@@ -1,0 +1,82 @@
+mod num;
+mod parse;
+
+pub fn evaluate(input: &str) -> Result<String, String> {
+    let (parsed, input) = parse::parse_expression(input)?;
+    if !input.is_empty() {
+        return Err(format!("Unexpected input found: '{}'", input));
+    }
+    Ok(format!("{}", parsed))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::evaluate;
+
+    fn test_evaluation(input: &str, expected: &str) {
+        assert_eq!(evaluate(input), Ok(expected.to_string()));
+    }
+
+    fn expect_parse_error(input: &str) {
+        assert!(evaluate(input).is_err());
+    }
+
+    #[test]
+    fn test_basic_integers() {
+        test_evaluation("2", "2");
+        test_evaluation("9", "9");
+        test_evaluation("10", "10");
+        test_evaluation("39456720983475234523452345", "39456720983475234523452345");
+        test_evaluation("10 ", "10");
+        test_evaluation(" 10", "10");
+        test_evaluation(" 10\n\r\n", "10");
+        expect_parse_error("10a");
+    }
+
+    #[test]
+    fn test_multiplication() {
+        test_evaluation("2*2", "4");
+        test_evaluation("\n2\n*\n2\n", "4");
+        test_evaluation(
+            "315427679023453451289740 * 927346502937456234523452",
+            "292510755072077978255166497050046859223676982480");
+    }
+
+    #[test]
+    fn test_addition() {
+        test_evaluation("2+2", "4");
+        test_evaluation("\n2\n+\n2\n", "4");
+        test_evaluation(
+            "315427679023453451289740 + 927346502937456234523452",
+            "1242774181960909685813192");
+    }
+
+    #[test]
+    fn test_subtraction() {
+        test_evaluation("2-2", "0");
+        test_evaluation("3-2", "1");
+        test_evaluation("2-3", "-1");
+        test_evaluation("\n2\n-\n64\n", "-62");
+        test_evaluation(
+            "315427679023453451289740 - 927346502937456234523452",
+            "-611918823914002783233712");
+    }
+
+    #[test]
+    fn test_basic_order_of_operations() {
+        test_evaluation("2+2*3", "8");
+        test_evaluation("2*2+3", "7");
+        test_evaluation("2+2+3", "7");
+        test_evaluation("2+2-3", "1");
+        test_evaluation("2-2+3", "3");
+        test_evaluation("2-2-3", "-3");
+        test_evaluation("2*2*3", "12");
+        test_evaluation("2*2*-3", "-12");
+        test_evaluation("2*-2*3", "-12");
+        test_evaluation("-2*2*3", "-12");
+        test_evaluation("-2*-2*3", "12");
+        test_evaluation("-2*2*-3", "12");
+        test_evaluation("2*-2*-3", "12");
+        test_evaluation("-2*-2*-3", "-12");
+    }
+}

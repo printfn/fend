@@ -1,0 +1,14 @@
+[package]
+name = "fend-core"
+version = "0.1.0"
+authors = ["printfn <printfn@users.noreply.github.com>"]
+description = "Backend for calculator and unit conversion tool fend"
+homepage = "https://github.com/printfn/fend-rs"
+repository = "https://github.com/printfn/fend-rs"
+readme = "README.md"
+license = "MIT"
+keywords = ["calculator", "library", "conversion", "math", "tool"]
+edition = "2018"
+
+[dependencies]
+num-bigint = "0.3.0"

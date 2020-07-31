@@ -1,0 +1,21 @@
+[package]
+name = "fend"
+version = "0.1.0"
+authors = ["printfn <printfn@users.noreply.github.com>"]
+description = "Calculator and unit conversion tool"
+homepage = "https://github.com/printfn/fend-rs"
+repository = "https://github.com/printfn/fend-rs"
+readme = "README.md"
+license = "MIT"
+keywords = ["calculator", "cli", "conversion", "math", "tool"]
+edition = "2018"
+
+[dependencies]
+rustyline = "6.2.0"
+
+[dependencies.fend-core]
+version = "0.1.0"
+path = "./core"
+
+[workspace]
+members = ["core"]
