@@ -1,6 +1,6 @@
+use fend_core;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use fend_core;
 
 fn main() {
     // `()` can be used when no completer is required
@@ -20,16 +20,12 @@ fn main() {
                     Ok(res) => println!("{}", res),
                     Err(msg) => println!("Error: {}", msg),
                 }
-            },
-            Err(ReadlineError::Interrupted) => {
-                println!("Use Ctrl-D (i.e. EOF) to exit")
-            },
-            Err(ReadlineError::Eof) => {
-                break
-            },
+            }
+            Err(ReadlineError::Interrupted) => println!("Use Ctrl-D (i.e. EOF) to exit"),
+            Err(ReadlineError::Eof) => break,
             Err(err) => {
                 println!("Error: {:?}", err);
-                break
+                break;
             }
         }
     }
