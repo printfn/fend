@@ -29,6 +29,11 @@ mod tests {
     }
 
     #[test]
+    fn test_blank_input() {
+        test_evaluation("", "");
+    }
+
+    #[test]
     fn test_basic_integers() {
         test_evaluation("2", "2");
         test_evaluation("9", "9");
