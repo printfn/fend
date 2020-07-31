@@ -3,7 +3,7 @@ use std::convert::TryInto;
 
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
 
-fn parse_char<'a>(input: &'a str) -> ParseResult<'a, char> {
+fn parse_char(input: &str) -> ParseResult<char> {
     let mut char_indices = input.char_indices();
     if let Some((_, ch)) = char_indices.next() {
         if let Some((idx, _)) = char_indices.next() {
@@ -18,7 +18,7 @@ fn parse_char<'a>(input: &'a str) -> ParseResult<'a, char> {
     }
 }
 
-pub fn skip_whitespace<'a>(mut input: &'a str) -> ParseResult<'a, ()> {
+pub fn skip_whitespace(mut input: &str) -> ParseResult<()> {
     loop {
         match parse_char(input) {
             Ok((ch, remaining)) => {
@@ -33,7 +33,7 @@ pub fn skip_whitespace<'a>(mut input: &'a str) -> ParseResult<'a, ()> {
     }
 }
 
-fn parse_ascii_digit<'a>(input: &'a str) -> ParseResult<'a, i32> {
+fn parse_ascii_digit(input: &str) -> ParseResult<i32> {
     let (ch, input) = parse_char(input)?;
     if let Some(digit) = ch.to_digit(10) {
         Ok((digit.try_into().unwrap(), input))
@@ -43,7 +43,7 @@ fn parse_ascii_digit<'a>(input: &'a str) -> ParseResult<'a, i32> {
 }
 
 // parse an integer consisting of only digits in base 10
-fn parse_number<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
+fn parse_number(input: &str) -> ParseResult<BigRat> {
     let (_, mut input) = skip_whitespace(input)?;
     let negative = if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
         let (_, remaining) = skip_whitespace(remaining)?;
@@ -72,7 +72,7 @@ fn parse_number<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
     }
 }
 
-fn parse_fixed_char<'a>(input: &'a str, ch: char) -> ParseResult<'a, ()> {
+fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == ch {
         Ok(((), input))
@@ -81,7 +81,7 @@ fn parse_fixed_char<'a>(input: &'a str, ch: char) -> ParseResult<'a, ()> {
     }
 }
 
-fn parse_multiplicative<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
+fn parse_multiplicative(input: &str) -> ParseResult<BigRat> {
     let mut factors = vec![];
     let (a, mut input) = parse_number(input)?;
     factors.push(a);
@@ -105,19 +105,19 @@ fn parse_multiplicative<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
     Ok((product, input))
 }
 
-fn parse_addition_cont<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
+fn parse_addition_cont(input: &str) -> ParseResult<BigRat> {
     let (_, input) = parse_fixed_char(input, '+')?;
     let (b, input) = parse_multiplicative(input)?;
     Ok((b, input))
 }
 
-fn parse_subtraction_cont<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
+fn parse_subtraction_cont(input: &str) -> ParseResult<BigRat> {
     let (_, input) = parse_fixed_char(input, '-')?;
     let (b, input) = parse_multiplicative(input)?;
     Ok((BigRat::from(0) - b, input))
 }
 
-fn parse_additive<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
+fn parse_additive(input: &str) -> ParseResult<BigRat> {
     let mut terms = vec![];
     let (a, mut input) = parse_multiplicative(input)?;
     terms.push(a);
@@ -139,6 +139,6 @@ fn parse_additive<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
     Ok((sum, input))
 }
 
-pub fn parse_expression<'a>(input: &'a str) -> ParseResult<'a, BigRat> {
+pub fn parse_expression(input: &str) -> ParseResult<BigRat> {
     parse_additive(input)
 }

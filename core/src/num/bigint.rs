@@ -89,8 +89,8 @@ impl BigInt {
         a
     }
 
-    fn _lcm(a: BigInt, b: BigInt) -> BigInt {
-        a.clone() * b.clone() / BigInt::gcd(a.clone(), b.clone())
+    pub fn lcm(a: BigInt, b: BigInt) -> BigInt {
+        a.clone() * b.clone() / BigInt::gcd(a, b)
     }
 }
 

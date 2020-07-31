@@ -18,9 +18,12 @@ impl Add for BigRat {
                 den: self.den,
             }
         } else {
+            let new_denominator = BigInt::lcm(self.den.clone(), rhs.den.clone());
+            let a = self.num * new_denominator.clone() / self.den;
+            let b = rhs.num * new_denominator.clone() / rhs.den;
             BigRat {
-                num: self.num.clone() * rhs.den.clone() + rhs.num.clone() * self.den.clone(),
-                den: self.den * rhs.den,
+                num: a + b,
+                den: new_denominator,
             }
         }
     }
@@ -70,6 +73,7 @@ impl Div for BigRat {
     type Output = BigRat;
 
     fn div(self, rhs: BigRat) -> BigRat {
+        #[allow(clippy::suspicious_arithmetic_impl)]
         BigRat {
             num: self.num * rhs.den,
             den: self.den * rhs.num,

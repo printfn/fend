@@ -1,4 +1,5 @@
-use fend_core;
+#![forbid(unsafe_code)]
+
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
@@ -15,7 +16,7 @@ fn main() {
                 if line.as_str().is_empty() {
                     continue;
                 }
-                if let Some(ch) = line.as_str().chars().nth(0) {
+                if let Some(ch) = line.as_str().chars().next() {
                     if !ch.is_whitespace() {
                         rl.add_history_entry(line.as_str());
                     }
