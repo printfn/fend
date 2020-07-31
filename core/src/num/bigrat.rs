@@ -118,8 +118,7 @@ impl Display for BigRat {
         if x.den == 1.into() {
             write!(f, "{}", x.num)?;
         } else {
-            // TODO this is very broken
-            write!(f, "{:?}", x)?;
+            write!(f, "{}/{}", x.num, x.den)?;
         }
         Ok(())
     }

@@ -81,26 +81,36 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
     }
 }
 
+fn parse_multiplication_cont(input: &str) -> ParseResult<BigRat> {
+    let (_, input) = parse_fixed_char(input, '*')?;
+    let (b, input) = parse_number(input)?;
+    Ok((b, input))
+}
+
+fn parse_division_cont(input: &str) -> ParseResult<BigRat> {
+    let (_, input) = parse_fixed_char(input, '/')?;
+    let (b, input) = parse_number(input)?;
+    Ok((BigRat::from(1) / b, input))
+}
+
 fn parse_multiplicative(input: &str) -> ParseResult<BigRat> {
-    let mut factors = vec![];
+    let mut terms = vec![];
     let (a, mut input) = parse_number(input)?;
-    factors.push(a);
+    terms.push(a);
     loop {
-        match parse_fixed_char(input, '*') {
-            Err(_) => break,
-            Ok((_, remaining)) => input = remaining,
-        }
-        match parse_number(input) {
-            Err(_) => break,
-            Ok((next_factor, remaining)) => {
-                factors.push(next_factor);
-                input = remaining;
-            }
+        if let Ok((term, remaining)) = parse_multiplication_cont(input) {
+            terms.push(term);
+            input = remaining;
+        } else if let Ok((term, remaining)) = parse_division_cont(input) {
+            terms.push(term);
+            input = remaining;
+        } else {
+            break;
         }
     }
     let mut product = 1.into();
-    for factor in factors {
-        product = product * factor;
+    for term in terms {
+        product = product * term;
     }
     Ok((product, input))
 }
