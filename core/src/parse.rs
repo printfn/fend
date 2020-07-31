@@ -90,7 +90,7 @@ fn parse_multiplication_cont(input: &str) -> ParseResult<BigRat> {
 fn parse_division_cont(input: &str) -> ParseResult<BigRat> {
     let (_, input) = parse_fixed_char(input, '/')?;
     let (b, input) = parse_number(input)?;
-    Ok((BigRat::from(1) / b, input))
+    Ok((BigRat::from(1).div(b)?, input))
 }
 
 fn parse_multiplicative(input: &str) -> ParseResult<BigRat> {

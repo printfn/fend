@@ -1,6 +1,6 @@
 use crate::num::bigint::BigInt;
 use std::fmt::Display;
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone)]
 pub struct BigRat {
@@ -69,18 +69,6 @@ impl Mul for BigRat {
     }
 }
 
-impl Div for BigRat {
-    type Output = BigRat;
-
-    fn div(self, rhs: BigRat) -> BigRat {
-        #[allow(clippy::suspicious_arithmetic_impl)]
-        BigRat {
-            num: self.num * rhs.den,
-            den: self.den * rhs.num,
-        }
-    }
-}
-
 impl From<i32> for BigRat {
     fn from(i: i32) -> Self {
         BigRat {
@@ -103,6 +91,17 @@ impl BigRat {
         self.num = self.num / gcd.clone();
         self.den = self.den / gcd;
         self
+    }
+
+    pub fn div(self, rhs: BigRat) -> Result<BigRat, String> {
+        if rhs.num == 0.into() {
+            return Err("Attempt to divide by zero".to_string());
+        }
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        Ok(BigRat {
+            num: self.num * rhs.den,
+            den: self.den * rhs.num,
+        })
     }
 }
 
