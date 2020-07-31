@@ -2,6 +2,11 @@ mod num;
 mod parse;
 
 pub fn evaluate(input: &str) -> Result<String, String> {
+    let (_, input) = parse::skip_whitespace(input)?;
+    if input.is_empty() {
+        // no or blank input: return no output
+        return Ok("".to_string());
+    }
     let (parsed, input) = parse::parse_expression(input)?;
     if !input.is_empty() {
         return Err(format!("Unexpected input found: '{}'", input));

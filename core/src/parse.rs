@@ -18,7 +18,7 @@ fn parse_char<'a>(input: &'a str) -> ParseResult<'a, char> {
     }
 }
 
-fn skip_whitespace<'a>(mut input: &'a str) -> ParseResult<'a, ()> {
+pub fn skip_whitespace<'a>(mut input: &'a str) -> ParseResult<'a, ()> {
     loop {
         match parse_char(input) {
             Ok((ch, remaining)) => {
