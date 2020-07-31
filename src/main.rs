@@ -15,7 +15,11 @@ fn main() {
                 if line.as_str().is_empty() {
                     continue;
                 }
-                rl.add_history_entry(line.as_str());
+                if let Some(ch) = line.as_str().chars().nth(0) {
+                    if !ch.is_whitespace() {
+                        rl.add_history_entry(line.as_str());
+                    }
+                }
                 match fend_core::evaluate(line.as_str()) {
                     Ok(res) => println!("{}", res),
                     Err(msg) => println!("Error: {}", msg),
