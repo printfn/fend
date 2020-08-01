@@ -92,6 +92,25 @@ impl BigInt {
     pub fn lcm(a: BigInt, b: BigInt) -> BigInt {
         a.clone() * b.clone() / BigInt::gcd(a, b)
     }
+
+    pub fn pow(a: BigInt, b: BigInt) -> Result<BigInt, String> {
+        if a == 0.into() && b == 0.into() {
+            return Err("Zero to the power of zero is undefined".to_string());
+        }
+        if b < 0.into() {
+            return Err("Negative exponents not supported".to_string());
+        }
+        if b == 0.into() {
+            return Ok(BigInt::from(1))
+        }
+        let b_as_u32 = b.value.to_u32_digits().1;
+        if b_as_u32.len() > 1 {
+            return Err("Exponent too large".to_string());
+        }
+        Ok(BigInt {
+            value: a.value.pow(b_as_u32[0]),
+        })
+    }
 }
 
 #[cfg(test)]

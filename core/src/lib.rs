@@ -172,4 +172,21 @@ mod tests {
         test_evaluation("1+((2 )*3)", "7");
         test_evaluation(" 1 + ( (\r\n2 ) * 3 ) ", "7");
     }
+
+    #[test]
+    fn test_powers() {
+        test_evaluation("1^1", "1");
+        test_evaluation("1**1", "1");
+        test_evaluation("1**1.0", "1");
+        test_evaluation("1.0**1", "1");
+        test_evaluation("2^4", "16");
+        test_evaluation("4^2", "16");
+        test_evaluation("4^3", "64");
+        test_evaluation("4^(3^1)", "64");
+        test_evaluation("4^3^1", "64");
+        test_evaluation("(4^3)^1", "64");
+        test_evaluation("(2^3)^4", "4096");
+        test_evaluation("2^3^2", "512");
+        test_evaluation("(2^3)^2", "64");
+    }
 }

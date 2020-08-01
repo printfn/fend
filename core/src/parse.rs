@@ -116,20 +116,42 @@ fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
     }
 }
 
+fn parse_power_cont(mut input: &str) -> ParseResult<Expr> {
+    if let Ok((_, remaining)) = parse_fixed_char(input, '^') {
+        input = remaining;
+    } else if let Ok((_, remaining)) = parse_fixed_char(input, '*') {
+        let (_, remaining) = parse_fixed_char(remaining, '*')?;
+        input = remaining;
+    } else {
+        return Err("Expected ^ or **".to_string());
+    }
+    let (b, input) = parse_power(input)?;
+    Ok((b, input))
+}
+
+fn parse_power(input: &str) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_parens_or_literal(input)?;
+    if let Ok((term, remaining)) = parse_power_cont(input) {
+        res = Expr::Pow(Box::new(res), Box::new(term));
+        input = remaining;
+    }
+    Ok((res, input))
+}
+
 fn parse_multiplication_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '*')?;
-    let (b, input) = parse_parens_or_literal(input)?;
+    let (b, input) = parse_power(input)?;
     Ok((b, input))
 }
 
 fn parse_division_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '/')?;
-    let (b, input) = parse_parens_or_literal(input)?;
+    let (b, input) = parse_power(input)?;
     Ok((b, input))
 }
 
 fn parse_multiplicative(input: &str) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_parens_or_literal(input)?;
+    let (mut res, mut input) = parse_power(input)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
             res = Expr::Mul(Box::new(res), Box::new(term));

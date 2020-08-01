@@ -104,6 +104,18 @@ impl BigRat {
         })
     }
 
+    pub fn pow(mut self, mut rhs: BigRat) -> Result<BigRat, String> {
+        self = self.simplify();
+        rhs = rhs.simplify();
+        if rhs.den != 1.into() {
+            return Err("Non-integer exponents not currently supported".to_string());
+        }
+        Ok(BigRat {
+            num: BigInt::pow(self.num, rhs.num.clone())?,
+            den: BigInt::pow(self.den, rhs.num)?,
+        })
+    }
+
     // test if this fraction has a terminating representation
     // e.g. in base 10: 1/4 = 0.25, but not 1/3
     fn terminates_in_base(&self, base: BigInt) -> bool {

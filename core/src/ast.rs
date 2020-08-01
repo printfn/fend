@@ -8,6 +8,7 @@ pub enum Expr {
     Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
+    Pow(Box<Expr>, Box<Expr>),
 }
 
 pub fn evaluate(expr: Expr) -> Result<BigRat, String> {
@@ -18,5 +19,6 @@ pub fn evaluate(expr: Expr) -> Result<BigRat, String> {
         Expr::Sub(a, b) => evaluate(*a)? - evaluate(*b)?,
         Expr::Mul(a, b) => evaluate(*a)? * evaluate(*b)?,
         Expr::Div(a, b) => evaluate(*a)?.div(evaluate(*b)?)?,
+        Expr::Pow(a, b) => evaluate(*a)?.pow(evaluate(*b)?)?,
     })
 }
