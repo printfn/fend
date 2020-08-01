@@ -23,7 +23,7 @@ fn main() {
                 }
                 match fend_core::evaluate(line.as_str()) {
                     Ok(res) => println!("{}", res),
-                    Err(msg) => println!("Error: {}", msg),
+                    Err(msg) => eprintln!("Error: {}", msg),
                 }
             }
             Err(ReadlineError::Interrupted) => println!("Use Ctrl-D (i.e. EOF) to exit"),
