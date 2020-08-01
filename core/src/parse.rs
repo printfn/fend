@@ -1,4 +1,5 @@
 use crate::num::bigrat::BigRat;
+use crate::ast::Expr;
 use std::convert::TryInto;
 
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
@@ -43,7 +44,7 @@ fn parse_ascii_digit(input: &str) -> ParseResult<i32> {
 }
 
 // parse an integer consisting of only digits in base 10
-fn parse_number(input: &str) -> ParseResult<BigRat> {
+fn parse_number(input: &str) -> ParseResult<Expr> {
     let (_, mut input) = skip_whitespace(input)?;
     let negative = if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
         let (_, remaining) = skip_whitespace(remaining)?;
@@ -61,7 +62,7 @@ fn parse_number(input: &str) -> ParseResult<BigRat> {
                 if negative {
                     res = BigRat::from(0) - res;
                 }
-                return Ok((res, input));
+                return Ok((Expr::Num(res), input));
             }
             Ok((digit, next_input)) => {
                 res = res * 10.into();
@@ -81,74 +82,62 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
     }
 }
 
-fn parse_multiplication_cont(input: &str) -> ParseResult<BigRat> {
+fn parse_multiplication_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '*')?;
     let (b, input) = parse_number(input)?;
     Ok((b, input))
 }
 
-fn parse_division_cont(input: &str) -> ParseResult<BigRat> {
+fn parse_division_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '/')?;
     let (b, input) = parse_number(input)?;
-    Ok((BigRat::from(1).div(b)?, input))
+    Ok((b, input))
 }
 
-fn parse_multiplicative(input: &str) -> ParseResult<BigRat> {
-    let mut terms = vec![];
-    let (a, mut input) = parse_number(input)?;
-    terms.push(a);
+fn parse_multiplicative(input: &str) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_number(input)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
-            terms.push(term);
+            res = Expr::Mul(Box::new(res), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_division_cont(input) {
-            terms.push(term);
+            res = Expr::Div(Box::new(res), Box::new(term));
             input = remaining;
         } else {
             break;
         }
     }
-    let mut product = 1.into();
-    for term in terms {
-        product = product * term;
-    }
-    Ok((product, input))
+    Ok((res, input))
 }
 
-fn parse_addition_cont(input: &str) -> ParseResult<BigRat> {
+fn parse_addition_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '+')?;
     let (b, input) = parse_multiplicative(input)?;
     Ok((b, input))
 }
 
-fn parse_subtraction_cont(input: &str) -> ParseResult<BigRat> {
+fn parse_subtraction_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '-')?;
     let (b, input) = parse_multiplicative(input)?;
-    Ok((BigRat::from(0) - b, input))
+    Ok((b, input))
 }
 
-fn parse_additive(input: &str) -> ParseResult<BigRat> {
-    let mut terms = vec![];
-    let (a, mut input) = parse_multiplicative(input)?;
-    terms.push(a);
+fn parse_additive(input: &str) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_multiplicative(input)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input) {
-            terms.push(term);
+            res = Expr::Add(Box::new(res), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_subtraction_cont(input) {
-            terms.push(term);
+            res = Expr::Sub(Box::new(res), Box::new(term));
             input = remaining;
         } else {
             break;
         }
     }
-    let mut sum = 0.into();
-    for term in terms {
-        sum = sum + term;
-    }
-    Ok((sum, input))
+    Ok((res, input))
 }
 
-pub fn parse_expression(input: &str) -> ParseResult<BigRat> {
+pub fn parse_expression(input: &str) -> ParseResult<Expr> {
     parse_additive(input)
 }

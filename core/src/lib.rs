@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod ast;
 mod num;
 mod parse;
 
@@ -13,7 +14,8 @@ pub fn evaluate(input: &str) -> Result<String, String> {
     if !input.is_empty() {
         return Err(format!("Unexpected input found: '{}'", input));
     }
-    Ok(format!("{}", parsed))
+    let result = ast::evaluate(parsed)?;
+    Ok(format!("{}", result))
 }
 
 #[cfg(test)]
@@ -31,6 +33,13 @@ mod tests {
     #[test]
     fn test_blank_input() {
         test_evaluation("", "");
+    }
+
+    #[test]
+    fn test_div_by_zero() {
+        assert_eq!(evaluate("1/0"), Err("Attempt to divide by zero".to_string()));
+        assert_eq!(evaluate("0/0"), Err("Attempt to divide by zero".to_string()));
+        assert_eq!(evaluate("-1/0"), Err("Attempt to divide by zero".to_string()));
     }
 
     #[test]
