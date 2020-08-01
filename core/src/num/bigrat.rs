@@ -6,6 +6,7 @@ use std::ops::{Add, Mul, Neg, Sub};
 pub struct BigRat {
     num: BigInt,
     den: BigInt,
+    exact: bool,
 }
 
 impl Add for BigRat {
@@ -16,6 +17,7 @@ impl Add for BigRat {
             BigRat {
                 num: self.num + rhs.num,
                 den: self.den,
+                exact: self.exact && rhs.exact,
             }
         } else {
             let new_denominator = BigInt::lcm(self.den.clone(), rhs.den.clone());
@@ -24,6 +26,7 @@ impl Add for BigRat {
             BigRat {
                 num: a + b,
                 den: new_denominator,
+                exact: self.exact && rhs.exact,
             }
         }
     }
@@ -36,6 +39,7 @@ impl Neg for BigRat {
         BigRat {
             num: -self.num,
             den: self.den,
+            exact: self.exact,
         }
     }
 }
@@ -65,6 +69,7 @@ impl Mul for BigRat {
         BigRat {
             num: self.num * rhs.num,
             den: self.den * rhs.den,
+            exact: self.exact && rhs.exact,
         }
     }
 }
@@ -74,6 +79,7 @@ impl From<i32> for BigRat {
         BigRat {
             num: i.into(),
             den: 1.into(),
+            exact: true,
         }
     }
 }
@@ -110,6 +116,7 @@ impl BigRat {
         Ok(BigRat {
             num: self.num * rhs.den,
             den: self.den * rhs.num,
+            exact: self.exact && rhs.exact,
         })
     }
 
@@ -127,6 +134,7 @@ impl BigRat {
         Ok(BigRat {
             num: BigInt::pow(self.num, rhs.num.clone())?,
             den: BigInt::pow(self.den, rhs.num)?,
+            exact: self.exact && rhs.exact,
         })
     }
 
@@ -137,6 +145,7 @@ impl BigRat {
         let base = BigRat {
             num: base,
             den: 1.into(),
+            exact: true,
         };
         loop {
             let old_den = x.den.clone();
@@ -160,11 +169,22 @@ impl BigRat {
         self.num = self.num.clone() * 10.into() + digit.into();
         self.den = self.den.clone() * 10.into();
     }
+
+    pub fn approx_pi() -> BigRat {
+        BigRat {
+            num: BigInt::from(1068966896),
+            den: BigInt::from(340262731),
+            exact: false,
+        }
+    }
 }
 
 impl Display for BigRat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         let mut x = self.clone().simplify();
+        if !self.exact {
+            write!(f, "approx. ")?;
+        }
         let negative = x.is_negative();
         if negative {
             write!(f, "-")?;
@@ -174,7 +194,7 @@ impl Display for BigRat {
             write!(f, "{}", x.num)?;
         } else {
             let terminating = x.terminates_in_base(10.into());
-            if !terminating {
+            if !terminating && self.exact {
                 write!(f, "{}/{}, approx. ", x.num, x.den)?;
                 if negative {
                     write!(f, "-")?;
@@ -186,6 +206,7 @@ impl Display for BigRat {
             let integer_as_rational = BigRat {
                 num: integer_part,
                 den: 1.into(),
+                exact: self.exact,
             };
             let mut remaining_fraction = x - integer_as_rational;
             let mut i = 0;
@@ -197,6 +218,7 @@ impl Display for BigRat {
                     - BigRat {
                         num: digit,
                         den: 1.into(),
+                        exact: self.exact,
                     };
                 i += 1;
             }

@@ -1,5 +1,5 @@
 use crate::num::bigrat::BigRat;
-use std::fmt::{Debug, Formatter, Error};
+use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone)]
 pub enum Expr {
@@ -38,7 +38,7 @@ impl Debug for Expr {
 pub fn evaluate(expr: Expr) -> Result<BigRat, String> {
     Ok(match expr {
         Expr::Num(n) => n,
-        Expr::Ident(_ident) => 0.into(),
+        Expr::Ident(ident) => resolve_identifier(ident.as_str())?,
         Expr::Parens(x) => evaluate(*x)?,
         Expr::UnaryMinus(x) => -evaluate(*x)?,
         Expr::UnaryPlus(x) => evaluate(*x)?,
@@ -48,5 +48,12 @@ pub fn evaluate(expr: Expr) -> Result<BigRat, String> {
         Expr::Div(a, b) => evaluate(*a)?.div(evaluate(*b)?)?,
         Expr::Pow(a, b) => evaluate(*a)?.pow(evaluate(*b)?)?,
         Expr::Apply(a, b) => evaluate(*a)? * evaluate(*b)?,
+    })
+}
+
+fn resolve_identifier(ident: &str) -> Result<BigRat, String> {
+    Ok(match ident {
+        "pi" => BigRat::approx_pi(),
+        _ => return Err(format!("Unknown identifier '{}'", ident)),
     })
 }

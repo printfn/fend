@@ -108,7 +108,7 @@ impl BigInt {
             return Err("Negative exponents not supported".to_string());
         }
         if b == 0.into() {
-            return Ok(BigInt::from(1))
+            return Ok(BigInt::from(1));
         }
         let b_as_u32 = b.value.to_u32_digits().1;
         if b_as_u32.len() > 1 {

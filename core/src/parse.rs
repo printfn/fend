@@ -91,7 +91,7 @@ fn parse_ident(input: &str) -> ParseResult<Expr> {
     let (_, input) = skip_whitespace(input)?;
     let (ch, mut input) = parse_char(input)?;
     if !ch.is_alphabetic() {
-        return Err(format!("Found invalid character in identifier: '{}'", ch))
+        return Err(format!("Found invalid character in identifier: '{}'", ch));
     }
     let mut ident = ch.to_string();
     loop {
@@ -104,6 +104,7 @@ fn parse_ident(input: &str) -> ParseResult<Expr> {
         }
         break;
     }
+    let (_, input) = skip_whitespace(input)?;
     Ok((Expr::Ident(ident), input))
 }
 
