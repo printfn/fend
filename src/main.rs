@@ -9,7 +9,8 @@ fn main() {
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
-            .build());
+            .build(),
+    );
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
     }
