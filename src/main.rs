@@ -5,7 +5,11 @@ use rustyline::Editor;
 
 fn main() {
     // `()` can be used when no completer is required
-    let mut rl = Editor::<()>::new();
+    let mut rl = Editor::<()>::with_config(
+        rustyline::config::Builder::new()
+            .history_ignore_space(true)
+            .auto_add_history(true)
+            .build());
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
     }
@@ -15,11 +19,6 @@ fn main() {
             Ok(line) => {
                 if line.as_str().is_empty() {
                     continue;
-                }
-                if let Some(ch) = line.as_str().chars().next() {
-                    if !ch.is_whitespace() {
-                        rl.add_history_entry(line.as_str());
-                    }
                 }
                 match fend_core::evaluate(line.as_str()) {
                     Ok(res) => println!("{}", res),
