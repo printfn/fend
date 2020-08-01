@@ -93,5 +93,32 @@ mod tests {
         test_evaluation("-2*2*-3", "12");
         test_evaluation("2*-2*-3", "12");
         test_evaluation("-2*-2*-3", "-12");
+        test_evaluation("-2*-2*-3/2", "-6");
+        test_evaluation("-2*-2*-3/-2", "6");
+    }
+
+    #[test]
+    fn test_exact_division() {
+        test_evaluation("1/1", "1");
+        test_evaluation("1/2", "0.5");
+        test_evaluation("1/4", "0.25");
+        test_evaluation("1/8", "0.125");
+        test_evaluation("1/16", "0.0625");
+        test_evaluation("1/32", "0.03125");
+        test_evaluation("1/64", "0.015625");
+        test_evaluation("2/64", "0.03125");
+        test_evaluation("4/64", "0.0625");
+        test_evaluation("8/64", "0.125");
+        test_evaluation("16/64", "0.25");
+        test_evaluation("32/64", "0.5");
+        test_evaluation("64/64", "1");
+        test_evaluation("2/1", "2");
+        test_evaluation("27/3", "9");
+        test_evaluation("100/5", "20");
+        test_evaluation("18446744073709551616/2", "9223372036854775808");
+        test_evaluation(
+            "184467440737095516160000000000000/2",
+            "92233720368547758080000000000000",
+        );
     }
 }

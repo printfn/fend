@@ -103,21 +103,69 @@ impl BigRat {
             den: self.den * rhs.num,
         })
     }
+
+    // test if this fraction has a terminating representation
+    // e.g. in base 10: 1/4 = 0.25, but not 1/3
+    fn terminates_in_base(&self, base: BigInt) -> bool {
+        let mut x = self.clone();
+        let base = BigRat {
+            num: base,
+            den: 1.into(),
+        };
+        loop {
+            let old_den = x.den.clone();
+            x = (x * base.clone()).simplify();
+            let new_den = x.den.clone();
+            if new_den == old_den {
+                break;
+            }
+        }
+        x.den == 1.into()
+    }
+
+    fn is_negative(&self) -> bool {
+        self.num < 0.into()
+    }
 }
 
 impl Display for BigRat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         let mut x = self.clone().simplify();
-        if x.num < 0.into() {
+        let negative = x.is_negative();
+        if negative {
             write!(f, "-")?;
-            if x.num < 0.into() {
-                x.num = -x.num;
-            }
-        }
+            x.num = -x.num;
+        };
         if x.den == 1.into() {
             write!(f, "{}", x.num)?;
         } else {
-            write!(f, "{}/{}", x.num, x.den)?;
+            let terminating = x.terminates_in_base(10.into());
+            if !terminating {
+                write!(f, "{}/{}, approx. ", x.num, x.den)?;
+                if negative {
+                    write!(f, "-")?;
+                }
+            }
+            let num_trailing_digits_to_print = if terminating { std::usize::MAX } else { 10 };
+            let integer_part = x.num.clone() / x.den.clone();
+            write!(f, "{}.", integer_part)?;
+            let integer_as_rational = BigRat {
+                num: integer_part,
+                den: 1.into(),
+            };
+            let mut remaining_fraction = x - integer_as_rational;
+            let mut i = 0;
+            while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
+                remaining_fraction = (remaining_fraction * 10.into()).simplify();
+                let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
+                write!(f, "{}", digit)?;
+                remaining_fraction = remaining_fraction
+                    - BigRat {
+                        num: digit,
+                        den: 1.into(),
+                    };
+                i += 1;
+            }
         }
         Ok(())
     }
