@@ -2,7 +2,7 @@ use crate::num::bigint::BigInt;
 use std::fmt::Display;
 use std::ops::{Add, Mul, Neg, Sub};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct BigRat {
     num: BigInt,
     den: BigInt,
@@ -87,9 +87,18 @@ impl BigRat {
         if self.den == 1.into() {
             return self;
         }
+        let negative = if self.num < 0.into() {
+            self.num = -self.num;
+            true
+        } else {
+            false
+        };
         let gcd = BigInt::gcd(self.num.clone(), self.den.clone());
         self.num = self.num / gcd.clone();
         self.den = self.den / gcd;
+        if negative {
+            self.num = -self.num;
+        }
         self
     }
 
@@ -109,6 +118,11 @@ impl BigRat {
         rhs = rhs.simplify();
         if rhs.den != 1.into() {
             return Err("Non-integer exponents not currently supported".to_string());
+        }
+        if rhs.num < 0.into() {
+            // a^-b => 1/a^b
+            rhs.num = -rhs.num;
+            return Ok(BigRat::from(1).div(self.pow(rhs)?)?);
         }
         Ok(BigRat {
             num: BigInt::pow(self.num, rhs.num.clone())?,
@@ -135,6 +149,7 @@ impl BigRat {
         x.den == 1.into()
     }
 
+    // number must be simplified first
     fn is_negative(&self) -> bool {
         self.num < 0.into()
     }
@@ -186,6 +201,13 @@ impl Display for BigRat {
                 i += 1;
             }
         }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for BigRat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self)?;
         Ok(())
     }
 }

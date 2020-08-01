@@ -2,7 +2,7 @@ use num_bigint::BigInt as NumBigInt;
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BigInt {
     value: NumBigInt,
 }
@@ -74,6 +74,13 @@ impl From<i32> for BigInt {
 impl Display for BigInt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.value)?;
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for BigInt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self)?;
         Ok(())
     }
 }

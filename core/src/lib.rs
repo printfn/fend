@@ -60,7 +60,6 @@ mod tests {
         test_evaluation("10 ", "10");
         test_evaluation(" 10", "10");
         test_evaluation(" 10\n\r\n", "10");
-        expect_parse_error("10a");
     }
 
     #[test]
@@ -188,5 +187,20 @@ mod tests {
         test_evaluation("(2^3)^4", "4096");
         test_evaluation("2^3^2", "512");
         test_evaluation("(2^3)^2", "64");
+    }
+
+    #[test]
+    fn test_tricky_power_negation() {
+        test_evaluation("-0.125", "-0.125");
+        test_evaluation("2^1^2", "2");
+        test_evaluation("2^(1^2)", "2");
+        test_evaluation("2^(1)", "2");
+        test_evaluation("2 * (-2^3)", "-16");
+        test_evaluation("2 * -2^3", "-16");
+        test_evaluation("2^-3 * 4", "0.5");
+        test_evaluation("2 * -3 * 4", "-24");
+        test_evaluation("-2^-3", "-0.125");
+        assert_eq!(evaluate("2^-3^4"), evaluate("1 / 2^81"));
+        test_evaluation("4^-1^2", "0.25");
     }
 }

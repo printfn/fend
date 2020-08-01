@@ -54,14 +54,7 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
 
 // parse an integer consisting of only digits in base 10
 fn parse_number(input: &str) -> ParseResult<Expr> {
-    let (_, mut input) = skip_whitespace(input)?;
-    let negative = if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
-        let (_, remaining) = skip_whitespace(remaining)?;
-        input = remaining;
-        true
-    } else {
-        false
-    };
+    let (_, input) = skip_whitespace(input)?;
     let (digit, mut input) = parse_ascii_digit(input)?;
     let mut res = BigRat::from(digit);
     loop {
@@ -83,9 +76,6 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                     }
                 }
                 let (_, input) = skip_whitespace(input)?;
-                if negative {
-                    res = BigRat::from(0) - res;
-                }
                 return Ok((Expr::Num(res), input));
             }
             Ok((digit, next_input)) => {
@@ -95,6 +85,26 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
             }
         }
     }
+}
+
+fn parse_ident(input: &str) -> ParseResult<Expr> {
+    let (_, input) = skip_whitespace(input)?;
+    let (ch, mut input) = parse_char(input)?;
+    if !ch.is_alphabetic() {
+        return Err(format!("Found invalid character in identifier: '{}'", ch))
+    }
+    let mut ident = ch.to_string();
+    loop {
+        if let Ok((ch, remaining)) = parse_char(input) {
+            if ch.is_alphanumeric() {
+                ident.push(ch);
+                input = remaining;
+                continue;
+            }
+        }
+        break;
+    }
+    Ok((Expr::Ident(ident), input))
 }
 
 fn parse_parens(input: &str) -> ParseResult<Expr> {
@@ -109,11 +119,22 @@ fn parse_parens(input: &str) -> ParseResult<Expr> {
 fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
     if let Ok((res, remaining)) = parse_number(input) {
         Ok((res, remaining))
+    } else if let Ok((res, remaining)) = parse_ident(input) {
+        Ok((res, remaining))
     } else if let Ok((res, remaining)) = parse_parens(input) {
         Ok((res, remaining))
     } else {
         Err("Expected literal or parentheses".to_string())
     }
+}
+
+fn parse_apply(input: &str) -> ParseResult<Expr> {
+    let (a, input) = parse_parens_or_literal(input)?;
+    Ok(if let Ok((b, input)) = parse_apply(input) {
+        (Expr::Apply(Box::new(a), Box::new(b)), input)
+    } else {
+        (a, input)
+    })
 }
 
 fn parse_power_cont(mut input: &str) -> ParseResult<Expr> {
@@ -130,7 +151,12 @@ fn parse_power_cont(mut input: &str) -> ParseResult<Expr> {
 }
 
 fn parse_power(input: &str) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_parens_or_literal(input)?;
+    let (_, input) = skip_whitespace(input)?;
+    if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
+        let (res, remaining) = parse_power(remaining)?;
+        return Ok((Expr::Negate(Box::new(res)), remaining));
+    }
+    let (mut res, mut input) = parse_apply(input)?;
     if let Ok((term, remaining)) = parse_power_cont(input) {
         res = Expr::Pow(Box::new(res), Box::new(term));
         input = remaining;
