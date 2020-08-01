@@ -76,6 +76,8 @@ mod tests {
     fn test_addition() {
         test_evaluation("2+2", "4");
         test_evaluation("\n2\n+\n2\n", "4");
+        test_evaluation("+2", "2");
+        test_evaluation("++++2", "2");
         test_evaluation(
             "315427679023453451289740 + 927346502937456234523452",
             "1242774181960909685813192",
@@ -87,6 +89,10 @@ mod tests {
         test_evaluation("2-2", "0");
         test_evaluation("3-2", "1");
         test_evaluation("2-3", "-1");
+        test_evaluation("-2", "-2");
+        test_evaluation("--2", "2");
+        test_evaluation("---2", "-2");
+        test_evaluation("-(--2)", "-2");
         test_evaluation("\n2\n-\n64\n", "-62");
         test_evaluation(
             "315427679023453451289740 - 927346502937456234523452",
@@ -198,6 +204,7 @@ mod tests {
         test_evaluation("2 * (-2^3)", "-16");
         test_evaluation("2 * -2^3", "-16");
         test_evaluation("2^-3 * 4", "0.5");
+        test_evaluation("2^3 * 4", "32");
         test_evaluation("2 * -3 * 4", "-24");
         test_evaluation("-2^-3", "-0.125");
         assert_eq!(evaluate("2^-3^4"), evaluate("1 / 2^81"));

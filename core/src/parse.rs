@@ -154,7 +154,11 @@ fn parse_power(input: &str) -> ParseResult<Expr> {
     let (_, input) = skip_whitespace(input)?;
     if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
         let (res, remaining) = parse_power(remaining)?;
-        return Ok((Expr::Negate(Box::new(res)), remaining));
+        return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
+    }
+    if let Ok((_, remaining)) = parse_fixed_char(input, '+') {
+        let (res, remaining) = parse_power(remaining)?;
+        return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
     }
     let (mut res, mut input) = parse_apply(input)?;
     if let Ok((term, remaining)) = parse_power_cont(input) {
