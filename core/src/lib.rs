@@ -37,9 +37,18 @@ mod tests {
 
     #[test]
     fn test_div_by_zero() {
-        assert_eq!(evaluate("1/0"), Err("Attempt to divide by zero".to_string()));
-        assert_eq!(evaluate("0/0"), Err("Attempt to divide by zero".to_string()));
-        assert_eq!(evaluate("-1/0"), Err("Attempt to divide by zero".to_string()));
+        assert_eq!(
+            evaluate("1/0"),
+            Err("Attempt to divide by zero".to_string())
+        );
+        assert_eq!(
+            evaluate("0/0"),
+            Err("Attempt to divide by zero".to_string())
+        );
+        assert_eq!(
+            evaluate("-1/0"),
+            Err("Attempt to divide by zero".to_string())
+        );
     }
 
     #[test]
@@ -123,11 +132,44 @@ mod tests {
         test_evaluation("64/64", "1");
         test_evaluation("2/1", "2");
         test_evaluation("27/3", "9");
+        test_evaluation("100/4", "25");
         test_evaluation("100/5", "20");
         test_evaluation("18446744073709551616/2", "9223372036854775808");
         test_evaluation(
             "184467440737095516160000000000000/2",
             "92233720368547758080000000000000",
         );
+    }
+
+    #[test]
+    fn test_decimal_point() {
+        test_evaluation("0.0", "0");
+        test_evaluation("0.000000", "0");
+        test_evaluation("0.01", "0.01");
+        test_evaluation("0.01000", "0.01");
+        test_evaluation("001.01000", "1.01");
+        test_evaluation("0.25", "0.25");
+        expect_parse_error("1.");
+        expect_parse_error(".1");
+        test_evaluation(
+            "0.251974862348971623412341534273261435",
+            "0.251974862348971623412341534273261435",
+        );
+    }
+
+    #[test]
+    fn test_parens() {
+        test_evaluation("(1)", "1");
+        test_evaluation("(0.0)", "0");
+        test_evaluation("(1+-2)", "-1");
+        test_evaluation("1+2*3", "7");
+        test_evaluation("(1+2)*3", "9");
+        test_evaluation("((1+2))*3", "9");
+        test_evaluation("((1)+2)*3", "9");
+        test_evaluation("(1+(2))*3", "9");
+        test_evaluation("(1+(2)*3)", "7");
+        test_evaluation("1+(2*3)", "7");
+        test_evaluation("1+((2 )*3)", "7");
+        test_evaluation(" 1 + ( (\r\n2 ) * 3 ) ", "7");
     }
 }

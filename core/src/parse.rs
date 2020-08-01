@@ -1,5 +1,5 @@
-use crate::num::bigrat::BigRat;
 use crate::ast::Expr;
+use crate::num::bigrat::BigRat;
 use std::convert::TryInto;
 
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
@@ -43,6 +43,15 @@ fn parse_ascii_digit(input: &str) -> ParseResult<i32> {
     }
 }
 
+fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
+    let (parsed_ch, input) = parse_char(input)?;
+    if parsed_ch == ch {
+        Ok(((), input))
+    } else {
+        Err(format!("Expected '{}', found '{}'", parsed_ch, ch))
+    }
+}
+
 // parse an integer consisting of only digits in base 10
 fn parse_number(input: &str) -> ParseResult<Expr> {
     let (_, mut input) = skip_whitespace(input)?;
@@ -58,6 +67,21 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     loop {
         match parse_ascii_digit(input) {
             Err(_) => {
+                // parse decimal point and at least one digit
+                if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
+                    let (digit, remaining) = parse_ascii_digit(remaining)?;
+                    input = remaining;
+                    res.add_decimal_digit(digit);
+                    loop {
+                        match parse_ascii_digit(input) {
+                            Err(_) => break,
+                            Ok((digit, next_input)) => {
+                                res.add_decimal_digit(digit);
+                                input = next_input;
+                            }
+                        }
+                    }
+                }
                 let (_, input) = skip_whitespace(input)?;
                 if negative {
                     res = BigRat::from(0) - res;
@@ -73,29 +97,39 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     }
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
-    let (parsed_ch, input) = parse_char(input)?;
-    if parsed_ch == ch {
-        Ok(((), input))
+fn parse_parens(input: &str) -> ParseResult<Expr> {
+    let (_, input) = skip_whitespace(input)?;
+    let (_, input) = parse_fixed_char(input, '(')?;
+    let (inner, input) = parse_expression(input)?;
+    let (_, input) = parse_fixed_char(input, ')')?;
+    let (_, input) = skip_whitespace(input)?;
+    Ok((Expr::Parens(Box::new(inner)), input))
+}
+
+fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
+    if let Ok((res, remaining)) = parse_number(input) {
+        Ok((res, remaining))
+    } else if let Ok((res, remaining)) = parse_parens(input) {
+        Ok((res, remaining))
     } else {
-        Err(format!("Expected '{}', found '{}'", parsed_ch, ch))
+        Err("Expected literal or parentheses".to_string())
     }
 }
 
 fn parse_multiplication_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '*')?;
-    let (b, input) = parse_number(input)?;
+    let (b, input) = parse_parens_or_literal(input)?;
     Ok((b, input))
 }
 
 fn parse_division_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '/')?;
-    let (b, input) = parse_number(input)?;
+    let (b, input) = parse_parens_or_literal(input)?;
     Ok((b, input))
 }
 
 fn parse_multiplicative(input: &str) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_number(input)?;
+    let (mut res, mut input) = parse_parens_or_literal(input)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
             res = Expr::Mul(Box::new(res), Box::new(term));

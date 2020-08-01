@@ -126,6 +126,13 @@ impl BigRat {
     fn is_negative(&self) -> bool {
         self.num < 0.into()
     }
+
+    // This method is dangerous!! Use this method only when the number has *not* been
+    // simplified or otherwise changed.
+    pub fn add_decimal_digit(&mut self, digit: i32) {
+        self.num = self.num.clone() * 10.into() + digit.into();
+        self.den = self.den.clone() * 10.into();
+    }
 }
 
 impl Display for BigRat {
