@@ -12,17 +12,19 @@ fn main() {
             .build(),
     );
     if rl.load_history("history.txt").is_err() {
-        println!("No previous history.");
+        // No previous history
     }
     loop {
         let readline = rl.readline("> ");
         match readline {
             Ok(line) => {
-                if line.as_str().is_empty() {
-                    continue;
-                }
                 match fend_core::evaluate(line.as_str()) {
-                    Ok(res) => println!("{}", res),
+                    Ok(res) => {
+                        if res.is_empty() {
+                            continue;
+                        }
+                        println!("{}", res);
+                    }
                     Err(msg) => eprintln!("Error: {}", msg),
                 }
             }
