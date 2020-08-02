@@ -20,10 +20,11 @@ fn main() {
             Ok(line) => {
                 match fend_core::evaluate(line.as_str()) {
                     Ok(res) => {
-                        if res.is_empty() {
+                        let main_result = res.get_main_result();
+                        if main_result.is_empty() {
                             continue;
                         }
-                        println!("{}", res);
+                        println!("{}", main_result);
                     }
                     Err(msg) => eprintln!("Error: {}", msg),
                 }

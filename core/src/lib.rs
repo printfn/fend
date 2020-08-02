@@ -4,18 +4,40 @@ mod ast;
 mod num;
 mod parse;
 
-pub fn evaluate(input: &str) -> Result<String, String> {
+#[derive(PartialEq, Eq, Debug)]
+pub struct FendResult {
+    main_result: String,
+    other_info: Vec<String>,
+}
+
+impl FendResult {
+    pub fn get_main_result(&self) -> &str {
+        self.main_result.as_str()
+    }
+
+    pub fn get_other_info(&self) -> &Vec<String> {
+        &self.other_info
+    }
+}
+
+pub fn evaluate(input: &str) -> Result<FendResult, String> {
     let (_, input) = parse::skip_whitespace(input)?;
     if input.is_empty() {
         // no or blank input: return no output
-        return Ok("".to_string());
+        return Ok(FendResult {
+            main_result: "".to_string(),
+            other_info: vec![],
+        });
     }
     let (parsed, input) = parse::parse_expression(input)?;
     if !input.is_empty() {
         return Err(format!("Unexpected input found: '{}'", input));
     }
     let result = ast::evaluate(parsed)?;
-    Ok(format!("{}", result))
+    Ok(FendResult {
+        main_result: format!("{}", result),
+        other_info: vec![],
+    })
 }
 
 #[cfg(test)]
@@ -23,7 +45,7 @@ mod tests {
     use crate::evaluate;
 
     fn test_evaluation(input: &str, expected: &str) {
-        assert_eq!(evaluate(input), Ok(expected.to_string()));
+        assert_eq!(evaluate(input).unwrap().get_main_result(), expected.to_string());
     }
 
     fn expect_parse_error(input: &str) {
