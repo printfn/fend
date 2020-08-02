@@ -25,6 +25,10 @@ fn main() {
                             continue;
                         }
                         println!("{}", main_result);
+                        let extra_info = res.get_other_info();
+                        for info in extra_info {
+                            println!("-> {}", info);
+                        }
                     }
                     Err(msg) => eprintln!("Error: {}", msg),
                 }
