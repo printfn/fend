@@ -2,7 +2,7 @@
 
 mod ast;
 mod num;
-mod parse;
+mod parser;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct FendResult {
@@ -21,7 +21,7 @@ impl FendResult {
 }
 
 pub fn evaluate(input: &str) -> Result<FendResult, String> {
-    let (_, input) = parse::skip_whitespace(input)?;
+    let (_, input) = parser::skip_whitespace(input)?;
     if input.is_empty() {
         // no or blank input: return no output
         return Ok(FendResult {
@@ -29,7 +29,7 @@ pub fn evaluate(input: &str) -> Result<FendResult, String> {
             other_info: vec![],
         });
     }
-    let (parsed, input) = parse::parse_expression(input)?;
+    let (parsed, input) = parser::parse_expression(input)?;
     if !input.is_empty() {
         return Err(format!("Unexpected input found: '{}'", input));
     }
@@ -45,7 +45,10 @@ mod tests {
     use crate::evaluate;
 
     fn test_evaluation(input: &str, expected: &str) {
-        assert_eq!(evaluate(input).unwrap().get_main_result(), expected.to_string());
+        assert_eq!(
+            evaluate(input).unwrap().get_main_result(),
+            expected.to_string()
+        );
     }
 
     fn expect_parse_error(input: &str) {

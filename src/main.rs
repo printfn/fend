@@ -17,22 +17,20 @@ fn main() {
     loop {
         let readline = rl.readline("> ");
         match readline {
-            Ok(line) => {
-                match fend_core::evaluate(line.as_str()) {
-                    Ok(res) => {
-                        let main_result = res.get_main_result();
-                        if main_result.is_empty() {
-                            continue;
-                        }
-                        println!("{}", main_result);
-                        let extra_info = res.get_other_info();
-                        for info in extra_info {
-                            println!("-> {}", info);
-                        }
+            Ok(line) => match fend_core::evaluate(line.as_str()) {
+                Ok(res) => {
+                    let main_result = res.get_main_result();
+                    if main_result.is_empty() {
+                        continue;
                     }
-                    Err(msg) => eprintln!("Error: {}", msg),
+                    println!("{}", main_result);
+                    let extra_info = res.get_other_info();
+                    for info in extra_info {
+                        println!("-> {}", info);
+                    }
                 }
-            }
+                Err(msg) => eprintln!("Error: {}", msg),
+            },
             Err(ReadlineError::Interrupted) => println!("Use Ctrl-D (i.e. EOF) to exit"),
             Err(ReadlineError::Eof) => break,
             Err(err) => {
