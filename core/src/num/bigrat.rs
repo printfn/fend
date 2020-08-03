@@ -102,7 +102,7 @@ impl BigRat {
             let b = rhs.num * new_denominator.clone() / rhs.den;
             if rhs.sign == Sign::Negative && a < b {
                 BigRat {
-                    sign: Sign::Positive,
+                    sign: Sign::Negative,
                     num: b - a,
                     den: new_denominator,
                     exact: self.exact && rhs.exact,
@@ -347,6 +347,55 @@ impl Display for BigRat {
     }
 }
 
+impl From<BigUint> for BigRat {
+    fn from(n: BigUint) -> Self {
+        BigRat {
+            sign: Sign::Positive,
+            num: n,
+            den: BigUint::from(1),
+            exact: true,
+        }
+    }
+}
+
+impl BigRat {
+    pub fn root_n(self, n: &BigUint) -> Result<BigRat, String> {
+        if self.sign == Sign::Negative {
+            return Err("Can't compute roots of negative numbers".to_string());
+        }
+        let n_as_bigrat = BigRat::from(n.clone());
+        if self.num == 0.into() {
+            return Ok(self);
+        }
+        let mut guess = BigRat::from(1);
+        let mut too_high = false;
+        let mut too_low = false;
+        for _ in 0..100 {
+            let res = guess.clone().pow(n_as_bigrat.clone())?;
+            if res == self {
+                return Ok(guess);
+            } else if res > self {
+                guess.den = guess.den * 2.into() + 1.into();
+                guess.num = guess.num * 2.into();
+                too_high = true;
+            } else if res < self {
+                guess.den = guess.den;
+                guess.num = guess.num + 1.into();
+                too_low = true;
+            }
+        }
+        if !too_high || !too_low {
+            return Err("Unable to find root".to_string())
+        }
+        Ok(BigRat {
+            sign: guess.sign,
+            num: guess.num,
+            den: guess.den,
+            exact: false,
+        })
+    }
+}
+
 impl std::fmt::Debug for BigRat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self)?;
@@ -356,7 +405,9 @@ impl std::fmt::Debug for BigRat {
 
 #[cfg(test)]
 mod tests {
+    use super::sign::Sign;
     use super::BigRat;
+    use crate::num::biguint::BigUint;
 
     #[test]
     fn test_bigrat_from() {
@@ -369,5 +420,17 @@ mod tests {
     fn test_addition() {
         eprintln!("{:?}", "yay");
         assert_eq!(BigRat::from(2) + BigRat::from(2), BigRat::from(4));
+    }
+
+    #[test]
+    fn test_cmp() {
+        assert!(
+            BigRat {
+                sign: Sign::Positive,
+                num: BigUint::from(16),
+                den: BigUint::from(9),
+                exact: true
+            } < BigRat::from(2)
+        )
     }
 }

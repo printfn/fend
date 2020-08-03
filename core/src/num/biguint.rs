@@ -195,7 +195,7 @@ impl Sub for &BigUint {
         }
         let mut carry = 0; // 0 or 1
         let mut res = vec![];
-        for i in 0..other.value.len() {
+        for i in 0..max(self.value.len(), other.value.len()) {
             let a = self.get(i);
             let b = other.get(i);
             if a >= b + carry {

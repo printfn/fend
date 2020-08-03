@@ -1,4 +1,5 @@
 use crate::num::bigrat::BigRat;
+use crate::value::Value;
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone)]
@@ -35,25 +36,34 @@ impl Debug for Expr {
     }
 }
 
-pub fn evaluate(expr: Expr) -> Result<BigRat, String> {
+pub fn evaluate(expr: Expr) -> Result<Value, String> {
     Ok(match expr {
-        Expr::Num(n) => n,
+        Expr::Num(n) => Value::Num(n),
         Expr::Ident(ident) => resolve_identifier(ident.as_str())?,
         Expr::Parens(x) => evaluate(*x)?,
-        Expr::UnaryMinus(x) => -evaluate(*x)?,
-        Expr::UnaryPlus(x) => evaluate(*x)?,
-        Expr::Add(a, b) => evaluate(*a)? + evaluate(*b)?,
-        Expr::Sub(a, b) => evaluate(*a)? - evaluate(*b)?,
-        Expr::Mul(a, b) => evaluate(*a)? * evaluate(*b)?,
-        Expr::Div(a, b) => evaluate(*a)?.div(evaluate(*b)?)?,
-        Expr::Pow(a, b) => evaluate(*a)?.pow(evaluate(*b)?)?,
-        Expr::Apply(a, b) => evaluate(*a)? * evaluate(*b)?,
+        Expr::UnaryMinus(x) => Value::Num(-evaluate(*x)?.expect_num()?),
+        Expr::UnaryPlus(x) => Value::Num(evaluate(*x)?.expect_num()?),
+        Expr::Add(a, b) => Value::Num(evaluate(*a)?.expect_num()? + evaluate(*b)?.expect_num()?),
+        Expr::Sub(a, b) => Value::Num(evaluate(*a)?.expect_num()? - evaluate(*b)?.expect_num()?),
+        Expr::Mul(a, b) => Value::Num(evaluate(*a)?.expect_num()? * evaluate(*b)?.expect_num()?),
+        Expr::Div(a, b) => Value::Num(
+            evaluate(*a)?
+                .expect_num()?
+                .div(evaluate(*b)?.expect_num()?)?,
+        ),
+        Expr::Pow(a, b) => Value::Num(
+            evaluate(*a)?
+                .expect_num()?
+                .pow(evaluate(*b)?.expect_num()?)?,
+        ),
+        Expr::Apply(a, b) => evaluate(*a)?.apply(evaluate(*b)?)?,
     })
 }
 
-fn resolve_identifier(ident: &str) -> Result<BigRat, String> {
+fn resolve_identifier(ident: &str) -> Result<Value, String> {
     Ok(match ident {
-        "pi" => BigRat::approx_pi(),
+        "pi" => Value::Num(BigRat::approx_pi()),
+        "sqrt" => Value::Func("sqrt".to_string()),
         _ => return Err(format!("Unknown identifier '{}'", ident)),
     })
 }

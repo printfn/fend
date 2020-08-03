@@ -3,6 +3,7 @@
 mod ast;
 mod num;
 mod parser;
+mod value;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct FendResult {
@@ -130,6 +131,11 @@ mod tests {
             "315427679023453451289740 - 927346502937456234523452",
             "-611918823914002783233712",
         );
+    }
+
+    #[test]
+    fn test_subtraction_2() {
+        test_evaluation("36893488123704996004 - 18446744065119617025", "18446744058585378979");
     }
 
     #[test]
