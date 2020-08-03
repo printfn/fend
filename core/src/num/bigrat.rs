@@ -372,21 +372,31 @@ impl BigRat {
         let mut low_guess = BigRat::from(0);
         let mut high_guess = BigRat::from(1);
         let mut found_high = false;
+        let mut searching_for_integers = true;
         for _ in 0..30 {
             if !found_high {
-                high_guess = high_guess * 10.into();
+                high_guess = high_guess * 16.into();
             }
             let mut guess = low_guess.clone() + high_guess.clone();
             guess.den = guess.den * 2.into();
+
+            // prefer guessing integers if possible
+            guess = guess.simplify();
+            if found_high && searching_for_integers && guess.den == 2.into() {
+                guess.num = guess.num + 1.into();
+                if guess >= high_guess {
+                    guess.num = guess.num - 1.into();
+                    searching_for_integers = false;
+                }
+            }
+
             let res = guess.clone().pow(n_as_bigrat.clone())?;
             if res == self {
                 return Ok(guess);
             } else if res > self {
-                //dbg!(&res);
                 high_guess = guess;
                 found_high = true;
             } else if res < self {
-                //dbg!(&res);
                 low_guess = guess;
             }
         }
