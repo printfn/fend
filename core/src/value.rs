@@ -21,6 +21,8 @@ impl Value {
             Value::Func(name) => {
                 if name == "sqrt" {
                     other.expect_num()?.root_n(&2.into())?
+                } else if name == "cbrt" {
+                    other.expect_num()?.root_n(&3.into())?
                 } else {
                     return Err(format!("Unknown function '{}'", name));
                 }

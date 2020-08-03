@@ -110,7 +110,7 @@ impl BigUint {
     }
 
     fn lshift(&mut self) {
-        if self.value[self.value.len() - 1] & (1u64 << 62) != 0 {
+        if self.value[self.value.len() - 1] & (1u64 << 63) != 0 {
             self.value.push(0);
         }
         for i in (0..self.value.len()).rev() {
@@ -198,7 +198,7 @@ impl Sub for &BigUint {
         for i in 0..max(self.value.len(), other.value.len()) {
             let a = self.get(i);
             let b = other.get(i);
-            if a >= b + carry {
+            if !(b == std::u64::MAX && carry == 1) && a >= b + carry {
                 res.push(a - b - carry);
                 carry = 0;
             } else {
@@ -297,7 +297,7 @@ impl Display for BigUint {
 
 impl Debug for BigUint {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "{}", self)
+        write!(f, "{:?}", self.value)
     }
 }
 
@@ -405,6 +405,13 @@ mod tests {
         let mut x = BigUint::from(0);
         x.add_assign_internal(&BigUint::from(1), 1, 1);
         assert_eq!(x, BigUint { value: vec![0, 1] });
+    }
+
+    #[test]
+    fn test_large_lshift() {
+        let mut a = BigUint::from(9223372036854775808);
+        a.lshift();
+        assert!(!a.is_zero());
     }
 
     #[test]

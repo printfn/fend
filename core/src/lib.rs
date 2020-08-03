@@ -139,6 +139,11 @@ mod tests {
     }
 
     #[test]
+    fn test_sqrt_half() {
+        evaluate("sqrt (1/2)").unwrap();
+    }
+
+    #[test]
     fn test_basic_order_of_operations() {
         test_evaluation("2+2*3", "8");
         test_evaluation("2*2+3", "7");
@@ -198,6 +203,13 @@ mod tests {
             "0.251974862348971623412341534273261435",
             "0.251974862348971623412341534273261435",
         );
+    }
+
+    #[test]
+    fn test_slow_division() {
+        test_evaluation(
+            "60153992292001127921539815855494266880 / 9223372036854775808",
+            "6521908912666391110")
     }
 
     #[test]

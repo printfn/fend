@@ -97,9 +97,11 @@ impl BigRat {
                 }
             }
         } else {
-            let new_denominator = BigUint::lcm(self.den.clone(), rhs.den.clone());
-            let a = self.num * new_denominator.clone() / self.den;
-            let b = rhs.num * new_denominator.clone() / rhs.den;
+            let gcd = BigUint::gcd(self.den.clone(), rhs.den.clone());
+            let new_denominator = self.den.clone() * rhs.den.clone() / gcd.clone();
+            let a = self.num * rhs.den / gcd.clone();
+            let b = rhs.num * self.den / gcd;
+
             if rhs.sign == Sign::Negative && a < b {
                 BigRat {
                     sign: Sign::Negative,
@@ -367,26 +369,31 @@ impl BigRat {
         if self.num == 0.into() {
             return Ok(self);
         }
-        let mut guess = BigRat::from(1);
-        let mut too_high = false;
-        let mut too_low = false;
-        for _ in 0..100 {
+        let mut low_guess = BigRat::from(0);
+        let mut high_guess = BigRat::from(1);
+        let mut found_high = false;
+        for _ in 0..30 {
+            if !found_high {
+                high_guess = high_guess * 10.into();
+            }
+            let mut guess = low_guess.clone() + high_guess.clone();
+            guess.den = guess.den * 2.into();
             let res = guess.clone().pow(n_as_bigrat.clone())?;
             if res == self {
                 return Ok(guess);
             } else if res > self {
-                guess.den = guess.den * 2.into() + 1.into();
-                guess.num = guess.num * 2.into();
-                too_high = true;
+                //dbg!(&res);
+                high_guess = guess;
+                found_high = true;
             } else if res < self {
-                guess.den = guess.den;
-                guess.num = guess.num + 1.into();
-                too_low = true;
+                //dbg!(&res);
+                low_guess = guess;
             }
         }
-        if !too_high || !too_low {
-            return Err("Unable to find root".to_string())
+        if !found_high {
+            return Err("Unable to find root: too high".to_string())
         }
+        let guess = (low_guess + high_guess).div(BigRat::from(2))?;
         Ok(BigRat {
             sign: guess.sign,
             num: guess.num,
@@ -431,6 +438,23 @@ mod tests {
                 den: BigUint::from(9),
                 exact: true
             } < BigRat::from(2)
+        )
+    }
+
+    #[test]
+    fn test_cmp_2() {
+        assert!(
+            BigRat {
+                sign: Sign::Positive,
+                num: BigUint::from(36),
+                den: BigUint::from(49),
+                exact: true
+            } < BigRat {
+                sign: Sign::Positive,
+                num: BigUint::from(3),
+                den: BigUint::from(4),
+                exact: true
+            }
         )
     }
 }

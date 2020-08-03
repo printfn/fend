@@ -64,6 +64,7 @@ fn resolve_identifier(ident: &str) -> Result<Value, String> {
     Ok(match ident {
         "pi" => Value::Num(BigRat::approx_pi()),
         "sqrt" => Value::Func("sqrt".to_string()),
+        "cbrt" => Value::Func("cbrt".to_string()),
         _ => return Err(format!("Unknown identifier '{}'", ident)),
     })
 }
