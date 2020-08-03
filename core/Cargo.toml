@@ -11,4 +11,3 @@ keywords = ["calculator", "library", "conversion", "math", "tool"]
 edition = "2018"
 
 [dependencies]
-num-bigint = "0.3.0"

@@ -1,6 +1,5 @@
 use crate::ast::Expr;
 use crate::num::bigrat::BigRat;
-use std::convert::TryInto;
 
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
 
@@ -34,10 +33,10 @@ pub fn skip_whitespace(mut input: &str) -> ParseResult<()> {
     }
 }
 
-fn parse_ascii_digit(input: &str) -> ParseResult<i32> {
+fn parse_ascii_digit(input: &str) -> ParseResult<u64> {
     let (ch, input) = parse_char(input)?;
     if let Some(digit) = ch.to_digit(10) {
-        Ok((digit.try_into().unwrap(), input))
+        Ok((digit.into(), input))
     } else {
         Err(format!("Expected a digit, found '{}'", ch))
     }
