@@ -144,6 +144,31 @@ mod tests {
     }
 
     #[test]
+    fn test_exact_roots() {
+        test_evaluation("sqrt 0", "0");
+        test_evaluation("sqrt 1", "1");
+        test_evaluation("sqrt 4", "2");
+        test_evaluation("sqrt 9", "3");
+        test_evaluation("sqrt 16", "4");
+        test_evaluation("sqrt 25", "5");
+        test_evaluation("sqrt 36", "6");
+        test_evaluation("sqrt 49", "7");
+        test_evaluation("sqrt 64", "8");
+        test_evaluation("sqrt 81", "9");
+        test_evaluation("sqrt 100", "10");
+        test_evaluation("sqrt 10000", "100");
+        test_evaluation("sqrt 1000000", "1000");
+        test_evaluation("sqrt 0.25", "0.5");
+        test_evaluation("sqrt 0.0625", "0.25");
+
+        test_evaluation("cbrt 0", "0");
+        test_evaluation("cbrt 1", "1");
+        test_evaluation("cbrt 8", "2");
+        test_evaluation("cbrt 27", "3");
+        test_evaluation("cbrt 64", "4");
+    }
+
+    #[test]
     fn test_basic_order_of_operations() {
         test_evaluation("2+2*3", "8");
         test_evaluation("2*2+3", "7");
