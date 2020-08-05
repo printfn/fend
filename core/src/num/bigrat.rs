@@ -440,7 +440,6 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        eprintln!("{:?}", "yay");
         assert_eq!(BigRat::from(2) + BigRat::from(2), BigRat::from(4));
     }
 
