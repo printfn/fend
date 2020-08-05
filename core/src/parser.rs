@@ -55,6 +55,7 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
 fn parse_number(input: &str) -> ParseResult<Expr> {
     let (_, input) = skip_whitespace(input)?;
     let (digit, mut input) = parse_ascii_digit(input)?;
+    let leading_zero = digit == 0;
     let mut res = BigRat::from(digit);
     loop {
         match parse_ascii_digit(input) {
@@ -78,6 +79,9 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                 return Ok((Expr::Num(res), input));
             }
             Ok((digit, next_input)) => {
+                if leading_zero {
+                    return Err("Integer literals cannot have a leading zero".to_string());
+                }
                 res = res * 10.into();
                 res = res + digit.into();
                 input = next_input;

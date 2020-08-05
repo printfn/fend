@@ -225,10 +225,10 @@ mod tests {
         test_evaluation("0.000000", "0");
         test_evaluation("0.01", "0.01");
         test_evaluation("0.01000", "0.01");
-        test_evaluation("001.01000", "1.01");
         test_evaluation("0.25", "0.25");
         expect_parse_error("1.");
         expect_parse_error(".1");
+        expect_parse_error("001.01000");
         test_evaluation(
             "0.251974862348971623412341534273261435",
             "0.251974862348971623412341534273261435",
