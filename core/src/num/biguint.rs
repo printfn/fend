@@ -329,11 +329,139 @@ impl BigUint {
         }
         Ok(a.pow_internal(b_as_u64[0]))
     }
+
+    // computes the exact square root if possible, otherwise the next lower integer
+    pub fn root_n(self, n: &BigUint) -> Result<(BigUint, bool), String> {
+        if self == 0.into() || self == 1.into() {
+            return Ok((self, true));
+        }
+        let mut low_guess = BigUint::from(1);
+        let mut high_guess = self.clone();
+        while high_guess.clone() - low_guess.clone() > 1.into() {
+            let mut guess = low_guess.clone() + high_guess.clone();
+            guess.rshift();
+
+            let res = Self::pow(guess.clone(), n.clone())?;
+            if res == self {
+                return Ok((guess, true));
+            } else if res > self {
+                high_guess = guess;
+            } else if res < self {
+                low_guess = guess;
+            }
+        }
+        Ok((low_guess, false))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::BigUint;
+
+    #[test]
+    fn test_sqrt() {
+        let two = &BigUint::from(2);
+        assert_eq!(
+            BigUint::from(0).root_n(two).unwrap(),
+            (BigUint::from(0), true)
+        );
+        assert_eq!(
+            BigUint::from(1).root_n(two).unwrap(),
+            (BigUint::from(1), true)
+        );
+        assert_eq!(
+            BigUint::from(2).root_n(two).unwrap(),
+            (BigUint::from(1), false)
+        );
+        assert_eq!(
+            BigUint::from(3).root_n(two).unwrap(),
+            (BigUint::from(1), false)
+        );
+        assert_eq!(
+            BigUint::from(4).root_n(two).unwrap(),
+            (BigUint::from(2), true)
+        );
+        assert_eq!(
+            BigUint::from(5).root_n(two).unwrap(),
+            (BigUint::from(2), false)
+        );
+        assert_eq!(
+            BigUint::from(6).root_n(two).unwrap(),
+            (BigUint::from(2), false)
+        );
+        assert_eq!(
+            BigUint::from(7).root_n(two).unwrap(),
+            (BigUint::from(2), false)
+        );
+        assert_eq!(
+            BigUint::from(8).root_n(two).unwrap(),
+            (BigUint::from(2), false)
+        );
+        assert_eq!(
+            BigUint::from(9).root_n(two).unwrap(),
+            (BigUint::from(3), true)
+        );
+        assert_eq!(
+            BigUint::from(10).root_n(two).unwrap(),
+            (BigUint::from(3), false)
+        );
+        assert_eq!(
+            BigUint::from(11).root_n(two).unwrap(),
+            (BigUint::from(3), false)
+        );
+        assert_eq!(
+            BigUint::from(12).root_n(two).unwrap(),
+            (BigUint::from(3), false)
+        );
+        assert_eq!(
+            BigUint::from(13).root_n(two).unwrap(),
+            (BigUint::from(3), false)
+        );
+        assert_eq!(
+            BigUint::from(14).root_n(two).unwrap(),
+            (BigUint::from(3), false)
+        );
+        assert_eq!(
+            BigUint::from(15).root_n(two).unwrap(),
+            (BigUint::from(3), false)
+        );
+        assert_eq!(
+            BigUint::from(16).root_n(two).unwrap(),
+            (BigUint::from(4), true)
+        );
+        assert_eq!(
+            BigUint::from(17).root_n(two).unwrap(),
+            (BigUint::from(4), false)
+        );
+        assert_eq!(
+            BigUint::from(18).root_n(two).unwrap(),
+            (BigUint::from(4), false)
+        );
+        assert_eq!(
+            BigUint::from(19).root_n(two).unwrap(),
+            (BigUint::from(4), false)
+        );
+        assert_eq!(
+            BigUint::from(20).root_n(two).unwrap(),
+            (BigUint::from(4), false)
+        );
+        assert_eq!(
+            BigUint::from(200000).root_n(two).unwrap(),
+            (BigUint::from(447), false)
+        );
+        assert_eq!(
+            BigUint::from(1740123984719364372).root_n(two).unwrap(),
+            (BigUint::from(1319137591), false)
+        );
+        assert_eq!(
+            BigUint {
+                value: vec![0, 3260954456333195555]
+            }
+            .root_n(two)
+            .unwrap(),
+            (BigUint::from(7755900482342532476), false)
+        );
+    }
 
     #[test]
     fn test_cmp() {

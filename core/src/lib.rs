@@ -135,7 +135,10 @@ mod tests {
 
     #[test]
     fn test_subtraction_2() {
-        test_evaluation("36893488123704996004 - 18446744065119617025", "18446744058585378979");
+        test_evaluation(
+            "36893488123704996004 - 18446744065119617025",
+            "18446744058585378979",
+        );
     }
 
     #[test]
@@ -166,6 +169,8 @@ mod tests {
         test_evaluation("cbrt 8", "2");
         test_evaluation("cbrt 27", "3");
         test_evaluation("cbrt 64", "4");
+        test_evaluation("cbrt (1/8)", "0.5");
+        test_evaluation("cbrt (125/8)", "2.5");
     }
 
     #[test]
@@ -234,7 +239,8 @@ mod tests {
     fn test_slow_division() {
         test_evaluation(
             "60153992292001127921539815855494266880 / 9223372036854775808",
-            "6521908912666391110")
+            "6521908912666391110",
+        )
     }
 
     #[test]

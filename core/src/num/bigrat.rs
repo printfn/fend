@@ -320,7 +320,11 @@ impl Display for BigRat {
                     write!(f, "-")?;
                 }
             }
-            let num_trailing_digits_to_print = if terminating { std::usize::MAX } else { 10 };
+            let num_trailing_digits_to_print = if terminating && self.exact {
+                std::usize::MAX
+            } else {
+                10
+            };
             let integer_part = x.num.clone() / x.den.clone();
             write!(f, "{}.", integer_part)?;
             let integer_as_rational = BigRat {
@@ -361,55 +365,56 @@ impl From<BigUint> for BigRat {
 }
 
 impl BigRat {
+    fn iter_root_n(mut low_bound: BigRat, val: &BigRat, n: &BigRat) -> Result<BigRat, String> {
+        low_bound.exact = false;
+        let mut high_bound = low_bound.clone() + 1.into();
+        for _ in 0..30 {
+            let guess = (low_bound.clone() + high_bound.clone()).div(2.into())?;
+            if &guess.clone().pow(n.clone())? < val {
+                low_bound = guess;
+            } else {
+                high_bound = guess;
+            }
+        }
+        Ok((low_bound + high_bound).div(2.into())?)
+    }
+
     pub fn root_n(self, n: &BigUint) -> Result<BigRat, String> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());
         }
-        let n_as_bigrat = BigRat::from(n.clone());
         if self.num == 0.into() {
             return Ok(self);
         }
-        let mut low_guess = BigRat::from(0);
-        let mut high_guess = BigRat::from(1);
-        let mut found_high = false;
-        let mut searching_for_integers = true;
-        for _ in 0..30 {
-            if !found_high {
-                high_guess = high_guess * 16.into();
-            }
-            let mut guess = low_guess.clone() + high_guess.clone();
-            guess.den = guess.den * 2.into();
-
-            // prefer guessing integers if possible
-            guess = guess.simplify();
-            if found_high && searching_for_integers && guess.den == 2.into() {
-                guess.num = guess.num + 1.into();
-                if guess >= high_guess {
-                    guess.num = guess.num - 1.into();
-                    searching_for_integers = false;
-                }
-            }
-
-            let res = guess.clone().pow(n_as_bigrat.clone())?;
-            if res == self {
-                return Ok(guess);
-            } else if res > self {
-                high_guess = guess;
-                found_high = true;
-            } else if res < self {
-                low_guess = guess;
-            }
+        let (num, num_exact) = self.clone().num.root_n(n)?;
+        let (den, den_exact) = self.clone().den.root_n(n)?;
+        if num_exact && den_exact {
+            return Ok(BigRat {
+                sign: Sign::Positive,
+                num,
+                den,
+                exact: self.exact,
+            });
         }
-        if !found_high {
-            return Err("Unable to find root: too high".to_string())
-        }
-        let guess = (low_guess + high_guess).div(BigRat::from(2))?;
-        Ok(BigRat {
-            sign: guess.sign,
-            num: guess.num,
-            den: guess.den,
-            exact: false,
-        })
+        let num_rat = if num_exact {
+            BigRat::from(num)
+        } else {
+            Self::iter_root_n(
+                BigRat::from(num),
+                &BigRat::from(self.num),
+                &BigRat::from(n.clone()),
+            )?
+        };
+        let den_rat = if den_exact {
+            BigRat::from(den)
+        } else {
+            Self::iter_root_n(
+                BigRat::from(den),
+                &BigRat::from(self.den),
+                &BigRat::from(n.clone()),
+            )?
+        };
+        Ok(num_rat.div(den_rat)?)
     }
 }
 
