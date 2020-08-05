@@ -361,98 +361,35 @@ mod tests {
     #[test]
     fn test_sqrt() {
         let two = &BigUint::from(2);
-        assert_eq!(
-            BigUint::from(0).root_n(two).unwrap(),
-            (BigUint::from(0), true)
-        );
-        assert_eq!(
-            BigUint::from(1).root_n(two).unwrap(),
-            (BigUint::from(1), true)
-        );
-        assert_eq!(
-            BigUint::from(2).root_n(two).unwrap(),
-            (BigUint::from(1), false)
-        );
-        assert_eq!(
-            BigUint::from(3).root_n(two).unwrap(),
-            (BigUint::from(1), false)
-        );
-        assert_eq!(
-            BigUint::from(4).root_n(two).unwrap(),
-            (BigUint::from(2), true)
-        );
-        assert_eq!(
-            BigUint::from(5).root_n(two).unwrap(),
-            (BigUint::from(2), false)
-        );
-        assert_eq!(
-            BigUint::from(6).root_n(two).unwrap(),
-            (BigUint::from(2), false)
-        );
-        assert_eq!(
-            BigUint::from(7).root_n(two).unwrap(),
-            (BigUint::from(2), false)
-        );
-        assert_eq!(
-            BigUint::from(8).root_n(two).unwrap(),
-            (BigUint::from(2), false)
-        );
-        assert_eq!(
-            BigUint::from(9).root_n(two).unwrap(),
-            (BigUint::from(3), true)
-        );
-        assert_eq!(
-            BigUint::from(10).root_n(two).unwrap(),
-            (BigUint::from(3), false)
-        );
-        assert_eq!(
-            BigUint::from(11).root_n(two).unwrap(),
-            (BigUint::from(3), false)
-        );
-        assert_eq!(
-            BigUint::from(12).root_n(two).unwrap(),
-            (BigUint::from(3), false)
-        );
-        assert_eq!(
-            BigUint::from(13).root_n(two).unwrap(),
-            (BigUint::from(3), false)
-        );
-        assert_eq!(
-            BigUint::from(14).root_n(two).unwrap(),
-            (BigUint::from(3), false)
-        );
-        assert_eq!(
-            BigUint::from(15).root_n(two).unwrap(),
-            (BigUint::from(3), false)
-        );
-        assert_eq!(
-            BigUint::from(16).root_n(two).unwrap(),
-            (BigUint::from(4), true)
-        );
-        assert_eq!(
-            BigUint::from(17).root_n(two).unwrap(),
-            (BigUint::from(4), false)
-        );
-        assert_eq!(
-            BigUint::from(18).root_n(two).unwrap(),
-            (BigUint::from(4), false)
-        );
-        assert_eq!(
-            BigUint::from(19).root_n(two).unwrap(),
-            (BigUint::from(4), false)
-        );
-        assert_eq!(
-            BigUint::from(20).root_n(two).unwrap(),
-            (BigUint::from(4), false)
-        );
-        assert_eq!(
-            BigUint::from(200000).root_n(two).unwrap(),
-            (BigUint::from(447), false)
-        );
-        assert_eq!(
-            BigUint::from(1740123984719364372).root_n(two).unwrap(),
-            (BigUint::from(1319137591), false)
-        );
+        let test_sqrt_inner = |n, expected_root, exact| {
+            assert_eq!(
+                BigUint::from(n).root_n(two).unwrap(),
+                (BigUint::from(expected_root), exact)
+            );
+        };
+        test_sqrt_inner(0, 0, true);
+        test_sqrt_inner(1, 1, true);
+        test_sqrt_inner(2, 1, false);
+        test_sqrt_inner(3, 1, false);
+        test_sqrt_inner(4, 2, true);
+        test_sqrt_inner(5, 2, false);
+        test_sqrt_inner(6, 2, false);
+        test_sqrt_inner(7, 2, false);
+        test_sqrt_inner(8, 2, false);
+        test_sqrt_inner(9, 3, true);
+        test_sqrt_inner(10, 3, false);
+        test_sqrt_inner(11, 3, false);
+        test_sqrt_inner(12, 3, false);
+        test_sqrt_inner(13, 3, false);
+        test_sqrt_inner(14, 3, false);
+        test_sqrt_inner(15, 3, false);
+        test_sqrt_inner(16, 4, true);
+        test_sqrt_inner(17, 4, false);
+        test_sqrt_inner(18, 4, false);
+        test_sqrt_inner(19, 4, false);
+        test_sqrt_inner(20, 4, false);
+        test_sqrt_inner(200000, 447, false);
+        test_sqrt_inner(1740123984719364372, 1319137591, false);
         assert_eq!(
             BigUint {
                 value: vec![0, 3260954456333195555]
