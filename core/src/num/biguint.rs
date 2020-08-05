@@ -144,6 +144,12 @@ impl BigUint {
         if self == other {
             return (BigUint::from(1), BigUint::from(0));
         }
+        if other == &BigUint::from(2) {
+            let mut div_result = self.clone();
+            div_result.rshift();
+            let modulo = self.value[0] & 1;
+            return (div_result, BigUint::from(modulo));
+        }
         let mut remaining_dividend = self.clone();
         let mut quotient = BigUint::from(0);
         let mut step_size = BigUint::from(1);
@@ -433,6 +439,19 @@ mod tests {
     #[test]
     fn test_multiplication() {
         assert_eq!(BigUint::from(20) * BigUint::from(3), BigUint::from(60));
+    }
+
+    #[test]
+    fn test_small_division_by_two() {
+        assert_eq!(BigUint::from(0) / BigUint::from(2), BigUint::from(0));
+        assert_eq!(BigUint::from(1) / BigUint::from(2), BigUint::from(0));
+        assert_eq!(BigUint::from(2) / BigUint::from(2), BigUint::from(1));
+        assert_eq!(BigUint::from(3) / BigUint::from(2), BigUint::from(1));
+        assert_eq!(BigUint::from(4) / BigUint::from(2), BigUint::from(2));
+        assert_eq!(BigUint::from(5) / BigUint::from(2), BigUint::from(2));
+        assert_eq!(BigUint::from(6) / BigUint::from(2), BigUint::from(3));
+        assert_eq!(BigUint::from(7) / BigUint::from(2), BigUint::from(3));
+        assert_eq!(BigUint::from(8) / BigUint::from(2), BigUint::from(4));
     }
 
     #[test]
