@@ -70,18 +70,11 @@ mod tests {
 
     #[test]
     fn test_div_by_zero() {
-        assert_eq!(
-            evaluate("1/0"),
-            Err("Attempt to divide by zero".to_string())
-        );
-        assert_eq!(
-            evaluate("0/0"),
-            Err("Attempt to divide by zero".to_string())
-        );
-        assert_eq!(
-            evaluate("-1/0"),
-            Err("Attempt to divide by zero".to_string())
-        );
+        let msg = "Attempt to divide by zero".to_string();
+        assert_eq!(evaluate("1/0"), Err(msg.clone()));
+        assert_eq!(evaluate("0/0"), Err(msg.clone()));
+        assert_eq!(evaluate("-1/0"), Err(msg.clone()));
+        assert_eq!(evaluate("-1/(2-2)"), Err(msg.clone()));
     }
 
     #[test]
