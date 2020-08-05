@@ -85,6 +85,15 @@ mod tests {
     }
 
     #[test]
+    fn test_leading_zeroes() {
+        let msg = "Integer literals cannot have leading zeroes".to_string();
+        assert_eq!(evaluate("00"), Err(msg.clone()));
+        assert_eq!(evaluate("000000"), Err(msg.clone()));
+        assert_eq!(evaluate("000000.01"), Err(msg.clone()));
+        assert_eq!(evaluate("0000001.01"), Err(msg.clone()));
+    }
+
+    #[test]
     fn test_basic_integers() {
         test_evaluation("2", "2");
         test_evaluation("9", "9");

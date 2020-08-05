@@ -80,7 +80,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
             }
             Ok((digit, next_input)) => {
                 if leading_zero {
-                    return Err("Integer literals cannot have a leading zero".to_string());
+                    return Err("Integer literals cannot have leading zeroes".to_string());
                 }
                 res = res * 10.into();
                 res = res + digit.into();
@@ -121,14 +121,14 @@ fn parse_parens(input: &str) -> ParseResult<Expr> {
 }
 
 fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
-    if let Ok((res, remaining)) = parse_number(input) {
-        Ok((res, remaining))
-    } else if let Ok((res, remaining)) = parse_ident(input) {
-        Ok((res, remaining))
-    } else if let Ok((res, remaining)) = parse_parens(input) {
-        Ok((res, remaining))
+    let (ch, _) = parse_char(input)?;
+
+    if ch.is_ascii_digit() {
+        return parse_number(input);
+    } else if ch == '(' {
+        return parse_parens(input);
     } else {
-        Err("Expected literal or parentheses".to_string())
+        return parse_ident(input);
     }
 }
 
