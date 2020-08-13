@@ -3,6 +3,7 @@
 mod ast;
 mod num;
 mod parser;
+mod unit;
 mod value;
 
 #[derive(PartialEq, Eq, Debug)]
