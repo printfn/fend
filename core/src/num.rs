@@ -1,3 +1,3 @@
-pub mod bigrat;
+mod bigrat;
 mod biguint;
 pub mod complex;

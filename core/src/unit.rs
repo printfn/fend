@@ -1,13 +1,13 @@
-use crate::num::bigrat::BigRat;
+use crate::num::complex::Complex;
 use std::fmt::{Display, Error, Formatter};
 use std::ops::Neg;
 
 #[derive(Clone)]
 pub struct Unit {
-    value: BigRat,
-    scale: BigRat,
-    exponents: Vec<BigRat>, // each value represents an exponent of a base unit
-    names: Vec<(UnitName, BigRat)>,
+    value: Complex,
+    scale: Complex,
+    exponents: Vec<Complex>, // each value represents an exponent of a base unit
+    names: Vec<(UnitName, Complex)>,
 }
 
 impl Neg for Unit {
@@ -51,8 +51,8 @@ impl Unit {
     }
 }
 
-impl From<BigRat> for Unit {
-    fn from(value: BigRat) -> Self {
+impl From<Complex> for Unit {
+    fn from(value: Complex) -> Self {
         Unit {
             value,
             scale: 1.into(),
@@ -128,18 +128,18 @@ impl UnitSystem {
 #[cfg(test)]
 mod tests {
     use super::{Unit, UnitName};
-    use crate::num::bigrat::BigRat;
+    use crate::num::complex::Complex;
 
     #[test]
     fn test_percentage_addition() {
         let percent_name = UnitName::new_single("%");
         let five_percent = Unit {
             value: 5.into(),
-            scale: BigRat::from(1).div(BigRat::from(100)).unwrap(),
+            scale: Complex::from(1).div(Complex::from(100)).unwrap(),
             exponents: vec![],
             names: vec![(percent_name, 1.into())],
         };
-        let half = Unit::from(BigRat::from(1).div(BigRat::from(2)).unwrap());
+        let half = Unit::from(Complex::from(1).div(Complex::from(2)).unwrap());
         assert_eq!(
             "55%",
             five_percent.clone().add(half.clone()).unwrap().to_string()
