@@ -295,7 +295,7 @@ impl Display for BigUint {
                 output.insert(0, char::try_from(divmod_res.1.value[0] as u8 + 48).unwrap());
                 num = divmod_res.0;
             }
-            write!(f, "{}", output,)?;
+            write!(f, "{}", output)?;
         }
         Ok(())
     }

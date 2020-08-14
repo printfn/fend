@@ -1,6 +1,6 @@
 use crate::num::biguint::BigUint;
 use std::cmp::Ordering;
-use std::fmt::Display;
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
 
 mod sign {
@@ -300,7 +300,7 @@ impl BigRat {
 }
 
 impl Display for BigRat {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         if !self.exact {
             write!(f, "approx. ")?;
         }
@@ -423,8 +423,8 @@ impl BigRat {
     }
 }
 
-impl std::fmt::Debug for BigRat {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl Debug for BigRat {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(f, "{}", self)?;
         Ok(())
     }
