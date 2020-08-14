@@ -15,6 +15,7 @@ fn main() {
         // No previous history
     }
     let mut initial_run = true; // set to false after first successful command
+    let mut last_command_success = true;
     loop {
         let readline = rl.readline("> ");
         match readline {
@@ -22,6 +23,7 @@ fn main() {
                 "exit" | "quit" | ":q" => break,
                 line => match fend_core::evaluate(line) {
                     Ok(res) => {
+                        last_command_success = true;
                         let main_result = res.get_main_result();
                         if main_result.is_empty() {
                             continue;
@@ -33,7 +35,10 @@ fn main() {
                         }
                         initial_run = false;
                     }
-                    Err(msg) => eprintln!("Error: {}", msg),
+                    Err(msg) => {
+                        last_command_success = false;
+                        eprintln!("Error: {}", msg);
+                    },
                 },
             },
             Err(ReadlineError::Interrupted) => {
@@ -51,4 +56,6 @@ fn main() {
         }
     }
     rl.save_history("history.txt").unwrap();
+    let exit_code = if last_command_success { 0 } else { 1 };
+    std::process::exit(exit_code);
 }
