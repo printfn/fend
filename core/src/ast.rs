@@ -66,6 +66,7 @@ fn resolve_identifier(ident: &str) -> Result<Value, String> {
         "i" => Value::Num(Complex::i()),
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
+        "abs" => Value::Func("abs".to_string()),
         _ => return Err(format!("Unknown identifier '{}'", ident)),
     })
 }
