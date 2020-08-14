@@ -7,25 +7,18 @@ pub struct Unit {
     value: BigRat,
     scale: BigRat,
     exponents: Vec<BigRat>, // each value represents an exponent of a base unit
-    name: String,
-}
-
-impl Display for Unit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "{}{}", self.value, self.name)?;
-        Ok(())
-    }
+    names: Vec<(UnitName, BigRat)>
 }
 
 impl Neg for Unit {
-    type Output = Unit;
+    type Output = Self;
 
     fn neg(self) -> Self::Output {
         Unit {
             value: -self.value,
             scale: self.scale,
             exponents: self.exponents,
-            name: self.name,
+            names: self.names,
         }
     }
 }
@@ -47,7 +40,7 @@ impl Unit {
             value: sum,
             scale: self.scale,
             exponents: self.exponents,
-            name: self.name
+            names: self.names
         })
     }
 
@@ -63,23 +56,87 @@ impl From<BigRat> for Unit {
             value,
             scale: 1.into(),
             exponents: vec![],
-            name: "".to_string(),
+            names: vec![],
+        }
+    }
+}
+
+impl Display for Unit {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "{}", self.value)?;
+        for (i, (name, exp)) in self.names.iter().enumerate() {
+            if i != 0 {
+                write!(f, " ")?;
+            }
+            write!(f, "{}", name.singular_name)?;
+            if exp != &1.into() {
+                write!(f, "^{}", exp)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct UnitName {
+    singular_name: String,
+    plural_name: String
+}
+
+impl UnitName {
+    #[allow(dead_code)]
+    pub fn new(singular_name: impl ToString, plural_name: impl ToString) -> UnitName {
+        UnitName {
+            singular_name: singular_name.to_string(),
+            plural_name: plural_name.to_string(),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn new_single(name: impl ToString) -> UnitName {
+        UnitName {
+            singular_name: name.to_string(),
+            plural_name: name.to_string(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct UnitSystem {
+    base_units: Vec<UnitName>,
+    unit_mappings: Vec<(UnitName, Unit)>,
+}
+
+impl UnitSystem {
+    #[allow(dead_code)]
+    pub fn si_unit_system() -> UnitSystem {
+        let second = UnitName::new("second", "seconds");
+        let meter = UnitName::new("meter", "meters");
+        let kilogram = UnitName::new("kilogram", "kilograms");
+        let ampere = UnitName::new("ampere", "amperes");
+        let kelvin = UnitName::new("kelvin", "kelvins");
+        let mole = UnitName::new("mole", "moles");
+        let candela = UnitName::new("candela", "candelas");
+        UnitSystem {
+            base_units: vec![second, meter, kilogram, ampere, kelvin, mole, candela],
+            unit_mappings: vec![],
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Unit;
+    use super::{Unit, UnitName};
     use crate::num::bigrat::BigRat;
 
     #[test]
     fn test_percentage_addition() {
+        let percent_name = UnitName::new_single("%");
         let five_percent = Unit {
             value: 5.into(),
             scale: BigRat::from(1).div(BigRat::from(100)).unwrap(),
             exponents: vec![],
-            name: "%".to_string()
+            names: vec![(percent_name, 1.into())]
         };
         let half = Unit::from(BigRat::from(1).div(BigRat::from(2)).unwrap());
         assert_eq!("55%", five_percent.clone().add(half.clone()).unwrap().to_string());
