@@ -16,8 +16,8 @@ impl FendResult {
         self.main_result.as_str()
     }
 
-    pub fn get_other_info(&self) -> &Vec<String> {
-        &self.other_info
+    pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
+        self.other_info.iter().map(|string| string.as_str())
     }
 }
 
