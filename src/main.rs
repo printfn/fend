@@ -3,7 +3,7 @@
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-fn main() {
+fn repl_loop() -> i32 {
     // `()` can be used when no completer is required
     let mut rl = Editor::<()>::with_config(
         rustyline::config::Builder::new()
@@ -56,6 +56,10 @@ fn main() {
         }
     }
     rl.save_history("history.txt").unwrap();
-    let exit_code = if last_command_success { 0 } else { 1 };
+    if last_command_success { 0 } else { 1 }
+}
+
+fn main() {
+    let exit_code = repl_loop();
     std::process::exit(exit_code);
 }
