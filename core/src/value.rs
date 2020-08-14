@@ -1,14 +1,14 @@
-use crate::num::bigrat::BigRat;
+use crate::num::complex::Complex;
 use std::fmt::{Display, Error, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum Value {
-    Num(BigRat),
+    Num(Complex),
     Func(String),
 }
 
 impl Value {
-    pub fn expect_num(&self) -> Result<BigRat, String> {
+    pub fn expect_num(&self) -> Result<Complex, String> {
         match self {
             Value::Num(bigrat) => Ok(bigrat.clone()),
             _ => Err("Expected a number".to_string()),

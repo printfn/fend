@@ -1,10 +1,10 @@
-use crate::num::bigrat::BigRat;
+use crate::num::complex::Complex;
 use crate::value::Value;
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone)]
 pub enum Expr {
-    Num(BigRat),
+    Num(Complex),
     Ident(String),
     Parens(Box<Expr>),
     UnaryMinus(Box<Expr>),
@@ -62,7 +62,8 @@ pub fn evaluate(expr: Expr) -> Result<Value, String> {
 
 fn resolve_identifier(ident: &str) -> Result<Value, String> {
     Ok(match ident {
-        "pi" => Value::Num(BigRat::approx_pi()),
+        "pi" => Value::Num(Complex::approx_pi()),
+        "i" => Value::Num(Complex::i()),
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         _ => return Err(format!("Unknown identifier '{}'", ident)),

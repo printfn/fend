@@ -7,7 +7,7 @@ pub struct Unit {
     value: BigRat,
     scale: BigRat,
     exponents: Vec<BigRat>, // each value represents an exponent of a base unit
-    names: Vec<(UnitName, BigRat)>
+    names: Vec<(UnitName, BigRat)>,
 }
 
 impl Neg for Unit {
@@ -31,16 +31,17 @@ impl Unit {
                 return Err(format!("Units {} and {} are incompatible", self, b));
             }
         }
-        let sum = self.value + if self.scale == b.scale {
-            b.value
-        } else {
-            (b.value * b.scale.clone()).div(self.scale.clone())?
-        };
+        let sum = self.value
+            + if self.scale == b.scale {
+                b.value
+            } else {
+                (b.value * b.scale.clone()).div(self.scale.clone())?
+            };
         Ok(Unit {
             value: sum,
             scale: self.scale,
             exponents: self.exponents,
-            names: self.names
+            names: self.names,
         })
     }
 
@@ -80,7 +81,7 @@ impl Display for Unit {
 #[derive(Clone)]
 pub struct UnitName {
     singular_name: String,
-    plural_name: String
+    plural_name: String,
 }
 
 impl UnitName {
@@ -136,10 +137,13 @@ mod tests {
             value: 5.into(),
             scale: BigRat::from(1).div(BigRat::from(100)).unwrap(),
             exponents: vec![],
-            names: vec![(percent_name, 1.into())]
+            names: vec![(percent_name, 1.into())],
         };
         let half = Unit::from(BigRat::from(1).div(BigRat::from(2)).unwrap());
-        assert_eq!("55%", five_percent.clone().add(half.clone()).unwrap().to_string());
+        assert_eq!(
+            "55%",
+            five_percent.clone().add(half.clone()).unwrap().to_string()
+        );
         assert_eq!("0.55", half.add(five_percent).unwrap().to_string());
     }
 }

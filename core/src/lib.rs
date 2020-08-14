@@ -294,4 +294,18 @@ mod tests {
         assert_eq!(evaluate("2^-3^4"), evaluate("1 / 2^81"));
         test_evaluation("4^-1^2", "0.25");
     }
+
+    #[test]
+    fn test_basic_complex_numbers() {
+        test_evaluation("i", "i");
+        test_evaluation("3i", "3i");
+        test_evaluation("3i+4", "4 + 3i");
+        test_evaluation("(3i+4) + i", "4 + 4i");
+        test_evaluation("3i+(4 + i)", "4 + 4i");
+        test_evaluation("-3i", "-3i");
+        test_evaluation("i/i", "1");
+        test_evaluation("i*i", "-1");
+        test_evaluation("i*i*i", "-i");
+        test_evaluation("i*i*i*i", "1");
+    }
 }

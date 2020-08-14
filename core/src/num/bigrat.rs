@@ -379,10 +379,15 @@ impl BigRat {
         Ok((low_bound + high_bound).div(2.into())?)
     }
 
-    pub fn root_n(self, n: &BigUint) -> Result<BigRat, String> {
+    pub fn root_n(self, n: &BigRat) -> Result<BigRat, String> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());
         }
+        let n = n.clone().simplify();
+        if n.den != 1.into() || n.sign == Sign::Negative {
+            return Err("Can't compute non-integer or negative roots".to_string());
+        }
+        let n = &n.num;
         if self.num == 0.into() {
             return Ok(self);
         }
