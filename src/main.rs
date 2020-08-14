@@ -14,6 +14,7 @@ fn main() {
     if rl.load_history("history.txt").is_err() {
         // No previous history
     }
+    let mut initial_run = true; // set to false after first successful command
     loop {
         let readline = rl.readline("> ");
         match readline {
@@ -30,11 +31,18 @@ fn main() {
                         for info in extra_info {
                             println!("-> {}", info);
                         }
+                        initial_run = false;
                     }
                     Err(msg) => eprintln!("Error: {}", msg),
                 },
             },
-            Err(ReadlineError::Interrupted) => println!("Use Ctrl-D (i.e. EOF) to exit"),
+            Err(ReadlineError::Interrupted) => {
+                if initial_run {
+                    break;
+                } else {
+                    println!("Use Ctrl-D (i.e. EOF) to exit");
+                }
+            },
             Err(ReadlineError::Eof) => break,
             Err(err) => {
                 println!("Error: {:?}", err);
