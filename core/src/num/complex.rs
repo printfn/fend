@@ -150,20 +150,38 @@ impl Complex {
 
 impl Display for Complex {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        match (self.real == 0.into(), self.imag == 0.into()) {
-            (true, true) => write!(f, "{}", self.real)?,
-            (true, false) => {
-                if self.imag == 1.into() {
-                    write!(f, "i")?
-                } else if self.imag == BigRat::from(-1) {
-                    write!(f, "-i")?
-                } else {
-                    write!(f, "{}i", self.imag)?
-                }
-            },
-            (false, true) => write!(f, "{}", self.real)?,
-            (false, false) => write!(f, "{} + {}i", self.real, self.imag)?,
+        if self.imag == 0.into() {
+            write!(f, "{}", self.real)?;
+            return Ok(())
         }
+
+        if self.real != 0.into() {
+            write!(f, "{}", self.real)?;
+            if self.imag > 0.into() {
+                write!(f, " + ")?;
+                if self.imag == 1.into() {
+                    write!(f, "i")?;
+                } else {
+                    write!(f, "{}i", self.imag)?;
+                }
+            } else {
+                write!(f, " - ")?;
+                if self.imag == BigRat::from(-1) {
+                    write!(f, "i")?;
+                } else {
+                    write!(f, "{}i", -self.imag.clone())?;
+                }
+            }
+        } else {
+            if self.imag == 1.into() {
+                write!(f, "i")?
+            } else if self.imag == BigRat::from(-1) {
+                write!(f, "-i")?
+            } else {
+                write!(f, "{}i", self.imag)?
+            }
+        }
+
         Ok(())
     }
 }

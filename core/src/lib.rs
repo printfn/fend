@@ -307,5 +307,17 @@ mod tests {
         test_evaluation("i*i", "-1");
         test_evaluation("i*i*i", "-i");
         test_evaluation("i*i*i*i", "1");
+        test_evaluation("-3+i", "-3 + i");
+        test_evaluation("1+i", "1 + i");
+        test_evaluation("1-i", "1 - i");
+        test_evaluation("-1 + i", "-1 + i");
+        test_evaluation("-1 - i", "-1 - i");
+        test_evaluation("-1 - 2i", "-1 - 2i");
+        test_evaluation("-1 - 0.5i", "-1 - 0.5i");
+        test_evaluation("-1 - 0.5i + 1.5i", "-1 + i");
+        test_evaluation("-3i", "-3i");
+        test_evaluation("-i", "-i");
+        test_evaluation("+i", "i");
+        test_evaluation("2i", "2i");
     }
 }
