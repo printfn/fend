@@ -284,9 +284,10 @@ impl BigRat {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_decimal_digit(&mut self, digit: u64) {
-        self.num = self.num.clone() * 10.into() + digit.into();
-        self.den = self.den.clone() * 10.into();
+    pub fn add_digit_in_base(&mut self, digit: u64, base: u8) {
+        let base_as_u64: u64 = base.into();
+        self.num = self.num.clone() * base_as_u64.into() + digit.into();
+        self.den = self.den.clone() * base_as_u64.into();
     }
 
     pub fn approx_pi() -> BigRat {

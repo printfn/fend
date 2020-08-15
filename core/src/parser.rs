@@ -33,9 +33,9 @@ pub fn skip_whitespace(mut input: &str) -> ParseResult<()> {
     }
 }
 
-fn parse_ascii_digit(input: &str) -> ParseResult<u64> {
+fn parse_ascii_digit(input: &str, base: u8) -> ParseResult<u64> {
     let (ch, input) = parse_char(input)?;
-    if let Some(digit) = ch.to_digit(10) {
+    if let Some(digit) = ch.to_digit(base.into()) {
         Ok((digit.into(), input))
     } else {
         Err(format!("Expected a digit, found '{}'", ch))
@@ -51,10 +51,31 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
     }
 }
 
+fn parse_base_prefix(input: &str) -> ParseResult<u8> {
+    // 0x -> 16
+    // 0o -> 8
+    // 0b -> 2
+    // case-sensitive, no whitespace allowed
+    let (_, input) = parse_fixed_char(input, '0')?;
+    let (ch, input) = parse_char(input)?;
+    Ok((match ch {
+        'x' => 16,
+        'o' => 8,
+        'b' => 2,
+        _ => return Err("Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string())
+    }, input))
+}
+
 // parse an integer consisting of only digits in base 10
 fn parse_number(input: &str) -> ParseResult<Expr> {
-    let (_, input) = skip_whitespace(input)?;
-    let (digit, mut input) = parse_ascii_digit(input)?;
+    let (_, mut input) = skip_whitespace(input)?;
+    let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
+        input = remaining;
+        base
+    } else {
+        10
+    };
+    let (digit, mut input) = parse_ascii_digit(input, base)?;
     let leading_zero = digit == 0;
     let mut res = Number::from(digit);
     let mut parsed_digit_separator;
@@ -65,16 +86,16 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
         } else {
             parsed_digit_separator = false;
         }
-        match parse_ascii_digit(input) {
+        match parse_ascii_digit(input, base) {
             Err(_) => {
                 if parsed_digit_separator {
                     return Err("Digit separators can only occur between digits".to_string());
                 }
                 // parse decimal point and at least one digit
                 if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
-                    let (digit, remaining) = parse_ascii_digit(remaining)?;
+                    let (digit, remaining) = parse_ascii_digit(remaining, base)?;
                     input = remaining;
-                    res.add_decimal_digit(digit);
+                    res.add_digit_in_base(digit, base);
                     loop {
                         if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
                             input = remaining;
@@ -82,7 +103,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                         } else {
                             parsed_digit_separator = false;
                         }
-                        match parse_ascii_digit(input) {
+                        match parse_ascii_digit(input, base) {
                             Err(_) => {
                                 if parsed_digit_separator {
                                     return Err("Digit separators can only occur between digits".to_string());
@@ -90,7 +111,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                                 break;
                             },
                             Ok((digit, next_input)) => {
-                                res.add_decimal_digit(digit);
+                                res.add_digit_in_base(digit, base);
                                 input = next_input;
                             }
                         }
@@ -103,7 +124,8 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                 if leading_zero {
                     return Err("Integer literals cannot have leading zeroes".to_string());
                 }
-                res = res * 10.into();
+                let base_as_u64: u64 = base.into();
+                res = res * base_as_u64.into();
                 res = res + digit.into();
                 input = next_input;
             }

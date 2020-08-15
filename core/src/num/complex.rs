@@ -136,8 +136,8 @@ impl Complex {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_decimal_digit(&mut self, digit: u64) {
-        self.real.add_decimal_digit(digit)
+    pub fn add_digit_in_base(&mut self, digit: u64, base: u8) {
+        self.real.add_digit_in_base(digit, base)
     }
 
     pub fn i() -> Complex {
