@@ -164,11 +164,20 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     // parse optional exponent, but only for base 10 and below
     if base.base_as_u8() <= 10 {
         if let Ok((_, remaining)) = parse_fixed_char(input, 'e') {
+            input = remaining;
+            let mut negative_exponent = false;
+            if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
+                negative_exponent = true;
+                input = remaining;
+            }
             let mut exp = Number::zero_with_base(Base::Decimal);
-            let (_, remaining) = parse_integer(remaining, true, false, Base::Decimal, &mut |digit| {
+            let (_, remaining) = parse_integer(input, true, false, Base::Decimal, &mut |digit| {
                 exp = exp.clone() * 10.into() + digit.into();
                 Ok(())
             })?;
+            if negative_exponent {
+                exp = -exp;
+            }
             let base_as_u64: u64 = base.base_as_u8().into();
             let base_as_number: Number = base_as_u64.into();
             res = res * base_as_number.pow(exp)?;

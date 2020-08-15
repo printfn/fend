@@ -379,5 +379,10 @@ mod tests {
         test_evaluation("0 + 0b1e16", "65536");
         test_evaluation("16#1e10", "16#1e10");
         expect_parse_error("11#1e10");
+        test_evaluation("0 + 0b1e1_00", "1267650600228229401496703205376");
+        test_evaluation("1.5e-1", "0.15");
+        expect_parse_error("1e -1");
+        expect_parse_error("1e- 1");
+        test_evaluation("0 + 0b1e-6", "0.015625");
     }
 }
