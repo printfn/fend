@@ -121,6 +121,7 @@ mod tests {
 
     #[test]
     fn test_subtraction() {
+        test_evaluation("-0", "0");
         test_evaluation("2-2", "0");
         test_evaluation("3-2", "1");
         test_evaluation("2-3", "-1");
@@ -173,6 +174,11 @@ mod tests {
         test_evaluation("cbrt 64", "4");
         test_evaluation("cbrt (1/8)", "0.5");
         test_evaluation("cbrt (125/8)", "2.5");
+    }
+
+    #[test]
+    fn test_approx_roots() {
+        test_evaluation("sqrt 2", "approx. 1.4142135619");
     }
 
     #[test]
@@ -336,5 +342,15 @@ mod tests {
         expect_parse_error("1_.1");
         expect_parse_error("1._1");
         expect_parse_error("1.1_");
+    }
+
+
+    #[test]
+    fn test_different_bases() {
+        test_evaluation("0x10", "0x10");
+        test_evaluation("0o10", "0o10");
+        test_evaluation("0b10", "0b10");
+        test_evaluation("0x10 - 1", "0xf");
+        test_evaluation("0x0 + sqrt 16", "0x4");
     }
 }

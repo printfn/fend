@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use crate::num::bigrat::BigRat;
 use std::ops::{Add, Mul, Neg, Sub};
-use std::fmt::{Display, Error, Formatter};
+use std::fmt::{Error, Formatter};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Complex {
@@ -148,28 +148,30 @@ impl Complex {
     }
 }
 
-impl Display for Complex {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+impl Complex {
+    pub fn format(&self, f: &mut Formatter<'_>, exact: bool, base: u8) -> Result<(), Error> {
         if self.imag == 0.into() {
-            write!(f, "{}", self.real)?;
+            self.real.format(f, exact, base)?;
             return Ok(())
         }
 
         if self.real != 0.into() {
-            write!(f, "{}", self.real)?;
+            self.real.format(f, exact, base)?;
             if self.imag > 0.into() {
                 write!(f, " + ")?;
                 if self.imag == 1.into() {
                     write!(f, "i")?;
                 } else {
-                    write!(f, "{}i", self.imag)?;
+                    self.imag.format(f, exact, base)?;
+                    write!(f, "i",)?;
                 }
             } else {
                 write!(f, " - ")?;
                 if self.imag == BigRat::from(-1) {
                     write!(f, "i")?;
                 } else {
-                    write!(f, "{}i", -self.imag.clone())?;
+                    (-self.imag.clone()).format(f, exact, base)?;
+                    write!(f, "i")?;
                 }
             }
         } else {
@@ -178,7 +180,8 @@ impl Display for Complex {
             } else if self.imag == BigRat::from(-1) {
                 write!(f, "-i")?
             } else {
-                write!(f, "{}i", self.imag)?
+                self.imag.format(f, exact, base)?;
+                write!(f, "i")?
             }
         }
 
@@ -187,14 +190,15 @@ impl Display for Complex {
 }
 
 impl Complex {
-    pub fn root_n(self, n: &Complex) -> Result<Complex, String> {
+    pub fn root_n(self, n: &Complex) -> Result<(Complex, bool), String> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("Roots are currently unsupported for complex numbers".to_string())
         }
-        Ok(Complex {
-            real: self.real.root_n(&n.real)?,
+        let (real_root, real_root_exact) = self.real.root_n(&n.real)?;
+        Ok((Complex {
+            real: real_root,
             imag: 0.into(),
-        })
+        }, real_root_exact))
     }
 
     pub fn approx_pi() -> Complex {

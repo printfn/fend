@@ -1,5 +1,5 @@
 use std::cmp::{max, Ordering};
-use std::fmt::{Debug, Display, Error, Formatter};
+use std::fmt::{Debug, Error, Formatter};
 use std::ops::{Add, AddAssign, Div, Mul, Rem, Sub};
 
 #[derive(Clone)]
@@ -276,8 +276,8 @@ impl Rem for &BigUint {
     }
 }
 
-impl Display for BigUint {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+impl BigUint {
+    pub fn format(&self, f: &mut Formatter<'_>, base: u8) -> Result<(), Error> {
         use std::convert::TryFrom;
 
         if self.is_zero() {
@@ -286,13 +286,20 @@ impl Display for BigUint {
         }
 
         let mut num = self.clone();
-        if num.value.len() == 1 {
+        if num.value.len() == 1 && base == 10 {
             write!(f, "{}", num.value[0])?;
         } else {
             let mut output = String::new();
             while !num.is_zero() {
-                let divmod_res = num.divmod(&BigUint::from(10));
-                output.insert(0, char::try_from(divmod_res.1.value[0] as u8 + 48).unwrap());
+                let base_as_u64: u64 = base.into();
+                let divmod_res = num.divmod(&BigUint::from(base_as_u64));
+                let digit_value = divmod_res.1.value[0] as u8;
+                let ch = if digit_value < 10 {
+                    char::try_from(digit_value + 48).unwrap()
+                } else {
+                    char::try_from(digit_value + 96 - 9).unwrap()
+                };
+                output.insert(0, ch);
                 num = divmod_res.0;
             }
             write!(f, "{}", output)?;

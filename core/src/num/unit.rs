@@ -64,14 +64,15 @@ impl From<Complex> for Unit {
 
 impl Display for Unit {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "{}", self.value)?;
+        self.value.format(f, true, 10)?;
         for (i, (name, exp)) in self.names.iter().enumerate() {
             if i != 0 {
                 write!(f, " ")?;
             }
             write!(f, "{}", name.singular_name)?;
             if exp != &1.into() {
-                write!(f, "^{}", exp)?;
+                write!(f, "^")?;
+                exp.format(f, true, 10)?;
             }
         }
         Ok(())

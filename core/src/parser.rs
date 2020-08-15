@@ -77,7 +77,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     };
     let (digit, mut input) = parse_ascii_digit(input, base)?;
     let leading_zero = digit == 0;
-    let mut res = Number::from(digit);
+    let mut res = Number::zero_with_base(base) + Number::from(digit);
     let mut parsed_digit_separator;
     loop {
         if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
@@ -95,7 +95,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                 if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
                     let (digit, remaining) = parse_ascii_digit(remaining, base)?;
                     input = remaining;
-                    res.add_digit_in_base(digit, base);
+                    res.add_digit_in_base(digit, base)?;
                     loop {
                         if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
                             input = remaining;
@@ -111,7 +111,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                                 break;
                             },
                             Ok((digit, next_input)) => {
-                                res.add_digit_in_base(digit, base);
+                                res.add_digit_in_base(digit, base)?;
                                 input = next_input;
                             }
                         }

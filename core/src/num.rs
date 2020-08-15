@@ -1,6 +1,7 @@
 mod bigrat;
 mod biguint;
 mod complex;
+mod exact_base;
 mod unit;
 
-pub type Number = complex::Complex;
+pub type Number = exact_base::ExactBase;

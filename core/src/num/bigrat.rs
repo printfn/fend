@@ -1,6 +1,6 @@
 use crate::num::biguint::BigUint;
 use std::cmp::Ordering;
-use std::fmt::{Debug, Display, Error, Formatter};
+use std::fmt::{Debug, Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
 
 mod sign {
@@ -36,7 +36,6 @@ pub struct BigRat {
     sign: Sign,
     num: BigUint,
     den: BigUint,
-    exact: bool,
 }
 
 impl Ord for BigRat {
@@ -82,7 +81,6 @@ impl BigRat {
                     sign: Sign::Negative,
                     num: rhs.num - self.num,
                     den: self.den,
-                    exact: self.exact && rhs.exact,
                 }
             } else {
                 BigRat {
@@ -93,7 +91,6 @@ impl BigRat {
                         self.num - rhs.num
                     },
                     den: self.den,
-                    exact: self.exact && rhs.exact,
                 }
             }
         } else {
@@ -107,7 +104,6 @@ impl BigRat {
                     sign: Sign::Negative,
                     num: b - a,
                     den: new_denominator,
-                    exact: self.exact && rhs.exact,
                 }
             } else {
                 BigRat {
@@ -118,7 +114,6 @@ impl BigRat {
                         a - b
                     },
                     den: new_denominator,
-                    exact: self.exact && rhs.exact,
                 }
             }
         }
@@ -141,7 +136,6 @@ impl Neg for BigRat {
             sign: self.sign.flip(),
             num: self.num,
             den: self.den,
-            exact: self.exact,
         }
     }
 }
@@ -179,7 +173,6 @@ impl Mul for BigRat {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num * rhs.num,
             den: self.den * rhs.den,
-            exact: self.exact && rhs.exact,
         }
     }
 }
@@ -190,7 +183,6 @@ impl From<u64> for BigRat {
             sign: Sign::Positive,
             num: i.into(),
             den: 1.into(),
-            exact: true,
         }
     }
 }
@@ -204,7 +196,6 @@ impl From<i32> for BigRat {
                 sign: Sign::Positive,
                 num: j.into(),
                 den: 1.into(),
-                exact: true,
             }
         } else {
             let j: u64 = (-i).try_into().unwrap();
@@ -212,7 +203,6 @@ impl From<i32> for BigRat {
                 sign: Sign::Negative,
                 num: j.into(),
                 den: 1.into(),
-                exact: true,
             }
         }
     }
@@ -238,7 +228,6 @@ impl BigRat {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num * rhs.den,
             den: self.den * rhs.num,
-            exact: self.exact && rhs.exact,
         })
     }
 
@@ -257,7 +246,6 @@ impl BigRat {
             sign: Sign::Positive,
             num: BigUint::pow(self.num, rhs.num.clone())?,
             den: BigUint::pow(self.den, rhs.num)?,
-            exact: self.exact && rhs.exact,
         })
     }
 
@@ -269,7 +257,6 @@ impl BigRat {
             sign: Sign::Positive,
             num: base,
             den: 1.into(),
-            exact: true,
         };
         loop {
             let old_den = x.den.clone();
@@ -295,62 +282,90 @@ impl BigRat {
             sign: Sign::Positive,
             num: BigUint::from(1068966896),
             den: BigUint::from(340262731),
-            exact: false,
         }
     }
 }
 
-impl Display for BigRat {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        if !self.exact {
-            write!(f, "approx. ")?;
+impl BigRat {
+    fn write_base_prefix(f: &mut Formatter<'_>, base: u8) -> Result<(), Error> {
+        if base == 10 {
+            return Ok(());
         }
+        write!(f, "{}", match base {
+            2 => "0b",
+            8 => "0o",
+            16 => "0x",
+            _ => panic!("Invalid base {}", base),
+        })?;
+        Ok(())
+    }
+
+    // Formats as an integer if possible, or a terminating float, otherwise as
+    // either a fraction or a potentially approximated floating-point number.
+    // The result bool indicates whether the number had to be approximated or not.
+    pub fn format(&self, f: &mut Formatter<'_>, exact: bool, base: u8) -> Result<bool, Error> {
         let mut x = self.clone().simplify();
-        let negative = x.sign == Sign::Negative;
+        let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
             x.sign = Sign::Positive;
-            write!(f, "-")?;
         };
+        // try as integer if possible
         if x.den == 1.into() {
-            write!(f, "{}", x.num)?;
-        } else {
-            let terminating = x.terminates_in_base(10.into());
-            if !terminating && x.exact {
-                write!(f, "{}/{}, approx. ", x.num, x.den)?;
-                if negative {
-                    write!(f, "-")?;
-                }
+            if negative {
+                write!(f, "-")?;
             }
-            let num_trailing_digits_to_print = if terminating && self.exact {
-                std::usize::MAX
-            } else {
-                10
-            };
-            let integer_part = x.num.clone() / x.den.clone();
-            write!(f, "{}.", integer_part)?;
-            let integer_as_rational = BigRat {
-                sign: Sign::Positive,
-                num: integer_part,
-                den: 1.into(),
-                exact: x.exact,
-            };
-            let mut remaining_fraction = x.clone() - integer_as_rational;
-            let mut i = 0;
-            while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
-                remaining_fraction = (remaining_fraction * 10.into()).simplify();
-                let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
-                write!(f, "{}", digit)?;
-                remaining_fraction = remaining_fraction
-                    - BigRat {
-                        sign: Sign::Positive,
-                        num: digit,
-                        den: 1.into(),
-                        exact: x.exact,
-                    };
-                i += 1;
-            }
+            Self::write_base_prefix(f, base)?;
+            x.num.format(f, base)?;
+            return Ok(false);
         }
-        Ok(())
+        let terminating = x.terminates_in_base(10.into());
+        if !terminating && exact {
+            if negative {
+                write!(f, "-")?;
+            }
+            Self::write_base_prefix(f, base)?;
+            x.num.format(f, base)?;
+            write!(f, "/")?;
+            Self::write_base_prefix(f, base)?;
+            x.den.format(f, base)?;
+            return Ok(false);
+        }
+        if !terminating || !exact {
+            write!(f, "approx. ")?;
+        }
+        if negative {
+            write!(f, "-")?;
+        }
+        Self::write_base_prefix(f, base)?;
+        let num_trailing_digits_to_print = if terminating && exact {
+            std::usize::MAX
+        } else {
+            10
+        };
+        let integer_part = x.num.clone() / x.den.clone();
+        integer_part.format(f, base)?;
+        write!(f, ".")?;
+        let integer_as_rational = BigRat {
+            sign: Sign::Positive,
+            num: integer_part,
+            den: 1.into(),
+        };
+        let mut remaining_fraction = x.clone() - integer_as_rational;
+        let mut i = 0;
+        while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
+            let base_as_u64: u64 = base.into();
+            remaining_fraction = (remaining_fraction * base_as_u64.into()).simplify();
+            let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
+            digit.format(f, base)?;
+            remaining_fraction = remaining_fraction
+                - BigRat {
+                    sign: Sign::Positive,
+                    num: digit,
+                    den: 1.into(),
+                };
+            i += 1;
+        }
+        Ok(!terminating)
     }
 }
 
@@ -360,14 +375,12 @@ impl From<BigUint> for BigRat {
             sign: Sign::Positive,
             num: n,
             den: BigUint::from(1),
-            exact: true,
         }
     }
 }
 
 impl BigRat {
     fn iter_root_n(mut low_bound: BigRat, val: &BigRat, n: &BigRat) -> Result<BigRat, String> {
-        low_bound.exact = false;
         let mut high_bound = low_bound.clone() + 1.into();
         for _ in 0..30 {
             let guess = (low_bound.clone() + high_bound.clone()).div(2.into())?;
@@ -380,7 +393,8 @@ impl BigRat {
         Ok((low_bound + high_bound).div(2.into())?)
     }
 
-    pub fn root_n(self, n: &BigRat) -> Result<BigRat, String> {
+    // the boolean indicates whether or not the result is exact
+    pub fn root_n(self, n: &BigRat) -> Result<(BigRat, bool), String> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());
         }
@@ -390,17 +404,16 @@ impl BigRat {
         }
         let n = &n.num;
         if self.num == 0.into() {
-            return Ok(self);
+            return Ok((self, true));
         }
         let (num, num_exact) = self.clone().num.root_n(n)?;
         let (den, den_exact) = self.clone().den.root_n(n)?;
         if num_exact && den_exact {
-            return Ok(BigRat {
+            return Ok((BigRat {
                 sign: Sign::Positive,
                 num,
-                den,
-                exact: self.exact,
-            });
+                den
+            }, true));
         }
         let num_rat = if num_exact {
             BigRat::from(num)
@@ -420,13 +433,13 @@ impl BigRat {
                 &BigRat::from(n.clone()),
             )?
         };
-        Ok(num_rat.div(den_rat)?)
+        Ok((num_rat.div(den_rat)?, false))
     }
 }
 
 impl Debug for BigRat {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "{}", self)?;
+        self.format(f, true, 10)?;
         Ok(())
     }
 }
@@ -455,8 +468,7 @@ mod tests {
             BigRat {
                 sign: Sign::Positive,
                 num: BigUint::from(16),
-                den: BigUint::from(9),
-                exact: true
+                den: BigUint::from(9)
             } < BigRat::from(2)
         )
     }
@@ -467,13 +479,11 @@ mod tests {
             BigRat {
                 sign: Sign::Positive,
                 num: BigUint::from(36),
-                den: BigUint::from(49),
-                exact: true
+                den: BigUint::from(49)
             } < BigRat {
                 sign: Sign::Positive,
                 num: BigUint::from(3),
-                den: BigUint::from(4),
-                exact: true
+                den: BigUint::from(4)
             }
         )
     }
