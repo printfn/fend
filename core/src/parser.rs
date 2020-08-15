@@ -57,17 +57,38 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     let (digit, mut input) = parse_ascii_digit(input)?;
     let leading_zero = digit == 0;
     let mut res = Complex::from(digit);
+    let mut parsed_digit_separator;
     loop {
+        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
+            input = remaining;
+            parsed_digit_separator = true;
+        } else {
+            parsed_digit_separator = false;
+        }
         match parse_ascii_digit(input) {
             Err(_) => {
+                if parsed_digit_separator {
+                    return Err("Digit separators can only occur between digits".to_string());
+                }
                 // parse decimal point and at least one digit
                 if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
                     let (digit, remaining) = parse_ascii_digit(remaining)?;
                     input = remaining;
                     res.add_decimal_digit(digit);
                     loop {
+                        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
+                            input = remaining;
+                            parsed_digit_separator = true;
+                        } else {
+                            parsed_digit_separator = false;
+                        }
                         match parse_ascii_digit(input) {
-                            Err(_) => break,
+                            Err(_) => {
+                                if parsed_digit_separator {
+                                    return Err("Digit separators can only occur between digits".to_string());
+                                }
+                                break;
+                            },
                             Ok((digit, next_input)) => {
                                 res.add_decimal_digit(digit);
                                 input = next_input;

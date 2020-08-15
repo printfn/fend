@@ -319,4 +319,22 @@ mod tests {
         test_evaluation("+i", "i");
         test_evaluation("2i", "2i");
     }
+
+    // #[test]
+    // fn test_digit_separators() {
+    //     test_evaluation("1_1", "11");
+    //     test_evaluation("11_1", "111");
+    //     test_evaluation("1_1_1", "111");
+    //     test_evaluation("123_456_789_123", "123456789123");
+    //     test_evaluation("1_2_3_4_5_6", "123456");
+    //     test_evaluation("1.1_1", "1.11");
+    //     test_evaluation("1_1.1_1", "11.11");
+    //     expect_parse_error("_1");
+    //     expect_parse_error("1_");
+    //     expect_parse_error("1__1");
+    //     expect_parse_error("_");
+    //     expect_parse_error("1_.1");
+    //     expect_parse_error("1._1");
+    //     expect_parse_error("1.1_");
+    // }
 }
