@@ -97,23 +97,43 @@ fn parse_base_prefix(input: &str) -> ParseResult<Base> {
     // 0x -> 16
     // 0o -> 8
     // 0b -> 2
+    // base# -> base (where 2 <= base <= 36)
     // case-sensitive, no whitespace allowed
-    let (_, input) = parse_fixed_char(input, '0')?;
-    let (ch, input) = parse_char(input)?;
-    Ok((
-        match ch {
-            'x' => Base::Hex,
-            'o' => Base::Octal,
-            'b' => Base::Binary,
-            _ => {
-                return Err("Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string())
+    if let Ok((_, input)) = parse_fixed_char(input, '0') {
+        let (ch, input) = parse_char(input)?;
+        Ok((
+            match ch {
+                'x' => Base::Hex,
+                'o' => Base::Octal,
+                'b' => Base::Binary,
+                _ => {
+                    return Err(
+                        "Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string()
+                    )
+                }
+            },
+            input,
+        ))
+    } else {
+        let mut custom_base: u8 = 0;
+        let (_, input) = parse_integer(input, false, false, Base::Decimal, &mut |digit| {
+            if custom_base > 3 {
+                return Err("Base cannot be larger than 36".to_string());
             }
-        },
-        input,
-    ))
+            custom_base = 10 * custom_base + digit as u8;
+            if custom_base > 36 {
+                return Err("Base cannot be larger than 36".to_string());
+            }
+            Ok(())
+        })?;
+        if custom_base < 2 {
+            return Err("Base must be at least 2".to_string());
+        }
+        let (_, input) = parse_fixed_char(input, '#')?;
+        Ok((Base::Custom(custom_base), input))
+    }
 }
 
-// parse an integer consisting of only digits in base 10
 fn parse_number(input: &str) -> ParseResult<Expr> {
     let (_, mut input) = skip_whitespace(input)?;
 

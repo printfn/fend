@@ -354,5 +354,16 @@ mod tests {
         test_evaluation("0b10", "0b10");
         test_evaluation("0x10 - 1", "0xf");
         test_evaluation("0x0 + sqrt 16", "0x4");
+        test_evaluation("16#0 + sqrt 16", "16#4");
+        test_evaluation("0 + 6#100", "36");
+        test_evaluation("0 + 36#z", "35");
+        test_evaluation("16#dead_beef", "16#deadbeef");
+        test_evaluation("16#DEAD_BEEF", "16#deadbeef");
+        expect_parse_error("#");
+        expect_parse_error("0#0");
+        expect_parse_error("1#0");
+        expect_parse_error("2_2#0");
+        expect_parse_error("22 #0");
+        expect_parse_error("22# 0");
     }
 }
