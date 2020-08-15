@@ -327,6 +327,8 @@ mod tests {
         test_evaluation("i/3", "i/3");
         test_evaluation("2i/3", "2i/3");
         test_evaluation("2i/-3-1", "-1 - 2i/3");
+        // i is an identifier, not a number; cf. 0bi
+        expect_parse_error("2#i");
     }
 
     #[test]
