@@ -96,35 +96,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                 if parsed_digit_separator {
                     return Err("Digit separators can only occur between digits".to_string());
                 }
-                // parse decimal point and at least one digit
-                if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
-                    let (digit, remaining) = parse_ascii_digit(remaining, base)?;
-                    input = remaining;
-                    res.add_digit_in_base(digit, base)?;
-                    loop {
-                        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
-                            input = remaining;
-                            parsed_digit_separator = true;
-                        } else {
-                            parsed_digit_separator = false;
-                        }
-                        match parse_ascii_digit(input, base) {
-                            Err(_) => {
-                                if parsed_digit_separator {
-                                    return Err("Digit separators can only occur between digits"
-                                        .to_string());
-                                }
-                                break;
-                            }
-                            Ok((digit, next_input)) => {
-                                res.add_digit_in_base(digit, base)?;
-                                input = next_input;
-                            }
-                        }
-                    }
-                }
-                let (_, input) = skip_whitespace(input)?;
-                return Ok((Expr::Num(res), input));
+                break;
             }
             Ok((digit, next_input)) => {
                 if leading_zero {
@@ -137,6 +109,34 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
             }
         }
     }
+    // parse decimal point and at least one digit
+    if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
+        let (digit, remaining) = parse_ascii_digit(remaining, base)?;
+        input = remaining;
+        res.add_digit_in_base(digit, base)?;
+        loop {
+            if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
+                input = remaining;
+                parsed_digit_separator = true;
+            } else {
+                parsed_digit_separator = false;
+            }
+            match parse_ascii_digit(input, base) {
+                Err(_) => {
+                    if parsed_digit_separator {
+                        return Err("Digit separators can only occur between digits".to_string());
+                    }
+                    break;
+                }
+                Ok((digit, next_input)) => {
+                    res.add_digit_in_base(digit, base)?;
+                    input = next_input;
+                }
+            }
+        }
+    }
+    let (_, input) = skip_whitespace(input)?;
+    return Ok((Expr::Num(res), input));
 }
 
 fn parse_ident(input: &str) -> ParseResult<Expr> {
