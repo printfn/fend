@@ -1,10 +1,10 @@
-use crate::num::complex::Complex;
+use crate::num::Number;
 use crate::value::Value;
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone)]
 pub enum Expr {
-    Num(Complex),
+    Num(Number),
     Ident(String),
     Parens(Box<Expr>),
     UnaryMinus(Box<Expr>),
@@ -62,8 +62,8 @@ pub fn evaluate(expr: Expr) -> Result<Value, String> {
 
 fn resolve_identifier(ident: &str) -> Result<Value, String> {
     Ok(match ident {
-        "pi" => Value::Num(Complex::approx_pi()),
-        "i" => Value::Num(Complex::i()),
+        "pi" => Value::Num(Number::approx_pi()),
+        "i" => Value::Num(Number::i()),
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),

@@ -1,4 +1,6 @@
 mod bigrat;
 mod biguint;
-pub mod complex;
+mod complex;
 mod unit;
+
+pub type Number = complex::Complex;

@@ -1,5 +1,5 @@
 use crate::ast::Expr;
-use crate::num::complex::Complex;
+use crate::num::Number;
 
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
 
@@ -56,7 +56,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     let (_, input) = skip_whitespace(input)?;
     let (digit, mut input) = parse_ascii_digit(input)?;
     let leading_zero = digit == 0;
-    let mut res = Complex::from(digit);
+    let mut res = Number::from(digit);
     let mut parsed_digit_separator;
     loop {
         if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
