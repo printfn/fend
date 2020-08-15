@@ -63,7 +63,7 @@ impl From<Complex> for Unit {
 }
 
 impl Display for Unit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.value.format(f, true, 10)?;
         for (i, (name, exp)) in self.names.iter().enumerate() {
             if i != 0 {

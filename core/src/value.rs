@@ -39,7 +39,7 @@ impl Value {
 }
 
 impl Display for Value {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Value::Num(n) => write!(f, "{}", n)?,
             Value::Func(name) => write!(f, "{}", name)?,

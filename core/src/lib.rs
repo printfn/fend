@@ -324,6 +324,9 @@ mod tests {
         test_evaluation("-i", "-i");
         test_evaluation("+i", "i");
         test_evaluation("2i", "2i");
+        test_evaluation("i/3", "i/3");
+        test_evaluation("2i/3", "2i/3");
+        test_evaluation("2i/-3-1", "-1 - 2i/3");
     }
 
     #[test]

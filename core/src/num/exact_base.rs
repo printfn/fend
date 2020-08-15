@@ -149,7 +149,10 @@ impl ExactBase {
 }
 
 impl Display for ExactBase {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        if !self.exact {
+            write!(f, "approx. ")?;
+        }
         self.value.format(f, self.exact, self.base)?;
         Ok(())
     }

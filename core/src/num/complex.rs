@@ -1,4 +1,4 @@
-use crate::num::bigrat::BigRat;
+use crate::num::bigrat::{BigRat, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -149,40 +149,28 @@ impl Complex {
 }
 
 impl Complex {
-    pub fn format(&self, f: &mut Formatter<'_>, exact: bool, base: u8) -> Result<(), Error> {
+    pub fn format(&self, f: &mut Formatter, exact: bool, base: u8) -> Result<(), Error> {
+        let style = if exact {
+            FormattingStyle::ExactFloatWithFractionFallback
+        } else {
+            FormattingStyle::ApproxFloat
+        };
         if self.imag == 0.into() {
-            self.real.format(f, exact, base)?;
+            self.real.format(f, base, style, false)?;
             return Ok(());
         }
 
         if self.real != 0.into() {
-            self.real.format(f, exact, base)?;
+            self.real.format(f, base, style, false)?;
             if self.imag > 0.into() {
                 write!(f, " + ")?;
-                if self.imag == 1.into() {
-                    write!(f, "i")?;
-                } else {
-                    self.imag.format(f, exact, base)?;
-                    write!(f, "i",)?;
-                }
+                self.imag.format(f, base, style, true)?;
             } else {
                 write!(f, " - ")?;
-                if self.imag == BigRat::from(-1) {
-                    write!(f, "i")?;
-                } else {
-                    (-self.imag.clone()).format(f, exact, base)?;
-                    write!(f, "i")?;
-                }
+                (-self.imag.clone()).format(f, base, style, true)?;
             }
         } else {
-            if self.imag == 1.into() {
-                write!(f, "i")?
-            } else if self.imag == BigRat::from(-1) {
-                write!(f, "-i")?
-            } else {
-                self.imag.format(f, exact, base)?;
-                write!(f, "i")?
-            }
+            self.imag.format(f, base, style, true)?;
         }
 
         Ok(())

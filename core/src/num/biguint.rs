@@ -277,8 +277,34 @@ impl Rem for &BigUint {
 }
 
 impl BigUint {
-    pub fn format(&self, f: &mut Formatter<'_>, base: u8) -> Result<(), Error> {
+    fn write_base_prefix(f: &mut Formatter, base: u8) -> Result<(), Error> {
+        if base == 10 {
+            return Ok(());
+        }
+        write!(
+            f,
+            "{}",
+            match base {
+                2 => "0b",
+                8 => "0o",
+                16 => "0x",
+                _ => panic!("Invalid base {}", base),
+            }
+        )?;
+        Ok(())
+    }
+
+    pub fn format(
+        &self,
+        f: &mut Formatter,
+        base: u8,
+        write_base_prefix: bool,
+    ) -> Result<(), Error> {
         use std::convert::TryFrom;
+
+        if write_base_prefix {
+            Self::write_base_prefix(f, base)?;
+        }
 
         if self.is_zero() {
             write!(f, "0")?;
@@ -309,7 +335,7 @@ impl BigUint {
 }
 
 impl Debug for BigUint {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "{:?}", self.value)
     }
 }

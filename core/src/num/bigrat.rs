@@ -286,68 +286,83 @@ impl BigRat {
     }
 }
 
-impl BigRat {
-    fn write_base_prefix(f: &mut Formatter<'_>, base: u8) -> Result<(), Error> {
-        if base == 10 {
-            return Ok(());
-        }
-        write!(
-            f,
-            "{}",
-            match base {
-                2 => "0b",
-                8 => "0o",
-                16 => "0x",
-                _ => panic!("Invalid base {}", base),
-            }
-        )?;
-        Ok(())
-    }
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[non_exhaustive]
+pub enum FormattingStyle {
+    /// Print value as an exact fraction
+    ExactFraction,
+    /// If possible, print as an exact float, but fall back to an exact fraction
+    ExactFloatWithFractionFallback,
+    /// Print as an approximate float, with up to 10 decimal places
+    ApproxFloat,
+}
 
+impl BigRat {
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
     // The result bool indicates whether the number had to be approximated or not.
-    pub fn format(&self, f: &mut Formatter<'_>, exact: bool, base: u8) -> Result<bool, Error> {
+    pub fn format(
+        &self,
+        f: &mut Formatter,
+        base: u8,
+        style: FormattingStyle,
+        imag: bool,
+    ) -> Result<bool, Error> {
         let mut x = self.clone().simplify();
         let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
             x.sign = Sign::Positive;
         };
+
         // try as integer if possible
         if x.den == 1.into() {
             if negative {
                 write!(f, "-")?;
             }
-            Self::write_base_prefix(f, base)?;
-            x.num.format(f, base)?;
+            if imag && x.num == 1.into() {
+                write!(f, "i")?;
+            } else {
+                x.num.format(f, base, true)?;
+                if imag {
+                    write!(f, "i")?;
+                }
+            }
             return Ok(false);
         }
-        let terminating = x.terminates_in_base(10.into());
-        if !terminating && exact {
+
+        let base_as_u64: u64 = base.into();
+        let terminating = x.terminates_in_base(base_as_u64.into());
+        let fraction = style == FormattingStyle::ExactFraction
+            || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating);
+        if fraction {
             if negative {
                 write!(f, "-")?;
             }
-            Self::write_base_prefix(f, base)?;
-            x.num.format(f, base)?;
+            if imag && x.num == 1.into() {
+                write!(f, "i")?;
+            } else {
+                x.num.format(f, base, true)?;
+                if imag {
+                    write!(f, "i")?;
+                }
+            }
             write!(f, "/")?;
-            Self::write_base_prefix(f, base)?;
-            x.den.format(f, base)?;
+            x.den.format(f, base, true)?;
             return Ok(false);
         }
-        if !terminating || !exact {
-            write!(f, "approx. ")?;
-        }
+
+        // not a fraction, will be printed as a decimal
         if negative {
             write!(f, "-")?;
         }
-        Self::write_base_prefix(f, base)?;
-        let num_trailing_digits_to_print = if terminating && exact {
-            std::usize::MAX
-        } else {
-            10
-        };
+        let num_trailing_digits_to_print =
+            if style == FormattingStyle::ExactFloatWithFractionFallback && terminating {
+                std::usize::MAX
+            } else {
+                10
+            };
         let integer_part = x.num.clone() / x.den.clone();
-        integer_part.format(f, base)?;
+        integer_part.format(f, base, true)?;
         write!(f, ".")?;
         let integer_as_rational = BigRat {
             sign: Sign::Positive,
@@ -357,10 +372,9 @@ impl BigRat {
         let mut remaining_fraction = x.clone() - integer_as_rational;
         let mut i = 0;
         while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
-            let base_as_u64: u64 = base.into();
             remaining_fraction = (remaining_fraction * base_as_u64.into()).simplify();
             let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
-            digit.format(f, base)?;
+            digit.format(f, base, false)?;
             remaining_fraction = remaining_fraction
                 - BigRat {
                     sign: Sign::Positive,
@@ -368,6 +382,9 @@ impl BigRat {
                     den: 1.into(),
                 };
             i += 1;
+        }
+        if imag {
+            write!(f, "i")?;
         }
         Ok(!terminating)
     }
@@ -445,8 +462,13 @@ impl BigRat {
 }
 
 impl Debug for BigRat {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        self.format(f, true, 10)?;
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        self.format(
+            f,
+            10,
+            FormattingStyle::ExactFloatWithFractionFallback,
+            false,
+        )?;
         Ok(())
     }
 }

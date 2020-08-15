@@ -18,7 +18,7 @@ pub enum Expr {
 }
 
 impl Debug for Expr {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Expr::Num(n) => write!(f, "{}", n)?,
             Expr::Ident(ident) => write!(f, "{}", ident)?,
