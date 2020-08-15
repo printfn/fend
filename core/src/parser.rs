@@ -51,6 +51,48 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
     }
 }
 
+// Parses a plain integer with no whitespace and no base prefix.
+// Leading minus sign is not allowed.
+fn parse_integer<'a>(
+    input: &'a str,
+    allow_digit_separator: bool,
+    allow_leading_zeroes: bool,
+    base: Base,
+    process_digit: &mut impl FnMut(u64) -> Result<(), String>,
+) -> ParseResult<'a, ()> {
+    let (digit, mut input) = parse_ascii_digit(input, base)?;
+    process_digit(digit)?;
+    let leading_zero = digit == 0;
+    let mut parsed_digit_separator;
+    loop {
+        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
+            input = remaining;
+            parsed_digit_separator = true;
+            if !allow_digit_separator {
+                return Err("Digit separators are not allowed".to_string());
+            }
+        } else {
+            parsed_digit_separator = false;
+        }
+        match parse_ascii_digit(input, base) {
+            Err(_) => {
+                if parsed_digit_separator {
+                    return Err("Digit separators can only occur between digits".to_string());
+                }
+                break;
+            }
+            Ok((digit, next_input)) => {
+                if leading_zero && !allow_leading_zeroes {
+                    return Err("Integer literals cannot have leading zeroes".to_string());
+                }
+                process_digit(digit)?;
+                input = next_input;
+            }
+        }
+    }
+    Ok(((), input))
+}
+
 fn parse_base_prefix(input: &str) -> ParseResult<Base> {
     // 0x -> 16
     // 0o -> 8
@@ -74,66 +116,30 @@ fn parse_base_prefix(input: &str) -> ParseResult<Base> {
 // parse an integer consisting of only digits in base 10
 fn parse_number(input: &str) -> ParseResult<Expr> {
     let (_, mut input) = skip_whitespace(input)?;
+
     let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
         input = remaining;
         base
     } else {
         Base::Decimal
     };
-    let (digit, mut input) = parse_ascii_digit(input, base)?;
-    let leading_zero = digit == 0;
-    let mut res = Number::zero_with_base(base) + Number::from(digit);
-    let mut parsed_digit_separator;
-    loop {
-        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
-            input = remaining;
-            parsed_digit_separator = true;
-        } else {
-            parsed_digit_separator = false;
-        }
-        match parse_ascii_digit(input, base) {
-            Err(_) => {
-                if parsed_digit_separator {
-                    return Err("Digit separators can only occur between digits".to_string());
-                }
-                break;
-            }
-            Ok((digit, next_input)) => {
-                if leading_zero {
-                    return Err("Integer literals cannot have leading zeroes".to_string());
-                }
-                let base_as_u64: u64 = base.base_as_u8().into();
-                res = res * base_as_u64.into();
-                res = res + digit.into();
-                input = next_input;
-            }
-        }
-    }
+
+    // parse integer component
+    let mut res = Number::zero_with_base(base);
+    let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
+        let base_as_u64: u64 = base.base_as_u8().into();
+        res = res.clone() * base_as_u64.into();
+        res = res.clone() + digit.into();
+        Ok(())
+    })?;
+
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
-        let (digit, remaining) = parse_ascii_digit(remaining, base)?;
+        let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| {
+            res.add_digit_in_base(digit, base)?;
+            Ok(())
+        })?;
         input = remaining;
-        res.add_digit_in_base(digit, base)?;
-        loop {
-            if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
-                input = remaining;
-                parsed_digit_separator = true;
-            } else {
-                parsed_digit_separator = false;
-            }
-            match parse_ascii_digit(input, base) {
-                Err(_) => {
-                    if parsed_digit_separator {
-                        return Err("Digit separators can only occur between digits".to_string());
-                    }
-                    break;
-                }
-                Ok((digit, next_input)) => {
-                    res.add_digit_in_base(digit, base)?;
-                    input = next_input;
-                }
-            }
-        }
     }
     let (_, input) = skip_whitespace(input)?;
     return Ok((Expr::Num(res), input));
