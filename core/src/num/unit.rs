@@ -1,4 +1,5 @@
 use crate::num::complex::Complex;
+use crate::num::Base;
 use std::fmt::{Display, Error, Formatter};
 use std::ops::Neg;
 
@@ -64,7 +65,7 @@ impl From<Complex> for Unit {
 
 impl Display for Unit {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        self.value.format(f, true, 10)?;
+        self.value.format(f, true, Base::Decimal)?;
         for (i, (name, exp)) in self.names.iter().enumerate() {
             if i != 0 {
                 write!(f, " ")?;
@@ -72,7 +73,7 @@ impl Display for Unit {
             write!(f, "{}", name.singular_name)?;
             if exp != &1.into() {
                 write!(f, "^")?;
-                exp.format(f, true, 10)?;
+                exp.format(f, true, Base::Decimal)?;
             }
         }
         Ok(())

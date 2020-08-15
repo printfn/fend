@@ -1,4 +1,5 @@
 use crate::num::complex::Complex;
+use crate::num::Base;
 use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -7,7 +8,7 @@ use std::ops::{Add, Mul, Neg, Sub};
 pub struct ExactBase {
     value: Complex,
     exact: bool,
-    base: u8,
+    base: Base,
 }
 
 impl PartialOrd for ExactBase {
@@ -81,7 +82,7 @@ impl From<u64> for ExactBase {
         ExactBase {
             value: i.into(),
             exact: true,
-            base: 10,
+            base: Base::Decimal,
         }
     }
 }
@@ -91,7 +92,7 @@ impl From<i32> for ExactBase {
         ExactBase {
             value: i.into(),
             exact: true,
-            base: 10,
+            base: Base::Decimal,
         }
     }
 }
@@ -121,7 +122,7 @@ impl ExactBase {
         })
     }
 
-    pub fn zero_with_base(base: u8) -> Self {
+    pub fn zero_with_base(base: Base) -> Self {
         Self {
             value: 0.into(),
             exact: true,
@@ -131,11 +132,15 @@ impl ExactBase {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(&mut self, digit: u64, base: u8) -> Result<(), String> {
+    pub fn add_digit_in_base(&mut self, digit: u64, base: Base) -> Result<(), String> {
         if base != self.base {
-            return Err(format!("Base does not match: {} != {}", base, self.base));
+            return Err(format!(
+                "Base does not match: {} != {}",
+                base.base_as_u8(),
+                self.base.base_as_u8()
+            ));
         }
-        self.value.add_digit_in_base(digit, base);
+        self.value.add_digit_in_base(digit, base.base_as_u8());
         Ok(())
     }
 
@@ -143,7 +148,7 @@ impl ExactBase {
         ExactBase {
             value: Complex::i(),
             exact: true,
-            base: 10,
+            base: Base::Decimal,
         }
     }
 }
@@ -172,7 +177,7 @@ impl ExactBase {
         ExactBase {
             value: Complex::approx_pi(),
             exact: false,
-            base: 10,
+            base: Base::Decimal,
         }
     }
 }

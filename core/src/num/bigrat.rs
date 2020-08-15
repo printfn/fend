@@ -1,4 +1,5 @@
 use crate::num::biguint::BigUint;
+use crate::num::Base;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -251,11 +252,12 @@ impl BigRat {
 
     // test if this fraction has a terminating representation
     // e.g. in base 10: 1/4 = 0.25, but not 1/3
-    fn terminates_in_base(&self, base: BigUint) -> bool {
+    fn terminates_in_base(&self, base: Base) -> bool {
         let mut x = self.clone();
+        let base_as_u64: u64 = base.base_as_u8().into();
         let base = BigRat {
             sign: Sign::Positive,
-            num: base,
+            num: base_as_u64.into(),
             den: 1.into(),
         };
         loop {
@@ -304,7 +306,7 @@ impl BigRat {
     pub fn format(
         &self,
         f: &mut Formatter,
-        base: u8,
+        base: Base,
         style: FormattingStyle,
         imag: bool,
     ) -> Result<bool, Error> {
@@ -330,8 +332,7 @@ impl BigRat {
             return Ok(false);
         }
 
-        let base_as_u64: u64 = base.into();
-        let terminating = x.terminates_in_base(base_as_u64.into());
+        let terminating = x.terminates_in_base(base);
         let fraction = style == FormattingStyle::ExactFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating);
         if fraction {
@@ -372,6 +373,7 @@ impl BigRat {
         let mut remaining_fraction = x.clone() - integer_as_rational;
         let mut i = 0;
         while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
+            let base_as_u64: u64 = base.base_as_u8().into();
             remaining_fraction = (remaining_fraction * base_as_u64.into()).simplify();
             let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
             digit.format(f, base, false)?;
@@ -465,7 +467,7 @@ impl Debug for BigRat {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.format(
             f,
-            10,
+            Base::Decimal,
             FormattingStyle::ExactFloatWithFractionFallback,
             false,
         )?;

@@ -1,4 +1,5 @@
 use crate::num::bigrat::{BigRat, FormattingStyle};
+use crate::num::Base;
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -149,7 +150,7 @@ impl Complex {
 }
 
 impl Complex {
-    pub fn format(&self, f: &mut Formatter, exact: bool, base: u8) -> Result<(), Error> {
+    pub fn format(&self, f: &mut Formatter, exact: bool, base: Base) -> Result<(), Error> {
         let style = if exact {
             FormattingStyle::ExactFloatWithFractionFallback
         } else {

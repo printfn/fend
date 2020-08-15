@@ -1,3 +1,4 @@
+use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::ops::{Add, AddAssign, Div, Mul, Rem, Sub};
@@ -277,33 +278,16 @@ impl Rem for &BigUint {
 }
 
 impl BigUint {
-    fn write_base_prefix(f: &mut Formatter, base: u8) -> Result<(), Error> {
-        if base == 10 {
-            return Ok(());
-        }
-        write!(
-            f,
-            "{}",
-            match base {
-                2 => "0b",
-                8 => "0o",
-                16 => "0x",
-                _ => panic!("Invalid base {}", base),
-            }
-        )?;
-        Ok(())
-    }
-
     pub fn format(
         &self,
         f: &mut Formatter,
-        base: u8,
+        base: Base,
         write_base_prefix: bool,
     ) -> Result<(), Error> {
         use std::convert::TryFrom;
 
         if write_base_prefix {
-            Self::write_base_prefix(f, base)?;
+            base.write_prefix(f)?;
         }
 
         if self.is_zero() {
@@ -312,12 +296,12 @@ impl BigUint {
         }
 
         let mut num = self.clone();
-        if num.value.len() == 1 && base == 10 {
+        if num.value.len() == 1 && base.base_as_u8() == 10 {
             write!(f, "{}", num.value[0])?;
         } else {
             let mut output = String::new();
             while !num.is_zero() {
-                let base_as_u64: u64 = base.into();
+                let base_as_u64: u64 = base.base_as_u8().into();
                 let divmod_res = num.divmod(&BigUint::from(base_as_u64));
                 let digit_value = divmod_res.1.value[0] as u8;
                 let ch = if digit_value < 10 {

@@ -1,5 +1,5 @@
 use crate::ast::Expr;
-use crate::num::Number;
+use crate::num::{Base, Number};
 
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
 
@@ -33,9 +33,9 @@ pub fn skip_whitespace(mut input: &str) -> ParseResult<()> {
     }
 }
 
-fn parse_ascii_digit(input: &str, base: u8) -> ParseResult<u64> {
+fn parse_ascii_digit(input: &str, base: Base) -> ParseResult<u64> {
     let (ch, input) = parse_char(input)?;
-    if let Some(digit) = ch.to_digit(base.into()) {
+    if let Some(digit) = ch.to_digit(base.base_as_u8().into()) {
         Ok((digit.into(), input))
     } else {
         Err(format!("Expected a digit, found '{}'", ch))
@@ -51,7 +51,7 @@ fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
     }
 }
 
-fn parse_base_prefix(input: &str) -> ParseResult<u8> {
+fn parse_base_prefix(input: &str) -> ParseResult<Base> {
     // 0x -> 16
     // 0o -> 8
     // 0b -> 2
@@ -60,9 +60,9 @@ fn parse_base_prefix(input: &str) -> ParseResult<u8> {
     let (ch, input) = parse_char(input)?;
     Ok((
         match ch {
-            'x' => 16,
-            'o' => 8,
-            'b' => 2,
+            'x' => Base::Hex,
+            'o' => Base::Octal,
+            'b' => Base::Binary,
             _ => {
                 return Err("Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string())
             }
@@ -78,7 +78,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
         input = remaining;
         base
     } else {
-        10
+        Base::Decimal
     };
     let (digit, mut input) = parse_ascii_digit(input, base)?;
     let leading_zero = digit == 0;
@@ -102,7 +102,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                 if leading_zero {
                     return Err("Integer literals cannot have leading zeroes".to_string());
                 }
-                let base_as_u64: u64 = base.into();
+                let base_as_u64: u64 = base.base_as_u8().into();
                 res = res * base_as_u64.into();
                 res = res + digit.into();
                 input = next_input;
