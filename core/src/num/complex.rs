@@ -1,7 +1,7 @@
-use std::cmp::Ordering;
 use crate::num::bigrat::BigRat;
-use std::ops::{Add, Mul, Neg, Sub};
+use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Complex {
@@ -87,7 +87,7 @@ impl From<u64> for Complex {
     fn from(i: u64) -> Self {
         Complex {
             real: i.into(),
-            imag: 0.into()
+            imag: 0.into(),
         }
     }
 }
@@ -96,7 +96,7 @@ impl From<i32> for Complex {
     fn from(i: i32) -> Self {
         Complex {
             real: i.into(),
-            imag: 0.into()
+            imag: 0.into(),
         }
     }
 }
@@ -117,7 +117,7 @@ impl Complex {
         let y = rhs.imag;
         Ok(Complex {
             real: BigRat::from(1).div(x.clone() * x.clone() + y.clone() * y.clone())?,
-            imag: 0.into()
+            imag: 0.into(),
         } * Complex {
             real: u.clone() * x.clone() + v.clone() * y.clone(),
             imag: v.clone() * x.clone() - u.clone() * y.clone(),
@@ -126,7 +126,7 @@ impl Complex {
 
     pub fn pow(self, rhs: Complex) -> Result<Complex, String> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
-            return Err("Exponentiation is currently unsupported for complex numbers".to_string())
+            return Err("Exponentiation is currently unsupported for complex numbers".to_string());
         }
         Ok(Complex {
             real: self.real.pow(rhs.real)?,
@@ -152,7 +152,7 @@ impl Complex {
     pub fn format(&self, f: &mut Formatter<'_>, exact: bool, base: u8) -> Result<(), Error> {
         if self.imag == 0.into() {
             self.real.format(f, exact, base)?;
-            return Ok(())
+            return Ok(());
         }
 
         if self.real != 0.into() {
@@ -192,13 +192,16 @@ impl Complex {
 impl Complex {
     pub fn root_n(self, n: &Complex) -> Result<(Complex, bool), String> {
         if self.imag != 0.into() || n.imag != 0.into() {
-            return Err("Roots are currently unsupported for complex numbers".to_string())
+            return Err("Roots are currently unsupported for complex numbers".to_string());
         }
         let (real_root, real_root_exact) = self.real.root_n(&n.real)?;
-        Ok((Complex {
-            real: real_root,
-            imag: 0.into(),
-        }, real_root_exact))
+        Ok((
+            Complex {
+                real: real_root,
+                imag: 0.into(),
+            },
+            real_root_exact,
+        ))
     }
 
     pub fn approx_pi() -> Complex {

@@ -344,7 +344,6 @@ mod tests {
         expect_parse_error("1.1_");
     }
 
-
     #[test]
     fn test_different_bases() {
         test_evaluation("0x10", "0x10");

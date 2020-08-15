@@ -58,12 +58,17 @@ fn parse_base_prefix(input: &str) -> ParseResult<u8> {
     // case-sensitive, no whitespace allowed
     let (_, input) = parse_fixed_char(input, '0')?;
     let (ch, input) = parse_char(input)?;
-    Ok((match ch {
-        'x' => 16,
-        'o' => 8,
-        'b' => 2,
-        _ => return Err("Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string())
-    }, input))
+    Ok((
+        match ch {
+            'x' => 16,
+            'o' => 8,
+            'b' => 2,
+            _ => {
+                return Err("Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string())
+            }
+        },
+        input,
+    ))
 }
 
 // parse an integer consisting of only digits in base 10
@@ -106,10 +111,11 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
                         match parse_ascii_digit(input, base) {
                             Err(_) => {
                                 if parsed_digit_separator {
-                                    return Err("Digit separators can only occur between digits".to_string());
+                                    return Err("Digit separators can only occur between digits"
+                                        .to_string());
                                 }
                                 break;
-                            },
+                            }
                             Ok((digit, next_input)) => {
                                 res.add_digit_in_base(digit, base)?;
                                 input = next_input;

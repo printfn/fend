@@ -38,7 +38,7 @@ fn repl_loop() -> i32 {
                     Err(msg) => {
                         last_command_success = false;
                         eprintln!("Error: {}", msg);
-                    },
+                    }
                 },
             },
             Err(ReadlineError::Interrupted) => {
@@ -47,7 +47,7 @@ fn repl_loop() -> i32 {
                 } else {
                     println!("Use Ctrl-D (i.e. EOF) to exit");
                 }
-            },
+            }
             Err(ReadlineError::Eof) => break,
             Err(err) => {
                 println!("Error: {:?}", err);
@@ -56,7 +56,11 @@ fn repl_loop() -> i32 {
         }
     }
     rl.save_history("history.txt").unwrap();
-    if last_command_success { 0 } else { 1 }
+    if last_command_success {
+        0
+    } else {
+        1
+    }
 }
 
 fn main() {

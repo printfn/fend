@@ -291,12 +291,16 @@ impl BigRat {
         if base == 10 {
             return Ok(());
         }
-        write!(f, "{}", match base {
-            2 => "0b",
-            8 => "0o",
-            16 => "0x",
-            _ => panic!("Invalid base {}", base),
-        })?;
+        write!(
+            f,
+            "{}",
+            match base {
+                2 => "0b",
+                8 => "0o",
+                16 => "0x",
+                _ => panic!("Invalid base {}", base),
+            }
+        )?;
         Ok(())
     }
 
@@ -409,11 +413,14 @@ impl BigRat {
         let (num, num_exact) = self.clone().num.root_n(n)?;
         let (den, den_exact) = self.clone().den.root_n(n)?;
         if num_exact && den_exact {
-            return Ok((BigRat {
-                sign: Sign::Positive,
-                num,
-                den
-            }, true));
+            return Ok((
+                BigRat {
+                    sign: Sign::Positive,
+                    num,
+                    den,
+                },
+                true,
+            ));
         }
         let num_rat = if num_exact {
             BigRat::from(num)
