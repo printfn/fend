@@ -148,8 +148,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
         let base_as_u64: u64 = base.base_as_u8().into();
-        res = res.clone() * base_as_u64.into();
-        res = res.clone() + digit.into();
+        res = res.clone() * base_as_u64.into() + digit.into();
         Ok(())
     })?;
 
@@ -161,6 +160,22 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
         })?;
         input = remaining;
     }
+
+    // parse optional exponent, but only for base 10 and below
+    if base.base_as_u8() <= 10 {
+        if let Ok((_, remaining)) = parse_fixed_char(input, 'e') {
+            let mut exp = Number::zero_with_base(Base::Decimal);
+            let (_, remaining) = parse_integer(remaining, true, false, Base::Decimal, &mut |digit| {
+                exp = exp.clone() * 10.into() + digit.into();
+                Ok(())
+            })?;
+            let base_as_u64: u64 = base.base_as_u8().into();
+            let base_as_number: Number = base_as_u64.into();
+            res = res * base_as_number.pow(exp)?;
+            input = remaining;
+        }
+    }
+
     let (_, input) = skip_whitespace(input)?;
     return Ok((Expr::Num(res), input));
 }

@@ -368,4 +368,16 @@ mod tests {
         expect_parse_error("22 #0");
         expect_parse_error("22# 0");
     }
+
+    #[test]
+    fn test_exponents() {
+        test_evaluation("1e10", "10000000000");
+        test_evaluation("1.5e10", "15000000000");
+        test_evaluation("0b1e10", "0b10000000000");
+        test_evaluation("0 + 0b1e100", "1267650600228229401496703205376");
+        test_evaluation("0 + 0b1e32", "4294967296");
+        test_evaluation("0 + 0b1e16", "65536");
+        test_evaluation("16#1e10", "16#1e10");
+        expect_parse_error("11#1e10");
+    }
 }
