@@ -98,6 +98,14 @@ impl From<i32> for ExactBase {
 }
 
 impl ExactBase {
+    pub fn make_approximate(self) -> Self {
+        ExactBase {
+            value: self.value,
+            exact: false,
+            base: self.base,
+        }
+    }
+
     pub fn conjugate(self) -> Self {
         ExactBase {
             value: self.value.conjugate(),

@@ -50,6 +50,11 @@ mod tests {
             evaluate(input).unwrap().get_main_result(),
             expected.to_string()
         );
+        // try parsing the output again, and make sure it matches
+        assert_eq!(
+            evaluate(expected).unwrap().get_main_result(),
+            expected.to_string()
+        );
     }
 
     fn expect_parse_error(input: &str) {

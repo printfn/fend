@@ -198,7 +198,7 @@ fn parse_ident(input: &str) -> ParseResult<Expr> {
     let mut ident = ch.to_string();
     loop {
         if let Ok((ch, remaining)) = parse_char(input) {
-            if ch.is_alphanumeric() {
+            if ch.is_alphanumeric() || ch == '.' {
                 ident.push(ch);
                 input = remaining;
                 continue;

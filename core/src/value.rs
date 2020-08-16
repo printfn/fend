@@ -23,6 +23,8 @@ impl Value {
                     other.expect_num()?.root_n(&2.into())?
                 } else if name == "cbrt" {
                     other.expect_num()?.root_n(&3.into())?
+                } else if name == "approximately" {
+                    other.expect_num()?.make_approximate()
                 } else if name == "abs" {
                     let arg = other.expect_num()?;
                     if arg < 0.into() {
