@@ -372,6 +372,12 @@ mod tests {
         expect_parse_error("2_2#0");
         expect_parse_error("22 #0");
         expect_parse_error("22# 0");
+        test_evaluation("36#i i", "36#i i");
+        test_evaluation("16#1i", "16#1i");
+        test_evaluation("16#fi", "16#fi");
+        test_evaluation("0 + 36#ii", "666");
+        expect_parse_error("18#i/i");
+        test_evaluation("19#i/i", "-19#i i");
     }
 
     #[test]

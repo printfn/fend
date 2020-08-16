@@ -321,11 +321,15 @@ impl BigRat {
             if negative {
                 write!(f, "-")?;
             }
-            if imag && x.num == 1.into() {
+            if imag && base == Base::Decimal && x.num == 1.into() {
                 write!(f, "i")?;
             } else {
                 x.num.format(f, base, true)?;
                 if imag {
+                    if base.base_as_u8() >= 19 {
+                        // at this point 'i' could be a digit, so we need a space to disambiguate
+                        write!(f, " ")?;
+                    }
                     write!(f, "i")?;
                 }
             }
@@ -339,11 +343,14 @@ impl BigRat {
             if negative {
                 write!(f, "-")?;
             }
-            if imag && x.num == 1.into() {
+            if imag && base == Base::Decimal && x.num == 1.into() {
                 write!(f, "i")?;
             } else {
                 x.num.format(f, base, true)?;
                 if imag {
+                    if base.base_as_u8() >= 19 {
+                        write!(f, " ")?;
+                    }
                     write!(f, "i")?;
                 }
             }
@@ -386,6 +393,9 @@ impl BigRat {
             i += 1;
         }
         if imag {
+            if base.base_as_u8() >= 19 {
+                write!(f, " ")?;
+            }
             write!(f, "i")?;
         }
         Ok(!terminating)
