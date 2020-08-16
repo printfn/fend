@@ -12,6 +12,7 @@ edition = "2018"
 
 [dependencies]
 rustyline = "6.2.0"
+directories = "3.0.1"
 
 [dependencies.fend-core]
 version = "0.1.0"

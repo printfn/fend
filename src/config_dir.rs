@@ -1,27 +1,20 @@
 use std::env::var_os;
 use std::fs;
 use std::path::PathBuf;
+use directories::ProjectDirs;
 
 fn get_config_dir() -> Option<PathBuf> {
     // first try $FEND_CONFIG_DIR
     if let Some(config_dir) = var_os("FEND_CONFIG_DIR") {
-        return Some(PathBuf::from(config_dir));
+        Some(PathBuf::from(config_dir))
+    } else if let Some(proj_dirs) = ProjectDirs::from("", "",  "fend") {
+        // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
+        // macOS: $HOME/Library/Application Support/fend
+        // Windows: {FOLDERID_RoamingAppData}\fend\config
+        Some(PathBuf::from(proj_dirs.config_dir()))
+    } else {
+        None
     }
-    // Next, look for XDG_CONFIG_HOME
-    if let Some(config_dir) = var_os("XDG_CONFIG_HOME") {
-        let mut path = PathBuf::from(config_dir);
-        path.push("fend");
-        return Some(path);
-    }
-    // Otherwise use $HOME/.config/fend
-    if let Some(home_dir) = var_os("HOME") {
-        let mut path = PathBuf::from(home_dir);
-        path.push(".config");
-        path.push("fend");
-        return Some(path);
-    }
-    // Otherwise return None
-    None
 }
 
 pub fn get_history_file_path() -> Option<PathBuf> {
