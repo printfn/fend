@@ -1,13 +1,13 @@
+use directories::ProjectDirs;
 use std::env::var_os;
 use std::fs;
 use std::path::PathBuf;
-use directories::ProjectDirs;
 
 fn get_config_dir() -> Option<PathBuf> {
     // first try $FEND_CONFIG_DIR
     if let Some(config_dir) = var_os("FEND_CONFIG_DIR") {
         Some(PathBuf::from(config_dir))
-    } else if let Some(proj_dirs) = ProjectDirs::from("", "",  "fend") {
+    } else if let Some(proj_dirs) = ProjectDirs::from("", "", "fend") {
         // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
         // macOS: $HOME/Library/Application Support/fend
         // Windows: {FOLDERID_RoamingAppData}\fend\config
