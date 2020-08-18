@@ -20,19 +20,18 @@ pub enum Expr {
 impl Debug for Expr {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            Expr::Num(n) => write!(f, "{}", n)?,
-            Expr::Ident(ident) => write!(f, "{}", ident)?,
-            Expr::Parens(x) => write!(f, "({:?})", *x)?,
-            Expr::UnaryMinus(x) => write!(f, "(-{:?})", *x)?,
-            Expr::UnaryPlus(x) => write!(f, "(+{:?})", *x)?,
-            Expr::Add(a, b) => write!(f, "({:?}+{:?})", *a, *b)?,
-            Expr::Sub(a, b) => write!(f, "({:?}-{:?})", *a, *b)?,
-            Expr::Mul(a, b) => write!(f, "({:?}*{:?})", *a, *b)?,
-            Expr::Div(a, b) => write!(f, "({:?}/{:?})", *a, *b)?,
-            Expr::Pow(a, b) => write!(f, "({:?}^{:?})", *a, *b)?,
-            Expr::Apply(a, b) => write!(f, "({:?} {:?})", *a, *b)?,
-        };
-        Ok(())
+            Expr::Num(n) => write!(f, "{}", n),
+            Expr::Ident(ident) => write!(f, "{}", ident),
+            Expr::Parens(x) => write!(f, "({:?})", *x),
+            Expr::UnaryMinus(x) => write!(f, "(-{:?})", *x),
+            Expr::UnaryPlus(x) => write!(f, "(+{:?})", *x),
+            Expr::Add(a, b) => write!(f, "({:?}+{:?})", *a, *b),
+            Expr::Sub(a, b) => write!(f, "({:?}-{:?})", *a, *b),
+            Expr::Mul(a, b) => write!(f, "({:?}*{:?})", *a, *b),
+            Expr::Div(a, b) => write!(f, "({:?}/{:?})", *a, *b),
+            Expr::Pow(a, b) => write!(f, "({:?}^{:?})", *a, *b),
+            Expr::Apply(a, b) => write!(f, "({:?} {:?})", *a, *b),
+        }
     }
 }
 
