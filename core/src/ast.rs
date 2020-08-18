@@ -1,6 +1,6 @@
 use crate::num::Number;
 use crate::value::Value;
-use std::fmt::{Debug, Error, Formatter};
+use std::{collections::HashMap, fmt::{Debug, Error, Formatter}};
 
 #[derive(Clone)]
 pub enum Expr {
@@ -35,39 +35,39 @@ impl Debug for Expr {
     }
 }
 
-pub fn evaluate(expr: Expr) -> Result<Value, String> {
+pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, String> {
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
-        Expr::Ident(ident) => resolve_identifier(ident.as_str())?,
-        Expr::Parens(x) => evaluate(*x)?,
-        Expr::UnaryMinus(x) => Value::Num(-evaluate(*x)?.expect_num()?),
-        Expr::UnaryPlus(x) => Value::Num(evaluate(*x)?.expect_num()?),
+        Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope)?,
+        Expr::Parens(x) => evaluate(*x, scope)?,
+        Expr::UnaryMinus(x) => Value::Num(-evaluate(*x, scope)?.expect_num()?),
+        Expr::UnaryPlus(x) => Value::Num(evaluate(*x, scope)?.expect_num()?),
         Expr::Add(a, b) => Value::Num(
-            evaluate(*a)?
+            evaluate(*a, scope)?
                 .expect_num()?
-                .add(evaluate(*b)?.expect_num()?)?,
+                .add(evaluate(*b, scope)?.expect_num()?)?,
         ),
         Expr::Sub(a, b) => Value::Num(
-            evaluate(*a)?
+            evaluate(*a, scope)?
                 .expect_num()?
-                .sub(evaluate(*b)?.expect_num()?)?,
+                .sub(evaluate(*b, scope)?.expect_num()?)?,
         ),
-        Expr::Mul(a, b) => Value::Num(evaluate(*a)?.expect_num()? * evaluate(*b)?.expect_num()?),
+        Expr::Mul(a, b) => Value::Num(evaluate(*a, scope)?.expect_num()? * evaluate(*b, scope)?.expect_num()?),
         Expr::Div(a, b) => Value::Num(
-            evaluate(*a)?
+            evaluate(*a, scope)?
                 .expect_num()?
-                .div(evaluate(*b)?.expect_num()?)?,
+                .div(evaluate(*b, scope)?.expect_num()?)?,
         ),
         Expr::Pow(a, b) => Value::Num(
-            evaluate(*a)?
+            evaluate(*a, scope)?
                 .expect_num()?
-                .pow(evaluate(*b)?.expect_num()?)?,
+                .pow(evaluate(*b, scope)?.expect_num()?)?,
         ),
-        Expr::Apply(a, b) => evaluate(*a)?.apply(evaluate(*b)?)?,
+        Expr::Apply(a, b) => evaluate(*a, scope)?.apply(evaluate(*b, scope)?)?,
     })
 }
 
-fn resolve_identifier(ident: &str) -> Result<Value, String> {
+fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Value, String> {
     Ok(match ident {
         "pi" => Value::Num(Number::approx_pi()),
         "i" => Value::Num(Number::i()),
@@ -76,8 +76,12 @@ fn resolve_identifier(ident: &str) -> Result<Value, String> {
         "abs" => Value::Func("abs".to_string()),
         "approx." => Value::Func("approximately".to_string()),
         "approximately" => Value::Func("approximately".to_string()),
-        "kg" => Value::Num(Number::kg()),
-        "g" => Value::Num(Number::g()),
-        _ => return Err(format!("Unknown identifier '{}'", ident)),
+        _ => {
+            if let Some(value) = scope.get(&ident.to_string()) {
+                value.clone()
+            } else {
+                return Err(format!("Unknown identifier '{}'", ident));
+            }
+        },
     })
 }

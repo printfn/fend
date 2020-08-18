@@ -1,5 +1,6 @@
 use crate::num::exact_base::ExactBase;
 use crate::num::Base;
+use crate::value::Value;
 use std::ops::{Mul, Neg};
 use std::{
     collections::HashMap,
@@ -13,12 +14,27 @@ pub struct UnitValue {
 }
 
 impl UnitValue {
-    pub fn kg() -> Self {
-        Self::new_base_unit("kg", "kg", true)
+    pub fn create_initial_units() -> HashMap<String, Value> {
+        Self::create_units(vec![
+            ("kg", "kg", true, None),
+            ("g", "g", true, Some("(1/1000) kg")),
+        ])
     }
 
-    pub fn g() -> Self {
-        Self::new_unit("g", "g", true, "(1/1000) kg")
+    fn create_units(unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>) -> HashMap<String, Value> {
+        let mut scope = HashMap::new();
+        for (singular_name, plural_name, space, expr) in unit_descriptions {
+            let unit = if let Some(expr) = expr {
+                Self::new_unit(singular_name.to_string(), plural_name.to_string(), space, expr, &scope)
+            } else {
+                Self::new_base_unit(singular_name.to_string(), plural_name.to_string(), space)
+            };
+            scope.insert(singular_name.to_string(), Value::Num(unit.clone()));
+            if plural_name.to_string() != singular_name.to_string() {
+                scope.insert(plural_name.to_string(), Value::Num(unit));
+            }
+        }
+        scope
     }
 
     fn new_unit(
@@ -26,10 +42,11 @@ impl UnitValue {
         plural_name: impl ToString,
         space: bool,
         expression: impl ToString,
+        scope: &HashMap<String, Value>
     ) -> Self {
         let expression_as_string = expression.to_string();
         // todo remove unwraps
-        let value = crate::evaluate_to_value(expression_as_string.as_str())
+        let value = crate::evaluate_to_value(expression_as_string.as_str(), scope)
             .unwrap()
             .expect_num()
             .unwrap();

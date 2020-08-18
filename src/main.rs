@@ -20,6 +20,7 @@ fn repl_loop() -> i32 {
             // No previous history
         }
     }
+    let mut context = fend_core::Context::new();
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     loop {
@@ -27,7 +28,7 @@ fn repl_loop() -> i32 {
         match readline {
             Ok(line) => match line.as_str() {
                 "exit" | "quit" | ":q" => break,
-                line => match fend_core::evaluate(line) {
+                line => match fend_core::evaluate(line, &mut context) {
                     Ok(res) => {
                         last_command_success = true;
                         let main_result = res.get_main_result();

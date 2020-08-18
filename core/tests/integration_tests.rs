@@ -1,19 +1,26 @@
-use fend_core::evaluate;
+use fend_core::{evaluate, Context};
 
 pub fn test_evaluation(input: &str, expected: &str) {
+    let mut context = Context::new();
     assert_eq!(
-        evaluate(input).unwrap().get_main_result(),
+        evaluate(input, &mut context).unwrap().get_main_result(),
         expected.to_string()
     );
     // try parsing the output again, and make sure it matches
     assert_eq!(
-        evaluate(expected).unwrap().get_main_result(),
+        evaluate(expected, &mut context).unwrap().get_main_result(),
         expected.to_string()
     );
 }
 
 fn expect_parse_error(input: &str) {
-    assert!(evaluate(input).is_err());
+    let mut context = Context::new();
+    assert!(evaluate(input, &mut context).is_err());
+}
+
+fn assert_err_msg(input: &str, error: &str) {
+    let mut context = Context::new();
+    assert_eq!(evaluate(input, &mut context), Err(error.to_string()));
 }
 
 #[test]
@@ -41,20 +48,20 @@ fn test_pi() {
 
 #[test]
 fn test_div_by_zero() {
-    let msg = "Attempt to divide by zero".to_string();
-    assert_eq!(evaluate("1/0"), Err(msg.clone()));
-    assert_eq!(evaluate("0/0"), Err(msg.clone()));
-    assert_eq!(evaluate("-1/0"), Err(msg.clone()));
-    assert_eq!(evaluate("-1/(2-2)"), Err(msg.clone()));
+    let msg = "Attempt to divide by zero";
+    assert_err_msg("1/0", msg);
+    assert_err_msg("0/0", msg);
+    assert_err_msg("-1/0", msg);
+    assert_err_msg("-1/(2-2)", msg);
 }
 
 #[test]
 fn test_leading_zeroes() {
-    let msg = "Integer literals cannot have leading zeroes".to_string();
-    assert_eq!(evaluate("00"), Err(msg.clone()));
-    assert_eq!(evaluate("000000"), Err(msg.clone()));
-    assert_eq!(evaluate("000000.01"), Err(msg.clone()));
-    assert_eq!(evaluate("0000001.01"), Err(msg.clone()));
+    let msg = "Integer literals cannot have leading zeroes";
+    assert_err_msg("00", msg);
+    assert_err_msg("000000", msg);
+    assert_err_msg("000000.01", msg);
+    assert_err_msg("0000001.01", msg);
 }
 
 #[test]
@@ -106,7 +113,7 @@ fn test_subtraction_2() {
 
 #[test]
 fn test_sqrt_half() {
-    evaluate("sqrt (1/2)").unwrap();
+    test_evaluation("sqrt (1/2)", "approx. 0.7071067809");
 }
 
 #[test]
@@ -256,7 +263,8 @@ fn test_tricky_power_negation() {
     test_evaluation("2^3 * 4", "32");
     test_evaluation("2 * -3 * 4", "-24");
     test_evaluation("-2^-3", "-0.125");
-    assert_eq!(evaluate("2^-3^4"), evaluate("1 / 2^81"));
+    let mut context = Context::new();
+    assert_eq!(evaluate("2^-3^4", &mut context), evaluate("1 / 2^81", &mut context));
     test_evaluation("4^-1^2", "0.25");
 }
 
