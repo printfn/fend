@@ -178,13 +178,29 @@ impl Display for UnitValue {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "{}", self.value)?;
         if !self.unit.components.is_empty() {
-            for (i, unit_exponent) in self.unit.components.iter().enumerate() {
-                if i > 0 || unit_exponent.unit.spacing == true {
-                    write!(f, " ")?;
+            let mut negative_components = vec![];
+            let mut first = true;
+            for unit_exponent in self.unit.components.iter() {
+                if unit_exponent.exponent < 0.into() {
+                    negative_components.push(unit_exponent);
+                } else {
+                    if !first || unit_exponent.unit.spacing == true {
+                        write!(f, " ")?;
+                    }
+                    first = false;
+                    write!(f, "{}", unit_exponent.unit.singular_name)?;
+                    if unit_exponent.exponent != 1.into() {
+                        write!(f, "^{}", unit_exponent.exponent)?;
+                    }
                 }
-                write!(f, "{}", unit_exponent.unit.singular_name)?;
-                if unit_exponent.exponent != 1.into() {
-                    write!(f, "^{}", unit_exponent.exponent)?;
+            }
+            if !negative_components.is_empty() {
+                write!(f, " /")?;
+                for unit_exponent in negative_components {
+                    write!(f, " {}", unit_exponent.unit.singular_name)?;
+                    if unit_exponent.exponent != (-1).into() {
+                        write!(f, "^{}", -unit_exponent.exponent.clone())?;
+                    }
                 }
             }
         }

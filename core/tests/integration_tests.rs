@@ -360,6 +360,6 @@ fn test_basic_units() {
     test_evaluation("1kg + 100g", "1.1 kg");
     test_evaluation("0g + 1kg + 100g", "1100 g");
     test_evaluation("0g + 1kg", "1000 g");
-    test_evaluation("1/0.5kg", "2 kg^-1");
+    test_evaluation("1/0.5kg", "2 / kg");
     test_evaluation("1/(1/0.5kg)", "0.5 kg");
 }
