@@ -379,3 +379,8 @@ fn test_basic_units() {
 fn test_complex_number_with_unit() {
     test_evaluation("1 kg + i g", "(1 + 0.001i) kg");
 }
+
+#[test]
+fn test_more_units() {
+    test_evaluation("0m + 1kph * 1 hr", "1000 m");
+}

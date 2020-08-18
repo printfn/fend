@@ -293,7 +293,6 @@ struct Unit {
 }
 
 impl Unit {
-    // todo this breaks for exponents that are zero
     fn into_hashmap_and_scale(&self) -> (HashMap<BaseUnit, ExactBase>, ExactBase) {
         let mut hashmap = HashMap::<BaseUnit, ExactBase>::new();
         let mut scale = ExactBase::from(1);
@@ -301,9 +300,19 @@ impl Unit {
             let overall_exp = &named_unit_exp.exponent;
             for (base_unit, base_exp) in named_unit_exp.unit.base_units.iter() {
                 match hashmap.get_mut(&base_unit) {
-                    Some(exp) => *exp = exp.clone() + overall_exp.clone() * base_exp.clone(),
+                    Some(exp) => {
+                        let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
+                        if new_exp != 0.into() {
+                            *exp = new_exp;
+                        } else {
+                            hashmap.remove(&base_unit);
+                        }
+                    }
                     None => {
-                        hashmap.insert(base_unit.clone(), overall_exp.clone());
+                        let new_exp = overall_exp.clone() * base_exp.clone();
+                        if new_exp != 0.into() {
+                            hashmap.insert(base_unit.clone(), overall_exp.clone() * base_exp.clone());
+                        }
                     }
                 }
             }
@@ -327,6 +336,7 @@ impl Unit {
             // todo remove unwrap
             Ok(scale_a.div(scale_b).unwrap())
         } else {
+            //eprintln!("{:#?} != {:#?}", hash_a, hash_b);
             Err(format!("Units are incompatible"))
         }
     }
