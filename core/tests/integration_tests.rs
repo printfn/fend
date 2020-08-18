@@ -363,3 +363,8 @@ fn test_basic_units() {
     test_evaluation("1/0.5kg", "2 / kg");
     test_evaluation("1/(1/0.5kg)", "0.5 kg");
 }
+
+#[test]
+fn test_complex_number_with_unit() {
+    test_evaluation("1 kg + i g", "(1 + 0.001i) kg");
+}

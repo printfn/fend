@@ -176,9 +176,8 @@ impl From<i32> for UnitValue {
 
 impl Display for UnitValue {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        // todo: needs to be in parentheses if complex and not unitless
-        // e.g. `1 kg + i g` => 1 + 0.001i kg, which is incorrect
-        write!(f, "{}", self.value)?;
+        let use_parentheses = !self.unit.components.is_empty();
+        self.value.format(f, use_parentheses)?;
         if !self.unit.components.is_empty() {
             let mut negative_components = vec![];
             let mut first = true;
@@ -192,7 +191,8 @@ impl Display for UnitValue {
                     first = false;
                     write!(f, "{}", unit_exponent.unit.singular_name)?;
                     if unit_exponent.exponent != 1.into() {
-                        write!(f, "^{}", unit_exponent.exponent)?;
+                        write!(f, "^")?;
+                        unit_exponent.exponent.format(f, true)?;
                     }
                 }
             }
@@ -201,7 +201,8 @@ impl Display for UnitValue {
                 for unit_exponent in negative_components {
                     write!(f, " {}", unit_exponent.unit.singular_name)?;
                     if unit_exponent.exponent != (-1).into() {
-                        write!(f, "^{}", -unit_exponent.exponent.clone())?;
+                        write!(f, "^")?;
+                        (-unit_exponent.exponent.clone()).format(f, true)?;
                     }
                 }
             }

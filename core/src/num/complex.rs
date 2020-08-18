@@ -150,7 +150,7 @@ impl Complex {
 }
 
 impl Complex {
-    pub fn format(&self, f: &mut Formatter, exact: bool, base: Base) -> Result<(), Error> {
+    pub fn format(&self, f: &mut Formatter, exact: bool, base: Base, use_parentheses_if_complex: bool) -> Result<(), Error> {
         let style = if exact {
             FormattingStyle::ExactFloatWithFractionFallback
         } else {
@@ -162,6 +162,9 @@ impl Complex {
         }
 
         if self.real != 0.into() {
+            if use_parentheses_if_complex {
+                write!(f, "(")?;
+            }
             self.real.format(f, base, style, false)?;
             if self.imag > 0.into() {
                 write!(f, " + ")?;
@@ -169,6 +172,9 @@ impl Complex {
             } else {
                 write!(f, " - ")?;
                 (-self.imag.clone()).format(f, base, style, true)?;
+            }
+            if use_parentheses_if_complex {
+                write!(f, ")")?;
             }
         } else {
             self.imag.format(f, base, style, true)?;

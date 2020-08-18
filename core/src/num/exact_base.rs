@@ -1,7 +1,7 @@
 use crate::num::complex::Complex;
 use crate::num::Base;
 use std::cmp::Ordering;
-use std::fmt::{Display, Error, Formatter};
+use std::fmt::{Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -159,14 +159,12 @@ impl ExactBase {
             base: Base::Decimal,
         }
     }
-}
 
-impl Display for ExactBase {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+    pub fn format(&self, f: &mut Formatter, use_parentheses_if_complex: bool) -> Result<(), Error> {
         if !self.exact {
             write!(f, "approx. ")?;
         }
-        self.value.format(f, self.exact, self.base)?;
+        self.value.format(f, self.exact, self.base, use_parentheses_if_complex)?;
         Ok(())
     }
 }
