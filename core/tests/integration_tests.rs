@@ -383,4 +383,5 @@ fn test_complex_number_with_unit() {
 #[test]
 fn test_more_units() {
     test_evaluation("0m + 1kph * 1 hr", "1000 m");
+    test_evaluation("0GiB + 1GB", "0.931322574615478515625 GiB");
 }
