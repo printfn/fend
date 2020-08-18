@@ -27,7 +27,7 @@ impl Value {
                     other.expect_num()?.make_approximate()
                 } else if name == "abs" {
                     let arg = other.expect_num()?;
-                    if arg < 0.into() {
+                    if arg.is_negative() {
                         -arg
                     } else {
                         arg

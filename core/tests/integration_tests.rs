@@ -351,3 +351,15 @@ fn test_exponents() {
     expect_parse_error("1e- 1");
     test_evaluation("0 + 0b1e-6", "0.015625");
 }
+
+#[test]
+fn test_basic_units() {
+    test_evaluation("1kg", "1 kg");
+    test_evaluation("1g", "1 g");
+    test_evaluation("1kg + 1g", "1.001 kg");
+    test_evaluation("1kg + 100g", "1.1 kg");
+    test_evaluation("0g + 1kg + 100g", "1100 g");
+    test_evaluation("0g + 1kg", "1000 g");
+    test_evaluation("1/0.5kg", "2 kg^-1");
+    test_evaluation("1/(1/0.5kg)", "0.5 kg");
+}

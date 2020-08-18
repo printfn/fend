@@ -148,7 +148,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
         let base_as_u64: u64 = base.base_as_u8().into();
-        res = res.clone() * base_as_u64.into() + digit.into();
+        res = (res.clone() * base_as_u64.into()).add(digit.into())?;
         Ok(())
     })?;
 
@@ -172,7 +172,7 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
             }
             let mut exp = Number::zero_with_base(Base::Decimal);
             let (_, remaining) = parse_integer(input, true, false, Base::Decimal, &mut |digit| {
-                exp = exp.clone() * 10.into() + digit.into();
+                exp = (exp.clone() * 10.into()).add(digit.into())?;
                 Ok(())
             })?;
             if negative_exponent {

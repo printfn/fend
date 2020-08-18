@@ -4,7 +4,7 @@ mod complex;
 mod exact_base;
 mod unit;
 
-pub type Number = exact_base::ExactBase;
+pub type Number = unit::UnitValue;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Base {

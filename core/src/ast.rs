@@ -42,8 +42,16 @@ pub fn evaluate(expr: Expr) -> Result<Value, String> {
         Expr::Parens(x) => evaluate(*x)?,
         Expr::UnaryMinus(x) => Value::Num(-evaluate(*x)?.expect_num()?),
         Expr::UnaryPlus(x) => Value::Num(evaluate(*x)?.expect_num()?),
-        Expr::Add(a, b) => Value::Num(evaluate(*a)?.expect_num()? + evaluate(*b)?.expect_num()?),
-        Expr::Sub(a, b) => Value::Num(evaluate(*a)?.expect_num()? - evaluate(*b)?.expect_num()?),
+        Expr::Add(a, b) => Value::Num(
+            evaluate(*a)?
+                .expect_num()?
+                .add(evaluate(*b)?.expect_num()?)?,
+        ),
+        Expr::Sub(a, b) => Value::Num(
+            evaluate(*a)?
+                .expect_num()?
+                .sub(evaluate(*b)?.expect_num()?)?,
+        ),
         Expr::Mul(a, b) => Value::Num(evaluate(*a)?.expect_num()? * evaluate(*b)?.expect_num()?),
         Expr::Div(a, b) => Value::Num(
             evaluate(*a)?
@@ -68,6 +76,8 @@ fn resolve_identifier(ident: &str) -> Result<Value, String> {
         "abs" => Value::Func("abs".to_string()),
         "approx." => Value::Func("approximately".to_string()),
         "approximately" => Value::Func("approximately".to_string()),
+        "kg" => Value::Num(Number::kg()),
+        "g" => Value::Num(Number::g()),
         _ => return Err(format!("Unknown identifier '{}'", ident)),
     })
 }
