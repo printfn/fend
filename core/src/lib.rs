@@ -5,8 +5,8 @@ mod num;
 mod parser;
 mod value;
 
-use value::Value;
 use std::collections::HashMap;
+use value::Value;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct FendResult {
@@ -41,7 +41,7 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         Self {
-            scope: crate::num::Number::create_initial_units()
+            scope: crate::num::Number::create_initial_units(),
         }
     }
 }

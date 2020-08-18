@@ -1,6 +1,9 @@
 use crate::num::Number;
 use crate::value::Value;
-use std::{collections::HashMap, fmt::{Debug, Error, Formatter}};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Error, Formatter},
+};
 
 #[derive(Clone)]
 pub enum Expr {
@@ -52,7 +55,9 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
                 .expect_num()?
                 .sub(evaluate(*b, scope)?.expect_num()?)?,
         ),
-        Expr::Mul(a, b) => Value::Num(evaluate(*a, scope)?.expect_num()? * evaluate(*b, scope)?.expect_num()?),
+        Expr::Mul(a, b) => {
+            Value::Num(evaluate(*a, scope)?.expect_num()? * evaluate(*b, scope)?.expect_num()?)
+        }
         Expr::Div(a, b) => Value::Num(
             evaluate(*a, scope)?
                 .expect_num()?
@@ -82,6 +87,6 @@ fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Val
             } else {
                 return Err(format!("Unknown identifier '{}'", ident));
             }
-        },
+        }
     })
 }

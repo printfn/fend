@@ -264,7 +264,10 @@ fn test_tricky_power_negation() {
     test_evaluation("2 * -3 * 4", "-24");
     test_evaluation("-2^-3", "-0.125");
     let mut context = Context::new();
-    assert_eq!(evaluate("2^-3^4", &mut context), evaluate("1 / 2^81", &mut context));
+    assert_eq!(
+        evaluate("2^-3^4", &mut context),
+        evaluate("1 / 2^81", &mut context)
+    );
     test_evaluation("4^-1^2", "0.25");
 }
 

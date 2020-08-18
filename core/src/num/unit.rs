@@ -16,16 +16,52 @@ pub struct UnitValue {
 impl UnitValue {
     pub fn create_initial_units() -> HashMap<String, Value> {
         Self::create_units(vec![
+            ("s", "s", true, None),
+            ("m", "m", true, None),
             ("kg", "kg", true, None),
-            ("g", "g", true, Some("(1/1000) kg")),
+            ("A", "A", true, None),
+            ("K", "K", true, None),
+            ("mol", "mol", true, None),
+            ("cd", "cd", true, None),
+            ("g", "g", true, Some("(1/1000)kg")),
+            ("km", "km", true, Some("1000m")),
+            ("min", "min", true, Some("60s")),
+            ("hr", "hr", true, Some("60min")),
+            ("kph", "kph", true, Some("1 km / hr")),
+            ("bit", "bits", true, None),
+            ("byte", "bytes", true, Some("8 bit")),
+            ("KB", "KB", true, Some("1000 bytes")),
+            ("MB", "MB", true, Some("1000 KB")),
+            ("GB", "GB", true, Some("1000 MB")),
+            ("TB", "TB", true, Some("1000 GB")),
+            ("KiB", "KiB", true, Some("1024 KB")),
+            ("MiB", "MiB", true, Some("1024 KiB")),
+            ("GiB", "GiB", true, Some("1024 MiB")),
+            ("TiB", "TiB", true, Some("1024 GiB")),
+            ("Kb", "Kb", true, Some("1000 bits")),
+            ("Mb", "Mb", true, Some("1000 Kb")),
+            ("Gb", "Gb", true, Some("1000 Mb")),
+            ("Tb", "Tb", true, Some("1000 Gb")),
+            ("Kib", "Kib", true, Some("1024 Kb")),
+            ("Mib", "Mib", true, Some("1024 Kib")),
+            ("Gib", "Gib", true, Some("1024 Mib")),
+            ("Tib", "Tib", true, Some("1024 Gib")),
         ])
     }
 
-    fn create_units(unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>) -> HashMap<String, Value> {
+    fn create_units(
+        unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>,
+    ) -> HashMap<String, Value> {
         let mut scope = HashMap::new();
         for (singular_name, plural_name, space, expr) in unit_descriptions {
             let unit = if let Some(expr) = expr {
-                Self::new_unit(singular_name.to_string(), plural_name.to_string(), space, expr, &scope)
+                Self::new_unit(
+                    singular_name.to_string(),
+                    plural_name.to_string(),
+                    space,
+                    expr,
+                    &scope,
+                )
             } else {
                 Self::new_base_unit(singular_name.to_string(), plural_name.to_string(), space)
             };
@@ -42,7 +78,7 @@ impl UnitValue {
         plural_name: impl ToString,
         space: bool,
         expression: impl ToString,
-        scope: &HashMap<String, Value>
+        scope: &HashMap<String, Value>,
     ) -> Self {
         let expression_as_string = expression.to_string();
         // todo remove unwraps
