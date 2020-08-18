@@ -164,7 +164,8 @@ impl ExactBase {
         if !self.exact {
             write!(f, "approx. ")?;
         }
-        self.value.format(f, self.exact, self.base, use_parentheses_if_complex)?;
+        self.value
+            .format(f, self.exact, self.base, use_parentheses_if_complex)?;
         Ok(())
     }
 }

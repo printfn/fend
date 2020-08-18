@@ -1,10 +1,10 @@
 use crate::num::exact_base::ExactBase;
+use crate::num::Base;
 use std::ops::{Mul, Neg};
 use std::{
     collections::HashMap,
     fmt::{Display, Error, Formatter},
 };
-use crate::num::Base;
 
 #[derive(Clone, Debug)]
 pub struct UnitValue {
@@ -14,27 +14,47 @@ pub struct UnitValue {
 
 impl UnitValue {
     pub fn kg() -> Self {
-        let base_kg = BaseUnit::new("kilogram");
-        let kg = NamedUnit::new(
-            "kg",
-            "kg",
-            true,
-            vec![UnitExponent::new(base_kg.clone(), 1)],
-            1,
-        );
-        Self::new(1, vec![UnitExponent::new(kg.clone(), 1)])
+        Self::new_base_unit("kg", "kg", true)
     }
 
     pub fn g() -> Self {
-        let base_kg = BaseUnit::new("kilogram");
-        let g = NamedUnit::new(
-            "g",
-            "g",
-            true,
-            vec![UnitExponent::new(base_kg.clone(), 1)],
-            ExactBase::from(1).div(1000.into()).unwrap(),
+        Self::new_unit("g", "g", true, "(1/1000) kg")
+    }
+
+    fn new_unit(
+        singular_name: impl ToString,
+        plural_name: impl ToString,
+        space: bool,
+        expression: impl ToString,
+    ) -> Self {
+        let expression_as_string = expression.to_string();
+        // todo remove unwraps
+        let value = crate::evaluate_to_value(expression_as_string.as_str())
+            .unwrap()
+            .expect_num()
+            .unwrap();
+        let (hashmap, scale) = value.unit.into_hashmap_and_scale();
+        let scale = scale * value.value;
+        let resulting_unit = NamedUnit::new(singular_name, plural_name, space, hashmap, scale);
+        UnitValue::new(1, vec![UnitExponent::new(resulting_unit, 1)])
+    }
+
+    fn new_base_unit(
+        singular_name: impl ToString,
+        plural_name: impl ToString,
+        space: bool,
+    ) -> Self {
+        let base_kg = BaseUnit::new(singular_name.to_string());
+        let mut hashmap = HashMap::new();
+        hashmap.insert(base_kg.clone(), 1.into());
+        let kg = NamedUnit::new(
+            singular_name.to_string(),
+            plural_name.to_string(),
+            space,
+            hashmap,
+            1,
         );
-        Self::new(1, vec![UnitExponent::new(g.clone(), 1)])
+        Self::new(1, vec![UnitExponent::new(kg.clone(), 1)])
     }
 
     fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent<NamedUnit>>) -> Self {
@@ -65,7 +85,10 @@ impl UnitValue {
     pub fn div(self, rhs: Self) -> Result<Self, String> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
-            components.push(UnitExponent::<NamedUnit>::new(rhs_component.unit, -rhs_component.exponent));
+            components.push(UnitExponent::<NamedUnit>::new(
+                rhs_component.unit,
+                -rhs_component.exponent,
+            ));
         }
         Ok(Self {
             value: self.value.div(rhs.value)?,
@@ -101,14 +124,14 @@ impl UnitValue {
     pub fn approx_pi() -> Self {
         Self {
             value: ExactBase::approx_pi(),
-            unit: Unit { components: vec![] }
+            unit: Unit { components: vec![] },
         }
     }
 
     pub fn i() -> Self {
         Self {
             value: ExactBase::i(),
-            unit: Unit { components: vec![] }
+            unit: Unit { components: vec![] },
         }
     }
 
@@ -223,13 +246,11 @@ impl Unit {
         let mut scale = ExactBase::from(1);
         for named_unit_exp in self.components.iter() {
             let overall_exp = &named_unit_exp.exponent;
-            for base_unit_exp in named_unit_exp.unit.base_units.iter() {
-                match hashmap.get_mut(&base_unit_exp.unit) {
-                    Some(exp) => {
-                        *exp = exp.clone() + overall_exp.clone() * base_unit_exp.exponent.clone()
-                    }
+            for (base_unit, base_exp) in named_unit_exp.unit.base_units.iter() {
+                match hashmap.get_mut(&base_unit) {
+                    Some(exp) => *exp = exp.clone() + overall_exp.clone() * base_exp.clone(),
                     None => {
-                        hashmap.insert(base_unit_exp.unit.clone(), overall_exp.clone());
+                        hashmap.insert(base_unit.clone(), overall_exp.clone());
                     }
                 }
             }
@@ -258,9 +279,7 @@ impl Unit {
     }
 
     fn unitless() -> Self {
-        Self {
-            components: vec![],
-        }
+        Self { components: vec![] }
     }
 }
 
@@ -285,7 +304,7 @@ struct NamedUnit {
     singular_name: String,
     plural_name: String,
     spacing: bool, // true for most units, false for percentages and degrees (angles)
-    base_units: Vec<UnitExponent<BaseUnit>>,
+    base_units: HashMap<BaseUnit, ExactBase>,
     scale: ExactBase,
 }
 
@@ -294,7 +313,7 @@ impl NamedUnit {
         singular_name: impl ToString,
         plural_name: impl ToString,
         spacing: bool,
-        base_units: Vec<UnitExponent<BaseUnit>>,
+        base_units: HashMap<BaseUnit, ExactBase>,
         scale: impl Into<ExactBase>,
     ) -> Self {
         Self {
@@ -328,7 +347,9 @@ mod tests {
     #[test]
     fn test_basic_kg() {
         let base_kg = BaseUnit::new("kilogram");
-        let kg = NamedUnit::new("kg", "kg", true, vec![UnitExponent::new(base_kg, 1)], 1);
+        let mut hashmap = HashMap::new();
+        hashmap.insert(base_kg, 1.into());
+        let kg = NamedUnit::new("kg", "kg", true, hashmap, 1);
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg.clone(), 1)]);
         let sum = one_kg.add(two_kg).unwrap();
@@ -338,18 +359,14 @@ mod tests {
     #[test]
     fn test_basic_kg_and_g() {
         let base_kg = BaseUnit::new("kilogram");
-        let kg = NamedUnit::new(
-            "kg",
-            "kg",
-            true,
-            vec![UnitExponent::new(base_kg.clone(), 1)],
-            1,
-        );
+        let mut hashmap = HashMap::new();
+        hashmap.insert(base_kg.clone(), 1.into());
+        let kg = NamedUnit::new("kg", "kg", true, hashmap.clone(), 1);
         let g = NamedUnit::new(
             "g",
             "g",
             true,
-            vec![UnitExponent::new(base_kg, 1)],
+            hashmap,
             ExactBase::from(1).div(1000.into()).unwrap(),
         );
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);

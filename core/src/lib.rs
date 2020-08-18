@@ -21,6 +21,15 @@ impl FendResult {
     }
 }
 
+fn evaluate_to_value(input: &str) -> Result<value::Value, String> {
+    let (parsed, input) = parser::parse_expression(input)?;
+    if !input.is_empty() {
+        return Err(format!("Unexpected input found: '{}'", input));
+    }
+    let result = ast::evaluate(parsed)?;
+    Ok(result)
+}
+
 pub fn evaluate(input: &str) -> Result<FendResult, String> {
     let (_, input) = parser::skip_whitespace(input)?;
     if input.is_empty() {
@@ -30,11 +39,7 @@ pub fn evaluate(input: &str) -> Result<FendResult, String> {
             other_info: vec![],
         });
     }
-    let (parsed, input) = parser::parse_expression(input)?;
-    if !input.is_empty() {
-        return Err(format!("Unexpected input found: '{}'", input));
-    }
-    let result = ast::evaluate(parsed)?;
+    let result = evaluate_to_value(input)?;
     Ok(FendResult {
         main_result: format!("{}", result),
         other_info: vec![],
