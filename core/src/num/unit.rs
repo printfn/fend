@@ -16,7 +16,8 @@ pub struct UnitValue {
 impl UnitValue {
     pub fn create_initial_units() -> HashMap<String, Value> {
         Self::create_units(vec![
-            ("%", "%", false, Some("0.01")),
+            ("percent", "percent", true, Some("0.01")),
+            ("%", "%", false, Some("percent")),
             ("‰", "‰", false, Some("0.001")),
             ("s", "s", true, None),
             ("second", "seconds", true, Some("s")),
