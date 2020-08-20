@@ -1,6 +1,56 @@
 use crate::ast::Expr;
 use crate::num::{Base, Number};
 
+/*
+
+Grammar:
+
+expression = additive
+additive = compound_fraction [addition_cont subtraction_cont]*
+addition_cont = '+' compound_fraction
+subtraction_cont = '-' compound_fraction
+compound_fraction = A:multiplicative B:multiplicative?
+  // if there are two terms, they are matched as follows:
+  // <Num>, <Num> / <Num> => A + B # e.g. 8 1/2
+  // -<Num>, <Num / <Num> => A - B # e.g. -8 1/2
+  // <ApplyMul>, <ApplyMul> => A + B # e.g. 1 foot 3 inches
+multiplicative = power [multiplication_cont division_cont]*
+multiplication_cont = '*' power
+division_cont = '/' power
+power = whitespace? [('-' power) ('+' power) (apply power_cont)]
+power_cont = ['^' '**'] power
+apply = parens_or_literal [parens_or_literal]*
+  // every pair of terms is matched as follows
+  // <Num>, <Num> => error
+  // <ApplyMul>, <Num> => error
+  // _, <Num> => ApplyFunctionCall
+  // <Num>, _ => ApplyMul
+  // <ApplyMul>, _ => ApplyMul
+  // _ => Apply
+parens_or_literal = [number parens ident]
+parens = whitespace? '(' expression ')' whitespace?
+ident = whitespace? alphabetic [alphabetic '.']*
+number =
+    whitespace?
+    base_prefix?
+    A:integer
+    ('.' B:integer)?
+    ('e' '-'? C:integer)?
+
+  // A can have digit separators but no leading zero
+  // B can have digit separators and leading zeroes
+  // C can have digit separators but no leading zero,
+  //   and is only considered if the base <= 10
+  // A and B are in the parsed base, or 10 if unspecified.
+  // C is always in base 10
+  // If C is present, the number is multiplied by base^C
+
+base_prefix = ['0x' '0o' '0b' (A:integer '#')]
+  // A is decimal, and may not have leading zeroes or digit separators,
+  // and must be between 2 and 36 inclusive.
+
+*/
+
 type ParseResult<'a, T> = Result<(T, &'a str), String>;
 
 fn parse_char(input: &str) -> ParseResult<char> {
