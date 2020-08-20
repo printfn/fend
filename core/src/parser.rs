@@ -232,13 +232,11 @@ fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
 }
 
 fn parse_apply(input: &str) -> ParseResult<Expr> {
-    let error_message =
-        "Cannot multiply two plain numbers, use parentheses if you want to multiply them";
     let (mut res, mut input) = parse_parens_or_literal(input)?;
     loop {
         if let Ok((term, remaining)) = parse_parens_or_literal(input) {
             res = match (&res, &term) {
-                (Expr::Num(_), Expr::Num(_)) => return Err(error_message.to_string()),
+                (Expr::Num(_), Expr::Num(_)) => return Ok((res, input)),
                 (_, Expr::Num(_)) => Expr::FunctionCall(Box::new(res), Box::new(term)),
                 (Expr::Num(_), _) => Expr::Mul(Box::new(res), Box::new(term)),
                 _ => Expr::Apply(Box::new(res), Box::new(term)),
@@ -310,20 +308,38 @@ fn parse_multiplicative(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
+fn parse_compound_fraction(input: &str) -> ParseResult<Expr> {
+    let (res, input) = parse_multiplicative(input)?;
+    if let Ok((rhs, remaining)) = parse_multiplicative(input) {
+        match (&res, &rhs) {
+            (Expr::Num(_), Expr::Div(b, c)) => {
+                match (&**b, &**c) {
+                    (Expr::Num(_), Expr::Num(_)) => {
+                        return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
+                    },
+                    _ => (),
+                }
+            },
+            _ => (),
+        };
+    }
+    Ok((res, input))
+}
+
 fn parse_addition_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '+')?;
-    let (b, input) = parse_multiplicative(input)?;
+    let (b, input) = parse_compound_fraction(input)?;
     Ok((b, input))
 }
 
 fn parse_subtraction_cont(input: &str) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_char(input, '-')?;
-    let (b, input) = parse_multiplicative(input)?;
+    let (b, input) = parse_compound_fraction(input)?;
     Ok((b, input))
 }
 
 fn parse_additive(input: &str) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_multiplicative(input)?;
+    let (mut res, mut input) = parse_compound_fraction(input)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input) {
             res = Expr::Add(Box::new(res), Box::new(term));

@@ -392,7 +392,13 @@ fn test_no_adjacent_numbers() {
     expect_parse_error("1 2 3 4 5");
     expect_parse_error("1 inch 5");
     expect_parse_error("abs 1 2");
-    expect_parse_error("abs 1 (2)");
+    //expect_parse_error("abs 1 (2)");
     expect_parse_error("1 inch 5 kg");
     test_evaluation("5 (abs 4)", "20");
+}
+
+#[test]
+fn test_compound_fraction() {
+    test_evaluation("1 2/3", "5/3");
+    test_evaluation("4 + 1 2/3", "17/3");
 }
