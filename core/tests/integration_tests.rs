@@ -402,3 +402,8 @@ fn test_compound_fraction() {
     test_evaluation("1 2/3", "5/3");
     test_evaluation("4 + 1 2/3", "17/3");
 }
+
+#[test]
+fn test_unit_sums() {
+    test_evaluation("5 feet 12 inch", "6 foot");
+}

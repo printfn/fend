@@ -236,9 +236,18 @@ fn parse_apply(input: &str) -> ParseResult<Expr> {
     loop {
         if let Ok((term, remaining)) = parse_parens_or_literal(input) {
             res = match (&res, &term) {
-                (Expr::Num(_), Expr::Num(_)) => return Ok((res, input)),
-                (_, Expr::Num(_)) => Expr::FunctionCall(Box::new(res), Box::new(term)),
-                (Expr::Num(_), _) => Expr::Mul(Box::new(res), Box::new(term)),
+                (Expr::Num(_), Expr::Num(_)) => {
+                    // this may later be parsed as a compound fraction
+                    return Ok((res, input));
+                }
+                (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+                    // this may later become an addition, e.g. 6 feet 1 inch
+                    return Ok((res, input));
+                }
+                (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(res), Box::new(term)),
+                (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
+                    Expr::ApplyMul(Box::new(res), Box::new(term))
+                }
                 _ => Expr::Apply(Box::new(res), Box::new(term)),
             };
             input = remaining;
@@ -312,14 +321,15 @@ fn parse_compound_fraction(input: &str) -> ParseResult<Expr> {
     let (res, input) = parse_multiplicative(input)?;
     if let Ok((rhs, remaining)) = parse_multiplicative(input) {
         match (&res, &rhs) {
-            (Expr::Num(_), Expr::Div(b, c)) => {
-                match (&**b, &**c) {
-                    (Expr::Num(_), Expr::Num(_)) => {
-                        return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
-                    },
-                    _ => (),
+            (Expr::Num(_), Expr::Div(b, c)) => match (&**b, &**c) {
+                (Expr::Num(_), Expr::Num(_)) => {
+                    return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
                 }
+                _ => (),
             },
+            (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _)) => {
+                return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
+            }
             _ => (),
         };
     }
