@@ -232,12 +232,23 @@ fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
 }
 
 fn parse_apply(input: &str) -> ParseResult<Expr> {
-    let (a, input) = parse_parens_or_literal(input)?;
-    Ok(if let Ok((b, input)) = parse_apply(input) {
-        (Expr::Apply(Box::new(a), Box::new(b)), input)
-    } else {
-        (a, input)
-    })
+    let error_message =
+        "Cannot multiply two plain numbers, use parentheses if you want to multiply them";
+    let (mut res, mut input) = parse_parens_or_literal(input)?;
+    loop {
+        if let Ok((term, remaining)) = parse_parens_or_literal(input) {
+            res = match (&res, &term) {
+                (Expr::Num(_), Expr::Num(_)) => return Err(error_message.to_string()),
+                (_, Expr::Num(_)) => Expr::FunctionCall(Box::new(res), Box::new(term)),
+                (Expr::Num(_), _) => Expr::Mul(Box::new(res), Box::new(term)),
+                _ => Expr::Apply(Box::new(res), Box::new(term)),
+            };
+            input = remaining;
+        } else {
+            break;
+        }
+    }
+    Ok((res, input))
 }
 
 fn parse_power_cont(mut input: &str) -> ParseResult<Expr> {

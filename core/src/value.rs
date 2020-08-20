@@ -15,9 +15,15 @@ impl Value {
         }
     }
 
-    pub fn apply(&self, other: Value) -> Result<Value, String> {
+    pub fn apply(&self, other: Value, allow_multiplication: bool) -> Result<Value, String> {
         Ok(Value::Num(match self {
-            Value::Num(n) => n.clone() * other.expect_num()?,
+            Value::Num(n) => {
+                if allow_multiplication {
+                    n.clone() * other.expect_num()?
+                } else {
+                    return Err(format!("{} is not a function", self));
+                }
+            }
             Value::Func(name) => {
                 if name == "sqrt" {
                     other.expect_num()?.root_n(&2.into())?

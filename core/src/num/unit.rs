@@ -371,7 +371,8 @@ impl Unit {
                     None => {
                         let new_exp = overall_exp.clone() * base_exp.clone();
                         if new_exp != 0.into() {
-                            hashmap.insert(base_unit.clone(), overall_exp.clone() * base_exp.clone());
+                            hashmap
+                                .insert(base_unit.clone(), overall_exp.clone() * base_exp.clone());
                         }
                     }
                 }

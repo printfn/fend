@@ -17,7 +17,10 @@ pub enum Expr {
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
     Pow(Box<Expr>, Box<Expr>),
+    // Call a function or multiply the expressions
     Apply(Box<Expr>, Box<Expr>),
+    // Call a function, or throw an error if lhs is not a function
+    FunctionCall(Box<Expr>, Box<Expr>),
 }
 
 impl Debug for Expr {
@@ -33,7 +36,8 @@ impl Debug for Expr {
             Expr::Mul(a, b) => write!(f, "({:?}*{:?})", *a, *b),
             Expr::Div(a, b) => write!(f, "({:?}/{:?})", *a, *b),
             Expr::Pow(a, b) => write!(f, "({:?}^{:?})", *a, *b),
-            Expr::Apply(a, b) => write!(f, "({:?} {:?})", *a, *b),
+            Expr::Apply(a, b) => write!(f, "({:?} ({:?}))", *a, *b),
+            Expr::FunctionCall(a, b) => write!(f, "({:?} {:?})", *a, *b),
         }
     }
 }
@@ -68,7 +72,8 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
                 .expect_num()?
                 .pow(evaluate(*b, scope)?.expect_num()?)?,
         ),
-        Expr::Apply(a, b) => evaluate(*a, scope)?.apply(evaluate(*b, scope)?)?,
+        Expr::Apply(a, b) => evaluate(*a, scope)?.apply(evaluate(*b, scope)?, true)?,
+        Expr::FunctionCall(a, b) => evaluate(*a, scope)?.apply(evaluate(*b, scope)?, false)?,
     })
 }
 
