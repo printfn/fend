@@ -327,6 +327,16 @@ fn parse_compound_fraction(input: &str) -> ParseResult<Expr> {
                 }
                 _ => (),
             },
+            (Expr::UnaryMinus(a), Expr::Div(b, c)) => match (&**a, &**b, &**c) {
+                (Expr::Num(_), Expr::Num(_), Expr::Num(_)) => {
+                    return Ok((
+                        // note that res = '-<num>' here because unary minus has a higher precedence
+                        Expr::Sub(Box::new(res), Box::new(rhs)),
+                        remaining,
+                    ))
+                }
+                _ => (),
+            },
             (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _)) => {
                 return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
             }

@@ -401,6 +401,7 @@ fn test_no_adjacent_numbers() {
 fn test_compound_fraction() {
     test_evaluation("1 2/3", "5/3");
     test_evaluation("4 + 1 2/3", "17/3");
+    test_evaluation("-8 1/2", "-8.5");
 }
 
 #[test]
