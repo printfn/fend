@@ -266,6 +266,10 @@ impl UnitValue {
         self.value.add_digit_in_base(digit, base)
     }
 
+    pub fn is_zero(&self) -> bool {
+        self.value == 0.into()
+    }
+
     pub fn is_negative(&self) -> bool {
         self.value < 0.into()
     }

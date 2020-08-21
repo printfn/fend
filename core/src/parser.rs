@@ -33,7 +33,8 @@ ident = whitespace? alphabetic [alphabetic '.']*
 number =
     whitespace?
     base_prefix?
-    A:integer
+    basic_number
+basic_number(base) = A:integer
     ('.' B:integer)?
     ('e' '-'? C:integer)?
 
@@ -184,16 +185,7 @@ fn parse_base_prefix(input: &str) -> ParseResult<Base> {
     }
 }
 
-fn parse_number(input: &str) -> ParseResult<Expr> {
-    let (_, mut input) = skip_whitespace(input)?;
-
-    let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
-        input = remaining;
-        base
-    } else {
-        Base::Decimal
-    };
-
+fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> ParseResult<Number> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
@@ -209,6 +201,10 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
             Ok(())
         })?;
         input = remaining;
+    }
+
+    if !allow_zero && res.is_zero() {
+        return Err("Invalid number: 0".to_string());
     }
 
     // parse optional exponent, but only for base 10 and below
@@ -234,6 +230,21 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
             input = remaining;
         }
     }
+
+    Ok((res, input))
+}
+
+fn parse_number(input: &str) -> ParseResult<Expr> {
+    let (_, mut input) = skip_whitespace(input)?;
+
+    let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
+        input = remaining;
+        base
+    } else {
+        Base::Decimal
+    };
+
+    let (res, input) = parse_basic_number(input, base, true)?;
 
     let (_, input) = skip_whitespace(input)?;
     return Ok((Expr::Num(res), input));
