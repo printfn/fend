@@ -163,7 +163,7 @@ impl Complex {
             FormattingStyle::ApproxFloat
         };
         if self.imag == 0.into() {
-            self.real.format(f, base, style, false)?;
+            self.real.format(f, base, style, false, use_parentheses_if_complex)?;
             return Ok(());
         }
 
@@ -171,19 +171,19 @@ impl Complex {
             if use_parentheses_if_complex {
                 write!(f, "(")?;
             }
-            self.real.format(f, base, style, false)?;
+            self.real.format(f, base, style, false, false)?;
             if self.imag > 0.into() {
                 write!(f, " + ")?;
-                self.imag.format(f, base, style, true)?;
+                self.imag.format(f, base, style, true, false)?;
             } else {
                 write!(f, " - ")?;
-                (-self.imag.clone()).format(f, base, style, true)?;
+                (-self.imag.clone()).format(f, base, style, true, false)?;
             }
             if use_parentheses_if_complex {
                 write!(f, ")")?;
             }
         } else {
-            self.imag.format(f, base, style, true)?;
+            self.imag.format(f, base, style, true, use_parentheses_if_complex)?;
         }
 
         Ok(())

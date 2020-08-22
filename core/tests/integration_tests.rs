@@ -384,6 +384,7 @@ fn test_complex_number_with_unit() {
 fn test_more_units() {
     test_evaluation("0m + 1kph * 1 hr", "1000 m");
     test_evaluation("0GiB + 1GB", "0.931322574615478515625 GiB");
+    test_evaluation("0m/s + 1 km/hr", "(5/18) m / s");
 }
 
 #[test]
@@ -392,7 +393,6 @@ fn test_no_adjacent_numbers() {
     expect_parse_error("1 2 3 4 5");
     expect_parse_error("1 inch 5");
     expect_parse_error("abs 1 2");
-    //expect_parse_error("abs 1 (2)");
     expect_parse_error("1 inch 5 kg");
     test_evaluation("5 (abs 4)", "20");
 }
