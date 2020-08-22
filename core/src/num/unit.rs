@@ -191,6 +191,17 @@ impl UnitValue {
         })
     }
 
+    pub fn convert_to(self, rhs: Self) -> Result<Self, String> {
+        if rhs.value != 1.into() {
+            return Err("Right-hand side of unit conversion has a numerical value".to_string());
+        }
+        let scale_factor = Unit::try_convert(&self.unit, &rhs.unit)?;
+        Ok(UnitValue {
+            value: self.value * scale_factor,
+            unit: rhs.unit,
+        })
+    }
+
     pub fn sub(self, rhs: Self) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit)?;
         Ok(UnitValue {

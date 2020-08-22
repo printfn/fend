@@ -5,7 +5,9 @@ use crate::num::{Base, Number};
 
 Grammar:
 
-expression = additive
+expression = arrow_conversion
+arrow_conversion = additive arrow_conversion_cont*
+arrow_conversion_cont = '->' additive
 additive = compound_fraction [addition_cont subtraction_cont]*
 addition_cont = '+' compound_fraction
 subtraction_cont = '-' compound_fraction
@@ -447,6 +449,26 @@ fn parse_additive(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
+fn parse_arrow_conversion_cont(input: &str) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_char(input, '-')?;
+    let (_, input) = parse_fixed_char(input, '>')?;
+    let (b, input) = parse_additive(input)?;
+    Ok((b, input))
+}
+
+fn parse_arrow_conversion(input: &str) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_additive(input)?;
+    loop {
+        if let Ok((term, remaining)) = parse_arrow_conversion_cont(input) {
+            res = Expr::As(Box::new(res), Box::new(term));
+            input = remaining;
+        } else {
+            break;
+        }
+    }
+    Ok((res, input))
+}
+
 pub fn parse_expression(input: &str) -> ParseResult<Expr> {
-    parse_additive(input)
+    parse_arrow_conversion(input)
 }

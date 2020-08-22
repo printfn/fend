@@ -432,3 +432,14 @@ fn test_unit_sums() {
     test_evaluation("3'6\"", "3.5'");
     test_evaluation("3’6”", "3.5’");
 }
+
+#[test]
+fn test_unit_conversions() {
+    expect_parse_error("->");
+    expect_parse_error("1m->");
+    expect_parse_error("1m - >");
+    expect_parse_error("->1ft");
+    expect_parse_error("1m -> 45ft");
+    expect_parse_error("1m -> 45 kg ft");
+    test_evaluation("1' -> inches", "12 inch");
+}
