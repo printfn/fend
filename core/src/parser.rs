@@ -250,16 +250,28 @@ fn parse_number(input: &str) -> ParseResult<Expr> {
     return Ok((Expr::Num(res), input));
 }
 
+fn is_valid_in_ident(ch: char, first: bool) -> bool {
+    if ch.is_alphabetic() {
+        true
+    } else if "%‰\"'’”".contains(ch) {
+        true
+    } else if !first && ".".contains(ch) {
+        true
+    } else {
+        false
+    }
+}
+
 fn parse_ident(input: &str) -> ParseResult<Expr> {
     let (_, input) = skip_whitespace(input)?;
     let (ch, mut input) = parse_char(input)?;
-    if !ch.is_alphabetic() {
+    if !is_valid_in_ident(ch, true) {
         return Err(format!("Found invalid character in identifier: '{}'", ch));
     }
     let mut ident = ch.to_string();
     loop {
         if let Ok((ch, remaining)) = parse_char(input) {
-            if ch.is_alphanumeric() || ch == '.' {
+            if is_valid_in_ident(ch, false) {
                 ident.push(ch);
                 input = remaining;
                 continue;

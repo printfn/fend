@@ -387,6 +387,26 @@ fn test_more_units() {
     test_evaluation("0m/s + 1 km/hr", "(5/18) m / s");
     test_evaluation("0m/s + i km/hr", "(5i/18) m / s");
     test_evaluation("0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
+    expect_parse_error("7165928\t761528765");
+    test_evaluation("1 2/3", "5/3");
+    test_evaluation("abs 2", "2");
+    test_evaluation("5 m", "5 m");
+    test_evaluation("(4)(6)", "24");
+    test_evaluation("5(6)", "30");
+    expect_parse_error("(5)6");
+    test_evaluation("3’6”", "3.5’");
+    //test_evaluation("1 light year", "1 light year");
+    expect_parse_error("1 2 m");
+    test_evaluation("5pi", "approx. 15.7079632679");
+    test_evaluation("5 pi/2", "approx. 7.8539816339");
+    test_evaluation("5 i/2", "2.5i");
+    test_evaluation("3 m 15 cm", "3.15 m");
+    test_evaluation("5%", "5%");
+    test_evaluation("5% + 0.1", "15%");
+    test_evaluation("5% + 1", "105%");
+    test_evaluation("0.1 + 5%", "0.15");
+    test_evaluation("1 + 5%", "1.05");
+    //test_evaluation("5% * 5%", "0.25%");
 }
 
 #[test]
@@ -409,4 +429,6 @@ fn test_compound_fraction() {
 #[test]
 fn test_unit_sums() {
     test_evaluation("5 feet 12 inch", "6 foot");
+    test_evaluation("3'6\"", "3.5'");
+    test_evaluation("3’6”", "3.5’");
 }
