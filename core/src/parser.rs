@@ -1,5 +1,7 @@
 use crate::ast::Expr;
-use crate::num::{Base, Number};
+use crate::lexer::{LexerToken, Symbol};
+
+type Token = LexerToken;
 
 /*
 
@@ -54,259 +56,63 @@ base_prefix = ['0x' '0o' '0b' (A:integer '#')]
 
 */
 
-type ParseResult<'a, T> = Result<(T, &'a str), String>;
+type ParseResult<'a, T> = Result<(T, &'a [Token]), String>;
 
-fn parse_char(input: &str) -> ParseResult<char> {
-    let mut char_indices = input.char_indices();
-    if let Some((_, ch)) = char_indices.next() {
-        if let Some((idx, _)) = char_indices.next() {
-            let (_a, b) = input.split_at(idx);
-            Ok((ch, b))
-        } else {
-            let (empty, _b) = input.split_at(0);
-            Ok((ch, empty))
-        }
+fn parse_token(input: &[Token]) -> ParseResult<Token> {
+    if input.is_empty() {
+        Err("Expected a token".to_string())
     } else {
-        Err("Expected a character".to_string())
+        Ok((input[0].clone(), &input[1..]))
     }
 }
 
-pub fn skip_whitespace(mut input: &str) -> ParseResult<()> {
-    loop {
-        match parse_char(input) {
-            Ok((ch, remaining)) => {
-                if ch.is_whitespace() {
-                    input = remaining;
-                } else {
-                    return Ok(((), input));
-                }
-            }
-            Err(_) => return Ok(((), input)),
-        }
-    }
-}
-
-fn parse_ascii_digit(input: &str, base: Base) -> ParseResult<u64> {
-    let (ch, input) = parse_char(input)?;
-    if let Some(digit) = ch.to_digit(base.base_as_u8().into()) {
-        Ok((digit.into(), input))
-    } else {
-        Err(format!("Expected a digit, found '{}'", ch))
-    }
-}
-
-fn parse_fixed_char(input: &str, ch: char) -> ParseResult<()> {
-    let (parsed_ch, input) = parse_char(input)?;
-    if parsed_ch == ch {
-        Ok(((), input))
-    } else {
-        Err(format!("Expected '{}', found '{}'", parsed_ch, ch))
-    }
-}
-
-// Parses a plain integer with no whitespace and no base prefix.
-// Leading minus sign is not allowed.
-fn parse_integer<'a>(
-    input: &'a str,
-    allow_digit_separator: bool,
-    allow_leading_zeroes: bool,
-    base: Base,
-    process_digit: &mut impl FnMut(u64) -> Result<(), String>,
-) -> ParseResult<'a, ()> {
-    let (digit, mut input) = parse_ascii_digit(input, base)?;
-    process_digit(digit)?;
-    let leading_zero = digit == 0;
-    let mut parsed_digit_separator;
-    loop {
-        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
-            input = remaining;
-            parsed_digit_separator = true;
-            if !allow_digit_separator {
-                return Err("Digit separators are not allowed".to_string());
-            }
-        } else {
-            parsed_digit_separator = false;
-        }
-        match parse_ascii_digit(input, base) {
-            Err(_) => {
-                if parsed_digit_separator {
-                    return Err("Digit separators can only occur between digits".to_string());
-                }
-                break;
-            }
-            Ok((digit, next_input)) => {
-                if leading_zero && !allow_leading_zeroes {
-                    return Err("Integer literals cannot have leading zeroes".to_string());
-                }
-                process_digit(digit)?;
-                input = next_input;
+fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<()> {
+    let (token, remaining) = parse_token(input)?;
+    match token {
+        Token::Symbol(sym) => {
+            if sym == symbol {
+                Ok(((), remaining))
+            } else {
+                Err(format!("Found '{}' while expecting '{}'", sym, symbol))
             }
         }
-    }
-    Ok(((), input))
-}
-
-fn parse_base_prefix(input: &str) -> ParseResult<Base> {
-    // 0x -> 16
-    // 0o -> 8
-    // 0b -> 2
-    // base# -> base (where 2 <= base <= 36)
-    // case-sensitive, no whitespace allowed
-    if let Ok((_, input)) = parse_fixed_char(input, '0') {
-        let (ch, input) = parse_char(input)?;
-        Ok((
-            match ch {
-                'x' => Base::Hex,
-                'o' => Base::Octal,
-                'b' => Base::Binary,
-                _ => {
-                    return Err(
-                        "Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string()
-                    )
-                }
-            },
-            input,
-        ))
-    } else {
-        let mut custom_base: u8 = 0;
-        let (_, input) = parse_integer(input, false, false, Base::Decimal, &mut |digit| {
-            if custom_base > 3 {
-                return Err("Base cannot be larger than 36".to_string());
-            }
-            custom_base = 10 * custom_base + digit as u8;
-            if custom_base > 36 {
-                return Err("Base cannot be larger than 36".to_string());
-            }
-            Ok(())
-        })?;
-        if custom_base < 2 {
-            return Err("Base must be at least 2".to_string());
-        }
-        let (_, input) = parse_fixed_char(input, '#')?;
-        Ok((Base::Custom(custom_base), input))
+        _ => Err(format!("Found an invalid token while expecting '{}'", symbol))
     }
 }
 
-fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> ParseResult<Number> {
-    // parse integer component
-    let mut res = Number::zero_with_base(base);
-    let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
-        let base_as_u64: u64 = base.base_as_u8().into();
-        res = (res.clone() * base_as_u64.into()).add(digit.into())?;
-        Ok(())
-    })?;
-
-    // parse decimal point and at least one digit
-    if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
-        let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| {
-            res.add_digit_in_base(digit, base)?;
-            Ok(())
-        })?;
-        input = remaining;
-    }
-
-    if !allow_zero && res.is_zero() {
-        return Err("Invalid number: 0".to_string());
-    }
-
-    // parse optional exponent, but only for base 10 and below
-    if base.base_as_u8() <= 10 {
-        if let Ok((_, remaining)) = parse_fixed_char(input, 'e') {
-            input = remaining;
-            let mut negative_exponent = false;
-            if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
-                negative_exponent = true;
-                input = remaining;
-            }
-            let mut exp = Number::zero_with_base(Base::Decimal);
-            let (_, remaining) = parse_integer(input, true, false, Base::Decimal, &mut |digit| {
-                exp = (exp.clone() * 10.into()).add(digit.into())?;
-                Ok(())
-            })?;
-            if negative_exponent {
-                exp = -exp;
-            }
-            let base_as_u64: u64 = base.base_as_u8().into();
-            let base_as_number: Number = base_as_u64.into();
-            res = res * base_as_number.pow(exp)?;
-            input = remaining;
-        }
-    }
-
-    Ok((res, input))
-}
-
-fn parse_number(input: &str) -> ParseResult<Expr> {
-    let (_, mut input) = skip_whitespace(input)?;
-
-    let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
-        input = remaining;
-        base
-    } else {
-        Base::Decimal
-    };
-
-    let (res, input) = parse_basic_number(input, base, true)?;
-
-    let (_, input) = skip_whitespace(input)?;
-    return Ok((Expr::Num(res), input));
-}
-
-fn is_valid_in_ident(ch: char, first: bool) -> bool {
-    if ch.is_alphabetic() {
-        true
-    } else if "%‰\"'’”".contains(ch) {
-        true
-    } else if !first && ".".contains(ch) {
-        true
-    } else {
-        false
+fn parse_number(input: &[Token]) -> ParseResult<Expr> {
+    match parse_token(input)? {
+        (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
+        _ => Err("Expected a number".to_string())
     }
 }
 
-fn parse_ident(input: &str) -> ParseResult<Expr> {
-    let (_, input) = skip_whitespace(input)?;
-    let (ch, mut input) = parse_char(input)?;
-    if !is_valid_in_ident(ch, true) {
-        return Err(format!("Found invalid character in identifier: '{}'", ch));
+fn parse_ident(input: &[Token]) -> ParseResult<Expr> {
+    match parse_token(input)? {
+        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
+        _ => Err("Expected an identifier".to_string())
     }
-    let mut ident = ch.to_string();
-    loop {
-        if let Ok((ch, remaining)) = parse_char(input) {
-            if is_valid_in_ident(ch, false) {
-                ident.push(ch);
-                input = remaining;
-                continue;
-            }
-        }
-        break;
-    }
-    let (_, input) = skip_whitespace(input)?;
-    Ok((Expr::Ident(ident), input))
 }
 
-fn parse_parens(input: &str) -> ParseResult<Expr> {
-    let (_, input) = skip_whitespace(input)?;
-    let (_, input) = parse_fixed_char(input, '(')?;
+fn parse_parens(input: &[Token]) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
     let (inner, input) = parse_expression(input)?;
-    let (_, input) = parse_fixed_char(input, ')')?;
-    let (_, input) = skip_whitespace(input)?;
+    let (_, input) = parse_fixed_symbol(input, Symbol::CloseParens)?;
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
-fn parse_parens_or_literal(input: &str) -> ParseResult<Expr> {
-    let (ch, _) = parse_char(input)?;
+fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
+    let (token, _) = parse_token(input)?;
 
-    if ch.is_ascii_digit() {
-        return parse_number(input);
-    } else if ch == '(' {
-        return parse_parens(input);
-    } else {
-        return parse_ident(input);
+    match token {
+        Token::Num(_) => parse_number(input),
+        Token::Ident(_) => parse_ident(input),
+        Token::Symbol(Symbol::OpenParens) => parse_parens(input),
+        _ => return Err("Expected a number, an identifier or an open parenthesis".to_string())
     }
 }
 
-fn parse_apply(input: &str) -> ParseResult<Expr> {
+fn parse_apply(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_parens_or_literal(input)?;
     loop {
         if let Ok((term, remaining)) = parse_parens_or_literal(input) {
@@ -333,11 +139,8 @@ fn parse_apply(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_power_cont(mut input: &str) -> ParseResult<Expr> {
-    if let Ok((_, remaining)) = parse_fixed_char(input, '^') {
-        input = remaining;
-    } else if let Ok((_, remaining)) = parse_fixed_char(input, '*') {
-        let (_, remaining) = parse_fixed_char(remaining, '*')?;
+fn parse_power_cont(mut input: &[Token]) -> ParseResult<Expr> {
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
         input = remaining;
     } else {
         return Err("Expected ^ or **".to_string());
@@ -346,13 +149,12 @@ fn parse_power_cont(mut input: &str) -> ParseResult<Expr> {
     Ok((b, input))
 }
 
-fn parse_power(input: &str) -> ParseResult<Expr> {
-    let (_, input) = skip_whitespace(input)?;
-    if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
+fn parse_power(input: &[Token]) -> ParseResult<Expr> {
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
         let (res, remaining) = parse_power(remaining)?;
         return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
     }
-    if let Ok((_, remaining)) = parse_fixed_char(input, '+') {
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
         let (res, remaining) = parse_power(remaining)?;
         return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
     }
@@ -364,19 +166,19 @@ fn parse_power(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_multiplication_cont(input: &str) -> ParseResult<Expr> {
-    let (_, input) = parse_fixed_char(input, '*')?;
+fn parse_multiplication_cont(input: &[Token]) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
     let (b, input) = parse_power(input)?;
     Ok((b, input))
 }
 
-fn parse_division_cont(input: &str) -> ParseResult<Expr> {
-    let (_, input) = parse_fixed_char(input, '/')?;
+fn parse_division_cont(input: &[Token]) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
     let (b, input) = parse_power(input)?;
     Ok((b, input))
 }
 
-fn parse_multiplicative(input: &str) -> ParseResult<Expr> {
+fn parse_multiplicative(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_power(input)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
@@ -392,7 +194,7 @@ fn parse_multiplicative(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_compound_fraction(input: &str) -> ParseResult<Expr> {
+fn parse_compound_fraction(input: &[Token]) -> ParseResult<Expr> {
     let (res, input) = parse_multiplicative(input)?;
     if let Ok((rhs, remaining)) = parse_multiplicative(input) {
         match (&res, &rhs) {
@@ -421,19 +223,19 @@ fn parse_compound_fraction(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_addition_cont(input: &str) -> ParseResult<Expr> {
-    let (_, input) = parse_fixed_char(input, '+')?;
+fn parse_addition_cont(input: &[Token]) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::Add)?;
     let (b, input) = parse_compound_fraction(input)?;
     Ok((b, input))
 }
 
-fn parse_subtraction_cont(input: &str) -> ParseResult<Expr> {
-    let (_, input) = parse_fixed_char(input, '-')?;
+fn parse_subtraction_cont(input: &[Token]) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::Sub)?;
     let (b, input) = parse_compound_fraction(input)?;
     Ok((b, input))
 }
 
-fn parse_additive(input: &str) -> ParseResult<Expr> {
+fn parse_additive(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_compound_fraction(input)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input) {
@@ -449,14 +251,13 @@ fn parse_additive(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_arrow_conversion_cont(input: &str) -> ParseResult<Expr> {
-    let (_, input) = parse_fixed_char(input, '-')?;
-    let (_, input) = parse_fixed_char(input, '>')?;
+fn parse_arrow_conversion_cont(input: &[Token]) -> ParseResult<Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
     let (b, input) = parse_additive(input)?;
     Ok((b, input))
 }
 
-fn parse_arrow_conversion(input: &str) -> ParseResult<Expr> {
+fn parse_arrow_conversion(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_additive(input)?;
     loop {
         if let Ok((term, remaining)) = parse_arrow_conversion_cont(input) {
@@ -469,6 +270,15 @@ fn parse_arrow_conversion(input: &str) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-pub fn parse_expression(input: &str) -> ParseResult<Expr> {
+pub fn parse_expression(input: &[Token]) -> ParseResult<Expr> {
     parse_arrow_conversion(input)
+}
+
+pub fn parse_string(input: &str) -> Result<Expr, String> {
+    let tokens = crate::lexer::lex(input)?;
+    let (res, remaining) = parse_expression(tokens.as_slice())?;
+    if !remaining.is_empty() {
+        return Err(format!("Unexpected input found: '{}'", input));
+    }
+    Ok(res)
 }

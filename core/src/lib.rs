@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod ast;
+mod lexer;
 mod num;
 mod parser;
 mod value;
@@ -25,10 +26,7 @@ impl FendResult {
 }
 
 fn evaluate_to_value(input: &str, scope: &HashMap<String, Value>) -> Result<Value, String> {
-    let (parsed, input) = parser::parse_expression(input)?;
-    if !input.is_empty() {
-        return Err(format!("Unexpected input found: '{}'", input));
-    }
+    let parsed = parser::parse_string(input)?;
     let result = ast::evaluate(parsed, scope)?;
     Ok(result)
 }
@@ -47,7 +45,6 @@ impl Context {
 }
 
 pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String> {
-    let (_, input) = parser::skip_whitespace(input)?;
     if input.is_empty() {
         // no or blank input: return no output
         return Ok(FendResult {
