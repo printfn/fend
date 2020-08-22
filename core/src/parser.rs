@@ -76,21 +76,24 @@ fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<()> {
                 Err(format!("Found '{}' while expecting '{}'", sym, symbol))
             }
         }
-        _ => Err(format!("Found an invalid token while expecting '{}'", symbol))
+        _ => Err(format!(
+            "Found an invalid token while expecting '{}'",
+            symbol
+        )),
     }
 }
 
 fn parse_number(input: &[Token]) -> ParseResult<Expr> {
     match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
-        _ => Err("Expected a number".to_string())
+        _ => Err("Expected a number".to_string()),
     }
 }
 
 fn parse_ident(input: &[Token]) -> ParseResult<Expr> {
     match parse_token(input)? {
         (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
-        _ => Err("Expected an identifier".to_string())
+        _ => Err("Expected an identifier".to_string()),
     }
 }
 
@@ -108,7 +111,7 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
-        _ => return Err("Expected a number, an identifier or an open parenthesis".to_string())
+        _ => return Err("Expected a number, an identifier or an open parenthesis".to_string()),
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::num::{Base, Number};
-use std::fmt::{Formatter, Display, Error};
+use std::fmt::{Display, Error, Formatter};
 
 #[derive(Clone)]
 pub enum LexerToken {
@@ -31,7 +31,7 @@ impl Display for Symbol {
             Mul => "*",
             Div => "/",
             Pow => "^",
-            ArrowConversion => "->"
+            ArrowConversion => "->",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -247,9 +247,10 @@ fn is_valid_in_ident(ch: char, first: bool) -> bool {
 fn parse_ident(input: &mut &str) -> Result<LexerToken, String> {
     let first_char = consume_char(input)?;
     if !is_valid_in_ident(first_char, true) {
-        return Err(
-            format!("Character '{}' is not valid at the beginning of an identifier", first_char)
-        );
+        return Err(format!(
+            "Character '{}' is not valid at the beginning of an identifier",
+            first_char
+        ));
     }
     let mut ident = first_char.to_string();
     while let Some(next_char) = input.chars().next() {
@@ -285,7 +286,7 @@ pub fn lex(mut input: &str) -> Result<Vec<LexerToken>, String> {
                             } else {
                                 res.push(LexerToken::Symbol(Symbol::Sub))
                             }
-                        },
+                        }
                         '*' => {
                             if input.chars().next() == Some('*') {
                                 consume_char(&mut input)?;
@@ -293,15 +294,13 @@ pub fn lex(mut input: &str) -> Result<Vec<LexerToken>, String> {
                             } else {
                                 res.push(LexerToken::Symbol(Symbol::Mul))
                             }
-                        },
+                        }
                         '/' => res.push(LexerToken::Symbol(Symbol::Div)),
                         '^' => res.push(LexerToken::Symbol(Symbol::Pow)),
-                        _ => {
-                            return Err(format!("Unexpected character '{}'", ch))
-                        }
+                        _ => return Err(format!("Unexpected character '{}'", ch)),
                     }
                 }
-            },
+            }
             None => return Ok(res),
         }
     }
