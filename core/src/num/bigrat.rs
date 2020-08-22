@@ -487,7 +487,7 @@ impl Debug for BigRat {
             Base::Decimal,
             FormattingStyle::ExactFloatWithFractionFallback,
             false,
-            false
+            false,
         )?;
         Ok(())
     }

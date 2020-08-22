@@ -163,7 +163,8 @@ impl Complex {
             FormattingStyle::ApproxFloat
         };
         if self.imag == 0.into() {
-            self.real.format(f, base, style, false, use_parentheses_if_complex)?;
+            self.real
+                .format(f, base, style, false, use_parentheses_if_complex)?;
             return Ok(());
         }
 
@@ -183,7 +184,8 @@ impl Complex {
                 write!(f, ")")?;
             }
         } else {
-            self.imag.format(f, base, style, true, use_parentheses_if_complex)?;
+            self.imag
+                .format(f, base, style, true, use_parentheses_if_complex)?;
         }
 
         Ok(())

@@ -394,7 +394,7 @@ fn parse_compound_fraction(input: &str) -> ParseResult<Expr> {
                         // note that res = '-<num>' here because unary minus has a higher precedence
                         Expr::Sub(Box::new(res), Box::new(rhs)),
                         remaining,
-                    ))
+                    ));
                 }
                 _ => (),
             },
