@@ -243,23 +243,21 @@ impl BigUint {
             let modulo = self.get(0) & 1;
             return (div_result, BigUint::from(modulo));
         }
-        let mut remaining_dividend = self.clone();
-        let mut quotient = BigUint::from(0);
-        let mut step_size = BigUint::from(1);
-        let mut step_size_times_other = &step_size * other;
-        while &remaining_dividend >= other {
-            while step_size_times_other < remaining_dividend {
-                step_size.lshift();
-                step_size_times_other.lshift();
+        // binary long division
+        let mut q = BigUint::from(0);
+        let mut r = BigUint::from(0);
+        for i in (0..self.value_len()).rev() {
+            for j in (0..64).rev() {
+                r.lshift();
+                let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
+                r.set(0, r.get(0) | bit_of_self);
+                if &r >= other {
+                    r = r - other.clone();
+                    q.set(i, q.get(i) | (1 << j));
+                }
             }
-            while step_size_times_other > remaining_dividend {
-                step_size.rshift();
-                step_size_times_other.rshift();
-            }
-            remaining_dividend = remaining_dividend - step_size_times_other.clone();
-            quotient += &step_size;
         }
-        (quotient, remaining_dividend)
+        (q, r)
     }
 
     /// computes self *= other
