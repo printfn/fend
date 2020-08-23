@@ -301,7 +301,7 @@ impl Sub for BigUint {
             _ => (),
         }
         if self < other {
-            panic!("Number would be less than 0");
+            unreachable!("Number would be less than 0");
         }
         if self == other {
             return BigUint::from(0);
