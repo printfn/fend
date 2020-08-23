@@ -415,20 +415,24 @@ impl BigUint {
             write!(f, "{}", num.get(0))?;
         } else {
             let mut output = String::new();
-            let base_as_u64: u64 = base.base_as_u8().into();
-            let mut divisor = base_as_u64.clone();
+            let base_as_u128: u128 = base.base_as_u8().into();
+            let mut divisor = base_as_u128.clone();
             let mut rounds = 1;
-            while divisor < u64::MAX / base_as_u64 {
-                divisor *= base_as_u64;
+            while divisor < u128::MAX / base_as_u128 {
+                divisor *= base_as_u128;
                 rounds += 1;
             }
             while !num.is_zero() {
-                let divmod_res = num.divmod(&BigUint::from(divisor));
-                let mut digit_group_value = divmod_res.1.get(0);
+                let divmod_res = num.divmod(&BigUint::Large(vec![
+                    divisor as u64,
+                    (divisor >> 64) as u64,
+                ]));
+                let mut digit_group_value =
+                    (divmod_res.1.get(1) as u128) << 64 | divmod_res.1.get(0) as u128;
                 for _ in 0..rounds {
-                    let digit_value = digit_group_value % base_as_u64;
-                    digit_group_value /= base_as_u64;
-                    let ch = Base::digit_as_char(digit_value).unwrap();
+                    let digit_value = digit_group_value % base_as_u128;
+                    digit_group_value /= base_as_u128;
+                    let ch = Base::digit_as_char(digit_value as u64).unwrap();
                     output.insert(0, ch);
                 }
                 num = divmod_res.0;
