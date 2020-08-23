@@ -415,14 +415,25 @@ impl BigUint {
             write!(f, "{}", num.get(0))?;
         } else {
             let mut output = String::new();
+            let base_as_u64: u64 = base.base_as_u8().into();
+            let mut divisor = base_as_u64.clone();
+            let mut rounds = 1;
+            while divisor < u64::MAX / base_as_u64 {
+                divisor *= base_as_u64;
+                rounds += 1;
+            }
             while !num.is_zero() {
-                let base_as_u64: u64 = base.base_as_u8().into();
-                let divmod_res = num.divmod(&BigUint::from(base_as_u64));
-                let digit_value = divmod_res.1.get(0);
-                let ch = Base::digit_as_char(digit_value).unwrap();
-                output.insert(0, ch);
+                let divmod_res = num.divmod(&BigUint::from(divisor));
+                let mut digit_group_value = divmod_res.1.get(0);
+                for _ in 0..rounds {
+                    let digit_value = digit_group_value % base_as_u64;
+                    digit_group_value /= base_as_u64;
+                    let ch = Base::digit_as_char(digit_value).unwrap();
+                    output.insert(0, ch);
+                }
                 num = divmod_res.0;
             }
+            output = output.trim_start_matches('0').to_string();
             write!(f, "{}", output)?;
         }
         Ok(())
