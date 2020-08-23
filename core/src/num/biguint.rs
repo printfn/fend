@@ -252,7 +252,7 @@ impl BigUint {
                 step_size.rshift();
                 step_size_times_other.rshift();
             }
-            remaining_dividend = remaining_dividend.clone() - step_size_times_other.clone();
+            remaining_dividend = remaining_dividend - step_size_times_other.clone();
             quotient += &step_size;
         }
         (quotient, remaining_dividend)
