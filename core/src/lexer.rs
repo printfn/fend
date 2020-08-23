@@ -1,5 +1,8 @@
 use crate::num::{Base, Number};
-use std::fmt::{Display, Error, Formatter};
+use std::{
+    convert::TryInto,
+    fmt::{Display, Error, Formatter},
+};
 
 #[derive(Clone)]
 pub enum Token {
@@ -63,10 +66,11 @@ fn consume_char(input: &mut &str) -> Result<char, String> {
     }
 }
 
-fn parse_ascii_digit(input: &str, base: Base) -> Result<(u64, &str), String> {
+fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), String> {
     let (ch, input) = parse_char(input)?;
-    if let Some(digit) = ch.to_digit(base.base_as_u8().into()) {
-        Ok((digit.into(), input))
+    let possible_digit = ch.to_digit(base.base_as_u8().into());
+    if let Some(digit) = possible_digit.and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok()) {
+        Ok((digit, input))
     } else {
         Err(format!("Expected a digit, found '{}'", ch))
     }
@@ -88,7 +92,7 @@ fn parse_integer<'a>(
     allow_digit_separator: bool,
     allow_leading_zeroes: bool,
     base: Base,
-    process_digit: &mut impl FnMut(u64) -> Result<(), String>,
+    process_digit: &mut impl FnMut(u8) -> Result<(), String>,
 ) -> Result<((), &'a str), String> {
     let (digit, mut input) = parse_ascii_digit(input, base)?;
     process_digit(digit)?;
@@ -150,7 +154,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), String> {
             if custom_base > 3 {
                 return Err("Base cannot be larger than 36".to_string());
             }
-            custom_base = 10 * custom_base + digit as u8;
+            custom_base = 10 * custom_base + digit;
             if custom_base > 36 {
                 return Err("Base cannot be larger than 36".to_string());
             }
@@ -169,14 +173,14 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
         let base_as_u64: u64 = base.base_as_u8().into();
-        res = (res.clone() * base_as_u64.into()).add(digit.into())?;
+        res = (res.clone() * base_as_u64.into()).add(u64::from(digit).into())?;
         Ok(())
     })?;
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
         let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| {
-            res.add_digit_in_base(digit, base)?;
+            res.add_digit_in_base(digit.into(), base)?;
             Ok(())
         })?;
         input = remaining;
@@ -197,7 +201,7 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
             }
             let mut exp = Number::zero_with_base(Base::Decimal);
             let (_, remaining) = parse_integer(input, true, false, Base::Decimal, &mut |digit| {
-                exp = (exp.clone() * 10.into()).add(digit.into())?;
+                exp = (exp.clone() * 10.into()).add(u64::from(digit).into())?;
                 Ok(())
             })?;
             if negative_exponent {
