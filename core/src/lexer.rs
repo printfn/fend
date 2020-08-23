@@ -2,7 +2,7 @@ use crate::num::{Base, Number};
 use std::fmt::{Display, Error, Formatter};
 
 #[derive(Clone)]
-pub enum LexerToken {
+pub enum Token {
     Num(Number),
     Ident(String),
     Symbol(Symbol),
@@ -223,13 +223,13 @@ fn parse_number_internal(mut input: &str) -> Result<(Number, &str), String> {
 
     let (res, input) = parse_basic_number(input, base, true)?;
 
-    return Ok((res, input));
+    Ok((res, input))
 }
 
-fn parse_number(input: &mut &str) -> Result<LexerToken, String> {
+fn parse_number(input: &mut &str) -> Result<Token, String> {
     let (num, remaining_input) = parse_number_internal(input)?;
     *input = remaining_input;
-    Ok(LexerToken::Num(num))
+    Ok(Token::Num(num))
 }
 
 fn is_valid_in_ident(ch: char, first: bool) -> bool {
@@ -244,7 +244,7 @@ fn is_valid_in_ident(ch: char, first: bool) -> bool {
     }
 }
 
-fn parse_ident(input: &mut &str) -> Result<LexerToken, String> {
+fn parse_ident(input: &mut &str) -> Result<Token, String> {
     let first_char = consume_char(input)?;
     if !is_valid_in_ident(first_char, true) {
         return Err(format!(
@@ -260,10 +260,10 @@ fn parse_ident(input: &mut &str) -> Result<LexerToken, String> {
         consume_char(input)?;
         ident.push(next_char);
     }
-    Ok(LexerToken::Ident(ident))
+    Ok(Token::Ident(ident))
 }
 
-pub fn lex(mut input: &str) -> Result<Vec<LexerToken>, String> {
+pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {
     let mut res = vec![];
     loop {
         match input.chars().next() {
@@ -276,27 +276,27 @@ pub fn lex(mut input: &str) -> Result<Vec<LexerToken>, String> {
                     res.push(parse_ident(&mut input)?);
                 } else {
                     match consume_char(&mut input)? {
-                        '(' => res.push(LexerToken::Symbol(Symbol::OpenParens)),
-                        ')' => res.push(LexerToken::Symbol(Symbol::CloseParens)),
-                        '+' => res.push(LexerToken::Symbol(Symbol::Add)),
+                        '(' => res.push(Token::Symbol(Symbol::OpenParens)),
+                        ')' => res.push(Token::Symbol(Symbol::CloseParens)),
+                        '+' => res.push(Token::Symbol(Symbol::Add)),
                         '-' => {
                             if input.chars().next() == Some('>') {
                                 consume_char(&mut input)?;
-                                res.push(LexerToken::Symbol(Symbol::ArrowConversion))
+                                res.push(Token::Symbol(Symbol::ArrowConversion))
                             } else {
-                                res.push(LexerToken::Symbol(Symbol::Sub))
+                                res.push(Token::Symbol(Symbol::Sub))
                             }
                         }
                         '*' => {
                             if input.chars().next() == Some('*') {
                                 consume_char(&mut input)?;
-                                res.push(LexerToken::Symbol(Symbol::Pow))
+                                res.push(Token::Symbol(Symbol::Pow))
                             } else {
-                                res.push(LexerToken::Symbol(Symbol::Mul))
+                                res.push(Token::Symbol(Symbol::Mul))
                             }
                         }
-                        '/' => res.push(LexerToken::Symbol(Symbol::Div)),
-                        '^' => res.push(LexerToken::Symbol(Symbol::Pow)),
+                        '/' => res.push(Token::Symbol(Symbol::Div)),
+                        '^' => res.push(Token::Symbol(Symbol::Pow)),
                         _ => return Err(format!("Unexpected character '{}'", ch)),
                     }
                 }

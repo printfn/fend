@@ -381,10 +381,10 @@ impl Unit {
                 match hashmap.get_mut(&base_unit) {
                     Some(exp) => {
                         let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
-                        if new_exp != 0.into() {
-                            *exp = new_exp;
-                        } else {
+                        if new_exp == 0.into() {
                             hashmap.remove(&base_unit);
+                        } else {
+                            *exp = new_exp;
                         }
                     }
                     None => {

@@ -1,7 +1,5 @@
 use crate::ast::Expr;
-use crate::lexer::{LexerToken, Symbol};
-
-type Token = LexerToken;
+use crate::lexer::{Symbol, Token};
 
 /*
 
@@ -111,7 +109,7 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
-        _ => return Err("Expected a number, an identifier or an open parenthesis".to_string()),
+        _ => Err("Expected a number, an identifier or an open parenthesis".to_string()),
     }
 }
 

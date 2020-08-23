@@ -168,7 +168,10 @@ impl Complex {
             return Ok(());
         }
 
-        if self.real != 0.into() {
+        if self.real == 0.into() {
+            self.imag
+                .format(f, base, style, true, use_parentheses_if_complex)?;
+        } else {
             if use_parentheses_if_complex {
                 write!(f, "(")?;
             }
@@ -183,9 +186,6 @@ impl Complex {
             if use_parentheses_if_complex {
                 write!(f, ")")?;
             }
-        } else {
-            self.imag
-                .format(f, base, style, true, use_parentheses_if_complex)?;
         }
 
         Ok(())

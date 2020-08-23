@@ -282,8 +282,8 @@ impl BigRat {
     pub fn approx_pi() -> BigRat {
         BigRat {
             sign: Sign::Positive,
-            num: BigUint::from(3141592653589793238_u64),
-            den: BigUint::from(1000000000000000000_u64),
+            num: BigUint::from(3_141_592_653_589_793_238_u64),
+            den: BigUint::from(1_000_000_000_000_000_000_u64),
         }
     }
 }

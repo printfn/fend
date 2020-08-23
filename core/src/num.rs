@@ -32,12 +32,12 @@ impl Base {
     }
 
     pub fn write_prefix(self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        return Ok(match self {
+        Ok(match self {
             Base::Binary => write!(f, "0b")?,
             Base::Octal => write!(f, "0o")?,
             Base::Decimal => (),
             Base::Hex => write!(f, "0x")?,
             Base::Custom(b) => write!(f, "{}#", b)?,
-        });
+        })
     }
 }

@@ -60,7 +60,9 @@ impl BigUint {
             Small(n) => {
                 if idx == 0 {
                     *n = new_value;
-                } else if new_value != 0 {
+                } else if new_value == 0 {
+                    // no need to do anything
+                } else {
                     self.make_large();
                     self.set(idx, new_value)
                 }
@@ -107,6 +109,8 @@ impl Ord for BigUint {
                 return Ordering::Less;
             } else if v1 > v2 {
                 return Ordering::Greater;
+            } else {
+                // continue if equal
             }
             i -= 1;
         }
@@ -175,15 +179,15 @@ impl BigUint {
     fn lshift(&mut self) {
         match self {
             Small(n) => {
-                if *n & 0xc000_0000_0000_0000 != 0 {
+                if *n & 0xc000_0000_0000_0000 == 0 {
+                    *n <<= 1;
+                } else {
                     self.make_large();
                     self.lshift();
-                } else {
-                    *n <<= 1;
                 }
             }
             Large(value) => {
-                if value[value.len() - 1] & (1u64 << 63) != 0 {
+                if value[value.len() - 1] & (1_u64 << 63) != 0 {
                     value.push(0);
                 }
                 for i in (0..value.len()).rev() {
@@ -484,7 +488,8 @@ impl BigUint {
                 return Ok((guess, true));
             } else if res > self {
                 high_guess = guess;
-            } else if res < self {
+            } else {
+                // res < self
                 low_guess = guess;
             }
         }
