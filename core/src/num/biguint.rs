@@ -146,7 +146,7 @@ impl BigUint {
         for i in 0..max(self.value_len(), other.value_len() + shift) {
             let a = self.get(i);
             let b = if i >= shift { other.get(i - shift) } else { 0 };
-            let sum = a as u128 + (b as u128 * mul_digit as u128) + carry as u128;
+            let sum = u128::from(a) + (u128::from(b) * u128::from(mul_digit)) + u128::from(carry);
             self.set(i, sum as u64);
             carry = (sum >> 64) as u64;
         }
@@ -318,7 +318,9 @@ impl Sub for BigUint {
                 res.push(a - b - carry);
                 carry = 0;
             } else {
-                res.push((a as u128 + ((1 as u128) << 64) - b as u128 - carry as u128) as u64);
+                let next_digit =
+                    u128::from(a) + ((1_u128) << 64) - u128::from(b) - u128::from(carry);
+                res.push(next_digit as u64);
                 carry = 1;
             }
         }
