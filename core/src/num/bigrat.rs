@@ -32,7 +32,7 @@ mod sign {
 
 use sign::Sign;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BigRat {
     sign: Sign,
     num: BigUint,
@@ -477,19 +477,6 @@ impl BigRat {
             )?
         };
         Ok((num_rat.div(den_rat)?, false))
-    }
-}
-
-impl Debug for BigRat {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        self.format(
-            f,
-            Base::Decimal,
-            FormattingStyle::ExactFloatWithFractionFallback,
-            false,
-            false,
-        )?;
-        Ok(())
     }
 }
 
