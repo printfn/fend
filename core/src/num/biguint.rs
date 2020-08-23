@@ -60,7 +60,7 @@ impl BigUint {
             Small(n) => {
                 if idx == 0 {
                     *n = new_value;
-                } else {
+                } else if new_value != 0 {
                     self.make_large();
                     self.set(idx, new_value)
                 }
@@ -82,6 +82,9 @@ impl BigUint {
     }
 
     fn value_push(&mut self, new: u64) {
+        if new == 0 {
+            return;
+        }
         self.make_large();
         match self {
             Small(_) => unreachable!(),
@@ -249,7 +252,7 @@ impl BigUint {
                 step_size.rshift();
                 step_size_times_other.rshift();
             }
-            remaining_dividend = &remaining_dividend - &step_size_times_other;
+            remaining_dividend = remaining_dividend.clone() - step_size_times_other.clone();
             quotient += &step_size;
         }
         (quotient, remaining_dividend)
@@ -257,6 +260,10 @@ impl BigUint {
 
     /// computes self *= other
     fn mul_internal(&mut self, other: BigUint) {
+        if self.is_zero() || other.is_zero() {
+            *self = BigUint::from(0);
+            return;
+        }
         let self_clone = self.clone();
         self.make_large();
         match self {
@@ -281,12 +288,12 @@ impl Add for BigUint {
     }
 }
 
-impl Sub for &BigUint {
+impl Sub for BigUint {
     type Output = BigUint;
 
-    fn sub(self, other: &BigUint) -> BigUint {
-        match (self, other) {
-            (Small(a), Small(b)) => return BigUint::from(*a - *b),
+    fn sub(self, other: BigUint) -> BigUint {
+        match (&self, &other) {
+            (Small(a), Small(b)) => return BigUint::from(a - b),
             _ => (),
         }
         if self < other {
@@ -294,6 +301,9 @@ impl Sub for &BigUint {
         }
         if self == other {
             return BigUint::from(0);
+        }
+        if other == 0.into() {
+            return self;
         }
         let mut carry = 0; // 0 or 1
         let mut res = vec![];
@@ -310,14 +320,6 @@ impl Sub for &BigUint {
         }
         assert_eq!(carry, 0);
         BigUint::Large(res)
-    }
-}
-
-impl Sub for BigUint {
-    type Output = BigUint;
-
-    fn sub(self, other: BigUint) -> BigUint {
-        &self - &other
     }
 }
 

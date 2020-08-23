@@ -54,7 +54,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
     }
     let result = evaluate_to_value(input, &context.scope)?;
     Ok(FendResult {
-        main_result: format!("{}", result),
+        main_result: format!("{:?}", result),
         other_info: vec![],
     })
 }
