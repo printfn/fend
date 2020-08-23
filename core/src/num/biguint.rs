@@ -401,8 +401,6 @@ impl BigUint {
         base: Base,
         write_base_prefix: bool,
     ) -> Result<(), Error> {
-        use std::convert::TryFrom;
-
         if write_base_prefix {
             base.write_prefix(f)?;
         }
@@ -420,12 +418,8 @@ impl BigUint {
             while !num.is_zero() {
                 let base_as_u64: u64 = base.base_as_u8().into();
                 let divmod_res = num.divmod(&BigUint::from(base_as_u64));
-                let digit_value = divmod_res.1.get(0) as u8;
-                let ch = if digit_value < 10 {
-                    char::try_from(digit_value + 48).unwrap()
-                } else {
-                    char::try_from(digit_value + 96 - 9).unwrap()
-                };
+                let digit_value = divmod_res.1.get(0);
+                let ch = Base::digit_as_char(digit_value).unwrap();
                 output.insert(0, ch);
                 num = divmod_res.0;
             }
