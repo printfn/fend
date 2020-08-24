@@ -12,7 +12,7 @@ pub enum BigUint {
 
 use BigUint::{Large, Small};
 
-#[allow(clippy::as_conversions, clippy::clippy::cast_possible_truncation)]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 const fn truncate(n: u128) -> u64 {
     n as u64
 }
