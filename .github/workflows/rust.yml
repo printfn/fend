@@ -26,3 +26,5 @@ jobs:
       run: cargo build --workspace --verbose
     - name: Run tests
       run: cargo test --workspace --verbose
+    - name: Run clippy
+      run: cargo clean && cargo clippy -- -D clippy::correctness -D clippy::complexity
