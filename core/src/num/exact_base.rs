@@ -12,16 +12,16 @@ pub struct ExactBase {
 }
 
 impl PartialOrd for ExactBase {
-    fn partial_cmp(&self, other: &ExactBase) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.value.partial_cmp(&other.value)
     }
 }
 
 impl Add for ExactBase {
-    type Output = ExactBase;
+    type Output = Self;
 
-    fn add(self, rhs: ExactBase) -> ExactBase {
-        ExactBase {
+    fn add(self, rhs: Self) -> Self {
+        Self {
             value: self.value + rhs.value,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
@@ -30,10 +30,10 @@ impl Add for ExactBase {
 }
 
 impl Neg for ExactBase {
-    type Output = ExactBase;
+    type Output = Self;
 
-    fn neg(self) -> ExactBase {
-        ExactBase {
+    fn neg(self) -> Self {
+        Self {
             value: -self.value,
             exact: self.exact,
             base: self.base,
@@ -50,9 +50,9 @@ impl Neg for &ExactBase {
 }
 
 impl Sub for ExactBase {
-    type Output = ExactBase;
+    type Output = Self;
 
-    fn sub(self, rhs: ExactBase) -> ExactBase {
+    fn sub(self, rhs: Self) -> Self {
         self + -rhs
     }
 }
@@ -60,16 +60,16 @@ impl Sub for ExactBase {
 impl Sub for &ExactBase {
     type Output = ExactBase;
 
-    fn sub(self, rhs: &ExactBase) -> ExactBase {
+    fn sub(self, rhs: Self) -> ExactBase {
         self.clone() + -rhs.clone()
     }
 }
 
 impl Mul for ExactBase {
-    type Output = ExactBase;
+    type Output = Self;
 
-    fn mul(self, rhs: ExactBase) -> ExactBase {
-        ExactBase {
+    fn mul(self, rhs: Self) -> Self {
+        Self {
             value: self.value * rhs.value,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
@@ -79,17 +79,7 @@ impl Mul for ExactBase {
 
 impl From<u64> for ExactBase {
     fn from(i: u64) -> Self {
-        ExactBase {
-            value: i.into(),
-            exact: true,
-            base: Base::Decimal,
-        }
-    }
-}
-
-impl From<i32> for ExactBase {
-    fn from(i: i32) -> Self {
-        ExactBase {
+        Self {
             value: i.into(),
             exact: true,
             base: Base::Decimal,
@@ -102,8 +92,9 @@ fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
 }
 
 impl ExactBase {
+    #[allow(clippy::missing_const_for_fn)]
     pub fn make_approximate(self) -> Self {
-        ExactBase {
+        Self {
             value: self.value,
             exact: false,
             base: self.base,
@@ -111,23 +102,23 @@ impl ExactBase {
     }
 
     pub fn conjugate(self) -> Self {
-        ExactBase {
+        Self {
             value: self.value.conjugate(),
             exact: self.exact,
             base: self.base,
         }
     }
 
-    pub fn div(self, rhs: ExactBase) -> Result<ExactBase, String> {
-        Ok(ExactBase {
+    pub fn div(self, rhs: Self) -> Result<Self, String> {
+        Ok(Self {
             value: self.value.div(rhs.value)?,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
         })
     }
 
-    pub fn pow(self, rhs: ExactBase) -> Result<ExactBase, String> {
-        Ok(ExactBase {
+    pub fn pow(self, rhs: Self) -> Result<Self, String> {
+        Ok(Self {
             value: self.value.pow(rhs.value)?,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
@@ -156,8 +147,8 @@ impl ExactBase {
         Ok(())
     }
 
-    pub fn i() -> ExactBase {
-        ExactBase {
+    pub fn i() -> Self {
+        Self {
             value: Complex::i(),
             exact: true,
             base: Base::Decimal,
@@ -166,7 +157,7 @@ impl ExactBase {
 
     pub fn abs(self) -> Result<Self, String> {
         let (new_value, res_exact) = self.value.abs()?;
-        Ok(ExactBase {
+        Ok(Self {
             value: new_value,
             exact: require_both_exact(self.exact, res_exact),
             base: self.base,
@@ -184,17 +175,17 @@ impl ExactBase {
 }
 
 impl ExactBase {
-    pub fn root_n(self, n: &ExactBase) -> Result<ExactBase, String> {
+    pub fn root_n(self, n: &Self) -> Result<Self, String> {
         let (root, root_exact) = self.value.root_n(&n.value)?;
-        Ok(ExactBase {
+        Ok(Self {
             value: root,
             exact: self.exact && n.exact && root_exact,
             base: self.base,
         })
     }
 
-    pub fn approx_pi() -> ExactBase {
-        ExactBase {
+    pub fn approx_pi() -> Self {
+        Self {
             value: Complex::approx_pi(),
             exact: false,
             base: Base::Decimal,

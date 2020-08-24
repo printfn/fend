@@ -23,21 +23,21 @@ pub enum Base {
 impl Base {
     pub fn base_as_u8(self) -> u8 {
         match self {
-            Base::Binary => 2,
-            Base::Octal => 8,
-            Base::Decimal => 10,
-            Base::Hex => 16,
-            Base::Custom(b) => b,
+            Self::Binary => 2,
+            Self::Octal => 8,
+            Self::Decimal => 10,
+            Self::Hex => 16,
+            Self::Custom(b) => b,
         }
     }
 
     pub fn write_prefix(self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
-            Base::Binary => write!(f, "0b")?,
-            Base::Octal => write!(f, "0o")?,
-            Base::Decimal => (),
-            Base::Hex => write!(f, "0x")?,
-            Base::Custom(b) => write!(f, "{}#", b)?,
+            Self::Binary => write!(f, "0b")?,
+            Self::Octal => write!(f, "0o")?,
+            Self::Decimal => (),
+            Self::Hex => write!(f, "0x")?,
+            Self::Custom(b) => write!(f, "{}#", b)?,
         }
         Ok(())
     }

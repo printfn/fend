@@ -26,14 +26,14 @@ pub enum Symbol {
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         let s = match self {
-            Symbol::OpenParens => "(",
-            Symbol::CloseParens => ")",
-            Symbol::Add => "+",
-            Symbol::Sub => "-",
-            Symbol::Mul => "*",
-            Symbol::Div => "/",
-            Symbol::Pow => "^",
-            Symbol::ArrowConversion => "->",
+            Self::OpenParens => "(",
+            Self::CloseParens => ")",
+            Self::Add => "+",
+            Self::Sub => "-",
+            Self::Mul => "*",
+            Self::Div => "/",
+            Self::Pow => "^",
+            Self::ArrowConversion => "->",
         };
         write!(f, "{}", s)?;
         Ok(())

@@ -153,7 +153,7 @@ impl UnitValue {
         let (hashmap, scale) = value.unit.to_hashmap_and_scale();
         let scale = scale * value.value;
         let resulting_unit = NamedUnit::new(singular_name, plural_name, space, hashmap, scale);
-        UnitValue::new(1, vec![UnitExponent::new(resulting_unit, 1)])
+        Self::new(1, vec![UnitExponent::new(resulting_unit, 1)])
     }
 
     fn new_base_unit(singular_name: String, plural_name: String, space: bool) -> Self {
@@ -175,7 +175,7 @@ impl UnitValue {
 
     pub fn add(self, rhs: Self) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit)?;
-        Ok(UnitValue {
+        Ok(Self {
             value: self.value + rhs.value * scale_factor,
             unit: self.unit,
         })
@@ -186,7 +186,7 @@ impl UnitValue {
             return Err("Right-hand side of unit conversion has a numerical value".to_string());
         }
         let scale_factor = Unit::try_convert(&self.unit, &rhs.unit)?;
-        Ok(UnitValue {
+        Ok(Self {
             value: self.value * scale_factor,
             unit: rhs.unit,
         })
@@ -194,7 +194,7 @@ impl UnitValue {
 
     pub fn sub(self, rhs: Self) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit)?;
-        Ok(UnitValue {
+        Ok(Self {
             value: self.value - rhs.value * scale_factor,
             unit: self.unit,
         })
@@ -286,7 +286,7 @@ impl UnitValue {
 impl Neg for UnitValue {
     type Output = Self;
     fn neg(self) -> Self {
-        UnitValue {
+        Self {
             value: -self.value,
             unit: self.unit,
         }
@@ -306,15 +306,6 @@ impl Mul for UnitValue {
 
 impl From<u64> for UnitValue {
     fn from(i: u64) -> Self {
-        Self {
-            value: i.into(),
-            unit: Unit::unitless(),
-        }
-    }
-}
-
-impl From<i32> for UnitValue {
-    fn from(i: i32) -> Self {
         Self {
             value: i.into(),
             unit: Unit::unitless(),
@@ -348,7 +339,7 @@ impl Display for UnitValue {
                 write!(f, " /")?;
                 for unit_exponent in negative_components {
                     write!(f, " {}", unit_exponent.unit.singular_name)?;
-                    if unit_exponent.exponent != (-1).into() {
+                    if unit_exponent.exponent != -ExactBase::from(1) {
                         write!(f, "^")?;
                         (-unit_exponent.exponent.clone()).format(f, true)?;
                     }
@@ -371,10 +362,10 @@ impl Unit {
         for named_unit_exp in &self.components {
             let overall_exp = &named_unit_exp.exponent;
             for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
-                if let Some(exp) = hashmap.get_mut(&base_unit) {
+                if let Some(exp) = hashmap.get_mut(base_unit) {
                     let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
                     if new_exp == 0.into() {
-                        hashmap.remove(&base_unit);
+                        hashmap.remove(base_unit);
                     } else {
                         *exp = new_exp;
                     }
@@ -398,7 +389,7 @@ impl Unit {
     }
 
     /// Returns the combined scale factor if successful
-    fn try_convert(from: &Unit, into: &Unit) -> Result<ExactBase, String> {
+    fn try_convert(from: &Self, into: &Self) -> Result<ExactBase, String> {
         let (hash_a, scale_a) = from.to_hashmap_and_scale();
         let (hash_b, scale_b) = into.to_hashmap_and_scale();
         if hash_a == hash_b {
@@ -409,7 +400,7 @@ impl Unit {
         }
     }
 
-    fn unitless() -> Self {
+    const fn unitless() -> Self {
         Self { components: vec![] }
     }
 }
@@ -464,7 +455,7 @@ struct BaseUnit {
 }
 
 impl BaseUnit {
-    fn new(name: String) -> Self {
+    const fn new(name: String) -> Self {
         Self { name }
     }
 }

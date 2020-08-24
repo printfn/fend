@@ -11,7 +11,7 @@ pub struct Complex {
 }
 
 impl PartialOrd for Complex {
-    fn partial_cmp(&self, other: &Complex) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self == other {
             Some(Ordering::Equal)
         } else if self.real <= other.real && self.imag <= other.imag {
@@ -25,10 +25,10 @@ impl PartialOrd for Complex {
 }
 
 impl Add for Complex {
-    type Output = Complex;
+    type Output = Self;
 
-    fn add(self, rhs: Complex) -> Complex {
-        Complex {
+    fn add(self, rhs: Self) -> Self {
+        Self {
             real: self.real + rhs.real,
             imag: self.imag + rhs.imag,
         }
@@ -36,10 +36,10 @@ impl Add for Complex {
 }
 
 impl Neg for Complex {
-    type Output = Complex;
+    type Output = Self;
 
-    fn neg(self) -> Complex {
-        Complex {
+    fn neg(self) -> Self {
+        Self {
             real: -self.real,
             imag: -self.imag,
         }
@@ -55,9 +55,9 @@ impl Neg for &Complex {
 }
 
 impl Sub for Complex {
-    type Output = Complex;
+    type Output = Self;
 
-    fn sub(self, rhs: Complex) -> Complex {
+    fn sub(self, rhs: Self) -> Self {
         self + -rhs
     }
 }
@@ -65,19 +65,19 @@ impl Sub for Complex {
 impl Sub for &Complex {
     type Output = Complex;
 
-    fn sub(self, rhs: &Complex) -> Complex {
+    fn sub(self, rhs: Self) -> Complex {
         self.clone() + -rhs.clone()
     }
 }
 
 impl Mul for Complex {
-    type Output = Complex;
+    type Output = Self;
 
-    fn mul(self, rhs: Complex) -> Complex {
+    fn mul(self, rhs: Self) -> Self {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
-        Complex {
+        Self {
             real: self.real.clone() * rhs.real.clone() - self.imag.clone() * rhs.imag.clone(),
             imag: self.real * rhs.imag + self.imag * rhs.real,
         }
@@ -86,16 +86,7 @@ impl Mul for Complex {
 
 impl From<u64> for Complex {
     fn from(i: u64) -> Self {
-        Complex {
-            real: i.into(),
-            imag: 0.into(),
-        }
-    }
-}
-
-impl From<i32> for Complex {
-    fn from(i: i32) -> Self {
-        Complex {
+        Self {
             real: i.into(),
             imag: 0.into(),
         }
@@ -104,32 +95,32 @@ impl From<i32> for Complex {
 
 impl Complex {
     pub fn conjugate(self) -> Self {
-        Complex {
+        Self {
             real: self.real,
             imag: -self.imag,
         }
     }
 
-    pub fn div(self, rhs: Complex) -> Result<Complex, String> {
+    pub fn div(self, rhs: Self) -> Result<Self, String> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;
         let v = self.imag;
         let x = rhs.real;
         let y = rhs.imag;
-        Ok(Complex {
+        Ok(Self {
             real: BigRat::from(1).div(x.clone() * x.clone() + y.clone() * y.clone())?,
             imag: 0.into(),
-        } * Complex {
+        } * Self {
             real: u.clone() * x.clone() + v.clone() * y.clone(),
             imag: v * x - u * y,
         })
     }
 
-    pub fn pow(self, rhs: Complex) -> Result<Complex, String> {
+    pub fn pow(self, rhs: Self) -> Result<Self, String> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err("Exponentiation is currently unsupported for complex numbers".to_string());
         }
-        Ok(Complex {
+        Ok(Self {
             real: self.real.pow(rhs.real)?,
             imag: 0.into(),
         })
@@ -141,8 +132,8 @@ impl Complex {
         self.real.add_digit_in_base(digit, base)
     }
 
-    pub fn i() -> Complex {
-        Complex {
+    pub fn i() -> Self {
+        Self {
             real: 0.into(),
             imag: 1.into(),
         }
@@ -184,7 +175,7 @@ impl Complex {
                 real: self.real.pow(2.into())? + self.imag.pow(2.into())?,
                 imag: 0.into(),
             };
-            res_squared.root_n(&Complex::from(2))?
+            res_squared.root_n(&Self::from(2))?
         })
     }
 }
@@ -233,13 +224,13 @@ impl Complex {
 }
 
 impl Complex {
-    pub fn root_n(self, n: &Complex) -> Result<(Complex, bool), String> {
+    pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("Roots are currently unsupported for complex numbers".to_string());
         }
         let (real_root, real_root_exact) = self.real.root_n(&n.real)?;
         Ok((
-            Complex {
+            Self {
                 real: real_root,
                 imag: 0.into(),
             },
@@ -247,8 +238,8 @@ impl Complex {
         ))
     }
 
-    pub fn approx_pi() -> Complex {
-        Complex {
+    pub fn approx_pi() -> Self {
+        Self {
             real: BigRat::approx_pi(),
             imag: 0.into(),
         }

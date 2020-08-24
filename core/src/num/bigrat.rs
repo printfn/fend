@@ -21,11 +21,11 @@ mod sign {
 
         pub fn sign_of_product(a: Self, b: Self) -> Self {
             match (a, b) {
-                (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
-                    Sign::Positive
+                (Self::Positive, Self::Positive) | (Self::Negative, Self::Negative) => {
+                    Self::Positive
                 }
-                (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
-                    Sign::Negative
+                (Self::Positive, Self::Negative) | (Self::Negative, Self::Positive) => {
+                    Self::Negative
                 }
             }
         }
@@ -42,7 +42,7 @@ pub struct BigRat {
 }
 
 impl Ord for BigRat {
-    fn cmp(&self, other: &BigRat) -> Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         let diff = self - other;
         if diff.num == 0.into() {
             Ordering::Equal
@@ -55,7 +55,7 @@ impl Ord for BigRat {
 }
 
 impl PartialOrd for BigRat {
-    fn partial_cmp(&self, other: &BigRat) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
@@ -70,7 +70,7 @@ impl Eq for BigRat {}
 
 impl BigRat {
     /// compute a + b
-    fn add_internal(self, rhs: BigRat) -> BigRat {
+    fn add_internal(self, rhs: Self) -> Self {
         // a + b == -((-a) + (-b))
         if self.sign == Sign::Negative {
             return -((-self).add_internal(-rhs));
@@ -80,13 +80,13 @@ impl BigRat {
 
         if self.den == rhs.den {
             if rhs.sign == Sign::Negative && self.num < rhs.num {
-                BigRat {
+                Self {
                     sign: Sign::Negative,
                     num: rhs.num - self.num,
                     den: self.den,
                 }
             } else {
-                BigRat {
+                Self {
                     sign: Sign::Positive,
                     num: if rhs.sign == Sign::Positive {
                         self.num + rhs.num
@@ -103,13 +103,13 @@ impl BigRat {
             let b = rhs.num * self.den / gcd;
 
             if rhs.sign == Sign::Negative && a < b {
-                BigRat {
+                Self {
                     sign: Sign::Negative,
                     num: b - a,
                     den: new_denominator,
                 }
             } else {
-                BigRat {
+                Self {
                     sign: Sign::Positive,
                     num: if rhs.sign == Sign::Positive {
                         a + b
@@ -124,18 +124,18 @@ impl BigRat {
 }
 
 impl Add for BigRat {
-    type Output = BigRat;
+    type Output = Self;
 
-    fn add(self, rhs: BigRat) -> BigRat {
+    fn add(self, rhs: Self) -> Self {
         self.add_internal(rhs)
     }
 }
 
 impl Neg for BigRat {
-    type Output = BigRat;
+    type Output = Self;
 
-    fn neg(self) -> BigRat {
-        BigRat {
+    fn neg(self) -> Self {
+        Self {
             sign: self.sign.flip(),
             num: self.num,
             den: self.den,
@@ -152,9 +152,9 @@ impl Neg for &BigRat {
 }
 
 impl Sub for BigRat {
-    type Output = BigRat;
+    type Output = Self;
 
-    fn sub(self, rhs: BigRat) -> BigRat {
+    fn sub(self, rhs: Self) -> Self {
         self.add_internal(-rhs)
     }
 }
@@ -162,17 +162,17 @@ impl Sub for BigRat {
 impl Sub for &BigRat {
     type Output = BigRat;
 
-    fn sub(self, rhs: &BigRat) -> BigRat {
+    fn sub(self, rhs: Self) -> BigRat {
         self.clone().add_internal(-rhs.clone())
     }
 }
 
 impl Mul for BigRat {
-    type Output = BigRat;
+    type Output = Self;
 
-    fn mul(self, rhs: BigRat) -> BigRat {
+    fn mul(self, rhs: Self) -> Self {
         #[allow(clippy::suspicious_arithmetic_impl)]
-        BigRat {
+        Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num * rhs.num,
             den: self.den * rhs.den,
@@ -182,7 +182,7 @@ impl Mul for BigRat {
 
 impl From<u64> for BigRat {
     fn from(i: u64) -> Self {
-        BigRat {
+        Self {
             sign: Sign::Positive,
             num: i.into(),
             den: 1.into(),
@@ -190,29 +190,8 @@ impl From<u64> for BigRat {
     }
 }
 
-impl From<i32> for BigRat {
-    fn from(i: i32) -> Self {
-        use std::convert::TryInto;
-
-        if let Ok(j) = TryInto::<u64>::try_into(i) {
-            BigRat {
-                sign: Sign::Positive,
-                num: j.into(),
-                den: 1.into(),
-            }
-        } else {
-            let j: u64 = (-i).try_into().unwrap();
-            BigRat {
-                sign: Sign::Negative,
-                num: j.into(),
-                den: 1.into(),
-            }
-        }
-    }
-}
-
 impl BigRat {
-    fn simplify(mut self) -> BigRat {
+    fn simplify(mut self) -> Self {
         if self.den == 1.into() {
             return self;
         }
@@ -222,19 +201,19 @@ impl BigRat {
         self
     }
 
-    pub fn div(self, rhs: BigRat) -> Result<BigRat, String> {
+    pub fn div(self, rhs: Self) -> Result<Self, String> {
         if rhs.num == 0.into() {
             return Err("Attempt to divide by zero".to_string());
         }
         #[allow(clippy::suspicious_arithmetic_impl)]
-        Ok(BigRat {
+        Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num * rhs.den,
             den: self.den * rhs.num,
         })
     }
 
-    pub fn pow(mut self, mut rhs: BigRat) -> Result<BigRat, String> {
+    pub fn pow(mut self, mut rhs: Self) -> Result<Self, String> {
         self = self.simplify();
         rhs = rhs.simplify();
         if rhs.den != 1.into() {
@@ -243,9 +222,9 @@ impl BigRat {
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
-            return Ok(BigRat::from(1).div(self.pow(rhs)?)?);
+            return Ok(Self::from(1).div(self.pow(rhs)?)?);
         }
-        Ok(BigRat {
+        Ok(Self {
             sign: Sign::Positive,
             num: BigUint::pow(&self.num, &rhs.num)?,
             den: BigUint::pow(&self.den, &rhs.num)?,
@@ -257,7 +236,7 @@ impl BigRat {
     fn terminates_in_base(&self, base: Base) -> bool {
         let mut x = self.clone();
         let base_as_u64: u64 = base.base_as_u8().into();
-        let base = BigRat {
+        let base = Self {
             sign: Sign::Positive,
             num: base_as_u64.into(),
             den: 1.into(),
@@ -281,8 +260,8 @@ impl BigRat {
         self.den = self.den.clone() * base_as_u64.into();
     }
 
-    pub fn approx_pi() -> BigRat {
-        BigRat {
+    pub fn approx_pi() -> Self {
+        Self {
             sign: Sign::Positive,
             num: BigUint::from(3_141_592_653_589_793_238_u64),
             den: BigUint::from(1_000_000_000_000_000_000_u64),
@@ -381,7 +360,7 @@ impl BigRat {
         let integer_part = x.num.clone() / x.den.clone();
         integer_part.format(f, base, true)?;
         write!(f, ".")?;
-        let integer_as_rational = BigRat {
+        let integer_as_rational = Self {
             sign: Sign::Positive,
             num: integer_part,
             den: 1.into(),
@@ -394,7 +373,7 @@ impl BigRat {
             let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
             digit.format(f, base, false)?;
             remaining_fraction = remaining_fraction
-                - BigRat {
+                - Self {
                     sign: Sign::Positive,
                     num: digit,
                     den: 1.into(),
@@ -413,7 +392,7 @@ impl BigRat {
 
 impl From<BigUint> for BigRat {
     fn from(n: BigUint) -> Self {
-        BigRat {
+        Self {
             sign: Sign::Positive,
             num: n,
             den: BigUint::from(1),
@@ -422,7 +401,7 @@ impl From<BigUint> for BigRat {
 }
 
 impl BigRat {
-    fn iter_root_n(mut low_bound: BigRat, val: &BigRat, n: &BigRat) -> Result<BigRat, String> {
+    fn iter_root_n(mut low_bound: Self, val: &Self, n: &Self) -> Result<Self, String> {
         let mut high_bound = low_bound.clone() + 1.into();
         for _ in 0..30 {
             let guess = (low_bound.clone() + high_bound.clone()).div(2.into())?;
@@ -436,7 +415,7 @@ impl BigRat {
     }
 
     // the boolean indicates whether or not the result is exact
-    pub fn root_n(self, n: &BigRat) -> Result<(BigRat, bool), String> {
+    pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());
         }
@@ -452,7 +431,7 @@ impl BigRat {
         let (den, den_exact) = self.clone().den.root_n(n)?;
         if num_exact && den_exact {
             return Ok((
-                BigRat {
+                Self {
                     sign: Sign::Positive,
                     num,
                     den,
@@ -461,21 +440,21 @@ impl BigRat {
             ));
         }
         let num_rat = if num_exact {
-            BigRat::from(num)
+            Self::from(num)
         } else {
             Self::iter_root_n(
-                BigRat::from(num),
-                &BigRat::from(self.num),
-                &BigRat::from(n.clone()),
+                Self::from(num),
+                &Self::from(self.num),
+                &Self::from(n.clone()),
             )?
         };
         let den_rat = if den_exact {
-            BigRat::from(den)
+            Self::from(den)
         } else {
             Self::iter_root_n(
-                BigRat::from(den),
-                &BigRat::from(self.den),
-                &BigRat::from(n.clone()),
+                Self::from(den),
+                &Self::from(self.den),
+                &Self::from(n.clone()),
             )?
         };
         Ok((num_rat.div(den_rat)?, false))
@@ -492,7 +471,8 @@ mod tests {
     fn test_bigrat_from() {
         BigRat::from(2);
         BigRat::from(0);
-        BigRat::from(-5);
+        BigRat::from(u64::MAX);
+        BigRat::from(u64::from(u32::MAX));
     }
 
     #[test]
