@@ -443,3 +443,13 @@ fn test_unit_conversions() {
     expect_parse_error("1m -> 45 kg ft");
     test_evaluation("1' -> inches", "12 inch");
 }
+
+#[test]
+fn test_abs() {
+    test_evaluation("abs 1", "1");
+    test_evaluation("abs i", "1");
+    test_evaluation("abs (-1)", "1");
+    test_evaluation("abs (-i)", "1");
+    test_evaluation("abs (2i)", "2");
+    test_evaluation("abs (1 + i)", "approx. 1.4142135619");
+}

@@ -160,6 +160,15 @@ impl ExactBase {
         }
     }
 
+    pub fn abs(self) -> Result<Self, String> {
+        let (new_value, res_exact) = self.value.abs()?;
+        Ok(ExactBase {
+            value: new_value,
+            exact: self.exact && res_exact,
+            base: self.base,
+        })
+    }
+
     pub fn format(&self, f: &mut Formatter, use_parentheses_if_complex: bool) -> Result<(), Error> {
         if !self.exact {
             write!(f, "approx. ")?;

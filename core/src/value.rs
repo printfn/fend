@@ -32,12 +32,7 @@ impl Value {
                 } else if name == "approximately" {
                     other.expect_num()?.make_approximate()
                 } else if name == "abs" {
-                    let arg = other.expect_num()?;
-                    if arg.is_negative() {
-                        -arg
-                    } else {
-                        arg
-                    }
+                    other.expect_num()?.abs()?
                 } else {
                     return Err(format!("Unknown function '{}'", name));
                 }

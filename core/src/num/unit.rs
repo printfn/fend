@@ -263,6 +263,13 @@ impl UnitValue {
         }
     }
 
+    pub fn abs(self) -> Result<Self, String> {
+        Ok(Self {
+            value: self.value.abs()?,
+            unit: self.unit,
+        })
+    }
+
     pub fn make_approximate(self) -> Self {
         Self {
             value: self.value.make_approximate(),
@@ -283,10 +290,6 @@ impl UnitValue {
 
     pub fn is_zero(&self) -> bool {
         self.value == 0.into()
-    }
-
-    pub fn is_negative(&self) -> bool {
-        self.value < 0.into()
     }
 }
 
