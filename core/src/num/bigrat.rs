@@ -384,7 +384,7 @@ impl BigRat {
             num: integer_part,
             den: 1.into(),
         };
-        let mut remaining_fraction = x.clone() - integer_as_rational;
+        let mut remaining_fraction = x - integer_as_rational;
         let mut i = 0;
         while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
             let base_as_u64: u64 = base.base_as_u8().into();

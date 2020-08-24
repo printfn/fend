@@ -115,27 +115,23 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
 
 fn parse_apply(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_parens_or_literal(input)?;
-    loop {
-        if let Ok((term, remaining)) = parse_parens_or_literal(input) {
-            res = match (&res, &term) {
-                (Expr::Num(_), Expr::Num(_)) => {
-                    // this may later be parsed as a compound fraction
-                    return Ok((res, input));
-                }
-                (Expr::ApplyMul(_, _), Expr::Num(_)) => {
-                    // this may later become an addition, e.g. 6 feet 1 inch
-                    return Ok((res, input));
-                }
-                (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(res), Box::new(term)),
-                (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
-                    Expr::ApplyMul(Box::new(res), Box::new(term))
-                }
-                _ => Expr::Apply(Box::new(res), Box::new(term)),
-            };
-            input = remaining;
-        } else {
-            break;
-        }
+    while let Ok((term, remaining)) = parse_parens_or_literal(input) {
+        res = match (&res, &term) {
+            (Expr::Num(_), Expr::Num(_)) => {
+                // this may later be parsed as a compound fraction
+                return Ok((res, input));
+            }
+            (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+                // this may later become an addition, e.g. 6 feet 1 inch
+                return Ok((res, input));
+            }
+            (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(res), Box::new(term)),
+            (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
+                Expr::ApplyMul(Box::new(res), Box::new(term))
+            }
+            _ => Expr::Apply(Box::new(res), Box::new(term)),
+        };
+        input = remaining;
     }
     Ok((res, input))
 }
@@ -199,22 +195,20 @@ fn parse_compound_fraction(input: &[Token]) -> ParseResult<Expr> {
     let (res, input) = parse_multiplicative(input)?;
     if let Ok((rhs, remaining)) = parse_multiplicative(input) {
         match (&res, &rhs) {
-            (Expr::Num(_), Expr::Div(b, c)) => match (&**b, &**c) {
-                (Expr::Num(_), Expr::Num(_)) => {
-                    return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
+            (Expr::Num(_), Expr::Div(b, c)) => {
+                if let (Expr::Num(_), Expr::Num(_)) = (&**b, &**c) {
+                    return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining));
                 }
-                _ => (),
-            },
-            (Expr::UnaryMinus(a), Expr::Div(b, c)) => match (&**a, &**b, &**c) {
-                (Expr::Num(_), Expr::Num(_), Expr::Num(_)) => {
+            }
+            (Expr::UnaryMinus(a), Expr::Div(b, c)) => {
+                if let (Expr::Num(_), Expr::Num(_), Expr::Num(_)) = (&**a, &**b, &**c) {
                     return Ok((
                         // note that res = '-<num>' here because unary minus has a higher precedence
                         Expr::Sub(Box::new(res), Box::new(rhs)),
                         remaining,
                     ));
                 }
-                _ => (),
-            },
+            }
             (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _)) => {
                 return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
             }
@@ -260,13 +254,9 @@ fn parse_arrow_conversion_cont(input: &[Token]) -> ParseResult<Expr> {
 
 fn parse_arrow_conversion(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_additive(input)?;
-    loop {
-        if let Ok((term, remaining)) = parse_arrow_conversion_cont(input) {
-            res = Expr::As(Box::new(res), Box::new(term));
-            input = remaining;
-        } else {
-            break;
-        }
+    while let Ok((term, remaining)) = parse_arrow_conversion_cont(input) {
+        res = Expr::As(Box::new(res), Box::new(term));
+        input = remaining;
     }
     Ok((res, input))
 }

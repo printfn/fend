@@ -23,7 +23,7 @@ impl Add for ExactBase {
     fn add(self, rhs: ExactBase) -> ExactBase {
         ExactBase {
             value: self.value + rhs.value,
-            exact: self.exact && rhs.exact,
+            exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
         }
     }
@@ -71,7 +71,7 @@ impl Mul for ExactBase {
     fn mul(self, rhs: ExactBase) -> ExactBase {
         ExactBase {
             value: self.value * rhs.value,
-            exact: self.exact && rhs.exact,
+            exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
         }
     }
@@ -97,6 +97,10 @@ impl From<i32> for ExactBase {
     }
 }
 
+fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
+    a_exact && b_exact
+}
+
 impl ExactBase {
     pub fn make_approximate(self) -> Self {
         ExactBase {
@@ -117,7 +121,7 @@ impl ExactBase {
     pub fn div(self, rhs: ExactBase) -> Result<ExactBase, String> {
         Ok(ExactBase {
             value: self.value.div(rhs.value)?,
-            exact: self.exact && rhs.exact,
+            exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
         })
     }
@@ -125,7 +129,7 @@ impl ExactBase {
     pub fn pow(self, rhs: ExactBase) -> Result<ExactBase, String> {
         Ok(ExactBase {
             value: self.value.pow(rhs.value)?,
-            exact: self.exact && rhs.exact,
+            exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
         })
     }
@@ -164,7 +168,7 @@ impl ExactBase {
         let (new_value, res_exact) = self.value.abs()?;
         Ok(ExactBase {
             value: new_value,
-            exact: self.exact && res_exact,
+            exact: require_both_exact(self.exact, res_exact),
             base: self.base,
         })
     }

@@ -9,5 +9,6 @@ readme = "README.md"
 license = "MIT"
 keywords = ["calculator", "library", "conversion", "math", "tool"]
 edition = "2018"
+categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]

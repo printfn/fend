@@ -121,7 +121,7 @@ impl Complex {
             imag: 0.into(),
         } * Complex {
             real: u.clone() * x.clone() + v.clone() * y.clone(),
-            imag: v.clone() * x.clone() - u.clone() * y.clone(),
+            imag: v * x - u * y,
         })
     }
 
@@ -151,29 +151,38 @@ impl Complex {
     pub fn abs(self) -> Result<(Self, bool), String> {
         Ok(if self.imag == 0.into() {
             if self.real < 0.into() {
-                (Self {
-                    real: -self.real,
-                    imag: 0.into(),
-                }, true)
+                (
+                    Self {
+                        real: -self.real,
+                        imag: 0.into(),
+                    },
+                    true,
+                )
             } else {
                 (self, true)
             }
         } else if self.real == 0.into() {
             if self.imag < 0.into() {
-                (Self {
-                    real: -self.imag,
-                    imag: 0.into(),
-                }, true)
+                (
+                    Self {
+                        real: -self.imag,
+                        imag: 0.into(),
+                    },
+                    true,
+                )
             } else {
-                (Self {
-                    real: self.imag,
-                    imag: 0.into(),
-                }, true)
+                (
+                    Self {
+                        real: self.imag,
+                        imag: 0.into(),
+                    },
+                    true,
+                )
             }
         } else {
             let res_squared = Self {
                 real: self.real.pow(2.into())? + self.imag.pow(2.into())?,
-                imag: 0.into()
+                imag: 0.into(),
             };
             res_squared.root_n(&Complex::from(2))?
         })

@@ -9,6 +9,7 @@ readme = "README.md"
 license = "MIT"
 keywords = ["calculator", "cli", "conversion", "math", "tool"]
 edition = "2018"
+categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
 rustyline = "6.2.0"

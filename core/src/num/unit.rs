@@ -151,7 +151,7 @@ impl UnitValue {
             .unwrap()
             .expect_num()
             .unwrap();
-        let (hashmap, scale) = value.unit.into_hashmap_and_scale();
+        let (hashmap, scale) = value.unit.to_hashmap_and_scale();
         let scale = scale * value.value;
         let resulting_unit = NamedUnit::new(singular_name, plural_name, space, hashmap, scale);
         UnitValue::new(1, vec![UnitExponent::new(resulting_unit, 1)])
@@ -164,7 +164,7 @@ impl UnitValue {
     ) -> Self {
         let base_kg = BaseUnit::new(singular_name.to_string());
         let mut hashmap = HashMap::new();
-        hashmap.insert(base_kg.clone(), 1.into());
+        hashmap.insert(base_kg, 1.into());
         let kg = NamedUnit::new(
             singular_name.to_string(),
             plural_name.to_string(),
@@ -172,7 +172,7 @@ impl UnitValue {
             hashmap,
             1,
         );
-        Self::new(1, vec![UnitExponent::new(kg.clone(), 1)])
+        Self::new(1, vec![UnitExponent::new(kg, 1)])
     }
 
     fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent<NamedUnit>>) -> Self {
@@ -344,7 +344,7 @@ impl Display for UnitValue {
                 if unit_exponent.exponent < 0.into() {
                     negative_components.push(unit_exponent);
                 } else {
-                    if !first || unit_exponent.unit.spacing == true {
+                    if !first || unit_exponent.unit.spacing {
                         write!(f, " ")?;
                     }
                     first = false;
@@ -376,7 +376,7 @@ struct Unit {
 }
 
 impl Unit {
-    fn into_hashmap_and_scale(&self) -> (HashMap<BaseUnit, ExactBase>, ExactBase) {
+    fn to_hashmap_and_scale(&self) -> (HashMap<BaseUnit, ExactBase>, ExactBase) {
         let mut hashmap = HashMap::<BaseUnit, ExactBase>::new();
         let mut scale = ExactBase::from(1);
         for named_unit_exp in self.components.iter() {
@@ -414,14 +414,13 @@ impl Unit {
 
     /// Returns the combined scale factor if successful
     fn try_convert(from: &Unit, into: &Unit) -> Result<ExactBase, String> {
-        let (hash_a, scale_a) = from.into_hashmap_and_scale();
-        let (hash_b, scale_b) = into.into_hashmap_and_scale();
+        let (hash_a, scale_a) = from.to_hashmap_and_scale();
+        let (hash_b, scale_b) = into.to_hashmap_and_scale();
         if hash_a == hash_b {
             // todo remove unwrap
             Ok(scale_a.div(scale_b).unwrap())
         } else {
-            //eprintln!("{:#?} != {:#?}", hash_a, hash_b);
-            Err(format!("Units are incompatible"))
+            Err("Units are incompatible".to_string())
         }
     }
 

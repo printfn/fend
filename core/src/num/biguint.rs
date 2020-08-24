@@ -98,76 +98,55 @@ impl BigUint {
             Large(v) => v.push(new),
         }
     }
-}
 
-impl Ord for BigUint {
-    fn cmp(&self, other: &BigUint) -> Ordering {
-        match (self, other) {
-            (Small(a), Small(b)) => return a.cmp(b),
-            _ => (),
+    pub fn gcd(mut a: BigUint, mut b: BigUint) -> BigUint {
+        while b >= 1.into() {
+            let r = a.clone() % b.clone();
+            a = b;
+            b = r;
         }
-        let mut i = std::cmp::max(self.value_len(), other.value_len());
-        while i != 0 {
-            let v1 = self.get(i - 1);
-            let v2 = other.get(i - 1);
-            if v1 < v2 {
-                return Ordering::Less;
-            } else if v1 > v2 {
-                return Ordering::Greater;
-            } else {
-                // continue if equal
+
+        a
+    }
+
+    pub fn lcm(a: BigUint, b: BigUint) -> BigUint {
+        a.clone() * b.clone() / BigUint::gcd(a, b)
+    }
+
+    pub fn pow(a: BigUint, b: BigUint) -> Result<BigUint, String> {
+        if a.is_zero() && b.is_zero() {
+            return Err("Zero to the power of zero is undefined".to_string());
+        }
+        if b.is_zero() {
+            return Ok(BigUint::from(1));
+        }
+        if b.value_len() > 1 {
+            return Err("Exponent too large".to_string());
+        }
+        Ok(a.pow_internal(b.get(0)))
+    }
+
+    // computes the exact square root if possible, otherwise the next lower integer
+    pub fn root_n(self, n: &BigUint) -> Result<(BigUint, bool), String> {
+        if self == 0.into() || self == 1.into() {
+            return Ok((self, true));
+        }
+        let mut low_guess = BigUint::from(1);
+        let mut high_guess = self.clone();
+        while high_guess.clone() - low_guess.clone() > 1.into() {
+            let mut guess = low_guess.clone() + high_guess.clone();
+            guess.rshift();
+
+            let res = Self::pow(guess.clone(), n.clone())?;
+            match res.cmp(&self) {
+                Ordering::Equal => return Ok((guess, true)),
+                Ordering::Greater => high_guess = guess,
+                Ordering::Less => low_guess = guess,
             }
-            i -= 1;
         }
-
-        Ordering::Equal
+        Ok((low_guess, false))
     }
-}
 
-impl PartialOrd for BigUint {
-    fn partial_cmp(&self, other: &BigUint) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for BigUint {
-    fn eq(&self, other: &Self) -> bool {
-        self.cmp(other) == Ordering::Equal
-    }
-}
-
-impl Eq for BigUint {}
-
-impl From<u64> for BigUint {
-    fn from(val: u64) -> BigUint {
-        Small(val)
-    }
-}
-
-impl BigUint {
-    /// computes self += (other * mul_digit) << (64 * shift)
-    fn add_assign_internal(&mut self, other: &BigUint, mul_digit: u64, shift: usize) {
-        let mut carry = 0;
-        for i in 0..max(self.value_len(), other.value_len() + shift) {
-            let a = self.get(i);
-            let b = if i >= shift { other.get(i - shift) } else { 0 };
-            let sum = u128::from(a) + (u128::from(b) * u128::from(mul_digit)) + u128::from(carry);
-            self.set(i, truncate(sum));
-            carry = truncate(sum >> 64);
-        }
-        if carry != 0 {
-            self.value_push(carry);
-        }
-    }
-}
-
-impl AddAssign<&BigUint> for BigUint {
-    fn add_assign(&mut self, other: &BigUint) {
-        self.add_assign_internal(other, 1, 0);
-    }
-}
-
-impl BigUint {
     fn pow_internal(&self, mut exponent: u64) -> BigUint {
         let mut result = BigUint::from(1);
         let mut base = self.clone();
@@ -223,9 +202,8 @@ impl BigUint {
     }
 
     fn divmod(&self, other: &BigUint) -> (BigUint, BigUint) {
-        match (self, other) {
-            (Small(a), Small(b)) => return (Small(*a / *b), Small(*a % *b)),
-            _ => (),
+        if let (Small(a), Small(b)) = (self, other) {
+            return (Small(*a / *b), Small(*a % *b));
         }
         if other.is_zero() {
             panic!("Can't divide by 0");
@@ -284,6 +262,116 @@ impl BigUint {
             self.add_assign_internal(&self_clone, other.get(i), i);
         }
     }
+
+    /// computes self += (other * mul_digit) << (64 * shift)
+    fn add_assign_internal(&mut self, other: &BigUint, mul_digit: u64, shift: usize) {
+        let mut carry = 0;
+        for i in 0..max(self.value_len(), other.value_len() + shift) {
+            let a = self.get(i);
+            let b = if i >= shift { other.get(i - shift) } else { 0 };
+            let sum = u128::from(a) + (u128::from(b) * u128::from(mul_digit)) + u128::from(carry);
+            self.set(i, truncate(sum));
+            carry = truncate(sum >> 64);
+        }
+        if carry != 0 {
+            self.value_push(carry);
+        }
+    }
+
+    pub fn format(
+        &self,
+        f: &mut Formatter,
+        base: Base,
+        write_base_prefix: bool,
+    ) -> Result<(), Error> {
+        if write_base_prefix {
+            base.write_prefix(f)?;
+        }
+
+        if self.is_zero() {
+            write!(f, "0")?;
+            return Ok(());
+        }
+
+        let mut num = self.clone();
+        if num.value_len() == 1 && base.base_as_u8() == 10 {
+            write!(f, "{}", num.get(0))?;
+        } else {
+            let mut output = String::new();
+            let base_as_u128: u128 = base.base_as_u8().into();
+            let mut divisor = base_as_u128;
+            let mut rounds = 1;
+            while divisor < u128::MAX / base_as_u128 {
+                divisor *= base_as_u128;
+                rounds += 1;
+            }
+            while !num.is_zero() {
+                let divmod_res = num.divmod(&BigUint::Large(vec![
+                    truncate(divisor),
+                    truncate(divisor >> 64),
+                ]));
+                let mut digit_group_value =
+                    u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
+                for _ in 0..rounds {
+                    let digit_value = digit_group_value % base_as_u128;
+                    digit_group_value /= base_as_u128;
+                    let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
+                    output.insert(0, ch);
+                }
+                num = divmod_res.0;
+            }
+            output = output.trim_start_matches('0').to_string();
+            write!(f, "{}", output)?;
+        }
+        Ok(())
+    }
+}
+
+impl Ord for BigUint {
+    fn cmp(&self, other: &BigUint) -> Ordering {
+        if let (Small(a), Small(b)) = (self, other) {
+            return a.cmp(b);
+        }
+        let mut i = std::cmp::max(self.value_len(), other.value_len());
+        while i != 0 {
+            let v1 = self.get(i - 1);
+            let v2 = other.get(i - 1);
+            match v1.cmp(&v2) {
+                Ordering::Less => return Ordering::Less,
+                Ordering::Greater => return Ordering::Greater,
+                Ordering::Equal => (),
+            }
+            i -= 1;
+        }
+
+        Ordering::Equal
+    }
+}
+
+impl PartialOrd for BigUint {
+    fn partial_cmp(&self, other: &BigUint) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for BigUint {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl Eq for BigUint {}
+
+impl From<u64> for BigUint {
+    fn from(val: u64) -> BigUint {
+        Small(val)
+    }
+}
+
+impl AddAssign<&BigUint> for BigUint {
+    fn add_assign(&mut self, other: &BigUint) {
+        self.add_assign_internal(other, 1, 0);
+    }
 }
 
 impl Add for BigUint {
@@ -299,9 +387,8 @@ impl Sub for BigUint {
     type Output = BigUint;
 
     fn sub(self, other: BigUint) -> BigUint {
-        match (&self, &other) {
-            (Small(a), Small(b)) => return BigUint::from(a - b),
-            _ => (),
+        if let (Small(a), Small(b)) = (&self, &other) {
+            return BigUint::from(a - b);
         }
         if self < other {
             unreachable!("Number would be less than 0");
@@ -336,13 +423,10 @@ impl Mul for &BigUint {
     type Output = BigUint;
 
     fn mul(self, other: &BigUint) -> BigUint {
-        match (self, other) {
-            (Small(a), Small(b)) => {
-                if let Some(res) = a.checked_mul(*b) {
-                    return BigUint::from(res);
-                }
+        if let (Small(a), Small(b)) = (self, other) {
+            if let Some(res) = a.checked_mul(*b) {
+                return BigUint::from(res);
             }
-            _ => (),
         }
         let mut res = self.clone();
         res.mul_internal(other.clone());
@@ -354,13 +438,10 @@ impl Mul for BigUint {
     type Output = BigUint;
 
     fn mul(mut self, other: BigUint) -> BigUint {
-        match (&self, &other) {
-            (Small(a), Small(b)) => {
-                if let Some(res) = a.checked_mul(*b) {
-                    return BigUint::from(res);
-                }
+        if let (Small(a), Small(b)) = (&self, &other) {
+            if let Some(res) = a.checked_mul(*b) {
+                return BigUint::from(res);
             }
-            _ => (),
         }
         self.mul_internal(other);
         self
@@ -399,115 +480,12 @@ impl Rem for &BigUint {
     }
 }
 
-impl BigUint {
-    pub fn format(
-        &self,
-        f: &mut Formatter,
-        base: Base,
-        write_base_prefix: bool,
-    ) -> Result<(), Error> {
-        if write_base_prefix {
-            base.write_prefix(f)?;
-        }
-
-        if self.is_zero() {
-            write!(f, "0")?;
-            return Ok(());
-        }
-
-        let mut num = self.clone();
-        if num.value_len() == 1 && base.base_as_u8() == 10 {
-            write!(f, "{}", num.get(0))?;
-        } else {
-            let mut output = String::new();
-            let base_as_u128: u128 = base.base_as_u8().into();
-            let mut divisor = base_as_u128.clone();
-            let mut rounds = 1;
-            while divisor < u128::MAX / base_as_u128 {
-                divisor *= base_as_u128;
-                rounds += 1;
-            }
-            while !num.is_zero() {
-                let divmod_res = num.divmod(&BigUint::Large(vec![
-                    truncate(divisor),
-                    truncate(divisor >> 64),
-                ]));
-                let mut digit_group_value =
-                    u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
-                for _ in 0..rounds {
-                    let digit_value = digit_group_value % base_as_u128;
-                    digit_group_value /= base_as_u128;
-                    let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
-                    output.insert(0, ch);
-                }
-                num = divmod_res.0;
-            }
-            output = output.trim_start_matches('0').to_string();
-            write!(f, "{}", output)?;
-        }
-        Ok(())
-    }
-}
-
 impl Debug for BigUint {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Small(n) => write!(f, "{}", n),
             Large(value) => write!(f, "{:?}", value),
         }
-    }
-}
-
-impl BigUint {
-    pub fn gcd(mut a: BigUint, mut b: BigUint) -> BigUint {
-        while b >= 1.into() {
-            let r = a.clone() % b.clone();
-            a = b;
-            b = r;
-        }
-
-        a
-    }
-
-    pub fn lcm(a: BigUint, b: BigUint) -> BigUint {
-        a.clone() * b.clone() / BigUint::gcd(a, b)
-    }
-
-    pub fn pow(a: BigUint, b: BigUint) -> Result<BigUint, String> {
-        if a.is_zero() && b.is_zero() {
-            return Err("Zero to the power of zero is undefined".to_string());
-        }
-        if b.is_zero() {
-            return Ok(BigUint::from(1));
-        }
-        if b.value_len() > 1 {
-            return Err("Exponent too large".to_string());
-        }
-        Ok(a.pow_internal(b.get(0)))
-    }
-
-    // computes the exact square root if possible, otherwise the next lower integer
-    pub fn root_n(self, n: &BigUint) -> Result<(BigUint, bool), String> {
-        if self == 0.into() || self == 1.into() {
-            return Ok((self, true));
-        }
-        let mut low_guess = BigUint::from(1);
-        let mut high_guess = self.clone();
-        while high_guess.clone() - low_guess.clone() > 1.into() {
-            let mut guess = low_guess.clone() + high_guess.clone();
-            guess.rshift();
-
-            let res = Self::pow(guess.clone(), n.clone())?;
-            if res == self {
-                return Ok((guess, true));
-            } else if res > self {
-                high_guess = guess;
-            } else {
-                // res < self
-                low_guess = guess;
-            }
-        }
-        Ok((low_guess, false))
     }
 }
 

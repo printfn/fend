@@ -237,15 +237,7 @@ fn parse_number(input: &mut &str) -> Result<Token, String> {
 }
 
 fn is_valid_in_ident(ch: char, first: bool) -> bool {
-    if ch.is_alphabetic() {
-        true
-    } else if "%‰\"'’”".contains(ch) {
-        true
-    } else if !first && ".".contains(ch) {
-        true
-    } else {
-        false
-    }
+    ch.is_alphabetic() || "%‰\"'’”".contains(ch) || (!first && ".".contains(ch))
 }
 
 fn parse_ident(input: &mut &str) -> Result<Token, String> {
@@ -284,7 +276,7 @@ pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {
                         ')' => res.push(Token::Symbol(Symbol::CloseParens)),
                         '+' => res.push(Token::Symbol(Symbol::Add)),
                         '-' => {
-                            if input.chars().next() == Some('>') {
+                            if input.starts_with('>') {
                                 consume_char(&mut input)?;
                                 res.push(Token::Symbol(Symbol::ArrowConversion))
                             } else {
@@ -292,7 +284,7 @@ pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {
                             }
                         }
                         '*' => {
-                            if input.chars().next() == Some('*') {
+                            if input.starts_with('*') {
                                 consume_char(&mut input)?;
                                 res.push(Token::Symbol(Symbol::Pow))
                             } else {
