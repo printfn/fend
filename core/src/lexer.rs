@@ -25,16 +25,15 @@ pub enum Symbol {
 
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        use Symbol::*;
         let s = match self {
-            OpenParens => "(",
-            CloseParens => ")",
-            Add => "+",
-            Sub => "-",
-            Mul => "*",
-            Div => "/",
-            Pow => "^",
-            ArrowConversion => "->",
+            Symbol::OpenParens => "(",
+            Symbol::CloseParens => ")",
+            Symbol::Add => "+",
+            Symbol::Sub => "-",
+            Symbol::Mul => "*",
+            Symbol::Div => "/",
+            Symbol::Pow => "^",
+            Symbol::ArrowConversion => "->",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -237,7 +236,10 @@ fn parse_number(input: &mut &str) -> Result<Token, String> {
 }
 
 fn is_valid_in_ident(ch: char, first: bool) -> bool {
-    ch.is_alphabetic() || "%‰\"'’”".contains(ch) || (!first && ".".contains(ch))
+    // percent, per mille, double quote, single quote, unicode single and double quotes
+    // %‰\"'’”
+    let allowed_symbols = "%\u{2030}\"'\u{2019}\u{201d}";
+    ch.is_alphabetic() || allowed_symbols.contains(ch) || (!first && ".".contains(ch))
 }
 
 fn parse_ident(input: &mut &str) -> Result<Token, String> {

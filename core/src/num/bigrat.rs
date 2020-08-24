@@ -21,10 +21,12 @@ mod sign {
 
         pub fn sign_of_product(a: Self, b: Self) -> Self {
             match (a, b) {
-                (Sign::Positive, Sign::Positive) => Sign::Positive,
-                (Sign::Positive, Sign::Negative) => Sign::Negative,
-                (Sign::Negative, Sign::Positive) => Sign::Negative,
-                (Sign::Negative, Sign::Negative) => Sign::Positive,
+                (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
+                    Sign::Positive
+                }
+                (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
+                    Sign::Negative
+                }
             }
         }
     }
@@ -245,8 +247,8 @@ impl BigRat {
         }
         Ok(BigRat {
             sign: Sign::Positive,
-            num: BigUint::pow(self.num, rhs.num.clone())?,
-            den: BigUint::pow(self.den, rhs.num)?,
+            num: BigUint::pow(&self.num, &rhs.num)?,
+            den: BigUint::pow(&self.den, &rhs.num)?,
         })
     }
 

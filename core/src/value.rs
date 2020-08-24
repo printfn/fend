@@ -15,7 +15,7 @@ impl Value {
         }
     }
 
-    pub fn apply(&self, other: Value, allow_multiplication: bool) -> Result<Value, String> {
+    pub fn apply(&self, other: &Value, allow_multiplication: bool) -> Result<Value, String> {
         Ok(Value::Num(match self {
             Value::Num(n) => {
                 if allow_multiplication {

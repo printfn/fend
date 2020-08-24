@@ -16,12 +16,13 @@ pub struct FendResult {
 }
 
 impl FendResult {
+    #[must_use]
     pub fn get_main_result(&self) -> &str {
         self.main_result.as_str()
     }
 
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
-        self.other_info.iter().map(|string| string.as_str())
+        self.other_info.iter().map(std::string::String::as_str)
     }
 }
 
@@ -43,6 +44,7 @@ impl Default for Context {
 }
 
 impl Context {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             scope: crate::num::Number::create_initial_units(),
@@ -50,6 +52,12 @@ impl Context {
     }
 }
 
+/// This function evaluates a string using the given context. For example,
+/// passing in the string "1 + 1" will return a result of "2".
+///
+/// # Errors
+/// It returns an error if the given string is invalid.
+/// This may be due to parser or runtime errors.
 pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String> {
     if input.is_empty() {
         // no or blank input: return no output

@@ -12,7 +12,7 @@ pub enum BigUint {
 
 use BigUint::{Large, Small};
 
-#[allow(clippy::as_conversions)]
+#[allow(clippy::as_conversions, clippy::clippy::cast_possible_truncation)]
 fn truncate(n: u128) -> u64 {
     n as u64
 }
@@ -113,7 +113,7 @@ impl BigUint {
         a.clone() * b.clone() / BigUint::gcd(a, b)
     }
 
-    pub fn pow(a: BigUint, b: BigUint) -> Result<BigUint, String> {
+    pub fn pow(a: &BigUint, b: &BigUint) -> Result<BigUint, String> {
         if a.is_zero() && b.is_zero() {
             return Err("Zero to the power of zero is undefined".to_string());
         }
@@ -137,7 +137,7 @@ impl BigUint {
             let mut guess = low_guess.clone() + high_guess.clone();
             guess.rshift();
 
-            let res = Self::pow(guess.clone(), n.clone())?;
+            let res = Self::pow(&guess, &n)?;
             match res.cmp(&self) {
                 Ordering::Equal => return Ok((guess, true)),
                 Ordering::Greater => high_guess = guess,
@@ -244,7 +244,7 @@ impl BigUint {
     }
 
     /// computes self *= other
-    fn mul_internal(&mut self, other: BigUint) {
+    fn mul_internal(&mut self, other: &BigUint) {
         if self.is_zero() || other.is_zero() {
             *self = BigUint::from(0);
             return;
@@ -263,7 +263,7 @@ impl BigUint {
         }
     }
 
-    /// computes self += (other * mul_digit) << (64 * shift)
+    /// computes `self += (other * mul_digit) << (64 * shift)`
     fn add_assign_internal(&mut self, other: &BigUint, mul_digit: u64, shift: usize) {
         let mut carry = 0;
         for i in 0..max(self.value_len(), other.value_len() + shift) {
@@ -429,7 +429,7 @@ impl Mul for &BigUint {
             }
         }
         let mut res = self.clone();
-        res.mul_internal(other.clone());
+        res.mul_internal(other);
         res
     }
 }
@@ -443,7 +443,7 @@ impl Mul for BigUint {
                 return BigUint::from(res);
             }
         }
-        self.mul_internal(other);
+        self.mul_internal(&other);
         self
     }
 }

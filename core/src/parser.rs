@@ -109,7 +109,9 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
-        _ => Err("Expected a number, an identifier or an open parenthesis".to_string()),
+        Token::Symbol(..) => {
+            Err("Expected a number, an identifier or an open parenthesis".to_string())
+        }
     }
 }
 
@@ -117,12 +119,9 @@ fn parse_apply(input: &[Token]) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_parens_or_literal(input)?;
     while let Ok((term, remaining)) = parse_parens_or_literal(input) {
         res = match (&res, &term) {
-            (Expr::Num(_), Expr::Num(_)) => {
-                // this may later be parsed as a compound fraction
-                return Ok((res, input));
-            }
-            (Expr::ApplyMul(_, _), Expr::Num(_)) => {
-                // this may later become an addition, e.g. 6 feet 1 inch
+            (Expr::Num(_), Expr::Num(_)) | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+                // this may later be parsed as a compound fraction, e.g. 1 2/3
+                // or as an addition, e.g. 6 feet 1 inch
                 return Ok((res, input));
             }
             (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(res), Box::new(term)),

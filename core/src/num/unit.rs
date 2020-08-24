@@ -19,7 +19,7 @@ impl UnitValue {
         Self::create_units(vec![
             ("percent", "percent", true, Some("0.01")),
             ("%", "%", false, Some("percent")),
-            ("‰", "‰", false, Some("0.001")),
+            ("\u{2030}", "\u{2030}", false, Some("0.001")), // per mille (‰)
             ("s", "s", true, None),
             ("second", "seconds", true, Some("s")),
             ("m", "m", true, None),
@@ -28,7 +28,7 @@ impl UnitValue {
             ("cm", "cm", true, Some("0.01m")),
             ("mm", "mm", true, Some("0.001m")),
             ("um", "um", true, Some("0.001mm")),
-            ("µm", "µm", true, Some("0.001mm")),
+            ("\u{b5}m", "\u{b5}m", true, Some("0.001mm")), // micrometres (µm)
             ("nm", "nm", true, Some("1e-9m")),
             ("pm", "pm", true, Some("1e-12m")),
             ("fm", "fm", true, Some("1e-15m")),
@@ -40,9 +40,9 @@ impl UnitValue {
             ("ft", "ft", true, Some("12 inches")),
             ("foot", "feet", true, Some("1ft")),
             ("\"", "\"", false, Some("inch")),
-            ("”", "”", false, Some("inch")),
+            ("\u{201d}", "\u{201d}", false, Some("inch")), // Unicode double quote (”)
             ("'", "'", false, Some("foot")),
-            ("’", "’", false, Some("foot")),
+            ("\u{2019}", "\u{2019}", false, Some("foot")), // Unicode single quote (’)
             ("yard", "yards", true, Some("3 feet")),
             ("mile", "miles", true, Some("1760 yards")),
             ("km", "km", true, Some("1000m")),
@@ -70,7 +70,7 @@ impl UnitValue {
             ("volt", "volts", true, Some("1 J / C")),
             ("V", "V", true, Some("1 volt")),
             ("ohm", "ohms", true, Some("1 V / A")),
-            ("Ω", "Ω", true, Some("1 ohm")),
+            ("\u{3a9}", "\u{3a9}", true, Some("1 ohm")), // Omega symbol (Ω)
             ("siemens", "siemens", true, Some("1 / ohm")),
             ("S", "S", true, Some("1 siemens")),
             ("farad", "farad", true, Some("1 s / ohm")),
@@ -124,7 +124,7 @@ impl UnitValue {
                     singular_name.to_string(),
                     plural_name.to_string(),
                     space,
-                    expr,
+                    expr.to_string().as_str(),
                     &scope,
                 )
             } else {
@@ -139,15 +139,14 @@ impl UnitValue {
     }
 
     fn new_unit(
-        singular_name: impl ToString,
-        plural_name: impl ToString,
+        singular_name: String,
+        plural_name: String,
         space: bool,
-        expression: impl ToString,
+        expression: &str,
         scope: &HashMap<String, Value>,
     ) -> Self {
-        let expression_as_string = expression.to_string();
         // todo remove unwraps
-        let value = crate::evaluate_to_value(expression_as_string.as_str(), scope)
+        let value = crate::evaluate_to_value(expression, scope)
             .unwrap()
             .expect_num()
             .unwrap();
@@ -157,21 +156,11 @@ impl UnitValue {
         UnitValue::new(1, vec![UnitExponent::new(resulting_unit, 1)])
     }
 
-    fn new_base_unit(
-        singular_name: impl ToString,
-        plural_name: impl ToString,
-        space: bool,
-    ) -> Self {
-        let base_kg = BaseUnit::new(singular_name.to_string());
+    fn new_base_unit(singular_name: String, plural_name: String, space: bool) -> Self {
+        let base_kg = BaseUnit::new(singular_name.clone());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new(
-            singular_name.to_string(),
-            plural_name.to_string(),
-            space,
-            hashmap,
-            1,
-        );
+        let kg = NamedUnit::new(singular_name, plural_name, space, hashmap, 1);
         Self::new(1, vec![UnitExponent::new(kg, 1)])
     }
 
@@ -340,7 +329,7 @@ impl Display for UnitValue {
         if !self.unit.components.is_empty() {
             let mut negative_components = vec![];
             let mut first = true;
-            for unit_exponent in self.unit.components.iter() {
+            for unit_exponent in &self.unit.components {
                 if unit_exponent.exponent < 0.into() {
                     negative_components.push(unit_exponent);
                 } else {
@@ -379,24 +368,20 @@ impl Unit {
     fn to_hashmap_and_scale(&self) -> (HashMap<BaseUnit, ExactBase>, ExactBase) {
         let mut hashmap = HashMap::<BaseUnit, ExactBase>::new();
         let mut scale = ExactBase::from(1);
-        for named_unit_exp in self.components.iter() {
+        for named_unit_exp in &self.components {
             let overall_exp = &named_unit_exp.exponent;
-            for (base_unit, base_exp) in named_unit_exp.unit.base_units.iter() {
-                match hashmap.get_mut(&base_unit) {
-                    Some(exp) => {
-                        let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
-                        if new_exp == 0.into() {
-                            hashmap.remove(&base_unit);
-                        } else {
-                            *exp = new_exp;
-                        }
+            for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
+                if let Some(exp) = hashmap.get_mut(&base_unit) {
+                    let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
+                    if new_exp == 0.into() {
+                        hashmap.remove(&base_unit);
+                    } else {
+                        *exp = new_exp;
                     }
-                    None => {
-                        let new_exp = overall_exp.clone() * base_exp.clone();
-                        if new_exp != 0.into() {
-                            hashmap
-                                .insert(base_unit.clone(), overall_exp.clone() * base_exp.clone());
-                        }
+                } else {
+                    let new_exp = overall_exp.clone() * base_exp.clone();
+                    if new_exp != 0.into() {
+                        hashmap.insert(base_unit.clone(), overall_exp.clone() * base_exp.clone());
                     }
                 }
             }
@@ -456,15 +441,15 @@ struct NamedUnit {
 
 impl NamedUnit {
     fn new(
-        singular_name: impl ToString,
-        plural_name: impl ToString,
+        singular_name: String,
+        plural_name: String,
         spacing: bool,
         base_units: HashMap<BaseUnit, ExactBase>,
         scale: impl Into<ExactBase>,
     ) -> Self {
         Self {
-            singular_name: singular_name.to_string(),
-            plural_name: plural_name.to_string(),
+            singular_name,
+            plural_name,
             spacing,
             base_units,
             scale: scale.into(),
@@ -479,10 +464,8 @@ struct BaseUnit {
 }
 
 impl BaseUnit {
-    fn new(name: impl ToString) -> Self {
-        Self {
-            name: name.to_string(),
-        }
+    fn new(name: String) -> Self {
+        Self { name }
     }
 }
 
@@ -492,10 +475,10 @@ mod tests {
 
     #[test]
     fn test_basic_kg() {
-        let base_kg = BaseUnit::new("kilogram");
+        let base_kg = BaseUnit::new("kilogram".to_string());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new("kg", "kg", true, hashmap, 1);
+        let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), true, hashmap, 1);
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg.clone(), 1)]);
         let sum = one_kg.add(two_kg).unwrap();
@@ -504,13 +487,13 @@ mod tests {
 
     #[test]
     fn test_basic_kg_and_g() {
-        let base_kg = BaseUnit::new("kilogram");
+        let base_kg = BaseUnit::new("kilogram".to_string());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg.clone(), 1.into());
-        let kg = NamedUnit::new("kg", "kg", true, hashmap.clone(), 1);
+        let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), true, hashmap.clone(), 1);
         let g = NamedUnit::new(
-            "g",
-            "g",
+            "g".to_string(),
+            "g".to_string(),
             true,
             hashmap,
             ExactBase::from(1).div(1000.into()).unwrap(),
