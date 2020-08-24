@@ -12,6 +12,11 @@ pub enum BigUint {
 
 use BigUint::{Large, Small};
 
+#[allow(clippy::as_conversions)]
+fn truncate(n: u128) -> u64 {
+    n as u64
+}
+
 impl BigUint {
     fn is_zero(&self) -> bool {
         match self {
@@ -147,8 +152,8 @@ impl BigUint {
             let a = self.get(i);
             let b = if i >= shift { other.get(i - shift) } else { 0 };
             let sum = u128::from(a) + (u128::from(b) * u128::from(mul_digit)) + u128::from(carry);
-            self.set(i, sum as u64);
-            carry = (sum >> 64) as u64;
+            self.set(i, truncate(sum));
+            carry = truncate(sum >> 64);
         }
         if carry != 0 {
             self.value_push(carry);
@@ -318,7 +323,7 @@ impl Sub for BigUint {
             } else {
                 let next_digit =
                     u128::from(a) + ((1_u128) << 64) - u128::from(b) - u128::from(carry);
-                res.push(next_digit as u64);
+                res.push(truncate(next_digit));
                 carry = 1;
             }
         }
@@ -424,15 +429,15 @@ impl BigUint {
             }
             while !num.is_zero() {
                 let divmod_res = num.divmod(&BigUint::Large(vec![
-                    divisor as u64,
-                    (divisor >> 64) as u64,
+                    truncate(divisor),
+                    truncate(divisor >> 64),
                 ]));
                 let mut digit_group_value =
-                    (divmod_res.1.get(1) as u128) << 64 | divmod_res.1.get(0) as u128;
+                    u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
                 for _ in 0..rounds {
                     let digit_value = digit_group_value % base_as_u128;
                     digit_group_value /= base_as_u128;
-                    let ch = Base::digit_as_char(digit_value as u64).unwrap();
+                    let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
                     output.insert(0, ch);
                 }
                 num = divmod_res.0;

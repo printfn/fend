@@ -8,6 +8,7 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub struct UnitValue {
     value: ExactBase,
     unit: Unit,
