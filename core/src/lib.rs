@@ -1,4 +1,20 @@
 #![forbid(unsafe_code)]
+// enable all clippy warnings
+#![forbid(clippy::all)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
+#![deny(clippy::restriction)]
+// selectively disable these warnings, all of them are under clippy::restriction
+#![allow(clippy::implicit_return)]
+#![allow(clippy::shadow_reuse)]
+#![allow(clippy::missing_docs_in_private_items)]
+#![allow(clippy::integer_arithmetic)]
+#![allow(clippy::missing_inline_in_public_items)]
+#![allow(clippy::indexing_slicing)]
+#![allow(clippy::unreachable)]
+#![allow(clippy::panic)]
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
 
 mod ast;
 mod lexer;

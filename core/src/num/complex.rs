@@ -10,89 +10,6 @@ pub struct Complex {
     imag: BigRat,
 }
 
-impl PartialOrd for Complex {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self == other {
-            Some(Ordering::Equal)
-        } else if self.real <= other.real && self.imag <= other.imag {
-            Some(Ordering::Less)
-        } else if self.real >= other.real && self.imag >= other.imag {
-            Some(Ordering::Greater)
-        } else {
-            None
-        }
-    }
-}
-
-impl Add for Complex {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            real: self.real + rhs.real,
-            imag: self.imag + rhs.imag,
-        }
-    }
-}
-
-impl Neg for Complex {
-    type Output = Self;
-
-    fn neg(self) -> Self {
-        Self {
-            real: -self.real,
-            imag: -self.imag,
-        }
-    }
-}
-
-impl Neg for &Complex {
-    type Output = Complex;
-
-    fn neg(self) -> Complex {
-        -self.clone()
-    }
-}
-
-impl Sub for Complex {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        self + -rhs
-    }
-}
-
-impl Sub for &Complex {
-    type Output = Complex;
-
-    fn sub(self, rhs: Self) -> Complex {
-        self.clone() + -rhs.clone()
-    }
-}
-
-impl Mul for Complex {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        // (a + bi) * (c + di)
-        //     => ac + bci + adi - bd
-        //     => (ac - bd) + (bc + ad)i
-        Self {
-            real: self.real.clone() * rhs.real.clone() - self.imag.clone() * rhs.imag.clone(),
-            imag: self.real * rhs.imag + self.imag * rhs.real,
-        }
-    }
-}
-
-impl From<u64> for Complex {
-    fn from(i: u64) -> Self {
-        Self {
-            real: i.into(),
-            imag: 0.into(),
-        }
-    }
-}
-
 impl Complex {
     pub fn conjugate(self) -> Self {
         Self {
@@ -178,9 +95,7 @@ impl Complex {
             res_squared.root_n(&Self::from(2))?
         })
     }
-}
 
-impl Complex {
     pub fn format(
         &self,
         f: &mut Formatter,
@@ -221,9 +136,7 @@ impl Complex {
 
         Ok(())
     }
-}
 
-impl Complex {
     pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("Roots are currently unsupported for complex numbers".to_string());
@@ -241,6 +154,89 @@ impl Complex {
     pub fn approx_pi() -> Self {
         Self {
             real: BigRat::approx_pi(),
+            imag: 0.into(),
+        }
+    }
+}
+
+impl PartialOrd for Complex {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self == other {
+            Some(Ordering::Equal)
+        } else if self.real <= other.real && self.imag <= other.imag {
+            Some(Ordering::Less)
+        } else if self.real >= other.real && self.imag >= other.imag {
+            Some(Ordering::Greater)
+        } else {
+            None
+        }
+    }
+}
+
+impl Add for Complex {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            real: self.real + rhs.real,
+            imag: self.imag + rhs.imag,
+        }
+    }
+}
+
+impl Neg for Complex {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            real: -self.real,
+            imag: -self.imag,
+        }
+    }
+}
+
+impl Neg for &Complex {
+    type Output = Complex;
+
+    fn neg(self) -> Complex {
+        -self.clone()
+    }
+}
+
+impl Sub for Complex {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        self + -rhs
+    }
+}
+
+impl Sub for &Complex {
+    type Output = Complex;
+
+    fn sub(self, rhs: Self) -> Complex {
+        self.clone() + -rhs.clone()
+    }
+}
+
+impl Mul for Complex {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        // (a + bi) * (c + di)
+        //     => ac + bci + adi - bd
+        //     => (ac - bd) + (bc + ad)i
+        Self {
+            real: self.real.clone() * rhs.real.clone() - self.imag.clone() * rhs.imag.clone(),
+            imag: self.real * rhs.imag + self.imag * rhs.real,
+        }
+    }
+}
+
+impl From<u64> for Complex {
+    fn from(i: u64) -> Self {
+        Self {
+            real: i.into(),
             imag: 0.into(),
         }
     }

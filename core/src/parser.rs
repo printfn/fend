@@ -66,18 +66,17 @@ fn parse_token(input: &[Token]) -> ParseResult<Token> {
 
 fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<()> {
     let (token, remaining) = parse_token(input)?;
-    match token {
-        Token::Symbol(sym) => {
-            if sym == symbol {
-                Ok(((), remaining))
-            } else {
-                Err(format!("Found '{}' while expecting '{}'", sym, symbol))
-            }
+    if let Token::Symbol(sym) = token {
+        if sym == symbol {
+            Ok(((), remaining))
+        } else {
+            Err(format!("Found '{}' while expecting '{}'", sym, symbol))
         }
-        _ => Err(format!(
+    } else {
+        Err(format!(
             "Found an invalid token while expecting '{}'",
             symbol
-        )),
+        ))
     }
 }
 

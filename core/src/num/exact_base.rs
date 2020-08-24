@@ -11,86 +11,6 @@ pub struct ExactBase {
     base: Base,
 }
 
-impl PartialOrd for ExactBase {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.value.partial_cmp(&other.value)
-    }
-}
-
-impl Add for ExactBase {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            value: self.value + rhs.value,
-            exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-        }
-    }
-}
-
-impl Neg for ExactBase {
-    type Output = Self;
-
-    fn neg(self) -> Self {
-        Self {
-            value: -self.value,
-            exact: self.exact,
-            base: self.base,
-        }
-    }
-}
-
-impl Neg for &ExactBase {
-    type Output = ExactBase;
-
-    fn neg(self) -> ExactBase {
-        -self.clone()
-    }
-}
-
-impl Sub for ExactBase {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        self + -rhs
-    }
-}
-
-impl Sub for &ExactBase {
-    type Output = ExactBase;
-
-    fn sub(self, rhs: Self) -> ExactBase {
-        self.clone() + -rhs.clone()
-    }
-}
-
-impl Mul for ExactBase {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        Self {
-            value: self.value * rhs.value,
-            exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-        }
-    }
-}
-
-impl From<u64> for ExactBase {
-    fn from(i: u64) -> Self {
-        Self {
-            value: i.into(),
-            exact: true,
-            base: Base::Decimal,
-        }
-    }
-}
-
-fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
-    a_exact && b_exact
-}
-
 impl ExactBase {
     #[allow(clippy::missing_const_for_fn)]
     pub fn make_approximate(self) -> Self {
@@ -172,9 +92,7 @@ impl ExactBase {
             .format(f, self.exact, self.base, use_parentheses_if_complex)?;
         Ok(())
     }
-}
 
-impl ExactBase {
     pub fn root_n(self, n: &Self) -> Result<Self, String> {
         let (root, root_exact) = self.value.root_n(&n.value)?;
         Ok(Self {
@@ -191,4 +109,84 @@ impl ExactBase {
             base: Base::Decimal,
         }
     }
+}
+
+impl PartialOrd for ExactBase {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
+    }
+}
+
+impl Add for ExactBase {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            value: self.value + rhs.value,
+            exact: require_both_exact(self.exact, rhs.exact),
+            base: self.base,
+        }
+    }
+}
+
+impl Neg for ExactBase {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            value: -self.value,
+            exact: self.exact,
+            base: self.base,
+        }
+    }
+}
+
+impl Neg for &ExactBase {
+    type Output = ExactBase;
+
+    fn neg(self) -> ExactBase {
+        -self.clone()
+    }
+}
+
+impl Sub for ExactBase {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        self + -rhs
+    }
+}
+
+impl Sub for &ExactBase {
+    type Output = ExactBase;
+
+    fn sub(self, rhs: Self) -> ExactBase {
+        self.clone() + -rhs.clone()
+    }
+}
+
+impl Mul for ExactBase {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Self {
+            value: self.value * rhs.value,
+            exact: require_both_exact(self.exact, rhs.exact),
+            base: self.base,
+        }
+    }
+}
+
+impl From<u64> for ExactBase {
+    fn from(i: u64) -> Self {
+        Self {
+            value: i.into(),
+            exact: true,
+            base: Base::Decimal,
+        }
+    }
+}
+
+fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
+    a_exact && b_exact
 }

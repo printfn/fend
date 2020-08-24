@@ -203,7 +203,10 @@ impl BigUint {
 
     fn divmod(&self, other: &Self) -> (Self, Self) {
         if let (Small(a), Small(b)) = (self, other) {
-            return (Small(*a / *b), Small(*a % *b));
+            if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
+                return (Small(div_res), Small(mod_res));
+            }
+            panic!("Can't divide by 0");
         }
         if other.is_zero() {
             panic!("Can't divide by 0");
@@ -301,7 +304,11 @@ impl BigUint {
             let base_as_u128: u128 = base.base_as_u8().into();
             let mut divisor = base_as_u128;
             let mut rounds = 1;
-            while divisor < u128::MAX / base_as_u128 {
+            while divisor
+                < u128::MAX
+                    .checked_div(base_as_u128)
+                    .expect("Base appears to be 0")
+            {
                 divisor *= base_as_u128;
                 rounds += 1;
             }

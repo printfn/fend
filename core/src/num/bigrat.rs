@@ -121,76 +121,7 @@ impl BigRat {
             }
         }
     }
-}
 
-impl Add for BigRat {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        self.add_internal(rhs)
-    }
-}
-
-impl Neg for BigRat {
-    type Output = Self;
-
-    fn neg(self) -> Self {
-        Self {
-            sign: self.sign.flip(),
-            num: self.num,
-            den: self.den,
-        }
-    }
-}
-
-impl Neg for &BigRat {
-    type Output = BigRat;
-
-    fn neg(self) -> BigRat {
-        -self.clone()
-    }
-}
-
-impl Sub for BigRat {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        self.add_internal(-rhs)
-    }
-}
-
-impl Sub for &BigRat {
-    type Output = BigRat;
-
-    fn sub(self, rhs: Self) -> BigRat {
-        self.clone().add_internal(-rhs.clone())
-    }
-}
-
-impl Mul for BigRat {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        #[allow(clippy::suspicious_arithmetic_impl)]
-        Self {
-            sign: Sign::sign_of_product(self.sign, rhs.sign),
-            num: self.num * rhs.num,
-            den: self.den * rhs.den,
-        }
-    }
-}
-
-impl From<u64> for BigRat {
-    fn from(i: u64) -> Self {
-        Self {
-            sign: Sign::Positive,
-            num: i.into(),
-            den: 1.into(),
-        }
-    }
-}
-
-impl BigRat {
     fn simplify(mut self) -> Self {
         if self.den == 1.into() {
             return self;
@@ -205,7 +136,6 @@ impl BigRat {
         if rhs.num == 0.into() {
             return Err("Attempt to divide by zero".to_string());
         }
-        #[allow(clippy::suspicious_arithmetic_impl)]
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num * rhs.den,
@@ -267,20 +197,7 @@ impl BigRat {
             den: BigUint::from(1_000_000_000_000_000_000_u64),
         }
     }
-}
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-#[non_exhaustive]
-pub enum FormattingStyle {
-    /// Print value as an exact fraction
-    ExactFraction,
-    /// If possible, print as an exact float, but fall back to an exact fraction
-    ExactFloatWithFractionFallback,
-    /// Print as an approximate float, with up to 10 decimal places
-    ApproxFloat,
-}
-
-impl BigRat {
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
     // The result bool indicates whether the number had to be approximated or not.
@@ -388,19 +305,7 @@ impl BigRat {
         }
         Ok(!terminating)
     }
-}
 
-impl From<BigUint> for BigRat {
-    fn from(n: BigUint) -> Self {
-        Self {
-            sign: Sign::Positive,
-            num: n,
-            den: BigUint::from(1),
-        }
-    }
-}
-
-impl BigRat {
     fn iter_root_n(mut low_bound: Self, val: &Self, n: &Self) -> Result<Self, String> {
         let mut high_bound = low_bound.clone() + 1.into();
         for _ in 0..30 {
@@ -458,6 +363,93 @@ impl BigRat {
             )?
         };
         Ok((num_rat.div(den_rat)?, false))
+    }
+}
+
+impl Add for BigRat {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        self.add_internal(rhs)
+    }
+}
+
+impl Neg for BigRat {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            sign: self.sign.flip(),
+            num: self.num,
+            den: self.den,
+        }
+    }
+}
+
+impl Neg for &BigRat {
+    type Output = BigRat;
+
+    fn neg(self) -> BigRat {
+        -self.clone()
+    }
+}
+
+impl Sub for BigRat {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        self.add_internal(-rhs)
+    }
+}
+
+impl Sub for &BigRat {
+    type Output = BigRat;
+
+    fn sub(self, rhs: Self) -> BigRat {
+        self.clone().add_internal(-rhs.clone())
+    }
+}
+
+impl Mul for BigRat {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Self {
+            sign: Sign::sign_of_product(self.sign, rhs.sign),
+            num: self.num * rhs.num,
+            den: self.den * rhs.den,
+        }
+    }
+}
+
+impl From<u64> for BigRat {
+    fn from(i: u64) -> Self {
+        Self {
+            sign: Sign::Positive,
+            num: i.into(),
+            den: 1.into(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[non_exhaustive]
+pub enum FormattingStyle {
+    /// Print value as an exact fraction
+    ExactFraction,
+    /// If possible, print as an exact float, but fall back to an exact fraction
+    ExactFloatWithFractionFallback,
+    /// Print as an approximate float, with up to 10 decimal places
+    ApproxFloat,
+}
+
+impl From<BigUint> for BigRat {
+    fn from(n: BigUint) -> Self {
+        Self {
+            sign: Sign::Positive,
+            num: n,
+            den: BigUint::from(1),
+        }
     }
 }
 
