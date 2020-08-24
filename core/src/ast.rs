@@ -41,8 +41,7 @@ impl Debug for Expr {
             Expr::Div(a, b) => write!(f, "({:?}/{:?})", *a, *b),
             Expr::Pow(a, b) => write!(f, "({:?}^{:?})", *a, *b),
             Expr::Apply(a, b) => write!(f, "({:?} ({:?}))", *a, *b),
-            Expr::ApplyFunctionCall(a, b) => write!(f, "({:?} {:?})", *a, *b),
-            Expr::ApplyMul(a, b) => write!(f, "({:?} {:?})", *a, *b),
+            Expr::ApplyFunctionCall(a, b) | Expr::ApplyMul(a, b) => write!(f, "({:?} {:?})", *a, *b),
             Expr::As(a, b) => write!(f, "({:?} as {:?})", *a, *b),
         }
     }
@@ -95,8 +94,7 @@ fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Val
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),
-        "approx." => Value::Func("approximately".to_string()),
-        "approximately" => Value::Func("approximately".to_string()),
+        "approx." | "approximately" => Value::Func("approximately".to_string()),
         _ => {
             if let Some(value) = scope.get(&ident.to_string()) {
                 value.clone()
