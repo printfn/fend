@@ -27,4 +27,4 @@ jobs:
     - name: Run tests
       run: cargo test --workspace --verbose
     - name: Run clippy
-      run: rustup component add clippy && cargo clean && cargo clippy -- -D clippy::correctness -D clippy::complexity -D clippy::pedantic
+      run: rustup component add clippy && cargo clean && cargo clippy --all-targets --all-features -- -D warnings -D clippy::correctness -D clippy::complexity -D clippy::pedantic
