@@ -143,24 +143,6 @@ impl BigRat {
         })
     }
 
-    pub fn pow(mut self, mut rhs: Self) -> Result<Self, String> {
-        self = self.simplify();
-        rhs = rhs.simplify();
-        if rhs.den != 1.into() {
-            return Err("Non-integer exponents not currently supported".to_string());
-        }
-        if rhs.sign == Sign::Negative {
-            // a^-b => 1/a^b
-            rhs.sign = Sign::Positive;
-            return Ok(Self::from(1).div(self.pow(rhs)?)?);
-        }
-        Ok(Self {
-            sign: Sign::Positive,
-            num: BigUint::pow(&self.num, &rhs.num)?,
-            den: BigUint::pow(&self.den, &rhs.num)?,
-        })
-    }
-
     // test if this fraction has a terminating representation
     // e.g. in base 10: 1/4 = 0.25, but not 1/3
     fn terminates_in_base(&self, base: Base) -> bool {
@@ -306,11 +288,37 @@ impl BigRat {
         Ok(!terminating)
     }
 
+    pub fn pow(mut self, mut rhs: Self) -> Result<(Self, bool), String> {
+        self = self.simplify();
+        rhs = rhs.simplify();
+        if rhs.sign == Sign::Negative {
+            // a^-b => 1/a^b
+            rhs.sign = Sign::Positive;
+            let (inverse_res, exact) = self.pow(rhs)?;
+            return Ok((Self::from(1).div(inverse_res)?, exact));
+        }
+        let pow_res = Self {
+            sign: Sign::Positive,
+            num: BigUint::pow(&self.num, &rhs.num)?,
+            den: BigUint::pow(&self.den, &rhs.num)?,
+        };
+        if rhs.den == 1.into() {
+            Ok((pow_res, true))
+        } else {
+            Ok(pow_res.root_n(&Self {
+                sign: Sign::Positive,
+                num: rhs.den,
+                den: 1.into(),
+            })?)
+        }
+    }
+
+    /// n must be an integer
     fn iter_root_n(mut low_bound: Self, val: &Self, n: &Self) -> Result<Self, String> {
         let mut high_bound = low_bound.clone() + 1.into();
         for _ in 0..30 {
             let guess = (low_bound.clone() + high_bound.clone()).div(2.into())?;
-            if &guess.clone().pow(n.clone())? < val {
+            if &guess.clone().pow(n.clone())?.0 < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
@@ -320,6 +328,7 @@ impl BigRat {
     }
 
     // the boolean indicates whether or not the result is exact
+    // n must be an integer
     pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());

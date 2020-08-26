@@ -128,7 +128,7 @@ impl BigUint {
 
     // computes the exact square root if possible, otherwise the next lower integer
     pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
-        if self == 0.into() || self == 1.into() {
+        if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok((self, true));
         }
         let mut low_guess = Self::from(1);

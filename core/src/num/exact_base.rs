@@ -38,9 +38,10 @@ impl ExactBase {
     }
 
     pub fn pow(self, rhs: Self) -> Result<Self, String> {
+        let (value, exact_root) = self.value.pow(rhs.value)?;
         Ok(Self {
-            value: self.value.pow(rhs.value)?,
-            exact: require_both_exact(self.exact, rhs.exact),
+            value,
+            exact: require_both_exact(require_both_exact(self.exact, rhs.exact), exact_root),
             base: self.base,
         })
     }

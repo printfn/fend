@@ -33,14 +33,18 @@ impl Complex {
         })
     }
 
-    pub fn pow(self, rhs: Self) -> Result<Self, String> {
+    pub fn pow(self, rhs: Self) -> Result<(Self, bool), String> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err("Exponentiation is currently unsupported for complex numbers".to_string());
         }
-        Ok(Self {
-            real: self.real.pow(rhs.real)?,
-            imag: 0.into(),
-        })
+        let (real, exact) = self.real.pow(rhs.real)?;
+        Ok((
+            Self {
+                real,
+                imag: 0.into(),
+            },
+            exact,
+        ))
     }
 
     // This method is dangerous!! Use this method only when the number has *not* been
@@ -89,7 +93,8 @@ impl Complex {
             }
         } else {
             let res_squared = Self {
-                real: self.real.pow(2.into())? + self.imag.pow(2.into())?,
+                // we can ignore the 'exact' bool because integer powers are always exact
+                real: self.real.pow(2.into())?.0 + self.imag.pow(2.into())?.0,
                 imag: 0.into(),
             };
             res_squared.root_n(&Self::from(2))?
