@@ -34,7 +34,7 @@ impl UnitValue {
             ("fm", "fm", true, Some("1e-15m")),
             ("am", "am", true, Some("1e-18m")),
             ("angstrom", "angstrom", true, Some("0.1nm")),
-            ("barn", "barn", true, Some("100 fm fm")),
+            ("barn", "barn", true, Some("100 (fm^2)")),
             ("inch", "inches", true, Some("2.54cm")),
             ("in", "in", true, Some("inch")),
             ("ft", "ft", true, Some("12 inches")),
@@ -57,11 +57,11 @@ impl UnitValue {
             ("cd", "cd", true, None),
             ("g", "g", true, Some("(1/1000)kg")),
             ("mg", "mg", true, Some("(1/1000)g")),
-            ("N", "N", true, Some("1 kg m / s s")),
+            ("N", "N", true, Some("1 kg m / s^2")),
             ("newton", "newtons", true, Some("1 N")),
             ("joule", "joules", true, Some("1 N m")),
             ("J", "J", true, Some("1 joule")),
-            ("pascal", "pascals", true, Some("1 kg / m s s")),
+            ("pascal", "pascals", true, Some("1 kg / m s^2")),
             ("Pa", "Pa", true, Some("1 pascal")),
             ("watt", "watts", true, Some("1 J/s")),
             ("W", "W", true, Some("1 watt")),
@@ -77,11 +77,11 @@ impl UnitValue {
             ("F", "F", true, Some("1 farad")),
             ("hertz", "hertz", true, Some("1/s")),
             ("Hz", "Hz", true, Some("1 hertz")),
-            ("henry", "henry", true, Some("J / A A")),
+            ("henry", "henry", true, Some("J / A^2")),
             ("H", "H", true, Some("1 henry")),
             ("weber", "weber", true, Some("V s")),
             ("Wb", "Wb", true, Some("1 weber")),
-            ("tesla", "tesla", true, Some("weber / m m")),
+            ("tesla", "tesla", true, Some("weber / m^2")),
             ("T", "T", true, Some("1 tesla")),
             ("min", "min", true, Some("60s")),
             ("hr", "hr", true, Some("60min")),
@@ -220,12 +220,23 @@ impl UnitValue {
     }
 
     pub fn pow(self, rhs: Self) -> Result<Self, String> {
-        if !self.is_unitless() || !rhs.is_unitless() {
-            return Err("Exponents are currently only supported for unitless numbers.".to_string());
+        if !rhs.is_unitless() {
+            return Err("Only unitless exponents are currently supported".to_string());
         }
+        let new_unit = Unit {
+            components: self
+                .unit
+                .components
+                .into_iter()
+                .map(|unit_exp| UnitExponent {
+                    unit: unit_exp.unit,
+                    exponent: unit_exp.exponent * rhs.value.clone(),
+                })
+                .collect(),
+        };
         Ok(Self {
             value: self.value.pow(rhs.value)?,
-            unit: self.unit,
+            unit: new_unit,
         })
     }
 

@@ -254,7 +254,10 @@ fn test_powers() {
     test_evaluation("4^(1/2)", "2");
     test_evaluation("4^(1/4)", "approx. 1.4142135619");
     test_evaluation("(2/3)^(4/5)", "approx. 0.7229811807");
-    test_evaluation("5.2*10^15*300^(3/2)", "approx. 27019992598076723515.9873962402")
+    test_evaluation(
+        "5.2*10^15*300^(3/2)",
+        "approx. 27019992598076723515.9873962402",
+    )
 }
 
 #[test]
