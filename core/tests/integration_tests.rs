@@ -381,8 +381,8 @@ fn test_basic_units() {
     test_evaluation("1kg + 100g", "1.1 kg");
     test_evaluation("0g + 1kg + 100g", "1100 g");
     test_evaluation("0g + 1kg", "1000 g");
-    test_evaluation("1/0.5kg", "2 / kg");
-    test_evaluation("1/(1/0.5kg)", "0.5 kg");
+    test_evaluation("1/0.5 kg", "2 kg");
+    test_evaluation("1/(1/0.5 kg)", "0.5 / kg");
 }
 
 #[test]
@@ -473,4 +473,17 @@ fn test_advanced_op_precedence() {
     expect_parse_error("2^abs 1");
     expect_parse_error("2 4^3");
     expect_parse_error("-2 4^3");
+    test_evaluation("3*-2", "-6");
+    test_evaluation("-3*-2", "6");
+    test_evaluation("-3*2", "-6");
+    expect_parse_error("1 2/3^2");
+    expect_parse_error("1 2^2/3");
+    expect_parse_error("1^2 2/3");
+    expect_parse_error("1 2/-3");
+    test_evaluation("1 2/3 + 4 5/6", "6.5");
+    test_evaluation("1 2/3 + -4 5/6", "-19/6");
+    test_evaluation("1 2/3 - 4 5/6", "-19/6");
+    test_evaluation("1 2/3 - 4 + 5/6", "-1.5");
+    test_evaluation("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
+    test_evaluation("1L -> m^3", "0.001 m^3");
 }

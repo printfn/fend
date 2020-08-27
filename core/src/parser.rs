@@ -150,56 +150,55 @@ fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_apply(input: &[Token]) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_power(input, true)?;
-    while let Ok((term, remaining)) = parse_power(input, false) {
-        res = match (&res, &term) {
-            (Expr::Num(_), Expr::Num(_))
-            | (Expr::UnaryMinus(_), Expr::Num(_))
-            | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
-                // this may later be parsed as a compound fraction, e.g. 1 2/3
-                // or as an addition, e.g. 6 feet 1 inch
-                return Ok((res, input));
+fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, Expr> {
+    let (rhs, input) = parse_power(input, false)?;
+    Ok((match (lhs, &rhs) {
+        (Expr::Num(_), Expr::Num(_))
+        | (Expr::UnaryMinus(_), Expr::Num(_))
+        | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+            // this may later be parsed as a compound fraction, e.g. 1 2/3
+            // or as an addition, e.g. 6 feet 1 inch
+            return Err("Error".to_string());
+        }
+        (Expr::Num(_), Expr::Pow(a, _))
+        | (Expr::UnaryMinus(_), Expr::Pow(a, _))
+        | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
+            if let Expr::Num(_) = **a {
+                return Err("Error".to_string());
             }
-            (Expr::Num(_), Expr::Pow(a, _))
-            | (Expr::UnaryMinus(_), Expr::Pow(a, _))
-            | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
-                if let Expr::Num(_) = **a {
-                    return Ok((res, input));
-                }
-                Expr::Apply(Box::new(res), Box::new(term))
-            }
-            (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(res), Box::new(term)),
-            (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
-                Expr::ApplyMul(Box::new(res), Box::new(term))
-            }
-            _ => Expr::Apply(Box::new(res), Box::new(term)),
-        };
-        input = remaining;
-    }
-    Ok((res, input))
+            Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
+        }
+        (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs)),
+        (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
+            Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
+        }
+        _ => Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)),
+    }, input))
 }
 
 fn parse_multiplication_cont(input: &[Token]) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
-    let (b, input) = parse_apply(input)?;
+    let (b, input) = parse_power(input, true)?;
     Ok((b, input))
 }
 
 fn parse_division_cont(input: &[Token]) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
-    let (b, input) = parse_apply(input)?;
+    let (b, input) = parse_power(input, true)?;
     Ok((b, input))
 }
 
 fn parse_multiplicative(input: &[Token]) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_apply(input)?;
+    let (mut res, mut input) = parse_power(input, true)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
             res = Expr::Mul(Box::new(res), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_division_cont(input) {
             res = Expr::Div(Box::new(res), Box::new(term));
+            input = remaining;
+        } else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res) {
+            res = new_res;
             input = remaining;
         } else {
             break;
