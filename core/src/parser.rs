@@ -3,7 +3,7 @@ use crate::lexer::{Symbol, Token};
 
 /*
 
-Grammar:
+Grammar (somewhat out-of-date):
 
 expression = arrow_conversion
 arrow_conversion = additive arrow_conversion_cont*
@@ -114,14 +114,60 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
     }
 }
 
+fn parse_unary(input: &[Token]) -> ParseResult<Expr> {
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
+        let (res, remaining) = parse_unary(remaining)?;
+        return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
+    }
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
+        let (res, remaining) = parse_unary(remaining)?;
+        return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
+    }
+    let (res, input) = parse_power(input, false)?;
+    Ok((res, input))
+}
+
+fn parse_power_cont(mut input: &[Token]) -> ParseResult<Expr> {
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
+        input = remaining;
+    } else {
+        return Err("Expected ^ or **".to_string());
+    }
+    let (b, input) = parse_power(input, true)?;
+    Ok((b, input))
+}
+
+fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<Expr> {
+    let (mut res, mut input) = if allow_unary {
+        parse_unary(input)?
+    } else {
+        parse_parens_or_literal(input)?
+    };
+    if let Ok((term, remaining)) = parse_power_cont(input) {
+        res = Expr::Pow(Box::new(res), Box::new(term));
+        input = remaining;
+    }
+    Ok((res, input))
+}
+
 fn parse_apply(input: &[Token]) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_parens_or_literal(input)?;
-    while let Ok((term, remaining)) = parse_parens_or_literal(input) {
+    let (mut res, mut input) = parse_power(input, true)?;
+    while let Ok((term, remaining)) = parse_power(input, false) {
         res = match (&res, &term) {
-            (Expr::Num(_), Expr::Num(_)) | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+            (Expr::Num(_), Expr::Num(_))
+            | (Expr::UnaryMinus(_), Expr::Num(_))
+            | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
                 // this may later be parsed as a compound fraction, e.g. 1 2/3
                 // or as an addition, e.g. 6 feet 1 inch
                 return Ok((res, input));
+            }
+            (Expr::Num(_), Expr::Pow(a, _))
+            | (Expr::UnaryMinus(_), Expr::Pow(a, _))
+            | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
+                if let Expr::Num(_) = **a {
+                    return Ok((res, input));
+                }
+                Expr::Apply(Box::new(res), Box::new(term))
             }
             (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(res), Box::new(term)),
             (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
@@ -134,47 +180,20 @@ fn parse_apply(input: &[Token]) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_power_cont(mut input: &[Token]) -> ParseResult<Expr> {
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
-        input = remaining;
-    } else {
-        return Err("Expected ^ or **".to_string());
-    }
-    let (b, input) = parse_power(input)?;
-    Ok((b, input))
-}
-
-fn parse_power(input: &[Token]) -> ParseResult<Expr> {
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
-        let (res, remaining) = parse_power(remaining)?;
-        return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
-    }
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
-        let (res, remaining) = parse_power(remaining)?;
-        return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
-    }
-    let (mut res, mut input) = parse_apply(input)?;
-    if let Ok((term, remaining)) = parse_power_cont(input) {
-        res = Expr::Pow(Box::new(res), Box::new(term));
-        input = remaining;
-    }
-    Ok((res, input))
-}
-
 fn parse_multiplication_cont(input: &[Token]) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
-    let (b, input) = parse_power(input)?;
+    let (b, input) = parse_apply(input)?;
     Ok((b, input))
 }
 
 fn parse_division_cont(input: &[Token]) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
-    let (b, input) = parse_power(input)?;
+    let (b, input) = parse_apply(input)?;
     Ok((b, input))
 }
 
 fn parse_multiplicative(input: &[Token]) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_power(input)?;
+    let (mut res, mut input) = parse_apply(input)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
             res = Expr::Mul(Box::new(res), Box::new(term));

@@ -166,6 +166,7 @@ fn test_basic_order_of_operations() {
     test_evaluation("-2*-2*-3", "-12");
     test_evaluation("-2*-2*-3/2", "-6");
     test_evaluation("-2*-2*-3/-2", "6");
+    test_evaluation("-3 -1/2", "-3.5");
 }
 
 #[test]
@@ -461,4 +462,15 @@ fn test_abs() {
     test_evaluation("abs (-i)", "1");
     test_evaluation("abs (2i)", "2");
     test_evaluation("abs (1 + i)", "approx. 1.4142135619");
+}
+
+#[test]
+fn test_advanced_op_precedence() {
+    test_evaluation("2 kg^2", "2 kg^2");
+    test_evaluation("((1/4) kg)^-2", "16 / kg^2");
+    test_evaluation("1 N - 1 kg m s^-2", "0 N");
+    test_evaluation("1 J - 1 kg m^2 s^-2 + 1 kg / (m^-2 s^2)", "1 J");
+    expect_parse_error("2^abs 1");
+    expect_parse_error("2 4^3");
+    expect_parse_error("-2 4^3");
 }
