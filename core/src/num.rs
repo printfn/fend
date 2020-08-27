@@ -21,7 +21,7 @@ pub enum Base {
 }
 
 impl Base {
-    pub fn base_as_u8(self) -> u8 {
+    pub const fn base_as_u8(self) -> u8 {
         match self {
             Self::Binary => 2,
             Self::Octal => 8,
@@ -42,7 +42,7 @@ impl Base {
         Ok(())
     }
 
-    pub fn digit_as_char(digit: u64) -> Option<char> {
+    pub const fn digit_as_char(digit: u64) -> Option<char> {
         Some(match digit {
             0 => '0',
             1 => '1',
