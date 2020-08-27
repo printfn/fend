@@ -12,7 +12,37 @@
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
+use fend_core::Context;
+
 mod config_dir;
+
+enum EvalResult {
+    Ok,
+    Err,
+    NoInput,
+}
+fn eval_and_print_res(line: &str, context: &mut Context, show_other_info: bool) -> EvalResult {
+    match fend_core::evaluate(line, context) {
+        Ok(res) => {
+            let main_result = res.get_main_result();
+            if main_result.is_empty() {
+                return EvalResult::NoInput;
+            }
+            println!("{}", main_result);
+            if show_other_info {
+                let extra_info = res.get_other_info();
+                for info in extra_info {
+                    println!("-> {}", info);
+                }
+            }
+            EvalResult::Ok
+        }
+        Err(msg) => {
+            eprintln!("Error: {}", msg);
+            EvalResult::Err
+        }
+    }
+}
 
 fn repl_loop() -> i32 {
     // `()` can be used when no completer is required
@@ -29,7 +59,7 @@ fn repl_loop() -> i32 {
             // No previous history
         }
     }
-    let mut context = fend_core::Context::new();
+    let mut context = Context::new();
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     loop {
@@ -37,23 +67,16 @@ fn repl_loop() -> i32 {
         match readline {
             Ok(line) => match line.as_str() {
                 "exit" | "quit" | ":q" => break,
-                line => match fend_core::evaluate(line, &mut context) {
-                    Ok(res) => {
+                line => match eval_and_print_res(line, &mut context, true) {
+                    EvalResult::Ok => {
                         last_command_success = true;
-                        let main_result = res.get_main_result();
-                        if main_result.is_empty() {
-                            continue;
-                        }
-                        println!("{}", main_result);
-                        let extra_info = res.get_other_info();
-                        for info in extra_info {
-                            println!("-> {}", info);
-                        }
                         initial_run = false;
                     }
-                    Err(msg) => {
+                    EvalResult::NoInput => {
+                        last_command_success = true;
+                    }
+                    EvalResult::Err => {
                         last_command_success = false;
-                        eprintln!("Error: {}", msg);
                     }
                 },
             },
@@ -84,6 +107,21 @@ fn repl_loop() -> i32 {
 }
 
 fn main() {
-    let exit_code = repl_loop();
-    std::process::exit(exit_code);
+    let mut args = std::env::args();
+    if args.len() >= 3 {
+        eprintln!("Too many arguments");
+        std::process::exit(1);
+    }
+    let _ = args.next();
+    if let Some(expr) = args.next() {
+        std::process::exit(
+            match eval_and_print_res(expr.as_str(), &mut Context::new(), false) {
+                EvalResult::Ok | EvalResult::NoInput => 0,
+                EvalResult::Err => 1,
+            },
+        )
+    } else {
+        let exit_code = repl_loop();
+        std::process::exit(exit_code);
+    }
 }
