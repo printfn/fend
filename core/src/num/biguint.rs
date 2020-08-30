@@ -1,7 +1,7 @@
 use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
-use std::ops::{Add, AddAssign, Div, Mul, Rem, Sub};
+use std::{hash::{Hash, Hasher}, ops::{Add, AddAssign, Div, Mul, Rem, Sub}};
 
 #[derive(Clone)]
 pub enum BigUint {
@@ -49,6 +49,31 @@ impl BigUint {
                 }
             }
         }
+    }
+
+    pub fn try_as_usize(&self) -> Result<usize, String> {
+        use std::convert::TryFrom;
+
+        Ok(match self {
+            Small(n) => {
+                if let Ok(res) = usize::try_from(*n) {
+                    res
+                } else {
+                    return Err("Value too large".to_string());
+                }
+            },
+            Large(v) => {
+                if v.len() == 1 {
+                    if let Ok(res) = usize::try_from(v[0]) {
+                        res
+                    } else {
+                        return Err("Value too large".to_string());
+                    }
+                } else {
+                    return Err("Value too large".to_string());
+                }
+            }
+        })
     }
 
     fn make_large(&mut self) {
@@ -368,6 +393,26 @@ impl PartialEq for BigUint {
 }
 
 impl Eq for BigUint {}
+
+impl Hash for BigUint {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Small(n) => n.hash(state),
+            Large(v) => {
+                v[0].hash(state);
+                let mut zeroes = true;
+                for &x in v.iter().skip(1) {
+                    if !zeroes || x != 0 {
+                        x.hash(state);
+                    }
+                    if x != 0 {
+                        zeroes = false;
+                    }
+                }
+            }
+        }
+    }
+}
 
 impl From<u64> for BigUint {
     fn from(val: u64) -> Self {

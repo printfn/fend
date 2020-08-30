@@ -152,28 +152,31 @@ fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<Expr> {
 
 fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, Expr> {
     let (rhs, input) = parse_power(input, false)?;
-    Ok((match (lhs, &rhs) {
-        (Expr::Num(_), Expr::Num(_))
-        | (Expr::UnaryMinus(_), Expr::Num(_))
-        | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
-            // this may later be parsed as a compound fraction, e.g. 1 2/3
-            // or as an addition, e.g. 6 feet 1 inch
-            return Err("Error".to_string());
-        }
-        (Expr::Num(_), Expr::Pow(a, _))
-        | (Expr::UnaryMinus(_), Expr::Pow(a, _))
-        | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
-            if let Expr::Num(_) = **a {
+    Ok((
+        match (lhs, &rhs) {
+            (Expr::Num(_), Expr::Num(_))
+            | (Expr::UnaryMinus(_), Expr::Num(_))
+            | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+                // this may later be parsed as a compound fraction, e.g. 1 2/3
+                // or as an addition, e.g. 6 feet 1 inch
                 return Err("Error".to_string());
             }
-            Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
-        }
-        (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs)),
-        (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
-            Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
-        }
-        _ => Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)),
-    }, input))
+            (Expr::Num(_), Expr::Pow(a, _))
+            | (Expr::UnaryMinus(_), Expr::Pow(a, _))
+            | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
+                if let Expr::Num(_) = **a {
+                    return Err("Error".to_string());
+                }
+                Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
+            }
+            (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs)),
+            (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
+                Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
+            }
+            _ => Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)),
+        },
+        input,
+    ))
 }
 
 fn parse_multiplication_cont(input: &[Token]) -> ParseResult<Expr> {

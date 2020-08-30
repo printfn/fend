@@ -1,5 +1,5 @@
-use crate::num::bigrat::{BigRat, FormattingStyle};
-use crate::num::Base;
+use crate::num::bigrat::BigRat;
+use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -11,6 +11,13 @@ pub struct Complex {
 }
 
 impl Complex {
+    pub fn try_as_usize(self) -> Result<usize, String> {
+        if self.imag != 0.into() {
+            return Err("Cannot convert complex number to integer".to_string());
+        }
+        Ok(self.real.try_as_usize()?)
+    }
+
     pub fn conjugate(self) -> Self {
         Self {
             real: self.real,
@@ -105,13 +112,18 @@ impl Complex {
         &self,
         f: &mut Formatter,
         exact: bool,
+        style: FormattingStyle,
         base: Base,
         use_parentheses_if_complex: bool,
     ) -> Result<(), Error> {
-        let style = if exact {
-            FormattingStyle::ExactFloatWithFractionFallback
+        let style = if style == FormattingStyle::Auto {
+            if exact {
+                FormattingStyle::ExactFloatWithFractionFallback
+            } else {
+                FormattingStyle::ApproxFloat(10)
+            }
         } else {
-            FormattingStyle::ApproxFloat
+            style
         };
         if self.imag == 0.into() {
             self.real

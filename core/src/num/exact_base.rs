@@ -1,5 +1,5 @@
 use crate::num::complex::Complex;
-use crate::num::Base;
+use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -9,15 +9,24 @@ pub struct ExactBase {
     value: Complex,
     exact: bool,
     base: Base,
+    format: FormattingStyle,
 }
 
 impl ExactBase {
+    pub fn try_as_usize(self) -> Result<usize, String> {
+        if !self.exact {
+            return Err("Cannot convert inexact number to integer".to_string());
+        }
+        Ok(self.value.try_as_usize()?)
+    }
+
     #[allow(clippy::missing_const_for_fn)]
     pub fn make_approximate(self) -> Self {
         Self {
             value: self.value,
             exact: false,
             base: self.base,
+            format: self.format,
         }
     }
 
@@ -26,6 +35,7 @@ impl ExactBase {
             value: self.value.conjugate(),
             exact: self.exact,
             base: self.base,
+            format: self.format,
         }
     }
 
@@ -34,6 +44,7 @@ impl ExactBase {
             value: self.value.div(rhs.value)?,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -43,6 +54,7 @@ impl ExactBase {
             value,
             exact: require_both_exact(require_both_exact(self.exact, rhs.exact), exact_root),
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -51,6 +63,7 @@ impl ExactBase {
             value: 0.into(),
             exact: true,
             base,
+            format: FormattingStyle::default(),
         }
     }
 
@@ -73,6 +86,7 @@ impl ExactBase {
             value: Complex::i(),
             exact: true,
             base: Base::Decimal,
+            format: FormattingStyle::default(),
         }
     }
 
@@ -82,6 +96,7 @@ impl ExactBase {
             value: new_value,
             exact: require_both_exact(self.exact, res_exact),
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -89,9 +104,28 @@ impl ExactBase {
         if !self.exact {
             write!(f, "approx. ")?;
         }
-        self.value
-            .format(f, self.exact, self.base, use_parentheses_if_complex)?;
+        self.value.format(
+            f,
+            self.exact,
+            self.format,
+            self.base,
+            use_parentheses_if_complex,
+        )?;
         Ok(())
+    }
+
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn with_format(self, format: FormattingStyle) -> Self {
+        Self {
+            value: self.value,
+            exact: self.exact,
+            base: self.base,
+            format,
+        }
+    }
+
+    pub const fn get_format(&self) -> FormattingStyle {
+        self.format
     }
 
     pub fn root_n(self, n: &Self) -> Result<Self, String> {
@@ -100,6 +134,7 @@ impl ExactBase {
             value: root,
             exact: self.exact && n.exact && root_exact,
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -108,6 +143,7 @@ impl ExactBase {
             value: Complex::approx_pi(),
             exact: false,
             base: Base::Decimal,
+            format: FormattingStyle::default(),
         }
     }
 }
@@ -126,6 +162,7 @@ impl Add for ExactBase {
             value: self.value + rhs.value,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
+            format: self.format,
         }
     }
 }
@@ -138,6 +175,7 @@ impl Neg for ExactBase {
             value: -self.value,
             exact: self.exact,
             base: self.base,
+            format: self.format,
         }
     }
 }
@@ -174,6 +212,7 @@ impl Mul for ExactBase {
             value: self.value * rhs.value,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
+            format: self.format,
         }
     }
 }
@@ -184,6 +223,7 @@ impl From<u64> for ExactBase {
             value: i.into(),
             exact: true,
             base: Base::Decimal,
+            format: FormattingStyle::default(),
         }
     }
 }

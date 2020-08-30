@@ -1,10 +1,12 @@
-use crate::num::Number;
+use crate::num::{FormattingStyle, Number};
 use std::fmt::{Display, Error, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum Value {
     Num(Number),
     Func(String),
+    Format(FormattingStyle),
+    Dp,
 }
 
 impl Value {
@@ -15,9 +17,13 @@ impl Value {
         }
     }
 
-    pub fn apply(&self, other: &Self, allow_multiplication: bool) -> Result<Self, String> {
+    pub fn apply(&self, other: &Self, allow_multiplication: bool, force_multiplication: bool) -> Result<Self, String> {
         Ok(Self::Num(match self {
             Self::Num(n) => {
+                if let Self::Dp = other {
+                    let num = self.expect_num()?;
+                    return Ok(Self::Format(FormattingStyle::ApproxFloat(num.try_as_usize()?)));
+                }
                 if allow_multiplication {
                     n.clone() * other.expect_num()?
                 } else {
@@ -25,6 +31,9 @@ impl Value {
                 }
             }
             Self::Func(name) => {
+                if force_multiplication {
+                    return Err(format!("Cannot apply function '{}' in this context", self));
+                }
                 if name == "sqrt" {
                     other.expect_num()?.root_n(&2.into())?
                 } else if name == "cbrt" {
@@ -37,6 +46,9 @@ impl Value {
                     return Err(format!("Unknown function '{}'", name));
                 }
             }
+            _ => {
+                return Err(format!("'{}' is not a function or a number", self));
+            }
         }))
     }
 }
@@ -46,6 +58,8 @@ impl Display for Value {
         match self {
             Self::Num(n) => write!(f, "{}", n)?,
             Self::Func(name) => write!(f, "{}", name)?,
+            Self::Format(fmt) => write!(f, "{}", fmt)?,
+            Self::Dp => write!(f, "dp")?,
         }
         Ok(())
     }

@@ -1,8 +1,11 @@
 use crate::num::biguint::BigUint;
-use crate::num::Base;
+use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Debug, Error, Formatter};
-use std::ops::{Add, Mul, Neg, Sub};
+use std::fmt::{Debug, Display, Error, Formatter};
+use std::{
+    collections::HashMap,
+    ops::{Add, Mul, Neg, Sub},
+};
 
 mod sign {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,6 +72,14 @@ impl PartialEq for BigRat {
 impl Eq for BigRat {}
 
 impl BigRat {
+    pub fn try_as_usize(mut self) -> Result<usize, String> {
+        self = self.simplify();
+        if self.den != 1.into() {
+            return Err("Cannot convert fraction to integer".to_string());
+        }
+        Ok(self.num.try_as_usize()?)
+    }
+
     /// compute a + b
     fn add_internal(self, rhs: Self) -> Self {
         // a + b == -((-a) + (-b))
@@ -250,12 +261,15 @@ impl BigRat {
         if negative {
             write!(f, "-")?;
         }
-        let num_trailing_digits_to_print =
-            if style == FormattingStyle::ExactFloatWithFractionFallback && terminating {
-                std::usize::MAX
-            } else {
-                10
-            };
+        let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
+            || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating)
+        {
+            None
+        } else if let FormattingStyle::ApproxFloat(n) = style {
+            Some(n)
+        } else {
+            Some(10)
+        };
         let integer_part = x.num.clone() / x.den.clone();
         integer_part.format(f, base, true)?;
         write!(f, ".")?;
@@ -264,21 +278,14 @@ impl BigRat {
             num: integer_part,
             den: 1.into(),
         };
-        let mut remaining_fraction = x - integer_as_rational;
-        let mut i = 0;
-        while remaining_fraction.num > 0.into() && i < num_trailing_digits_to_print {
-            let base_as_u64: u64 = base.base_as_u8().into();
-            remaining_fraction = (remaining_fraction * base_as_u64.into()).simplify();
-            let digit = remaining_fraction.num.clone() / remaining_fraction.den.clone();
-            digit.format(f, base, false)?;
-            remaining_fraction = remaining_fraction
-                - Self {
-                    sign: Sign::Positive,
-                    num: digit,
-                    den: 1.into(),
-                };
-            i += 1;
-        }
+        let remaining_fraction = x - integer_as_rational;
+        Self::format_trailing_digits(
+            f,
+            base,
+            remaining_fraction.num,
+            &remaining_fraction.den,
+            num_trailing_digits_to_print,
+        )?;
         if imag {
             if base.base_as_u8() >= 19 {
                 write!(f, " ")?;
@@ -286,6 +293,39 @@ impl BigRat {
             write!(f, "i")?;
         }
         Ok(!terminating)
+    }
+
+    /// Prints the decimal expansion of num/den, where num < den, in the given base.
+    /// If `max_digits` is given, only up to that many digits are printed, and recurring
+    /// digits are not printed in parentheses.
+    fn format_trailing_digits(
+        f: &mut Formatter,
+        base: Base,
+        mut numerator: BigUint,
+        denominator: &BigUint,
+        max_digits: Option<usize>,
+    ) -> Result<(), Error> {
+        let mut output = String::new();
+        let mut pos = 0;
+        let mut remainder_occurs_at_pos: HashMap<BigUint, usize> = HashMap::new();
+        let base_as_u64: u64 = base.base_as_u8().into();
+        let b: BigUint = base_as_u64.into();
+        while max_digits.is_some() || remainder_occurs_at_pos.get(&numerator) == None {
+            remainder_occurs_at_pos.insert(numerator.clone(), pos);
+            let bnum = b.clone() * numerator;
+            let digit = bnum.clone() / denominator.clone();
+            numerator = bnum - digit.clone() * denominator.clone();
+            output.push_str(Fmt(|f| digit.format(f, base, false)).to_string().as_str());
+            pos += 1;
+            if numerator == 0.into() || max_digits == Some(pos) {
+                // terminates here
+                write!(f, "{}", output)?;
+                return Ok(());
+            }
+        }
+        let (a, b) = output.split_at(pos - 1);
+        write!(f, "{}({})", a, b)?;
+        Ok(())
     }
 
     pub fn pow(mut self, mut rhs: Self) -> Result<(Self, bool), String> {
@@ -375,6 +415,20 @@ impl BigRat {
     }
 }
 
+// Small formatter helper
+struct Fmt<F>(F)
+where
+    F: Fn(&mut Formatter) -> Result<(), Error>;
+
+impl<F> Display for Fmt<F>
+where
+    F: Fn(&mut Formatter) -> Result<(), Error>,
+{
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        (self.0)(f)
+    }
+}
+
 impl Add for BigRat {
     type Output = Self;
 
@@ -439,17 +493,6 @@ impl From<u64> for BigRat {
             den: 1.into(),
         }
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-#[non_exhaustive]
-pub enum FormattingStyle {
-    /// Print value as an exact fraction
-    ExactFraction,
-    /// If possible, print as an exact float, but fall back to an exact fraction
-    ExactFloatWithFractionFallback,
-    /// Print as an approximate float, with up to 10 decimal places
-    ApproxFloat,
 }
 
 impl From<BigUint> for BigRat {

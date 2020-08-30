@@ -1,5 +1,5 @@
 use crate::num::exact_base::ExactBase;
-use crate::num::Base;
+use crate::num::{Base, FormattingStyle};
 use crate::value::Value;
 use std::ops::{Mul, Neg};
 use std::{
@@ -114,6 +114,13 @@ impl UnitValue {
         ])
     }
 
+    pub fn try_as_usize(self) -> Result<usize, String> {
+        if !self.is_unitless() {
+            return Err("Cannot convert number with unit to integer".to_string());
+        }
+        Ok(self.value.try_as_usize()?)
+    }
+
     fn create_units(
         unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>,
     ) -> HashMap<String, Value> {
@@ -164,6 +171,13 @@ impl UnitValue {
         Self::new(1, vec![UnitExponent::new(kg, 1)])
     }
 
+    pub fn with_format(self, format: FormattingStyle) -> Self {
+        Self {
+            value: self.value.with_format(format),
+            unit: self.unit,
+        }
+    }
+
     fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent<NamedUnit>>) -> Self {
         Self {
             value: value.into(),
@@ -186,8 +200,9 @@ impl UnitValue {
             return Err("Right-hand side of unit conversion has a numerical value".to_string());
         }
         let scale_factor = Unit::try_convert(&self.unit, &rhs.unit)?;
+        let new_value = self.value * scale_factor;
         Ok(Self {
-            value: self.value * scale_factor,
+            value: new_value,
             unit: rhs.unit,
         })
     }

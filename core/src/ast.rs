@@ -1,4 +1,4 @@
-use crate::num::Number;
+use crate::num::{FormattingStyle, Number};
 use crate::value::Value;
 use std::{
     collections::HashMap,
@@ -66,9 +66,10 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
                 .expect_num()?
                 .sub(evaluate(*b, scope)?.expect_num()?)?,
         ),
-        Expr::Mul(a, b) | Expr::ApplyMul(a, b) => {
+        Expr::Mul(a, b) => {
             Value::Num(evaluate(*a, scope)?.expect_num()? * evaluate(*b, scope)?.expect_num()?)
         }
+        Expr::ApplyMul(a, b) => evaluate(*a, scope)?.apply(&evaluate(*b, scope)?, true, true)?,
         Expr::Div(a, b) => Value::Num(
             evaluate(*a, scope)?
                 .expect_num()?
@@ -79,15 +80,18 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
                 .expect_num()?
                 .pow(evaluate(*b, scope)?.expect_num()?)?,
         ),
-        Expr::Apply(a, b) => evaluate(*a, scope)?.apply(&evaluate(*b, scope)?, true)?,
+        Expr::Apply(a, b) => evaluate(*a, scope)?.apply(&evaluate(*b, scope)?, true, false)?,
         Expr::ApplyFunctionCall(a, b) => {
-            evaluate(*a, scope)?.apply(&evaluate(*b, scope)?, false)?
+            evaluate(*a, scope)?.apply(&evaluate(*b, scope)?, false, false)?
         }
-        Expr::As(a, b) => Value::Num(
-            evaluate(*a, scope)?
-                .expect_num()?
-                .convert_to(evaluate(*b, scope)?.expect_num()?)?,
-        ),
+        Expr::As(a, b) => match evaluate(*b, scope)? {
+            Value::Num(b) => Value::Num(evaluate(*a, scope)?.expect_num()?.convert_to(b)?),
+            Value::Format(fmt) => Value::Num(evaluate(*a, scope)?.expect_num()?.with_format(fmt)),
+            Value::Dp => Value::Num(evaluate(*a, scope)?.expect_num()?.with_format(FormattingStyle::ApproxFloat(10))),
+            Value::Func(_) => {
+                return Err("Unable to convert value to a function".to_string());
+            }
+        },
     })
 }
 
@@ -99,6 +103,11 @@ fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Val
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),
         "approx." | "approximately" => Value::Func("approximately".to_string()),
+        "auto" => Value::Format(FormattingStyle::Auto),
+        "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),
+        "fraction" => Value::Format(FormattingStyle::ExactFraction),
+        "float" => Value::Format(FormattingStyle::ExactFloat),
+        "dp" => Value::Dp,
         _ => {
             if let Some(value) = scope.get(&ident.to_string()) {
                 value.clone()

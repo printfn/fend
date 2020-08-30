@@ -2,7 +2,10 @@ mod bigrat;
 mod biguint;
 mod complex;
 mod exact_base;
+mod formatting_style;
 mod unit;
+
+pub use formatting_style::FormattingStyle;
 
 pub type Number = unit::UnitValue;
 
