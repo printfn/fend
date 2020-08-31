@@ -196,11 +196,11 @@ impl Complex {
     }
 
     pub fn asin(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.asin()))
+        Ok(Self::from(self.expect_real()?.asin()?))
     }
 
     pub fn acos(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.acos()))
+        Ok(Self::from(self.expect_real()?.acos()?))
     }
 
     pub fn atan(self) -> Result<Self, String> {
@@ -224,23 +224,23 @@ impl Complex {
     }
 
     pub fn acosh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.acosh()))
+        Ok(Self::from(self.expect_real()?.acosh()?))
     }
 
     pub fn atanh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.atanh()))
+        Ok(Self::from(self.expect_real()?.atanh()?))
     }
 
     pub fn ln(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.ln()))
+        Ok(Self::from(self.expect_real()?.ln()?))
     }
 
     pub fn log2(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.log2()))
+        Ok(Self::from(self.expect_real()?.log2()?))
     }
 
     pub fn log10(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.log10()))
+        Ok(Self::from(self.expect_real()?.log10()?))
     }
 
     pub fn exp(self) -> Result<Self, String> {

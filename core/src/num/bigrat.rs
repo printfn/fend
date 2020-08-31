@@ -109,6 +109,7 @@ impl BigRat {
         }
     }
 
+    // sin, cos and tan work for all real numbers
     pub fn sin(self) -> Self {
         Self::from_f64(f64::sin(self.into_f64()))
     }
@@ -121,14 +122,24 @@ impl BigRat {
         Self::from_f64(f64::tan(self.into_f64()))
     }
 
-    pub fn asin(self) -> Self {
-        Self::from_f64(f64::asin(self.into_f64()))
+    // asin, acos and atan only work for values between -1 and 1
+    pub fn asin(self) -> Result<Self, String> {
+        let one: Self = 1.into();
+        if self > one || self < -one {
+            return Err("Value must be between -1 and 1".to_string());
+        }
+        Ok(Self::from_f64(f64::asin(self.into_f64())))
     }
 
-    pub fn acos(self) -> Self {
-        Self::from_f64(f64::acos(self.into_f64()))
+    pub fn acos(self) -> Result<Self, String> {
+        let one: Self = 1.into();
+        if self > one || self < -one {
+            return Err("Value must be between -1 and 1".to_string());
+        }
+        Ok(Self::from_f64(f64::acos(self.into_f64())))
     }
 
+    // note that this works for any real number, unlike asin and acos
     pub fn atan(self) -> Self {
         Self::from_f64(f64::atan(self.into_f64()))
     }
@@ -149,24 +160,43 @@ impl BigRat {
         Self::from_f64(f64::asinh(self.into_f64()))
     }
 
-    pub fn acosh(self) -> Self {
-        Self::from_f64(f64::acosh(self.into_f64()))
+    // value must not be less than 1
+    pub fn acosh(self) -> Result<Self, String> {
+        if self < 1.into() {
+            return Err("Value must not be less than 1".to_string())
+        }
+        Ok(Self::from_f64(f64::acosh(self.into_f64())))
     }
 
-    pub fn atanh(self) -> Self {
-        Self::from_f64(f64::atanh(self.into_f64()))
+    // value must be between -1 and 1.
+    pub fn atanh(self) -> Result<Self, String> {
+        let one: Self = 1.into();
+        if self >= one || self <= -one {
+            return Err("Value must be between -1 and 1".to_string());
+        }
+        Ok(Self::from_f64(f64::atanh(self.into_f64())))
     }
 
-    pub fn ln(self) -> Self {
-        Self::from_f64(f64::ln(self.into_f64()))
+    // For all logs: value must be greater than 0
+    pub fn ln(self) -> Result<Self, String> {
+        if self <= 0.into() {
+            return Err("Value must be greater than 0".to_string());
+        }
+        Ok(Self::from_f64(f64::ln(self.into_f64())))
     }
 
-    pub fn log2(self) -> Self {
-        Self::from_f64(f64::log2(self.into_f64()))
+    pub fn log2(self) -> Result<Self, String> {
+        if self <= 0.into() {
+            return Err("Value must be greater than 0".to_string());
+        }
+        Ok(Self::from_f64(f64::log2(self.into_f64())))
     }
 
-    pub fn log10(self) -> Self {
-        Self::from_f64(f64::log10(self.into_f64()))
+    pub fn log10(self) -> Result<Self, String> {
+        if self <= 0.into() {
+            return Err("Value must be greater than 0".to_string());
+        }
+        Ok(Self::from_f64(f64::log10(self.into_f64())))
     }
 
     pub fn exp(self) -> Self {
