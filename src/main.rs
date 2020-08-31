@@ -44,6 +44,17 @@ fn eval_and_print_res(line: &str, context: &mut Context, show_other_info: bool) 
     }
 }
 
+fn print_help() {
+    println!(concat!("For more information on how to use fend, ",
+        "please take a look at the manual:\n",
+        "https://github.com/printfn/fend-rs/wiki"));
+}
+
+fn print_version() {
+    println!("fend 0.1.0");
+    println!("fend-core {}", fend_core::get_version());
+}
+
 fn repl_loop() -> i32 {
     // `()` can be used when no completer is required
     let mut rl = Editor::<()>::with_config(
@@ -68,11 +79,10 @@ fn repl_loop() -> i32 {
             Ok(line) => match line.as_str() {
                 "exit" | "quit" | ":q" => break,
                 "help" => {
-                    println!(concat!("For more information on how to use fend, ",
-                        "please take a look at the manual:\n",
-                        "https://github.com/printfn/fend-rs/wiki\n",
-                        "To quit, type \"quit\""));
+                    print_help();
+                    println!("To quit, type \"quit\".");
                 }
+                "version" => print_version(),
                 line => match eval_and_print_res(line, &mut context, true) {
                     EvalResult::Ok => {
                         last_command_success = true;
@@ -120,6 +130,14 @@ fn main() {
     }
     let _ = args.next();
     if let Some(expr) = args.next() {
+        if expr == "help" || expr == "--help" || expr == "-h" {
+            print_help();
+            return;
+        }
+        if expr == "version" || expr == "--version" || expr == "-v" || expr == "-V" {
+            print_version();
+            return;
+        }
         std::process::exit(
             match eval_and_print_res(expr.as_str(), &mut Context::new(), false) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
