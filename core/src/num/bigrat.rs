@@ -293,7 +293,6 @@ impl BigRat {
         base: Base,
         style: FormattingStyle,
         imag: bool,
-        use_parentheses_if_rational: bool,
     ) -> Result<bool, Error> {
         let mut x = self.clone().simplify();
         let negative = x.sign == Sign::Negative && x != 0.into();
@@ -325,9 +324,6 @@ impl BigRat {
         let fraction = style == FormattingStyle::ExactFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating);
         if fraction {
-            if use_parentheses_if_rational {
-                write!(f, "(")?;
-            }
             if negative {
                 write!(f, "-")?;
             }
@@ -344,9 +340,6 @@ impl BigRat {
             }
             write!(f, "/")?;
             x.den.format(f, base, true)?;
-            if use_parentheses_if_rational {
-                write!(f, ")")?;
-            }
             return Ok(false);
         }
 

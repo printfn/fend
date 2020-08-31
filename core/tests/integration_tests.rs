@@ -406,8 +406,8 @@ fn test_complex_number_with_unit() {
 fn test_more_units() {
     test_evaluation("0m + 1kph * 1 hr", "1000 m");
     test_evaluation("0GiB + 1GB", "0.931322574615478515625 GiB");
-    test_evaluation("0m/s + 1 km/hr", "(5/18) m / s");
-    test_evaluation("0m/s + i km/hr", "(5i/18) m / s");
+    test_evaluation("0m/s + 1 km/hr", "5/18 m / s");
+    test_evaluation("0m/s + i km/hr", "5i/18 m / s");
     test_evaluation("0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
     expect_parse_error("7165928\t761528765");
     test_evaluation("1 2/3", "5/3");
