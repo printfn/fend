@@ -311,6 +311,6 @@ impl From<u64> for ExactBase {
     }
 }
 
-const fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
+fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
     a_exact && b_exact
 }

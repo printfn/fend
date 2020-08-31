@@ -15,14 +15,14 @@ mod sign {
     }
 
     impl Sign {
-        pub const fn flip(self) -> Self {
+        pub fn flip(self) -> Self {
             match self {
                 Self::Positive => Self::Negative,
                 Self::Negative => Self::Positive,
             }
         }
 
-        pub const fn sign_of_product(a: Self, b: Self) -> Self {
+        pub fn sign_of_product(a: Self, b: Self) -> Self {
             match (a, b) {
                 (Self::Positive, Self::Positive) | (Self::Negative, Self::Negative) => {
                     Self::Positive
