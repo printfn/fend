@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/printfn/fend-rs/workflows/Rust/badge.svg)](https://github.com/printfn/fend-rs)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
-[![docs.rs](https://docs.rs/fend/badge.svg)](https://docs.rs/fend)
+[![docs.rs](https://docs.rs/fend-core/badge.svg)](https://docs.rs/fend-core)
 
 Fend is an arbitrary-precision unit-aware calculator.
 
@@ -28,8 +28,8 @@ You can then run `fend` to start a REPL session:
 $ cargo install fend
 ...
 $ fend
-> 1 + 1
-2
+> 1 ft to cm
+30.48 cm
 >
 ```
 
@@ -45,7 +45,7 @@ You can find the Fend manual [here](https://github.com/printfn/fend-rs/wiki).
 ```
 
 ```
-> cos (pi/4) + (sin (pi/4)) i
+> cos (pi/4) + i * (sin (pi/4))
 approx. 0.7071067811 + 0.7071067811i
 ```
 
