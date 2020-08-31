@@ -175,6 +175,13 @@ impl Complex {
         }
     }
 
+    pub fn approx_e() -> Self {
+        Self {
+            real: BigRat::approx_e(),
+            imag: 0.into(),
+        }
+    }
+
     fn expect_real(self) -> Result<BigRat, String> {
         if self.imag == 0.into() {
             Ok(self.real)

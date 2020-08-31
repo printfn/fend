@@ -147,6 +147,15 @@ impl ExactBase {
         }
     }
 
+    pub fn approx_e() -> Self {
+        Self {
+            value: Complex::approx_e(),
+            exact: false,
+            base: Base::Decimal,
+            format: FormattingStyle::default(),
+        }
+    }
+
     fn apply_approx_fn(
         self,
         f: impl FnOnce(Complex) -> Result<Complex, String>,

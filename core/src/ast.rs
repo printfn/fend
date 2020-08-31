@@ -102,6 +102,7 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
 fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Value, String> {
     Ok(match ident {
         "pi" => Value::Num(Number::approx_pi()),
+        "e" => Value::Num(Number::approx_e()),
         "i" => Value::Num(Number::i()),
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),

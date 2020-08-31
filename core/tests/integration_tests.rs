@@ -383,6 +383,9 @@ fn test_exponents() {
     expect_parse_error("1e -1");
     expect_parse_error("1e- 1");
     test_evaluation("0 + 0b1e-6", "0.015625");
+    test_evaluation("e", "approx. 2.7182818284");
+    test_evaluation("2 e", "approx. 5.4365636569");
+    expect_parse_error("2e");
 }
 
 #[test]

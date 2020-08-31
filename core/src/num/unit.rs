@@ -293,6 +293,13 @@ impl UnitValue {
         }
     }
 
+    pub fn approx_e() -> Self {
+        Self {
+            value: ExactBase::approx_e(),
+            unit: Unit { components: vec![] },
+        }
+    }
+
     pub fn i() -> Self {
         Self {
             value: ExactBase::i(),
