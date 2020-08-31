@@ -20,7 +20,6 @@ impl ExactBase {
         Ok(self.value.try_as_usize()?)
     }
 
-    #[allow(clippy::missing_const_for_fn)]
     pub fn make_approximate(self) -> Self {
         Self {
             value: self.value,
@@ -114,7 +113,6 @@ impl ExactBase {
         Ok(())
     }
 
-    #[allow(clippy::missing_const_for_fn)]
     pub fn with_format(self, format: FormattingStyle) -> Self {
         Self {
             value: self.value,

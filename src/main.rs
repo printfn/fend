@@ -1,13 +1,6 @@
 #![forbid(unsafe_code)]
-// enable almost all clippy warnings
 #![forbid(clippy::all)]
 #![forbid(clippy::pedantic)]
-#![forbid(clippy::nursery)]
-#![deny(clippy::restriction)]
-#![allow(clippy::missing_docs_in_private_items)]
-#![allow(clippy::implicit_return)]
-#![allow(clippy::print_stdout)]
-#![allow(clippy::exit)]
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
