@@ -235,16 +235,25 @@ fn parse_number(input: &mut &str) -> Result<Token, String> {
     Ok(Token::Num(num))
 }
 
-fn is_valid_in_ident(ch: char, first: bool) -> bool {
+// checks if the char is valid only by itself
+fn is_valid_in_ident_char(ch: char) -> bool {
     // percent, per mille, double quote, single quote, unicode single and double quotes
     // %‰\"'’”
     let allowed_symbols = "%\u{2030}\"'\u{2019}\u{201d}";
-    ch.is_alphabetic() || allowed_symbols.contains(ch) || (!first && ".".contains(ch))
+    allowed_symbols.contains(ch)
+}
+
+// normal rules for identifiers
+fn is_valid_in_ident(ch: char, first: bool) -> bool {
+    ch.is_alphabetic() || (!first && ".0123456789".contains(ch))
 }
 
 fn parse_ident(input: &mut &str) -> Result<Token, String> {
     let first_char = consume_char(input)?;
     if !is_valid_in_ident(first_char, true) {
+        if is_valid_in_ident_char(first_char) {
+            return Ok(Token::Ident(first_char.to_string()));
+        }
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
             first_char
@@ -273,7 +282,7 @@ pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {
                     consume_char(&mut input)?;
                 } else if ch.is_ascii_digit() {
                     res.push(parse_number(&mut input)?);
-                } else if is_valid_in_ident(ch, true) {
+                } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
                     res.push(parse_ident(&mut input)?);
                 } else {
                     match consume_char(&mut input)? {
