@@ -1,5 +1,9 @@
 # Fend
 
+[![Build Status](https://github.com/printfn/fend-rs/workflows/Rust/badge.svg)](https://github.com/printfn/fend-rs)
+[![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
+[![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
+
 Fend is an arbitrary-precision unit-aware calculator.
 
 Unique features:
