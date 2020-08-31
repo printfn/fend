@@ -15,6 +15,7 @@ pub struct UnitValue {
 }
 
 impl UnitValue {
+    #[allow(clippy::too_many_lines)]
     pub fn create_initial_units() -> HashMap<String, Value> {
         Self::create_units(vec![
             ("percent", "percent", true, Some("0.01")),
@@ -443,6 +444,7 @@ impl Display for UnitValue {
         if !self.unit.components.is_empty() {
             let mut negative_components = vec![];
             let mut first = true;
+            let mut positive_exponents = false;
             for unit_exponent in &self.unit.components {
                 if unit_exponent.exponent < 0.into() {
                     negative_components.push(unit_exponent);
@@ -456,15 +458,23 @@ impl Display for UnitValue {
                         write!(f, "^")?;
                         unit_exponent.exponent.format(f, true)?;
                     }
+                    positive_exponents = true;
                 }
             }
             if !negative_components.is_empty() {
-                write!(f, " /")?;
+                if positive_exponents {
+                    write!(f, " /")?;
+                }
                 for unit_exponent in negative_components {
                     write!(f, " {}", unit_exponent.unit.singular_name)?;
-                    if unit_exponent.exponent != -ExactBase::from(1) {
+                    let exp = if positive_exponents {
+                        -unit_exponent.exponent.clone()
+                    } else {
+                        unit_exponent.exponent.clone()
+                    };
+                    if exp != ExactBase::from(1) {
                         write!(f, "^")?;
-                        (-unit_exponent.exponent.clone()).format(f, true)?;
+                        exp.format(f, true)?;
                     }
                 }
             }

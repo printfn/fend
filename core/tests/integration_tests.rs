@@ -382,7 +382,7 @@ fn test_basic_units() {
     test_evaluation("0g + 1kg + 100g", "1100 g");
     test_evaluation("0g + 1kg", "1000 g");
     test_evaluation("1/0.5 kg", "2 kg");
-    test_evaluation("1/(1/0.5 kg)", "0.5 / kg");
+    test_evaluation("1/(1/0.5 kg)", "0.5 kg^-1");
 }
 
 #[test]
@@ -405,7 +405,8 @@ fn test_more_units() {
     test_evaluation("5(6)", "30");
     expect_parse_error("(5)6");
     test_evaluation("3’6”", "3.5’");
-    //test_evaluation("1 light year", "1 light year");
+    test_evaluation("365.25 light days -> ly", "1 ly");
+    test_evaluation("1 light year", "1 light year");
     expect_parse_error("1 2 m");
     test_evaluation("5pi", "approx. 15.7079632679");
     test_evaluation("5 pi/2", "approx. 7.8539816339");
@@ -416,7 +417,8 @@ fn test_more_units() {
     test_evaluation("5% + 1", "105%");
     test_evaluation("0.1 + 5%", "0.15");
     test_evaluation("1 + 5%", "1.05");
-    //test_evaluation("5% * 5%", "0.25%");
+    test_evaluation("1psi -> kPa -> 5dp", "6.89475 kPa"); // should be approx.
+                                                          //test_evaluation("5% * 5%", "0.25%");
 }
 
 #[test]
@@ -467,7 +469,7 @@ fn test_abs() {
 #[test]
 fn test_advanced_op_precedence() {
     test_evaluation("2 kg^2", "2 kg^2");
-    test_evaluation("((1/4) kg)^-2", "16 / kg^2");
+    test_evaluation("((1/4) kg)^-2", "16 kg^-2");
     test_evaluation("1 N - 1 kg m s^-2", "0 N");
     test_evaluation("1 J - 1 kg m^2 s^-2 + 1 kg / (m^-2 s^2)", "1 J");
     expect_parse_error("2^abs 1");

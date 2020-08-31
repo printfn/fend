@@ -79,7 +79,11 @@ impl BigUint {
         })
     }
 
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss, clippy::float_arithmetic)]
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_precision_loss,
+        clippy::float_arithmetic
+    )]
     pub fn as_f64(&self) -> f64 {
         match self {
             Small(n) => *n as f64,

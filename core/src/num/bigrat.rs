@@ -86,7 +86,12 @@ impl BigRat {
         self.num.as_f64() / self.den.as_f64()
     }
 
-    #[allow(clippy::as_conversions, clippy::float_arithmetic, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[allow(
+        clippy::as_conversions,
+        clippy::float_arithmetic,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub fn from_f64(mut f: f64) -> Self {
         let negative = f < 0.0;
         if negative {
