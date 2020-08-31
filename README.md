@@ -12,12 +12,15 @@ Unique features:
 * Support for complex numbers
 * Binary, octal, hexadecimal and all other bases between 2 and 36.
 * Keeps track of units, with support for SI and US customary units.
+* Supports Emacs-style CLI shortcuts
+
+See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
 
 ## Installation
 
 Install `fend` by running `cargo install fend` in your terminal.
 
-You can then run `fend` to open a REPL session:
+You can then run `fend` to start a REPL session:
 
 ```bash
 $ cargo install fend
