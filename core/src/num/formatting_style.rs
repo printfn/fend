@@ -27,7 +27,7 @@ impl Display for FormattingStyle {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Self::ExactFraction => write!(f, "fraction"),
-            Self::ExactFloat => write!(f, "decimal"),
+            Self::ExactFloat => write!(f, "float"),
             Self::ExactFloatWithFractionFallback => write!(f, "exact"),
             Self::ApproxFloat(d) => write!(f, "{} dp", d),
             Self::Auto => write!(f, "auto"),
