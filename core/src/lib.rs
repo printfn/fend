@@ -25,6 +25,7 @@ mod value;
 use std::collections::HashMap;
 use value::Value;
 
+/// This contains the result of a computation.
 #[derive(PartialEq, Eq, Debug)]
 pub struct FendResult {
     main_result: String,
@@ -32,11 +33,15 @@ pub struct FendResult {
 }
 
 impl FendResult {
+    /// This retrieves the main result of the computation.
     #[must_use]
     pub fn get_main_result(&self) -> &str {
         self.main_result.as_str()
     }
 
+    /// This retrieves a list of other results of the computation. It is less
+    /// stable than the main result, and should only be shown for when used
+    /// interactively.
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
         self.other_info.iter().map(std::string::String::as_str)
     }
@@ -48,6 +53,8 @@ fn evaluate_to_value(input: &str, scope: &HashMap<String, Value>) -> Result<Valu
     Ok(result)
 }
 
+/// This struct contains context used for `fend`. It should only be created once
+/// at startup.
 #[derive(Clone)]
 pub struct Context {
     scope: HashMap<String, Value>,
@@ -60,6 +67,8 @@ impl Default for Context {
 }
 
 impl Context {
+    /// Create a new context instance. This can be fairly slow, and should
+    /// only be done once if possible.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -68,8 +77,9 @@ impl Context {
     }
 }
 
-/// This function evaluates a string using the given context. For example,
-/// passing in the string "1 + 1" will return a result of "2".
+/// This function evaluates a string using the given context.
+///
+/// For example, passing in the string `"1 + 1"` will return a result of `"2"`.
 ///
 /// # Errors
 /// It returns an error if the given string is invalid.
@@ -89,6 +99,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
     })
 }
 
+/// Returns the current version of `fend-core`.
 #[must_use]
 pub fn get_version() -> String {
     "0.1.0".to_string()
