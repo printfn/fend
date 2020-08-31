@@ -436,13 +436,9 @@ impl BigRat {
             if numerator == 0.into() || max_digits == Some(pos) {
                 // terminates here
                 write!(f, "{}", output)?;
-                return Ok(if numerator == 0.into() {
-                    // exact
-                    true
-                } else {
-                    // we had to truncate
-                    false
-                });
+                // is the number exact, or did we need to truncate?
+                let exact = numerator == 0.into();
+                return Ok(exact);
             }
         }
         // todo: this may panic if numerator is not found
