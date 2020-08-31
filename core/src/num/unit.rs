@@ -46,6 +46,7 @@ impl UnitValue {
             ("\u{2019}", "\u{2019}", false, Some("foot")), // Unicode single quote (’)
             ("yard", "yards", true, Some("3 feet")),
             ("mile", "miles", true, Some("1760 yards")),
+            ("mi", "mi", true, Some("mile")),
             ("km", "km", true, Some("1000m")),
             ("AU", "AU", true, Some("149597870700m")),
             ("kg", "kg", true, None),
