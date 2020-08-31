@@ -17,7 +17,16 @@ Unique features:
 
 Install `fend` by running `cargo install fend` in your terminal.
 
-You can then run `fend` to open a REPL session.
+You can then run `fend` to open a REPL session:
+
+```bash
+$ cargo install fend
+...
+$ fend
+> 1 + 1
+2
+>
+```
 
 ## [Manual](https://github.com/printfn/fend-rs/wiki)
 
