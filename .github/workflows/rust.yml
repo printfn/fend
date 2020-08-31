@@ -23,7 +23,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build
       run: |
-        rustup update
         cargo build --release --workspace
     - name: Run tests
       run: cargo test --workspace
@@ -44,6 +43,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Run clippy
       run: |
-        rustup update
         rustup component add clippy
         cargo clippy --all-targets --all-features -- -D warnings

@@ -1,6 +1,5 @@
 use fend_core::{evaluate, Context};
 
-#[track_caller]
 pub fn test_evaluation(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
@@ -14,7 +13,6 @@ pub fn test_evaluation(input: &str, expected: &str) {
     );
 }
 
-#[track_caller]
 fn test_eval_simple(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
@@ -23,13 +21,11 @@ fn test_eval_simple(input: &str, expected: &str) {
     );
 }
 
-#[track_caller]
 fn expect_parse_error(input: &str) {
     let mut context = Context::new();
     assert!(evaluate(input, &mut context).is_err());
 }
 
-#[track_caller]
 fn assert_err_msg(input: &str, error: &str) {
     let mut context = Context::new();
     assert_eq!(evaluate(input, &mut context), Err(error.to_string()));
