@@ -12,6 +12,7 @@ pub enum Expr {
     Parens(Box<Expr>),
     UnaryMinus(Box<Expr>),
     UnaryPlus(Box<Expr>),
+    Factorial(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
     Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
@@ -35,6 +36,7 @@ impl Debug for Expr {
             Self::Parens(x) => write!(f, "({:?})", *x),
             Self::UnaryMinus(x) => write!(f, "(-{:?})", *x),
             Self::UnaryPlus(x) => write!(f, "(+{:?})", *x),
+            Self::Factorial(x) => write!(f, "{:?}!", *x),
             Self::Add(a, b) => write!(f, "({:?}+{:?})", *a, *b),
             Self::Sub(a, b) => write!(f, "({:?}-{:?})", *a, *b),
             Self::Mul(a, b) => write!(f, "({:?}*{:?})", *a, *b),
@@ -56,6 +58,7 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
         Expr::Parens(x) => evaluate(*x, scope)?,
         Expr::UnaryMinus(x) => Value::Num(-evaluate(*x, scope)?.expect_num()?),
         Expr::UnaryPlus(x) => Value::Num(evaluate(*x, scope)?.expect_num()?),
+        Expr::Factorial(x) => Value::Num(evaluate(*x, scope)?.expect_num()?.factorial()?),
         Expr::Add(a, b) => Value::Num(
             evaluate(*a, scope)?
                 .expect_num()?

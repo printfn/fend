@@ -379,6 +379,16 @@ impl BigUint {
         }
         Ok(())
     }
+
+    // Note: 0! = 1, 1! = 1
+    pub fn factorial(mut self) -> Self {
+        let mut res = Self::from(1);
+        while self > 1.into() {
+            res = res * self.clone();
+            self = self - 1.into();
+        }
+        res
+    }
 }
 
 impl Ord for BigUint {

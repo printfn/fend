@@ -25,6 +25,16 @@ impl Complex {
         }
     }
 
+    pub fn factorial(self) -> Result<Self, String> {
+        if self.imag != 0.into() {
+            return Err("Factorial is not supported for complex numbers".to_string());
+        }
+        Ok(Self {
+            real: self.real.factorial()?,
+            imag: self.imag,
+        })
+    }
+
     pub fn div(self, rhs: Self) -> Result<Self, String> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;

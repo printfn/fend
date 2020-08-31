@@ -199,6 +199,16 @@ impl UnitValue {
         }
     }
 
+    pub fn factorial(self) -> Result<Self, String> {
+        if !self.is_unitless() {
+            return Err("Factorial is only supported for unitless numbers".to_string());
+        }
+        Ok(Self {
+            value: self.value.factorial()?,
+            unit: self.unit,
+        })
+    }
+
     fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent<NamedUnit>>) -> Self {
         Self {
             value: value.into(),

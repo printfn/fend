@@ -114,6 +114,15 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
     }
 }
 
+fn parse_factorial(input: &[Token]) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_parens_or_literal(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
+        res = Expr::Factorial(Box::new(res));
+        input = remaining;
+    }
+    Ok((res, input))
+}
+
 fn parse_unary(input: &[Token]) -> ParseResult<Expr> {
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
         let (res, remaining) = parse_unary(remaining)?;
@@ -141,7 +150,7 @@ fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<Expr> {
     let (mut res, mut input) = if allow_unary {
         parse_unary(input)?
     } else {
-        parse_parens_or_literal(input)?
+        parse_factorial(input)?
     };
     if let Ok((term, remaining)) = parse_power_cont(input) {
         res = Expr::Pow(Box::new(res), Box::new(term));

@@ -21,6 +21,7 @@ pub enum Symbol {
     Div,
     Pow,
     ArrowConversion,
+    Factorial,
 }
 
 impl Display for Symbol {
@@ -34,6 +35,7 @@ impl Display for Symbol {
             Self::Div => "/",
             Self::Pow => "^",
             Self::ArrowConversion => "->",
+            Self::Factorial => "!",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -289,6 +291,7 @@ pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {
                         '(' => res.push(Token::Symbol(Symbol::OpenParens)),
                         ')' => res.push(Token::Symbol(Symbol::CloseParens)),
                         '+' => res.push(Token::Symbol(Symbol::Add)),
+                        '!' => res.push(Token::Symbol(Symbol::Factorial)),
                         '-' => {
                             if input.starts_with('>') {
                                 consume_char(&mut input)?;

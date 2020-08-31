@@ -38,6 +38,15 @@ impl ExactBase {
         }
     }
 
+    pub fn factorial(self) -> Result<Self, String> {
+        Ok(Self {
+            value: self.value.factorial()?,
+            exact: self.exact,
+            base: self.base,
+            format: self.format,
+        })
+    }
+
     pub fn div(self, rhs: Self) -> Result<Self, String> {
         Ok(Self {
             value: self.value.div(rhs.value)?,

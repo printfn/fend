@@ -203,6 +203,21 @@ impl BigRat {
         Self::from_f64(f64::exp(self.into_f64()))
     }
 
+    pub fn factorial(mut self) -> Result<Self, String> {
+        self = self.simplify();
+        if self.den != 1.into() {
+            return Err("Factorial is only supported for integers".to_string());
+        }
+        if self.sign == Sign::Negative && self.num != 0.into() {
+            return Err("Factorial is only supported for positive integers".to_string());
+        }
+        Ok(Self {
+            sign: Sign::Positive,
+            num: self.num.factorial(),
+            den: self.den,
+        })
+    }
+
     /// compute a + b
     fn add_internal(self, rhs: Self) -> Self {
         // a + b == -((-a) + (-b))
