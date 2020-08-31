@@ -17,7 +17,7 @@ rustyline = { version =  "6.2.0", default-features = false }
 directories = "3.0.1"
 
 [dependencies.fend-core]
-version = "0.1.0"
+version = "0.1.1"
 path = "./core"
 
 [workspace]
