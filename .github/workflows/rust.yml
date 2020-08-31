@@ -34,6 +34,7 @@ jobs:
         path: |
           target/release/fend*
           !target/release/fend.d*
+          !target/release/fend.pdb
 
 
   clippy:
