@@ -23,7 +23,7 @@ Install `fend` by running `cargo install fend` in your terminal.
 
 You can then run `fend` to start a REPL session:
 
-```bash
+```
 $ cargo install fend
 ...
 $ fend
