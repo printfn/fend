@@ -258,7 +258,10 @@ fn parse_ident(input: &mut &str) -> Result<Token, String> {
         consume_char(input)?;
         ident.push(next_char);
     }
-    Ok(Token::Ident(ident))
+    Ok(match ident.as_str() {
+        "to" => Token::Symbol(Symbol::ArrowConversion),
+        _ => Token::Ident(ident),
+    })
 }
 
 pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {

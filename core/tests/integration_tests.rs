@@ -500,6 +500,7 @@ fn test_advanced_op_precedence() {
     test_evaluation("1 2/3 - 4 + 5/6", "-1.5");
     test_evaluation("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
     test_evaluation("1L -> m^3", "0.001 m^3");
+    test_evaluation("5 ft to m", "1.524 m");
 }
 
 #[test]
