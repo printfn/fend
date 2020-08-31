@@ -316,7 +316,7 @@ impl BigRat {
 
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
-    // The result bool indicates whether the number had to be approximated or not.
+    // The result bool indicates whether the number was exact or not.
     pub fn format(
         &self,
         f: &mut Formatter,
@@ -347,7 +347,7 @@ impl BigRat {
                     write!(f, "i")?;
                 }
             }
-            return Ok(false);
+            return Ok(true);
         }
 
         let terminating = x.terminates_in_base(base);
@@ -370,7 +370,7 @@ impl BigRat {
             }
             write!(f, "/")?;
             x.den.format(f, base, true)?;
-            return Ok(false);
+            return Ok(true);
         }
 
         // not a fraction, will be printed as a decimal
@@ -395,7 +395,7 @@ impl BigRat {
             den: 1.into(),
         };
         let remaining_fraction = x - integer_as_rational;
-        Self::format_trailing_digits(
+        let was_exact = Self::format_trailing_digits(
             f,
             base,
             remaining_fraction.num,
@@ -408,7 +408,7 @@ impl BigRat {
             }
             write!(f, "i")?;
         }
-        Ok(!terminating)
+        Ok(was_exact)
     }
 
     /// Prints the decimal expansion of num/den, where num < den, in the given base.
@@ -420,7 +420,7 @@ impl BigRat {
         mut numerator: BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
         let mut output = String::new();
         let mut pos = 0;
         let mut remainder_occurs_at_pos: HashMap<BigUint, usize> = HashMap::new();
@@ -436,14 +436,20 @@ impl BigRat {
             if numerator == 0.into() || max_digits == Some(pos) {
                 // terminates here
                 write!(f, "{}", output)?;
-                return Ok(());
+                return Ok(if numerator == 0.into() {
+                    // exact
+                    true
+                } else {
+                    // we had to truncate
+                    false
+                });
             }
         }
         // todo: this may panic if numerator is not found
         let location = remainder_occurs_at_pos[&numerator];
         let (a, b) = output.split_at(location);
         write!(f, "{}({})", a, b)?;
-        Ok(())
+        Ok(true) // the recurring decimal is exact
     }
 
     pub fn pow(mut self, mut rhs: Self) -> Result<(Self, bool), String> {
