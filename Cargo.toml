@@ -1,6 +1,7 @@
 [package]
 name = "fend"
-version = "0.1.0"
+# Don't forget to update print_version()
+version = "0.1.1"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Calculator and unit conversion tool"
 homepage = "https://github.com/printfn/fend-rs"

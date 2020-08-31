@@ -47,7 +47,7 @@ fn print_help() {
 }
 
 fn print_version() {
-    println!("fend 0.1.0");
+    println!("fend 0.1.1");
     println!("fend-core {}", fend_core::get_version());
 }
 

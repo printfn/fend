@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
 #![deny(clippy::pedantic)]
-#![doc(html_root_url = "https://docs.rs/fend-core/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.1")]
 
 mod ast;
 mod lexer;
@@ -89,5 +89,5 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
 /// Returns the current version of `fend-core`.
 #[must_use]
 pub fn get_version() -> String {
-    "0.1.0".to_string()
+    "0.1.1".to_string()
 }
