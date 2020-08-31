@@ -1,5 +1,6 @@
 use fend_core::{evaluate, Context};
 
+#[track_caller]
 pub fn test_evaluation(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
@@ -13,11 +14,22 @@ pub fn test_evaluation(input: &str, expected: &str) {
     );
 }
 
+#[track_caller]
+fn test_eval_simple(input: &str, expected: &str) {
+    let mut context = Context::new();
+    assert_eq!(
+        evaluate(input, &mut context).unwrap().get_main_result(),
+        expected.to_string()
+    );
+}
+
+#[track_caller]
 fn expect_parse_error(input: &str) {
     let mut context = Context::new();
     assert!(evaluate(input, &mut context).is_err());
 }
 
+#[track_caller]
 fn assert_err_msg(input: &str, error: &str) {
     let mut context = Context::new();
     assert_eq!(evaluate(input, &mut context), Err(error.to_string()));
@@ -488,4 +500,11 @@ fn test_advanced_op_precedence() {
     test_evaluation("1 2/3 - 4 + 5/6", "-1.5");
     test_evaluation("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
     test_evaluation("1L -> m^3", "0.001 m^3");
+}
+
+#[test]
+fn test_recurring_digits() {
+    test_eval_simple("9/11 -> float", "0.(81)");
+    test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
+    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)")
 }

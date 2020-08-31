@@ -416,7 +416,9 @@ impl BigRat {
                 return Ok(());
             }
         }
-        let (a, b) = output.split_at(pos - 1);
+        // todo: this may panic if numerator is not found
+        let location = remainder_occurs_at_pos[&numerator];
+        let (a, b) = output.split_at(location);
         write!(f, "{}({})", a, b)?;
         Ok(())
     }
