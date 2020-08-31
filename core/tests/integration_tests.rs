@@ -506,5 +506,8 @@ fn test_advanced_op_precedence() {
 fn test_recurring_digits() {
     test_eval_simple("9/11 -> float", "0.(81)");
     test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
-    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)")
+    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)");
+    test_eval_simple("0.25 -> fraction", "1/4");
+    test_eval_simple("0.21 -> 1 dp", "0.2");
+    test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
 }
