@@ -58,6 +58,10 @@ approx. 0.7071067811 + 0.7071067811i
 approx. 0.3066013937 parsec
 ```
 
+## Changelog
+
+See here: [https://github.com/printfn/fend-rs/blob/main/CHANGELOG.md](https://github.com/printfn/fend-rs/blob/main/CHANGELOG.md)
+
 ## License
 
 Fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
