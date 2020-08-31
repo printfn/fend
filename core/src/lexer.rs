@@ -172,11 +172,17 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), String> {
 fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Number, &str), String> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
-    let (_, mut input) = parse_integer(input, true, false, base, &mut |digit| {
-        let base_as_u64: u64 = base.base_as_u8().into();
-        res = (res.clone() * base_as_u64.into()).add(u64::from(digit).into())?;
-        Ok(())
-    })?;
+    let (_, mut input) = parse_integer(
+        input,
+        true,
+        base.allow_leading_zeroes(),
+        base,
+        &mut |digit| {
+            let base_as_u64: u64 = base.base_as_u8().into();
+            res = (res.clone() * base_as_u64.into()).add(u64::from(digit).into())?;
+            Ok(())
+        },
+    )?;
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
@@ -201,7 +207,7 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
                 input = remaining;
             }
             let mut exp = Number::zero_with_base(Base::Decimal);
-            let (_, remaining) = parse_integer(input, true, false, Base::Decimal, &mut |digit| {
+            let (_, remaining) = parse_integer(input, true, true, Base::Decimal, &mut |digit| {
                 exp = (exp.clone() * 10.into()).add(u64::from(digit).into())?;
                 Ok(())
             })?;

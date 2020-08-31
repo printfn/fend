@@ -70,6 +70,12 @@ fn test_leading_zeroes() {
     assert_err_msg("000000", msg);
     assert_err_msg("000000.01", msg);
     assert_err_msg("0000001.01", msg);
+    test_evaluation("0b01", "0b1");
+    test_evaluation("0x0000_00ff", "0xff");
+    test_evaluation("10#04", "10#4");
+    test_evaluation("1.001", "1.001");
+    test_evaluation("1e01", "10");
+    test_evaluation("1e-01", "0.1");
 }
 
 #[test]

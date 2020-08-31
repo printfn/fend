@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+* Allow leading zeroes for non-decimal numbers
+
 ## v0.1.1 (2020-09-01)
 
 * Save history continuously instead of only on program exit

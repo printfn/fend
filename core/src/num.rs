@@ -86,4 +86,11 @@ impl Base {
             _ => return None,
         })
     }
+
+    pub fn allow_leading_zeroes(self) -> bool {
+        match self {
+            Self::Decimal => false,
+            _ => true,
+        }
+    }
 }
