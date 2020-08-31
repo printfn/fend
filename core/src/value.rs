@@ -72,6 +72,8 @@ impl Value {
                     other.expect_num()?.log2()?
                 } else if name == "log10" {
                     other.expect_num()?.log10()?
+                } else if name == "exp" {
+                    other.expect_num()?.exp()?
                 } else {
                     return Err(format!("Unknown function '{}'", name));
                 }

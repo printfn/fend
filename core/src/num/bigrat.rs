@@ -158,6 +158,10 @@ impl BigRat {
         Self::from_f64(f64::log10(self.as_f64()))
     }
 
+    pub fn exp(self) -> Self {
+        Self::from_f64(f64::exp(self.as_f64()))
+    }
+
     /// compute a + b
     fn add_internal(self, rhs: Self) -> Self {
         // a + b == -((-a) + (-b))

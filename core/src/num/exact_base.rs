@@ -215,6 +215,10 @@ impl ExactBase {
     pub fn log10(self) -> Result<Self, String> {
         self.apply_approx_fn(|c| c.log10())
     }
+
+    pub fn exp(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.exp())
+    }
 }
 
 impl PartialOrd for ExactBase {

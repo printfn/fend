@@ -117,6 +117,7 @@ fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Val
         "ln" => Value::Func("ln".to_string()),
         "log2" => Value::Func("log2".to_string()),
         "log10" => Value::Func("log10".to_string()),
+        "exp" => Value::Func("exp".to_string()),
         "approx." | "approximately" => Value::Func("approximately".to_string()),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),

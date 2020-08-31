@@ -242,6 +242,10 @@ impl Complex {
     pub fn log10(self) -> Result<Self, String> {
         Ok(Self::from(self.expect_real()?.log10()))
     }
+
+    pub fn exp(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.exp()))
+    }
 }
 
 impl PartialOrd for Complex {

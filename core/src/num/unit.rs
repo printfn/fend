@@ -377,6 +377,10 @@ impl UnitValue {
     pub fn log10(self) -> Result<Self, String> {
         self.apply_fn(|c| c.log10(), true)
     }
+
+    pub fn exp(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.exp(), true)
+    }
 }
 
 impl Neg for UnitValue {
