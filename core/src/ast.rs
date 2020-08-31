@@ -104,6 +104,7 @@ fn resolve_identifier(ident: &str, scope: &HashMap<String, Value>) -> Result<Val
         "pi" => Value::Num(Number::approx_pi()),
         "e" => Value::Num(Number::approx_e()),
         "i" => Value::Num(Number::i()),
+        "c" => crate::evaluate_to_value("299792458 m / s", scope).unwrap(),
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),
