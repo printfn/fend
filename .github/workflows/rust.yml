@@ -24,9 +24,17 @@ jobs:
     - name: Build
       run: |
         rustup update
-        cargo build --workspace --verbose
+        cargo build --release --workspace
     - name: Run tests
-      run: cargo test --workspace --verbose
+      run: cargo test --workspace
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: fend-${{ matrix.platform }}
+        path: |
+          target/release/fend*
+          !target/release/fend.d*
+
 
   clippy:
     runs-on: ubuntu-latest
