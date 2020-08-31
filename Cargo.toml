@@ -12,7 +12,7 @@ edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
-rustyline = "6.2.0"
+rustyline = { version =  "6.2.0", default-features = false }
 directories = "3.0.1"
 
 [dependencies.fend-core]
