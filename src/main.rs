@@ -67,6 +67,12 @@ fn repl_loop() -> i32 {
         match readline {
             Ok(line) => match line.as_str() {
                 "exit" | "quit" | ":q" => break,
+                "help" => {
+                    println!(concat!("For more information on how to use fend, ",
+                        "please take a look at the manual:\n",
+                        "https://github.com/printfn/fend-rs/wiki\n",
+                        "To quit, type \"quit\""));
+                }
                 line => match eval_and_print_res(line, &mut context, true) {
                     EvalResult::Ok => {
                         last_command_success = true;
