@@ -147,7 +147,10 @@ impl ExactBase {
         }
     }
 
-    fn apply_approx_fn(self, f: impl FnOnce(Complex) -> Result<Complex, String>) -> Result<Self, String> {
+    fn apply_approx_fn(
+        self,
+        f: impl FnOnce(Complex) -> Result<Complex, String>,
+    ) -> Result<Self, String> {
         Ok(Self {
             value: f(self.value)?,
             exact: false,
@@ -157,67 +160,67 @@ impl ExactBase {
     }
 
     pub fn sin(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.sin())
+        self.apply_approx_fn(Complex::sin)
     }
 
     pub fn cos(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.cos())
+        self.apply_approx_fn(Complex::cos)
     }
 
     pub fn tan(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.tan())
+        self.apply_approx_fn(Complex::tan)
     }
 
     pub fn asin(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.asin())
+        self.apply_approx_fn(Complex::asin)
     }
 
     pub fn acos(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.acos())
+        self.apply_approx_fn(Complex::acos)
     }
 
     pub fn atan(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.atan())
+        self.apply_approx_fn(Complex::atan)
     }
 
     pub fn sinh(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.sinh())
+        self.apply_approx_fn(Complex::sinh)
     }
 
     pub fn cosh(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.cosh())
+        self.apply_approx_fn(Complex::cosh)
     }
 
     pub fn tanh(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.tanh())
+        self.apply_approx_fn(Complex::tanh)
     }
 
     pub fn asinh(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.asinh())
+        self.apply_approx_fn(Complex::asinh)
     }
 
     pub fn acosh(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.acosh())
+        self.apply_approx_fn(Complex::acosh)
     }
 
     pub fn atanh(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.atanh())
+        self.apply_approx_fn(Complex::atanh)
     }
 
     pub fn ln(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.ln())
+        self.apply_approx_fn(Complex::ln)
     }
 
     pub fn log2(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.log2())
+        self.apply_approx_fn(Complex::log2)
     }
 
     pub fn log10(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.log10())
+        self.apply_approx_fn(Complex::log10)
     }
 
     pub fn exp(self) -> Result<Self, String> {
-        self.apply_approx_fn(|c| c.exp())
+        self.apply_approx_fn(Complex::exp)
     }
 }
 

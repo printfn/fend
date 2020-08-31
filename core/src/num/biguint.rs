@@ -1,7 +1,10 @@
 use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
-use std::{hash::{Hash, Hasher}, ops::{Add, AddAssign, Div, Mul, Rem, Sub}};
+use std::{
+    hash::{Hash, Hasher},
+    ops::{Add, AddAssign, Div, Mul, Rem, Sub},
+};
 
 #[derive(Clone)]
 pub enum BigUint {
@@ -61,7 +64,7 @@ impl BigUint {
                 } else {
                     return Err("Value too large".to_string());
                 }
-            },
+            }
             Large(v) => {
                 if v.len() == 1 {
                     if let Ok(res) = usize::try_from(v[0]) {
@@ -76,6 +79,7 @@ impl BigUint {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss, clippy::float_arithmetic)]
     pub fn as_f64(&self) -> f64 {
         match self {
             Small(n) => *n as f64,

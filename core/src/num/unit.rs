@@ -308,7 +308,11 @@ impl UnitValue {
         self.value == 0.into()
     }
 
-    fn apply_fn(self, f: impl FnOnce(ExactBase) -> Result<ExactBase, String>, require_unitless: bool) -> Result<Self, String> {
+    fn apply_fn(
+        self,
+        f: impl FnOnce(ExactBase) -> Result<ExactBase, String>,
+        require_unitless: bool,
+    ) -> Result<Self, String> {
         if require_unitless && !self.is_unitless() {
             return Err("Expected a unitless number".to_string());
         }
@@ -319,67 +323,67 @@ impl UnitValue {
     }
 
     pub fn sin(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.sin(), false)
+        self.apply_fn(ExactBase::sin, false)
     }
 
     pub fn cos(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.cos(), false)
+        self.apply_fn(ExactBase::cos, false)
     }
 
     pub fn tan(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.tan(), false)
+        self.apply_fn(ExactBase::tan, false)
     }
 
     pub fn asin(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.asin(), false)
+        self.apply_fn(ExactBase::asin, false)
     }
 
     pub fn acos(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.acos(), false)
+        self.apply_fn(ExactBase::acos, false)
     }
 
     pub fn atan(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.atan(), false)
+        self.apply_fn(ExactBase::atan, false)
     }
 
     pub fn sinh(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.sinh(), false)
+        self.apply_fn(ExactBase::sinh, false)
     }
 
     pub fn cosh(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.cosh(), false)
+        self.apply_fn(ExactBase::cosh, false)
     }
 
     pub fn tanh(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.tanh(), false)
+        self.apply_fn(ExactBase::tanh, false)
     }
 
     pub fn asinh(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.asinh(), false)
+        self.apply_fn(ExactBase::asinh, false)
     }
 
     pub fn acosh(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.acosh(), false)
+        self.apply_fn(ExactBase::acosh, false)
     }
 
     pub fn atanh(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.atanh(), false)
+        self.apply_fn(ExactBase::atanh, false)
     }
 
     pub fn ln(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.ln(), true)
+        self.apply_fn(ExactBase::ln, true)
     }
 
     pub fn log2(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.log2(), true)
+        self.apply_fn(ExactBase::log2, true)
     }
 
     pub fn log10(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.log10(), true)
+        self.apply_fn(ExactBase::log10, true)
     }
 
     pub fn exp(self) -> Result<Self, String> {
-        self.apply_fn(|c| c.exp(), true)
+        self.apply_fn(ExactBase::exp, true)
     }
 }
 

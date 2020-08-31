@@ -87,7 +87,11 @@ pub fn evaluate(expr: Expr, scope: &HashMap<String, Value>) -> Result<Value, Str
         Expr::As(a, b) => match evaluate(*b, scope)? {
             Value::Num(b) => Value::Num(evaluate(*a, scope)?.expect_num()?.convert_to(b)?),
             Value::Format(fmt) => Value::Num(evaluate(*a, scope)?.expect_num()?.with_format(fmt)),
-            Value::Dp => Value::Num(evaluate(*a, scope)?.expect_num()?.with_format(FormattingStyle::ApproxFloat(10))),
+            Value::Dp => Value::Num(
+                evaluate(*a, scope)?
+                    .expect_num()?
+                    .with_format(FormattingStyle::ApproxFloat(10)),
+            ),
             Value::Func(_) => {
                 return Err("Unable to convert value to a function".to_string());
             }

@@ -14,7 +14,7 @@ pub enum FormattingStyle {
     /// Print as an approximate float with up to some number of decimal places
     ApproxFloat(usize),
     /// If exact: ExactFloatWithFractionFallback, otherwise: ApproxFloat(10)
-    Auto
+    Auto,
 }
 
 impl Default for FormattingStyle {
