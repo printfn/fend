@@ -89,6 +89,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
     })
 }
 
+#[must_use]
 pub fn get_version() -> String {
     "0.1.0".to_string()
 }
