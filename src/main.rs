@@ -13,6 +13,7 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 use fend_core::Context;
+use std::path::PathBuf;
 
 mod config_dir;
 
@@ -53,6 +54,14 @@ fn print_help() {
 fn print_version() {
     println!("fend 0.1.0");
     println!("fend-core {}", fend_core::get_version());
+}
+
+fn save_history(rl: &Editor<()>, path: &Option<PathBuf>) {
+    if let Some(history_path) = path {
+        if rl.save_history(history_path.as_path()).is_err() {
+            // Error trying to save history
+        }
+    }
 }
 
 fn repl_loop() -> i32 {
@@ -109,12 +118,9 @@ fn repl_loop() -> i32 {
                 break;
             }
         }
+        save_history(&rl, &history_path);
     }
-    if let Some(history_path) = history_path {
-        if rl.save_history(history_path.as_path()).is_err() {
-            // Error trying to save history
-        }
-    }
+    save_history(&rl, &history_path);
     if last_command_success {
         0
     } else {
