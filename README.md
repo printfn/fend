@@ -12,7 +12,8 @@ Unique features:
 * Support for complex numbers
 * Binary, octal, hexadecimal and all other bases between 2 and 36.
 * Keeps track of units, with support for SI and US customary units.
-* Supports Emacs-style CLI shortcuts
+* Support for Emacs-style CLI shortcuts
+* Trigonometric functions
 
 See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
 
