@@ -146,6 +146,75 @@ impl ExactBase {
             format: FormattingStyle::default(),
         }
     }
+
+    fn apply_approx_fn(self, f: impl FnOnce(Complex) -> Result<Complex, String>) -> Result<Self, String> {
+        Ok(Self {
+            value: f(self.value)?,
+            exact: false,
+            base: self.base,
+            format: self.format,
+        })
+    }
+
+    pub fn sin(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.sin())
+    }
+
+    pub fn cos(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.cos())
+    }
+
+    pub fn tan(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.tan())
+    }
+
+    pub fn asin(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.asin())
+    }
+
+    pub fn acos(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.acos())
+    }
+
+    pub fn atan(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.atan())
+    }
+
+    pub fn sinh(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.sinh())
+    }
+
+    pub fn cosh(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.cosh())
+    }
+
+    pub fn tanh(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.tanh())
+    }
+
+    pub fn asinh(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.asinh())
+    }
+
+    pub fn acosh(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.acosh())
+    }
+
+    pub fn atanh(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.atanh())
+    }
+
+    pub fn ln(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.ln())
+    }
+
+    pub fn log2(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.log2())
+    }
+
+    pub fn log10(self) -> Result<Self, String> {
+        self.apply_approx_fn(|c| c.log10())
+    }
 }
 
 impl PartialOrd for ExactBase {

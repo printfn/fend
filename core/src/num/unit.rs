@@ -307,6 +307,76 @@ impl UnitValue {
     pub fn is_zero(&self) -> bool {
         self.value == 0.into()
     }
+
+    fn apply_fn(self, f: impl FnOnce(ExactBase) -> Result<ExactBase, String>, require_unitless: bool) -> Result<Self, String> {
+        if require_unitless && !self.is_unitless() {
+            return Err("Expected a unitless number".to_string());
+        }
+        Ok(Self {
+            value: f(self.value)?,
+            unit: self.unit,
+        })
+    }
+
+    pub fn sin(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.sin(), false)
+    }
+
+    pub fn cos(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.cos(), false)
+    }
+
+    pub fn tan(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.tan(), false)
+    }
+
+    pub fn asin(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.asin(), false)
+    }
+
+    pub fn acos(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.acos(), false)
+    }
+
+    pub fn atan(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.atan(), false)
+    }
+
+    pub fn sinh(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.sinh(), false)
+    }
+
+    pub fn cosh(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.cosh(), false)
+    }
+
+    pub fn tanh(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.tanh(), false)
+    }
+
+    pub fn asinh(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.asinh(), false)
+    }
+
+    pub fn acosh(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.acosh(), false)
+    }
+
+    pub fn atanh(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.atanh(), false)
+    }
+
+    pub fn ln(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.ln(), true)
+    }
+
+    pub fn log2(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.log2(), true)
+    }
+
+    pub fn log10(self) -> Result<Self, String> {
+        self.apply_fn(|c| c.log10(), true)
+    }
 }
 
 impl Neg for UnitValue {

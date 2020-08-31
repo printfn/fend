@@ -42,6 +42,36 @@ impl Value {
                     other.expect_num()?.make_approximate()
                 } else if name == "abs" {
                     other.expect_num()?.abs()?
+                } else if name == "sin" {
+                    other.expect_num()?.sin()?
+                } else if name == "cos" {
+                    other.expect_num()?.cos()?
+                } else if name == "tan" {
+                    other.expect_num()?.tan()?
+                } else if name == "asin" {
+                    other.expect_num()?.asin()?
+                } else if name == "acos" {
+                    other.expect_num()?.acos()?
+                } else if name == "atan" {
+                    other.expect_num()?.atan()?
+                } else if name == "sinh" {
+                    other.expect_num()?.sinh()?
+                } else if name == "cosh" {
+                    other.expect_num()?.cosh()?
+                } else if name == "tanh" {
+                    other.expect_num()?.tanh()?
+                } else if name == "asinh" {
+                    other.expect_num()?.asinh()?
+                } else if name == "acosh" {
+                    other.expect_num()?.acosh()?
+                } else if name == "atanh" {
+                    other.expect_num()?.atanh()?
+                } else if name == "ln" {
+                    other.expect_num()?.ln()?
+                } else if name == "log2" {
+                    other.expect_num()?.log2()?
+                } else if name == "log10" {
+                    other.expect_num()?.log10()?
                 } else {
                     return Err(format!("Unknown function '{}'", name));
                 }

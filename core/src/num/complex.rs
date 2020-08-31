@@ -174,6 +174,74 @@ impl Complex {
             imag: 0.into(),
         }
     }
+
+    fn expect_real(self) -> Result<BigRat, String> {
+        if self.imag == 0.into() {
+            Ok(self.real)
+        } else {
+            Err("Expected a real number".to_string())
+        }
+    }
+
+    pub fn sin(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.sin()))
+    }
+
+    pub fn cos(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.cos()))
+    }
+
+    pub fn tan(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.tan()))
+    }
+
+    pub fn asin(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.asin()))
+    }
+
+    pub fn acos(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.acos()))
+    }
+
+    pub fn atan(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.atan()))
+    }
+
+    pub fn sinh(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.sinh()))
+    }
+
+    pub fn cosh(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.cosh()))
+    }
+
+    pub fn tanh(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.tanh()))
+    }
+
+    pub fn asinh(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.asinh()))
+    }
+
+    pub fn acosh(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.acosh()))
+    }
+
+    pub fn atanh(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.atanh()))
+    }
+
+    pub fn ln(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.ln()))
+    }
+
+    pub fn log2(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.log2()))
+    }
+
+    pub fn log10(self) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.log10()))
+    }
 }
 
 impl PartialOrd for Complex {
@@ -254,6 +322,15 @@ impl From<u64> for Complex {
     fn from(i: u64) -> Self {
         Self {
             real: i.into(),
+            imag: 0.into(),
+        }
+    }
+}
+
+impl From<BigRat> for Complex {
+    fn from(i: BigRat) -> Self {
+        Self {
+            real: i,
             imag: 0.into(),
         }
     }

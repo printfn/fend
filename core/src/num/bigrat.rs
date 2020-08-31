@@ -80,6 +80,84 @@ impl BigRat {
         Ok(self.num.try_as_usize()?)
     }
 
+    pub fn as_f64(mut self) -> f64 {
+        self = self.simplify();
+        self.num.as_f64() / self.den.as_f64()
+    }
+
+    pub fn from_f64(mut f: f64) -> Self {
+        let negative = f < 0.0;
+        if negative {
+            f = -f;
+        }
+        let i = (f * f64::from(u32::MAX)) as u64;
+        Self {
+            sign: if negative { Sign::Negative } else { Sign::Positive },
+            num: BigUint::from(i),
+            den: BigUint::from(u64::from(u32::MAX)),
+        }
+    }
+
+    pub fn sin(self) -> Self {
+        Self::from_f64(f64::sin(self.as_f64()))
+    }
+
+    pub fn cos(self) -> Self {
+        Self::from_f64(f64::cos(self.as_f64()))
+    }
+
+    pub fn tan(self) -> Self {
+        Self::from_f64(f64::tan(self.as_f64()))
+    }
+
+    pub fn asin(self) -> Self {
+        Self::from_f64(f64::asin(self.as_f64()))
+    }
+
+    pub fn acos(self) -> Self {
+        Self::from_f64(f64::acos(self.as_f64()))
+    }
+
+    pub fn atan(self) -> Self {
+        Self::from_f64(f64::atan(self.as_f64()))
+    }
+
+    pub fn sinh(self) -> Self {
+        Self::from_f64(f64::sinh(self.as_f64()))
+    }
+
+    pub fn cosh(self) -> Self {
+        Self::from_f64(f64::cosh(self.as_f64()))
+    }
+
+    pub fn tanh(self) -> Self {
+        Self::from_f64(f64::tanh(self.as_f64()))
+    }
+
+    pub fn asinh(self) -> Self {
+        Self::from_f64(f64::asinh(self.as_f64()))
+    }
+
+    pub fn acosh(self) -> Self {
+        Self::from_f64(f64::acosh(self.as_f64()))
+    }
+
+    pub fn atanh(self) -> Self {
+        Self::from_f64(f64::atanh(self.as_f64()))
+    }
+
+    pub fn ln(self) -> Self {
+        Self::from_f64(f64::ln(self.as_f64()))
+    }
+
+    pub fn log2(self) -> Self {
+        Self::from_f64(f64::log2(self.as_f64()))
+    }
+
+    pub fn log10(self) -> Self {
+        Self::from_f64(f64::log10(self.as_f64()))
+    }
+
     /// compute a + b
     fn add_internal(self, rhs: Self) -> Self {
         // a + b == -((-a) + (-b))

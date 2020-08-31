@@ -76,6 +76,20 @@ impl BigUint {
         })
     }
 
+    pub fn as_f64(&self) -> f64 {
+        match self {
+            Small(n) => *n as f64,
+            Large(v) => {
+                let mut res = 0.0;
+                for &n in v.iter().rev() {
+                    res *= u64::MAX as f64;
+                    res += n as f64;
+                }
+                res
+            }
+        }
+    }
+
     fn make_large(&mut self) {
         match self {
             Small(n) => {
