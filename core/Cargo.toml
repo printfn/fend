@@ -1,5 +1,6 @@
 [package]
 name = "fend-core"
+# Don't forget to update html_root_url and get_version()
 version = "0.1.0"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Backend for calculator and unit conversion tool fend"

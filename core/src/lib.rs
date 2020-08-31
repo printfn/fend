@@ -16,6 +16,8 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.0")]
+
 mod ast;
 mod lexer;
 mod num;
