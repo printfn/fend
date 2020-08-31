@@ -1,7 +1,6 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
 #![deny(clippy::pedantic)]
-
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.0")]
 
 mod ast;

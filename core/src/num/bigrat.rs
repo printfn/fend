@@ -163,7 +163,7 @@ impl BigRat {
     // value must not be less than 1
     pub fn acosh(self) -> Result<Self, String> {
         if self < 1.into() {
-            return Err("Value must not be less than 1".to_string())
+            return Err("Value must not be less than 1".to_string());
         }
         Ok(Self::from_f64(f64::acosh(self.into_f64())))
     }

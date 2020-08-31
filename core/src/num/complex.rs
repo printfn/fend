@@ -136,14 +136,12 @@ impl Complex {
             style
         };
         if self.imag == 0.into() {
-            self.real
-                .format(f, base, style, false)?;
+            self.real.format(f, base, style, false)?;
             return Ok(());
         }
 
         if self.real == 0.into() {
-            self.imag
-                .format(f, base, style, true)?;
+            self.imag.format(f, base, style, true)?;
         } else {
             if use_parentheses_if_complex {
                 write!(f, "(")?;

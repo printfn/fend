@@ -39,9 +39,11 @@ fn eval_and_print_res(line: &str, context: &mut Context, show_other_info: bool) 
 }
 
 fn print_help() {
-    println!(concat!("For more information on how to use fend, ",
+    println!(concat!(
+        "For more information on how to use fend, ",
         "please take a look at the manual:\n",
-        "https://github.com/printfn/fend-rs/wiki"));
+        "https://github.com/printfn/fend-rs/wiki"
+    ));
 }
 
 fn print_version() {
