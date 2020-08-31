@@ -511,4 +511,5 @@ fn test_recurring_digits() {
     test_eval_simple("0.25 -> fraction", "1/4");
     test_eval_simple("0.21 -> 1 dp", "0.2");
     test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
+    test_eval_simple("502938/700 -> float", "718.48(285714)");
 }
