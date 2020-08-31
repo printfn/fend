@@ -15,7 +15,7 @@ Unique features:
 
 ## Installation
 
-`cargo install fend`
+Install `fend` by running `cargo install fend` in your terminal.
 
 You can then run `fend` to open a REPL session.
 
