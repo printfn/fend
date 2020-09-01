@@ -228,16 +228,15 @@ impl BigRat {
     }
 
     /// compute a + b
-    fn add_internal(self, rhs: Self) -> Self {
+    fn add_internal(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
         // a + b == -((-a) + (-b))
         if self.sign == Sign::Negative {
-            return -((-self).add_internal(-rhs));
+            return Ok(-((-self).add_internal(-rhs, int)?));
         }
 
         assert_eq!(self.sign, Sign::Positive);
-        let int = &crate::interrupt::Never::default();
 
-        if self.den == rhs.den {
+        Ok(if self.den == rhs.den {
             if rhs.sign == Sign::Negative && self.num < rhs.num {
                 Self {
                     sign: Sign::Negative,
@@ -256,10 +255,10 @@ impl BigRat {
                 }
             }
         } else {
-            let gcd = BigUint::gcd(self.den.clone(), rhs.den.clone());
-            let new_denominator = self.den.clone().mul(&rhs.den, int).unwrap() / gcd.clone();
-            let a = self.num.mul(&rhs.den, int).unwrap() / gcd.clone();
-            let b = rhs.num.mul(&self.den, int).unwrap() / gcd;
+            let gcd = BigUint::gcd(self.den.clone(), rhs.den.clone(), int)?;
+            let new_denominator = self.den.clone().mul(&rhs.den, int)?.div(&gcd, int)?;
+            let a = self.num.mul(&rhs.den, int)?.div(&gcd, int)?;
+            let b = rhs.num.mul(&self.den, int)?.div(&gcd, int)?;
 
             if rhs.sign == Sign::Negative && a < b {
                 Self {
@@ -278,16 +277,17 @@ impl BigRat {
                     den: new_denominator,
                 }
             }
-        }
+        })
     }
 
     fn simplify(mut self) -> Self {
         if self.den == 1.into() {
             return self;
         }
-        let gcd = BigUint::gcd(self.num.clone(), self.den.clone());
-        self.num = self.num / gcd.clone();
-        self.den = self.den / gcd;
+        let int = &crate::interrupt::Never::default();
+        let gcd = BigUint::gcd(self.num.clone(), self.den.clone(), int).unwrap();
+        self.num = self.num.div(&gcd, int).unwrap();
+        self.den = self.den.div(&gcd, int).unwrap();
         self
     }
 
@@ -426,7 +426,7 @@ impl BigRat {
         } else {
             Some(10)
         };
-        let integer_part = x.num.clone() / x.den.clone();
+        let integer_part = x.num.clone().div(&x.den, int)?;
         try_i!(integer_part.format(f, base, true, int)?);
         try_i!(write!(f, "."));
         let integer_as_rational = Self {
@@ -472,7 +472,7 @@ impl BigRat {
             test_int(int)?;
             remainder_occurs_at_pos.insert(numerator.clone(), pos);
             let bnum = b.clone().mul(&numerator, int)?;
-            let digit: BigUint = bnum.clone() / denominator.clone();
+            let digit: BigUint = bnum.clone().div(&denominator, int)?;
             numerator = bnum - digit.clone().mul(&denominator, int)?;
             output.push_str(crate::num::to_string(|f| digit.format(f, base, false, int))?.as_str());
             pos += 1;
@@ -592,7 +592,8 @@ impl Add for BigRat {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        self.add_internal(rhs)
+        let int = &crate::interrupt::Never::default();
+        self.add_internal(rhs, int).unwrap()
     }
 }
 
@@ -620,7 +621,8 @@ impl Sub for BigRat {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        self.add_internal(-rhs)
+        let int = &crate::interrupt::Never::default();
+        self.add_internal(-rhs, int).unwrap()
     }
 }
 
@@ -628,7 +630,8 @@ impl Sub for &BigRat {
     type Output = BigRat;
 
     fn sub(self, rhs: Self) -> BigRat {
-        self.clone().add_internal(-rhs.clone())
+        let int = &crate::interrupt::Never::default();
+        self.clone().add_internal(-rhs.clone(), int).unwrap()
     }
 }
 

@@ -8,7 +8,7 @@ use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::{
     hash::{Hash, Hasher},
-    ops::{Add, AddAssign, Div, Rem, Sub},
+    ops::{Add, AddAssign, Sub},
 };
 
 #[derive(Clone)]
@@ -151,14 +151,14 @@ impl BigUint {
         }
     }
 
-    pub fn gcd(mut a: Self, mut b: Self) -> Self {
+    pub fn gcd(mut a: Self, mut b: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
         while b >= 1.into() {
-            let r = &a % &b;
+            let r = a.rem(&b, int)?;
             a = b;
             b = r;
         }
 
-        a
+        Ok(a)
     }
 
     pub fn pow<I: Interrupt>(
@@ -259,10 +259,10 @@ impl BigUint {
         }
     }
 
-    fn divmod(&self, other: &Self) -> Result<(Self, Self), DivideByZero> {
+    fn divmod(&self, other: &Self, int: &impl Interrupt) -> Result<Result<(Self, Self), DivideByZero>, crate::err::Interrupt> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
-                return Ok((Small(div_res), Small(mod_res)));
+                return Ok(Ok((Small(div_res), Small(mod_res))));
             }
             return err();
         }
@@ -270,27 +270,28 @@ impl BigUint {
             return err();
         }
         if other == &Self::from(1) {
-            return Ok((self.clone(), Self::from(0)));
+            return Ok(Ok((self.clone(), Self::from(0))));
         }
         if self.is_zero() {
-            return Ok((Self::from(0), Self::from(0)));
+            return Ok(Ok((Self::from(0), Self::from(0))));
         }
         if self < other {
-            return Ok((Self::from(0), self.clone()));
+            return Ok(Ok((Self::from(0), self.clone())));
         }
         if self == other {
-            return Ok((Self::from(1), Self::from(0)));
+            return Ok(Ok((Self::from(1), Self::from(0))));
         }
         if other == &Self::from(2) {
             let mut div_result = self.clone();
             div_result.rshift();
             let modulo = self.get(0) & 1;
-            return Ok((div_result, Self::from(modulo)));
+            return Ok(Ok((div_result, Self::from(modulo))));
         }
         // binary long division
         let mut q = Self::from(0);
         let mut r = Self::from(0);
         for i in (0..self.value_len()).rev() {
+            test_int(int)?;
             for j in (0..64).rev() {
                 r.lshift();
                 let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
@@ -301,7 +302,7 @@ impl BigUint {
                 }
             }
         }
-        Ok((q, r))
+        Ok(Ok((q, r)))
     }
 
     /// computes self *= other
@@ -391,7 +392,7 @@ impl BigUint {
                     .divmod(&Self::Large(vec![
                         truncate(divisor),
                         truncate(divisor >> 64),
-                    ]))
+                    ]), int)?
                     .expect("Division by zero is not allowed");
                 let mut digit_group_value =
                     u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
@@ -432,6 +433,14 @@ impl BigUint {
         }
         self.mul_internal(&other, int)?;
         Ok(self)
+    }
+
+    fn rem(&self, other: &Self, int: &impl Interrupt) -> Result<BigUint, crate::err::Interrupt> {
+        Ok(self.divmod(other, int)?.unwrap().1)
+    }
+
+    pub fn div(self, other: &Self, int: &impl Interrupt) -> Result<BigUint, crate::err::Interrupt> {
+        Ok(self.divmod(other, int)?.unwrap().0)
     }
 }
 
@@ -547,30 +556,6 @@ impl Sub for BigUint {
     }
 }
 
-impl Div for BigUint {
-    type Output = Self;
-
-    fn div(self, other: Self) -> Self {
-        self.divmod(&other).unwrap().0
-    }
-}
-
-impl Div for &BigUint {
-    type Output = BigUint;
-
-    fn div(self, other: Self) -> BigUint {
-        self.divmod(other).unwrap().0
-    }
-}
-
-impl Rem for &BigUint {
-    type Output = BigUint;
-
-    fn rem(self, other: Self) -> BigUint {
-        self.divmod(other).unwrap().1
-    }
-}
-
 impl Debug for BigUint {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
@@ -661,24 +646,26 @@ mod tests {
 
     #[test]
     fn test_small_division_by_two() {
-        assert_eq!(BigUint::from(0) / BigUint::from(2), BigUint::from(0));
-        assert_eq!(BigUint::from(1) / BigUint::from(2), BigUint::from(0));
-        assert_eq!(BigUint::from(2) / BigUint::from(2), BigUint::from(1));
-        assert_eq!(BigUint::from(3) / BigUint::from(2), BigUint::from(1));
-        assert_eq!(BigUint::from(4) / BigUint::from(2), BigUint::from(2));
-        assert_eq!(BigUint::from(5) / BigUint::from(2), BigUint::from(2));
-        assert_eq!(BigUint::from(6) / BigUint::from(2), BigUint::from(3));
-        assert_eq!(BigUint::from(7) / BigUint::from(2), BigUint::from(3));
-        assert_eq!(BigUint::from(8) / BigUint::from(2), BigUint::from(4));
+        let int = &crate::interrupt::Never::default();
+        assert_eq!(BigUint::from(0).div(&BigUint::from(2), int).unwrap(), BigUint::from(0));
+        assert_eq!(BigUint::from(1).div(&BigUint::from(2), int).unwrap(), BigUint::from(0));
+        assert_eq!(BigUint::from(2).div(&BigUint::from(2), int).unwrap(), BigUint::from(1));
+        assert_eq!(BigUint::from(3).div(&BigUint::from(2), int).unwrap(), BigUint::from(1));
+        assert_eq!(BigUint::from(4).div(&BigUint::from(2), int).unwrap(), BigUint::from(2));
+        assert_eq!(BigUint::from(5).div(&BigUint::from(2), int).unwrap(), BigUint::from(2));
+        assert_eq!(BigUint::from(6).div(&BigUint::from(2), int).unwrap(), BigUint::from(3));
+        assert_eq!(BigUint::from(7).div(&BigUint::from(2), int).unwrap(), BigUint::from(3));
+        assert_eq!(BigUint::from(8).div(&BigUint::from(2), int).unwrap(), BigUint::from(4));
     }
 
     #[test]
     fn test_rem() {
-        assert_eq!(&BigUint::from(20) % &BigUint::from(3), BigUint::from(2));
-        assert_eq!(&BigUint::from(21) % &BigUint::from(3), BigUint::from(0));
-        assert_eq!(&BigUint::from(22) % &BigUint::from(3), BigUint::from(1));
-        assert_eq!(&BigUint::from(23) % &BigUint::from(3), BigUint::from(2));
-        assert_eq!(&BigUint::from(24) % &BigUint::from(3), BigUint::from(0));
+        let int = &crate::interrupt::Never::default();
+        assert_eq!(BigUint::from(20).rem(&BigUint::from(3), int).unwrap(), BigUint::from(2));
+        assert_eq!(BigUint::from(21).rem(&BigUint::from(3), int).unwrap(), BigUint::from(0));
+        assert_eq!(BigUint::from(22).rem(&BigUint::from(3), int).unwrap(), BigUint::from(1));
+        assert_eq!(BigUint::from(23).rem(&BigUint::from(3), int).unwrap(), BigUint::from(2));
+        assert_eq!(BigUint::from(24).rem(&BigUint::from(3), int).unwrap(), BigUint::from(0));
     }
 
     #[test]
@@ -693,12 +680,13 @@ mod tests {
 
     #[test]
     fn test_gcd() {
-        assert_eq!(BigUint::gcd(2.into(), 4.into()), 2.into());
-        assert_eq!(BigUint::gcd(4.into(), 2.into()), 2.into());
-        assert_eq!(BigUint::gcd(37.into(), 43.into()), 1.into());
-        assert_eq!(BigUint::gcd(43.into(), 37.into()), 1.into());
-        assert_eq!(BigUint::gcd(215.into(), 86.into()), 43.into());
-        assert_eq!(BigUint::gcd(86.into(), 215.into()), 43.into());
+        let int = &crate::interrupt::Never::default();
+        assert_eq!(BigUint::gcd(2.into(), 4.into(), int).unwrap(), 2.into());
+        assert_eq!(BigUint::gcd(4.into(), 2.into(), int).unwrap(), 2.into());
+        assert_eq!(BigUint::gcd(37.into(), 43.into(), int).unwrap(), 1.into());
+        assert_eq!(BigUint::gcd(43.into(), 37.into(), int).unwrap(), 1.into());
+        assert_eq!(BigUint::gcd(215.into(), 86.into(), int).unwrap(), 43.into());
+        assert_eq!(BigUint::gcd(86.into(), 215.into(), int).unwrap(), 43.into());
     }
 
     #[test]
