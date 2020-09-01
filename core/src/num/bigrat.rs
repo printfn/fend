@@ -235,6 +235,7 @@ impl BigRat {
         }
 
         assert_eq!(self.sign, Sign::Positive);
+        let int = &crate::interrupt::Never::default();
 
         if self.den == rhs.den {
             if rhs.sign == Sign::Negative && self.num < rhs.num {
@@ -256,9 +257,9 @@ impl BigRat {
             }
         } else {
             let gcd = BigUint::gcd(self.den.clone(), rhs.den.clone());
-            let new_denominator = self.den.clone() * rhs.den.clone() / gcd.clone();
-            let a = self.num * rhs.den / gcd.clone();
-            let b = rhs.num * self.den / gcd;
+            let new_denominator = self.den.clone().mul(&rhs.den, int).unwrap() / gcd.clone();
+            let a = self.num.mul(&rhs.den, int).unwrap() / gcd.clone();
+            let b = rhs.num.mul(&self.den, int).unwrap() / gcd;
 
             if rhs.sign == Sign::Negative && a < b {
                 Self {
@@ -290,14 +291,14 @@ impl BigRat {
         self
     }
 
-    pub fn div(self, rhs: Self, _int: &impl Interrupt) -> Result<Self, String> {
+    pub fn div(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, String> {
         if rhs.num == 0.into() {
             return Err("Attempt to divide by zero".to_string());
         }
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
-            num: self.num * rhs.den,
-            den: self.den * rhs.num,
+            num: self.num.mul(&rhs.den, int)?,
+            den: self.den.mul(&rhs.num, int)?,
         })
     }
 
@@ -324,10 +325,16 @@ impl BigRat {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(&mut self, digit: u64, base: u8) {
+    pub fn add_digit_in_base(
+        &mut self,
+        digit: u64,
+        base: u8,
+        int: &impl Interrupt,
+    ) -> Result<(), crate::err::Interrupt> {
         let base_as_u64: u64 = base.into();
-        self.num = self.num.clone() * base_as_u64.into() + digit.into();
-        self.den = self.den.clone() * base_as_u64.into();
+        self.num = self.num.clone().mul(&base_as_u64.into(), int)? + digit.into();
+        self.den = self.den.clone().mul(&base_as_u64.into(), int)?;
+        Ok(())
     }
 
     pub fn approx_pi() -> Self {
@@ -464,9 +471,9 @@ impl BigRat {
         while max_digits.is_some() || remainder_occurs_at_pos.get(&numerator) == None {
             test_int(int)?;
             remainder_occurs_at_pos.insert(numerator.clone(), pos);
-            let bnum = b.clone() * numerator;
-            let digit = bnum.clone() / denominator.clone();
-            numerator = bnum - digit.clone() * denominator.clone();
+            let bnum = b.clone().mul(&numerator, int)?;
+            let digit: BigUint = bnum.clone() / denominator.clone();
+            numerator = bnum - digit.clone().mul(&denominator, int)?;
             output.push_str(crate::num::to_string(|f| digit.format(f, base, false, int))?.as_str());
             pos += 1;
             if numerator == 0.into() || max_digits == Some(pos) {
@@ -491,7 +498,7 @@ impl BigRat {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
             let (inverse_res, exact) = self.pow(rhs, int)?;
-            return Ok((Self::from(1).div(inverse_res, int)?, exact));
+            return Ok((Self::from(1).div(&inverse_res, int)?, exact));
         }
         let pow_res = Self {
             sign: Sign::Positive,
@@ -521,14 +528,14 @@ impl BigRat {
     ) -> Result<Self, String> {
         let mut high_bound = low_bound.clone() + 1.into();
         for _ in 0..30 {
-            let guess = (low_bound.clone() + high_bound.clone()).div(2.into(), int)?;
+            let guess = (low_bound.clone() + high_bound.clone()).div(&2.into(), int)?;
             if &guess.clone().pow(n.clone(), int)?.0 < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
             }
         }
-        Ok((low_bound + high_bound).div(2.into(), int)?)
+        Ok((low_bound + high_bound).div(&2.into(), int)?)
     }
 
     // the boolean indicates whether or not the result is exact
@@ -577,7 +584,7 @@ impl BigRat {
                 int,
             )?
         };
-        Ok((num_rat.div(den_rat, int)?, false))
+        Ok((num_rat.div(&den_rat, int)?, false))
     }
 }
 
@@ -629,10 +636,11 @@ impl Mul for BigRat {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
+        let int = &crate::interrupt::Never::default();
         Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
-            num: self.num * rhs.num,
-            den: self.den * rhs.den,
+            num: self.num.mul(&rhs.num, int).unwrap(),
+            den: self.den.mul(&rhs.den, int).unwrap(),
         }
     }
 }

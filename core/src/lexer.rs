@@ -193,7 +193,7 @@ fn parse_basic_number<'a>(
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
         let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| {
-            res.add_digit_in_base(digit.into(), base)?;
+            res.add_digit_in_base(digit.into(), base, int)?;
             Ok(())
         })?;
         input = remaining;

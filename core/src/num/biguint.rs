@@ -8,7 +8,7 @@ use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::{
     hash::{Hash, Hasher},
-    ops::{Add, AddAssign, Div, Mul, Rem, Sub},
+    ops::{Add, AddAssign, Div, Rem, Sub},
 };
 
 #[derive(Clone)]
@@ -162,7 +162,8 @@ impl BigUint {
     }
 
     pub fn lcm(a: Self, b: Self) -> Self {
-        a.clone() * b.clone() / Self::gcd(a, b)
+        let int = &crate::interrupt::Never::default();
+        a.clone().mul(&b, int).unwrap() / Self::gcd(a, b)
     }
 
     pub fn pow<I: Interrupt>(
@@ -214,10 +215,10 @@ impl BigUint {
         while exponent > 0 {
             test_int(int)?;
             if exponent % 2 == 1 {
-                result = &result * &base;
+                result = result.mul(&base, int)?;
             }
             exponent >>= 1;
-            base = &base * &base;
+            base = base.clone().mul(&base, int)?;
         }
         Ok(result)
     }
@@ -309,10 +310,14 @@ impl BigUint {
     }
 
     /// computes self *= other
-    fn mul_internal(&mut self, other: &Self) {
+    fn mul_internal(
+        &mut self,
+        other: &Self,
+        int: &impl Interrupt,
+    ) -> Result<(), crate::err::Interrupt> {
         if self.is_zero() || other.is_zero() {
             *self = Self::from(0);
-            return;
+            return Ok(());
         }
         let self_clone = self.clone();
         self.make_large();
@@ -324,8 +329,10 @@ impl BigUint {
             }
         }
         for i in 0..other.value_len() {
+            test_int(int)?;
             self.add_assign_internal(&self_clone, other.get(i), i);
         }
+        Ok(())
     }
 
     /// computes `self += (other * mul_digit) << (64 * shift)`
@@ -412,10 +419,24 @@ impl BigUint {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
-            res = res * self.clone();
+            res = res.mul(&self, int)?;
             self = self - 1.into();
         }
         Ok(res)
+    }
+
+    pub fn mul(
+        mut self,
+        other: &Self,
+        int: &impl Interrupt,
+    ) -> Result<Self, crate::err::Interrupt> {
+        if let (Small(a), Small(b)) = (&self, &other) {
+            if let Some(res) = a.checked_mul(*b) {
+                return Ok(Self::from(res));
+            }
+        }
+        self.mul_internal(&other, int)?;
+        Ok(self)
     }
 }
 
@@ -531,35 +552,6 @@ impl Sub for BigUint {
     }
 }
 
-impl Mul for &BigUint {
-    type Output = BigUint;
-
-    fn mul(self, other: Self) -> BigUint {
-        if let (Small(a), Small(b)) = (self, other) {
-            if let Some(res) = a.checked_mul(*b) {
-                return BigUint::from(res);
-            }
-        }
-        let mut res = self.clone();
-        res.mul_internal(other);
-        res
-    }
-}
-
-impl Mul for BigUint {
-    type Output = Self;
-
-    fn mul(mut self, other: Self) -> Self {
-        if let (Small(a), Small(b)) = (&self, &other) {
-            if let Some(res) = a.checked_mul(*b) {
-                return Self::from(res);
-            }
-        }
-        self.mul_internal(&other);
-        self
-    }
-}
-
 impl Div for BigUint {
     type Output = Self;
 
@@ -665,7 +657,11 @@ mod tests {
 
     #[test]
     fn test_multiplication() {
-        assert_eq!(BigUint::from(20) * BigUint::from(3), BigUint::from(60));
+        let int = &crate::interrupt::Never::default();
+        assert_eq!(
+            BigUint::from(20).mul(&BigUint::from(3), int).unwrap(),
+            BigUint::from(60)
+        );
     }
 
     #[test]
@@ -727,8 +723,11 @@ mod tests {
 
     #[test]
     fn test_big_multiplication() {
+        let int = &crate::interrupt::Never::default();
         assert_eq!(
-            BigUint::from(1) * BigUint::Large(vec![0, 1]),
+            BigUint::from(1)
+                .mul(&BigUint::Large(vec![0, 1]), int)
+                .unwrap(),
             BigUint::Large(vec![0, 1])
         );
     }

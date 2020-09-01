@@ -78,7 +78,12 @@ impl ExactBase {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(&mut self, digit: u64, base: Base) -> Result<(), String> {
+    pub fn add_digit_in_base(
+        &mut self,
+        digit: u64,
+        base: Base,
+        int: &impl Interrupt,
+    ) -> Result<(), String> {
         if base != self.base {
             return Err(format!(
                 "Base does not match: {} != {}",
@@ -86,7 +91,8 @@ impl ExactBase {
                 self.base.base_as_u8()
             ));
         }
-        self.value.add_digit_in_base(digit, base.base_as_u8());
+        self.value
+            .add_digit_in_base(digit, base.base_as_u8(), int)?;
         Ok(())
     }
 

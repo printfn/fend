@@ -43,7 +43,7 @@ impl Complex {
         let x = rhs.real;
         let y = rhs.imag;
         Ok(Self {
-            real: BigRat::from(1).div(x.clone() * x.clone() + y.clone() * y.clone(), int)?,
+            real: BigRat::from(1).div(&(x.clone() * x.clone() + y.clone() * y.clone()), int)?,
             imag: 0.into(),
         } * Self {
             real: u.clone() * x.clone() + v.clone() * y.clone(),
@@ -67,8 +67,13 @@ impl Complex {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(&mut self, digit: u64, base: u8) {
-        self.real.add_digit_in_base(digit, base)
+    pub fn add_digit_in_base(
+        &mut self,
+        digit: u64,
+        base: u8,
+        int: &impl Interrupt,
+    ) -> Result<(), crate::err::Interrupt> {
+        self.real.add_digit_in_base(digit, base, int)
     }
 
     pub fn i() -> Self {

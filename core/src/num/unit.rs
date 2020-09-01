@@ -345,8 +345,13 @@ impl UnitValue {
         }
     }
 
-    pub fn add_digit_in_base(&mut self, digit: u64, base: Base) -> Result<(), String> {
-        self.value.add_digit_in_base(digit, base)
+    pub fn add_digit_in_base(
+        &mut self,
+        digit: u64,
+        base: Base,
+        int: &impl Interrupt,
+    ) -> Result<(), String> {
+        self.value.add_digit_in_base(digit, base, int)
     }
 
     pub fn is_zero(&self) -> bool {
