@@ -13,6 +13,14 @@ pub fn test_evaluation(input: &str, expected: &str) {
     );
 }
 
+fn test_same(a: &str, b: &str) {
+    let mut context = Context::new();
+    assert_eq!(
+        evaluate(a, &mut context).unwrap().get_main_result(),
+        evaluate(b, &mut context).unwrap().get_main_result()
+    );
+}
+
 fn test_eval_simple(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
@@ -287,11 +295,7 @@ fn test_tricky_power_negation() {
     test_evaluation("2^3 * 4", "32");
     test_evaluation("2 * -3 * 4", "-24");
     test_evaluation("-2^-3", "-0.125");
-    let mut context = Context::new();
-    assert_eq!(
-        evaluate("2^-3^4", &mut context),
-        evaluate("1 / 2^81", &mut context)
-    );
+    test_same("2^-3^4", "1 / 2^81");
     test_evaluation("4^-1^2", "0.25");
 }
 
@@ -368,6 +372,10 @@ fn test_different_bases() {
     test_evaluation("0 + 36#ii", "666");
     expect_parse_error("18#i/i");
     test_evaluation("19#i/i", "-19#i i");
+    // verified using a ruby program
+    test_evaluation(
+        "0+36#0123456789abcdefghijklmnopqrstuvwxyz",
+        "86846823611197163108337531226495015298096208677436155")
 }
 
 #[test]
