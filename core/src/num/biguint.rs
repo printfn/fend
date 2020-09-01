@@ -1,5 +1,6 @@
 use crate::interrupt::Interrupt;
 use crate::num::Base;
+use crate::err::{err, ValueTooLarge};
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::{
@@ -55,7 +56,7 @@ impl BigUint {
         }
     }
 
-    pub fn try_as_usize(&self) -> Result<usize, String> {
+    pub fn try_as_usize(&self) -> Result<usize, ValueTooLarge> {
         use std::convert::TryFrom;
 
         Ok(match self {
@@ -63,7 +64,7 @@ impl BigUint {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return Err("Value too large".to_string());
+                    return err();
                 }
             }
             Large(v) => {
@@ -71,10 +72,10 @@ impl BigUint {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return Err("Value too large".to_string());
+                        return err();
                     }
                 } else {
-                    return Err("Value too large".to_string());
+                    return err();
                 }
             }
         })

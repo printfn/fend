@@ -4,6 +4,7 @@
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.1")]
 
 mod ast;
+mod err;
 mod interrupt;
 mod lexer;
 mod num;
