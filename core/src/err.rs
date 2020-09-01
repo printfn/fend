@@ -39,7 +39,34 @@ impl<T: Error, U: Error> From<Combined<T, U>> for String {
 impl<T: Error, U: Error> Error for Combined<T, U> {}
 
 macro_rules! make_err {
+    ($i:ident, $($a:ident, )*) => {
+        pub enum $i { $($a($a), )* }
+        impl Display for $i {
+            fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+                match self {
+                    $(Self::$a(v) => v.fmt(f),)*
+                }
+            }
+        }
+        $(
+            impl From<$a> for $i {
+                fn from(v: $a) -> Self {
+                    Self::$a(v)
+                }
+            }
+        )*
+        // eventually we should be able to remove this
+        // (once all the string-based error handling is gone)
+        impl From<$i> for String {
+            fn from(c: $i) -> Self {
+                c.to_string()
+            }
+        }
+        impl Error for $i {}
+    };
+
     ($i:ident, $e:expr) => {
+        #[derive(Debug)]
         pub enum $i { $i }
         impl Display for $i {
             fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
@@ -59,6 +86,11 @@ macro_rules! make_err {
                 Self::$i
             }
         }
+        impl $i {
+            pub fn err<T, E: From<Self>>() -> Result<T, E> {
+                Err(Self::default().into())
+            }
+        }
     }
 }
 
@@ -67,3 +99,8 @@ pub fn err<T, E>() -> Result<T, E> where E: Error + Default {
 }
 
 make_err!(ValueTooLarge, "Value too large");
+make_err!(Interrupt, "Interrupted");
+make_err!(ZeroToThePowerOfZero, "Zero to the power of zero is undefined");
+make_err!(ExponentTooLarge, "Exponent too large");
+make_err!(IntegerPowerError, ExponentTooLarge, ZeroToThePowerOfZero, Interrupt,);
+make_err!(DivideByZero, "Division by zero");

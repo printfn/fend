@@ -1,6 +1,6 @@
 use crate::interrupt::Interrupt;
 use crate::num::Base;
-use crate::err::{err, ValueTooLarge};
+use crate::err::{err, ValueTooLarge, IntegerPowerError, ZeroToThePowerOfZero, ExponentTooLarge, DivideByZero};
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::{
@@ -162,15 +162,15 @@ impl BigUint {
         a.clone() * b.clone() / Self::gcd(a, b)
     }
 
-    pub fn pow(a: &Self, b: &Self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn pow(a: &Self, b: &Self, int: &impl Interrupt) -> Result<Self, IntegerPowerError> {
         if a.is_zero() && b.is_zero() {
-            return Err("Zero to the power of zero is undefined".to_string());
+            return ZeroToThePowerOfZero::err();
         }
         if b.is_zero() {
             return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
-            return Err("Exponent too large".to_string());
+            return ExponentTooLarge::err();
         }
         Ok(a.pow_internal(b.get(0), int)?)
     }
@@ -183,6 +183,7 @@ impl BigUint {
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
         while high_guess.clone() - low_guess.clone() > 1.into() {
+            int.test()?;
             let mut guess = low_guess.clone() + high_guess.clone();
             guess.rshift();
 
@@ -196,7 +197,7 @@ impl BigUint {
         Ok((low_guess, false))
     }
 
-    fn pow_internal(&self, mut exponent: u64, int: &impl Interrupt) -> Result<Self, String> {
+    fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> Result<Self, crate::err::Interrupt> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
@@ -251,33 +252,33 @@ impl BigUint {
         }
     }
 
-    fn divmod(&self, other: &Self) -> (Self, Self) {
+    fn divmod(&self, other: &Self) -> Result<(Self, Self), DivideByZero> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
-                return (Small(div_res), Small(mod_res));
+                return Ok((Small(div_res), Small(mod_res)));
             }
-            panic!("Can't divide by 0");
+            return err();
         }
         if other.is_zero() {
-            panic!("Can't divide by 0");
+            return err();
         }
         if other == &Self::from(1) {
-            return (self.clone(), Self::from(0));
+            return Ok((self.clone(), Self::from(0)));
         }
         if self.is_zero() {
-            return (Self::from(0), Self::from(0));
+            return Ok((Self::from(0), Self::from(0)));
         }
         if self < other {
-            return (Self::from(0), self.clone());
+            return Ok((Self::from(0), self.clone()));
         }
         if self == other {
-            return (Self::from(1), Self::from(0));
+            return Ok((Self::from(1), Self::from(0)));
         }
         if other == &Self::from(2) {
             let mut div_result = self.clone();
             div_result.rshift();
             let modulo = self.get(0) & 1;
-            return (div_result, Self::from(modulo));
+            return Ok((div_result, Self::from(modulo)));
         }
         // binary long division
         let mut q = Self::from(0);
@@ -293,7 +294,7 @@ impl BigUint {
                 }
             }
         }
-        (q, r)
+        Ok((q, r))
     }
 
     /// computes self *= other
@@ -366,7 +367,7 @@ impl BigUint {
                 let divmod_res = num.divmod(&Self::Large(vec![
                     truncate(divisor),
                     truncate(divisor >> 64),
-                ]));
+                ])).expect("Division by zero is not allowed");
                 let mut digit_group_value =
                     u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
                 for _ in 0..rounds {
@@ -540,7 +541,7 @@ impl Div for BigUint {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        self.divmod(&other).0
+        self.divmod(&other).unwrap().0
     }
 }
 
@@ -548,7 +549,7 @@ impl Div for &BigUint {
     type Output = BigUint;
 
     fn div(self, other: Self) -> BigUint {
-        self.divmod(other).0
+        self.divmod(other).unwrap().0
     }
 }
 
@@ -556,7 +557,7 @@ impl Rem for &BigUint {
     type Output = BigUint;
 
     fn rem(self, other: Self) -> BigUint {
-        self.divmod(other).1
+        self.divmod(other).unwrap().1
     }
 }
 

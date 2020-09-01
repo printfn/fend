@@ -2,13 +2,7 @@ use std::time::{Duration, Instant};
 
 pub trait Interrupt {
     fn should_interrupt(&self) -> bool;
-    fn test(&self) -> Result<(), String> {
-        if self.should_interrupt() {
-            Err("Interrupted".to_string())
-        } else {
-            Ok(())
-        }
-    }
+    fn test(&self) -> Result<(), crate::err::Interrupt>;
 }
 
 #[derive(Default)]
@@ -16,6 +10,9 @@ pub struct Never {}
 impl Interrupt for Never {
     fn should_interrupt(&self) -> bool {
         false
+    }
+    fn test(&self) -> Result<(), crate::err::Interrupt> {
+        return Ok(())
     }
 }
 
@@ -28,6 +25,13 @@ pub struct Timeout {
 impl Interrupt for Timeout {
     fn should_interrupt(&self) -> bool {
         Instant::now().duration_since(self.start) >= self.duration
+    }
+    fn test(&self) -> Result<(), crate::err::Interrupt> {
+        if self.should_interrupt() {
+            crate::err::err()
+        } else {
+            Ok(())
+        }
     }
 }
 
