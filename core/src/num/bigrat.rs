@@ -1,12 +1,20 @@
-use crate::interrupt::Interrupt;
+use crate::interrupt::{test_int, Interrupt};
 use crate::num::biguint::BigUint;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Debug, Display, Error, Formatter};
+use std::fmt::{Debug, Error, Formatter};
 use std::{
     collections::HashMap,
     ops::{Add, Mul, Neg, Sub},
 };
+
+macro_rules! try_i {
+    ($e:expr) => {
+        if let Err(e) = $e {
+            return Ok(Err(e));
+        }
+    };
+}
 
 mod sign {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -347,7 +355,8 @@ impl BigRat {
         base: Base,
         style: FormattingStyle,
         imag: bool,
-    ) -> Result<bool, Error> {
+        int: &impl Interrupt,
+    ) -> Result<Result<bool, Error>, crate::err::Interrupt> {
         let mut x = self.clone().simplify();
         let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
@@ -357,21 +366,21 @@ impl BigRat {
         // try as integer if possible
         if x.den == 1.into() {
             if negative {
-                write!(f, "-")?;
+                try_i!(write!(f, "-"));
             }
             if imag && base == Base::Decimal && x.num == 1.into() {
-                write!(f, "i")?;
+                try_i!(write!(f, "i"));
             } else {
-                x.num.format(f, base, true)?;
+                try_i!(x.num.format(f, base, true, int)?);
                 if imag {
                     if base.base_as_u8() >= 19 {
                         // at this point 'i' could be a digit, so we need a space to disambiguate
-                        write!(f, " ")?;
+                        try_i!(write!(f, " "));
                     }
-                    write!(f, "i")?;
+                    try_i!(write!(f, "i"));
                 }
             }
-            return Ok(true);
+            return Ok(Ok(true));
         }
 
         let terminating = x.terminates_in_base(base);
@@ -379,27 +388,27 @@ impl BigRat {
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating);
         if fraction {
             if negative {
-                write!(f, "-")?;
+                try_i!(write!(f, "-"));
             }
             if imag && base == Base::Decimal && x.num == 1.into() {
-                write!(f, "i")?;
+                try_i!(write!(f, "i"));
             } else {
-                x.num.format(f, base, true)?;
+                try_i!(x.num.format(f, base, true, int)?);
                 if imag {
                     if base.base_as_u8() >= 19 {
-                        write!(f, " ")?;
+                        try_i!(write!(f, " "));
                     }
-                    write!(f, "i")?;
+                    try_i!(write!(f, "i"));
                 }
             }
-            write!(f, "/")?;
-            x.den.format(f, base, true)?;
-            return Ok(true);
+            try_i!(write!(f, "/"));
+            try_i!(x.den.format(f, base, true, int)?);
+            return Ok(Ok(true));
         }
 
         // not a fraction, will be printed as a decimal
         if negative {
-            write!(f, "-")?;
+            try_i!(write!(f, "-"));
         }
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
             || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating)
@@ -411,8 +420,8 @@ impl BigRat {
             Some(10)
         };
         let integer_part = x.num.clone() / x.den.clone();
-        integer_part.format(f, base, true)?;
-        write!(f, ".")?;
+        try_i!(integer_part.format(f, base, true, int)?);
+        try_i!(write!(f, "."));
         let integer_as_rational = Self {
             sign: Sign::Positive,
             num: integer_part,
@@ -425,12 +434,13 @@ impl BigRat {
             remaining_fraction.num,
             &remaining_fraction.den,
             num_trailing_digits_to_print,
+            int,
         )?;
         if imag {
             if base.base_as_u8() >= 19 {
-                write!(f, " ")?;
+                try_i!(write!(f, " "));
             }
-            write!(f, "i")?;
+            try_i!(write!(f, "i"));
         }
         Ok(was_exact)
     }
@@ -444,32 +454,34 @@ impl BigRat {
         mut numerator: BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
-    ) -> Result<bool, Error> {
+        int: &impl Interrupt,
+    ) -> Result<Result<bool, Error>, crate::err::Interrupt> {
         let mut output = String::new();
         let mut pos = 0;
         let mut remainder_occurs_at_pos: HashMap<BigUint, usize> = HashMap::new();
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
         while max_digits.is_some() || remainder_occurs_at_pos.get(&numerator) == None {
+            test_int(int)?;
             remainder_occurs_at_pos.insert(numerator.clone(), pos);
             let bnum = b.clone() * numerator;
             let digit = bnum.clone() / denominator.clone();
             numerator = bnum - digit.clone() * denominator.clone();
-            output.push_str(Fmt(|f| digit.format(f, base, false)).to_string().as_str());
+            output.push_str(crate::num::to_string(|f| digit.format(f, base, false, int))?.as_str());
             pos += 1;
             if numerator == 0.into() || max_digits == Some(pos) {
                 // terminates here
-                write!(f, "{}", output)?;
+                try_i!(write!(f, "{}", output));
                 // is the number exact, or did we need to truncate?
                 let exact = numerator == 0.into();
-                return Ok(exact);
+                return Ok(Ok(exact));
             }
         }
         // todo: this may panic if numerator is not found
         let location = remainder_occurs_at_pos[&numerator];
         let (a, b) = output.split_at(location);
-        write!(f, "{}({})", a, b)?;
-        Ok(true) // the recurring decimal is exact
+        try_i!(write!(f, "{}({})", a, b));
+        Ok(Ok(true)) // the recurring decimal is exact
     }
 
     pub fn pow(mut self, mut rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
@@ -566,20 +578,6 @@ impl BigRat {
             )?
         };
         Ok((num_rat.div(den_rat, int)?, false))
-    }
-}
-
-// Small formatter helper
-struct Fmt<F>(F)
-where
-    F: Fn(&mut Formatter) -> Result<(), Error>;
-
-impl<F> Display for Fmt<F>
-where
-    F: Fn(&mut Formatter) -> Result<(), Error>,
-{
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        (self.0)(f)
     }
 }
 

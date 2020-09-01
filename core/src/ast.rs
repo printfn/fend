@@ -32,7 +32,7 @@ pub enum Expr {
 impl Debug for Expr {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            Self::Num(n) => write!(f, "{}", n),
+            Self::Num(n) => write!(f, "{:?}", n),
             Self::Ident(ident) => write!(f, "{}", ident),
             Self::Parens(x) => write!(f, "({:?})", *x),
             Self::UnaryMinus(x) => write!(f, "(-{:?})", *x),

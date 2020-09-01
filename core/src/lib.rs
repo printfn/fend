@@ -98,7 +98,7 @@ pub fn evaluate_with_interrupt(
     }
     let result = eval::evaluate_to_value(input, &context.scope, int)?;
     Ok(FendResult {
-        main_result: format!("{}", result),
+        main_result: crate::num::to_string(|f| result.format(f, int))?,
         other_info: vec![],
     })
 }

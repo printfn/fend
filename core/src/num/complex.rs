@@ -126,7 +126,15 @@ impl Complex {
         style: FormattingStyle,
         base: Base,
         use_parentheses_if_complex: bool,
-    ) -> Result<(), Error> {
+        int: &impl Interrupt,
+    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
+        macro_rules! try_i {
+            ($e:expr) => {
+                if let Err(e) = $e {
+                    return Ok(Err(e));
+                }
+            };
+        }
         let style = if style == FormattingStyle::Auto {
             if exact {
                 FormattingStyle::ExactFloatWithFractionFallback
@@ -137,30 +145,30 @@ impl Complex {
             style
         };
         if self.imag == 0.into() {
-            self.real.format(f, base, style, false)?;
-            return Ok(());
+            try_i!(self.real.format(f, base, style, false, int)?);
+            return Ok(Ok(()));
         }
 
         if self.real == 0.into() {
-            self.imag.format(f, base, style, true)?;
+            try_i!(self.imag.format(f, base, style, true, int)?);
         } else {
             if use_parentheses_if_complex {
-                write!(f, "(")?;
+                try_i!(write!(f, "("));
             }
-            self.real.format(f, base, style, false)?;
+            try_i!(self.real.format(f, base, style, false, int)?);
             if self.imag > 0.into() {
-                write!(f, " + ")?;
-                self.imag.format(f, base, style, true)?;
+                try_i!(write!(f, " + "));
+                try_i!(self.imag.format(f, base, style, true, int)?);
             } else {
-                write!(f, " - ")?;
-                (-self.imag.clone()).format(f, base, style, true)?;
+                try_i!(write!(f, " - "));
+                try_i!((-self.imag.clone()).format(f, base, style, true, int)?);
             }
             if use_parentheses_if_complex {
-                write!(f, ")")?;
+                try_i!(write!(f, ")"));
             }
         }
 
-        Ok(())
+        Ok(Ok(()))
     }
 
     pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {

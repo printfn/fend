@@ -1,3 +1,5 @@
+use std::fmt::{Display, Error, Formatter};
+
 mod bigrat;
 mod biguint;
 mod complex;
@@ -93,4 +95,48 @@ impl Base {
             _ => true,
         }
     }
+}
+
+// Small formatter helper
+// TODO: Handle interrupts separately from other errors
+pub fn to_string<F: Fn(&mut Formatter) -> Result<Result<(), Error>, crate::err::Interrupt>>(
+    func: F,
+) -> Result<String, crate::err::Interrupt> {
+    //let mut interrupt_occurred = false;
+
+    struct Fmt<F>(F)
+    where
+        F: Fn(&mut Formatter) -> Result<(), Error>;
+
+    impl<F> Display for Fmt<F>
+    where
+        F: Fn(&mut Formatter) -> Result<(), Error>,
+    {
+        fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+            (self.0)(f)
+        }
+    }
+
+    use std::fmt::Write;
+    let mut buf = String::new();
+    let res = buf.write_fmt(format_args!(
+        "{}",
+        Fmt(|f| {
+            match func(f) {
+                Ok(val) => val,
+                Err(_int) => {
+                    //interrupt_occurred = true;
+                    Err(Error::default())
+                }
+            }
+        })
+    ));
+    if res.is_err() {
+        //if interrupt_occurred {
+        return Err(crate::err::Interrupt::default());
+        //}
+        //panic!("a Display implementation returned an error unexpectedly");
+    }
+    buf.shrink_to_fit();
+    Ok(buf)
 }

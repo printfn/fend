@@ -348,19 +348,28 @@ impl BigUint {
         f: &mut Formatter,
         base: Base,
         write_base_prefix: bool,
-    ) -> Result<(), Error> {
+        int: &impl Interrupt,
+    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
+        macro_rules! try_i {
+            ($e:expr) => {
+                if let Err(e) = $e {
+                    return Ok(Err(e));
+                }
+            };
+        }
+
         if write_base_prefix {
-            base.write_prefix(f)?;
+            try_i!(base.write_prefix(f));
         }
 
         if self.is_zero() {
-            write!(f, "0")?;
-            return Ok(());
+            try_i!(write!(f, "0"));
+            return Ok(Ok(()));
         }
 
         let mut num = self.clone();
         if num.value_len() == 1 && base.base_as_u8() == 10 {
-            write!(f, "{}", num.get(0))?;
+            try_i!(write!(f, "{}", num.get(0)));
         } else {
             let mut output = String::new();
             let base_as_u128: u128 = base.base_as_u8().into();
@@ -375,6 +384,7 @@ impl BigUint {
                 rounds += 1;
             }
             while !num.is_zero() {
+                test_int(int)?;
                 let divmod_res = num
                     .divmod(&Self::Large(vec![
                         truncate(divisor),
@@ -392,9 +402,9 @@ impl BigUint {
                 num = divmod_res.0;
             }
             output = output.trim_start_matches('0').to_string();
-            write!(f, "{}", output)?;
+            try_i!(write!(f, "{}", output));
         }
-        Ok(())
+        Ok(Ok(()))
     }
 
     // Note: 0! = 1, 1! = 1

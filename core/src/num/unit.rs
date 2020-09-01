@@ -5,7 +5,7 @@ use crate::value::Value;
 use std::ops::{Mul, Neg};
 use std::{
     collections::HashMap,
-    fmt::{Display, Error, Formatter},
+    fmt::{Error, Formatter},
 };
 
 #[derive(Clone, Debug)]
@@ -430,6 +430,61 @@ impl UnitValue {
     pub fn exp(self) -> Result<Self, String> {
         self.apply_fn(ExactBase::exp, true)
     }
+
+    pub fn format(
+        &self,
+        f: &mut Formatter,
+        int: &impl Interrupt,
+    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
+        macro_rules! try_i {
+            ($e:expr) => {
+                if let Err(e) = $e {
+                    return Ok(Err(e));
+                }
+            };
+        }
+        let use_parentheses = !self.unit.components.is_empty();
+        try_i!(self.value.format(f, use_parentheses, int)?);
+        if !self.unit.components.is_empty() {
+            let mut negative_components = vec![];
+            let mut first = true;
+            let mut positive_exponents = false;
+            for unit_exponent in &self.unit.components {
+                if unit_exponent.exponent < 0.into() {
+                    negative_components.push(unit_exponent);
+                } else {
+                    if !first || unit_exponent.unit.spacing {
+                        try_i!(write!(f, " "));
+                    }
+                    first = false;
+                    try_i!(write!(f, "{}", unit_exponent.unit.singular_name));
+                    if unit_exponent.exponent != 1.into() {
+                        try_i!(write!(f, "^"));
+                        try_i!(unit_exponent.exponent.format(f, true, int)?);
+                    }
+                    positive_exponents = true;
+                }
+            }
+            if !negative_components.is_empty() {
+                if positive_exponents {
+                    try_i!(write!(f, " /"));
+                }
+                for unit_exponent in negative_components {
+                    try_i!(write!(f, " {}", unit_exponent.unit.singular_name));
+                    let exp = if positive_exponents {
+                        -unit_exponent.exponent.clone()
+                    } else {
+                        unit_exponent.exponent.clone()
+                    };
+                    if exp != ExactBase::from(1) {
+                        try_i!(write!(f, "^"));
+                        try_i!(exp.format(f, true, int)?);
+                    }
+                }
+            }
+        }
+        Ok(Ok(()))
+    }
 }
 
 impl Neg for UnitValue {
@@ -459,52 +514,6 @@ impl From<u64> for UnitValue {
             value: i.into(),
             unit: Unit::unitless(),
         }
-    }
-}
-
-impl Display for UnitValue {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        let use_parentheses = !self.unit.components.is_empty();
-        self.value.format(f, use_parentheses)?;
-        if !self.unit.components.is_empty() {
-            let mut negative_components = vec![];
-            let mut first = true;
-            let mut positive_exponents = false;
-            for unit_exponent in &self.unit.components {
-                if unit_exponent.exponent < 0.into() {
-                    negative_components.push(unit_exponent);
-                } else {
-                    if !first || unit_exponent.unit.spacing {
-                        write!(f, " ")?;
-                    }
-                    first = false;
-                    write!(f, "{}", unit_exponent.unit.singular_name)?;
-                    if unit_exponent.exponent != 1.into() {
-                        write!(f, "^")?;
-                        unit_exponent.exponent.format(f, true)?;
-                    }
-                    positive_exponents = true;
-                }
-            }
-            if !negative_components.is_empty() {
-                if positive_exponents {
-                    write!(f, " /")?;
-                }
-                for unit_exponent in negative_components {
-                    write!(f, " {}", unit_exponent.unit.singular_name)?;
-                    let exp = if positive_exponents {
-                        -unit_exponent.exponent.clone()
-                    } else {
-                        unit_exponent.exponent.clone()
-                    };
-                    if exp != ExactBase::from(1) {
-                        write!(f, "^")?;
-                        exp.format(f, true)?;
-                    }
-                }
-            }
-        }
-        Ok(())
     }
 }
 
@@ -628,6 +637,11 @@ mod tests {
     use super::*;
     use crate::interrupt::Never;
 
+    fn to_string(n: UnitValue) -> String {
+        let int = &crate::interrupt::Never::default();
+        crate::num::to_string(|f| n.format(f, int)).unwrap()
+    }
+
     #[test]
     fn test_basic_kg() {
         let base_kg = BaseUnit::new("kilogram".to_string());
@@ -637,7 +651,7 @@ mod tests {
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg.clone(), 1)]);
         let sum = one_kg.add(two_kg, &Never::default()).unwrap();
-        assert_eq!(sum.to_string(), "3 kg");
+        assert_eq!(to_string(sum), "3 kg");
     }
 
     #[test]
@@ -657,13 +671,9 @@ mod tests {
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let twelve_g = UnitValue::new(12, vec![UnitExponent::new(g.clone(), 1)]);
         assert_eq!(
-            one_kg
-                .clone()
-                .add(twelve_g.clone(), int)
-                .unwrap()
-                .to_string(),
+            to_string(one_kg.clone().add(twelve_g.clone(), int).unwrap()),
             "1.012 kg"
         );
-        assert_eq!(twelve_g.add(one_kg, int).unwrap().to_string(), "1012 g");
+        assert_eq!(to_string(twelve_g.add(one_kg, int).unwrap()), "1012 g");
     }
 }

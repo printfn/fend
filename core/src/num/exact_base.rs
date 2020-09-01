@@ -109,9 +109,16 @@ impl ExactBase {
         })
     }
 
-    pub fn format(&self, f: &mut Formatter, use_parentheses_if_complex: bool) -> Result<(), Error> {
+    pub fn format(
+        &self,
+        f: &mut Formatter,
+        use_parentheses_if_complex: bool,
+        int: &impl Interrupt,
+    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
         if !self.exact {
-            write!(f, "approx. ")?;
+            if let Err(e) = write!(f, "approx. ") {
+                return Ok(Err(e));
+            }
         }
         self.value.format(
             f,
@@ -119,8 +126,8 @@ impl ExactBase {
             self.format,
             self.base,
             use_parentheses_if_complex,
-        )?;
-        Ok(())
+            int,
+        )
     }
 
     pub fn with_format(self, format: FormattingStyle) -> Self {

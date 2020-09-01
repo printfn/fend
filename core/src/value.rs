@@ -1,6 +1,6 @@
 use crate::interrupt::Interrupt;
 use crate::num::{FormattingStyle, Number};
-use std::fmt::{Display, Error, Formatter};
+use std::fmt::{Error, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -36,12 +36,18 @@ impl Value {
                 if allow_multiplication {
                     n.clone() * other.expect_num()?
                 } else {
-                    return Err(format!("{} is not a function", self));
+                    return Err(format!(
+                        "{} is not a function",
+                        crate::num::to_string(|f| self.format(f, int))?
+                    ));
                 }
             }
             Self::Func(name) => {
                 if force_multiplication {
-                    return Err(format!("Cannot apply function '{}' in this context", self));
+                    return Err(format!(
+                        "Cannot apply function '{}' in this context",
+                        crate::num::to_string(|f| self.format(f, int))?
+                    ));
                 }
                 if name == "sqrt" {
                     other.expect_num()?.root_n(&2.into(), int)?
@@ -88,20 +94,24 @@ impl Value {
                 }
             }
             _ => {
-                return Err(format!("'{}' is not a function or a number", self));
+                return Err(format!(
+                    "'{}' is not a function or a number",
+                    crate::num::to_string(|f| self.format(f, int))?
+                ));
             }
         }))
     }
-}
 
-impl Display for Value {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        match self {
-            Self::Num(n) => write!(f, "{}", n)?,
-            Self::Func(name) => write!(f, "{}", name)?,
-            Self::Format(fmt) => write!(f, "{}", fmt)?,
-            Self::Dp => write!(f, "dp")?,
-        }
-        Ok(())
+    pub fn format(
+        &self,
+        f: &mut Formatter,
+        int: &impl Interrupt,
+    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
+        Ok(match self {
+            Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?),
+            Self::Func(name) => write!(f, "{}", name),
+            Self::Format(fmt) => write!(f, "{}", fmt),
+            Self::Dp => write!(f, "dp"),
+        })
     }
 }
