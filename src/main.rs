@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
 #![deny(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -9,6 +10,7 @@ use fend_core::Context;
 use std::path::PathBuf;
 
 mod config_dir;
+mod helper;
 mod interrupt;
 
 enum EvalResult {
@@ -57,7 +59,7 @@ fn print_version() {
     println!("fend-core {}", fend_core::get_version());
 }
 
-fn save_history(rl: &Editor<()>, path: &Option<PathBuf>) {
+fn save_history(rl: &Editor<helper::FendHelper>, path: &Option<PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
@@ -67,13 +69,14 @@ fn save_history(rl: &Editor<()>, path: &Option<PathBuf>) {
 
 fn repl_loop() -> i32 {
     // `()` can be used when no completer is required
-    let mut rl = Editor::<()>::with_config(
+    let mut rl = Editor::<helper::FendHelper>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
             .max_history_size(10000)
             .build(),
     );
+    rl.set_helper(Some(helper::FendHelper::default()));
     let history_path = config_dir::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {

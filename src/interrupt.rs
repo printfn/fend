@@ -1,5 +1,3 @@
-#![allow(clippy::module_name_repetitions)]
-
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
