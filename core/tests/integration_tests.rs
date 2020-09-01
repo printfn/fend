@@ -375,7 +375,12 @@ fn test_different_bases() {
     // verified using a ruby program
     test_evaluation(
         "0+36#0123456789abcdefghijklmnopqrstuvwxyz",
-        "86846823611197163108337531226495015298096208677436155")
+        "86846823611197163108337531226495015298096208677436155");
+    test_evaluation(
+        "36#0 + 86846823611197163108337531226495015298096208677436155",
+        "36#123456789abcdefghijklmnopqrstuvwxyz");
+    test_evaluation("18#100/65537 i", "18#100i/18#b44h");
+    test_evaluation("19#100/65537 i", "19#100 i/19#9aa6");
 }
 
 #[test]
@@ -524,6 +529,10 @@ fn test_advanced_op_precedence() {
     test_evaluation("6!", "720");
     test_evaluation("7!", "5040");
     test_evaluation("8!", "40320");
+    expect_parse_error("0.5!");
+    expect_parse_error("(-2)!");
+    expect_parse_error("3i!");
+    expect_parse_error("(3 kg)!");
 }
 
 #[test]
@@ -545,7 +554,15 @@ fn test_various_functions() {
     test_same("tan 0", "tan pi");
     test_evaluation("asin 1", "approx. 1.5707963266");
     test_evaluation("asin 1", "approx. 1.5707963266");
+    expect_parse_error("asin 3");
+    expect_parse_error("asin (-3)");
+    expect_parse_error("asin 1.01");
+    expect_parse_error("asin (-1.01)");
     test_evaluation("acos 0", "approx. 1.5707963266");
+    expect_parse_error("acos 3");
+    expect_parse_error("acos (-3)");
+    expect_parse_error("acos 1.01");
+    expect_parse_error("acos (-1.01)");
     test_evaluation("atan 1", "approx. 0.7853981633");
     test_same("sinh 0", "sin 0");
     test_same("cosh 0", "cos 0");
@@ -554,6 +571,12 @@ fn test_various_functions() {
     expect_parse_error("acosh 0");
     test_evaluation("acosh 2", "approx. 1.3169578968");
     test_same("atanh 0", "atan 0");
+    expect_parse_error("atanh 3");
+    expect_parse_error("atanh (-3)");
+    expect_parse_error("atanh 1.01");
+    expect_parse_error("atanh (-1.01)");
+    expect_parse_error("atanh 1");
+    expect_parse_error("atanh (-1)");
     test_evaluation("ln 2", "approx. 0.6931471805");
     expect_parse_error("ln 0");
     test_evaluation("exp 2", "approx. 7.3890560987");
@@ -564,6 +587,7 @@ fn test_various_functions() {
     test_evaluation("log2 65536", "approx. 16");
     expect_parse_error("log10 (-1)");
     expect_parse_error("log2 (-1)");
+    expect_parse_error("sqrt (-2)");
     expect_parse_error("oishfod 3");
     test_evaluation("ln", "ln");
     test_evaluation("sqrt", "sqrt");
