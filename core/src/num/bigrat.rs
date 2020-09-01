@@ -483,8 +483,8 @@ impl BigRat {
         }
         let pow_res = Self {
             sign: Sign::Positive,
-            num: BigUint::pow(&self.num, &rhs.num, int)?,
-            den: BigUint::pow(&self.den, &rhs.num, int)?,
+            num: BigUint::pow(&self.num, &rhs.num, int)??,
+            den: BigUint::pow(&self.den, &rhs.num, int)??,
         };
         if rhs.den == 1.into() {
             Ok((pow_res, true))

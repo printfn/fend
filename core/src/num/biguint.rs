@@ -1,5 +1,5 @@
 use crate::err::{
-    err, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge, ZeroToThePowerOfZero,
+    err, ret, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge, ZeroToThePowerOfZero,
 };
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;
@@ -164,17 +164,17 @@ impl BigUint {
         a.clone() * b.clone() / Self::gcd(a, b)
     }
 
-    pub fn pow(a: &Self, b: &Self, int: &impl Interrupt) -> Result<Self, IntegerPowerError> {
+    pub fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> Result<Result<Self, IntegerPowerError>, crate::err::Interrupt> {
         if a.is_zero() && b.is_zero() {
             return ZeroToThePowerOfZero::err();
         }
         if b.is_zero() {
-            return Ok(Self::from(1));
+            return ret(Self::from(1));
         }
         if b.value_len() > 1 {
             return ExponentTooLarge::err();
         }
-        Ok(a.pow_internal(b.get(0), int)?)
+        ret(a.pow_internal(b.get(0), int)?)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
@@ -189,7 +189,7 @@ impl BigUint {
             let mut guess = low_guess.clone() + high_guess.clone();
             guess.rshift();
 
-            let res = Self::pow(&guess, n, int)?;
+            let res = Self::pow(&guess, n, int)??;
             match res.cmp(&self) {
                 Ordering::Equal => return Ok((guess, true)),
                 Ordering::Greater => high_guess = guess,

@@ -86,8 +86,8 @@ macro_rules! make_err {
             }
         }
         impl $i {
-            pub fn err<T, E: From<Self>>() -> Result<T, E> {
-                Err(Self::default().into())
+            pub fn err<T, E: From<Self>>() -> Result<Result<T, E>, Interrupt> {
+                Ok(Err(Self::default().into()))
             }
         }
     }
@@ -100,8 +100,13 @@ where
     Err(E::default())
 }
 
-make_err!(ValueTooLarge, "Value too large");
+pub fn ret<T, E>(value: T) -> Result<Result<T, E>, Interrupt> {
+    Ok(Ok(value))
+}
+
 make_err!(Interrupt, "Interrupted");
+
+make_err!(ValueTooLarge, "Value too large");
 make_err!(
     ZeroToThePowerOfZero,
     "Zero to the power of zero is undefined"
@@ -111,6 +116,5 @@ make_err!(
     IntegerPowerError,
     ExponentTooLarge,
     ZeroToThePowerOfZero,
-    Interrupt,
 );
 make_err!(DivideByZero, "Division by zero");
