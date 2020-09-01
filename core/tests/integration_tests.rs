@@ -375,10 +375,12 @@ fn test_different_bases() {
     // verified using a ruby program
     test_evaluation(
         "0+36#0123456789abcdefghijklmnopqrstuvwxyz",
-        "86846823611197163108337531226495015298096208677436155");
+        "86846823611197163108337531226495015298096208677436155",
+    );
     test_evaluation(
         "36#0 + 86846823611197163108337531226495015298096208677436155",
-        "36#123456789abcdefghijklmnopqrstuvwxyz");
+        "36#123456789abcdefghijklmnopqrstuvwxyz",
+    );
     test_evaluation("18#100/65537 i", "18#100i/18#b44h");
     test_evaluation("19#100/65537 i", "19#100 i/19#9aa6");
 }

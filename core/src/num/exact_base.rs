@@ -1,3 +1,4 @@
+use crate::interrupt::Interrupt;
 use crate::num::complex::Complex;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
@@ -38,26 +39,26 @@ impl ExactBase {
         }
     }
 
-    pub fn factorial(self) -> Result<Self, String> {
+    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, String> {
         Ok(Self {
-            value: self.value.factorial()?,
+            value: self.value.factorial(int)?,
             exact: self.exact,
             base: self.base,
             format: self.format,
         })
     }
 
-    pub fn div(self, rhs: Self) -> Result<Self, String> {
+    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
         Ok(Self {
-            value: self.value.div(rhs.value)?,
+            value: self.value.div(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
             format: self.format,
         })
     }
 
-    pub fn pow(self, rhs: Self) -> Result<Self, String> {
-        let (value, exact_root) = self.value.pow(rhs.value)?;
+    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
+        let (value, exact_root) = self.value.pow(rhs.value, int)?;
         Ok(Self {
             value,
             exact: require_both_exact(require_both_exact(self.exact, rhs.exact), exact_root),
@@ -98,8 +99,8 @@ impl ExactBase {
         }
     }
 
-    pub fn abs(self) -> Result<Self, String> {
-        let (new_value, res_exact) = self.value.abs()?;
+    pub fn abs(self, int: &impl Interrupt) -> Result<Self, String> {
+        let (new_value, res_exact) = self.value.abs(int)?;
         Ok(Self {
             value: new_value,
             exact: require_both_exact(self.exact, res_exact),
@@ -135,8 +136,8 @@ impl ExactBase {
         self.format
     }
 
-    pub fn root_n(self, n: &Self) -> Result<Self, String> {
-        let (root, root_exact) = self.value.root_n(&n.value)?;
+    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<Self, String> {
+        let (root, root_exact) = self.value.root_n(&n.value, int)?;
         Ok(Self {
             value: root,
             exact: self.exact && n.exact && root_exact,

@@ -1,3 +1,4 @@
+use crate::interrupt::Interrupt;
 use crate::num::{Base, Number};
 use std::{
     convert::TryInto,
@@ -169,7 +170,12 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), String> {
     }
 }
 
-fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Number, &str), String> {
+fn parse_basic_number<'a>(
+    input: &'a str,
+    base: Base,
+    allow_zero: bool,
+    int: &impl Interrupt,
+) -> Result<(Number, &'a str), String> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(
@@ -179,7 +185,7 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
         base,
         &mut |digit| {
             let base_as_u64: u64 = base.base_as_u8().into();
-            res = (res.clone() * base_as_u64.into()).add(u64::from(digit).into())?;
+            res = (res.clone() * base_as_u64.into()).add(u64::from(digit).into(), int)?;
             Ok(())
         },
     )?;
@@ -208,7 +214,7 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
             }
             let mut exp = Number::zero_with_base(Base::Decimal);
             let (_, remaining) = parse_integer(input, true, true, Base::Decimal, &mut |digit| {
-                exp = (exp.clone() * 10.into()).add(u64::from(digit).into())?;
+                exp = (exp.clone() * 10.into()).add(u64::from(digit).into(), int)?;
                 Ok(())
             })?;
             if negative_exponent {
@@ -216,7 +222,7 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
             }
             let base_as_u64: u64 = base.base_as_u8().into();
             let base_as_number: Number = base_as_u64.into();
-            res = res * base_as_number.pow(exp)?;
+            res = res * base_as_number.pow(exp, int)?;
             input = remaining;
         }
     }
@@ -224,7 +230,10 @@ fn parse_basic_number(input: &str, base: Base, allow_zero: bool) -> Result<(Numb
     Ok((res, input))
 }
 
-fn parse_number_internal(mut input: &str) -> Result<(Number, &str), String> {
+fn parse_number_internal<'a>(
+    mut input: &'a str,
+    int: &impl Interrupt,
+) -> Result<(Number, &'a str), String> {
     let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
         input = remaining;
         base
@@ -232,13 +241,13 @@ fn parse_number_internal(mut input: &str) -> Result<(Number, &str), String> {
         Base::Decimal
     };
 
-    let (res, input) = parse_basic_number(input, base, true)?;
+    let (res, input) = parse_basic_number(input, base, true, int)?;
 
     Ok((res, input))
 }
 
-fn parse_number(input: &mut &str) -> Result<Token, String> {
-    let (num, remaining_input) = parse_number_internal(input)?;
+fn parse_number(input: &mut &str, int: &impl Interrupt) -> Result<Token, String> {
+    let (num, remaining_input) = parse_number_internal(input, int)?;
     *input = remaining_input;
     Ok(Token::Num(num))
 }
@@ -281,15 +290,16 @@ fn parse_ident(input: &mut &str) -> Result<Token, String> {
     })
 }
 
-pub fn lex(mut input: &str) -> Result<Vec<Token>, String> {
+pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, String> {
     let mut res = vec![];
     loop {
+        int.test()?;
         match input.chars().next() {
             Some(ch) => {
                 if ch.is_whitespace() {
                     consume_char(&mut input)?;
                 } else if ch.is_ascii_digit() {
-                    res.push(parse_number(&mut input)?);
+                    res.push(parse_number(&mut input, int)?);
                 } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
                     res.push(parse_ident(&mut input)?);
                 } else {

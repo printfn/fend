@@ -1,3 +1,4 @@
+use crate::interrupt::Interrupt;
 use crate::num::bigrat::BigRat;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
@@ -25,24 +26,24 @@ impl Complex {
         }
     }
 
-    pub fn factorial(self) -> Result<Self, String> {
+    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, String> {
         if self.imag != 0.into() {
             return Err("Factorial is not supported for complex numbers".to_string());
         }
         Ok(Self {
-            real: self.real.factorial()?,
+            real: self.real.factorial(int)?,
             imag: self.imag,
         })
     }
 
-    pub fn div(self, rhs: Self) -> Result<Self, String> {
+    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;
         let v = self.imag;
         let x = rhs.real;
         let y = rhs.imag;
         Ok(Self {
-            real: BigRat::from(1).div(x.clone() * x.clone() + y.clone() * y.clone())?,
+            real: BigRat::from(1).div(x.clone() * x.clone() + y.clone() * y.clone(), int)?,
             imag: 0.into(),
         } * Self {
             real: u.clone() * x.clone() + v.clone() * y.clone(),
@@ -50,11 +51,11 @@ impl Complex {
         })
     }
 
-    pub fn pow(self, rhs: Self) -> Result<(Self, bool), String> {
+    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err("Exponentiation is currently unsupported for complex numbers".to_string());
         }
-        let (real, exact) = self.real.pow(rhs.real)?;
+        let (real, exact) = self.real.pow(rhs.real, int)?;
         Ok((
             Self {
                 real,
@@ -77,7 +78,7 @@ impl Complex {
         }
     }
 
-    pub fn abs(self) -> Result<(Self, bool), String> {
+    pub fn abs(self, int: &impl Interrupt) -> Result<(Self, bool), String> {
         Ok(if self.imag == 0.into() {
             if self.real < 0.into() {
                 (
@@ -111,10 +112,10 @@ impl Complex {
         } else {
             let res_squared = Self {
                 // we can ignore the 'exact' bool because integer powers are always exact
-                real: self.real.pow(2.into())?.0 + self.imag.pow(2.into())?.0,
+                real: self.real.pow(2.into(), int)?.0 + self.imag.pow(2.into(), int)?.0,
                 imag: 0.into(),
             };
-            res_squared.root_n(&Self::from(2))?
+            res_squared.root_n(&Self::from(2), int)?
         })
     }
 
@@ -162,11 +163,11 @@ impl Complex {
         Ok(())
     }
 
-    pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
+    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("Roots are currently unsupported for complex numbers".to_string());
         }
-        let (real_root, real_root_exact) = self.real.root_n(&n.real)?;
+        let (real_root, real_root_exact) = self.real.root_n(&n.real, int)?;
         Ok((
             Self {
                 real: real_root,

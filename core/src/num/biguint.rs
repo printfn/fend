@@ -1,3 +1,4 @@
+use crate::interrupt::Interrupt;
 use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
@@ -160,7 +161,7 @@ impl BigUint {
         a.clone() * b.clone() / Self::gcd(a, b)
     }
 
-    pub fn pow(a: &Self, b: &Self) -> Result<Self, String> {
+    pub fn pow(a: &Self, b: &Self, int: &impl Interrupt) -> Result<Self, String> {
         if a.is_zero() && b.is_zero() {
             return Err("Zero to the power of zero is undefined".to_string());
         }
@@ -170,11 +171,11 @@ impl BigUint {
         if b.value_len() > 1 {
             return Err("Exponent too large".to_string());
         }
-        Ok(a.pow_internal(b.get(0)))
+        Ok(a.pow_internal(b.get(0), int)?)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
-    pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
+    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok((self, true));
         }
@@ -184,7 +185,7 @@ impl BigUint {
             let mut guess = low_guess.clone() + high_guess.clone();
             guess.rshift();
 
-            let res = Self::pow(&guess, n)?;
+            let res = Self::pow(&guess, n, int)?;
             match res.cmp(&self) {
                 Ordering::Equal => return Ok((guess, true)),
                 Ordering::Greater => high_guess = guess,
@@ -194,17 +195,18 @@ impl BigUint {
         Ok((low_guess, false))
     }
 
-    fn pow_internal(&self, mut exponent: u64) -> Self {
+    fn pow_internal(&self, mut exponent: u64, int: &impl Interrupt) -> Result<Self, String> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
+            int.test()?;
             if exponent % 2 == 1 {
                 result = &result * &base;
             }
             exponent >>= 1;
             base = &base * &base;
         }
-        result
+        Ok(result)
     }
 
     fn lshift(&mut self) {
@@ -381,13 +383,14 @@ impl BigUint {
     }
 
     // Note: 0! = 1, 1! = 1
-    pub fn factorial(mut self) -> Self {
+    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
         let mut res = Self::from(1);
         while self > 1.into() {
+            int.test()?;
             res = res * self.clone();
             self = self - 1.into();
         }
-        res
+        Ok(res)
     }
 }
 
@@ -572,9 +575,10 @@ mod tests {
     #[test]
     fn test_sqrt() {
         let two = &BigUint::from(2);
+        let int = crate::interrupt::Never::default();
         let test_sqrt_inner = |n, expected_root, exact| {
             assert_eq!(
-                BigUint::from(n).root_n(two).unwrap(),
+                BigUint::from(n).root_n(two, &int).unwrap(),
                 (BigUint::from(expected_root), exact)
             );
         };
@@ -603,7 +607,7 @@ mod tests {
         test_sqrt_inner(1740123984719364372, 1319137591, false);
         assert_eq!(
             BigUint::Large(vec![0, 3260954456333195555])
-                .root_n(two)
+                .root_n(two, &int)
                 .unwrap(),
             (BigUint::from(7755900482342532476), false)
         );

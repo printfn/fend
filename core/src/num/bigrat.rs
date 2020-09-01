@@ -1,3 +1,4 @@
+use crate::interrupt::Interrupt;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
@@ -203,7 +204,7 @@ impl BigRat {
         Self::from_f64(f64::exp(self.into_f64()))
     }
 
-    pub fn factorial(mut self) -> Result<Self, String> {
+    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
         self = self.simplify();
         if self.den != 1.into() {
             return Err("Factorial is only supported for integers".to_string());
@@ -213,7 +214,7 @@ impl BigRat {
         }
         Ok(Self {
             sign: Sign::Positive,
-            num: self.num.factorial(),
+            num: self.num.factorial(int)?,
             den: self.den,
         })
     }
@@ -281,7 +282,7 @@ impl BigRat {
         self
     }
 
-    pub fn div(self, rhs: Self) -> Result<Self, String> {
+    pub fn div(self, rhs: Self, _int: &impl Interrupt) -> Result<Self, String> {
         if rhs.num == 0.into() {
             return Err("Attempt to divide by zero".to_string());
         }
@@ -471,48 +472,56 @@ impl BigRat {
         Ok(true) // the recurring decimal is exact
     }
 
-    pub fn pow(mut self, mut rhs: Self) -> Result<(Self, bool), String> {
+    pub fn pow(mut self, mut rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
         self = self.simplify();
         rhs = rhs.simplify();
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
-            let (inverse_res, exact) = self.pow(rhs)?;
-            return Ok((Self::from(1).div(inverse_res)?, exact));
+            let (inverse_res, exact) = self.pow(rhs, int)?;
+            return Ok((Self::from(1).div(inverse_res, int)?, exact));
         }
         let pow_res = Self {
             sign: Sign::Positive,
-            num: BigUint::pow(&self.num, &rhs.num)?,
-            den: BigUint::pow(&self.den, &rhs.num)?,
+            num: BigUint::pow(&self.num, &rhs.num, int)?,
+            den: BigUint::pow(&self.den, &rhs.num, int)?,
         };
         if rhs.den == 1.into() {
             Ok((pow_res, true))
         } else {
-            Ok(pow_res.root_n(&Self {
-                sign: Sign::Positive,
-                num: rhs.den,
-                den: 1.into(),
-            })?)
+            Ok(pow_res.root_n(
+                &Self {
+                    sign: Sign::Positive,
+                    num: rhs.den,
+                    den: 1.into(),
+                },
+                int,
+            )?)
         }
     }
 
     /// n must be an integer
-    fn iter_root_n(mut low_bound: Self, val: &Self, n: &Self) -> Result<Self, String> {
+    fn iter_root_n(
+        mut low_bound: Self,
+        val: &Self,
+        n: &Self,
+        int: &impl Interrupt,
+    ) -> Result<Self, String> {
         let mut high_bound = low_bound.clone() + 1.into();
         for _ in 0..30 {
-            let guess = (low_bound.clone() + high_bound.clone()).div(2.into())?;
-            if &guess.clone().pow(n.clone())?.0 < val {
+            let guess = (low_bound.clone() + high_bound.clone()).div(2.into(), int)?;
+            if &guess.clone().pow(n.clone(), int)?.0 < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
             }
         }
-        Ok((low_bound + high_bound).div(2.into())?)
+        Ok((low_bound + high_bound).div(2.into(), int)?)
     }
 
     // the boolean indicates whether or not the result is exact
     // n must be an integer
-    pub fn root_n(self, n: &Self) -> Result<(Self, bool), String> {
+    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());
         }
@@ -524,8 +533,8 @@ impl BigRat {
         if self.num == 0.into() {
             return Ok((self, true));
         }
-        let (num, num_exact) = self.clone().num.root_n(n)?;
-        let (den, den_exact) = self.clone().den.root_n(n)?;
+        let (num, num_exact) = self.clone().num.root_n(n, int)?;
+        let (den, den_exact) = self.clone().den.root_n(n, int)?;
         if num_exact && den_exact {
             return Ok((
                 Self {
@@ -543,6 +552,7 @@ impl BigRat {
                 Self::from(num),
                 &Self::from(self.num),
                 &Self::from(n.clone()),
+                int,
             )?
         };
         let den_rat = if den_exact {
@@ -552,9 +562,10 @@ impl BigRat {
                 Self::from(den),
                 &Self::from(self.den),
                 &Self::from(n.clone()),
+                int,
             )?
         };
-        Ok((num_rat.div(den_rat)?, false))
+        Ok((num_rat.div(den_rat, int)?, false))
     }
 }
 

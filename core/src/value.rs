@@ -1,3 +1,4 @@
+use crate::interrupt::Interrupt;
 use crate::num::{FormattingStyle, Number};
 use std::fmt::{Display, Error, Formatter};
 
@@ -22,6 +23,7 @@ impl Value {
         other: &Self,
         allow_multiplication: bool,
         force_multiplication: bool,
+        int: &impl Interrupt,
     ) -> Result<Self, String> {
         Ok(Self::Num(match self {
             Self::Num(n) => {
@@ -42,13 +44,13 @@ impl Value {
                     return Err(format!("Cannot apply function '{}' in this context", self));
                 }
                 if name == "sqrt" {
-                    other.expect_num()?.root_n(&2.into())?
+                    other.expect_num()?.root_n(&2.into(), int)?
                 } else if name == "cbrt" {
-                    other.expect_num()?.root_n(&3.into())?
+                    other.expect_num()?.root_n(&3.into(), int)?
                 } else if name == "approximately" {
                     other.expect_num()?.make_approximate()
                 } else if name == "abs" {
-                    other.expect_num()?.abs()?
+                    other.expect_num()?.abs(int)?
                 } else if name == "sin" {
                     other.expect_num()?.sin()?
                 } else if name == "cos" {

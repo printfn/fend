@@ -4,11 +4,13 @@
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.1")]
 
 mod ast;
+mod interrupt;
 mod lexer;
 mod num;
 mod parser;
 mod value;
 
+use interrupt::Interrupt;
 use std::collections::HashMap;
 use value::Value;
 
@@ -34,9 +36,13 @@ impl FendResult {
     }
 }
 
-fn evaluate_to_value(input: &str, scope: &HashMap<String, Value>) -> Result<Value, String> {
-    let parsed = parser::parse_string(input)?;
-    let result = ast::evaluate(parsed, scope)?;
+fn evaluate_to_value(
+    input: &str,
+    scope: &HashMap<String, Value>,
+    int: &impl Interrupt,
+) -> Result<Value, String> {
+    let parsed = parser::parse_string(input, int)?;
+    let result = ast::evaluate(parsed, scope, int)?;
     Ok(result)
 }
 
@@ -59,7 +65,8 @@ impl Context {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            scope: crate::num::Number::create_initial_units(),
+            scope: crate::num::Number::create_initial_units(&crate::interrupt::Never::default())
+                .unwrap(),
         }
     }
 }
@@ -79,7 +86,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
             other_info: vec![],
         });
     }
-    let result = evaluate_to_value(input, &context.scope)?;
+    let result = evaluate_to_value(input, &context.scope, &interrupt::Never::default())?;
     Ok(FendResult {
         main_result: format!("{}", result),
         other_info: vec![],

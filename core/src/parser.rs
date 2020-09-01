@@ -1,4 +1,5 @@
 use crate::ast::Expr;
+use crate::interrupt::Interrupt;
 use crate::lexer::{Symbol, Token};
 
 /*
@@ -293,8 +294,8 @@ pub fn parse_expression(input: &[Token]) -> ParseResult<Expr> {
     parse_arrow_conversion(input)
 }
 
-pub fn parse_string(input: &str) -> Result<Expr, String> {
-    let tokens = crate::lexer::lex(input)?;
+pub fn parse_string(input: &str, int: &impl Interrupt) -> Result<Expr, String> {
+    let tokens = crate::lexer::lex(input, int)?;
     let (res, remaining) = parse_expression(tokens.as_slice())?;
     if !remaining.is_empty() {
         return Err(format!("Unexpected input found: '{}'", input));
