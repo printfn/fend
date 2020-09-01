@@ -161,11 +161,6 @@ impl BigUint {
         a
     }
 
-    pub fn lcm(a: Self, b: Self) -> Self {
-        let int = &crate::interrupt::Never::default();
-        a.clone().mul(&b, int).unwrap() / Self::gcd(a, b)
-    }
-
     pub fn pow<I: Interrupt>(
         a: &Self,
         b: &Self,
