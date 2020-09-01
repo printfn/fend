@@ -1,5 +1,6 @@
 use crate::err::{
-    err, ret, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge, ZeroToThePowerOfZero,
+    err, ret, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge,
+    ZeroToThePowerOfZero,
 };
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;
@@ -164,7 +165,11 @@ impl BigUint {
         a.clone() * b.clone() / Self::gcd(a, b)
     }
 
-    pub fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> Result<Result<Self, IntegerPowerError>, crate::err::Interrupt> {
+    pub fn pow<I: Interrupt>(
+        a: &Self,
+        b: &Self,
+        int: &I,
+    ) -> Result<Result<Self, IntegerPowerError>, crate::err::Interrupt> {
         if a.is_zero() && b.is_zero() {
             return ZeroToThePowerOfZero::err();
         }

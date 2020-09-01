@@ -112,9 +112,5 @@ make_err!(
     "Zero to the power of zero is undefined"
 );
 make_err!(ExponentTooLarge, "Exponent too large");
-make_err!(
-    IntegerPowerError,
-    ExponentTooLarge,
-    ZeroToThePowerOfZero,
-);
+make_err!(IntegerPowerError, ExponentTooLarge, ZeroToThePowerOfZero,);
 make_err!(DivideByZero, "Division by zero");

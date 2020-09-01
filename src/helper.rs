@@ -1,5 +1,10 @@
-use rustyline::hint::Hinter;
-use rustyline_derive::{Completer, Helper, Highlighter, Validator};
+use rustyline::{
+    completion::{Candidate, Completer},
+    highlight::Highlighter,
+    hint::Hinter,
+    validate::Validator,
+    Helper,
+};
 use std::time::{Duration, Instant};
 
 pub struct HintInterrupt {
@@ -22,7 +27,7 @@ impl Default for HintInterrupt {
     }
 }
 
-#[derive(Default, Completer, Helper, Highlighter, Validator)]
+#[derive(Default)]
 pub struct FendHelper {
     ctx: fend_core::Context,
 }
@@ -47,3 +52,23 @@ impl Hinter for FendHelper {
         )
     }
 }
+
+impl Highlighter for FendHelper {}
+
+impl Validator for FendHelper {}
+
+pub struct FendCandidate {}
+impl Candidate for FendCandidate {
+    fn display(&self) -> &str {
+        ""
+    }
+    fn replacement(&self) -> &str {
+        ""
+    }
+}
+
+impl Completer for FendHelper {
+    type Candidate = FendCandidate;
+}
+
+impl Helper for FendHelper {}
