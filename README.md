@@ -1,6 +1,6 @@
 # Fend
 
-[![Build Status](https://github.com/printfn/fend-rs/workflows/Rust/badge.svg)](https://github.com/printfn/fend-rs)
+[![build](https://github.com/printfn/fend-rs/workflows/build/badge.svg)](https://github.com/printfn/fend-rs)
 [![codecov](https://codecov.io/gh/printfn/fend-rs/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend-rs)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
