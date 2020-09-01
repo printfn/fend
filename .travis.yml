@@ -41,5 +41,5 @@ after_success: |
     mkdir -p "target/cov/$(basename $file)";
     ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file";
   done &&
-  bash <(curl -vs --retry 10 https://codecov.io/bash) &&
+  bash <(curl -vs --retry 10 --connect-timeout 30 https://codecov.io/bash) &&
   echo "Uploaded code coverage"
