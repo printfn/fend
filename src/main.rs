@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
-#![forbid(clippy::pedantic)]
+#![deny(clippy::pedantic)]
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -9,14 +9,20 @@ use fend_core::Context;
 use std::path::PathBuf;
 
 mod config_dir;
+mod interrupt;
 
 enum EvalResult {
     Ok,
     Err,
     NoInput,
 }
-fn eval_and_print_res(line: &str, context: &mut Context, show_other_info: bool) -> EvalResult {
-    match fend_core::evaluate(line, context) {
+fn eval_and_print_res(
+    line: &str,
+    context: &mut Context,
+    int: &impl fend_core::Interrupt,
+    show_other_info: bool,
+) -> EvalResult {
+    match fend_core::evaluate_with_interrupt(line, context, int) {
         Ok(res) => {
             let main_result = res.get_main_result();
             if main_result.is_empty() {
@@ -77,6 +83,7 @@ fn repl_loop() -> i32 {
     let mut context = Context::new();
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
+    let interrupt = interrupt::register_handler();
     loop {
         let readline = rl.readline("> ");
         match readline {
@@ -87,18 +94,21 @@ fn repl_loop() -> i32 {
                     println!("To quit, type \"quit\".");
                 }
                 "version" => print_version(),
-                line => match eval_and_print_res(line, &mut context, true) {
-                    EvalResult::Ok => {
-                        last_command_success = true;
-                        initial_run = false;
+                line => {
+                    interrupt.reset();
+                    match eval_and_print_res(line, &mut context, &interrupt, true) {
+                        EvalResult::Ok => {
+                            last_command_success = true;
+                            initial_run = false;
+                        }
+                        EvalResult::NoInput => {
+                            last_command_success = true;
+                        }
+                        EvalResult::Err => {
+                            last_command_success = false;
+                        }
                     }
-                    EvalResult::NoInput => {
-                        last_command_success = true;
-                    }
-                    EvalResult::Err => {
-                        last_command_success = false;
-                    }
-                },
+                }
             },
             Err(ReadlineError::Interrupted) => {
                 if initial_run {
@@ -140,7 +150,12 @@ fn main() {
             return;
         }
         std::process::exit(
-            match eval_and_print_res(expr.as_str(), &mut Context::new(), false) {
+            match eval_and_print_res(
+                expr.as_str(),
+                &mut Context::new(),
+                &interrupt::NeverInterrupt::default(),
+                false,
+            ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
                 EvalResult::Err => 1,
             },

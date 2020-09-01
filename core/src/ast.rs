@@ -1,4 +1,4 @@
-use crate::interrupt::Interrupt;
+use crate::interrupt::{test_int, Interrupt};
 use crate::num::{FormattingStyle, Number};
 use crate::value::Value;
 use std::{
@@ -57,7 +57,7 @@ pub fn evaluate(
     scope: &HashMap<String, Value>,
     int: &impl Interrupt,
 ) -> Result<Value, String> {
-    int.test()?;
+    test_int(int)?;
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
         Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, int)?,
@@ -125,7 +125,7 @@ fn resolve_identifier(
         "pi" => Value::Num(Number::approx_pi()),
         "e" => Value::Num(Number::approx_e()),
         "i" => Value::Num(Number::i()),
-        "c" => crate::evaluate_to_value("299792458 m / s", scope, int).unwrap(),
+        "c" => crate::eval::evaluate_to_value("299792458 m / s", scope, int).unwrap(),
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),

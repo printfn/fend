@@ -1,6 +1,8 @@
-use crate::interrupt::Interrupt;
+use crate::err::{
+    err, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge, ZeroToThePowerOfZero,
+};
+use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;
-use crate::err::{err, ValueTooLarge, IntegerPowerError, ZeroToThePowerOfZero, ExponentTooLarge, DivideByZero};
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::{
@@ -183,7 +185,7 @@ impl BigUint {
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
         while high_guess.clone() - low_guess.clone() > 1.into() {
-            int.test()?;
+            test_int(int)?;
             let mut guess = low_guess.clone() + high_guess.clone();
             guess.rshift();
 
@@ -197,11 +199,15 @@ impl BigUint {
         Ok((low_guess, false))
     }
 
-    fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> Result<Self, crate::err::Interrupt> {
+    fn pow_internal<I: Interrupt>(
+        &self,
+        mut exponent: u64,
+        int: &I,
+    ) -> Result<Self, crate::err::Interrupt> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
-            int.test()?;
+            test_int(int)?;
             if exponent % 2 == 1 {
                 result = &result * &base;
             }
@@ -364,10 +370,12 @@ impl BigUint {
                 rounds += 1;
             }
             while !num.is_zero() {
-                let divmod_res = num.divmod(&Self::Large(vec![
-                    truncate(divisor),
-                    truncate(divisor >> 64),
-                ])).expect("Division by zero is not allowed");
+                let divmod_res = num
+                    .divmod(&Self::Large(vec![
+                        truncate(divisor),
+                        truncate(divisor >> 64),
+                    ]))
+                    .expect("Division by zero is not allowed");
                 let mut digit_group_value =
                     u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
                 for _ in 0..rounds {
@@ -388,7 +396,7 @@ impl BigUint {
     pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
         let mut res = Self::from(1);
         while self > 1.into() {
-            int.test()?;
+            test_int(int)?;
             res = res * self.clone();
             self = self - 1.into();
         }

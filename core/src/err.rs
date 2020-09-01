@@ -1,11 +1,10 @@
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
-pub trait Error : Display + Into<String> {
-}
+pub trait Error: Display + Into<String> {}
 
-pub enum Never {
-}
+#[allow(clippy::empty_enum)]
+pub enum Never {}
 
 impl Error for Never {}
 impl Display for Never {
@@ -94,13 +93,24 @@ macro_rules! make_err {
     }
 }
 
-pub fn err<T, E>() -> Result<T, E> where E: Error + Default {
+pub fn err<T, E>() -> Result<T, E>
+where
+    E: Error + Default,
+{
     Err(E::default())
 }
 
 make_err!(ValueTooLarge, "Value too large");
 make_err!(Interrupt, "Interrupted");
-make_err!(ZeroToThePowerOfZero, "Zero to the power of zero is undefined");
+make_err!(
+    ZeroToThePowerOfZero,
+    "Zero to the power of zero is undefined"
+);
 make_err!(ExponentTooLarge, "Exponent too large");
-make_err!(IntegerPowerError, ExponentTooLarge, ZeroToThePowerOfZero, Interrupt,);
+make_err!(
+    IntegerPowerError,
+    ExponentTooLarge,
+    ZeroToThePowerOfZero,
+    Interrupt,
+);
 make_err!(DivideByZero, "Division by zero");

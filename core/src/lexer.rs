@@ -1,4 +1,4 @@
-use crate::interrupt::Interrupt;
+use crate::interrupt::{test_int, Interrupt};
 use crate::num::{Base, Number};
 use std::{
     convert::TryInto,
@@ -293,7 +293,7 @@ fn parse_ident(input: &mut &str) -> Result<Token, String> {
 pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, String> {
     let mut res = vec![];
     loop {
-        int.test()?;
+        test_int(int)?;
         match input.chars().next() {
             Some(ch) => {
                 if ch.is_whitespace() {

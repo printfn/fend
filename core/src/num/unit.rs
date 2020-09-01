@@ -1,4 +1,4 @@
-use crate::interrupt::Interrupt;
+use crate::interrupt::{test_int, Interrupt};
 use crate::num::exact_base::ExactBase;
 use crate::num::{Base, FormattingStyle};
 use crate::value::Value;
@@ -181,7 +181,7 @@ impl UnitValue {
         int: &impl Interrupt,
     ) -> Result<Self, String> {
         // todo remove unwraps
-        let value = crate::evaluate_to_value(expression, scope, int)
+        let value = crate::eval::evaluate_to_value(expression, scope, int)
             .unwrap()
             .expect_num()
             .unwrap();
@@ -521,10 +521,10 @@ impl Unit {
         let mut hashmap = HashMap::<BaseUnit, ExactBase>::new();
         let mut scale = ExactBase::from(1);
         for named_unit_exp in &self.components {
-            int.test()?;
+            test_int(int)?;
             let overall_exp = &named_unit_exp.exponent;
             for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
-                int.test()?;
+                test_int(int)?;
                 if let Some(exp) = hashmap.get_mut(base_unit) {
                     let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
                     if new_exp == 0.into() {

@@ -5,15 +5,17 @@
 
 mod ast;
 mod err;
+mod eval;
 mod interrupt;
 mod lexer;
 mod num;
 mod parser;
 mod value;
 
-use interrupt::Interrupt;
 use std::collections::HashMap;
 use value::Value;
+
+pub use interrupt::Interrupt;
 
 /// This contains the result of a computation.
 #[derive(PartialEq, Eq, Debug)]
@@ -35,16 +37,6 @@ impl FendResult {
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
         self.other_info.iter().map(std::string::String::as_str)
     }
-}
-
-fn evaluate_to_value(
-    input: &str,
-    scope: &HashMap<String, Value>,
-    int: &impl Interrupt,
-) -> Result<Value, String> {
-    let parsed = parser::parse_string(input, int)?;
-    let result = ast::evaluate(parsed, scope, int)?;
-    Ok(result)
 }
 
 /// This struct contains context used for `fend`. It should only be created once
@@ -72,7 +64,8 @@ impl Context {
     }
 }
 
-/// This function evaluates a string using the given context.
+/// This function evaluates a string using the given context. Any evaluation using this
+/// function cannot be interrupted.
 ///
 /// For example, passing in the string `"1 + 1"` will return a result of `"2"`.
 ///
@@ -80,6 +73,22 @@ impl Context {
 /// It returns an error if the given string is invalid.
 /// This may be due to parser or runtime errors.
 pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String> {
+    evaluate_with_interrupt(input, context, &interrupt::Never::default())
+}
+
+/// This function evaluates a string using the given context and the provided
+/// Interrupt object.
+///
+/// For example, passing in the string `"1 + 1"` will return a result of `"2"`.
+///
+/// # Errors
+/// It returns an error if the given string is invalid.
+/// This may be due to parser or runtime errors.
+pub fn evaluate_with_interrupt(
+    input: &str,
+    context: &mut Context,
+    int: &impl Interrupt,
+) -> Result<FendResult, String> {
     if input.is_empty() {
         // no or blank input: return no output
         return Ok(FendResult {
@@ -87,7 +96,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
             other_info: vec![],
         });
     }
-    let result = evaluate_to_value(input, &context.scope, &interrupt::Never::default())?;
+    let result = eval::evaluate_to_value(input, &context.scope, int)?;
     Ok(FendResult {
         main_result: format!("{}", result),
         other_info: vec![],
