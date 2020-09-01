@@ -515,6 +515,15 @@ fn test_advanced_op_precedence() {
     test_evaluation("1L -> m^3", "0.001 m^3");
     test_evaluation("5 ft to m", "1.524 m");
     test_evaluation("log10 4", "approx. 0.6020599912");
+    test_evaluation("0!", "1");
+    test_evaluation("1!", "1");
+    test_evaluation("2!", "2");
+    test_evaluation("3!", "6");
+    test_evaluation("4!", "24");
+    test_evaluation("5!", "120");
+    test_evaluation("6!", "720");
+    test_evaluation("7!", "5040");
+    test_evaluation("8!", "40320");
 }
 
 #[test]
@@ -526,4 +535,41 @@ fn test_recurring_digits() {
     test_eval_simple("0.21 -> 1 dp", "0.2");
     test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
     test_eval_simple("502938/700 -> float", "718.48(285714)");
+}
+
+#[test]
+fn test_various_functions() {
+    test_same("sin 0", "sin pi");
+    test_same("cos 0", "cos (2pi)");
+    test_same("cos 0", "sin (pi/2)");
+    test_same("tan 0", "tan pi");
+    test_evaluation("asin 1", "approx. 1.5707963266");
+    test_evaluation("asin 1", "approx. 1.5707963266");
+    test_evaluation("acos 0", "approx. 1.5707963266");
+    test_evaluation("atan 1", "approx. 0.7853981633");
+    test_same("sinh 0", "sin 0");
+    test_same("cosh 0", "cos 0");
+    test_same("tanh 0", "tan 0");
+    test_same("asinh 0", "asin 0");
+    expect_parse_error("acosh 0");
+    test_evaluation("acosh 2", "approx. 1.3169578968");
+    test_same("atanh 0", "atan 0");
+    test_evaluation("ln 2", "approx. 0.6931471805");
+    expect_parse_error("ln 0");
+    test_evaluation("exp 2", "approx. 7.3890560987");
+    test_evaluation("log10 100", "approx. 2");
+    test_evaluation("log10 1000", "approx. 3");
+    test_evaluation("log10 10000", "approx. 4");
+    test_evaluation("log10 100000", "approx. 5");
+    test_evaluation("log2 65536", "approx. 16");
+    expect_parse_error("log10 (-1)");
+    expect_parse_error("log2 (-1)");
+    expect_parse_error("oishfod 3");
+    test_evaluation("ln", "ln");
+    test_evaluation("sqrt", "sqrt");
+    test_evaluation("dp", "dp");
+    test_evaluation("10 dp", "10 dp");
+    test_evaluation("float", "float");
+    test_evaluation("fraction", "fraction");
+    test_evaluation("auto", "auto");
 }
