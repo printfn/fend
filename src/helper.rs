@@ -5,7 +5,10 @@ use rustyline::{
     validate::Validator,
     Helper,
 };
-use std::{env, time::{Duration, Instant}};
+use std::{
+    env,
+    time::{Duration, Instant},
+};
 
 pub struct HintInterrupt {
     start: Instant,

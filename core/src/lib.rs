@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
 #![deny(clippy::pedantic)]
-#![doc(html_root_url = "https://docs.rs/fend-core/0.1.1")]
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.2")]
 
 mod ast;
 mod err;
@@ -106,5 +106,5 @@ pub fn evaluate_with_interrupt(
 /// Returns the current version of `fend-core`.
 #[must_use]
 pub fn get_version() -> String {
-    "0.1.1".to_string()
+    "0.1.2".to_string()
 }

@@ -1,7 +1,7 @@
 [package]
 name = "fend"
 # Don't forget to update print_version()
-version = "0.1.1"
+version = "0.1.2"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Calculator and unit conversion tool"
 homepage = "https://github.com/printfn/fend-rs"
@@ -18,7 +18,7 @@ directories = "3.0.1"
 ctrlc = "3.1.6"
 
 [dependencies.fend-core]
-version = "0.1.1"
+version = "0.1.2"
 path = "./core"
 
 [workspace]

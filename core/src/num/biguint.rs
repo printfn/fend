@@ -1,6 +1,5 @@
 use crate::err::{
-    err, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge,
-    ZeroToThePowerOfZero,
+    err, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge, ZeroToThePowerOfZero,
 };
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;

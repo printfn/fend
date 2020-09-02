@@ -62,7 +62,7 @@ approx. 0.3066013937 parsec
 
 ## Changelog
 
-See here: [https://github.com/printfn/fend-rs/blob/main/CHANGELOG.md](https://github.com/printfn/fend-rs/blob/main/CHANGELOG.md)
+See here: [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 

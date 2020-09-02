@@ -89,17 +89,17 @@ dependencies = [
 
 [[package]]
 name = "fend"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ctrlc 3.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "directories 3.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "fend-core 0.1.1",
+ "fend-core 0.1.2",
  "rustyline 6.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "fend-core"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "getrandom"

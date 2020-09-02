@@ -1,8 +1,9 @@
 # Changelog
 
-## Next release
+## v0.1.2 (2020-09-02)
 
 * Allow leading zeroes for non-decimal numbers
+* Support interrupting an ongoing calculation with Ctrl-C
 
 ## v0.1.1 (2020-09-01)
 
