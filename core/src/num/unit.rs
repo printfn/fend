@@ -353,82 +353,83 @@ impl UnitValue {
         self.value == 0.into()
     }
 
-    fn apply_fn(
+    fn apply_fn<I: Interrupt>(
         self,
-        f: impl FnOnce(ExactBase) -> Result<ExactBase, String>,
+        f: impl FnOnce(ExactBase, &I) -> Result<ExactBase, String>,
         require_unitless: bool,
+        int: &I,
     ) -> Result<Self, String> {
         if require_unitless && !self.is_unitless() {
             return Err("Expected a unitless number".to_string());
         }
         Ok(Self {
-            value: f(self.value)?,
+            value: f(self.value, int)?,
             unit: self.unit,
         })
     }
 
-    pub fn sin(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::sin, false)
+    pub fn sin(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::sin, false, int)
     }
 
-    pub fn cos(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::cos, false)
+    pub fn cos(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::cos, false, int)
     }
 
-    pub fn tan(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::tan, false)
+    pub fn tan(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::tan, false, int)
     }
 
-    pub fn asin(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::asin, false)
+    pub fn asin(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::asin, false, int)
     }
 
-    pub fn acos(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::acos, false)
+    pub fn acos(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::acos, false, int)
     }
 
-    pub fn atan(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::atan, false)
+    pub fn atan(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::atan, false, int)
     }
 
-    pub fn sinh(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::sinh, false)
+    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::sinh, false, int)
     }
 
-    pub fn cosh(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::cosh, false)
+    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::cosh, false, int)
     }
 
-    pub fn tanh(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::tanh, false)
+    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::tanh, false, int)
     }
 
-    pub fn asinh(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::asinh, false)
+    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::asinh, false, int)
     }
 
-    pub fn acosh(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::acosh, false)
+    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::acosh, false, int)
     }
 
-    pub fn atanh(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::atanh, false)
+    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::atanh, false, int)
     }
 
-    pub fn ln(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::ln, true)
+    pub fn ln(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::ln, true, int)
     }
 
-    pub fn log2(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::log2, true)
+    pub fn log2(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::log2, true, int)
     }
 
-    pub fn log10(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::log10, true)
+    pub fn log10(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::log10, true, int)
     }
 
-    pub fn exp(self) -> Result<Self, String> {
-        self.apply_fn(ExactBase::exp, true)
+    pub fn exp(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_fn(ExactBase::exp, true, int)
     }
 
     pub fn format(

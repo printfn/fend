@@ -177,80 +177,81 @@ impl ExactBase {
         }
     }
 
-    fn apply_approx_fn(
+    fn apply_approx_fn<I: Interrupt>(
         self,
-        f: impl FnOnce(Complex) -> Result<Complex, String>,
+        f: impl FnOnce(Complex, &I) -> Result<Complex, String>,
+        int: &I,
     ) -> Result<Self, String> {
         Ok(Self {
-            value: f(self.value)?,
+            value: f(self.value, int)?,
             exact: false,
             base: self.base,
             format: self.format,
         })
     }
 
-    pub fn sin(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::sin)
+    pub fn sin(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::sin, int)
     }
 
-    pub fn cos(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::cos)
+    pub fn cos(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::cos, int)
     }
 
-    pub fn tan(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::tan)
+    pub fn tan(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::tan, int)
     }
 
-    pub fn asin(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::asin)
+    pub fn asin(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::asin, int)
     }
 
-    pub fn acos(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::acos)
+    pub fn acos(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::acos, int)
     }
 
-    pub fn atan(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::atan)
+    pub fn atan(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::atan, int)
     }
 
-    pub fn sinh(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::sinh)
+    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::sinh, int)
     }
 
-    pub fn cosh(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::cosh)
+    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::cosh, int)
     }
 
-    pub fn tanh(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::tanh)
+    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::tanh, int)
     }
 
-    pub fn asinh(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::asinh)
+    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::asinh, int)
     }
 
-    pub fn acosh(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::acosh)
+    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::acosh, int)
     }
 
-    pub fn atanh(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::atanh)
+    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::atanh, int)
     }
 
-    pub fn ln(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::ln)
+    pub fn ln(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::ln, int)
     }
 
-    pub fn log2(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::log2)
+    pub fn log2(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::log2, int)
     }
 
-    pub fn log10(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::log10)
+    pub fn log10(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::log10, int)
     }
 
-    pub fn exp(self) -> Result<Self, String> {
-        self.apply_approx_fn(Complex::exp)
+    pub fn exp(self, int: &impl Interrupt) -> Result<Self, String> {
+        self.apply_approx_fn(Complex::exp, int)
     }
 
     pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {

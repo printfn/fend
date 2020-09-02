@@ -58,37 +58,37 @@ impl Value {
                 } else if name == "abs" {
                     other.expect_num()?.abs(int)?
                 } else if name == "sin" {
-                    other.expect_num()?.sin()?
+                    other.expect_num()?.sin(int)?
                 } else if name == "cos" {
-                    other.expect_num()?.cos()?
+                    other.expect_num()?.cos(int)?
                 } else if name == "tan" {
-                    other.expect_num()?.tan()?
+                    other.expect_num()?.tan(int)?
                 } else if name == "asin" {
-                    other.expect_num()?.asin()?
+                    other.expect_num()?.asin(int)?
                 } else if name == "acos" {
-                    other.expect_num()?.acos()?
+                    other.expect_num()?.acos(int)?
                 } else if name == "atan" {
-                    other.expect_num()?.atan()?
+                    other.expect_num()?.atan(int)?
                 } else if name == "sinh" {
-                    other.expect_num()?.sinh()?
+                    other.expect_num()?.sinh(int)?
                 } else if name == "cosh" {
-                    other.expect_num()?.cosh()?
+                    other.expect_num()?.cosh(int)?
                 } else if name == "tanh" {
-                    other.expect_num()?.tanh()?
+                    other.expect_num()?.tanh(int)?
                 } else if name == "asinh" {
-                    other.expect_num()?.asinh()?
+                    other.expect_num()?.asinh(int)?
                 } else if name == "acosh" {
-                    other.expect_num()?.acosh()?
+                    other.expect_num()?.acosh(int)?
                 } else if name == "atanh" {
-                    other.expect_num()?.atanh()?
+                    other.expect_num()?.atanh(int)?
                 } else if name == "ln" {
-                    other.expect_num()?.ln()?
+                    other.expect_num()?.ln(int)?
                 } else if name == "log2" {
-                    other.expect_num()?.log2()?
+                    other.expect_num()?.log2(int)?
                 } else if name == "log10" {
-                    other.expect_num()?.log10()?
+                    other.expect_num()?.log10(int)?
                 } else if name == "exp" {
-                    other.expect_num()?.exp()?
+                    other.expect_num()?.exp(int)?
                 } else {
                     return Err(format!("Unknown function '{}'", name));
                 }

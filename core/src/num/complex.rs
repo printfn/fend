@@ -216,68 +216,68 @@ impl Complex {
         }
     }
 
-    pub fn sin(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.sin()))
+    pub fn sin(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.sin(int)?))
     }
 
-    pub fn cos(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.cos()))
+    pub fn cos(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.cos(int)?))
     }
 
-    pub fn tan(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.tan()))
+    pub fn tan(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.tan(int)?))
     }
 
-    pub fn asin(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.asin()?))
+    pub fn asin(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.asin(int)?))
     }
 
-    pub fn acos(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.acos()?))
+    pub fn acos(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.acos(int)?))
     }
 
-    pub fn atan(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.atan()))
+    pub fn atan(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.atan(int)?))
     }
 
-    pub fn sinh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.sinh()))
+    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.sinh(int)?))
     }
 
-    pub fn cosh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.cosh()))
+    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.cosh(int)?))
     }
 
-    pub fn tanh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.tanh()))
+    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.tanh(int)?))
     }
 
-    pub fn asinh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.asinh()))
+    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.asinh(int)?))
     }
 
-    pub fn acosh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.acosh()?))
+    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.acosh(int)?))
     }
 
-    pub fn atanh(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.atanh()?))
+    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.atanh(int)?))
     }
 
-    pub fn ln(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.ln()?))
+    pub fn ln(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.ln(int)?))
     }
 
-    pub fn log2(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.log2()?))
+    pub fn log2(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.log2(int)?))
     }
 
-    pub fn log10(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.log10()?))
+    pub fn log10(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
-    pub fn exp(self) -> Result<Self, String> {
-        Ok(Self::from(self.expect_real()?.exp()))
+    pub fn exp(self, int: &impl Interrupt) -> Result<Self, String> {
+        Ok(Self::from(self.expect_real()?.exp(int)?))
     }
 
     pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {

@@ -90,10 +90,9 @@ impl BigRat {
     }
 
     #[allow(clippy::float_arithmetic)]
-    pub fn into_f64(mut self) -> f64 {
-        let int = &crate::interrupt::Never::default();
+    pub fn into_f64(mut self, int: &impl Interrupt) -> Result<f64, crate::err::Interrupt> {
         self = self.simplify(int).unwrap();
-        self.num.as_f64() / self.den.as_f64()
+        Ok(self.num.as_f64() / self.den.as_f64())
     }
 
     #[allow(
@@ -120,97 +119,97 @@ impl BigRat {
     }
 
     // sin, cos and tan work for all real numbers
-    pub fn sin(self) -> Self {
-        Self::from_f64(f64::sin(self.into_f64()))
+    pub fn sin(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::sin(self.into_f64(int)?)))
     }
 
-    pub fn cos(self) -> Self {
-        Self::from_f64(f64::cos(self.into_f64()))
+    pub fn cos(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::cos(self.into_f64(int)?)))
     }
 
-    pub fn tan(self) -> Self {
-        Self::from_f64(f64::tan(self.into_f64()))
+    pub fn tan(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::tan(self.into_f64(int)?)))
     }
 
     // asin, acos and atan only work for values between -1 and 1
-    pub fn asin(self) -> Result<Self, String> {
+    pub fn asin(self, int: &impl Interrupt) -> Result<Self, String> {
         let one: Self = 1.into();
         if self > one || self < -one {
             return Err("Value must be between -1 and 1".to_string());
         }
-        Ok(Self::from_f64(f64::asin(self.into_f64())))
+        Ok(Self::from_f64(f64::asin(self.into_f64(int)?)))
     }
 
-    pub fn acos(self) -> Result<Self, String> {
+    pub fn acos(self, int: &impl Interrupt) -> Result<Self, String> {
         let one: Self = 1.into();
         if self > one || self < -one {
             return Err("Value must be between -1 and 1".to_string());
         }
-        Ok(Self::from_f64(f64::acos(self.into_f64())))
+        Ok(Self::from_f64(f64::acos(self.into_f64(int)?)))
     }
 
     // note that this works for any real number, unlike asin and acos
-    pub fn atan(self) -> Self {
-        Self::from_f64(f64::atan(self.into_f64()))
+    pub fn atan(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::atan(self.into_f64(int)?)))
     }
 
-    pub fn sinh(self) -> Self {
-        Self::from_f64(f64::sinh(self.into_f64()))
+    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::sinh(self.into_f64(int)?)))
     }
 
-    pub fn cosh(self) -> Self {
-        Self::from_f64(f64::cosh(self.into_f64()))
+    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::cosh(self.into_f64(int)?)))
     }
 
-    pub fn tanh(self) -> Self {
-        Self::from_f64(f64::tanh(self.into_f64()))
+    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::tanh(self.into_f64(int)?)))
     }
 
-    pub fn asinh(self) -> Self {
-        Self::from_f64(f64::asinh(self.into_f64()))
+    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::asinh(self.into_f64(int)?)))
     }
 
     // value must not be less than 1
-    pub fn acosh(self) -> Result<Self, String> {
+    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, String> {
         if self < 1.into() {
             return Err("Value must not be less than 1".to_string());
         }
-        Ok(Self::from_f64(f64::acosh(self.into_f64())))
+        Ok(Self::from_f64(f64::acosh(self.into_f64(int)?)))
     }
 
     // value must be between -1 and 1.
-    pub fn atanh(self) -> Result<Self, String> {
+    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, String> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
             return Err("Value must be between -1 and 1".to_string());
         }
-        Ok(Self::from_f64(f64::atanh(self.into_f64())))
+        Ok(Self::from_f64(f64::atanh(self.into_f64(int)?)))
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln(self) -> Result<Self, String> {
+    pub fn ln(self, int: &impl Interrupt) -> Result<Self, String> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string());
         }
-        Ok(Self::from_f64(f64::ln(self.into_f64())))
+        Ok(Self::from_f64(f64::ln(self.into_f64(int)?)))
     }
 
-    pub fn log2(self) -> Result<Self, String> {
+    pub fn log2(self, int: &impl Interrupt) -> Result<Self, String> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string());
         }
-        Ok(Self::from_f64(f64::log2(self.into_f64())))
+        Ok(Self::from_f64(f64::log2(self.into_f64(int)?)))
     }
 
-    pub fn log10(self) -> Result<Self, String> {
+    pub fn log10(self, int: &impl Interrupt) -> Result<Self, String> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string());
         }
-        Ok(Self::from_f64(f64::log10(self.into_f64())))
+        Ok(Self::from_f64(f64::log10(self.into_f64(int)?)))
     }
 
-    pub fn exp(self) -> Self {
-        Self::from_f64(f64::exp(self.into_f64()))
+    pub fn exp(self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self::from_f64(f64::exp(self.into_f64(int)?)))
     }
 
     pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
