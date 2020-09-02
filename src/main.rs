@@ -9,7 +9,7 @@ use rustyline::Editor;
 use fend_core::Context;
 use std::path::PathBuf;
 
-mod config_dir;
+mod config;
 mod helper;
 mod interrupt;
 
@@ -77,7 +77,7 @@ fn repl_loop() -> i32 {
             .build(),
     );
     rl.set_helper(Some(helper::FendHelper::default()));
-    let history_path = config_dir::get_history_file_path();
+    let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
             // No previous history
