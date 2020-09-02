@@ -1,5 +1,5 @@
 use crate::err::{
-    err, ret, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge,
+    err, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge,
     ZeroToThePowerOfZero,
 };
 use crate::interrupt::{test_int, Interrupt};
@@ -174,12 +174,12 @@ impl BigUint {
             return ZeroToThePowerOfZero::err();
         }
         if b.is_zero() {
-            return ret(Self::from(1));
+            return Ok(Ok(Self::from(1)));
         }
         if b.value_len() > 1 {
             return ExponentTooLarge::err();
         }
-        ret(a.pow_internal(b.get(0), int)?)
+        Ok(Ok(a.pow_internal(b.get(0), int)?))
     }
 
     // computes the exact square root if possible, otherwise the next lower integer

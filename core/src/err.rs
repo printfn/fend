@@ -100,10 +100,6 @@ where
     Err(E::default())
 }
 
-pub fn ret<T, E>(value: T) -> Result<Result<T, E>, Interrupt> {
-    Ok(Ok(value))
-}
-
 make_err!(Interrupt, "Interrupted");
 
 make_err!(ValueTooLarge, "Value too large");
