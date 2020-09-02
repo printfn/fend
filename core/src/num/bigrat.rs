@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::fmt::{Debug, Error, Formatter};
 use std::{
     collections::HashMap,
-    ops::{Add, Mul, Neg, Sub},
+    ops::{Add, Neg, Sub},
 };
 
 macro_rules! try_i {
@@ -82,7 +82,8 @@ impl Eq for BigRat {}
 
 impl BigRat {
     pub fn try_as_usize(mut self) -> Result<usize, String> {
-        self = self.simplify();
+        let int = &crate::interrupt::Never::default();
+        self = self.simplify(int).unwrap();
         if self.den != 1.into() {
             return Err("Cannot convert fraction to integer".to_string());
         }
@@ -91,7 +92,8 @@ impl BigRat {
 
     #[allow(clippy::float_arithmetic)]
     pub fn into_f64(mut self) -> f64 {
-        self = self.simplify();
+        let int = &crate::interrupt::Never::default();
+        self = self.simplify(int).unwrap();
         self.num.as_f64() / self.den.as_f64()
     }
 
@@ -213,7 +215,7 @@ impl BigRat {
     }
 
     pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
-        self = self.simplify();
+        self = self.simplify(int)?;
         if self.den != 1.into() {
             return Err("Factorial is only supported for integers".to_string());
         }
@@ -280,15 +282,14 @@ impl BigRat {
         })
     }
 
-    fn simplify(mut self) -> Self {
+    fn simplify(mut self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
         if self.den == 1.into() {
-            return self;
+            return Ok(self);
         }
-        let int = &crate::interrupt::Never::default();
-        let gcd = BigUint::gcd(self.num.clone(), self.den.clone(), int).unwrap();
-        self.num = self.num.div(&gcd, int).unwrap();
-        self.den = self.den.div(&gcd, int).unwrap();
-        self
+        let gcd = BigUint::gcd(self.num.clone(), self.den.clone(), int)?;
+        self.num = self.num.div(&gcd, int)?;
+        self.den = self.den.div(&gcd, int)?;
+        Ok(self)
     }
 
     pub fn div(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, String> {
@@ -304,7 +305,11 @@ impl BigRat {
 
     // test if this fraction has a terminating representation
     // e.g. in base 10: 1/4 = 0.25, but not 1/3
-    fn terminates_in_base(&self, base: Base) -> bool {
+    fn terminates_in_base(
+        &self,
+        base: Base,
+        int: &impl Interrupt,
+    ) -> Result<bool, crate::err::Interrupt> {
         let mut x = self.clone();
         let base_as_u64: u64 = base.base_as_u8().into();
         let base = Self {
@@ -314,13 +319,13 @@ impl BigRat {
         };
         loop {
             let old_den = x.den.clone();
-            x = (x * base.clone()).simplify();
+            x = x.mul(&base, int)?.simplify(int)?;
             let new_den = x.den.clone();
             if new_den == old_den {
                 break;
             }
         }
-        x.den == 1.into()
+        Ok(x.den == 1.into())
     }
 
     // This method is dangerous!! Use this method only when the number has *not* been
@@ -364,7 +369,7 @@ impl BigRat {
         imag: bool,
         int: &impl Interrupt,
     ) -> Result<Result<bool, Error>, crate::err::Interrupt> {
-        let mut x = self.clone().simplify();
+        let mut x = self.clone().simplify(int)?;
         let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
             x.sign = Sign::Positive;
@@ -390,7 +395,7 @@ impl BigRat {
             return Ok(Ok(true));
         }
 
-        let terminating = x.terminates_in_base(base);
+        let terminating = x.terminates_in_base(base, int)?;
         let fraction = style == FormattingStyle::ExactFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating);
         if fraction {
@@ -492,8 +497,8 @@ impl BigRat {
     }
 
     pub fn pow(mut self, mut rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
-        self = self.simplify();
-        rhs = rhs.simplify();
+        self = self.simplify(int)?;
+        rhs = rhs.simplify(int)?;
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
@@ -544,7 +549,7 @@ impl BigRat {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string());
         }
-        let n = n.clone().simplify();
+        let n = n.clone().simplify(int)?;
         if n.den != 1.into() || n.sign == Sign::Negative {
             return Err("Can't compute non-integer or negative roots".to_string());
         }
@@ -585,6 +590,14 @@ impl BigRat {
             )?
         };
         Ok((num_rat.div(&den_rat, int)?, false))
+    }
+
+    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self {
+            sign: Sign::sign_of_product(self.sign, rhs.sign),
+            num: self.num.mul(&rhs.num, int)?,
+            den: self.den.mul(&rhs.den, int)?,
+        })
     }
 }
 
@@ -632,19 +645,6 @@ impl Sub for &BigRat {
     fn sub(self, rhs: Self) -> BigRat {
         let int = &crate::interrupt::Never::default();
         self.clone().add_internal(-rhs.clone(), int).unwrap()
-    }
-}
-
-impl Mul for BigRat {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        let int = &crate::interrupt::Never::default();
-        Self {
-            sign: Sign::sign_of_product(self.sign, rhs.sign),
-            num: self.num.mul(&rhs.num, int).unwrap(),
-            den: self.den.mul(&rhs.den, int).unwrap(),
-        }
     }
 }
 

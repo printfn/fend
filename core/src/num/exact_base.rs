@@ -3,7 +3,7 @@ use crate::num::complex::Complex;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Neg, Sub};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ExactBase {
@@ -252,6 +252,15 @@ impl ExactBase {
     pub fn exp(self) -> Result<Self, String> {
         self.apply_approx_fn(Complex::exp)
     }
+
+    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self {
+            value: self.value.mul(&rhs.value, int)?,
+            exact: require_both_exact(self.exact, rhs.exact),
+            base: self.base,
+            format: self.format,
+        })
+    }
 }
 
 impl PartialOrd for ExactBase {
@@ -307,19 +316,6 @@ impl Sub for &ExactBase {
 
     fn sub(self, rhs: Self) -> ExactBase {
         self.clone() + -rhs.clone()
-    }
-}
-
-impl Mul for ExactBase {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        Self {
-            value: self.value * rhs.value,
-            exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-            format: self.format,
-        }
     }
 }
 

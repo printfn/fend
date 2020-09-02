@@ -2,7 +2,7 @@ use crate::interrupt::{test_int, Interrupt};
 use crate::num::exact_base::ExactBase;
 use crate::num::{Base, FormattingStyle};
 use crate::value::Value;
-use std::ops::{Mul, Neg};
+use std::ops::Neg;
 use std::{
     collections::HashMap,
     fmt::{Error, Formatter},
@@ -180,13 +180,9 @@ impl UnitValue {
         scope: &HashMap<String, Value>,
         int: &impl Interrupt,
     ) -> Result<Self, String> {
-        // todo remove unwraps
-        let value = crate::eval::evaluate_to_value(expression, scope, int)
-            .unwrap()
-            .expect_num()
-            .unwrap();
+        let value = crate::eval::evaluate_to_value(expression, scope, int)?.expect_num()?;
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
-        let scale = scale * value.value;
+        let scale = scale.mul(&value.value, int)?;
         let resulting_unit = NamedUnit::new(singular_name, plural_name, space, hashmap, scale);
         Ok(Self::new(1, vec![UnitExponent::new(resulting_unit, 1)]))
     }
@@ -228,7 +224,7 @@ impl UnitValue {
     pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         Ok(Self {
-            value: self.value + rhs.value * scale_factor,
+            value: self.value + rhs.value.mul(&scale_factor, int)?,
             unit: self.unit,
         })
     }
@@ -238,7 +234,7 @@ impl UnitValue {
             return Err("Right-hand side of unit conversion has a numerical value".to_string());
         }
         let scale_factor = Unit::try_convert(&self.unit, &rhs.unit, int)?;
-        let new_value = self.value * scale_factor;
+        let new_value = self.value.mul(&scale_factor, int)?;
         Ok(Self {
             value: new_value,
             unit: rhs.unit,
@@ -248,7 +244,7 @@ impl UnitValue {
     pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         Ok(Self {
-            value: self.value - rhs.value * scale_factor,
+            value: self.value - rhs.value.mul(&scale_factor, int)?,
             unit: self.unit,
         })
     }
@@ -276,16 +272,15 @@ impl UnitValue {
         if !rhs.is_unitless() {
             return Err("Only unitless exponents are currently supported".to_string());
         }
+        let mut new_components = vec![];
+        for unit_exp in self.unit.components {
+            new_components.push(UnitExponent {
+                unit: unit_exp.unit,
+                exponent: unit_exp.exponent.mul(&rhs.value, int)?,
+            });
+        }
         let new_unit = Unit {
-            components: self
-                .unit
-                .components
-                .into_iter()
-                .map(|unit_exp| UnitExponent {
-                    unit: unit_exp.unit,
-                    exponent: unit_exp.exponent * rhs.value.clone(),
-                })
-                .collect(),
+            components: new_components,
         };
         Ok(Self {
             value: self.value.pow(rhs.value, int)?,
@@ -490,6 +485,14 @@ impl UnitValue {
         }
         Ok(Ok(()))
     }
+
+    pub fn mul(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        let components = [self.unit.components, rhs.unit.components].concat();
+        Ok(Self {
+            value: self.value.mul(&rhs.value, int)?,
+            unit: Unit { components },
+        })
+    }
 }
 
 impl Neg for UnitValue {
@@ -498,17 +501,6 @@ impl Neg for UnitValue {
         Self {
             value: -self.value,
             unit: self.unit,
-        }
-    }
-}
-
-impl Mul for UnitValue {
-    type Output = Self;
-    fn mul(self, rhs: Self) -> Self::Output {
-        let components = [self.unit.components, rhs.unit.components].concat();
-        Self {
-            value: self.value * rhs.value,
-            unit: Unit { components },
         }
     }
 }
@@ -540,27 +532,28 @@ impl Unit {
             for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
                 test_int(int)?;
                 if let Some(exp) = hashmap.get_mut(base_unit) {
-                    let new_exp = exp.clone() + overall_exp.clone() * base_exp.clone();
+                    let new_exp = exp.clone() + overall_exp.clone().mul(&base_exp, int)?;
                     if new_exp == 0.into() {
                         hashmap.remove(base_unit);
                     } else {
                         *exp = new_exp;
                     }
                 } else {
-                    let new_exp = overall_exp.clone() * base_exp.clone();
+                    let new_exp = overall_exp.clone().mul(&base_exp, int)?;
                     if new_exp != 0.into() {
-                        hashmap.insert(base_unit.clone(), overall_exp.clone() * base_exp.clone());
+                        hashmap.insert(base_unit.clone(), overall_exp.clone().mul(&base_exp, int)?);
                     }
                 }
             }
             // todo remove unwrap
-            scale = scale
-                * named_unit_exp
+            scale = scale.mul(
+                &named_unit_exp
                     .unit
                     .scale
                     .clone()
-                    .pow(overall_exp.clone(), int)
-                    .unwrap();
+                    .pow(overall_exp.clone(), int)?,
+                int,
+            )?;
         }
         Ok((hashmap, scale))
     }

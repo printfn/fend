@@ -185,7 +185,10 @@ fn parse_basic_number<'a>(
         base,
         &mut |digit| {
             let base_as_u64: u64 = base.base_as_u8().into();
-            res = (res.clone() * base_as_u64.into()).add(u64::from(digit).into(), int)?;
+            res = res
+                .clone()
+                .mul(base_as_u64.into(), int)?
+                .add(u64::from(digit).into(), int)?;
             Ok(())
         },
     )?;
@@ -214,7 +217,7 @@ fn parse_basic_number<'a>(
             }
             let mut exp = Number::zero_with_base(Base::Decimal);
             let (_, remaining) = parse_integer(input, true, true, Base::Decimal, &mut |digit| {
-                exp = (exp.clone() * 10.into()).add(u64::from(digit).into(), int)?;
+                exp = (exp.clone().mul(10.into(), int)?).add(u64::from(digit).into(), int)?;
                 Ok(())
             })?;
             if negative_exponent {
@@ -222,7 +225,7 @@ fn parse_basic_number<'a>(
             }
             let base_as_u64: u64 = base.base_as_u8().into();
             let base_as_number: Number = base_as_u64.into();
-            res = res * base_as_number.pow(exp, int)?;
+            res = res.mul(base_as_number.pow(exp, int)?, int)?;
             input = remaining;
         }
     }

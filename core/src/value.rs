@@ -34,7 +34,7 @@ impl Value {
                     )));
                 }
                 if allow_multiplication {
-                    n.clone() * other.expect_num()?
+                    n.clone().mul(other.expect_num()?, int)?
                 } else {
                     return Err(format!(
                         "{} is not a function",

@@ -76,7 +76,9 @@ pub fn evaluate(
                 .sub(evaluate(*b, scope, int)?.expect_num()?, int)?,
         ),
         Expr::Mul(a, b) => Value::Num(
-            evaluate(*a, scope, int)?.expect_num()? * evaluate(*b, scope, int)?.expect_num()?,
+            evaluate(*a, scope, int)?
+                .expect_num()?
+                .mul(evaluate(*b, scope, int)?.expect_num()?, int)?,
         ),
         Expr::ApplyMul(a, b) => {
             evaluate(*a, scope, int)?.apply(&evaluate(*b, scope, int)?, true, true, int)?

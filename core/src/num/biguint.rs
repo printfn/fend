@@ -151,7 +151,11 @@ impl BigUint {
         }
     }
 
-    pub fn gcd(mut a: Self, mut b: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn gcd(
+        mut a: Self,
+        mut b: Self,
+        int: &impl Interrupt,
+    ) -> Result<Self, crate::err::Interrupt> {
         while b >= 1.into() {
             let r = a.rem(&b, int)?;
             a = b;
@@ -259,7 +263,11 @@ impl BigUint {
         }
     }
 
-    fn divmod(&self, other: &Self, int: &impl Interrupt) -> Result<Result<(Self, Self), DivideByZero>, crate::err::Interrupt> {
+    fn divmod(
+        &self,
+        other: &Self,
+        int: &impl Interrupt,
+    ) -> Result<Result<(Self, Self), DivideByZero>, crate::err::Interrupt> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok(Ok((Small(div_res), Small(mod_res))));
@@ -389,10 +397,10 @@ impl BigUint {
             while !num.is_zero() {
                 test_int(int)?;
                 let divmod_res = num
-                    .divmod(&Self::Large(vec![
-                        truncate(divisor),
-                        truncate(divisor >> 64),
-                    ]), int)?
+                    .divmod(
+                        &Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]),
+                        int,
+                    )?
                     .expect("Division by zero is not allowed");
                 let mut digit_group_value =
                     u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
@@ -647,25 +655,67 @@ mod tests {
     #[test]
     fn test_small_division_by_two() {
         let int = &crate::interrupt::Never::default();
-        assert_eq!(BigUint::from(0).div(&BigUint::from(2), int).unwrap(), BigUint::from(0));
-        assert_eq!(BigUint::from(1).div(&BigUint::from(2), int).unwrap(), BigUint::from(0));
-        assert_eq!(BigUint::from(2).div(&BigUint::from(2), int).unwrap(), BigUint::from(1));
-        assert_eq!(BigUint::from(3).div(&BigUint::from(2), int).unwrap(), BigUint::from(1));
-        assert_eq!(BigUint::from(4).div(&BigUint::from(2), int).unwrap(), BigUint::from(2));
-        assert_eq!(BigUint::from(5).div(&BigUint::from(2), int).unwrap(), BigUint::from(2));
-        assert_eq!(BigUint::from(6).div(&BigUint::from(2), int).unwrap(), BigUint::from(3));
-        assert_eq!(BigUint::from(7).div(&BigUint::from(2), int).unwrap(), BigUint::from(3));
-        assert_eq!(BigUint::from(8).div(&BigUint::from(2), int).unwrap(), BigUint::from(4));
+        assert_eq!(
+            BigUint::from(0).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(0)
+        );
+        assert_eq!(
+            BigUint::from(1).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(0)
+        );
+        assert_eq!(
+            BigUint::from(2).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(1)
+        );
+        assert_eq!(
+            BigUint::from(3).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(1)
+        );
+        assert_eq!(
+            BigUint::from(4).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(2)
+        );
+        assert_eq!(
+            BigUint::from(5).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(2)
+        );
+        assert_eq!(
+            BigUint::from(6).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(3)
+        );
+        assert_eq!(
+            BigUint::from(7).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(3)
+        );
+        assert_eq!(
+            BigUint::from(8).div(&BigUint::from(2), int).unwrap(),
+            BigUint::from(4)
+        );
     }
 
     #[test]
     fn test_rem() {
         let int = &crate::interrupt::Never::default();
-        assert_eq!(BigUint::from(20).rem(&BigUint::from(3), int).unwrap(), BigUint::from(2));
-        assert_eq!(BigUint::from(21).rem(&BigUint::from(3), int).unwrap(), BigUint::from(0));
-        assert_eq!(BigUint::from(22).rem(&BigUint::from(3), int).unwrap(), BigUint::from(1));
-        assert_eq!(BigUint::from(23).rem(&BigUint::from(3), int).unwrap(), BigUint::from(2));
-        assert_eq!(BigUint::from(24).rem(&BigUint::from(3), int).unwrap(), BigUint::from(0));
+        assert_eq!(
+            BigUint::from(20).rem(&BigUint::from(3), int).unwrap(),
+            BigUint::from(2)
+        );
+        assert_eq!(
+            BigUint::from(21).rem(&BigUint::from(3), int).unwrap(),
+            BigUint::from(0)
+        );
+        assert_eq!(
+            BigUint::from(22).rem(&BigUint::from(3), int).unwrap(),
+            BigUint::from(1)
+        );
+        assert_eq!(
+            BigUint::from(23).rem(&BigUint::from(3), int).unwrap(),
+            BigUint::from(2)
+        );
+        assert_eq!(
+            BigUint::from(24).rem(&BigUint::from(3), int).unwrap(),
+            BigUint::from(0)
+        );
     }
 
     #[test]

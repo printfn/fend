@@ -3,7 +3,7 @@ use crate::num::bigrat::BigRat;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Neg, Sub};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Complex {
@@ -43,12 +43,16 @@ impl Complex {
         let x = rhs.real;
         let y = rhs.imag;
         Ok(Self {
-            real: BigRat::from(1).div(&(x.clone() * x.clone() + y.clone() * y.clone()), int)?,
+            real: BigRat::from(1).div(&(x.clone().mul(&x, int)? + y.clone().mul(&y, int)?), int)?,
             imag: 0.into(),
-        } * Self {
-            real: u.clone() * x.clone() + v.clone() * y.clone(),
-            imag: v * x - u * y,
-        })
+        }
+        .mul(
+            &Self {
+                real: u.clone().mul(&x, int)? + v.clone().mul(&y, int)?,
+                imag: v.mul(&x, int)? - u.mul(&y, int)?,
+            },
+            int,
+        )?)
     }
 
     pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
@@ -275,6 +279,16 @@ impl Complex {
     pub fn exp(self) -> Result<Self, String> {
         Ok(Self::from(self.expect_real()?.exp()))
     }
+
+    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        // (a + bi) * (c + di)
+        //     => ac + bci + adi - bd
+        //     => (ac - bd) + (bc + ad)i
+        Ok(Self {
+            real: self.real.clone().mul(&rhs.real, int)? - self.imag.clone().mul(&rhs.imag, int)?,
+            imag: self.real.mul(&rhs.imag, int)? + self.imag.mul(&rhs.real, int)?,
+        })
+    }
 }
 
 impl PartialOrd for Complex {
@@ -334,20 +348,6 @@ impl Sub for &Complex {
 
     fn sub(self, rhs: Self) -> Complex {
         self.clone() + -rhs.clone()
-    }
-}
-
-impl Mul for Complex {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        // (a + bi) * (c + di)
-        //     => ac + bci + adi - bd
-        //     => (ac - bd) + (bc + ad)i
-        Self {
-            real: self.real.clone() * rhs.real.clone() - self.imag.clone() * rhs.imag.clone(),
-            imag: self.real * rhs.imag + self.imag * rhs.real,
-        }
     }
 }
 
