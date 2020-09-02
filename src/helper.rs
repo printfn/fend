@@ -22,7 +22,7 @@ impl Default for HintInterrupt {
     fn default() -> Self {
         Self {
             start: Instant::now(),
-            duration: Duration::from_millis(100),
+            duration: Duration::from_millis(20),
         }
     }
 }
