@@ -30,7 +30,7 @@ impl Value {
                 if let Self::Dp = other {
                     let num = self.expect_num()?;
                     return Ok(Self::Format(FormattingStyle::ApproxFloat(
-                        num.try_as_usize()?,
+                        num.try_as_usize(int)?,
                     )));
                 }
                 if allow_multiplication {

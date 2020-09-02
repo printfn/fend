@@ -81,9 +81,8 @@ impl PartialEq for BigRat {
 impl Eq for BigRat {}
 
 impl BigRat {
-    pub fn try_as_usize(mut self) -> Result<usize, String> {
-        let int = &crate::interrupt::Never::default();
-        self = self.simplify(int).unwrap();
+    pub fn try_as_usize(mut self, int: &impl Interrupt) -> Result<usize, String> {
+        self = self.simplify(int)?;
         if self.den != 1.into() {
             return Err("Cannot convert fraction to integer".to_string());
         }

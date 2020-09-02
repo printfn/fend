@@ -139,11 +139,11 @@ impl UnitValue {
         )
     }
 
-    pub fn try_as_usize(self) -> Result<usize, String> {
+    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, String> {
         if !self.is_unitless() {
             return Err("Cannot convert number with unit to integer".to_string());
         }
-        Ok(self.value.try_as_usize()?)
+        Ok(self.value.try_as_usize(int)?)
     }
 
     fn create_units(

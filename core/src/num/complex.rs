@@ -12,11 +12,11 @@ pub struct Complex {
 }
 
 impl Complex {
-    pub fn try_as_usize(self) -> Result<usize, String> {
+    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, String> {
         if self.imag != 0.into() {
             return Err("Cannot convert complex number to integer".to_string());
         }
-        Ok(self.real.try_as_usize()?)
+        Ok(self.real.try_as_usize(int)?)
     }
 
     pub fn conjugate(self) -> Self {

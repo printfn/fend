@@ -14,11 +14,11 @@ pub struct ExactBase {
 }
 
 impl ExactBase {
-    pub fn try_as_usize(self) -> Result<usize, String> {
+    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, String> {
         if !self.exact {
             return Err("Cannot convert inexact number to integer".to_string());
         }
-        Ok(self.value.try_as_usize()?)
+        Ok(self.value.try_as_usize(int)?)
     }
 
     pub fn make_approximate(self) -> Self {
