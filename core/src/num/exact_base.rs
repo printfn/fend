@@ -3,7 +3,7 @@ use crate::num::complex::Complex;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
-use std::ops::{Add, Neg, Sub};
+use std::ops::Neg;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ExactBase {
@@ -262,24 +262,24 @@ impl ExactBase {
             format: self.format,
         })
     }
+
+    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self {
+            value: self.value.add(rhs.value, int)?,
+            exact: require_both_exact(self.exact, rhs.exact),
+            base: self.base,
+            format: self.format,
+        })
+    }
+
+    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        self.add(-rhs, int)
+    }
 }
 
 impl PartialOrd for ExactBase {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.value.partial_cmp(&other.value)
-    }
-}
-
-impl Add for ExactBase {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            value: self.value + rhs.value,
-            exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-            format: self.format,
-        }
     }
 }
 
@@ -301,22 +301,6 @@ impl Neg for &ExactBase {
 
     fn neg(self) -> ExactBase {
         -self.clone()
-    }
-}
-
-impl Sub for ExactBase {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        self + -rhs
-    }
-}
-
-impl Sub for &ExactBase {
-    type Output = ExactBase;
-
-    fn sub(self, rhs: Self) -> ExactBase {
-        self.clone() + -rhs.clone()
     }
 }
 

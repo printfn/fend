@@ -3,10 +3,7 @@ use crate::num::biguint::BigUint;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Error, Formatter};
-use std::{
-    collections::HashMap,
-    ops::{Add, Neg, Sub},
-};
+use std::{collections::HashMap, ops::Neg};
 
 macro_rules! try_i {
     ($e:expr) => {
@@ -55,7 +52,8 @@ pub struct BigRat {
 
 impl Ord for BigRat {
     fn cmp(&self, other: &Self) -> Ordering {
-        let diff = self - other;
+        let int = &crate::interrupt::Never::default();
+        let diff = self.clone().sub(other.clone(), int).unwrap();
         if diff.num == 0.into() {
             Ordering::Equal
         } else if diff.sign == Sign::Positive {
@@ -437,7 +435,7 @@ impl BigRat {
             num: integer_part,
             den: 1.into(),
         };
-        let remaining_fraction = x - integer_as_rational;
+        let remaining_fraction = x.sub(integer_as_rational, int)?;
         let was_exact = Self::format_trailing_digits(
             f,
             base,
@@ -529,16 +527,19 @@ impl BigRat {
         n: &Self,
         int: &impl Interrupt,
     ) -> Result<Self, String> {
-        let mut high_bound = low_bound.clone() + 1.into();
+        let mut high_bound = low_bound.clone().add(1.into(), int)?;
         for _ in 0..30 {
-            let guess = (low_bound.clone() + high_bound.clone()).div(&2.into(), int)?;
+            let guess = low_bound
+                .clone()
+                .add(high_bound.clone(), int)?
+                .div(&2.into(), int)?;
             if &guess.clone().pow(n.clone(), int)?.0 < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
             }
         }
-        Ok((low_bound + high_bound).div(&2.into(), int)?)
+        Ok(low_bound.add(high_bound, int)?.div(&2.into(), int)?)
     }
 
     // the boolean indicates whether or not the result is exact
@@ -597,14 +598,13 @@ impl BigRat {
             den: self.den.mul(&rhs.den, int)?,
         })
     }
-}
 
-impl Add for BigRat {
-    type Output = Self;
+    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(self.add_internal(-rhs, int)?)
+    }
 
-    fn add(self, rhs: Self) -> Self {
-        let int = &crate::interrupt::Never::default();
-        self.add_internal(rhs, int).unwrap()
+    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(self.add_internal(rhs, int)?)
     }
 }
 
@@ -617,32 +617,6 @@ impl Neg for BigRat {
             num: self.num,
             den: self.den,
         }
-    }
-}
-
-impl Neg for &BigRat {
-    type Output = BigRat;
-
-    fn neg(self) -> BigRat {
-        -self.clone()
-    }
-}
-
-impl Sub for BigRat {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        let int = &crate::interrupt::Never::default();
-        self.add_internal(-rhs, int).unwrap()
-    }
-}
-
-impl Sub for &BigRat {
-    type Output = BigRat;
-
-    fn sub(self, rhs: Self) -> BigRat {
-        let int = &crate::interrupt::Never::default();
-        self.clone().add_internal(-rhs.clone(), int).unwrap()
     }
 }
 
@@ -682,7 +656,11 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        assert_eq!(BigRat::from(2) + BigRat::from(2), BigRat::from(4));
+        let int = &crate::interrupt::Never::default();
+        assert_eq!(
+            BigRat::from(2).add(BigRat::from(2), int).unwrap(),
+            BigRat::from(4)
+        );
     }
 
     #[test]

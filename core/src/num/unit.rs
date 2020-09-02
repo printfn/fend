@@ -224,7 +224,7 @@ impl UnitValue {
     pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         Ok(Self {
-            value: self.value + rhs.value.mul(&scale_factor, int)?,
+            value: self.value.add(rhs.value.mul(&scale_factor, int)?, int)?,
             unit: self.unit,
         })
     }
@@ -244,7 +244,7 @@ impl UnitValue {
     pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         Ok(Self {
-            value: self.value - rhs.value.mul(&scale_factor, int)?,
+            value: self.value.sub(rhs.value.mul(&scale_factor, int)?, int)?,
             unit: self.unit,
         })
     }
@@ -533,7 +533,9 @@ impl Unit {
             for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
                 test_int(int)?;
                 if let Some(exp) = hashmap.get_mut(base_unit) {
-                    let new_exp = exp.clone() + overall_exp.clone().mul(&base_exp, int)?;
+                    let new_exp = exp
+                        .clone()
+                        .add(overall_exp.clone().mul(&base_exp, int)?, int)?;
                     if new_exp == 0.into() {
                         hashmap.remove(base_unit);
                     } else {

@@ -3,7 +3,7 @@ use crate::num::bigrat::BigRat;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
-use std::ops::{Add, Neg, Sub};
+use std::ops::Neg;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Complex {
@@ -42,14 +42,15 @@ impl Complex {
         let v = self.imag;
         let x = rhs.real;
         let y = rhs.imag;
+        let sum = x.clone().mul(&x, int)?.add(y.clone().mul(&y, int)?, int)?;
         Ok(Self {
-            real: BigRat::from(1).div(&(x.clone().mul(&x, int)? + y.clone().mul(&y, int)?), int)?,
+            real: BigRat::from(1).div(&sum, int)?,
             imag: 0.into(),
         }
         .mul(
             &Self {
-                real: u.clone().mul(&x, int)? + v.clone().mul(&y, int)?,
-                imag: v.mul(&x, int)? - u.mul(&y, int)?,
+                real: u.clone().mul(&x, int)?.add(v.clone().mul(&y, int)?, int)?,
+                imag: v.mul(&x, int)?.sub(u.mul(&y, int)?, int)?,
             },
             int,
         )?)
@@ -121,7 +122,11 @@ impl Complex {
         } else {
             let res_squared = Self {
                 // we can ignore the 'exact' bool because integer powers are always exact
-                real: self.real.pow(2.into(), int)?.0 + self.imag.pow(2.into(), int)?.0,
+                real: self
+                    .real
+                    .pow(2.into(), int)?
+                    .0
+                    .add(self.imag.pow(2.into(), int)?.0, int)?,
                 imag: 0.into(),
             };
             res_squared.root_n(&Self::from(2), int)?
@@ -285,9 +290,27 @@ impl Complex {
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
         Ok(Self {
-            real: self.real.clone().mul(&rhs.real, int)? - self.imag.clone().mul(&rhs.imag, int)?,
-            imag: self.real.mul(&rhs.imag, int)? + self.imag.mul(&rhs.real, int)?,
+            real: self
+                .real
+                .clone()
+                .mul(&rhs.real, int)?
+                .sub(self.imag.clone().mul(&rhs.imag, int)?, int)?,
+            imag: self
+                .real
+                .mul(&rhs.imag, int)?
+                .add(self.imag.mul(&rhs.real, int)?, int)?,
         })
+    }
+
+    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        Ok(Self {
+            real: self.real.add(rhs.real, int)?,
+            imag: self.imag.add(rhs.imag, int)?,
+        })
+    }
+
+    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+        self.add(-rhs, int)
     }
 }
 
@@ -301,17 +324,6 @@ impl PartialOrd for Complex {
             Some(Ordering::Greater)
         } else {
             None
-        }
-    }
-}
-
-impl Add for Complex {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            real: self.real + rhs.real,
-            imag: self.imag + rhs.imag,
         }
     }
 }
@@ -332,22 +344,6 @@ impl Neg for &Complex {
 
     fn neg(self) -> Complex {
         -self.clone()
-    }
-}
-
-impl Sub for Complex {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        self + -rhs
-    }
-}
-
-impl Sub for &Complex {
-    type Output = Complex;
-
-    fn sub(self, rhs: Self) -> Complex {
-        self.clone() + -rhs.clone()
     }
 }
 
