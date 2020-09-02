@@ -5,7 +5,7 @@ use rustyline::{
     validate::Validator,
     Helper,
 };
-use std::time::{Duration, Instant};
+use std::{env, time::{Duration, Instant}};
 
 pub struct HintInterrupt {
     start: Instant,
@@ -36,6 +36,9 @@ impl Hinter for FendHelper {
     // TODO: Prevent the user from actually completing this hint.
     // Blocked on a rustyline update.
     fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context) -> Option<String> {
+        if !enable_live_output() {
+            return None;
+        }
         let int = HintInterrupt::default();
         Some(
             match fend_core::evaluate_with_interrupt(line, &mut self.ctx.clone(), &int) {
@@ -72,3 +75,7 @@ impl Completer for FendHelper {
 }
 
 impl Helper for FendHelper {}
+
+fn enable_live_output() -> bool {
+    env::var_os("FEND_LIVE").is_some()
+}
