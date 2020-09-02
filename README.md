@@ -11,10 +11,10 @@ Fend is an arbitrary-precision unit-aware calculator.
 Unique features:
 
 * Arbitrary-precision arithmetic using rational numbers
-* Support for complex numbers
-* Binary, octal, hexadecimal and all other bases between 2 and 36.
-* Keeps track of units, with support for SI and US customary units.
-* Support for Emacs-style CLI shortcuts
+* Full support for complex numbers
+* Binary, octal, hexadecimal and all other bases between 2 and 36
+* Keeps track of units, with support for SI and US customary units
+* Emacs-style CLI shortcuts
 * Trigonometric functions
 
 See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
