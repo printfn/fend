@@ -493,24 +493,23 @@ impl BigRat {
             let next_num = bnum - digit.clone().mul(&denominator, int)?;
             Ok((next_num, digit))
         };
-        let fold_digits = |mut s: String, digit: BigUint| {
-            let digit_str = crate::num::to_string(|f| digit.format(f, base, false, int))?;
-            s.push_str(digit_str.as_str());
-            Ok(s)
-        };
+        let fold_digits =
+            |mut s: String, digit: BigUint| -> Result<String, crate::err::Interrupt> {
+                let digit_str = crate::num::to_string(|f| digit.format(f, base, false, int))?;
+                s.push_str(digit_str.as_str());
+                Ok(s)
+            };
         let skip_cycle_detection = max_digits.is_some() || terminating;
         if skip_cycle_detection {
-            let mut output = String::new();
             let mut current_numerator = numerator.clone();
             let mut i = 0;
             loop {
                 match next_digit(i, current_numerator.clone()) {
                     Ok((next_n, digit)) => {
                         current_numerator = next_n;
-                        output = fold_digits(output, digit)?;
+                        digit.format(f, base, false, int)?.unwrap();
                     }
                     Err(NextDigitErr::Terminated) => {
-                        try_i!(write!(f, "{}", output));
                         // is the number exact, or did we need to truncate?
                         let exact = numerator == &0.into();
                         return Ok(Ok(exact));
