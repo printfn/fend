@@ -191,7 +191,7 @@ impl BigUint {
         while high_guess.clone() - low_guess.clone() > 1.into() {
             test_int(int)?;
             let mut guess = low_guess.clone() + high_guess.clone();
-            guess.rshift();
+            guess.rshift(int)?;
 
             let res = Self::pow(&guess, n, int)??;
             match res.cmp(&self) {
@@ -221,14 +221,14 @@ impl BigUint {
         Ok(result)
     }
 
-    fn lshift(&mut self) {
-        match self {
+    fn lshift(&mut self, int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
+        Ok(match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
                     *n <<= 1;
                 } else {
                     self.make_large();
-                    self.lshift();
+                    self.lshift(int)?;
                 }
             }
             Large(value) => {
@@ -236,20 +236,22 @@ impl BigUint {
                     value.push(0);
                 }
                 for i in (0..value.len()).rev() {
+                    test_int(int)?;
                     value[i] <<= 1;
                     if i != 0 {
                         value[i] |= value[i - 1] >> 63;
                     }
                 }
             }
-        }
+        })
     }
 
-    fn rshift(&mut self) {
-        match self {
+    fn rshift(&mut self, int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
+        Ok(match self {
             Small(n) => *n >>= 1,
             Large(value) => {
                 for i in 0..value.len() {
+                    test_int(int)?;
                     value[i] >>= 1;
                     let next = if i + 1 >= value.len() {
                         0
@@ -259,7 +261,7 @@ impl BigUint {
                     value[i] |= next << 63;
                 }
             }
-        }
+        })
     }
 
     fn divmod(
@@ -290,7 +292,7 @@ impl BigUint {
         }
         if other == &Self::from(2) {
             let mut div_result = self.clone();
-            div_result.rshift();
+            div_result.rshift(int)?;
             let modulo = self.get(0) & 1;
             return Ok(Ok((div_result, Self::from(modulo))));
         }
@@ -300,7 +302,7 @@ impl BigUint {
         for i in (0..self.value_len()).rev() {
             test_int(int)?;
             for j in (0..64).rev() {
-                r.lshift();
+                r.lshift(int)?;
                 let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
                 r.set(0, r.get(0) | bit_of_self);
                 if &r >= other {
@@ -719,9 +721,10 @@ mod tests {
 
     #[test]
     fn test_lshift() {
+        let int = &crate::interrupt::Never::default();
         let mut n = BigUint::from(1);
         for _ in 0..100 {
-            n.lshift();
+            n.lshift(int).unwrap();
             eprintln!("{:?}", &n);
             assert_eq!(n.get(0) & 1, 0);
         }
@@ -748,8 +751,9 @@ mod tests {
 
     #[test]
     fn test_large_lshift() {
+        let int = &crate::interrupt::Never::default();
         let mut a = BigUint::from(9223372036854775808);
-        a.lshift();
+        a.lshift(int).unwrap();
         assert!(!a.is_zero());
     }
 
