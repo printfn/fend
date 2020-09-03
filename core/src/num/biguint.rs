@@ -222,7 +222,7 @@ impl BigUint {
     }
 
     fn lshift(&mut self, int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
-        Ok(match self {
+        match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
                     *n <<= 1;
@@ -243,11 +243,12 @@ impl BigUint {
                     }
                 }
             }
-        })
+        }
+        Ok(())
     }
 
     fn rshift(&mut self, int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
-        Ok(match self {
+        match self {
             Small(n) => *n >>= 1,
             Large(value) => {
                 for i in 0..value.len() {
@@ -261,7 +262,8 @@ impl BigUint {
                     value[i] |= next << 63;
                 }
             }
-        })
+        }
+        Ok(())
     }
 
     fn divmod(
