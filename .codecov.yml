@@ -4,3 +4,8 @@ coverage:
       default:
         target: 90%   # must be >90% to pass
         threshold: 5% # coverage may drop by up to 5%
+    patch:
+      default:
+        # don't require individual patches to have any particular code coverage
+        target: 0%
+        threshold: 100%
