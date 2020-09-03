@@ -3,7 +3,7 @@ use crate::num::biguint::BigUint;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Error, Formatter};
-use std::{collections::HashMap, ops::Neg};
+use std::ops::Neg;
 
 macro_rules! try_i {
     ($e:expr) => {
@@ -439,9 +439,10 @@ impl BigRat {
         let was_exact = Self::format_trailing_digits(
             f,
             base,
-            remaining_fraction.num,
+            &remaining_fraction.num,
             &remaining_fraction.den,
             num_trailing_digits_to_print,
+            terminating,
             int,
         )?;
         if imag {
@@ -454,42 +455,143 @@ impl BigRat {
     }
 
     /// Prints the decimal expansion of num/den, where num < den, in the given base.
-    /// If `max_digits` is given, only up to that many digits are printed, and recurring
-    /// digits are not printed in parentheses.
+    /// Behaviour:
+    ///   * If `max_digits` is None, print the whole decimal. Recurring digits are indicated
+    ///     with parentheses.
+    ///   * If `max_digits` is given, only up to that many digits are printed, and recurring
+    ///     digits will not printed in parentheses but will instead be repeated up to `max_digits`.
     fn format_trailing_digits(
         f: &mut Formatter,
         base: Base,
-        mut numerator: BigUint,
+        numerator: &BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
+        terminating: bool,
         int: &impl Interrupt,
     ) -> Result<Result<bool, Error>, crate::err::Interrupt> {
-        let mut output = String::new();
-        let mut pos = 0;
-        let mut remainder_occurs_at_pos: HashMap<BigUint, usize> = HashMap::new();
-        let base_as_u64: u64 = base.base_as_u8().into();
-        let b: BigUint = base_as_u64.into();
-        while max_digits.is_some() || remainder_occurs_at_pos.get(&numerator) == None {
-            test_int(int)?;
-            remainder_occurs_at_pos.insert(numerator.clone(), pos);
-            let bnum = b.clone().mul(&numerator, int)?;
-            let digit: BigUint = bnum.clone().div(&denominator, int)?;
-            numerator = bnum - digit.clone().mul(&denominator, int)?;
-            output.push_str(crate::num::to_string(|f| digit.format(f, base, false, int))?.as_str());
-            pos += 1;
-            if numerator == 0.into() || max_digits == Some(pos) {
-                // terminates here
-                try_i!(write!(f, "{}", output));
-                // is the number exact, or did we need to truncate?
-                let exact = numerator == 0.into();
-                return Ok(Ok(exact));
+        enum NextDigitErr {
+            Interrupt(crate::err::Interrupt),
+            Terminated,
+        };
+        impl From<crate::err::Interrupt> for NextDigitErr {
+            fn from(i: crate::err::Interrupt) -> Self {
+                Self::Interrupt(i)
             }
         }
-        // todo: this may panic if numerator is not found
-        let location = remainder_occurs_at_pos[&numerator];
-        let (a, b) = output.split_at(location);
-        try_i!(write!(f, "{}({})", a, b));
+
+        let base_as_u64: u64 = base.base_as_u8().into();
+        let b: BigUint = base_as_u64.into();
+        let next_digit = |i: usize, num: BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
+            test_int(int)?;
+            if num == 0.into() || max_digits == Some(i) {
+                return Err(NextDigitErr::Terminated);
+            }
+            // digit = base * numerator / denominator
+            // next_numerator = base * numerator - digit * denominator
+            let bnum = b.clone().mul(&num, int)?;
+            let digit = bnum.clone().div(&denominator, int)?;
+            let next_num = bnum - digit.clone().mul(&denominator, int)?;
+            Ok((next_num, digit))
+        };
+        let fold_digits = |mut s: String, digit: BigUint| {
+            let digit_str = crate::num::to_string(|f| digit.format(f, base, false, int))?;
+            s.push_str(digit_str.as_str());
+            Ok(s)
+        };
+        let skip_cycle_detection = max_digits.is_some() || terminating;
+        if skip_cycle_detection {
+            let mut output = String::new();
+            let mut current_numerator = numerator.clone();
+            let mut i = 0;
+            loop {
+                match next_digit(i, current_numerator.clone()) {
+                    Ok((next_n, digit)) => {
+                        current_numerator = next_n;
+                        output = fold_digits(output, digit)?;
+                    }
+                    Err(NextDigitErr::Terminated) => {
+                        try_i!(write!(f, "{}", output));
+                        // is the number exact, or did we need to truncate?
+                        let exact = numerator == &0.into();
+                        return Ok(Ok(exact));
+                    }
+                    Err(NextDigitErr::Interrupt(i)) => {
+                        return Err(i);
+                    }
+                }
+                i += 1;
+            }
+        }
+        match Self::brents_algorithm(next_digit, fold_digits, numerator.clone(), String::new()) {
+            Ok((cycle_length, location, output)) => {
+                let (ab, _) = output.split_at(location + cycle_length);
+                let (a, b) = ab.split_at(location);
+                try_i!(write!(f, "{}({})", a, b));
+            }
+            Err(NextDigitErr::Terminated) => {
+                panic!("Decimal number terminated unexpectedly");
+            }
+            Err(NextDigitErr::Interrupt(i)) => {
+                return Err(i);
+            }
+        }
         Ok(Ok(true)) // the recurring decimal is exact
+    }
+
+    // Brent's cycle detection algorithm (based on pseudocode from Wikipedia)
+    // returns (length of cycle, index of first element of cycle, collected result)
+    fn brents_algorithm<T: Clone + Eq, R, U, E1: From<E2>, E2>(
+        f: impl Fn(usize, T) -> Result<(T, U), E1>,
+        g: impl Fn(R, U) -> Result<R, E2>,
+        x0: T,
+        r0: R,
+    ) -> Result<(usize, usize, R), E1> {
+        // main phase: search successive powers of two
+        let mut power = 1;
+        // lam is the length of the cycle
+        let mut lam = 1;
+        let mut tortoise = x0.clone();
+        let mut depth = 0;
+        let (mut hare, _) = f(depth, x0.clone())?;
+        depth += 1;
+        while tortoise != hare {
+            if power == lam {
+                tortoise = hare.clone();
+                power *= 2;
+                lam = 0;
+            }
+            hare = f(depth, hare)?.0;
+            depth += 1;
+            lam += 1;
+        }
+
+        // Find the position of the first repetition of length lam
+        tortoise = x0.clone();
+        hare = x0;
+        let mut collected_res = r0;
+        let mut hare_depth = 0;
+        for _ in 0..lam {
+            let (new_hare, u) = f(hare_depth, hare)?;
+            hare_depth += 1;
+            hare = new_hare;
+            collected_res = g(collected_res, u)?;
+        }
+        // The distance between the hare and tortoise is now lam.
+
+        // Next, the hare and tortoise move at same speed until they agree
+        // mu will be the length of the initial sequence, before the cycle
+        let mut mu = 0;
+        let mut tortoise_depth = 0;
+        while tortoise != hare {
+            tortoise = f(tortoise_depth, tortoise)?.0;
+            tortoise_depth += 1;
+            let (new_hare, u) = f(hare_depth, hare)?;
+            hare_depth += 1;
+            hare = new_hare;
+            collected_res = g(collected_res, u)?;
+            mu += 1;
+        }
+        Ok((lam, mu, collected_res))
     }
 
     pub fn pow(mut self, mut rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
