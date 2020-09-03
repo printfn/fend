@@ -548,7 +548,6 @@ impl Unit {
                     }
                 }
             }
-            // todo remove unwrap
             scale = scale.mul(
                 &named_unit_exp
                     .unit
@@ -566,8 +565,7 @@ impl Unit {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
         if hash_a == hash_b {
-            // todo remove unwrap
-            Ok(scale_a.div(scale_b, int).unwrap())
+            Ok(scale_a.div(scale_b, int)?)
         } else {
             Err("Units are incompatible".to_string())
         }

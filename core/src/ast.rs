@@ -127,7 +127,9 @@ fn resolve_identifier(
         "pi" => Value::Num(Number::approx_pi()),
         "e" => Value::Num(Number::approx_e()),
         "i" => Value::Num(Number::i()),
-        "c" => crate::eval::evaluate_to_value("299792458 m / s", scope, int).unwrap(),
+        // TODO: we want to forward any interrupt, but panic on any other error
+        // or statically prove that no other error can occur
+        "c" => crate::eval::evaluate_to_value("299792458 m / s", scope, int)?,
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),

@@ -89,7 +89,7 @@ impl BigRat {
 
     #[allow(clippy::float_arithmetic)]
     pub fn into_f64(mut self, int: &impl Interrupt) -> Result<f64, crate::err::Interrupt> {
-        self = self.simplify(int).unwrap();
+        self = self.simplify(int)?;
         Ok(self.num.as_f64() / self.den.as_f64())
     }
 
