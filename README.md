@@ -21,7 +21,7 @@ See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
 
 ## Installation
 
-Install `fend` by running `cargo install fend` in your terminal.
+Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend-rs/releases/latest).
 
 You can then run `fend` to start a REPL session:
 
