@@ -1,3 +1,4 @@
+use crate::err::IntErr;
 use crate::interrupt::Interrupt;
 use crate::num::{FormattingStyle, Number};
 use std::fmt::{Error, Formatter};
@@ -102,16 +103,13 @@ impl Value {
         }))
     }
 
-    pub fn format(
-        &self,
-        f: &mut Formatter,
-        int: &impl Interrupt,
-    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
-        Ok(match self {
-            Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?),
-            Self::Func(name) => write!(f, "{}", name),
-            Self::Format(fmt) => write!(f, "{}", fmt),
-            Self::Dp => write!(f, "dp"),
-        })
+    pub fn format(&self, f: &mut Formatter, int: &impl Interrupt) -> Result<(), IntErr<Error>> {
+        match self {
+            Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?)?,
+            Self::Func(name) => write!(f, "{}", name)?,
+            Self::Format(fmt) => write!(f, "{}", fmt)?,
+            Self::Dp => write!(f, "dp")?,
+        }
+        Ok(())
     }
 }

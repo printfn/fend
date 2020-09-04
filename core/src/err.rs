@@ -1,13 +1,17 @@
 use std::fmt;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
-pub trait Error: Display + Into<String> {}
+pub trait Error: Display {}
 
 #[allow(clippy::empty_enum)]
 pub enum Never {}
 
-impl Error for Never {}
 impl Display for Never {
+    fn fmt(&self, _: &mut Formatter) -> Result<(), fmt::Error> {
+        match *self {}
+    }
+}
+impl Debug for Never {
     fn fmt(&self, _: &mut Formatter) -> Result<(), fmt::Error> {
         match *self {}
     }
@@ -43,7 +47,7 @@ macro_rules! make_err {
         impl Display for $i {
             fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
                 match self {
-                    $(Self::$a(v) => v.fmt(f),)*
+                    $(Self::$a(v) => write!(f, "{}", v),)*
                 }
             }
         }
@@ -51,6 +55,11 @@ macro_rules! make_err {
             impl From<$a> for $i {
                 fn from(v: $a) -> Self {
                     Self::$a(v)
+                }
+            }
+            impl From<$a> for IntErr<$i> {
+                fn from(v: $a) -> Self {
+                    Self::Error(v.into())
                 }
             }
         )*
@@ -70,7 +79,7 @@ macro_rules! make_err {
         impl Display for $i {
             fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
                 match self {
-                    Self::$i => write!(f, $e),
+                    Self::$i => write!(f, "{}", $e),
                 }
             }
         }
@@ -86,21 +95,122 @@ macro_rules! make_err {
             }
         }
         impl $i {
-            pub fn err<T, E: From<Self>>() -> Result<Result<T, E>, Interrupt> {
-                Ok(Err(Self::default().into()))
+            pub fn err<T, E: From<Self>>() -> Result<T, E> {
+                Err(Self::default().into())
+            }
+            pub fn ierr<T, E: From<Self> + Error>() -> Result<T, IntErr<E>> {
+                Err(IntErr::Error(E::from(Self::default())))
             }
         }
     }
 }
 
-pub fn err<T, E>() -> Result<T, E>
-where
-    E: Error + Default,
-{
-    Err(E::default())
+// pub fn err<T, E: Error>() -> Result<T, IntErr<E>>
+// where
+//     E: Error + Default,
+// {
+//     Err(IntErr::<E>::Error(E::default()))
+// }
+
+#[allow(clippy::module_name_repetitions)]
+pub enum IntErr<E> {
+    Interrupt(Interrupt),
+    Error(E),
 }
 
-make_err!(Interrupt, "Interrupted");
+impl<E> IntErr<E> {
+    pub fn expect(self, msg: &'static str) -> IntErr<Never> {
+        match self {
+            Self::Interrupt(i) => IntErr::<Never>::Interrupt(i),
+            Self::Error(_) => panic!(msg),
+        }
+    }
+
+    pub fn unwrap(self) -> IntErr<Never> {
+        match self {
+            Self::Interrupt(i) => IntErr::<Never>::Interrupt(i),
+            Self::Error(_) => panic!("Unwrap"),
+        }
+    }
+}
+
+impl<E> From<Interrupt> for IntErr<E> {
+    fn from(i: Interrupt) -> Self {
+        Self::Interrupt(i)
+    }
+}
+
+impl<E: Error> From<IntErr<E>> for String {
+    fn from(e: IntErr<E>) -> String {
+        match e {
+            IntErr::Interrupt(i) => i.to_string(),
+            IntErr::Error(e) => e.to_string(),
+        }
+    }
+}
+
+impl From<std::fmt::Error> for IntErr<std::fmt::Error> {
+    fn from(e: std::fmt::Error) -> Self {
+        Self::Error(e)
+    }
+}
+
+impl<E: Error> From<IntErr<Never>> for IntErr<E> {
+    fn from(e: IntErr<Never>) -> Self {
+        match e {
+            IntErr::Error(never) => match never {},
+            IntErr::Interrupt(i) => Self::Interrupt(i),
+        }
+    }
+}
+
+impl<E: std::fmt::Debug> std::fmt::Debug for IntErr<E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        match self {
+            Self::Interrupt(i) => write!(f, "{}", i)?,
+            Self::Error(e) => write!(f, "{:?}", e)?,
+        }
+        Ok(())
+    }
+}
+
+impl From<IntErr<Never>> for String {
+    fn from(e: IntErr<Never>) -> Self {
+        match e {
+            IntErr::Error(never) => match never {},
+            IntErr::Interrupt(i) => i.to_string(),
+        }
+    }
+}
+
+impl Error for std::fmt::Error {}
+
+#[derive(Debug)]
+pub enum Interrupt {
+    Interrupt,
+}
+impl Display for Interrupt {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        match self {
+            Self::Interrupt => write!(f, "Interrupted"),
+        }
+    }
+}
+impl From<Interrupt> for String {
+    fn from(e: Interrupt) -> Self {
+        e.to_string()
+    }
+}
+impl Default for Interrupt {
+    fn default() -> Self {
+        Self::Interrupt
+    }
+}
+impl Interrupt {
+    pub fn err<T, E: From<Self>>() -> Result<Result<T, E>, Interrupt> {
+        Ok(Err(Self::default().into()))
+    }
+}
 
 make_err!(ValueTooLarge, "Value too large");
 make_err!(

@@ -1,12 +1,13 @@
+use crate::err::IntErr;
 use std::time::{Duration, Instant};
 
 pub trait Interrupt {
     fn should_interrupt(&self) -> bool;
 }
 
-pub fn test_int(int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
+pub fn test_int(int: &impl Interrupt) -> Result<(), IntErr<crate::err::Never>> {
     if int.should_interrupt() {
-        crate::err::err()
+        Err(crate::err::Interrupt::default().into())
     } else {
         Ok(())
     }

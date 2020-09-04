@@ -1,3 +1,4 @@
+use crate::err::{IntErr, Never};
 use crate::interrupt::Interrupt;
 use crate::num::bigrat::BigRat;
 use crate::num::{Base, FormattingStyle};
@@ -77,7 +78,7 @@ impl Complex {
         digit: u64,
         base: u8,
         int: &impl Interrupt,
-    ) -> Result<(), crate::err::Interrupt> {
+    ) -> Result<(), IntErr<Never>> {
         self.real.add_digit_in_base(digit, base, int)
     }
 
@@ -141,14 +142,7 @@ impl Complex {
         base: Base,
         use_parentheses_if_complex: bool,
         int: &impl Interrupt,
-    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
-        macro_rules! try_i {
-            ($e:expr) => {
-                if let Err(e) = $e {
-                    return Ok(Err(e));
-                }
-            };
-        }
+    ) -> Result<(), IntErr<Error>> {
         let style = if style == FormattingStyle::Auto {
             if exact {
                 FormattingStyle::ExactFloatWithFractionFallback
@@ -159,30 +153,30 @@ impl Complex {
             style
         };
         if self.imag == 0.into() {
-            try_i!(self.real.format(f, base, style, false, int)?);
-            return Ok(Ok(()));
+            self.real.format(f, base, style, false, int)?;
+            return Ok(());
         }
 
         if self.real == 0.into() {
-            try_i!(self.imag.format(f, base, style, true, int)?);
+            self.imag.format(f, base, style, true, int)?;
         } else {
             if use_parentheses_if_complex {
-                try_i!(write!(f, "("));
+                write!(f, "(")?;
             }
-            try_i!(self.real.format(f, base, style, false, int)?);
+            self.real.format(f, base, style, false, int)?;
             if self.imag > 0.into() {
-                try_i!(write!(f, " + "));
-                try_i!(self.imag.format(f, base, style, true, int)?);
+                write!(f, " + ")?;
+                self.imag.format(f, base, style, true, int)?;
             } else {
-                try_i!(write!(f, " - "));
-                try_i!((-self.imag.clone()).format(f, base, style, true, int)?);
+                write!(f, " - ")?;
+                (-self.imag.clone()).format(f, base, style, true, int)?;
             }
             if use_parentheses_if_complex {
-                try_i!(write!(f, ")"));
+                write!(f, ")")?;
             }
         }
 
-        Ok(Ok(()))
+        Ok(())
     }
 
     pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
@@ -285,7 +279,7 @@ impl Complex {
         Ok(Self::from(self.expect_real()?.exp(int)?))
     }
 
-    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
@@ -302,14 +296,14 @@ impl Complex {
         })
     }
 
-    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         Ok(Self {
             real: self.real.add(rhs.real, int)?,
             imag: self.imag.add(rhs.imag, int)?,
         })
     }
 
-    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         self.add(-rhs, int)
     }
 }

@@ -1,3 +1,4 @@
+use crate::err::IntErr;
 use std::fmt::{Display, Error, Formatter};
 
 mod bigrat;
@@ -99,7 +100,7 @@ impl Base {
 
 // Small formatter helper
 // TODO: Handle interrupts separately from other errors
-pub fn to_string<F: Fn(&mut Formatter) -> Result<Result<(), Error>, crate::err::Interrupt>>(
+pub fn to_string<F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>>(
     func: F,
 ) -> Result<String, crate::err::Interrupt> {
     //let mut interrupt_occurred = false;
@@ -123,7 +124,7 @@ pub fn to_string<F: Fn(&mut Formatter) -> Result<Result<(), Error>, crate::err::
         "{}",
         Fmt(|f| {
             match func(f) {
-                Ok(val) => val,
+                Ok(_) => Ok(()),
                 Err(_int) => {
                     //interrupt_occurred = true;
                     Err(Error::default())

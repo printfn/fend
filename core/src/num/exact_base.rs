@@ -1,3 +1,4 @@
+use crate::err::{IntErr, Never};
 use crate::interrupt::Interrupt;
 use crate::num::complex::Complex;
 use crate::num::{Base, FormattingStyle};
@@ -120,11 +121,9 @@ impl ExactBase {
         f: &mut Formatter,
         use_parentheses_if_complex: bool,
         int: &impl Interrupt,
-    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
+    ) -> Result<(), IntErr<Error>> {
         if !self.exact {
-            if let Err(e) = write!(f, "approx. ") {
-                return Ok(Err(e));
-            }
+            write!(f, "approx. ")?;
         }
         self.value.format(
             f,
@@ -254,7 +253,7 @@ impl ExactBase {
         self.apply_approx_fn(Complex::exp, int)
     }
 
-    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
@@ -263,7 +262,7 @@ impl ExactBase {
         })
     }
 
-    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         Ok(Self {
             value: self.value.add(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
@@ -272,7 +271,7 @@ impl ExactBase {
         })
     }
 
-    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         self.add(-rhs, int)
     }
 }

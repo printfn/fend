@@ -1,5 +1,6 @@
 use crate::err::{
-    err, DivideByZero, ExponentTooLarge, IntegerPowerError, ValueTooLarge, ZeroToThePowerOfZero,
+    DivideByZero, ExponentTooLarge, IntErr, IntegerPowerError, Never, ValueTooLarge,
+    ZeroToThePowerOfZero,
 };
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;
@@ -63,18 +64,19 @@ impl BigUint {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return err();
+                    return ValueTooLarge::err();
                 }
             }
             Large(v) => {
+                // todo use correct method to get actual length excluding leading zeroes
                 if v.len() == 1 {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return err();
+                        return ValueTooLarge::err();
                     }
                 } else {
-                    return err();
+                    return ValueTooLarge::err();
                 }
             }
         })
@@ -147,13 +149,11 @@ impl BigUint {
         }
     }
 
-    pub fn gcd(
-        mut a: Self,
-        mut b: Self,
-        int: &impl Interrupt,
-    ) -> Result<Self, crate::err::Interrupt> {
+    pub fn gcd(mut a: Self, mut b: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         while b >= 1.into() {
-            let r = a.rem(&b, int)?;
+            let r = a
+                .rem(&b, int)
+                .map_err(|e| e.expect("Unexpected division by zero"))?;
             a = b;
             b = r;
         }
@@ -165,17 +165,17 @@ impl BigUint {
         a: &Self,
         b: &Self,
         int: &I,
-    ) -> Result<Result<Self, IntegerPowerError>, crate::err::Interrupt> {
+    ) -> Result<Self, IntErr<IntegerPowerError>> {
         if a.is_zero() && b.is_zero() {
             return ZeroToThePowerOfZero::err();
         }
         if b.is_zero() {
-            return Ok(Ok(Self::from(1)));
+            return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
             return ExponentTooLarge::err();
         }
-        Ok(Ok(a.pow_internal(b.get(0), int)?))
+        Ok(a.pow_internal(b.get(0), int)?)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
@@ -190,7 +190,7 @@ impl BigUint {
             let mut guess = low_guess.clone().add(&high_guess);
             guess.rshift(int)?;
 
-            let res = Self::pow(&guess, n, int)??;
+            let res = Self::pow(&guess, n, int)?;
             match res.cmp(&self) {
                 Ordering::Equal => return Ok((guess, true)),
                 Ordering::Greater => high_guess = guess,
@@ -204,7 +204,7 @@ impl BigUint {
         &self,
         mut exponent: u64,
         int: &I,
-    ) -> Result<Self, crate::err::Interrupt> {
+    ) -> Result<Self, IntErr<Never>> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
@@ -218,7 +218,7 @@ impl BigUint {
         Ok(result)
     }
 
-    fn lshift(&mut self, int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
+    fn lshift(&mut self, int: &impl Interrupt) -> Result<(), IntErr<Never>> {
         match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
@@ -244,7 +244,7 @@ impl BigUint {
         Ok(())
     }
 
-    fn rshift(&mut self, int: &impl Interrupt) -> Result<(), crate::err::Interrupt> {
+    fn rshift(&mut self, int: &impl Interrupt) -> Result<(), IntErr<Never>> {
         match self {
             Small(n) => *n >>= 1,
             Large(value) => {
@@ -267,33 +267,33 @@ impl BigUint {
         &self,
         other: &Self,
         int: &impl Interrupt,
-    ) -> Result<Result<(Self, Self), DivideByZero>, crate::err::Interrupt> {
+    ) -> Result<(Self, Self), IntErr<DivideByZero>> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
-                return Ok(Ok((Small(div_res), Small(mod_res))));
+                return Ok((Small(div_res), Small(mod_res)));
             }
-            return err();
+            return DivideByZero::ierr();
         }
         if other.is_zero() {
-            return err();
+            return DivideByZero::ierr();
         }
         if other == &Self::from(1) {
-            return Ok(Ok((self.clone(), Self::from(0))));
+            return Ok((self.clone(), Self::from(0)));
         }
         if self.is_zero() {
-            return Ok(Ok((Self::from(0), Self::from(0))));
+            return Ok((Self::from(0), Self::from(0)));
         }
         if self < other {
-            return Ok(Ok((Self::from(0), self.clone())));
+            return Ok((Self::from(0), self.clone()));
         }
         if self == other {
-            return Ok(Ok((Self::from(1), Self::from(0))));
+            return Ok((Self::from(1), Self::from(0)));
         }
         if other == &Self::from(2) {
             let mut div_result = self.clone();
             div_result.rshift(int)?;
             let modulo = self.get(0) & 1;
-            return Ok(Ok((div_result, Self::from(modulo))));
+            return Ok((div_result, Self::from(modulo)));
         }
         // binary long division
         let mut q = Self::from(0);
@@ -310,15 +310,11 @@ impl BigUint {
                 }
             }
         }
-        Ok(Ok((q, r)))
+        Ok((q, r))
     }
 
     /// computes self *= other
-    fn mul_internal(
-        &mut self,
-        other: &Self,
-        int: &impl Interrupt,
-    ) -> Result<(), crate::err::Interrupt> {
+    fn mul_internal(&mut self, other: &Self, int: &impl Interrupt) -> Result<(), IntErr<Never>> {
         if self.is_zero() || other.is_zero() {
             *self = Self::from(0);
             return Ok(());
@@ -360,27 +356,19 @@ impl BigUint {
         base: Base,
         write_base_prefix: bool,
         int: &impl Interrupt,
-    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
-        macro_rules! try_i {
-            ($e:expr) => {
-                if let Err(e) = $e {
-                    return Ok(Err(e));
-                }
-            };
-        }
-
+    ) -> Result<(), IntErr<Error>> {
         if write_base_prefix {
-            try_i!(base.write_prefix(f));
+            base.write_prefix(f)?;
         }
 
         if self.is_zero() {
-            try_i!(write!(f, "0"));
-            return Ok(Ok(()));
+            write!(f, "0")?;
+            return Ok(());
         }
 
         let mut num = self.clone();
         if num.value_len() == 1 && base.base_as_u8() == 10 {
-            try_i!(write!(f, "{}", num.get(0)));
+            write!(f, "{}", num.get(0))?;
         } else {
             let mut output = String::new();
             let base_as_u128: u128 = base.base_as_u8().into();
@@ -400,8 +388,8 @@ impl BigUint {
                     .divmod(
                         &Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]),
                         int,
-                    )?
-                    .expect("Division by zero is not allowed");
+                    )
+                    .map_err(|e| e.expect("Division by zero is not allowed"))?;
                 let mut digit_group_value =
                     u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
                 for _ in 0..rounds {
@@ -413,9 +401,9 @@ impl BigUint {
                 num = divmod_res.0;
             }
             output = output.trim_start_matches('0').to_string();
-            try_i!(write!(f, "{}", output));
+            write!(f, "{}", output)?;
         }
-        Ok(Ok(()))
+        Ok(())
     }
 
     // Note: 0! = 1, 1! = 1
@@ -429,11 +417,7 @@ impl BigUint {
         Ok(res)
     }
 
-    pub fn mul(
-        mut self,
-        other: &Self,
-        int: &impl Interrupt,
-    ) -> Result<Self, crate::err::Interrupt> {
+    pub fn mul(mut self, other: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         if let (Small(a), Small(b)) = (&self, &other) {
             if let Some(res) = a.checked_mul(*b) {
                 return Ok(Self::from(res));
@@ -443,12 +427,12 @@ impl BigUint {
         Ok(self)
     }
 
-    fn rem(&self, other: &Self, int: &impl Interrupt) -> Result<BigUint, crate::err::Interrupt> {
-        Ok(self.divmod(other, int)?.unwrap().1)
+    fn rem(&self, other: &Self, int: &impl Interrupt) -> Result<BigUint, IntErr<DivideByZero>> {
+        Ok(self.divmod(other, int)?.1)
     }
 
-    pub fn div(self, other: &Self, int: &impl Interrupt) -> Result<BigUint, crate::err::Interrupt> {
-        Ok(self.divmod(other, int)?.unwrap().0)
+    pub fn div(self, other: &Self, int: &impl Interrupt) -> Result<BigUint, IntErr<DivideByZero>> {
+        Ok(self.divmod(other, int)?.0)
     }
 
     pub fn add(mut self, other: &Self) -> Self {

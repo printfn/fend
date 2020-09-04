@@ -1,3 +1,4 @@
+use crate::err::{IntErr, Never};
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::exact_base::ExactBase;
 use crate::num::{Base, FormattingStyle};
@@ -432,20 +433,9 @@ impl UnitValue {
         self.apply_fn(ExactBase::exp, true, int)
     }
 
-    pub fn format(
-        &self,
-        f: &mut Formatter,
-        int: &impl Interrupt,
-    ) -> Result<Result<(), Error>, crate::err::Interrupt> {
-        macro_rules! try_i {
-            ($e:expr) => {
-                if let Err(e) = $e {
-                    return Ok(Err(e));
-                }
-            };
-        }
+    pub fn format(&self, f: &mut Formatter, int: &impl Interrupt) -> Result<(), IntErr<Error>> {
         let use_parentheses = !self.unit.components.is_empty();
-        try_i!(self.value.format(f, use_parentheses, int)?);
+        self.value.format(f, use_parentheses, int)?;
         if !self.unit.components.is_empty() {
             let mut negative_components = vec![];
             let mut first = true;
@@ -455,39 +445,39 @@ impl UnitValue {
                     negative_components.push(unit_exponent);
                 } else {
                     if !first || unit_exponent.unit.spacing {
-                        try_i!(write!(f, " "));
+                        write!(f, " ")?;
                     }
                     first = false;
-                    try_i!(write!(f, "{}", unit_exponent.unit.singular_name));
+                    write!(f, "{}", unit_exponent.unit.singular_name)?;
                     if unit_exponent.exponent != 1.into() {
-                        try_i!(write!(f, "^"));
-                        try_i!(unit_exponent.exponent.format(f, true, int)?);
+                        write!(f, "^")?;
+                        unit_exponent.exponent.format(f, true, int)?;
                     }
                     positive_exponents = true;
                 }
             }
             if !negative_components.is_empty() {
                 if positive_exponents {
-                    try_i!(write!(f, " /"));
+                    write!(f, " /")?;
                 }
                 for unit_exponent in negative_components {
-                    try_i!(write!(f, " {}", unit_exponent.unit.singular_name));
+                    write!(f, " {}", unit_exponent.unit.singular_name)?;
                     let exp = if positive_exponents {
                         -unit_exponent.exponent.clone()
                     } else {
                         unit_exponent.exponent.clone()
                     };
                     if exp != ExactBase::from(1) {
-                        try_i!(write!(f, "^"));
-                        try_i!(exp.format(f, true, int)?);
+                        write!(f, "^")?;
+                        exp.format(f, true, int)?;
                     }
                 }
             }
         }
-        Ok(Ok(()))
+        Ok(())
     }
 
-    pub fn mul(self, rhs: Self, int: &impl Interrupt) -> Result<Self, crate::err::Interrupt> {
+    pub fn mul(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         let components = [self.unit.components, rhs.unit.components].concat();
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,
