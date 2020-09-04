@@ -238,7 +238,7 @@ impl BigRat {
             if rhs.sign == Sign::Negative && self.num < rhs.num {
                 Self {
                     sign: Sign::Negative,
-                    num: rhs.num - self.num,
+                    num: rhs.num.sub(&self.num),
                     den: self.den,
                 }
             } else {
@@ -247,7 +247,7 @@ impl BigRat {
                     num: if rhs.sign == Sign::Positive {
                         self.num.add(&rhs.num)
                     } else {
-                        self.num - rhs.num
+                        self.num.sub(&rhs.num)
                     },
                     den: self.den,
                 }
@@ -261,7 +261,7 @@ impl BigRat {
             if rhs.sign == Sign::Negative && a < b {
                 Self {
                     sign: Sign::Negative,
-                    num: b - a,
+                    num: b.sub(&a),
                     den: new_denominator,
                 }
             } else {
@@ -270,7 +270,7 @@ impl BigRat {
                     num: if rhs.sign == Sign::Positive {
                         a.add(&b)
                     } else {
-                        a - b
+                        a.sub(&b)
                     },
                     den: new_denominator,
                 }
@@ -495,7 +495,7 @@ impl BigRat {
                 // next_numerator = base * numerator - digit * denominator
                 let bnum = num.mul(base, int)?;
                 let digit = bnum.clone().div(&denominator, int)?;
-                let next_num = bnum - digit.clone().mul(&denominator, int)?;
+                let next_num = bnum.sub(&digit.clone().mul(&denominator, int)?);
                 Ok((next_num, digit))
             };
         let fold_digits =

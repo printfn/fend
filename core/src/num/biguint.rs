@@ -5,10 +5,7 @@ use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
-use std::{
-    hash::{Hash, Hasher},
-    ops::Sub,
-};
+use std::hash::{Hash, Hasher};
 
 #[derive(Clone)]
 pub enum BigUint {
@@ -188,7 +185,7 @@ impl BigUint {
         }
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
-        while high_guess.clone() - low_guess.clone() > 1.into() {
+        while high_guess.clone().sub(&low_guess.clone()) > 1.into() {
             test_int(int)?;
             let mut guess = low_guess.clone().add(&high_guess);
             guess.rshift(int)?;
@@ -308,7 +305,7 @@ impl BigUint {
                 let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
                 r.set(0, r.get(0) | bit_of_self);
                 if &r >= other {
-                    r = r - other.clone();
+                    r = r.sub(other);
                     q.set(i, q.get(i) | (1 << j));
                 }
             }
@@ -427,7 +424,7 @@ impl BigUint {
         while self > 1.into() {
             test_int(int)?;
             res = res.mul(&self, int)?;
-            self = self - 1.into();
+            self = self.sub(&1.into());
         }
         Ok(res)
     }
@@ -457,6 +454,38 @@ impl BigUint {
     pub fn add(mut self, other: &Self) -> Self {
         self.add_assign_internal(other, 1, 0);
         self
+    }
+
+    pub fn sub(self, other: &Self) -> Self {
+        if let (Small(a), Small(b)) = (&self, &other) {
+            return Self::from(a - b);
+        }
+        if &self < other {
+            unreachable!("Number would be less than 0");
+        }
+        if &self == other {
+            return Self::from(0);
+        }
+        if other == &0.into() {
+            return self;
+        }
+        let mut carry = 0; // 0 or 1
+        let mut res = vec![];
+        for i in 0..max(self.value_len(), other.value_len()) {
+            let a = self.get(i);
+            let b = other.get(i);
+            if !(b == std::u64::MAX && carry == 1) && a >= b + carry {
+                res.push(a - b - carry);
+                carry = 0;
+            } else {
+                let next_digit =
+                    u128::from(a) + ((1_u128) << 64) - u128::from(b) - u128::from(carry);
+                res.push(truncate(next_digit));
+                carry = 1;
+            }
+        }
+        assert_eq!(carry, 0);
+        Large(res)
     }
 }
 
@@ -518,42 +547,6 @@ impl Hash for BigUint {
 impl From<u64> for BigUint {
     fn from(val: u64) -> Self {
         Small(val)
-    }
-}
-
-impl Sub for BigUint {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        if let (Small(a), Small(b)) = (&self, &other) {
-            return Self::from(a - b);
-        }
-        if self < other {
-            unreachable!("Number would be less than 0");
-        }
-        if self == other {
-            return Self::from(0);
-        }
-        if other == 0.into() {
-            return self;
-        }
-        let mut carry = 0; // 0 or 1
-        let mut res = vec![];
-        for i in 0..max(self.value_len(), other.value_len()) {
-            let a = self.get(i);
-            let b = other.get(i);
-            if !(b == std::u64::MAX && carry == 1) && a >= b + carry {
-                res.push(a - b - carry);
-                carry = 0;
-            } else {
-                let next_digit =
-                    u128::from(a) + ((1_u128) << 64) - u128::from(b) - u128::from(carry);
-                res.push(truncate(next_digit));
-                carry = 1;
-            }
-        }
-        assert_eq!(carry, 0);
-        Large(res)
     }
 }
 
@@ -632,8 +625,8 @@ mod tests {
 
     #[test]
     fn test_sub() {
-        assert_eq!(BigUint::from(5) - BigUint::from(3), BigUint::from(2));
-        assert_eq!(BigUint::from(0) - BigUint::from(0), BigUint::from(0));
+        assert_eq!(BigUint::from(5).sub(&BigUint::from(3)), BigUint::from(2));
+        assert_eq!(BigUint::from(0).sub(&BigUint::from(0)), BigUint::from(0));
     }
 
     #[test]
