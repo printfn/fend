@@ -64,7 +64,7 @@ fn test_pi() {
 
 #[test]
 fn test_div_by_zero() {
-    let msg = "Attempt to divide by zero";
+    let msg = "Division by zero";
     assert_err_msg("1/0", msg);
     assert_err_msg("0/0", msg);
     assert_err_msg("-1/0", msg);
