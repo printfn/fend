@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Never};
+use crate::err::{DivideByZero, IntErr, Never};
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::biguint::BigUint;
 use crate::num::{Base, FormattingStyle};
@@ -72,10 +72,10 @@ impl PartialEq for BigRat {
 impl Eq for BigRat {}
 
 impl BigRat {
-    pub fn try_as_usize(mut self, int: &impl Interrupt) -> Result<usize, String> {
+    pub fn try_as_usize(mut self, int: &impl Interrupt) -> Result<usize, IntErr<String>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err("Cannot convert fraction to integer".to_string());
+            return Err("Cannot convert fraction to integer".to_string())?;
         }
         Ok(self.num.try_as_usize()?)
     }
@@ -123,18 +123,18 @@ impl BigRat {
     }
 
     // asin, acos and atan only work for values between -1 and 1
-    pub fn asin(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn asin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err("Value must be between -1 and 1".to_string());
+            return Err("Value must be between -1 and 1".to_string())?;
         }
         Ok(Self::from_f64(f64::asin(self.into_f64(int)?)))
     }
 
-    pub fn acos(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn acos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err("Value must be between -1 and 1".to_string());
+            return Err("Value must be between -1 and 1".to_string())?;
         }
         Ok(Self::from_f64(f64::acos(self.into_f64(int)?)))
     }
@@ -161,40 +161,40 @@ impl BigRat {
     }
 
     // value must not be less than 1
-    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         if self < 1.into() {
-            return Err("Value must not be less than 1".to_string());
+            return Err("Value must not be less than 1".to_string())?;
         }
         Ok(Self::from_f64(f64::acosh(self.into_f64(int)?)))
     }
 
     // value must be between -1 and 1.
-    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
-            return Err("Value must be between -1 and 1".to_string());
+            return Err("Value must be between -1 and 1".to_string())?;
         }
         Ok(Self::from_f64(f64::atanh(self.into_f64(int)?)))
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn ln(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         if self <= 0.into() {
-            return Err("Value must be greater than 0".to_string());
+            return Err("Value must be greater than 0".to_string())?;
         }
         Ok(Self::from_f64(f64::ln(self.into_f64(int)?)))
     }
 
-    pub fn log2(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn log2(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         if self <= 0.into() {
-            return Err("Value must be greater than 0".to_string());
+            return Err("Value must be greater than 0".to_string())?;
         }
         Ok(Self::from_f64(f64::log2(self.into_f64(int)?)))
     }
 
-    pub fn log10(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn log10(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         if self <= 0.into() {
-            return Err("Value must be greater than 0".to_string());
+            return Err("Value must be greater than 0".to_string())?;
         }
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?)))
     }
@@ -203,13 +203,13 @@ impl BigRat {
         Ok(Self::from_f64(f64::exp(self.into_f64(int)?)))
     }
 
-    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err("Factorial is only supported for integers".to_string());
+            return Err("Factorial is only supported for integers".to_string())?;
         }
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err("Factorial is only supported for positive integers".to_string());
+            return Err("Factorial is only supported for positive integers".to_string())?;
         }
         Ok(Self {
             sign: Sign::Positive,
@@ -294,9 +294,9 @@ impl BigRat {
         Ok(self)
     }
 
-    pub fn div(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn div(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<DivideByZero>> {
         if rhs.num == 0.into() {
-            return Err("Attempt to divide by zero".to_string());
+            return DivideByZero::err();
         }
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
@@ -617,7 +617,11 @@ impl BigRat {
         Ok((lam, mu, collected_res))
     }
 
-    pub fn pow(mut self, mut rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
+    pub fn pow(
+        mut self,
+        mut rhs: Self,
+        int: &impl Interrupt,
+    ) -> Result<(Self, bool), IntErr<String>> {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if rhs.sign == Sign::Negative {
@@ -651,7 +655,7 @@ impl BigRat {
         val: &Self,
         n: &Self,
         int: &impl Interrupt,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, IntErr<String>> {
         let mut high_bound = low_bound.clone().add(1.into(), int)?;
         for _ in 0..30 {
             let guess = low_bound
@@ -669,13 +673,13 @@ impl BigRat {
 
     // the boolean indicates whether or not the result is exact
     // n must be an integer
-    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
+    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
         if self.sign == Sign::Negative {
-            return Err("Can't compute roots of negative numbers".to_string());
+            return Err("Can't compute roots of negative numbers".to_string())?;
         }
         let n = n.clone().simplify(int)?;
         if n.den != 1.into() || n.sign == Sign::Negative {
-            return Err("Can't compute non-integer or negative roots".to_string());
+            return Err("Can't compute non-integer or negative roots".to_string())?;
         }
         let n = &n.num;
         if self.num == 0.into() {

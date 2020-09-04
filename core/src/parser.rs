@@ -1,4 +1,5 @@
 use crate::ast::Expr;
+use crate::err::IntErr;
 use crate::interrupt::Interrupt;
 use crate::lexer::{Symbol, Token};
 
@@ -55,11 +56,11 @@ base_prefix = ['0x' '0o' '0b' (A:integer '#')]
 
 */
 
-type ParseResult<'a, T> = Result<(T, &'a [Token]), String>;
+type ParseResult<'a, T> = Result<(T, &'a [Token]), IntErr<String>>;
 
 fn parse_token(input: &[Token]) -> ParseResult<Token> {
     if input.is_empty() {
-        Err("Expected a token".to_string())
+        Err("Expected a token".to_string())?
     } else {
         Ok((input[0].clone(), &input[1..]))
     }
@@ -71,27 +72,27 @@ fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<()> {
         if sym == symbol {
             Ok(((), remaining))
         } else {
-            Err(format!("Found '{}' while expecting '{}'", sym, symbol))
+            Err(format!("Found '{}' while expecting '{}'", sym, symbol))?
         }
     } else {
         Err(format!(
             "Found an invalid token while expecting '{}'",
             symbol
-        ))
+        ))?
     }
 }
 
 fn parse_number(input: &[Token]) -> ParseResult<Expr> {
     match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
-        _ => Err("Expected a number".to_string()),
+        _ => Err("Expected a number".to_string())?,
     }
 }
 
 fn parse_ident(input: &[Token]) -> ParseResult<Expr> {
     match parse_token(input)? {
         (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
-        _ => Err("Expected an identifier".to_string()),
+        _ => Err("Expected an identifier".to_string())?,
     }
 }
 
@@ -110,7 +111,7 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<Expr> {
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
         Token::Symbol(..) => {
-            Err("Expected a number, an identifier or an open parenthesis".to_string())
+            Err("Expected a number, an identifier or an open parenthesis".to_string())?
         }
     }
 }
@@ -141,7 +142,7 @@ fn parse_power_cont(mut input: &[Token]) -> ParseResult<Expr> {
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
         input = remaining;
     } else {
-        return Err("Expected ^ or **".to_string());
+        return Err("Expected ^ or **".to_string())?;
     }
     let (b, input) = parse_power(input, true)?;
     Ok((b, input))
@@ -169,13 +170,13 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, Expr>
             | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
                 // this may later be parsed as a compound fraction, e.g. 1 2/3
                 // or as an addition, e.g. 6 feet 1 inch
-                return Err("Error".to_string());
+                return Err("Error".to_string())?;
             }
             (Expr::Num(_), Expr::Pow(a, _))
             | (Expr::UnaryMinus(_), Expr::Pow(a, _))
             | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
                 if let Expr::Num(_) = **a {
-                    return Err("Error".to_string());
+                    return Err("Error".to_string())?;
                 }
                 Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
             }
@@ -294,11 +295,11 @@ pub fn parse_expression(input: &[Token]) -> ParseResult<Expr> {
     parse_arrow_conversion(input)
 }
 
-pub fn parse_string(input: &str, int: &impl Interrupt) -> Result<Expr, String> {
+pub fn parse_string(input: &str, int: &impl Interrupt) -> Result<Expr, IntErr<String>> {
     let tokens = crate::lexer::lex(input, int)?;
     let (res, remaining) = parse_expression(tokens.as_slice())?;
     if !remaining.is_empty() {
-        return Err(format!("Unexpected input found: '{}'", input));
+        return Err(format!("Unexpected input found: '{}'", input))?;
     }
     Ok(res)
 }

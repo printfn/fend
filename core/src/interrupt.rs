@@ -45,6 +45,6 @@ mod tests {
         };
         let ctx = crate::Context::new();
         let res = crate::eval::evaluate_to_value("10^1000000", &ctx.scope, &int);
-        assert_eq!(res.unwrap_err(), "Interrupted".to_string());
+        assert_eq!(res.unwrap_err().unwrap_err(), "Interrupted".to_string());
     }
 }

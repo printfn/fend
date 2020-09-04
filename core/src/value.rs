@@ -12,10 +12,10 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn expect_num(&self) -> Result<Number, String> {
+    pub fn expect_num(&self) -> Result<Number, IntErr<String>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat.clone()),
-            _ => Err("Expected a number".to_string()),
+            _ => Err("Expected a number".to_string())?,
         }
     }
 
@@ -25,7 +25,7 @@ impl Value {
         allow_multiplication: bool,
         force_multiplication: bool,
         int: &impl Interrupt,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, IntErr<String>> {
         Ok(Self::Num(match self {
             Self::Num(n) => {
                 if let Self::Dp = other {
@@ -40,7 +40,7 @@ impl Value {
                     return Err(format!(
                         "{} is not a function",
                         crate::num::to_string(|f| self.format(f, int))?
-                    ));
+                    ))?;
                 }
             }
             Self::Func(name) => {
@@ -48,7 +48,7 @@ impl Value {
                     return Err(format!(
                         "Cannot apply function '{}' in this context",
                         crate::num::to_string(|f| self.format(f, int))?
-                    ));
+                    ))?;
                 }
                 if name == "sqrt" {
                     other.expect_num()?.root_n(&2.into(), int)?
@@ -91,14 +91,14 @@ impl Value {
                 } else if name == "exp" {
                     other.expect_num()?.exp(int)?
                 } else {
-                    return Err(format!("Unknown function '{}'", name));
+                    return Err(format!("Unknown function '{}'", name))?;
                 }
             }
             _ => {
                 return Err(format!(
                     "'{}' is not a function or a number",
                     crate::num::to_string(|f| self.format(f, int))?
-                ));
+                ))?;
             }
         }))
     }

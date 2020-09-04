@@ -13,9 +13,9 @@ pub struct Complex {
 }
 
 impl Complex {
-    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, String> {
+    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, IntErr<String>> {
         if self.imag != 0.into() {
-            return Err("Cannot convert complex number to integer".to_string());
+            return Err("Cannot convert complex number to integer".to_string())?;
         }
         Ok(self.real.try_as_usize(int)?)
     }
@@ -27,9 +27,9 @@ impl Complex {
         }
     }
 
-    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         if self.imag != 0.into() {
-            return Err("Factorial is not supported for complex numbers".to_string());
+            return Err("Factorial is not supported for complex numbers".to_string())?;
         }
         Ok(Self {
             real: self.real.factorial(int)?,
@@ -37,7 +37,7 @@ impl Complex {
         })
     }
 
-    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;
         let v = self.imag;
@@ -57,9 +57,9 @@ impl Complex {
         )?)
     }
 
-    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
+    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
-            return Err("Exponentiation is currently unsupported for complex numbers".to_string());
+            return Err("Exponentiation is currently unsupported for complex numbers".to_string())?;
         }
         let (real, exact) = self.real.pow(rhs.real, int)?;
         Ok((
@@ -89,7 +89,7 @@ impl Complex {
         }
     }
 
-    pub fn abs(self, int: &impl Interrupt) -> Result<(Self, bool), String> {
+    pub fn abs(self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
         Ok(if self.imag == 0.into() {
             if self.real < 0.into() {
                 (
@@ -179,9 +179,9 @@ impl Complex {
         Ok(())
     }
 
-    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
+    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
         if self.imag != 0.into() || n.imag != 0.into() {
-            return Err("Roots are currently unsupported for complex numbers".to_string());
+            return Err("Roots are currently unsupported for complex numbers".to_string())?;
         }
         let (real_root, real_root_exact) = self.real.root_n(&n.real, int)?;
         Ok((
@@ -207,75 +207,75 @@ impl Complex {
         }
     }
 
-    fn expect_real(self) -> Result<BigRat, String> {
+    fn expect_real(self) -> Result<BigRat, IntErr<String>> {
         if self.imag == 0.into() {
             Ok(self.real)
         } else {
-            Err("Expected a real number".to_string())
+            Err("Expected a real number".to_string())?
         }
     }
 
-    pub fn sin(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn sin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.sin(int)?))
     }
 
-    pub fn cos(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn cos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.cos(int)?))
     }
 
-    pub fn tan(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn tan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.tan(int)?))
     }
 
-    pub fn asin(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn asin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.asin(int)?))
     }
 
-    pub fn acos(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn acos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.acos(int)?))
     }
 
-    pub fn atan(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn atan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.atan(int)?))
     }
 
-    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.sinh(int)?))
     }
 
-    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.cosh(int)?))
     }
 
-    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.tanh(int)?))
     }
 
-    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.asinh(int)?))
     }
 
-    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.acosh(int)?))
     }
 
-    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.atanh(int)?))
     }
 
-    pub fn ln(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn ln(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.ln(int)?))
     }
 
-    pub fn log2(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn log2(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.log2(int)?))
     }
 
-    pub fn log10(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn log10(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
-    pub fn exp(self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn exp(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
         Ok(Self::from(self.expect_real()?.exp(int)?))
     }
 

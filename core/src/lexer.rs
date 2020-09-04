@@ -1,3 +1,4 @@
+use crate::err::IntErr;
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::{Base, Number};
 use std::{
@@ -43,7 +44,7 @@ impl Display for Symbol {
     }
 }
 
-fn parse_char(input: &str) -> Result<(char, &str), String> {
+fn parse_char(input: &str) -> Result<(char, &str), IntErr<String>> {
     let mut char_indices = input.char_indices();
     if let Some((_, ch)) = char_indices.next() {
         if let Some((idx, _)) = char_indices.next() {
@@ -54,36 +55,36 @@ fn parse_char(input: &str) -> Result<(char, &str), String> {
             Ok((ch, empty))
         }
     } else {
-        Err("Expected a character".to_string())
+        Err("Expected a character".to_string())?
     }
 }
 
-fn consume_char(input: &mut &str) -> Result<char, String> {
+fn consume_char(input: &mut &str) -> Result<char, IntErr<String>> {
     match parse_char(input) {
         Ok((ch, remaining_input)) => {
             *input = remaining_input;
             Ok(ch)
         }
-        Err(_) => Err("Expected a character".to_string()),
+        Err(_) => Err("Expected a character".to_string())?,
     }
 }
 
-fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), String> {
+fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), IntErr<String>> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
     if let Some(digit) = possible_digit.and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok()) {
         Ok((digit, input))
     } else {
-        Err(format!("Expected a digit, found '{}'", ch))
+        Err(format!("Expected a digit, found '{}'", ch))?
     }
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), String> {
+fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), IntErr<String>> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == ch {
         Ok(((), input))
     } else {
-        Err(format!("Expected '{}', found '{}'", parsed_ch, ch))
+        Err(format!("Expected '{}', found '{}'", parsed_ch, ch))?
     }
 }
 
@@ -94,8 +95,8 @@ fn parse_integer<'a>(
     allow_digit_separator: bool,
     allow_leading_zeroes: bool,
     base: Base,
-    process_digit: &mut impl FnMut(u8) -> Result<(), String>,
-) -> Result<((), &'a str), String> {
+    process_digit: &mut impl FnMut(u8) -> Result<(), IntErr<String>>,
+) -> Result<((), &'a str), IntErr<String>> {
     let (digit, mut input) = parse_ascii_digit(input, base)?;
     process_digit(digit)?;
     let leading_zero = digit == 0;
@@ -105,7 +106,7 @@ fn parse_integer<'a>(
             input = remaining;
             parsed_digit_separator = true;
             if !allow_digit_separator {
-                return Err("Digit separators are not allowed".to_string());
+                return Err("Digit separators are not allowed".to_string())?;
             }
         } else {
             parsed_digit_separator = false;
@@ -113,13 +114,13 @@ fn parse_integer<'a>(
         match parse_ascii_digit(input, base) {
             Err(_) => {
                 if parsed_digit_separator {
-                    return Err("Digit separators can only occur between digits".to_string());
+                    return Err("Digit separators can only occur between digits".to_string())?;
                 }
                 break;
             }
             Ok((digit, next_input)) => {
                 if leading_zero && !allow_leading_zeroes {
-                    return Err("Integer literals cannot have leading zeroes".to_string());
+                    return Err("Integer literals cannot have leading zeroes".to_string())?;
                 }
                 process_digit(digit)?;
                 input = next_input;
@@ -129,7 +130,7 @@ fn parse_integer<'a>(
     Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> Result<(Base, &str), String> {
+fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String>> {
     // 0x -> 16
     // 0o -> 8
     // 0b -> 2
@@ -145,7 +146,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), String> {
                 _ => {
                     return Err(
                         "Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string()
-                    )
+                    )?
                 }
             },
             input,
@@ -154,16 +155,16 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), String> {
         let mut custom_base: u8 = 0;
         let (_, input) = parse_integer(input, false, false, Base::Decimal, &mut |digit| {
             if custom_base > 3 {
-                return Err("Base cannot be larger than 36".to_string());
+                return Err("Base cannot be larger than 36".to_string())?;
             }
             custom_base = 10 * custom_base + digit;
             if custom_base > 36 {
-                return Err("Base cannot be larger than 36".to_string());
+                return Err("Base cannot be larger than 36".to_string())?;
             }
             Ok(())
         })?;
         if custom_base < 2 {
-            return Err("Base must be at least 2".to_string());
+            return Err("Base must be at least 2".to_string())?;
         }
         let (_, input) = parse_fixed_char(input, '#')?;
         Ok((Base::Custom(custom_base), input))
@@ -175,7 +176,7 @@ fn parse_basic_number<'a>(
     base: Base,
     allow_zero: bool,
     int: &impl Interrupt,
-) -> Result<(Number, &'a str), String> {
+) -> Result<(Number, &'a str), IntErr<String>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(
@@ -203,7 +204,7 @@ fn parse_basic_number<'a>(
     }
 
     if !allow_zero && res.is_zero() {
-        return Err("Invalid number: 0".to_string());
+        return Err("Invalid number: 0".to_string())?;
     }
 
     // parse optional exponent, but only for base 10 and below
@@ -236,7 +237,7 @@ fn parse_basic_number<'a>(
 fn parse_number_internal<'a>(
     mut input: &'a str,
     int: &impl Interrupt,
-) -> Result<(Number, &'a str), String> {
+) -> Result<(Number, &'a str), IntErr<String>> {
     let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
         input = remaining;
         base
@@ -249,7 +250,7 @@ fn parse_number_internal<'a>(
     Ok((res, input))
 }
 
-fn parse_number(input: &mut &str, int: &impl Interrupt) -> Result<Token, String> {
+fn parse_number(input: &mut &str, int: &impl Interrupt) -> Result<Token, IntErr<String>> {
     let (num, remaining_input) = parse_number_internal(input, int)?;
     *input = remaining_input;
     Ok(Token::Num(num))
@@ -268,7 +269,7 @@ fn is_valid_in_ident(ch: char, first: bool) -> bool {
     ch.is_alphabetic() || (!first && ".0123456789".contains(ch))
 }
 
-fn parse_ident(input: &mut &str) -> Result<Token, String> {
+fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String>> {
     let first_char = consume_char(input)?;
     if !is_valid_in_ident(first_char, true) {
         if is_valid_in_ident_char(first_char) {
@@ -277,7 +278,7 @@ fn parse_ident(input: &mut &str) -> Result<Token, String> {
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
             first_char
-        ));
+        ))?;
     }
     let mut ident = first_char.to_string();
     while let Some(next_char) = input.chars().next() {
@@ -293,7 +294,7 @@ fn parse_ident(input: &mut &str) -> Result<Token, String> {
     })
 }
 
-pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, String> {
+pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, IntErr<String>> {
     let mut res = vec![];
     loop {
         test_int(int)?;
@@ -329,7 +330,7 @@ pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, String> 
                         }
                         '/' => res.push(Token::Symbol(Symbol::Div)),
                         '^' => res.push(Token::Symbol(Symbol::Pow)),
-                        _ => return Err(format!("Unexpected character '{}'", ch)),
+                        _ => return Err(format!("Unexpected character '{}'", ch))?,
                     }
                 }
             }

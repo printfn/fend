@@ -35,6 +35,14 @@ macro_rules! make_err {
                 c.to_string()
             }
         }
+        impl From<IntErr<$i>> for IntErr<String> {
+            fn from(v: IntErr<$i>) -> Self {
+                match v {
+                    IntErr::<$i>::Interrupt(i) => Self::Interrupt(i),
+                    IntErr::<$i>::Error(e) => Self::Error(e.to_string()),
+                }
+            }
+        }
         impl Error for $i {}
     };
 
@@ -52,6 +60,19 @@ macro_rules! make_err {
         impl From<$i> for String {
             fn from(e: $i) -> Self {
                 e.to_string()
+            }
+        }
+        impl From<$i> for IntErr<String> {
+            fn from(v: $i) -> Self {
+                Self::Error(v.to_string())
+            }
+        }
+        impl From<IntErr<$i>> for IntErr<String> {
+            fn from(v: IntErr<$i>) -> Self {
+                match v {
+                    IntErr::<$i>::Interrupt(i) => Self::Interrupt(i),
+                    IntErr::<$i>::Error(e) => Self::Error(e.to_string()),
+                }
             }
         }
         impl Default for $i {
@@ -90,6 +111,13 @@ impl<E> IntErr<E> {
             Self::Error(_) => panic!("Unwrap"),
         }
     }
+
+    pub fn unwrap_err(self) -> E {
+        match self {
+            Self::Interrupt(_) => panic!("Attempt to call unwrap_err on an interrupt"),
+            Self::Error(e) => e,
+        }
+    }
 }
 
 impl<E> From<Interrupt> for IntErr<E> {
@@ -98,17 +126,8 @@ impl<E> From<Interrupt> for IntErr<E> {
     }
 }
 
-impl<E: Error> From<IntErr<E>> for String {
-    fn from(e: IntErr<E>) -> String {
-        match e {
-            IntErr::Interrupt(i) => i.to_string(),
-            IntErr::Error(e) => e.to_string(),
-        }
-    }
-}
-
-impl From<std::fmt::Error> for IntErr<std::fmt::Error> {
-    fn from(e: std::fmt::Error) -> Self {
+impl<E: Error> From<E> for IntErr<E> {
+    fn from(e: E) -> Self {
         Self::Error(e)
     }
 }
@@ -132,16 +151,8 @@ impl<E: std::fmt::Debug> std::fmt::Debug for IntErr<E> {
     }
 }
 
-impl From<IntErr<Never>> for String {
-    fn from(e: IntErr<Never>) -> Self {
-        match e {
-            IntErr::Error(never) => match never {},
-            IntErr::Interrupt(i) => i.to_string(),
-        }
-    }
-}
-
 impl Error for std::fmt::Error {}
+impl Error for String {}
 
 #[derive(Debug)]
 pub enum Interrupt {
@@ -162,11 +173,6 @@ impl From<Interrupt> for String {
 impl Default for Interrupt {
     fn default() -> Self {
         Self::Interrupt
-    }
-}
-impl Interrupt {
-    pub fn err<T, E: From<Self>>() -> Result<Result<T, E>, Interrupt> {
-        Ok(Err(Self::default().into()))
     }
 }
 

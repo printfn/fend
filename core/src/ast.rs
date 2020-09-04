@@ -1,3 +1,4 @@
+use crate::err::IntErr;
 use crate::interrupt::{test_int, Interrupt};
 use crate::num::{FormattingStyle, Number};
 use crate::value::Value;
@@ -56,7 +57,7 @@ pub fn evaluate(
     expr: Expr,
     scope: &HashMap<String, Value>,
     int: &impl Interrupt,
-) -> Result<Value, String> {
+) -> Result<Value, IntErr<String>> {
     test_int(int)?;
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
@@ -112,7 +113,7 @@ pub fn evaluate(
                     .with_format(FormattingStyle::ApproxFloat(10)),
             ),
             Value::Func(_) => {
-                return Err("Unable to convert value to a function".to_string());
+                return Err("Unable to convert value to a function".to_string())?;
             }
         },
     })
@@ -122,14 +123,15 @@ fn resolve_identifier(
     ident: &str,
     scope: &HashMap<String, Value>,
     int: &impl Interrupt,
-) -> Result<Value, String> {
+) -> Result<Value, IntErr<String>> {
     Ok(match ident {
         "pi" => Value::Num(Number::approx_pi()),
         "e" => Value::Num(Number::approx_e()),
         "i" => Value::Num(Number::i()),
         // TODO: we want to forward any interrupt, but panic on any other error
         // or statically prove that no other error can occur
-        "c" => crate::eval::evaluate_to_value("299792458 m / s", scope, int)?,
+        "c" => crate::eval::evaluate_to_value("299792458 m / s", scope, int)
+            .map_err(crate::err::IntErr::unwrap)?,
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),
@@ -159,7 +161,7 @@ fn resolve_identifier(
             if let Some(value) = scope.get(&ident.to_string()) {
                 value.clone()
             } else {
-                return Err(format!("Unknown identifier '{}'", ident));
+                return Err(format!("Unknown identifier '{}'", ident))?;
             }
         }
     })

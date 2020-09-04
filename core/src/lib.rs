@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
+#![allow(clippy::try_err)] // allow `Err(..)?`
 #![deny(clippy::pedantic)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.2")]
 
@@ -96,7 +97,12 @@ pub fn evaluate_with_interrupt(
             other_info: vec![],
         });
     }
-    let result = eval::evaluate_to_value(input, &context.scope, int)?;
+    let result = match eval::evaluate_to_value(input, &context.scope, int) {
+        Ok(value) => value,
+        // TODO: handle different interrupt values
+        Err(err::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
+        Err(err::IntErr::Error(e)) => return Err(e),
+    };
     Ok(FendResult {
         main_result: crate::num::to_string(|f| result.format(f, int))?,
         other_info: vec![],
