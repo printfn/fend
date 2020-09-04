@@ -395,9 +395,17 @@ impl BigRat {
             return Ok(Ok(true));
         }
 
-        let terminating = x.terminates_in_base(base, int)?;
+        let mut terminating_res = None;
+        let mut terminating = || match terminating_res {
+            None => {
+                let t = x.terminates_in_base(base, int)?;
+                terminating_res = Some(t);
+                Ok(t)
+            }
+            Some(t) => Ok(t),
+        };
         let fraction = style == FormattingStyle::ExactFraction
-            || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating);
+            || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
         if fraction {
             if negative {
                 try_i!(write!(f, "-"));
@@ -423,7 +431,7 @@ impl BigRat {
             try_i!(write!(f, "-"));
         }
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
-            || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating)
+            || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating()?)
         {
             None
         } else if let FormattingStyle::ApproxFloat(n) = style {
@@ -439,7 +447,7 @@ impl BigRat {
             num: integer_part,
             den: 1.into(),
         };
-        let remaining_fraction = x.sub(integer_as_rational, int)?;
+        let remaining_fraction = x.clone().sub(integer_as_rational, int)?;
         let was_exact = Self::format_trailing_digits(
             f,
             base,
@@ -470,7 +478,7 @@ impl BigRat {
         numerator: &BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
-        terminating: bool,
+        mut terminating: impl FnMut() -> Result<bool, crate::err::Interrupt>,
         int: &impl Interrupt,
     ) -> Result<Result<bool, Error>, crate::err::Interrupt> {
         enum NextDigitErr {
@@ -504,7 +512,7 @@ impl BigRat {
                 s.push_str(digit_str.as_str());
                 Ok(s)
             };
-        let skip_cycle_detection = max_digits.is_some() || terminating;
+        let skip_cycle_detection = max_digits.is_some() || terminating()?;
         if skip_cycle_detection {
             let mut current_numerator = numerator.clone();
             let mut i = 0;
