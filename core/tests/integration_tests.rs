@@ -280,7 +280,9 @@ fn test_powers() {
     test_evaluation(
         "5.2*10^15*300^(3/2)",
         "approx. 27019992598076723515.9873962402",
-    )
+    );
+    // todo: reconsider the trailing zero
+    test_eval_simple("pi^10", "approx. 93648.0474760830");
 }
 
 #[test]
@@ -403,6 +405,7 @@ fn test_exponents() {
     test_evaluation("e", "approx. 2.7182818284");
     test_evaluation("2 e", "approx. 5.4365636569");
     expect_parse_error("2e");
+    test_evaluation("e^10", "approx. 22026.4657948067");
 }
 
 #[test]
