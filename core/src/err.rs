@@ -101,13 +101,6 @@ impl<E> IntErr<E> {
             Self::Error(_) => panic!("Unwrap"),
         }
     }
-
-    pub fn unwrap_err(self) -> E {
-        match self {
-            Self::Interrupt(_) => panic!("Attempt to call unwrap_err on an interrupt"),
-            Self::Error(e) => e,
-        }
-    }
 }
 
 impl<E> From<Interrupt> for IntErr<E> {
