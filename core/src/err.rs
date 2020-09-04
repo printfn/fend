@@ -22,27 +22,9 @@ impl From<Never> for String {
     }
 }
 
-pub enum Combined<T: Error, U: Error> {
-    A(T),
-    B(U),
-}
-impl<T: Error, U: Error> Display for Combined<T, U> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::A(a) => a.fmt(f),
-            Self::B(b) => b.fmt(f),
-        }
-    }
-}
-impl<T: Error, U: Error> From<Combined<T, U>> for String {
-    fn from(c: Combined<T, U>) -> Self {
-        c.to_string()
-    }
-}
-impl<T: Error, U: Error> Error for Combined<T, U> {}
-
 macro_rules! make_err {
     ($i:ident, $($a:ident, )*) => {
+        #[derive(Debug)]
         pub enum $i { $($a($a), )* }
         impl Display for $i {
             fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
@@ -104,13 +86,6 @@ macro_rules! make_err {
         }
     }
 }
-
-// pub fn err<T, E: Error>() -> Result<T, IntErr<E>>
-// where
-//     E: Error + Default,
-// {
-//     Err(IntErr::<E>::Error(E::default()))
-// }
 
 #[allow(clippy::module_name_repetitions)]
 pub enum IntErr<E> {

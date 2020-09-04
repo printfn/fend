@@ -178,7 +178,11 @@ impl BigUint {
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
-    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), String> {
+    pub fn root_n(
+        self,
+        n: &Self,
+        int: &impl Interrupt,
+    ) -> Result<(Self, bool), IntErr<IntegerPowerError>> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok((self, true));
         }
@@ -406,7 +410,7 @@ impl BigUint {
     }
 
     // Note: 0! = 1, 1! = 1
-    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, String> {
+    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
