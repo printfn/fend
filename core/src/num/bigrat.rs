@@ -481,18 +481,19 @@ impl BigRat {
 
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
-        let next_digit = |i: usize, num: BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
-            test_int(int)?;
-            if num == 0.into() || max_digits == Some(i) {
-                return Err(NextDigitErr::Terminated);
-            }
-            // digit = base * numerator / denominator
-            // next_numerator = base * numerator - digit * denominator
-            let bnum = b.clone().mul(&num, int)?;
-            let digit = bnum.clone().div(&denominator, int)?;
-            let next_num = bnum - digit.clone().mul(&denominator, int)?;
-            Ok((next_num, digit))
-        };
+        let next_digit =
+            |i: usize, num: BigUint, base: &BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
+                test_int(int)?;
+                if num == 0.into() || max_digits == Some(i) {
+                    return Err(NextDigitErr::Terminated);
+                }
+                // digit = base * numerator / denominator
+                // next_numerator = base * numerator - digit * denominator
+                let bnum = base.clone().mul(&num, int)?;
+                let digit = bnum.clone().div(&denominator, int)?;
+                let next_num = bnum - digit.clone().mul(&denominator, int)?;
+                Ok((next_num, digit))
+            };
         let fold_digits =
             |mut s: String, digit: BigUint| -> Result<String, crate::err::Interrupt> {
                 let digit_str = crate::num::to_string(|f| digit.format(f, base, false, int))?;
@@ -504,7 +505,7 @@ impl BigRat {
             let mut current_numerator = numerator.clone();
             let mut i = 0;
             loop {
-                match next_digit(i, current_numerator.clone()) {
+                match next_digit(i, current_numerator.clone(), &b) {
                     Ok((next_n, digit)) => {
                         current_numerator = next_n;
                         digit.format(f, base, false, int)?.unwrap();
@@ -521,7 +522,13 @@ impl BigRat {
                 i += 1;
             }
         }
-        match Self::brents_algorithm(next_digit, fold_digits, numerator.clone(), String::new()) {
+        match Self::brents_algorithm(
+            next_digit,
+            fold_digits,
+            numerator.clone(),
+            &b,
+            String::new(),
+        ) {
             Ok((cycle_length, location, output)) => {
                 let (ab, _) = output.split_at(location + cycle_length);
                 let (a, b) = ab.split_at(location);
@@ -540,9 +547,10 @@ impl BigRat {
     // Brent's cycle detection algorithm (based on pseudocode from Wikipedia)
     // returns (length of cycle, index of first element of cycle, collected result)
     fn brents_algorithm<T: Clone + Eq, R, U, E1: From<E2>, E2>(
-        f: impl Fn(usize, T) -> Result<(T, U), E1>,
+        f: impl Fn(usize, T, &T) -> Result<(T, U), E1>,
         g: impl Fn(R, U) -> Result<R, E2>,
         x0: T,
+        state: &T,
         r0: R,
     ) -> Result<(usize, usize, R), E1> {
         // main phase: search successive powers of two
@@ -551,7 +559,7 @@ impl BigRat {
         let mut lam = 1;
         let mut tortoise = x0.clone();
         let mut depth = 0;
-        let (mut hare, _) = f(depth, x0.clone())?;
+        let (mut hare, _) = f(depth, x0.clone(), state)?;
         depth += 1;
         while tortoise != hare {
             if power == lam {
@@ -559,7 +567,7 @@ impl BigRat {
                 power *= 2;
                 lam = 0;
             }
-            hare = f(depth, hare)?.0;
+            hare = f(depth, hare, state)?.0;
             depth += 1;
             lam += 1;
         }
@@ -570,7 +578,7 @@ impl BigRat {
         let mut collected_res = r0;
         let mut hare_depth = 0;
         for _ in 0..lam {
-            let (new_hare, u) = f(hare_depth, hare)?;
+            let (new_hare, u) = f(hare_depth, hare, state)?;
             hare_depth += 1;
             hare = new_hare;
             collected_res = g(collected_res, u)?;
@@ -582,9 +590,9 @@ impl BigRat {
         let mut mu = 0;
         let mut tortoise_depth = 0;
         while tortoise != hare {
-            tortoise = f(tortoise_depth, tortoise)?.0;
+            tortoise = f(tortoise_depth, tortoise, state)?.0;
             tortoise_depth += 1;
-            let (new_hare, u) = f(hare_depth, hare)?;
+            let (new_hare, u) = f(hare_depth, hare, state)?;
             hare_depth += 1;
             hare = new_hare;
             collected_res = g(collected_res, u)?;
