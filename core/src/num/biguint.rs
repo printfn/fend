@@ -6,7 +6,6 @@ use crate::interrupt::{test_int, Interrupt};
 use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
-use std::hash::{Hash, Hasher};
 
 #[derive(Clone)]
 pub enum BigUint {
@@ -507,26 +506,6 @@ impl PartialEq for BigUint {
 }
 
 impl Eq for BigUint {}
-
-impl Hash for BigUint {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            Small(n) => n.hash(state),
-            Large(v) => {
-                v[0].hash(state);
-                let mut zeroes = true;
-                for &x in v.iter().skip(1) {
-                    if !zeroes || x != 0 {
-                        x.hash(state);
-                    }
-                    if x != 0 {
-                        zeroes = false;
-                    }
-                }
-            }
-        }
-    }
-}
 
 impl From<u64> for BigUint {
     fn from(val: u64) -> Self {
