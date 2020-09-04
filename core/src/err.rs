@@ -82,7 +82,7 @@ macro_rules! make_err {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub enum IntErr<E, I: Interrupt = PossibleInterrupt> {
+pub enum IntErr<E, I: Interrupt> {
     Interrupt(I::Int),
     Error(E),
 }
