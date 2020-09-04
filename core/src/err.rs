@@ -22,7 +22,7 @@ macro_rules! make_err {
                     Self::$a(v)
                 }
             }
-            impl From<$a> for IntErr<$i> {
+            impl<I: Interrupt> From<$a> for IntErr<$i, I> {
                 fn from(v: $a) -> Self {
                     Self::Error(v.into())
                 }
@@ -30,11 +30,11 @@ macro_rules! make_err {
         )*
         // eventually we should be able to remove this
         // (once all the string-based error handling is gone)
-        impl From<IntErr<$i>> for IntErr<String> {
-            fn from(v: IntErr<$i>) -> Self {
+        impl<I: Interrupt> From<IntErr<$i, I>> for IntErr<String, I> {
+            fn from(v: IntErr<$i, I>) -> Self {
                 match v {
-                    IntErr::<$i>::Interrupt(i) => Self::Interrupt(i),
-                    IntErr::<$i>::Error(e) => Self::Error(e.to_string()),
+                    IntErr::<$i, I>::Interrupt(i) => Self::Interrupt(i),
+                    IntErr::<$i, I>::Error(e) => Self::Error(e.to_string()),
                 }
             }
         }
@@ -52,16 +52,16 @@ macro_rules! make_err {
             }
         }
         impl Error for $i {}
-        impl From<$i> for IntErr<String> {
+        impl<I: Interrupt> From<$i> for IntErr<String, I> {
             fn from(v: $i) -> Self {
                 Self::Error(v.to_string())
             }
         }
-        impl From<IntErr<$i>> for IntErr<String> {
-            fn from(v: IntErr<$i>) -> Self {
+        impl<I: Interrupt> From<IntErr<$i, I>> for IntErr<String, I> {
+            fn from(v: IntErr<$i, I>) -> Self {
                 match v {
-                    IntErr::<$i>::Interrupt(i) => Self::Interrupt(i),
-                    IntErr::<$i>::Error(e) => Self::Error(e.to_string()),
+                    IntErr::<$i, I>::Interrupt(i) => Self::Interrupt(i),
+                    IntErr::<$i, I>::Error(e) => Self::Error(e.to_string()),
                 }
             }
         }
@@ -74,7 +74,7 @@ macro_rules! make_err {
             pub fn err<T, E: From<Self>>() -> Result<T, E> {
                 Err(Self::default().into())
             }
-            pub fn ierr<T, E: From<Self> + Error>() -> Result<T, IntErr<E>> {
+            pub fn ierr<T, E: From<Self> + Error, I: Interrupt>() -> Result<T, IntErr<E, I>> {
                 Err(IntErr::Error(E::from(Self::default())))
             }
         }
@@ -82,41 +82,44 @@ macro_rules! make_err {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub enum IntErr<E> {
-    Interrupt(Interrupt),
+pub enum IntErr<E, I: Interrupt = PossibleInterrupt> {
+    Interrupt(I::Int),
     Error(E),
 }
 
-impl<E> IntErr<E> {
-    pub fn expect(self, msg: &'static str) -> IntErr<Never> {
+impl<E, I: Interrupt> IntErr<E, I> {
+    pub fn expect(self, msg: &'static str) -> IntErr<Never, I> {
         match self {
-            Self::Interrupt(i) => IntErr::<Never>::Interrupt(i),
+            Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
             Self::Error(_) => panic!(msg),
         }
     }
 
-    pub fn unwrap(self) -> IntErr<Never> {
+    pub fn unwrap(self) -> IntErr<Never, I> {
         match self {
-            Self::Interrupt(i) => IntErr::<Never>::Interrupt(i),
+            Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
             Self::Error(_) => panic!("Unwrap"),
         }
     }
 }
 
-impl<E> From<Interrupt> for IntErr<E> {
-    fn from(i: Interrupt) -> Self {
-        Self::Interrupt(i)
+impl<E> IntErr<E, NeverInterrupt> {
+    pub fn get_error(self) -> E {
+        match self {
+            IntErr::Interrupt(i) => match i {},
+            IntErr::Error(e) => e,
+        }
     }
 }
 
-impl<E: Error> From<E> for IntErr<E> {
+impl<E: Error, I: Interrupt> From<E> for IntErr<E, I> {
     fn from(e: E) -> Self {
         Self::Error(e)
     }
 }
 
-impl<E: Error> From<IntErr<Never>> for IntErr<E> {
-    fn from(e: IntErr<Never>) -> Self {
+impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
+    fn from(e: IntErr<Never, I>) -> Self {
         match e {
             IntErr::Error(never) => match never {},
             IntErr::Interrupt(i) => Self::Interrupt(i),
@@ -124,7 +127,7 @@ impl<E: Error> From<IntErr<Never>> for IntErr<E> {
     }
 }
 
-impl<E: std::fmt::Debug> std::fmt::Debug for IntErr<E> {
+impl<E: std::fmt::Debug, I: Interrupt> std::fmt::Debug for IntErr<E, I> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
             Self::Interrupt(i) => write!(f, "{:?}", i)?,
@@ -137,13 +140,24 @@ impl<E: std::fmt::Debug> std::fmt::Debug for IntErr<E> {
 impl Error for std::fmt::Error {}
 impl Error for String {}
 
-#[derive(Debug)]
-pub enum Interrupt {
-    Interrupt,
+pub trait Interrupt {
+    type Int: Debug;
+    fn test(&self) -> Result<(), Self::Int>;
 }
-impl Default for Interrupt {
-    fn default() -> Self {
-        Self::Interrupt
+
+pub struct NeverInterrupt {}
+impl Interrupt for NeverInterrupt {
+    type Int = std::convert::Infallible;
+    fn test(&self) -> Result<(), Self::Int> {
+        Ok(())
+    }
+}
+
+pub struct PossibleInterrupt {}
+impl Interrupt for PossibleInterrupt {
+    type Int = ();
+    fn test(&self) -> Result<(), Self::Int> {
+        Ok(())
     }
 }
 

@@ -1,5 +1,5 @@
-use crate::err::IntErr;
-use crate::interrupt::{test_int, Interrupt};
+use crate::err::{IntErr, Interrupt};
+use crate::interrupt::test_int;
 use crate::num::{FormattingStyle, Number};
 use crate::value::Value;
 use std::{
@@ -53,11 +53,11 @@ impl Debug for Expr {
     }
 }
 
-pub fn evaluate(
+pub fn evaluate<I: Interrupt>(
     expr: Expr,
     scope: &HashMap<String, Value>,
-    int: &impl Interrupt,
-) -> Result<Value, IntErr<String>> {
+    int: &I,
+) -> Result<Value, IntErr<String, I>> {
     test_int(int)?;
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
@@ -119,11 +119,11 @@ pub fn evaluate(
     })
 }
 
-fn resolve_identifier(
+fn resolve_identifier<I: Interrupt>(
     ident: &str,
     scope: &HashMap<String, Value>,
-    int: &impl Interrupt,
-) -> Result<Value, IntErr<String>> {
+    int: &I,
+) -> Result<Value, IntErr<String, I>> {
     Ok(match ident {
         "pi" => Value::Num(Number::approx_pi()),
         "e" => Value::Num(Number::approx_e()),

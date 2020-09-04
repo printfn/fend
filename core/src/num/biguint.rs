@@ -1,8 +1,8 @@
 use crate::err::{
-    DivideByZero, ExponentTooLarge, IntErr, IntegerPowerError, Never, ValueTooLarge,
+    DivideByZero, ExponentTooLarge, IntErr, IntegerPowerError, Interrupt, Never, ValueTooLarge,
     ZeroToThePowerOfZero,
 };
-use crate::interrupt::{test_int, Interrupt};
+use crate::interrupt::test_int;
 use crate::num::Base;
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
@@ -148,7 +148,7 @@ impl BigUint {
         }
     }
 
-    pub fn gcd(mut a: Self, mut b: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         while b >= 1.into() {
             let r = a
                 .rem(&b, int)
@@ -164,7 +164,7 @@ impl BigUint {
         a: &Self,
         b: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<IntegerPowerError>> {
+    ) -> Result<Self, IntErr<IntegerPowerError, I>> {
         if a.is_zero() && b.is_zero() {
             return ZeroToThePowerOfZero::err();
         }
@@ -178,11 +178,11 @@ impl BigUint {
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
-    pub fn root_n(
+    pub fn root_n<I: Interrupt>(
         self,
         n: &Self,
-        int: &impl Interrupt,
-    ) -> Result<(Self, bool), IntErr<IntegerPowerError>> {
+        int: &I,
+    ) -> Result<(Self, bool), IntErr<IntegerPowerError, I>> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok((self, true));
         }
@@ -207,7 +207,7 @@ impl BigUint {
         &self,
         mut exponent: u64,
         int: &I,
-    ) -> Result<Self, IntErr<Never>> {
+    ) -> Result<Self, IntErr<Never, I>> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
@@ -221,7 +221,7 @@ impl BigUint {
         Ok(result)
     }
 
-    fn lshift(&mut self, int: &impl Interrupt) -> Result<(), IntErr<Never>> {
+    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<Never, I>> {
         match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
@@ -247,7 +247,7 @@ impl BigUint {
         Ok(())
     }
 
-    fn rshift(&mut self, int: &impl Interrupt) -> Result<(), IntErr<Never>> {
+    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<Never, I>> {
         match self {
             Small(n) => *n >>= 1,
             Large(value) => {
@@ -266,11 +266,11 @@ impl BigUint {
         Ok(())
     }
 
-    fn divmod(
+    fn divmod<I: Interrupt>(
         &self,
         other: &Self,
-        int: &impl Interrupt,
-    ) -> Result<(Self, Self), IntErr<DivideByZero>> {
+        int: &I,
+    ) -> Result<(Self, Self), IntErr<DivideByZero, I>> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok((Small(div_res), Small(mod_res)));
@@ -317,7 +317,11 @@ impl BigUint {
     }
 
     /// computes self *= other
-    fn mul_internal(&mut self, other: &Self, int: &impl Interrupt) -> Result<(), IntErr<Never>> {
+    fn mul_internal<I: Interrupt>(
+        &mut self,
+        other: &Self,
+        int: &I,
+    ) -> Result<(), IntErr<Never, I>> {
         if self.is_zero() || other.is_zero() {
             *self = Self::from(0);
             return Ok(());
@@ -353,13 +357,13 @@ impl BigUint {
         }
     }
 
-    pub fn format(
+    pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
         base: Base,
         write_base_prefix: bool,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<Error>> {
+        int: &I,
+    ) -> Result<(), IntErr<Error, I>> {
         if write_base_prefix {
             base.write_prefix(f)?;
         }
@@ -410,7 +414,7 @@ impl BigUint {
     }
 
     // Note: 0! = 1, 1! = 1
-    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
@@ -420,7 +424,7 @@ impl BigUint {
         Ok(res)
     }
 
-    pub fn mul(mut self, other: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         if let (Small(a), Small(b)) = (&self, &other) {
             if let Some(res) = a.checked_mul(*b) {
                 return Ok(Self::from(res));
@@ -430,11 +434,15 @@ impl BigUint {
         Ok(self)
     }
 
-    fn rem(&self, other: &Self, int: &impl Interrupt) -> Result<BigUint, IntErr<DivideByZero>> {
+    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<BigUint, IntErr<DivideByZero, I>> {
         Ok(self.divmod(other, int)?.1)
     }
 
-    pub fn div(self, other: &Self, int: &impl Interrupt) -> Result<BigUint, IntErr<DivideByZero>> {
+    pub fn div<I: Interrupt>(
+        self,
+        other: &Self,
+        int: &I,
+    ) -> Result<BigUint, IntErr<DivideByZero, I>> {
         Ok(self.divmod(other, int)?.0)
     }
 

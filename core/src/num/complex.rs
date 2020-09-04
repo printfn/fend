@@ -1,5 +1,4 @@
-use crate::err::{IntErr, Never};
-use crate::interrupt::Interrupt;
+use crate::err::{IntErr, Interrupt, Never};
 use crate::num::bigrat::BigRat;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
@@ -13,7 +12,7 @@ pub struct Complex {
 }
 
 impl Complex {
-    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, IntErr<String>> {
+    pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
         if self.imag != 0.into() {
             return Err("Cannot convert complex number to integer".to_string())?;
         }
@@ -27,7 +26,7 @@ impl Complex {
         }
     }
 
-    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self.imag != 0.into() {
             return Err("Factorial is not supported for complex numbers".to_string())?;
         }
@@ -37,7 +36,7 @@ impl Complex {
         })
     }
 
-    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;
         let v = self.imag;
@@ -57,7 +56,7 @@ impl Complex {
         )?)
     }
 
-    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
+    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err("Exponentiation is currently unsupported for complex numbers".to_string())?;
         }
@@ -73,12 +72,12 @@ impl Complex {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(
+    pub fn add_digit_in_base<I: Interrupt>(
         &mut self,
         digit: u64,
         base: u8,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<Never>> {
+        int: &I,
+    ) -> Result<(), IntErr<Never, I>> {
         self.real.add_digit_in_base(digit, base, int)
     }
 
@@ -89,7 +88,7 @@ impl Complex {
         }
     }
 
-    pub fn abs(self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
+    pub fn abs<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         Ok(if self.imag == 0.into() {
             if self.real < 0.into() {
                 (
@@ -134,15 +133,15 @@ impl Complex {
         })
     }
 
-    pub fn format(
+    pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
         exact: bool,
         style: FormattingStyle,
         base: Base,
         use_parentheses_if_complex: bool,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<Error>> {
+        int: &I,
+    ) -> Result<(), IntErr<Error, I>> {
         let style = if style == FormattingStyle::Auto {
             if exact {
                 FormattingStyle::ExactFloatWithFractionFallback
@@ -179,7 +178,11 @@ impl Complex {
         Ok(())
     }
 
-    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
+    pub fn root_n<I: Interrupt>(
+        self,
+        n: &Self,
+        int: &I,
+    ) -> Result<(Self, bool), IntErr<String, I>> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("Roots are currently unsupported for complex numbers".to_string())?;
         }
@@ -207,7 +210,7 @@ impl Complex {
         }
     }
 
-    fn expect_real(self) -> Result<BigRat, IntErr<String>> {
+    fn expect_real<I: Interrupt>(self) -> Result<BigRat, IntErr<String, I>> {
         if self.imag == 0.into() {
             Ok(self.real)
         } else {
@@ -215,71 +218,71 @@ impl Complex {
         }
     }
 
-    pub fn sin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.sin(int)?))
     }
 
-    pub fn cos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.cos(int)?))
     }
 
-    pub fn tan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.tan(int)?))
     }
 
-    pub fn asin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.asin(int)?))
     }
 
-    pub fn acos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.acos(int)?))
     }
 
-    pub fn atan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.atan(int)?))
     }
 
-    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.sinh(int)?))
     }
 
-    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.cosh(int)?))
     }
 
-    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.tanh(int)?))
     }
 
-    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.asinh(int)?))
     }
 
-    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.acosh(int)?))
     }
 
-    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.atanh(int)?))
     }
 
-    pub fn ln(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.ln(int)?))
     }
 
-    pub fn log2(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.log2(int)?))
     }
 
-    pub fn log10(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
-    pub fn exp(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.exp(int)?))
     }
 
-    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
@@ -296,14 +299,14 @@ impl Complex {
         })
     }
 
-    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             real: self.real.add(rhs.real, int)?,
             imag: self.imag.add(rhs.imag, int)?,
         })
     }
 
-    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         self.add(-rhs, int)
     }
 }

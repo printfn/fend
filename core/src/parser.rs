@@ -1,6 +1,5 @@
 use crate::ast::Expr;
-use crate::err::IntErr;
-use crate::interrupt::Interrupt;
+use crate::err::{IntErr, Interrupt, NeverInterrupt};
 use crate::lexer::{Symbol, Token};
 
 /*
@@ -56,7 +55,7 @@ base_prefix = ['0x' '0o' '0b' (A:integer '#')]
 
 */
 
-type ParseResult<'a, T> = Result<(T, &'a [Token]), IntErr<String>>;
+type ParseResult<'a, T> = Result<(T, &'a [Token]), IntErr<String, NeverInterrupt>>;
 
 fn parse_token(input: &[Token]) -> ParseResult<Token> {
     if input.is_empty() {
@@ -295,9 +294,9 @@ pub fn parse_expression(input: &[Token]) -> ParseResult<Expr> {
     parse_arrow_conversion(input)
 }
 
-pub fn parse_string(input: &str, int: &impl Interrupt) -> Result<Expr, IntErr<String>> {
+pub fn parse_string<I: Interrupt>(input: &str, int: &I) -> Result<Expr, IntErr<String, I>> {
     let tokens = crate::lexer::lex(input, int)?;
-    let (res, remaining) = parse_expression(tokens.as_slice())?;
+    let (res, remaining) = parse_expression(tokens.as_slice()).map_err(IntErr::get_error)?;
     if !remaining.is_empty() {
         return Err(format!("Unexpected input found: '{}'", input))?;
     }

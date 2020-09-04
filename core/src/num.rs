@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Never};
+use crate::err::{IntErr, Interrupt, Never};
 use std::{
     cell::Cell,
     fmt::{Display, Error, Formatter},
@@ -102,17 +102,17 @@ impl Base {
 }
 
 // Small formatter helper
-pub fn to_string<F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>>(
+pub fn to_string<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>>(
     func: F,
-) -> Result<String, IntErr<Never>> {
-    struct Fmt<F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>> {
+) -> Result<String, IntErr<Never, I>> {
+    struct Fmt<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>> {
         format: F,
-        error: Cell<Option<IntErr<Never>>>,
+        error: Cell<Option<IntErr<Never, I>>>,
     }
 
-    impl<F> Display for Fmt<F>
+    impl<F, I: Interrupt> Display for Fmt<I, F>
     where
-        F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>,
+        F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>,
     {
         fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
             let interrupt = match (self.format)(f) {

@@ -1,5 +1,4 @@
-use crate::err::{IntErr, Never};
-use crate::interrupt::Interrupt;
+use crate::err::{IntErr, Interrupt, Never};
 use crate::num::complex::Complex;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
@@ -15,7 +14,7 @@ pub struct ExactBase {
 }
 
 impl ExactBase {
-    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, IntErr<String>> {
+    pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
         if !self.exact {
             return Err("Cannot convert inexact number to integer".to_string())?;
         }
@@ -40,7 +39,7 @@ impl ExactBase {
         }
     }
 
-    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self {
             value: self.value.factorial(int)?,
             exact: self.exact,
@@ -49,7 +48,7 @@ impl ExactBase {
         })
     }
 
-    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self {
             value: self.value.div(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
@@ -58,7 +57,7 @@ impl ExactBase {
         })
     }
 
-    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (value, exact_root) = self.value.pow(rhs.value, int)?;
         Ok(Self {
             value,
@@ -79,12 +78,12 @@ impl ExactBase {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(
+    pub fn add_digit_in_base<I: Interrupt>(
         &mut self,
         digit: u64,
         base: Base,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<String>> {
+        int: &I,
+    ) -> Result<(), IntErr<String, I>> {
         if base != self.base {
             return Err(format!(
                 "Base does not match: {} != {}",
@@ -106,7 +105,7 @@ impl ExactBase {
         }
     }
 
-    pub fn abs(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (new_value, res_exact) = self.value.abs(int)?;
         Ok(Self {
             value: new_value,
@@ -116,12 +115,12 @@ impl ExactBase {
         })
     }
 
-    pub fn format(
+    pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
         use_parentheses_if_complex: bool,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<Error>> {
+        int: &I,
+    ) -> Result<(), IntErr<Error, I>> {
         if !self.exact {
             write!(f, "approx. ")?;
         }
@@ -148,7 +147,7 @@ impl ExactBase {
         self.format
     }
 
-    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (root, root_exact) = self.value.root_n(&n.value, int)?;
         Ok(Self {
             value: root,
@@ -178,9 +177,9 @@ impl ExactBase {
 
     fn apply_approx_fn<I: Interrupt>(
         self,
-        f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String>>,
+        f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String, I>>,
         int: &I,
-    ) -> Result<Self, IntErr<String>> {
+    ) -> Result<Self, IntErr<String, I>> {
         Ok(Self {
             value: f(self.value, int)?,
             exact: false,
@@ -189,71 +188,71 @@ impl ExactBase {
         })
     }
 
-    pub fn sin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::sin, int)
     }
 
-    pub fn cos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::cos, int)
     }
 
-    pub fn tan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::tan, int)
     }
 
-    pub fn asin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::asin, int)
     }
 
-    pub fn acos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::acos, int)
     }
 
-    pub fn atan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::atan, int)
     }
 
-    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::sinh, int)
     }
 
-    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::cosh, int)
     }
 
-    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::tanh, int)
     }
 
-    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::asinh, int)
     }
 
-    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::acosh, int)
     }
 
-    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::atanh, int)
     }
 
-    pub fn ln(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::ln, int)
     }
 
-    pub fn log2(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::log2, int)
     }
 
-    pub fn log10(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::log10, int)
     }
 
-    pub fn exp(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::exp, int)
     }
 
-    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
@@ -262,7 +261,7 @@ impl ExactBase {
         })
     }
 
-    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             value: self.value.add(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
@@ -271,7 +270,7 @@ impl ExactBase {
         })
     }
 
-    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         self.add(-rhs, int)
     }
 }

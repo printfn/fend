@@ -1,5 +1,5 @@
-use crate::err::{DivideByZero, IntErr, Never};
-use crate::interrupt::{test_int, Interrupt};
+use crate::err::{DivideByZero, IntErr, Interrupt, Never};
+use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
@@ -72,7 +72,7 @@ impl PartialEq for BigRat {
 impl Eq for BigRat {}
 
 impl BigRat {
-    pub fn try_as_usize(mut self, int: &impl Interrupt) -> Result<usize, IntErr<String>> {
+    pub fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, IntErr<String, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
             return Err("Cannot convert fraction to integer".to_string())?;
@@ -81,7 +81,7 @@ impl BigRat {
     }
 
     #[allow(clippy::float_arithmetic)]
-    pub fn into_f64(mut self, int: &impl Interrupt) -> Result<f64, IntErr<Never>> {
+    pub fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, IntErr<Never, I>> {
         self = self.simplify(int)?;
         Ok(self.num.as_f64() / self.den.as_f64())
     }
@@ -110,20 +110,20 @@ impl BigRat {
     }
 
     // sin, cos and tan work for all real numbers
-    pub fn sin(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::sin(self.into_f64(int)?)))
     }
 
-    pub fn cos(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::cos(self.into_f64(int)?)))
     }
 
-    pub fn tan(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::tan(self.into_f64(int)?)))
     }
 
     // asin, acos and atan only work for values between -1 and 1
-    pub fn asin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
             return Err("Value must be between -1 and 1".to_string())?;
@@ -131,7 +131,7 @@ impl BigRat {
         Ok(Self::from_f64(f64::asin(self.into_f64(int)?)))
     }
 
-    pub fn acos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
             return Err("Value must be between -1 and 1".to_string())?;
@@ -140,28 +140,28 @@ impl BigRat {
     }
 
     // note that this works for any real number, unlike asin and acos
-    pub fn atan(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::atan(self.into_f64(int)?)))
     }
 
-    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::sinh(self.into_f64(int)?)))
     }
 
-    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::cosh(self.into_f64(int)?)))
     }
 
-    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::tanh(self.into_f64(int)?)))
     }
 
-    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::asinh(self.into_f64(int)?)))
     }
 
     // value must not be less than 1
-    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self < 1.into() {
             return Err("Value must not be less than 1".to_string())?;
         }
@@ -169,7 +169,7 @@ impl BigRat {
     }
 
     // value must be between -1 and 1.
-    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
             return Err("Value must be between -1 and 1".to_string())?;
@@ -178,32 +178,32 @@ impl BigRat {
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string())?;
         }
         Ok(Self::from_f64(f64::ln(self.into_f64(int)?)))
     }
 
-    pub fn log2(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string())?;
         }
         Ok(Self::from_f64(f64::log2(self.into_f64(int)?)))
     }
 
-    pub fn log10(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string())?;
         }
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?)))
     }
 
-    pub fn exp(self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::exp(self.into_f64(int)?)))
     }
 
-    pub fn factorial(mut self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
             return Err("Factorial is only supported for integers".to_string())?;
@@ -219,7 +219,7 @@ impl BigRat {
     }
 
     /// compute a + b
-    fn add_internal(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    fn add_internal<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         // a + b == -((-a) + (-b))
         if self.sign == Sign::Negative {
             return Ok(-((-self).add_internal(-rhs, int)?));
@@ -284,7 +284,7 @@ impl BigRat {
         })
     }
 
-    fn simplify(mut self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    fn simplify<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
         if self.den == 1.into() {
             return Ok(self);
         }
@@ -294,7 +294,7 @@ impl BigRat {
         Ok(self)
     }
 
-    pub fn div(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<DivideByZero>> {
+    pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         if rhs.num == 0.into() {
             return DivideByZero::err();
         }
@@ -307,7 +307,11 @@ impl BigRat {
 
     // test if this fraction has a terminating representation
     // e.g. in base 10: 1/4 = 0.25, but not 1/3
-    fn terminates_in_base(&self, base: Base, int: &impl Interrupt) -> Result<bool, IntErr<Never>> {
+    fn terminates_in_base<I: Interrupt>(
+        &self,
+        base: Base,
+        int: &I,
+    ) -> Result<bool, IntErr<Never, I>> {
         let mut x = self.clone();
         let base_as_u64: u64 = base.base_as_u8().into();
         let base = Self {
@@ -328,12 +332,12 @@ impl BigRat {
 
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
-    pub fn add_digit_in_base(
+    pub fn add_digit_in_base<I: Interrupt>(
         &mut self,
         digit: u64,
         base: u8,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<Never>> {
+        int: &I,
+    ) -> Result<(), IntErr<Never, I>> {
         let base_as_u64: u64 = base.into();
         self.num = self
             .num
@@ -363,14 +367,14 @@ impl BigRat {
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
     // The result bool indicates whether the number was exact or not.
-    pub fn format(
+    pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
         base: Base,
         style: FormattingStyle,
         imag: bool,
-        int: &impl Interrupt,
-    ) -> Result<bool, IntErr<Error>> {
+        int: &I,
+    ) -> Result<bool, IntErr<Error, I>> {
         let mut x = self.clone().simplify(int)?;
         let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
@@ -474,44 +478,46 @@ impl BigRat {
     ///     with parentheses.
     ///   * If `max_digits` is given, only up to that many digits are printed, and recurring
     ///     digits will not printed in parentheses but will instead be repeated up to `max_digits`.
-    fn format_trailing_digits(
+    fn format_trailing_digits<I: Interrupt>(
         f: &mut Formatter,
         base: Base,
         numerator: &BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
-        mut terminating: impl FnMut() -> Result<bool, IntErr<Never>>,
-        int: &impl Interrupt,
-    ) -> Result<bool, IntErr<Error>> {
-        enum NextDigitErr {
-            Interrupt(IntErr<Never>),
+        mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
+        int: &I,
+    ) -> Result<bool, IntErr<Error, I>> {
+        enum NextDigitErr<I: Interrupt> {
+            Interrupt(IntErr<Never, I>),
             Terminated,
         };
-        impl From<IntErr<Never>> for NextDigitErr {
-            fn from(i: IntErr<Never>) -> Self {
+        impl<I: Interrupt> From<IntErr<Never, I>> for NextDigitErr<I> {
+            fn from(i: IntErr<Never, I>) -> Self {
                 Self::Interrupt(i)
             }
         }
 
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
-        let next_digit =
-            |i: usize, num: BigUint, base: &BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
-                test_int(int)?;
-                if num == 0.into() || max_digits == Some(i) {
-                    return Err(NextDigitErr::Terminated);
-                }
-                // digit = base * numerator / denominator
-                // next_numerator = base * numerator - digit * denominator
-                let bnum = num.mul(base, int)?;
-                let digit = bnum
-                    .clone()
-                    .div(&denominator, int)
-                    .map_err(IntErr::unwrap)?;
-                let next_num = bnum.sub(&digit.clone().mul(&denominator, int)?);
-                Ok((next_num, digit))
-            };
-        let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never>> {
+        let next_digit = |i: usize,
+                          num: BigUint,
+                          base: &BigUint|
+         -> Result<(BigUint, BigUint), NextDigitErr<I>> {
+            test_int(int)?;
+            if num == 0.into() || max_digits == Some(i) {
+                return Err(NextDigitErr::Terminated);
+            }
+            // digit = base * numerator / denominator
+            // next_numerator = base * numerator - digit * denominator
+            let bnum = num.mul(base, int)?;
+            let digit = bnum
+                .clone()
+                .div(&denominator, int)
+                .map_err(IntErr::unwrap)?;
+            let next_num = bnum.sub(&digit.clone().mul(&denominator, int)?);
+            Ok((next_num, digit))
+        };
+        let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never, I>> {
             let digit_str = crate::num::to_string(|f| digit.format(f, base, false, int))?;
             s.push_str(digit_str.as_str());
             Ok(s)
@@ -617,11 +623,11 @@ impl BigRat {
         Ok((lam, mu, collected_res))
     }
 
-    pub fn pow(
+    pub fn pow<I: Interrupt>(
         mut self,
         mut rhs: Self,
-        int: &impl Interrupt,
-    ) -> Result<(Self, bool), IntErr<String>> {
+        int: &I,
+    ) -> Result<(Self, bool), IntErr<String, I>> {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if rhs.sign == Sign::Negative {
@@ -650,12 +656,12 @@ impl BigRat {
     }
 
     /// n must be an integer
-    fn iter_root_n(
+    fn iter_root_n<I: Interrupt>(
         mut low_bound: Self,
         val: &Self,
         n: &Self,
-        int: &impl Interrupt,
-    ) -> Result<Self, IntErr<String>> {
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         let mut high_bound = low_bound.clone().add(1.into(), int)?;
         for _ in 0..30 {
             let guess = low_bound
@@ -673,7 +679,11 @@ impl BigRat {
 
     // the boolean indicates whether or not the result is exact
     // n must be an integer
-    pub fn root_n(self, n: &Self, int: &impl Interrupt) -> Result<(Self, bool), IntErr<String>> {
+    pub fn root_n<I: Interrupt>(
+        self,
+        n: &Self,
+        int: &I,
+    ) -> Result<(Self, bool), IntErr<String, I>> {
         if self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string())?;
         }
@@ -720,7 +730,7 @@ impl BigRat {
         Ok((num_rat.div(&den_rat, int)?, false))
     }
 
-    pub fn mul(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num.mul(&rhs.num, int)?,
@@ -728,11 +738,11 @@ impl BigRat {
         })
     }
 
-    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(self.add_internal(-rhs, int)?)
     }
 
-    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(self.add_internal(rhs, int)?)
     }
 }

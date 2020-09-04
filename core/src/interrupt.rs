@@ -5,9 +5,20 @@ pub trait Interrupt {
     fn should_interrupt(&self) -> bool;
 }
 
-pub fn test_int(int: &impl Interrupt) -> Result<(), IntErr<crate::err::Never>> {
-    if int.should_interrupt() {
-        Err(crate::err::Interrupt::default().into())
+impl<T: Interrupt> crate::err::Interrupt for T {
+    type Int = ();
+    fn test(&self) -> Result<(), Self::Int> {
+        if self.should_interrupt() {
+            Err(())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+pub fn test_int<I: crate::err::Interrupt>(int: &I) -> Result<(), IntErr<crate::err::Never, I>> {
+    if let Err(i) = int.test() {
+        Err(IntErr::Interrupt(i))
     } else {
         Ok(())
     }

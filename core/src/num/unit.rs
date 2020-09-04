@@ -1,5 +1,5 @@
-use crate::err::{IntErr, Never};
-use crate::interrupt::{test_int, Interrupt};
+use crate::err::{IntErr, Interrupt, Never};
+use crate::interrupt::test_int;
 use crate::num::exact_base::ExactBase;
 use crate::num::{Base, FormattingStyle};
 use crate::value::Value;
@@ -18,9 +18,9 @@ pub struct UnitValue {
 
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
-    pub fn create_initial_units(
-        int: &impl Interrupt,
-    ) -> Result<HashMap<String, Value>, IntErr<String>> {
+    pub fn create_initial_units<I: Interrupt>(
+        int: &I,
+    ) -> Result<HashMap<String, Value>, IntErr<String, I>> {
         Self::create_units(
             vec![
                 ("percent", "percent", true, Some("0.01")),
@@ -142,17 +142,17 @@ impl UnitValue {
         )
     }
 
-    pub fn try_as_usize(self, int: &impl Interrupt) -> Result<usize, IntErr<String>> {
+    pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
         if !self.is_unitless() {
             return Err("Cannot convert number with unit to integer".to_string())?;
         }
         Ok(self.value.try_as_usize(int)?)
     }
 
-    fn create_units(
+    fn create_units<I: Interrupt>(
         unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>,
-        int: &impl Interrupt,
-    ) -> Result<HashMap<String, Value>, IntErr<String>> {
+        int: &I,
+    ) -> Result<HashMap<String, Value>, IntErr<String, I>> {
         let mut scope = HashMap::new();
         for (singular_name, plural_name, space, expr) in unit_descriptions {
             let unit = if let Some(expr) = expr {
@@ -175,14 +175,14 @@ impl UnitValue {
         Ok(scope)
     }
 
-    fn new_unit(
+    fn new_unit<I: Interrupt>(
         singular_name: String,
         plural_name: String,
         space: bool,
         expression: &str,
         scope: &HashMap<String, Value>,
-        int: &impl Interrupt,
-    ) -> Result<Self, IntErr<String>> {
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         let value = crate::eval::evaluate_to_value(expression, scope, int)?.expect_num()?;
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
         let scale = scale.mul(&value.value, int)?;
@@ -205,7 +205,7 @@ impl UnitValue {
         }
     }
 
-    pub fn factorial(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !self.is_unitless() {
             return Err("Factorial is only supported for unitless numbers".to_string())?;
         }
@@ -224,7 +224,7 @@ impl UnitValue {
         }
     }
 
-    pub fn add(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         Ok(Self {
             value: self.value.add(rhs.value.mul(&scale_factor, int)?, int)?,
@@ -232,7 +232,7 @@ impl UnitValue {
         })
     }
 
-    pub fn convert_to(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn convert_to<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if rhs.value != 1.into() {
             return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
         }
@@ -244,7 +244,7 @@ impl UnitValue {
         })
     }
 
-    pub fn sub(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         Ok(Self {
             value: self.value.sub(rhs.value.mul(&scale_factor, int)?, int)?,
@@ -252,7 +252,7 @@ impl UnitValue {
         })
     }
 
-    pub fn div(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
             components.push(UnitExponent::<NamedUnit>::new(
@@ -271,7 +271,7 @@ impl UnitValue {
         self.unit.components.is_empty()
     }
 
-    pub fn pow(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !rhs.is_unitless() {
             return Err("Only unitless exponents are currently supported".to_string())?;
         }
@@ -291,7 +291,7 @@ impl UnitValue {
         })
     }
 
-    pub fn root_n(self, rhs: &Self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn root_n<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !self.is_unitless() || !rhs.is_unitless() {
             return Err("Roots are currently only supported for unitless numbers.".to_string())?;
         }
@@ -322,7 +322,7 @@ impl UnitValue {
         }
     }
 
-    pub fn abs(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self {
             value: self.value.abs(int)?,
             unit: self.unit,
@@ -343,12 +343,12 @@ impl UnitValue {
         }
     }
 
-    pub fn add_digit_in_base(
+    pub fn add_digit_in_base<I: Interrupt>(
         &mut self,
         digit: u64,
         base: Base,
-        int: &impl Interrupt,
-    ) -> Result<(), IntErr<String>> {
+        int: &I,
+    ) -> Result<(), IntErr<String, I>> {
         self.value.add_digit_in_base(digit, base, int)
     }
 
@@ -358,10 +358,10 @@ impl UnitValue {
 
     fn apply_fn<I: Interrupt>(
         self,
-        f: impl FnOnce(ExactBase, &I) -> Result<ExactBase, IntErr<String>>,
+        f: impl FnOnce(ExactBase, &I) -> Result<ExactBase, IntErr<String, I>>,
         require_unitless: bool,
         int: &I,
-    ) -> Result<Self, IntErr<String>> {
+    ) -> Result<Self, IntErr<String, I>> {
         if require_unitless && !self.is_unitless() {
             return Err("Expected a unitless number".to_string())?;
         }
@@ -371,71 +371,71 @@ impl UnitValue {
         })
     }
 
-    pub fn sin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::sin, false, int)
     }
 
-    pub fn cos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::cos, false, int)
     }
 
-    pub fn tan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::tan, false, int)
     }
 
-    pub fn asin(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::asin, false, int)
     }
 
-    pub fn acos(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::acos, false, int)
     }
 
-    pub fn atan(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::atan, false, int)
     }
 
-    pub fn sinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::sinh, false, int)
     }
 
-    pub fn cosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::cosh, false, int)
     }
 
-    pub fn tanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::tanh, false, int)
     }
 
-    pub fn asinh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::asinh, false, int)
     }
 
-    pub fn acosh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::acosh, false, int)
     }
 
-    pub fn atanh(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::atanh, false, int)
     }
 
-    pub fn ln(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::ln, true, int)
     }
 
-    pub fn log2(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::log2, true, int)
     }
 
-    pub fn log10(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::log10, true, int)
     }
 
-    pub fn exp(self, int: &impl Interrupt) -> Result<Self, IntErr<String>> {
+    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(ExactBase::exp, true, int)
     }
 
-    pub fn format(&self, f: &mut Formatter, int: &impl Interrupt) -> Result<(), IntErr<Error>> {
+    pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
         let use_parentheses = !self.unit.components.is_empty();
         self.value.format(f, use_parentheses, int)?;
         if !self.unit.components.is_empty() {
@@ -479,7 +479,7 @@ impl UnitValue {
         Ok(())
     }
 
-    pub fn mul(self, rhs: Self, int: &impl Interrupt) -> Result<Self, IntErr<Never>> {
+    pub fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         let components = [self.unit.components, rhs.unit.components].concat();
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,
@@ -513,10 +513,10 @@ struct Unit {
 }
 
 impl Unit {
-    fn to_hashmap_and_scale(
+    fn to_hashmap_and_scale<I: Interrupt>(
         &self,
-        int: &impl Interrupt,
-    ) -> Result<(HashMap<BaseUnit, ExactBase>, ExactBase), IntErr<String>> {
+        int: &I,
+    ) -> Result<(HashMap<BaseUnit, ExactBase>, ExactBase), IntErr<String, I>> {
         let mut hashmap = HashMap::<BaseUnit, ExactBase>::new();
         let mut scale = ExactBase::from(1);
         for named_unit_exp in &self.components {
@@ -553,11 +553,11 @@ impl Unit {
     }
 
     /// Returns the combined scale factor if successful
-    fn try_convert(
+    fn try_convert<I: Interrupt>(
         from: &Self,
         into: &Self,
-        int: &impl Interrupt,
-    ) -> Result<ExactBase, IntErr<String>> {
+        int: &I,
+    ) -> Result<ExactBase, IntErr<String, I>> {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
         if hash_a == hash_b {

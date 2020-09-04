@@ -1,5 +1,5 @@
-use crate::err::IntErr;
-use crate::interrupt::{test_int, Interrupt};
+use crate::err::{IntErr, Interrupt, NeverInterrupt};
+use crate::interrupt::test_int;
 use crate::num::{Base, Number};
 use std::{
     convert::TryInto,
@@ -44,7 +44,7 @@ impl Display for Symbol {
     }
 }
 
-fn parse_char(input: &str) -> Result<(char, &str), IntErr<String>> {
+fn parse_char(input: &str) -> Result<(char, &str), IntErr<String, NeverInterrupt>> {
     let mut char_indices = input.char_indices();
     if let Some((_, ch)) = char_indices.next() {
         if let Some((idx, _)) = char_indices.next() {
@@ -59,7 +59,7 @@ fn parse_char(input: &str) -> Result<(char, &str), IntErr<String>> {
     }
 }
 
-fn consume_char(input: &mut &str) -> Result<char, IntErr<String>> {
+fn consume_char(input: &mut &str) -> Result<char, IntErr<String, NeverInterrupt>> {
     match parse_char(input) {
         Ok((ch, remaining_input)) => {
             *input = remaining_input;
@@ -69,7 +69,10 @@ fn consume_char(input: &mut &str) -> Result<char, IntErr<String>> {
     }
 }
 
-fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), IntErr<String>> {
+fn parse_ascii_digit(
+    input: &str,
+    base: Base,
+) -> Result<(u8, &str), IntErr<String, NeverInterrupt>> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
     if let Some(digit) = possible_digit.and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok()) {
@@ -79,7 +82,7 @@ fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), IntErr<Strin
     }
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), IntErr<String>> {
+fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), IntErr<String, NeverInterrupt>> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == ch {
         Ok(((), input))
@@ -90,14 +93,14 @@ fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), IntErr<String>>
 
 // Parses a plain integer with no whitespace and no base prefix.
 // Leading minus sign is not allowed.
-fn parse_integer<'a>(
+fn parse_integer<'a, I: Interrupt>(
     input: &'a str,
     allow_digit_separator: bool,
     allow_leading_zeroes: bool,
     base: Base,
-    process_digit: &mut impl FnMut(u8) -> Result<(), IntErr<String>>,
-) -> Result<((), &'a str), IntErr<String>> {
-    let (digit, mut input) = parse_ascii_digit(input, base)?;
+    process_digit: &mut impl FnMut(u8) -> Result<(), IntErr<String, I>>,
+) -> Result<((), &'a str), IntErr<String, I>> {
+    let (digit, mut input) = parse_ascii_digit(input, base).map_err(IntErr::get_error)?;
     process_digit(digit)?;
     let leading_zero = digit == 0;
     let mut parsed_digit_separator;
@@ -130,7 +133,7 @@ fn parse_integer<'a>(
     Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String>> {
+fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverInterrupt>> {
     // 0x -> 16
     // 0o -> 8
     // 0b -> 2
@@ -171,12 +174,12 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String>> {
     }
 }
 
-fn parse_basic_number<'a>(
+fn parse_basic_number<'a, I: Interrupt>(
     input: &'a str,
     base: Base,
     allow_zero: bool,
-    int: &impl Interrupt,
-) -> Result<(Number, &'a str), IntErr<String>> {
+    int: &I,
+) -> Result<(Number, &'a str), IntErr<String, I>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let (_, mut input) = parse_integer(
@@ -234,10 +237,10 @@ fn parse_basic_number<'a>(
     Ok((res, input))
 }
 
-fn parse_number_internal<'a>(
+fn parse_number_internal<'a, I: Interrupt>(
     mut input: &'a str,
-    int: &impl Interrupt,
-) -> Result<(Number, &'a str), IntErr<String>> {
+    int: &I,
+) -> Result<(Number, &'a str), IntErr<String, I>> {
     let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
         input = remaining;
         base
@@ -250,7 +253,7 @@ fn parse_number_internal<'a>(
     Ok((res, input))
 }
 
-fn parse_number(input: &mut &str, int: &impl Interrupt) -> Result<Token, IntErr<String>> {
+fn parse_number<I: Interrupt>(input: &mut &str, int: &I) -> Result<Token, IntErr<String, I>> {
     let (num, remaining_input) = parse_number_internal(input, int)?;
     *input = remaining_input;
     Ok(Token::Num(num))
@@ -269,7 +272,7 @@ fn is_valid_in_ident(ch: char, first: bool) -> bool {
     ch.is_alphabetic() || (!first && ".0123456789".contains(ch))
 }
 
-fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String>> {
+fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String, NeverInterrupt>> {
     let first_char = consume_char(input)?;
     if !is_valid_in_ident(first_char, true) {
         if is_valid_in_ident_char(first_char) {
@@ -294,27 +297,27 @@ fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String>> {
     })
 }
 
-pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, IntErr<String>> {
+pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<String, I>> {
     let mut res = vec![];
     loop {
         test_int(int)?;
         match input.chars().next() {
             Some(ch) => {
                 if ch.is_whitespace() {
-                    consume_char(&mut input)?;
+                    consume_char(&mut input).map_err(IntErr::get_error)?;
                 } else if ch.is_ascii_digit() {
                     res.push(parse_number(&mut input, int)?);
                 } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
-                    res.push(parse_ident(&mut input)?);
+                    res.push(parse_ident(&mut input).map_err(IntErr::get_error)?);
                 } else {
-                    match consume_char(&mut input)? {
+                    match consume_char(&mut input).map_err(IntErr::get_error)? {
                         '(' => res.push(Token::Symbol(Symbol::OpenParens)),
                         ')' => res.push(Token::Symbol(Symbol::CloseParens)),
                         '+' => res.push(Token::Symbol(Symbol::Add)),
                         '!' => res.push(Token::Symbol(Symbol::Factorial)),
                         '-' => {
                             if input.starts_with('>') {
-                                consume_char(&mut input)?;
+                                consume_char(&mut input).map_err(IntErr::get_error)?;
                                 res.push(Token::Symbol(Symbol::ArrowConversion))
                             } else {
                                 res.push(Token::Symbol(Symbol::Sub))
@@ -322,7 +325,7 @@ pub fn lex(mut input: &str, int: &impl Interrupt) -> Result<Vec<Token>, IntErr<S
                         }
                         '*' => {
                             if input.starts_with('*') {
-                                consume_char(&mut input)?;
+                                consume_char(&mut input).map_err(IntErr::get_error)?;
                                 res.push(Token::Symbol(Symbol::Pow))
                             } else {
                                 res.push(Token::Symbol(Symbol::Mul))

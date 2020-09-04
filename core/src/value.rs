@@ -1,5 +1,4 @@
-use crate::err::IntErr;
-use crate::interrupt::Interrupt;
+use crate::err::{IntErr, Interrupt};
 use crate::num::{FormattingStyle, Number};
 use std::fmt::{Error, Formatter};
 
@@ -12,20 +11,20 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn expect_num(&self) -> Result<Number, IntErr<String>> {
+    pub fn expect_num<I: Interrupt>(&self) -> Result<Number, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat.clone()),
             _ => Err("Expected a number".to_string())?,
         }
     }
 
-    pub fn apply(
+    pub fn apply<I: Interrupt>(
         &self,
         other: &Self,
         allow_multiplication: bool,
         force_multiplication: bool,
-        int: &impl Interrupt,
-    ) -> Result<Self, IntErr<String>> {
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         Ok(Self::Num(match self {
             Self::Num(n) => {
                 if let Self::Dp = other {
@@ -103,7 +102,7 @@ impl Value {
         }))
     }
 
-    pub fn format(&self, f: &mut Formatter, int: &impl Interrupt) -> Result<(), IntErr<Error>> {
+    pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
         match self {
             Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?)?,
             Self::Func(name) => write!(f, "{}", name)?,
