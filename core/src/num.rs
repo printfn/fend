@@ -1,5 +1,8 @@
-use crate::err::IntErr;
-use std::fmt::{Display, Error, Formatter};
+use crate::err::{IntErr, Never};
+use std::{
+    cell::Cell,
+    fmt::{Display, Error, Formatter},
+};
 
 mod bigrat;
 mod biguint;
@@ -99,45 +102,36 @@ impl Base {
 }
 
 // Small formatter helper
-// TODO: Handle interrupts separately from other errors
 pub fn to_string<F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>>(
     func: F,
-) -> Result<String, crate::err::Interrupt> {
-    //let mut interrupt_occurred = false;
-
-    struct Fmt<F>(F)
-    where
-        F: Fn(&mut Formatter) -> Result<(), Error>;
+) -> Result<String, IntErr<Never>> {
+    struct Fmt<F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>> {
+        format: F,
+        error: Cell<Option<IntErr<Never>>>,
+    }
 
     impl<F> Display for Fmt<F>
     where
-        F: Fn(&mut Formatter) -> Result<(), Error>,
+        F: Fn(&mut Formatter) -> Result<(), IntErr<Error>>,
     {
         fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-            (self.0)(f)
+            let interrupt = match (self.format)(f) {
+                Ok(()) => return Ok(()),
+                Err(IntErr::Interrupt(i)) => i,
+                Err(IntErr::Error(e)) => return Err(e),
+            };
+            self.error.set(Some(IntErr::Interrupt(interrupt)));
+            Ok(())
         }
     }
 
-    use std::fmt::Write;
-    let mut buf = String::new();
-    let res = buf.write_fmt(format_args!(
-        "{}",
-        Fmt(|f| {
-            match func(f) {
-                Ok(_) => Ok(()),
-                Err(_int) => {
-                    //interrupt_occurred = true;
-                    Err(Error::default())
-                }
-            }
-        })
-    ));
-    if res.is_err() {
-        //if interrupt_occurred {
-        return Err(crate::err::Interrupt::default());
-        //}
-        //panic!("a Display implementation returned an error unexpectedly");
+    let fmt = Fmt {
+        format: func,
+        error: Cell::new(None),
+    };
+    let string = fmt.to_string();
+    if let Some(e) = fmt.error.into_inner() {
+        return Err(e);
     }
-    buf.shrink_to_fit();
-    Ok(buf)
+    Ok(string)
 }
