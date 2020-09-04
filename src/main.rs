@@ -55,8 +55,8 @@ fn print_help() {
 }
 
 fn print_version() {
-    println!("fend 0.1.2");
-    println!("fend-core {}", fend_core::get_version());
+    println!("fend v0.1.2");
+    println!("fend-core v{}", fend_core::get_version());
 }
 
 fn save_history(rl: &Editor<helper::FendHelper>, path: &Option<PathBuf>) {
