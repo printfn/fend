@@ -185,7 +185,7 @@ impl BigUint {
         }
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
-        while high_guess.clone().sub(&low_guess.clone()) > 1.into() {
+        while high_guess.clone().sub(&low_guess) > 1.into() {
             test_int(int)?;
             let mut guess = low_guess.clone().add(&high_guess);
             guess.rshift(int)?;
