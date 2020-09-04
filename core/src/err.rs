@@ -134,7 +134,7 @@ impl<E: Error> From<IntErr<Never>> for IntErr<E> {
 impl<E: std::fmt::Debug> std::fmt::Debug for IntErr<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
-            Self::Interrupt(i) => write!(f, "{}", i)?,
+            Self::Interrupt(i) => write!(f, "{:?}", i)?,
             Self::Error(e) => write!(f, "{:?}", e)?,
         }
         Ok(())
@@ -147,18 +147,6 @@ impl Error for String {}
 #[derive(Debug)]
 pub enum Interrupt {
     Interrupt,
-}
-impl Display for Interrupt {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::Interrupt => write!(f, "Interrupted"),
-        }
-    }
-}
-impl From<Interrupt> for String {
-    fn from(e: Interrupt) -> Self {
-        e.to_string()
-    }
 }
 impl Default for Interrupt {
     fn default() -> Self {

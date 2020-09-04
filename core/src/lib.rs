@@ -97,14 +97,14 @@ pub fn evaluate_with_interrupt(
             other_info: vec![],
         });
     }
-    let result = match eval::evaluate_to_value(input, &context.scope, int) {
+    let result = match eval::evaluate_to_string(input, &context.scope, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
         Err(err::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
         Err(err::IntErr::Error(e)) => return Err(e),
     };
     Ok(FendResult {
-        main_result: crate::num::to_string(|f| result.format(f, int))?,
+        main_result: result,
         other_info: vec![],
     })
 }
