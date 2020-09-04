@@ -283,6 +283,10 @@ fn test_powers() {
     );
     // todo: reconsider the trailing zero
     test_eval_simple("pi^10", "approx. 93648.0474760830");
+    expect_parse_error("0^0");
+    test_evaluation("0^1", "0");
+    test_evaluation("1^0", "1");
+    expect_parse_error("1^1e1000"); // this exponent is currently too large
 }
 
 #[test]
