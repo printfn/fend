@@ -3,24 +3,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 pub trait Error: Display {}
 
-#[allow(clippy::empty_enum)]
-pub enum Never {}
-
-impl Display for Never {
-    fn fmt(&self, _: &mut Formatter) -> Result<(), fmt::Error> {
-        match *self {}
-    }
-}
-impl Debug for Never {
-    fn fmt(&self, _: &mut Formatter) -> Result<(), fmt::Error> {
-        match *self {}
-    }
-}
-impl From<Never> for String {
-    fn from(n: Never) -> Self {
-        match n {}
-    }
-}
+pub type Never = std::convert::Infallible;
 
 macro_rules! make_err {
     ($i:ident, $($a:ident, )*) => {
