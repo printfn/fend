@@ -30,11 +30,6 @@ macro_rules! make_err {
         )*
         // eventually we should be able to remove this
         // (once all the string-based error handling is gone)
-        impl From<$i> for String {
-            fn from(c: $i) -> Self {
-                c.to_string()
-            }
-        }
         impl From<IntErr<$i>> for IntErr<String> {
             fn from(v: IntErr<$i>) -> Self {
                 match v {
@@ -57,11 +52,6 @@ macro_rules! make_err {
             }
         }
         impl Error for $i {}
-        impl From<$i> for String {
-            fn from(e: $i) -> Self {
-                e.to_string()
-            }
-        }
         impl From<$i> for IntErr<String> {
             fn from(v: $i) -> Self {
                 Self::Error(v.to_string())
