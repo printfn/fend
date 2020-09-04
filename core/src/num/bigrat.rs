@@ -489,7 +489,7 @@ impl BigRat {
                 }
                 // digit = base * numerator / denominator
                 // next_numerator = base * numerator - digit * denominator
-                let bnum = base.clone().mul(&num, int)?;
+                let bnum = num.mul(base, int)?;
                 let digit = bnum.clone().div(&denominator, int)?;
                 let next_num = bnum - digit.clone().mul(&denominator, int)?;
                 Ok((next_num, digit))
