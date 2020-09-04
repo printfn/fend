@@ -245,7 +245,7 @@ impl BigRat {
                 Self {
                     sign: Sign::Positive,
                     num: if rhs.sign == Sign::Positive {
-                        self.num + rhs.num
+                        self.num.add(&rhs.num)
                     } else {
                         self.num - rhs.num
                     },
@@ -268,7 +268,7 @@ impl BigRat {
                 Self {
                     sign: Sign::Positive,
                     num: if rhs.sign == Sign::Positive {
-                        a + b
+                        a.add(&b)
                     } else {
                         a - b
                     },
@@ -333,7 +333,11 @@ impl BigRat {
         int: &impl Interrupt,
     ) -> Result<(), crate::err::Interrupt> {
         let base_as_u64: u64 = base.into();
-        self.num = self.num.clone().mul(&base_as_u64.into(), int)? + digit.into();
+        self.num = self
+            .num
+            .clone()
+            .mul(&base_as_u64.into(), int)?
+            .add(&digit.into());
         self.den = self.den.clone().mul(&base_as_u64.into(), int)?;
         Ok(())
     }

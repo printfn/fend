@@ -7,7 +7,7 @@ use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 use std::{
     hash::{Hash, Hasher},
-    ops::{Add, AddAssign, Sub},
+    ops::Sub,
 };
 
 #[derive(Clone)]
@@ -190,7 +190,7 @@ impl BigUint {
         let mut high_guess = self.clone();
         while high_guess.clone() - low_guess.clone() > 1.into() {
             test_int(int)?;
-            let mut guess = low_guess.clone() + high_guess.clone();
+            let mut guess = low_guess.clone().add(&high_guess);
             guess.rshift(int)?;
 
             let res = Self::pow(&guess, n, int)??;
@@ -453,6 +453,11 @@ impl BigUint {
     pub fn div(self, other: &Self, int: &impl Interrupt) -> Result<BigUint, crate::err::Interrupt> {
         Ok(self.divmod(other, int)?.unwrap().0)
     }
+
+    pub fn add(mut self, other: &Self) -> Self {
+        self.add_assign_internal(other, 1, 0);
+        self
+    }
 }
 
 impl Ord for BigUint {
@@ -513,21 +518,6 @@ impl Hash for BigUint {
 impl From<u64> for BigUint {
     fn from(val: u64) -> Self {
         Small(val)
-    }
-}
-
-impl AddAssign<&BigUint> for BigUint {
-    fn add_assign(&mut self, other: &Self) {
-        self.add_assign_internal(other, 1, 0);
-    }
-}
-
-impl Add for BigUint {
-    type Output = Self;
-
-    fn add(mut self, other: Self) -> Self {
-        self += &other;
-        self
     }
 }
 
@@ -632,10 +622,10 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        assert_eq!(BigUint::from(2) + BigUint::from(2), BigUint::from(4));
-        assert_eq!(BigUint::from(5) + BigUint::from(3), BigUint::from(8));
+        assert_eq!(BigUint::from(2).add(&BigUint::from(2)), BigUint::from(4));
+        assert_eq!(BigUint::from(5).add(&BigUint::from(3)), BigUint::from(8));
         assert_eq!(
-            BigUint::from(0) + BigUint::Large(vec![0, 9223372036854775808, 0]),
+            BigUint::from(0).add(&BigUint::Large(vec![0, 9223372036854775808, 0])),
             BigUint::Large(vec![0, 9223372036854775808, 0])
         );
     }
