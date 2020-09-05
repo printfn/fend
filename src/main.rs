@@ -59,9 +59,27 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
+fn check_for_updates() -> Result<(), ()> {
+    use std::time::{Duration, SystemTime};
+    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map_err(|_| ())?;
+    let next_update_time = 1_601_424_000; // 30/9/2020
+    if now > Duration::from_secs(next_update_time) {
+        println!();
+        println!(concat!(
+            "An update is available. If you installed fend via cargo, \n",
+            "you can update by running `cargo install fend`. \n",
+            "See here for more information:\n",
+            "https://github.com/printfn/fend-rs"
+        ));
+    }
+    Ok(())
+}
+
 fn print_version() {
     println!("fend v0.1.2");
     println!("fend-core v{}", fend_core::get_version());
+    // ignore if update check fails
+    let _ = check_for_updates();
 }
 
 fn save_history(rl: &Editor<helper::FendHelper>, path: &Option<PathBuf>) {
