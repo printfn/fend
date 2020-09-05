@@ -458,11 +458,7 @@ impl UnitValue {
                         write!(f, " ")?;
                     }
                     first = false;
-                    write!(f, "{}", unit_exponent.unit.singular_name)?;
-                    if unit_exponent.exponent != 1.into() {
-                        write!(f, "^")?;
-                        unit_exponent.exponent.format(f, true, int)?;
-                    }
+                    unit_exponent.format(f, true, false, int)?;
                     positive_exponents = true;
                 }
             }
@@ -472,16 +468,9 @@ impl UnitValue {
                     write!(f, " /")?;
                 }
                 for unit_exponent in negative_components {
-                    write!(f, " {}", unit_exponent.unit.singular_name)?;
-                    let exp = if positive_exponents && negative_exponents == 1 {
-                        -unit_exponent.exponent.clone()
-                    } else {
-                        unit_exponent.exponent.clone()
-                    };
-                    if exp != ExactBase::from(1) {
-                        write!(f, "^")?;
-                        exp.format(f, true, int)?;
-                    }
+                    write!(f, " ")?;
+                    let invert = positive_exponents && negative_exponents == 1;
+                    unit_exponent.format(f, true, invert, int)?;
                 }
             }
         }
@@ -593,6 +582,33 @@ impl<T> UnitExponent<T> {
             unit,
             exponent: exponent.into(),
         }
+    }
+}
+
+impl UnitExponent<NamedUnit> {
+    fn format<I: Interrupt>(
+        &self,
+        f: &mut Formatter,
+        singular: bool,
+        invert_exp: bool,
+        int: &I,
+    ) -> Result<(), IntErr<Error, I>> {
+        let name = if singular {
+            self.unit.singular_name.as_str()
+        } else {
+            self.unit.plural_name.as_str()
+        };
+        write!(f, "{}", name)?;
+        let exp = if invert_exp {
+            -self.exponent.clone()
+        } else {
+            self.exponent.clone()
+        };
+        if exp != 1.into() {
+            write!(f, "^")?;
+            exp.format(f, true, int)?;
+        }
+        Ok(())
     }
 }
 
