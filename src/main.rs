@@ -78,7 +78,7 @@ fn check_for_updates() -> Result<(), ()> {
 }
 
 fn print_version() {
-    println!("fend v0.1.2");
+    println!("fend v0.1.3");
     println!("fend-core v{}", fend_core::get_version());
     // ignore if update check fails
     let _ = check_for_updates();
