@@ -467,6 +467,7 @@ fn test_more_units() {
     expect_parse_error("(5)6");
     test_evaluation("3’6”", "3.5’");
     test_evaluation("365.25 light days -> ly", "1 ly");
+    test_evaluation("365.25 light days as ly", "1 ly");
     test_evaluation("1 light year", "1 light year");
     expect_parse_error("1 2 m");
     test_evaluation("5pi", "approx. 15.7079632679");
@@ -482,6 +483,7 @@ fn test_more_units() {
     test_evaluation("1psi -> kPa -> 5dp", "6.89475 kPa");
     //test_evaluation("5% * 5%", "0.25%");
     test_evaluation("1NM to m", "1852 m");
+    test_evaluation("1NM + 1cm as m", "1852.01 m");
 }
 
 #[test]
