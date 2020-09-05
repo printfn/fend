@@ -33,7 +33,7 @@ fn test_eval_simple(input: &str, expected: &str) {
 }
 
 #[track_caller]
-fn expect_parse_error(input: &str) {
+fn expect_error(input: &str) {
     let mut context = Context::new();
     assert!(evaluate(input, &mut context).is_err());
 }
@@ -229,9 +229,9 @@ fn test_decimal_point() {
     test_evaluation("0.01", "0.01");
     test_evaluation("0.01000", "0.01");
     test_evaluation("0.25", "0.25");
-    expect_parse_error("1.");
-    expect_parse_error(".1");
-    expect_parse_error("001.01000");
+    expect_error("1.");
+    expect_error(".1");
+    expect_error("001.01000");
     test_evaluation(
         "0.251974862348971623412341534273261435",
         "0.251974862348971623412341534273261435",
@@ -295,10 +295,10 @@ fn test_powers() {
         "approx. 27019992598076723515.9873962402",
     );
     test_evaluation("pi^10", "approx. 93648.047476083");
-    expect_parse_error("0^0");
+    expect_error("0^0");
     test_evaluation("0^1", "0");
     test_evaluation("1^0", "1");
-    expect_parse_error("1^1e1000"); // this exponent is currently too large
+    expect_error("1^1e1000"); // this exponent is currently too large
 }
 
 #[test]
@@ -345,7 +345,7 @@ fn test_basic_complex_numbers() {
     test_evaluation("2i/3", "2i/3");
     test_evaluation("2i/-3-1", "-1 - 2i/3");
     // i is an identifier, not a number; cf. 0bi
-    expect_parse_error("2#i");
+    expect_error("2#i");
 }
 
 #[test]
@@ -357,13 +357,13 @@ fn test_digit_separators() {
     test_evaluation("1_2_3_4_5_6", "123456");
     test_evaluation("1.1_1", "1.11");
     test_evaluation("1_1.1_1", "11.11");
-    expect_parse_error("_1");
-    expect_parse_error("1_");
-    expect_parse_error("1__1");
-    expect_parse_error("_");
-    expect_parse_error("1_.1");
-    expect_parse_error("1._1");
-    expect_parse_error("1.1_");
+    expect_error("_1");
+    expect_error("1_");
+    expect_error("1__1");
+    expect_error("_");
+    expect_error("1_.1");
+    expect_error("1._1");
+    expect_error("1.1_");
 }
 
 #[test]
@@ -378,17 +378,17 @@ fn test_different_bases() {
     test_evaluation("0 + 36#z", "35");
     test_evaluation("16#dead_beef", "16#deadbeef");
     test_evaluation("16#DEAD_BEEF", "16#deadbeef");
-    expect_parse_error("#");
-    expect_parse_error("0#0");
-    expect_parse_error("1#0");
-    expect_parse_error("2_2#0");
-    expect_parse_error("22 #0");
-    expect_parse_error("22# 0");
+    expect_error("#");
+    expect_error("0#0");
+    expect_error("1#0");
+    expect_error("2_2#0");
+    expect_error("22 #0");
+    expect_error("22# 0");
     test_evaluation("36#i i", "36#i i");
     test_evaluation("16#1i", "16#1i");
     test_evaluation("16#fi", "16#fi");
     test_evaluation("0 + 36#ii", "666");
-    expect_parse_error("18#i/i");
+    expect_error("18#i/i");
     test_evaluation("19#i/i", "-19#i i");
     // verified using a ruby program
     test_evaluation(
@@ -407,12 +407,12 @@ fn test_different_bases() {
     test_eval_simple("100 to base 6", "244");
     test_eval_simple("65536 to hex", "10000");
     test_eval_simple("65536 to octal", "200000");
-    expect_parse_error("5 to base 1.5");
-    expect_parse_error("5 to base 1");
-    expect_parse_error("5 to base 1000000000");
-    expect_parse_error("5 to base 100");
-    expect_parse_error("5 to base i");
-    expect_parse_error("5 to base kg");
+    expect_error("5 to base 1.5");
+    expect_error("5 to base 1");
+    expect_error("5 to base 1000000000");
+    expect_error("5 to base 100");
+    expect_error("5 to base i");
+    expect_error("5 to base kg");
 }
 
 #[test]
@@ -426,18 +426,18 @@ fn test_exponents() {
     test_evaluation("0 + 0b1e100000", "4294967296");
     test_evaluation("16#1e10", "16#1e10");
     test_evaluation("0d1e10", "0d10000000000");
-    expect_parse_error("11#1e10");
+    expect_error("11#1e10");
     test_evaluation(
         "0 + 0b1e10000000",
         "340282366920938463463374607431768211456",
     );
     test_evaluation("1.5e-1", "0.15");
-    expect_parse_error("1e -1");
-    expect_parse_error("1e- 1");
+    expect_error("1e -1");
+    expect_error("1e- 1");
     test_evaluation("0 + 0b1e-110", "0.015625");
     test_evaluation("e", "approx. 2.7182818284");
     test_evaluation("2 e", "approx. 5.4365636569");
-    expect_parse_error("2e");
+    expect_error("2e");
     test_evaluation("e^10", "approx. 22026.4657948067");
 }
 
@@ -465,18 +465,18 @@ fn test_more_units() {
     test_evaluation("0m/s + 1 km/hr", "5/18 m / s");
     test_evaluation("0m/s + i km/hr", "5i/18 m / s");
     test_evaluation("0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
-    expect_parse_error("7165928\t761528765");
+    expect_error("7165928\t761528765");
     test_evaluation("1 2/3", "5/3");
     test_evaluation("abs 2", "2");
     test_evaluation("5 m", "5 m");
     test_evaluation("(4)(6)", "24");
     test_evaluation("5(6)", "30");
-    expect_parse_error("(5)6");
+    expect_error("(5)6");
     test_evaluation("3’6”", "3.5’");
     test_evaluation("365.25 light days -> ly", "1 ly");
     test_evaluation("365.25 light days as ly", "1 ly");
     test_evaluation("1 light year", "1 light year");
-    expect_parse_error("1 2 m");
+    expect_error("1 2 m");
     test_evaluation("5pi", "approx. 15.7079632679");
     test_evaluation("5 pi/2", "approx. 7.8539816339");
     test_evaluation("5 i/2", "2.5i");
@@ -495,11 +495,11 @@ fn test_more_units() {
 
 #[test]
 fn test_no_adjacent_numbers() {
-    expect_parse_error("1 2");
-    expect_parse_error("1 2 3 4 5");
-    expect_parse_error("1 inch 5");
-    expect_parse_error("abs 1 2");
-    expect_parse_error("1 inch 5 kg");
+    expect_error("1 2");
+    expect_error("1 2 3 4 5");
+    expect_error("1 inch 5");
+    expect_error("abs 1 2");
+    expect_error("1 inch 5 kg");
     test_evaluation("5 (abs 4)", "20");
 }
 
@@ -519,12 +519,12 @@ fn test_unit_sums() {
 
 #[test]
 fn test_unit_conversions() {
-    expect_parse_error("->");
-    expect_parse_error("1m->");
-    expect_parse_error("1m - >");
-    expect_parse_error("->1ft");
-    expect_parse_error("1m -> 45ft");
-    expect_parse_error("1m -> 45 kg ft");
+    expect_error("->");
+    expect_error("1m->");
+    expect_error("1m - >");
+    expect_error("->1ft");
+    expect_error("1m -> 45ft");
+    expect_error("1m -> 45 kg ft");
     test_evaluation("1' -> inches", "12 inch");
 }
 
@@ -544,16 +544,16 @@ fn test_advanced_op_precedence() {
     test_evaluation("((1/4) kg)^-2", "16 kg^-2");
     test_evaluation("1 N - 1 kg m s^-2", "0 N");
     test_evaluation("1 J - 1 kg m^2 s^-2 + 1 kg / (m^-2 s^2)", "1 J");
-    expect_parse_error("2^abs 1");
-    expect_parse_error("2 4^3");
-    expect_parse_error("-2 4^3");
+    expect_error("2^abs 1");
+    expect_error("2 4^3");
+    expect_error("-2 4^3");
     test_evaluation("3*-2", "-6");
     test_evaluation("-3*-2", "6");
     test_evaluation("-3*2", "-6");
-    expect_parse_error("1 2/3^2");
-    expect_parse_error("1 2^2/3");
-    expect_parse_error("1^2 2/3");
-    expect_parse_error("1 2/-3");
+    expect_error("1 2/3^2");
+    expect_error("1 2^2/3");
+    expect_error("1^2 2/3");
+    expect_error("1 2/-3");
     test_evaluation("1 2/3 + 4 5/6", "6.5");
     test_evaluation("1 2/3 + -4 5/6", "-19/6");
     test_evaluation("1 2/3 - 4 5/6", "-19/6");
@@ -571,10 +571,10 @@ fn test_advanced_op_precedence() {
     test_evaluation("6!", "720");
     test_evaluation("7!", "5040");
     test_evaluation("8!", "40320");
-    expect_parse_error("0.5!");
-    expect_parse_error("(-2)!");
-    expect_parse_error("3i!");
-    expect_parse_error("(3 kg)!");
+    expect_error("0.5!");
+    expect_error("(-2)!");
+    expect_error("3i!");
+    expect_error("(3 kg)!");
 }
 
 #[test]
@@ -596,41 +596,41 @@ fn test_various_functions() {
     test_same("tan 0", "tan pi");
     test_evaluation("asin 1", "approx. 1.5707963266");
     test_evaluation("asin 1", "approx. 1.5707963266");
-    expect_parse_error("asin 3");
-    expect_parse_error("asin (-3)");
-    expect_parse_error("asin 1.01");
-    expect_parse_error("asin (-1.01)");
+    expect_error("asin 3");
+    expect_error("asin (-3)");
+    expect_error("asin 1.01");
+    expect_error("asin (-1.01)");
     test_evaluation("acos 0", "approx. 1.5707963266");
-    expect_parse_error("acos 3");
-    expect_parse_error("acos (-3)");
-    expect_parse_error("acos 1.01");
-    expect_parse_error("acos (-1.01)");
+    expect_error("acos 3");
+    expect_error("acos (-3)");
+    expect_error("acos 1.01");
+    expect_error("acos (-1.01)");
     test_evaluation("atan 1", "approx. 0.7853981633");
     test_same("sinh 0", "sin 0");
     test_same("cosh 0", "cos 0");
     test_same("tanh 0", "tan 0");
     test_same("asinh 0", "asin 0");
-    expect_parse_error("acosh 0");
+    expect_error("acosh 0");
     test_evaluation("acosh 2", "approx. 1.3169578968");
     test_same("atanh 0", "atan 0");
-    expect_parse_error("atanh 3");
-    expect_parse_error("atanh (-3)");
-    expect_parse_error("atanh 1.01");
-    expect_parse_error("atanh (-1.01)");
-    expect_parse_error("atanh 1");
-    expect_parse_error("atanh (-1)");
+    expect_error("atanh 3");
+    expect_error("atanh (-3)");
+    expect_error("atanh 1.01");
+    expect_error("atanh (-1.01)");
+    expect_error("atanh 1");
+    expect_error("atanh (-1)");
     test_evaluation("ln 2", "approx. 0.6931471805");
-    expect_parse_error("ln 0");
+    expect_error("ln 0");
     test_evaluation("exp 2", "approx. 7.3890560987");
     test_evaluation("log10 100", "approx. 2");
     test_evaluation("log10 1000", "approx. 3");
     test_evaluation("log10 10000", "approx. 4");
     test_evaluation("log10 100000", "approx. 5");
     test_evaluation("log2 65536", "approx. 16");
-    expect_parse_error("log10 (-1)");
-    expect_parse_error("log2 (-1)");
-    expect_parse_error("sqrt (-2)");
-    expect_parse_error("oishfod 3");
+    expect_error("log10 (-1)");
+    expect_error("log2 (-1)");
+    expect_error("sqrt (-2)");
+    expect_error("oishfod 3");
     test_evaluation("ln", "ln");
     test_evaluation("sqrt", "sqrt");
     test_evaluation("dp", "dp");
