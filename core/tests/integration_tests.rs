@@ -478,8 +478,10 @@ fn test_more_units() {
     test_evaluation("5% + 1", "105%");
     test_evaluation("0.1 + 5%", "0.15");
     test_evaluation("1 + 5%", "1.05");
-    test_evaluation("1psi -> kPa -> 5dp", "6.89475 kPa"); // should be approx.
-                                                          //test_evaluation("5% * 5%", "0.25%");
+    // should be approx.
+    test_evaluation("1psi -> kPa -> 5dp", "6.89475 kPa");
+    //test_evaluation("5% * 5%", "0.25%");
+    test_evaluation("1NM to m", "1852 m");
 }
 
 #[test]
