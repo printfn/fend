@@ -22,7 +22,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --release --workspace
+      run: |
+        rustup update
+        cargo build --release --workspace
     - name: Run tests
       run: cargo test --workspace
     - name: Upload artifacts
