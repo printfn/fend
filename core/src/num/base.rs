@@ -18,7 +18,7 @@ enum BaseEnum {
 }
 
 impl Base {
-    pub fn base_as_u8(self) -> u8 {
+    pub const fn base_as_u8(self) -> u8 {
         match self.0 {
             BaseEnum::Binary => 2,
             BaseEnum::Octal => 8,
@@ -63,14 +63,14 @@ impl Base {
         Ok(())
     }
 
-    pub fn has_prefix(self) -> bool {
+    pub const fn has_prefix(self) -> bool {
         match self.0 {
             BaseEnum::Plain(_) => false,
             _ => true,
         }
     }
 
-    pub fn digit_as_char(digit: u64) -> Option<char> {
+    pub const fn digit_as_char(digit: u64) -> Option<char> {
         Some(match digit {
             0 => '0',
             1 => '1',
@@ -112,7 +112,7 @@ impl Base {
         })
     }
 
-    pub fn allow_leading_zeroes(self) -> bool {
+    pub const fn allow_leading_zeroes(self) -> bool {
         match self.0 {
             BaseEnum::Plain(10) => false,
             _ => true,

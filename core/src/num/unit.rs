@@ -567,7 +567,7 @@ impl Unit {
         }
     }
 
-    fn unitless() -> Self {
+    const fn unitless() -> Self {
         Self { components: vec![] }
     }
 }
