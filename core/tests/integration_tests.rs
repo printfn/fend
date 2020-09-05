@@ -496,6 +496,21 @@ fn test_more_units() {
     test_evaluation("1NM to m", "1852 m");
     test_evaluation("1NM + 1cm as m", "1852.01 m");
     test_evaluation("1 m / (s kg cd)", "1 m s^-1 kg^-1 cd^-1");
+    test_evaluation("1 watt hour / lb", "1 watt hour / lb");
+    test_evaluation("4 watt hours / lb", "4 watt hours / lb");
+    test_evaluation("1 second second", "1 second second");
+    test_evaluation("2 second seconds", "2 second seconds");
+    test_evaluation("1 lb^-1", "1 lb^-1");
+    test_evaluation("2 lb^-1", "2 lb^-1");
+    test_evaluation("2 lb^-1 kg^-1", "2 lb^-1 kg^-1");
+    test_evaluation("1 lb^-1 kg^-1", "1 lb^-1 kg^-1");
+    test_evaluation("1 light year", "1 light year");
+    test_evaluation("1 light year / second", "1 light year / second");
+    test_evaluation("2 light years / second", "2 light years / second");
+    test_evaluation(
+        "2 light years second^-1 lb^-1",
+        "2 light years second^-1 lb^-1",
+    );
 }
 
 #[test]
@@ -517,7 +532,7 @@ fn test_compound_fraction() {
 
 #[test]
 fn test_unit_sums() {
-    test_evaluation("5 feet 12 inch", "6 foot");
+    test_evaluation("5 feet 12 inch", "6 feet");
     test_evaluation("3'6\"", "3.5'");
     test_evaluation("3’6”", "3.5’");
 }
@@ -530,7 +545,7 @@ fn test_unit_conversions() {
     expect_error("->1ft");
     expect_error("1m -> 45ft");
     expect_error("1m -> 45 kg ft");
-    test_evaluation("1' -> inches", "12 inch");
+    test_evaluation("1' -> inches", "12 inches");
 }
 
 #[test]

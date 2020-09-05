@@ -223,7 +223,7 @@ impl UnitValue {
         })
     }
 
-    fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent<NamedUnit>>) -> Self {
+    fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent>) -> Self {
         Self {
             value: value.into(),
             unit: Unit {
@@ -263,7 +263,7 @@ impl UnitValue {
     pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
-            components.push(UnitExponent::<NamedUnit>::new(
+            components.push(UnitExponent::new(
                 rhs_component.unit,
                 -rhs_component.exponent,
             ));
@@ -447,31 +447,44 @@ impl UnitValue {
         let use_parentheses = !self.unit.components.is_empty();
         self.value.format(f, use_parentheses, int)?;
         if !self.unit.components.is_empty() {
+            // Pluralisation:
+            // All units should be singular, except for the last unit
+            // that has a positive exponent, iff the number is not equal to 1
+            let mut positive_components = vec![];
             let mut negative_components = vec![];
             let mut first = true;
-            let mut positive_exponents = false;
             for unit_exponent in &self.unit.components {
                 if unit_exponent.exponent < 0.into() {
                     negative_components.push(unit_exponent);
                 } else {
-                    if !first || unit_exponent.unit.spacing {
-                        write!(f, " ")?;
-                    }
-                    first = false;
-                    unit_exponent.format(f, true, false, int)?;
-                    positive_exponents = true;
+                    positive_components.push(unit_exponent);
                 }
             }
-            let negative_exponents = negative_components.len();
-            if !negative_components.is_empty() {
-                if positive_exponents && negative_exponents == 1 {
-                    write!(f, " /")?;
-                }
-                for unit_exponent in negative_components {
+            let invert_negative_component =
+                !positive_components.is_empty() && negative_components.len() == 1;
+            let mut merged_components = vec![];
+            let pluralised_idx = if positive_components.is_empty() {
+                usize::MAX
+            } else {
+                positive_components.len() - 1
+            };
+            for pos_comp in positive_components {
+                merged_components.push((pos_comp, false));
+            }
+            for neg_comp in negative_components {
+                merged_components.push((neg_comp, invert_negative_component));
+            }
+            let last_component_plural = self.value != 1.into();
+            for (i, (unit_exponent, invert)) in merged_components.into_iter().enumerate() {
+                if !first || unit_exponent.unit.spacing {
                     write!(f, " ")?;
-                    let invert = positive_exponents && negative_exponents == 1;
-                    unit_exponent.format(f, true, invert, int)?;
                 }
+                first = false;
+                if invert {
+                    write!(f, "/ ")?;
+                }
+                let plural = last_component_plural && i == pluralised_idx;
+                unit_exponent.format(f, plural, invert, int)?;
             }
         }
         Ok(())
@@ -507,7 +520,7 @@ impl From<u64> for UnitValue {
 
 #[derive(Clone, Debug)]
 struct Unit {
-    components: Vec<UnitExponent<NamedUnit>>,
+    components: Vec<UnitExponent>,
 }
 
 impl Unit {
@@ -571,32 +584,30 @@ impl Unit {
 }
 
 #[derive(Clone, Debug)]
-struct UnitExponent<T> {
-    unit: T,
+struct UnitExponent {
+    unit: NamedUnit,
     exponent: ExactBase,
 }
 
-impl<T> UnitExponent<T> {
-    fn new(unit: T, exponent: impl Into<ExactBase>) -> Self {
+impl UnitExponent {
+    fn new(unit: NamedUnit, exponent: impl Into<ExactBase>) -> Self {
         Self {
             unit,
             exponent: exponent.into(),
         }
     }
-}
 
-impl UnitExponent<NamedUnit> {
     fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
-        singular: bool,
+        plural: bool,
         invert_exp: bool,
         int: &I,
     ) -> Result<(), IntErr<Error, I>> {
-        let name = if singular {
-            self.unit.singular_name.as_str()
-        } else {
+        let name = if plural {
             self.unit.plural_name.as_str()
+        } else {
+            self.unit.singular_name.as_str()
         };
         write!(f, "{}", name)?;
         let exp = if invert_exp {
