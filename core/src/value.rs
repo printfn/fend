@@ -29,9 +29,9 @@ impl Value {
         Ok(Self::Num(match self {
             Self::Num(n) => {
                 if let Self::Dp = other {
-                    let num = self.expect_num()?;
+                    let num = self.expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::ApproxFloat(
-                        num.try_as_usize(int)?,
+                        num,
                     )));
                 }
                 if allow_multiplication {

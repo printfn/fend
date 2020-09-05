@@ -236,6 +236,14 @@ fn test_decimal_point() {
         "0.251974862348971623412341534273261435",
         "0.251974862348971623412341534273261435",
     );
+    test_eval_simple("1.00000001 as 1 dp", "1.0");
+    test_eval_simple("1.00000001 as 2 dp", "1.0");
+    test_eval_simple("1.00000001 as 3 dp", "1.0");
+    test_eval_simple("1.00000001 as 4 dp", "1.0");
+    test_evaluation("1.00000001 as 10 dp", "1.00000001");
+    test_evaluation("1.00000001 as 30 dp", "1.00000001");
+    test_evaluation("1.00000001 as 1000 dp", "1.00000001");
+    test_evaluation("1.00000001 as 0 dp", "1");
 }
 
 #[test]
@@ -286,8 +294,7 @@ fn test_powers() {
         "5.2*10^15*300^(3/2)",
         "approx. 27019992598076723515.9873962402",
     );
-    // todo: reconsider the trailing zero
-    test_eval_simple("pi^10", "approx. 93648.0474760830");
+    test_evaluation("pi^10", "approx. 93648.047476083");
     expect_parse_error("0^0");
     test_evaluation("0^1", "0");
     test_evaluation("1^0", "1");

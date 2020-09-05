@@ -447,7 +447,6 @@ impl BigRat {
         };
         let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
         integer_part.format(f, base, true, int)?;
-        write!(f, ".")?;
         let integer_as_rational = Self {
             sign: Sign::Positive,
             num: integer_part,
@@ -496,6 +495,9 @@ impl BigRat {
                 Self::Interrupt(i)
             }
         }
+        if max_digits != Some(0) {
+            write!(f, ".")?;
+        }
 
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
@@ -526,11 +528,20 @@ impl BigRat {
         if skip_cycle_detection {
             let mut current_numerator = numerator.clone();
             let mut i = 0;
+            let mut trailing_zeroes = 0;
             loop {
                 match next_digit(i, current_numerator.clone(), &b) {
                     Ok((next_n, digit)) => {
                         current_numerator = next_n;
-                        digit.format(f, base, false, int)?;
+                        if digit == 0.into() && i > 0 {
+                            trailing_zeroes += 1;
+                        } else {
+                            for _ in 0..trailing_zeroes {
+                                write!(f, "0")?;
+                            }
+                            trailing_zeroes = 0;
+                            digit.format(f, base, false, int)?;
+                        }
                     }
                     Err(NextDigitErr::Terminated) => {
                         // is the number exact, or did we need to truncate?
