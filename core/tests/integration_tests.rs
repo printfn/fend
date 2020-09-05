@@ -404,6 +404,8 @@ fn test_different_bases() {
     expect_parse_error("5 to base 1");
     expect_parse_error("5 to base 1000000000");
     expect_parse_error("5 to base 100");
+    expect_parse_error("5 to base i");
+    expect_parse_error("5 to base kg");
 }
 
 #[test]
