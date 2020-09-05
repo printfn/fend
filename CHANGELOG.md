@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.3 (2020-09-05)
+
+* Use correct singular/plural unit names
+* Base conversions using `to`
+* Make exponents in other bases more consistent
+
 ## v0.1.2 (2020-09-02)
 
 * Allow leading zeroes for non-decimal numbers
