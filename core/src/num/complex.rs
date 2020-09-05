@@ -196,20 +196,6 @@ impl Complex {
         ))
     }
 
-    pub fn approx_pi() -> Self {
-        Self {
-            real: BigRat::approx_pi(),
-            imag: 0.into(),
-        }
-    }
-
-    pub fn approx_e() -> Self {
-        Self {
-            real: BigRat::approx_e(),
-            imag: 0.into(),
-        }
-    }
-
     fn expect_real<I: Interrupt>(self) -> Result<BigRat, IntErr<String, I>> {
         if self.imag == 0.into() {
             Ok(self.real)

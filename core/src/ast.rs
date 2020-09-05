@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt};
+use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::value::Value;
@@ -122,19 +122,23 @@ pub fn evaluate<I: Interrupt>(
     })
 }
 
+fn eval<I: Interrupt>(input: &'static str, scope: &HashMap<String, Value>, int: &I) -> Result<Value, IntErr<Never, I>> {
+    crate::eval::evaluate_to_value(input, scope, int)
+        .map_err(crate::err::IntErr::unwrap)
+}
+
 fn resolve_identifier<I: Interrupt>(
     ident: &str,
     scope: &HashMap<String, Value>,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     Ok(match ident {
-        "pi" => Value::Num(Number::approx_pi()),
-        "e" => Value::Num(Number::approx_e()),
+        "pi" => eval("approx. 3.141592653589793238", scope, int)?,
+        "e" => eval("approx. 2.718281828459045235", scope, int)?,
         "i" => Value::Num(Number::i()),
         // TODO: we want to forward any interrupt, but panic on any other error
         // or statically prove that no other error can occur
-        "c" => crate::eval::evaluate_to_value("299792458 m / s", scope, int)
-            .map_err(crate::err::IntErr::unwrap)?,
+        "c" => eval("299792458 m / s", scope, int)?,
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),

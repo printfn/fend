@@ -348,22 +348,6 @@ impl BigRat {
         Ok(())
     }
 
-    pub fn approx_pi() -> Self {
-        Self {
-            sign: Sign::Positive,
-            num: BigUint::from(3_141_592_653_589_793_238_u64),
-            den: BigUint::from(1_000_000_000_000_000_000_u64),
-        }
-    }
-
-    pub fn approx_e() -> Self {
-        Self {
-            sign: Sign::Positive,
-            num: BigUint::from(2_718_281_828_459_045_235_u64),
-            den: BigUint::from(1_000_000_000_000_000_000_u64),
-        }
-    }
-
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
     // The result bool indicates whether the number was exact or not.

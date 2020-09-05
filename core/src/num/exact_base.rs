@@ -166,24 +166,6 @@ impl ExactBase {
         })
     }
 
-    pub fn approx_pi() -> Self {
-        Self {
-            value: Complex::approx_pi(),
-            exact: false,
-            base: Base::default(),
-            format: FormattingStyle::default(),
-        }
-    }
-
-    pub fn approx_e() -> Self {
-        Self {
-            value: Complex::approx_e(),
-            exact: false,
-            base: Base::default(),
-            format: FormattingStyle::default(),
-        }
-    }
-
     fn apply_approx_fn<I: Interrupt>(
         self,
         f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String, I>>,
