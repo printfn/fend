@@ -386,7 +386,7 @@ impl BigRat {
             if negative {
                 write!(f, "-")?;
             }
-            if imag && base == Base::Decimal && x.num == 1.into() {
+            if imag && !base.has_prefix() && x.num == 1.into() {
                 write!(f, "i")?;
             } else {
                 x.num.format(f, base, true, int)?;
@@ -416,7 +416,7 @@ impl BigRat {
             if negative {
                 write!(f, "-")?;
             }
-            if imag && base == Base::Decimal && x.num == 1.into() {
+            if imag && !base.has_prefix() && x.num == 1.into() {
                 write!(f, "i")?;
             } else {
                 x.num.format(f, base, true, int)?;

@@ -100,7 +100,7 @@ impl ExactBase {
         Self {
             value: Complex::i(),
             exact: true,
-            base: Base::Decimal,
+            base: Base::default(),
             format: FormattingStyle::default(),
         }
     }
@@ -161,7 +161,7 @@ impl ExactBase {
         Self {
             value: Complex::approx_pi(),
             exact: false,
-            base: Base::Decimal,
+            base: Base::default(),
             format: FormattingStyle::default(),
         }
     }
@@ -170,7 +170,7 @@ impl ExactBase {
         Self {
             value: Complex::approx_e(),
             exact: false,
-            base: Base::Decimal,
+            base: Base::default(),
             format: FormattingStyle::default(),
         }
     }
@@ -307,7 +307,7 @@ impl From<u64> for ExactBase {
         Self {
             value: i.into(),
             exact: true,
-            base: Base::Decimal,
+            base: Base::default(),
             format: FormattingStyle::default(),
         }
     }

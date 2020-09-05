@@ -135,28 +135,17 @@ fn parse_integer<'a, I: Interrupt>(
 
 fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverInterrupt>> {
     // 0x -> 16
+    // 0d -> 10
     // 0o -> 8
     // 0b -> 2
     // base# -> base (where 2 <= base <= 36)
     // case-sensitive, no whitespace allowed
     if let Ok((_, input)) = parse_fixed_char(input, '0') {
         let (ch, input) = parse_char(input)?;
-        Ok((
-            match ch {
-                'x' => Base::Hex,
-                'o' => Base::Octal,
-                'b' => Base::Binary,
-                _ => {
-                    return Err(
-                        "Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string()
-                    )?
-                }
-            },
-            input,
-        ))
+        Ok((Base::from_zero_based_prefix_char(ch)?, input))
     } else {
         let mut custom_base: u8 = 0;
-        let (_, input) = parse_integer(input, false, false, Base::Decimal, &mut |digit| {
+        let (_, input) = parse_integer(input, false, false, Base::default(), &mut |digit| {
             if custom_base > 3 {
                 return Err("Base cannot be larger than 36".to_string())?;
             }
@@ -170,7 +159,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverIn
             return Err("Base must be at least 2".to_string())?;
         }
         let (_, input) = parse_fixed_char(input, '#')?;
-        Ok((Base::Custom(custom_base), input))
+        Ok((Base::from_custom_base(custom_base)?, input))
     }
 }
 
@@ -219,9 +208,11 @@ fn parse_basic_number<'a, I: Interrupt>(
                 negative_exponent = true;
                 input = remaining;
             }
-            let mut exp = Number::zero_with_base(Base::Decimal);
-            let (_, remaining) = parse_integer(input, true, true, Base::Decimal, &mut |digit| {
-                exp = (exp.clone().mul(10.into(), int)?).add(u64::from(digit).into(), int)?;
+            let mut exp = Number::zero_with_base(base);
+            let base_num = Number::from(u64::from(base.base_as_u8()));
+            let (_, remaining) = parse_integer(input, true, true, base, &mut |digit| {
+                exp =
+                    (exp.clone().mul(base_num.clone(), int)?).add(u64::from(digit).into(), int)?;
                 Ok(())
             })?;
             if negative_exponent {
@@ -245,7 +236,7 @@ fn parse_number_internal<'a, I: Interrupt>(
         input = remaining;
         base
     } else {
-        Base::Decimal
+        Base::default()
     };
 
     let (res, input) = parse_basic_number(input, base, true, int)?;

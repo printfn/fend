@@ -1,37 +1,73 @@
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum Base {
+pub struct Base(BaseEnum);
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+enum BaseEnum {
     /// Binary with 0b prefix
     Binary,
     /// Octal with 0o prefix
     Octal,
-    /// Decimal with no prefix
+    /// Decimal with 0d prefix
     Decimal,
     /// Hex with 0x prefix
     Hex,
     /// Custom base between 2 and 36 (inclusive), written as base#number
     Custom(u8),
+    /// Plain (no prefix)
+    Plain(u8),
 }
 
 impl Base {
     pub fn base_as_u8(self) -> u8 {
-        match self {
-            Self::Binary => 2,
-            Self::Octal => 8,
-            Self::Decimal => 10,
-            Self::Hex => 16,
-            Self::Custom(b) => b,
+        match self.0 {
+            BaseEnum::Binary => 2,
+            BaseEnum::Octal => 8,
+            BaseEnum::Decimal => 10,
+            BaseEnum::Hex => 16,
+            BaseEnum::Custom(b) | BaseEnum::Plain(b) => b,
         }
     }
 
+    pub fn from_zero_based_prefix_char(ch: char) -> Result<Self, String> {
+        Ok(match ch {
+            'x' => Self(BaseEnum::Hex),
+            'd' => Self(BaseEnum::Decimal),
+            'o' => Self(BaseEnum::Octal),
+            'b' => Self(BaseEnum::Binary),
+            _ => {
+                return Err(
+                    "Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string()
+                )?
+            }
+        })
+    }
+
+    pub fn from_custom_base(base: u8) -> Result<Self, String> {
+        if base < 2 {
+            return Err("Base must be at least 2".to_string());
+        } else if base > 36 {
+            return Err("Base cannot be greater than 36".to_string());
+        }
+        Ok(Self(BaseEnum::Custom(base)))
+    }
+
     pub fn write_prefix(self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        match self {
-            Self::Binary => write!(f, "0b")?,
-            Self::Octal => write!(f, "0o")?,
-            Self::Decimal => (),
-            Self::Hex => write!(f, "0x")?,
-            Self::Custom(b) => write!(f, "{}#", b)?,
+        match self.0 {
+            BaseEnum::Binary => write!(f, "0b")?,
+            BaseEnum::Octal => write!(f, "0o")?,
+            BaseEnum::Decimal => write!(f, "0d")?,
+            BaseEnum::Hex => write!(f, "0x")?,
+            BaseEnum::Custom(b) => write!(f, "{}#", b)?,
+            BaseEnum::Plain(_) => (),
         }
         Ok(())
+    }
+
+    pub fn has_prefix(self) -> bool {
+        match self.0 {
+            BaseEnum::Plain(_) => false,
+            _ => true,
+        }
     }
 
     pub fn digit_as_char(digit: u64) -> Option<char> {
@@ -77,9 +113,15 @@ impl Base {
     }
 
     pub fn allow_leading_zeroes(self) -> bool {
-        match self {
-            Self::Decimal => false,
+        match self.0 {
+            BaseEnum::Plain(10) => false,
             _ => true,
         }
+    }
+}
+
+impl Default for Base {
+    fn default() -> Self {
+        Self(BaseEnum::Plain(10))
     }
 }

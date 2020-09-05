@@ -1,5 +1,6 @@
 use fend_core::{evaluate, Context};
 
+#[track_caller]
 pub fn test_evaluation(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
@@ -395,17 +396,22 @@ fn test_different_bases() {
 fn test_exponents() {
     test_evaluation("1e10", "10000000000");
     test_evaluation("1.5e10", "15000000000");
-    test_evaluation("0b1e10", "0b10000000000");
-    test_evaluation("0 + 0b1e100", "1267650600228229401496703205376");
-    test_evaluation("0 + 0b1e32", "4294967296");
-    test_evaluation("0 + 0b1e16", "65536");
+    test_evaluation("0b1e10", "0b100");
+    test_evaluation("0 + 0b1e100", "16");
+    test_evaluation("0 + 0b1e1000", "256");
+    test_evaluation("0 + 0b1e10000", "65536");
+    test_evaluation("0 + 0b1e100000", "4294967296");
     test_evaluation("16#1e10", "16#1e10");
+    test_evaluation("0d1e10", "0d10000000000");
     expect_parse_error("11#1e10");
-    test_evaluation("0 + 0b1e1_00", "1267650600228229401496703205376");
+    test_evaluation(
+        "0 + 0b1e10000000",
+        "340282366920938463463374607431768211456",
+    );
     test_evaluation("1.5e-1", "0.15");
     expect_parse_error("1e -1");
     expect_parse_error("1e- 1");
-    test_evaluation("0 + 0b1e-6", "0.015625");
+    test_evaluation("0 + 0b1e-110", "0.015625");
     test_evaluation("e", "approx. 2.7182818284");
     test_evaluation("2 e", "approx. 5.4365636569");
     expect_parse_error("2e");
