@@ -56,8 +56,13 @@ approx. 0.7071067811 + 0.7071067811i
 ```
 
 ```
-> 1 light year to parsec
-approx. 0.3066013937 parsec
+> 0xffff to decimal
+65535
+```
+
+```
+> 1 light year to parsecs
+approx. 0.3066013937 parsecs
 ```
 
 ## Changelog
