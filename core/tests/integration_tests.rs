@@ -298,7 +298,11 @@ fn test_powers() {
     expect_error("0^0");
     test_evaluation("0^1", "0");
     test_evaluation("1^0", "1");
-    expect_error("1^1e1000"); // this exponent is currently too large
+    // this exponent is currently too large
+    expect_error("1^1e1000");
+    expect_error("i^3");
+    expect_error("4^i");
+    expect_error("i^i");
 }
 
 #[test]
@@ -638,4 +642,9 @@ fn test_various_functions() {
     test_evaluation("float", "float");
     test_evaluation("fraction", "fraction");
     test_evaluation("auto", "auto");
+    expect_error("sqrt i");
+    expect_error("sqrt (-2i)");
+    expect_error("cbrt i");
+    expect_error("cbrt (-2i)");
+    expect_error("sin i");
 }
