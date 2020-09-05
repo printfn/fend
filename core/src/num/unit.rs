@@ -205,6 +205,13 @@ impl UnitValue {
         }
     }
 
+    pub fn with_base(self, base: Base) -> Self {
+        Self {
+            value: self.value.with_base(base),
+            unit: self.unit,
+        }
+    }
+
     pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !self.is_unitless() {
             return Err("Factorial is only supported for unitless numbers".to_string())?;

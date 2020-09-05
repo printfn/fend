@@ -394,6 +394,12 @@ fn test_different_bases() {
     );
     test_evaluation("18#100/65537 i", "18#100i/18#b44h");
     test_evaluation("19#100/65537 i", "19#100 i/19#9aa6");
+    test_eval_simple("16 to base 2", "10000");
+    test_eval_simple("0x10ffff to decimal", "1114111");
+    test_eval_simple("0o400 to decimal", "256");
+    test_eval_simple("100 to base 6", "244");
+    test_eval_simple("65536 to hex", "10000");
+    test_eval_simple("65536 to octal", "200000");
 }
 
 #[test]

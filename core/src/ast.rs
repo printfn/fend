@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt};
 use crate::interrupt::test_int;
-use crate::num::{FormattingStyle, Number};
+use crate::num::{Base, FormattingStyle, Number};
 use crate::value::Value;
 use std::{
     collections::HashMap,
@@ -112,6 +112,9 @@ pub fn evaluate<I: Interrupt>(
                     .expect_num()?
                     .with_format(FormattingStyle::ApproxFloat(10)),
             ),
+            Value::Base(base) => {
+                Value::Num(evaluate(*a, scope, int)?.expect_num()?.with_base(base))
+            }
             Value::Func(_) => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
@@ -157,6 +160,11 @@ fn resolve_identifier<I: Interrupt>(
         "fraction" => Value::Format(FormattingStyle::ExactFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
+        "base" => Value::Func("base".to_string()),
+        "decimal" => Value::Base(Base::from_plain_base(10)?),
+        "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),
+        "binary" => Value::Base(Base::from_plain_base(2)?),
+        "octal" => Value::Base(Base::from_plain_base(8)?),
         _ => {
             if let Some(value) = scope.get(&ident.to_string()) {
                 value.clone()

@@ -1,5 +1,5 @@
 use crate::err::{IntErr, Interrupt};
-use crate::num::{FormattingStyle, Number};
+use crate::num::{Base, FormattingStyle, Number};
 use std::fmt::{Error, Formatter};
 
 #[derive(Debug, Clone)]
@@ -8,6 +8,7 @@ pub enum Value {
     Func(String),
     Format(FormattingStyle),
     Dp,
+    Base(Base),
 }
 
 impl Value {
@@ -89,6 +90,14 @@ impl Value {
                     other.expect_num()?.log10(int)?
                 } else if name == "exp" {
                     other.expect_num()?.exp(int)?
+                } else if name == "base" {
+                    use std::convert::TryInto;
+                    let n: u8 = other
+                        .expect_num()?
+                        .try_as_usize(int)?
+                        .try_into()
+                        .map_err(|_| "Unable to convert number to a valid base".to_string())?;
+                    return Ok(Value::Base(Base::from_plain_base(n)?));
                 } else {
                     return Err(format!("Unknown function '{}'", name))?;
                 }
@@ -108,6 +117,7 @@ impl Value {
             Self::Func(name) => write!(f, "{}", name)?,
             Self::Format(fmt) => write!(f, "{}", fmt)?,
             Self::Dp => write!(f, "dp")?,
+            Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
         }
         Ok(())
     }

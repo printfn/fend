@@ -42,6 +42,15 @@ impl Base {
         })
     }
 
+    pub fn from_plain_base(base: u8) -> Result<Self, String> {
+        if base < 2 {
+            return Err("Base must be at least 2".to_string());
+        } else if base > 36 {
+            return Err("Base cannot be greater than 36".to_string());
+        }
+        Ok(Self(BaseEnum::Plain(base)))
+    }
+
     pub fn from_custom_base(base: u8) -> Result<Self, String> {
         if base < 2 {
             return Err("Base must be at least 2".to_string());

@@ -143,6 +143,15 @@ impl ExactBase {
         }
     }
 
+    pub fn with_base(self, base: Base) -> Self {
+        Self {
+            value: self.value,
+            exact: self.exact,
+            base,
+            format: self.format,
+        }
+    }
+
     pub const fn get_format(&self) -> FormattingStyle {
         self.format
     }
