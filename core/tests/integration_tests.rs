@@ -495,6 +495,7 @@ fn test_more_units() {
     //test_evaluation("5% * 5%", "0.25%");
     test_evaluation("1NM to m", "1852 m");
     test_evaluation("1NM + 1cm as m", "1852.01 m");
+    test_evaluation("1 m / (s kg cd)", "1 m s^-1 kg^-1 cd^-1");
 }
 
 #[test]

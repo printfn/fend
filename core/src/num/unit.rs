@@ -466,13 +466,14 @@ impl UnitValue {
                     positive_exponents = true;
                 }
             }
+            let negative_exponents = negative_components.len();
             if !negative_components.is_empty() {
-                if positive_exponents {
+                if positive_exponents && negative_exponents == 1 {
                     write!(f, " /")?;
                 }
                 for unit_exponent in negative_components {
                     write!(f, " {}", unit_exponent.unit.singular_name)?;
-                    let exp = if positive_exponents {
+                    let exp = if positive_exponents && negative_exponents == 1 {
                         -unit_exponent.exponent.clone()
                     } else {
                         unit_exponent.exponent.clone()
