@@ -46,12 +46,17 @@ fn eval_and_print_res(
     }
 }
 
-fn print_help() {
+fn print_help(explain_quitting: bool) {
     println!(concat!(
         "For more information on how to use fend, ",
         "please take a look at the manual:\n",
-        "https://github.com/printfn/fend-rs/wiki"
+        "https://github.com/printfn/fend-rs/wiki\n\n",
+        "Version:"
     ));
+    print_version();
+    if explain_quitting {
+        println!("\nTo quit, type `quit`.")
+    }
 }
 
 fn print_version() {
@@ -93,8 +98,7 @@ fn repl_loop() -> i32 {
             Ok(line) => match line.as_str() {
                 "exit" | "quit" | ":q" => break,
                 "help" => {
-                    print_help();
-                    println!("To quit, type \"quit\".");
+                    print_help(true);
                 }
                 "version" => print_version(),
                 line => {
@@ -145,7 +149,7 @@ fn main() {
     let _ = args.next();
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
-            print_help();
+            print_help(false);
             return;
         }
         if expr == "version" || expr == "--version" || expr == "-v" || expr == "-V" {
