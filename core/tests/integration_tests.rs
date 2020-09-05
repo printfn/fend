@@ -400,6 +400,10 @@ fn test_different_bases() {
     test_eval_simple("100 to base 6", "244");
     test_eval_simple("65536 to hex", "10000");
     test_eval_simple("65536 to octal", "200000");
+    expect_parse_error("5 to base 1.5");
+    expect_parse_error("5 to base 1");
+    expect_parse_error("5 to base 1000000000");
+    expect_parse_error("5 to base 100");
 }
 
 #[test]
