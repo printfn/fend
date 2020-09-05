@@ -61,7 +61,9 @@ fn print_help(explain_quitting: bool) {
 
 fn check_for_updates() -> Result<(), ()> {
     use std::time::{Duration, SystemTime};
-    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map_err(|_| ())?;
+    let now = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map_err(|_| ())?;
     let next_update_time = 1_601_424_000; // 30/9/2020
     if now > Duration::from_secs(next_update_time) {
         println!();

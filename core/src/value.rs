@@ -30,9 +30,7 @@ impl Value {
             Self::Num(n) => {
                 if let Self::Dp = other {
                     let num = self.expect_num()?.try_as_usize(int)?;
-                    return Ok(Self::Format(FormattingStyle::ApproxFloat(
-                        num,
-                    )));
+                    return Ok(Self::Format(FormattingStyle::ApproxFloat(num)));
                 }
                 if allow_multiplication {
                     n.clone().mul(other.expect_num()?, int)?
