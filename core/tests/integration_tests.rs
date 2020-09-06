@@ -368,6 +368,20 @@ fn test_digit_separators() {
     expect_error("1_.1");
     expect_error("1._1");
     expect_error("1.1_");
+    test_evaluation("1,1", "11");
+    test_evaluation("11,1", "111");
+    test_evaluation("1,1,1", "111");
+    test_evaluation("123,456,789,123", "123456789123");
+    test_evaluation("1,2,3,4,5,6", "123456");
+    test_evaluation("1.1,1", "1.11");
+    test_evaluation("1,1.1,1", "11.11");
+    expect_error(",1");
+    expect_error("1,");
+    expect_error("1,,1");
+    expect_error(",");
+    expect_error("1,.1");
+    expect_error("1.,1");
+    expect_error("1.1,");
 }
 
 #[test]

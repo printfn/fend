@@ -91,6 +91,15 @@ fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), IntErr<String, 
     }
 }
 
+fn parse_digit_separator(input: &str) -> Result<((), &str), IntErr<String, NeverInterrupt>> {
+    let (parsed_ch, input) = parse_char(input)?;
+    if parsed_ch == '_' || parsed_ch == ',' {
+        Ok(((), input))
+    } else {
+        Err(format!("Expected a digit separator, found {}", parsed_ch))?
+    }
+}
+
 // Parses a plain integer with no whitespace and no base prefix.
 // Leading minus sign is not allowed.
 fn parse_integer<'a, I: Interrupt>(
@@ -105,7 +114,7 @@ fn parse_integer<'a, I: Interrupt>(
     let leading_zero = digit == 0;
     let mut parsed_digit_separator;
     loop {
-        if let Ok((_, remaining)) = parse_fixed_char(input, '_') {
+        if let Ok((_, remaining)) = parse_digit_separator(input) {
             input = remaining;
             parsed_digit_separator = true;
             if !allow_digit_separator {
