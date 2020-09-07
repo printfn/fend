@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+* Allow `,` as a digit separator (e.g. `1,048,576`)
+
 ## v0.1.3 (2020-09-05)
 
 * Use correct singular/plural unit names
