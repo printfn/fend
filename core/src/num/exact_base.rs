@@ -23,28 +23,22 @@ impl ExactBase {
 
     pub fn make_approximate(self) -> Self {
         Self {
-            value: self.value,
             exact: false,
-            base: self.base,
-            format: self.format,
+            ..self
         }
     }
 
     pub fn conjugate(self) -> Self {
         Self {
             value: self.value.conjugate(),
-            exact: self.exact,
-            base: self.base,
-            format: self.format,
+            ..self
         }
     }
 
     pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self {
             value: self.value.factorial(int)?,
-            exact: self.exact,
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -52,8 +46,7 @@ impl ExactBase {
         Ok(Self {
             value: self.value.div(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -62,8 +55,7 @@ impl ExactBase {
         Ok(Self {
             value,
             exact: require_both_exact(require_both_exact(self.exact, rhs.exact), exact_root),
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -110,8 +102,7 @@ impl ExactBase {
         Ok(Self {
             value: new_value,
             exact: require_both_exact(self.exact, res_exact),
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -136,19 +127,15 @@ impl ExactBase {
 
     pub fn with_format(self, format: FormattingStyle) -> Self {
         Self {
-            value: self.value,
-            exact: self.exact,
-            base: self.base,
             format,
+            ..self
         }
     }
 
     pub fn with_base(self, base: Base) -> Self {
         Self {
-            value: self.value,
-            exact: self.exact,
             base,
-            format: self.format,
+            ..self
         }
     }
 
@@ -161,8 +148,7 @@ impl ExactBase {
         Ok(Self {
             value: root,
             exact: self.exact && n.exact && root_exact,
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -174,8 +160,7 @@ impl ExactBase {
         Ok(Self {
             value: f(self.value, int)?,
             exact: false,
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -247,8 +232,7 @@ impl ExactBase {
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -256,8 +240,7 @@ impl ExactBase {
         Ok(Self {
             value: self.value.add(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
-            base: self.base,
-            format: self.format,
+            ..self
         })
     }
 
@@ -278,9 +261,7 @@ impl Neg for ExactBase {
     fn neg(self) -> Self {
         Self {
             value: -self.value,
-            exact: self.exact,
-            base: self.base,
-            format: self.format,
+            ..self
         }
     }
 }

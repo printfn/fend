@@ -748,8 +748,7 @@ impl Neg for BigRat {
     fn neg(self) -> Self {
         Self {
             sign: self.sign.flip(),
-            num: self.num,
-            den: self.den,
+            ..self
         }
     }
 }
