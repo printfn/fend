@@ -2,10 +2,8 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::value::Value;
-use std::{
-    collections::HashMap,
-    fmt::{Debug, Error, Formatter},
-};
+use crate::scope::Scope;
+use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone)]
 pub enum Expr {
@@ -55,7 +53,7 @@ impl Debug for Expr {
 
 pub fn evaluate<I: Interrupt>(
     expr: Expr,
-    scope: &HashMap<String, Value>,
+    scope: &Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     test_int(int)?;
@@ -122,14 +120,14 @@ pub fn evaluate<I: Interrupt>(
     })
 }
 
-fn eval<I: Interrupt>(input: &'static str, scope: &HashMap<String, Value>, int: &I) -> Result<Value, IntErr<Never, I>> {
+fn eval<I: Interrupt>(input: &'static str, scope: &Scope, int: &I) -> Result<Value, IntErr<Never, I>> {
     crate::eval::evaluate_to_value(input, scope, int)
         .map_err(crate::err::IntErr::unwrap)
 }
 
 fn resolve_identifier<I: Interrupt>(
     ident: &str,
-    scope: &HashMap<String, Value>,
+    scope: &Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     Ok(match ident {
@@ -169,12 +167,6 @@ fn resolve_identifier<I: Interrupt>(
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),
         "binary" => Value::Base(Base::from_plain_base(2)?),
         "octal" => Value::Base(Base::from_plain_base(8)?),
-        _ => {
-            if let Some(value) = scope.get(&ident.to_string()) {
-                value.clone()
-            } else {
-                return Err(format!("Unknown identifier '{}'", ident))?;
-            }
-        }
+        _ => scope.get(ident, int)?
     })
 }

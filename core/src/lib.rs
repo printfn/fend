@@ -11,10 +11,8 @@ mod interrupt;
 mod lexer;
 mod num;
 mod parser;
+mod scope;
 mod value;
-
-use std::collections::HashMap;
-use value::Value;
 
 pub use interrupt::Interrupt;
 
@@ -44,7 +42,7 @@ impl FendResult {
 /// at startup.
 #[derive(Clone)]
 pub struct Context {
-    scope: HashMap<String, Value>,
+    scope: scope::Scope,
 }
 
 impl Default for Context {
@@ -59,8 +57,7 @@ impl Context {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            scope: crate::num::Number::create_initial_units(&crate::interrupt::Never::default())
-                .unwrap(),
+            scope: scope::Scope::new_default(&crate::interrupt::Never::default()).unwrap(),
         }
     }
 }

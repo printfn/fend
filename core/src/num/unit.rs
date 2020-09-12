@@ -2,6 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::exact_base::ExactBase;
 use crate::num::{Base, FormattingStyle};
+use crate::scope::Scope;
 use crate::value::Value;
 use std::ops::Neg;
 use std::{
@@ -20,7 +21,7 @@ impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(
         int: &I,
-    ) -> Result<HashMap<String, Value>, IntErr<String, I>> {
+    ) -> Result<Scope, IntErr<String, I>> {
         Self::create_units(
             vec![
                 ("percent", "percent", true, Some("0.01")),
@@ -153,8 +154,8 @@ impl UnitValue {
     fn create_units<I: Interrupt>(
         unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>,
         int: &I,
-    ) -> Result<HashMap<String, Value>, IntErr<String, I>> {
-        let mut scope = HashMap::new();
+    ) -> Result<Scope, IntErr<String, I>> {
+        let mut scope = Scope::new_empty();
         for (singular_name, plural_name, space, expr) in unit_descriptions {
             let unit = if let Some(expr) = expr {
                 Self::new_unit(
@@ -168,9 +169,9 @@ impl UnitValue {
             } else {
                 Self::new_base_unit(singular_name.to_string(), plural_name.to_string(), space)
             };
-            scope.insert(singular_name.to_string(), Value::Num(unit.clone()));
+            scope.insert(singular_name.to_string().as_str(), Value::Num(unit.clone()));
             if plural_name.to_string() != singular_name.to_string() {
-                scope.insert(plural_name.to_string(), Value::Num(unit));
+                scope.insert(plural_name.to_string().as_str(), Value::Num(unit));
             }
         }
         Ok(scope)
@@ -181,7 +182,7 @@ impl UnitValue {
         plural_name: String,
         space: bool,
         expression: &str,
-        scope: &HashMap<String, Value>,
+        scope: &Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let value = crate::eval::evaluate_to_value(expression, scope, int)?.expect_num()?;
