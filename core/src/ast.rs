@@ -1,8 +1,8 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
-use crate::value::Value;
 use crate::scope::Scope;
+use crate::value::Value;
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone)]
@@ -120,9 +120,12 @@ pub fn evaluate<I: Interrupt>(
     })
 }
 
-fn eval<I: Interrupt>(input: &'static str, scope: &Scope, int: &I) -> Result<Value, IntErr<Never, I>> {
-    crate::eval::evaluate_to_value(input, scope, int)
-        .map_err(crate::err::IntErr::unwrap)
+fn eval<I: Interrupt>(
+    input: &'static str,
+    scope: &Scope,
+    int: &I,
+) -> Result<Value, IntErr<Never, I>> {
+    crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
 }
 
 fn resolve_identifier<I: Interrupt>(
@@ -167,6 +170,6 @@ fn resolve_identifier<I: Interrupt>(
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),
         "binary" => Value::Base(Base::from_plain_base(2)?),
         "octal" => Value::Base(Base::from_plain_base(8)?),
-        _ => scope.get(ident, int)?
+        _ => scope.get(ident, int)?,
     })
 }

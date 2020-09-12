@@ -19,9 +19,7 @@ pub struct UnitValue {
 
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
-    pub fn create_initial_units<I: Interrupt>(
-        int: &I,
-    ) -> Result<Scope, IntErr<String, I>> {
+    pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
         Self::create_units(
             vec![
                 ("percent", "percent", true, Some("0.01")),
@@ -157,35 +155,33 @@ impl UnitValue {
     ) -> Result<Scope, IntErr<String, I>> {
         let mut scope = Scope::new_empty();
         for (singular_name, plural_name, space, expr) in unit_descriptions {
-            let unit = if let Some(expr) = expr {
-                Self::new_unit(
+            test_int(int)?;
+            if let Some(expr) = expr {
+                scope.insert_lazy_unit(
+                    expr.to_string(),
                     singular_name.to_string(),
                     plural_name.to_string(),
                     space,
-                    expr.to_string().as_str(),
-                    &scope,
-                    int,
-                )?
+                );
             } else {
-                Self::new_base_unit(singular_name.to_string(), plural_name.to_string(), space)
+                let unit =
+                    Self::new_base_unit(singular_name.to_string(), plural_name.to_string(), space);
+                scope.insert(singular_name.to_string().as_str(), Value::Num(unit.clone()));
+                if plural_name.to_string() != singular_name.to_string() {
+                    scope.insert(plural_name.to_string().as_str(), Value::Num(unit));
+                }
             };
-            scope.insert(singular_name.to_string().as_str(), Value::Num(unit.clone()));
-            if plural_name.to_string() != singular_name.to_string() {
-                scope.insert(plural_name.to_string().as_str(), Value::Num(unit));
-            }
         }
         Ok(scope)
     }
 
-    fn new_unit<I: Interrupt>(
+    pub fn create_unit_value_from_value<I: Interrupt>(
+        value: &Self,
         singular_name: String,
         plural_name: String,
         space: bool,
-        expression: &str,
-        scope: &Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        let value = crate::eval::evaluate_to_value(expression, scope, int)?.expect_num()?;
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
         let scale = scale.mul(&value.value, int)?;
         let resulting_unit = NamedUnit::new(singular_name, plural_name, space, hashmap, scale);
