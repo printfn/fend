@@ -21,7 +21,7 @@ impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
         let mut scope = Scope::new_empty();
-        Self::parse_units("s !\nUSD !", &mut scope, &[]);
+        Self::parse_units(include_str!("builtin.units"), &mut scope, &[]);
         Self::create_units(
             vec![
                 ("percent", "percent", Some("0.01")),
