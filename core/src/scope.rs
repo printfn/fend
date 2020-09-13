@@ -5,8 +5,8 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 enum ScopeValue {
     Eager(Value),
-    // expr, singular name, plural name, space
-    LazyUnit(String, String, String, bool),
+    // expr, singular name, plural name
+    LazyUnit(String, String, String),
 }
 
 impl ScopeValue {
@@ -18,14 +18,13 @@ impl ScopeValue {
     ) -> Result<Value, IntErr<String, I>> {
         match self {
             ScopeValue::Eager(value) => Ok(value.clone()),
-            ScopeValue::LazyUnit(expr, singular_name, plural_name, space) => {
+            ScopeValue::LazyUnit(expr, singular_name, plural_name) => {
                 let value =
                     crate::eval::evaluate_to_value(expr.as_str(), scope, int)?.expect_num()?;
                 let unit = crate::num::Number::create_unit_value_from_value(
                     &value,
                     singular_name.clone(),
                     plural_name.clone(),
-                    *space,
                     int,
                 )?;
                 scope.hashmap.insert(
@@ -59,15 +58,8 @@ impl Scope {
             .insert(ident.to_string(), ScopeValue::Eager(value));
     }
 
-    pub fn insert_lazy_unit(
-        &mut self,
-        expr: String,
-        singular_name: String,
-        plural_name: String,
-        space: bool,
-    ) {
-        let hashmap_val =
-            ScopeValue::LazyUnit(expr, singular_name.clone(), plural_name.clone(), space);
+    pub fn insert_lazy_unit(&mut self, expr: String, singular_name: String, plural_name: String) {
+        let hashmap_val = ScopeValue::LazyUnit(expr, singular_name.clone(), plural_name.clone());
         if singular_name != plural_name {
             self.hashmap.insert(plural_name, hashmap_val.clone());
         }

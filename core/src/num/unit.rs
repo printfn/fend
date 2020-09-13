@@ -22,121 +22,121 @@ impl UnitValue {
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
         Self::create_units(
             vec![
-                ("percent", "percent", true, Some("0.01")),
-                ("%", "%", false, Some("percent")),
-                ("\u{2030}", "\u{2030}", false, Some("0.001")), // per mille (‰)
-                ("s", "s", true, None),
-                ("second", "seconds", true, Some("s")),
-                ("m", "m", true, None),
-                ("dm", "dm", true, Some("0.1m")),
-                ("L", "L", true, Some("dm^3")),
-                ("cm", "cm", true, Some("0.01m")),
-                ("mm", "mm", true, Some("0.001m")),
-                ("um", "um", true, Some("0.001mm")),
-                ("\u{b5}m", "\u{b5}m", true, Some("0.001mm")), // micrometres (µm)
-                ("nm", "nm", true, Some("1e-9m")),
-                ("pm", "pm", true, Some("1e-12m")),
-                ("fm", "fm", true, Some("1e-15m")),
-                ("am", "am", true, Some("1e-18m")),
-                ("angstrom", "angstrom", true, Some("0.1nm")),
-                ("barn", "barn", true, Some("100fm^2")),
-                ("inch", "inches", true, Some("2.54cm")),
-                ("in", "in", true, Some("inch")),
-                ("ft", "ft", true, Some("12 inches")),
-                ("foot", "feet", true, Some("1ft")),
-                ("\"", "\"", false, Some("inch")),
-                ("\u{201d}", "\u{201d}", false, Some("inch")), // Unicode double quote (”)
-                ("'", "'", false, Some("foot")),
-                ("\u{2019}", "\u{2019}", false, Some("foot")), // Unicode single quote (’)
-                ("yard", "yards", true, Some("3 feet")),
-                ("mile", "miles", true, Some("1760 yards")),
-                ("mi", "mi", true, Some("mile")),
-                ("NM", "NM", true, Some("1852m")),
-                ("km", "km", true, Some("1000m")),
-                ("AU", "AU", true, Some("149597870700m")),
-                ("kg", "kg", true, None),
-                ("lb", "lbs", true, Some("0.45359237kg")),
-                ("pound", "pounds", true, Some("1lb")),
-                ("ounce", "ounces", true, Some("1/16 lb")),
-                ("oz", "oz", true, Some("1 ounce")),
-                ("dram", "drams", true, Some("1/16 oz")),
-                ("dr", "dr", true, Some("1 dram")),
-                ("grain", "grains", true, Some("1/7000 lb")),
-                ("gr", "gr", true, Some("1 grain")),
-                ("quarter", "quarters", true, Some("25lb")),
-                ("qr", "qr", true, Some("1 quarter")),
-                ("hundredweight", "hundredweights", true, Some("100lb")),
-                ("cwt", "cwt", true, Some("1 hundredweight")),
-                ("short_ton", "short_tons", true, Some("2000lb")),
-                ("A", "A", true, None),
-                ("K", "K", true, None),
-                ("kelvin", "kelvin", true, Some("K")),
-                ("mol", "mol", true, None),
-                ("cd", "cd", true, None),
-                ("g", "g", true, Some("(1/1000)kg")),
-                ("mg", "mg", true, Some("(1/1000)g")),
-                ("N", "N", true, Some("1 kg m / s^2")),
-                ("newton", "newtons", true, Some("1 N")),
-                ("joule", "joules", true, Some("1 N m")),
-                ("J", "J", true, Some("1 joule")),
-                ("pascal", "pascals", true, Some("1 kg m^-1 s^-2")),
-                ("Pa", "Pa", true, Some("1 pascal")),
-                ("kPa", "kPa", true, Some("1000 Pa")),
-                ("watt", "watts", true, Some("1 J/s")),
-                ("W", "W", true, Some("1 watt")),
-                ("coulomb", "coulombs", true, Some("1 A * 1 s")),
-                ("C", "C", true, Some("1 coulomb")),
-                ("volt", "volts", true, Some("1 J / C")),
-                ("V", "V", true, Some("1 volt")),
-                ("ohm", "ohms", true, Some("1 V / A")),
-                ("\u{3a9}", "\u{3a9}", true, Some("1 ohm")), // Omega symbol (Ω)
-                ("siemens", "siemens", true, Some("1 / ohm")),
-                ("S", "S", true, Some("1 siemens")),
-                ("farad", "farad", true, Some("1 s / ohm")),
-                ("F", "F", true, Some("1 farad")),
-                ("hertz", "hertz", true, Some("1/s")),
-                ("Hz", "Hz", true, Some("1 hertz")),
-                ("henry", "henry", true, Some("J / A^2")),
-                ("H", "H", true, Some("1 henry")),
-                ("weber", "weber", true, Some("V s")),
-                ("Wb", "Wb", true, Some("1 weber")),
-                ("tesla", "tesla", true, Some("weber / m^2")),
-                ("T", "T", true, Some("1 tesla")),
-                ("kgf", "kgf", true, Some("9.806650 N")),
-                ("lbf", "lbf", true, Some("kgf / kg * lb")),
-                ("psi", "psi", true, Some("lbf / inch^2")),
-                ("min", "min", true, Some("60s")),
-                ("hr", "hr", true, Some("60min")),
-                ("hour", "hours", true, Some("hr")),
-                ("minute", "minutes", true, Some("min")),
-                ("day", "days", true, Some("24 hours")),
-                ("year", "years", true, Some("365.25 days")),
-                ("light", "light", true, Some("299_792_458m/s")),
-                ("ly", "ly", true, Some("365.25 light days")),
-                ("parsec", "parsecs", true, Some("648000AU/pi")),
-                ("kph", "kph", true, Some("1 km / hr")),
-                ("mph", "mph", true, Some("1 mile / hr")),
-                ("bit", "bits", true, None),
-                ("b", "b", true, Some("bit")),
-                ("byte", "bytes", true, Some("8 bit")),
-                ("B", "B", true, Some("byte")),
-                ("KB", "KB", true, Some("1000 bytes")),
-                ("MB", "MB", true, Some("1000 KB")),
-                ("GB", "GB", true, Some("1000 MB")),
-                ("TB", "TB", true, Some("1000 GB")),
-                ("KiB", "KiB", true, Some("1024 bytes")),
-                ("MiB", "MiB", true, Some("1024 KiB")),
-                ("GiB", "GiB", true, Some("1024 MiB")),
-                ("TiB", "TiB", true, Some("1024 GiB")),
-                ("Kb", "Kb", true, Some("1000 bits")),
-                ("Mb", "Mb", true, Some("1000 Kb")),
-                ("Gb", "Gb", true, Some("1000 Mb")),
-                ("Tb", "Tb", true, Some("1000 Gb")),
-                ("Kib", "Kib", true, Some("1024 bits")),
-                ("Mib", "Mib", true, Some("1024 Kib")),
-                ("Gib", "Gib", true, Some("1024 Mib")),
-                ("Tib", "Tib", true, Some("1024 Gib")),
-                ("USD", "USD", true, None),
+                ("percent", "percent", Some("0.01")),
+                ("%", "%", Some("percent")),
+                ("\u{2030}", "\u{2030}", Some("0.001")), // per mille (‰)
+                ("s", "s", None),
+                ("second", "seconds", Some("s")),
+                ("m", "m", None),
+                ("dm", "dm", Some("0.1m")),
+                ("L", "L", Some("dm^3")),
+                ("cm", "cm", Some("0.01m")),
+                ("mm", "mm", Some("0.001m")),
+                ("um", "um", Some("0.001mm")),
+                ("\u{b5}m", "\u{b5}m", Some("0.001mm")), // micrometres (µm)
+                ("nm", "nm", Some("1e-9m")),
+                ("pm", "pm", Some("1e-12m")),
+                ("fm", "fm", Some("1e-15m")),
+                ("am", "am", Some("1e-18m")),
+                ("angstrom", "angstrom", Some("0.1nm")),
+                ("barn", "barn", Some("100fm^2")),
+                ("inch", "inches", Some("2.54cm")),
+                ("in", "in", Some("inch")),
+                ("ft", "ft", Some("12 inches")),
+                ("foot", "feet", Some("1ft")),
+                ("\"", "\"", Some("inch")),
+                ("\u{201d}", "\u{201d}", Some("inch")), // Unicode double quote (”)
+                ("'", "'", Some("foot")),
+                ("\u{2019}", "\u{2019}", Some("foot")), // Unicode single quote (’)
+                ("yard", "yards", Some("3 feet")),
+                ("mile", "miles", Some("1760 yards")),
+                ("mi", "mi", Some("mile")),
+                ("NM", "NM", Some("1852m")),
+                ("km", "km", Some("1000m")),
+                ("AU", "AU", Some("149597870700m")),
+                ("kg", "kg", None),
+                ("lb", "lbs", Some("0.45359237kg")),
+                ("pound", "pounds", Some("1lb")),
+                ("ounce", "ounces", Some("1/16 lb")),
+                ("oz", "oz", Some("1 ounce")),
+                ("dram", "drams", Some("1/16 oz")),
+                ("dr", "dr", Some("1 dram")),
+                ("grain", "grains", Some("1/7000 lb")),
+                ("gr", "gr", Some("1 grain")),
+                ("quarter", "quarters", Some("25lb")),
+                ("qr", "qr", Some("1 quarter")),
+                ("hundredweight", "hundredweights", Some("100lb")),
+                ("cwt", "cwt", Some("1 hundredweight")),
+                ("short_ton", "short_tons", Some("2000lb")),
+                ("A", "A", None),
+                ("K", "K", None),
+                ("kelvin", "kelvin", Some("K")),
+                ("mol", "mol", None),
+                ("cd", "cd", None),
+                ("g", "g", Some("(1/1000)kg")),
+                ("mg", "mg", Some("(1/1000)g")),
+                ("N", "N", Some("1 kg m / s^2")),
+                ("newton", "newtons", Some("1 N")),
+                ("joule", "joules", Some("1 N m")),
+                ("J", "J", Some("1 joule")),
+                ("pascal", "pascals", Some("1 kg m^-1 s^-2")),
+                ("Pa", "Pa", Some("1 pascal")),
+                ("kPa", "kPa", Some("1000 Pa")),
+                ("watt", "watts", Some("1 J/s")),
+                ("W", "W", Some("1 watt")),
+                ("coulomb", "coulombs", Some("1 A * 1 s")),
+                ("C", "C", Some("1 coulomb")),
+                ("volt", "volts", Some("1 J / C")),
+                ("V", "V", Some("1 volt")),
+                ("ohm", "ohms", Some("1 V / A")),
+                ("\u{3a9}", "\u{3a9}", Some("1 ohm")), // Omega symbol (Ω)
+                ("siemens", "siemens", Some("1 / ohm")),
+                ("S", "S", Some("1 siemens")),
+                ("farad", "farad", Some("1 s / ohm")),
+                ("F", "F", Some("1 farad")),
+                ("hertz", "hertz", Some("1/s")),
+                ("Hz", "Hz", Some("1 hertz")),
+                ("henry", "henry", Some("J / A^2")),
+                ("H", "H", Some("1 henry")),
+                ("weber", "weber", Some("V s")),
+                ("Wb", "Wb", Some("1 weber")),
+                ("tesla", "tesla", Some("weber / m^2")),
+                ("T", "T", Some("1 tesla")),
+                ("kgf", "kgf", Some("9.806650 N")),
+                ("lbf", "lbf", Some("kgf / kg * lb")),
+                ("psi", "psi", Some("lbf / inch^2")),
+                ("min", "min", Some("60s")),
+                ("hr", "hr", Some("60min")),
+                ("hour", "hours", Some("hr")),
+                ("minute", "minutes", Some("min")),
+                ("day", "days", Some("24 hours")),
+                ("year", "years", Some("365.25 days")),
+                ("light", "light", Some("299_792_458m/s")),
+                ("ly", "ly", Some("365.25 light days")),
+                ("parsec", "parsecs", Some("648000AU/pi")),
+                ("kph", "kph", Some("1 km / hr")),
+                ("mph", "mph", Some("1 mile / hr")),
+                ("bit", "bits", None),
+                ("b", "b", Some("bit")),
+                ("byte", "bytes", Some("8 bit")),
+                ("B", "B", Some("byte")),
+                ("KB", "KB", Some("1000 bytes")),
+                ("MB", "MB", Some("1000 KB")),
+                ("GB", "GB", Some("1000 MB")),
+                ("TB", "TB", Some("1000 GB")),
+                ("KiB", "KiB", Some("1024 bytes")),
+                ("MiB", "MiB", Some("1024 KiB")),
+                ("GiB", "GiB", Some("1024 MiB")),
+                ("TiB", "TiB", Some("1024 GiB")),
+                ("Kb", "Kb", Some("1000 bits")),
+                ("Mb", "Mb", Some("1000 Kb")),
+                ("Gb", "Gb", Some("1000 Mb")),
+                ("Tb", "Tb", Some("1000 Gb")),
+                ("Kib", "Kib", Some("1024 bits")),
+                ("Mib", "Mib", Some("1024 Kib")),
+                ("Gib", "Gib", Some("1024 Mib")),
+                ("Tib", "Tib", Some("1024 Gib")),
+                ("USD", "USD", None),
             ],
             int,
         )
@@ -150,22 +150,20 @@ impl UnitValue {
     }
 
     fn create_units<I: Interrupt>(
-        unit_descriptions: Vec<(impl ToString, impl ToString, bool, Option<impl ToString>)>,
+        unit_descriptions: Vec<(impl ToString, impl ToString, Option<impl ToString>)>,
         int: &I,
     ) -> Result<Scope, IntErr<String, I>> {
         let mut scope = Scope::new_empty();
-        for (singular_name, plural_name, space, expr) in unit_descriptions {
+        for (singular_name, plural_name, expr) in unit_descriptions {
             test_int(int)?;
             if let Some(expr) = expr {
                 scope.insert_lazy_unit(
                     expr.to_string(),
                     singular_name.to_string(),
                     plural_name.to_string(),
-                    space,
                 );
             } else {
-                let unit =
-                    Self::new_base_unit(singular_name.to_string(), plural_name.to_string(), space);
+                let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
                 scope.insert(singular_name.to_string().as_str(), Value::Num(unit.clone()));
                 if plural_name.to_string() != singular_name.to_string() {
                     scope.insert(plural_name.to_string().as_str(), Value::Num(unit));
@@ -179,20 +177,19 @@ impl UnitValue {
         value: &Self,
         singular_name: String,
         plural_name: String,
-        space: bool,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
         let scale = scale.mul(&value.value, int)?;
-        let resulting_unit = NamedUnit::new(singular_name, plural_name, space, hashmap, scale);
+        let resulting_unit = NamedUnit::new(singular_name, plural_name, hashmap, scale);
         Ok(Self::new(1, vec![UnitExponent::new(resulting_unit, 1)]))
     }
 
-    fn new_base_unit(singular_name: String, plural_name: String, space: bool) -> Self {
+    fn new_base_unit(singular_name: String, plural_name: String) -> Self {
         let base_kg = BaseUnit::new(singular_name.clone());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new(singular_name, plural_name, space, hashmap, 1);
+        let kg = NamedUnit::new(singular_name, plural_name, hashmap, 1);
         Self::new(1, vec![UnitExponent::new(kg, 1)])
     }
 
@@ -459,7 +456,7 @@ impl UnitValue {
             }
             let last_component_plural = self.value != 1.into();
             for (i, (unit_exponent, invert)) in merged_components.into_iter().enumerate() {
-                if !first || unit_exponent.unit.spacing {
+                if !first || unit_exponent.unit.print_with_space() {
                     write!(f, " ")?;
                 }
                 first = false;
@@ -611,7 +608,6 @@ impl UnitExponent {
 struct NamedUnit {
     singular_name: String,
     plural_name: String,
-    spacing: bool, // true for most units, false for percentages and degrees (angles)
     base_units: HashMap<BaseUnit, ExactBase>,
     scale: ExactBase,
 }
@@ -620,16 +616,28 @@ impl NamedUnit {
     fn new(
         singular_name: String,
         plural_name: String,
-        spacing: bool,
         base_units: HashMap<BaseUnit, ExactBase>,
         scale: impl Into<ExactBase>,
     ) -> Self {
         Self {
             singular_name,
             plural_name,
-            spacing,
             base_units,
             scale: scale.into(),
+        }
+    }
+
+    /// Returns whether or not this unit should be printed with a
+    /// space (between the number and the unit). This should be true for most
+    /// units like kg or m, but not for % or °
+    fn print_with_space(&self) -> bool {
+        if let Some(ch) = self.singular_name.chars().next() {
+            // alphabetic names like kg or m should have a space,
+            // while non-alphabetic names like %, ° or ' shouldn't
+            ch.is_alphabetic()
+        } else {
+            // empty name?!
+            true
         }
     }
 }
@@ -661,7 +669,7 @@ mod tests {
         let base_kg = BaseUnit::new("kilogram".to_string());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), true, hashmap, 1);
+        let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), hashmap, 1);
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg.clone(), 1)]);
         let sum = one_kg.add(two_kg, &Never::default()).unwrap();
@@ -674,11 +682,10 @@ mod tests {
         let base_kg = BaseUnit::new("kilogram".to_string());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg.clone(), 1.into());
-        let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), true, hashmap.clone(), 1);
+        let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), hashmap.clone(), 1);
         let g = NamedUnit::new(
             "g".to_string(),
             "g".to_string(),
-            true,
             hashmap,
             ExactBase::from(1).div(1000.into(), int).unwrap(),
         );
