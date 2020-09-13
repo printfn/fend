@@ -22,8 +22,26 @@
 !plural minute minutes
 !plural hour hours
 !plural day days
+!plural degree degrees
 !plural year years
 !plural inch inches
+!plural yard yards
+!plural mile miles
+!plural fathom fathoms
+!plural pound pounds
+!plural lb lbs
+!plural grain grains
+!plural dram drams
+!plural beerkeg beerkegs
+!plural uscup uscups
+!plural ustablespoon ustablespoons
+!plural ream reams
+!plural bundle bundles
+!plural byte bytes
+!plural romanpace romanpaces
+!plural greekfinger greekfingers
+!plural aeginastater aeginastaters
+!plural atticstater atticstaters
 
 NM      nauticalmile
 ’       foot # unicode single quote
@@ -34,4 +52,25 @@ NM      nauticalmile
 !ignore "                       arcsec
 !ignore ''                      "
 # '
+m2      m^2
+ft3     ft^3
 
+# air molecular weight is too complicated to parse for now
+!ignore air_1976
+!ignore polyndx_1976
+!ignore polyndx
+
+# functions we can't parse
+!ignore ipv4subnetsize
+!ignore tempF
+!ignore normaltemp
+!ignore SB_degree
+
+# we can't parse ' as part of a longer identifier
+!ignore tongapa'anga
+#'
+!ignore tongapa’anga
+
+# conflicts with the 'to' keyword
+!ignore to                   10 shou
+!ignore koku                 10 to

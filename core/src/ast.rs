@@ -140,7 +140,7 @@ fn resolve_identifier<I: Interrupt>(
         "i" => Value::Num(Number::i()),
         // TODO: we want to forward any interrupt, but panic on any other error
         // or statically prove that no other error can occur
-        "c" => eval("299792458 m / s", scope, int)?,
+        //"c" => eval("299792458 m / s", scope, int)?,
         "sqrt" => Value::Func("sqrt".to_string()),
         "cbrt" => Value::Func("cbrt".to_string()),
         "abs" => Value::Func("abs".to_string()),
