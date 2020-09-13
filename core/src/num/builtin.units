@@ -6,11 +6,124 @@ A !
 K !
 mol !
 cd !
-
-# these aren't SI base units, but it's
-# still useful to consider them as base units
 bit !
 USD !
 
 # dimensionless units
-percent 0.01
+percent        0.01
+%              percent
+‰              0.001 # per mille
+
+# derived units
+dm             0.1 m
+L              dm^3
+cm             0.01 m
+mm             0.001 m
+um             0.001 mm
+µm             um
+nm             1e-9 m
+pm             1e-12 m
+fm             1e-15 m
+am             1e-18 m
+angstrom       0.1 nm
+barn           100 fm^2
+
+inch           2.54 cm
+in             inch
+"              inch # " # (fix syntax highlighting)
+”              inch # unicode double quote
+foot           12 inches
+ft             foot
+'              foot # '
+’              foot # unicode single quote
+yard           3 feet
+mile           1760 yards
+mi             mile
+NM             1852 m
+km             1000 m
+AU             149597870700 m
+
+g              1/1000 kg
+mg             1/1000 g
+pound          0.45359237 kg
+lb             pound
+ounce          1/16 lb
+oz             ounce
+dram           1/16 oz
+dr             dram
+grain          1/7000 lb
+gr             grain
+quarter        25 lb
+qr             quarter
+hundredweight  100 lb
+cwt            hundredweight
+short_ton      2000 lb
+
+kelvin         K
+
+N              1 kg m / s^2
+newton         1 N
+joule          1 N m
+J              1 joule
+pascal         1 kg m^-1 s^-2
+Pa             1 pascal
+kPa            1000 Pa
+watt           1 J/s
+W              1 watt
+coulomb        1 A * 1 s
+C              1 coulomb
+volt           1 J / C
+V              1 volt
+ohm            1 V / A
+Ω              ohm
+siemens        1 / ohm
+S              1 siemens
+farad          1 s / ohm
+F              1 farad
+hertz          1/s
+Hz             1 hertz
+henry          J / A^2
+H              1 henry
+weber          V s
+Wb             1 weber
+tesla          weber / m^2
+T              1 tesla
+
+kgf            9.806650 N
+lbf            kgf / kg * lb
+psi            lbf / inch^2
+
+second         s
+minute         60 s
+min            minute
+hour           60 minutes
+hr             hour
+day            24 hours
+year           365.25 days
+
+light          299,792,458 m/s # speed of light, needed for 'light years' etc.
+ly             light year
+parsec         648000 AU/pi
+
+kph            km / hr
+mph            mi / hr
+
+b              bit
+byte           8 bits
+B              byte
+KB             1000 byte
+MB             1000 KB
+GB             1000 MB
+TB             1000 GB
+KiB            1024 bytes
+MiB            1024 KiB
+GiB            1024 MiB
+TiB            1024 GiB
+Kb             1000 bits
+Mb             1000 Kb
+Gb             1000 Mb
+Tb             1000 Gb
+Kib            1024 bits
+Mib            1024 Kib
+Gib            1024 Mib
+Tib            1024 Gib

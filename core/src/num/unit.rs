@@ -24,118 +24,36 @@ impl UnitValue {
         Self::parse_units(
             include_str!("builtin.units"),
             &mut scope,
-            &[("bit", "bits")],
-            int,
-        )?;
-        Self::create_units(
-            vec![
-                ("%", "%", Some("percent")),
-                ("\u{2030}", "\u{2030}", Some("0.001")), // per mille (‰)
-                ("second", "seconds", Some("s")),
-                ("dm", "dm", Some("0.1m")),
-                ("L", "L", Some("dm^3")),
-                ("cm", "cm", Some("0.01m")),
-                ("mm", "mm", Some("0.001m")),
-                ("um", "um", Some("0.001mm")),
-                ("\u{b5}m", "\u{b5}m", Some("0.001mm")), // micrometres (µm)
-                ("nm", "nm", Some("1e-9m")),
-                ("pm", "pm", Some("1e-12m")),
-                ("fm", "fm", Some("1e-15m")),
-                ("am", "am", Some("1e-18m")),
-                ("angstrom", "angstrom", Some("0.1nm")),
-                ("barn", "barn", Some("100fm^2")),
-                ("inch", "inches", Some("2.54cm")),
-                ("in", "in", Some("inch")),
-                ("ft", "ft", Some("12 inches")),
-                ("foot", "feet", Some("1ft")),
-                ("\"", "\"", Some("inch")),
-                ("\u{201d}", "\u{201d}", Some("inch")), // Unicode double quote (”)
-                ("'", "'", Some("foot")),
-                ("\u{2019}", "\u{2019}", Some("foot")), // Unicode single quote (’)
-                ("yard", "yards", Some("3 feet")),
-                ("mile", "miles", Some("1760 yards")),
-                ("mi", "mi", Some("mile")),
-                ("NM", "NM", Some("1852m")),
-                ("km", "km", Some("1000m")),
-                ("AU", "AU", Some("149597870700m")),
-                ("lb", "lbs", Some("0.45359237kg")),
-                ("pound", "pounds", Some("1lb")),
-                ("ounce", "ounces", Some("1/16 lb")),
-                ("oz", "oz", Some("1 ounce")),
-                ("dram", "drams", Some("1/16 oz")),
-                ("dr", "dr", Some("1 dram")),
-                ("grain", "grains", Some("1/7000 lb")),
-                ("gr", "gr", Some("1 grain")),
-                ("quarter", "quarters", Some("25lb")),
-                ("qr", "qr", Some("1 quarter")),
-                ("hundredweight", "hundredweights", Some("100lb")),
-                ("cwt", "cwt", Some("1 hundredweight")),
-                ("short_ton", "short_tons", Some("2000lb")),
-                ("kelvin", "kelvin", Some("K")),
-                ("g", "g", Some("(1/1000)kg")),
-                ("mg", "mg", Some("(1/1000)g")),
-                ("N", "N", Some("1 kg m / s^2")),
-                ("newton", "newtons", Some("1 N")),
-                ("joule", "joules", Some("1 N m")),
-                ("J", "J", Some("1 joule")),
-                ("pascal", "pascals", Some("1 kg m^-1 s^-2")),
-                ("Pa", "Pa", Some("1 pascal")),
-                ("kPa", "kPa", Some("1000 Pa")),
-                ("watt", "watts", Some("1 J/s")),
-                ("W", "W", Some("1 watt")),
-                ("coulomb", "coulombs", Some("1 A * 1 s")),
-                ("C", "C", Some("1 coulomb")),
-                ("volt", "volts", Some("1 J / C")),
-                ("V", "V", Some("1 volt")),
-                ("ohm", "ohms", Some("1 V / A")),
-                ("\u{3a9}", "\u{3a9}", Some("1 ohm")), // Omega symbol (Ω)
-                ("siemens", "siemens", Some("1 / ohm")),
-                ("S", "S", Some("1 siemens")),
-                ("farad", "farad", Some("1 s / ohm")),
-                ("F", "F", Some("1 farad")),
-                ("hertz", "hertz", Some("1/s")),
-                ("Hz", "Hz", Some("1 hertz")),
-                ("henry", "henry", Some("J / A^2")),
-                ("H", "H", Some("1 henry")),
-                ("weber", "weber", Some("V s")),
-                ("Wb", "Wb", Some("1 weber")),
-                ("tesla", "tesla", Some("weber / m^2")),
-                ("T", "T", Some("1 tesla")),
-                ("kgf", "kgf", Some("9.806650 N")),
-                ("lbf", "lbf", Some("kgf / kg * lb")),
-                ("psi", "psi", Some("lbf / inch^2")),
-                ("min", "min", Some("60s")),
-                ("hr", "hr", Some("60min")),
-                ("hour", "hours", Some("hr")),
-                ("minute", "minutes", Some("min")),
-                ("day", "days", Some("24 hours")),
-                ("year", "years", Some("365.25 days")),
-                ("light", "light", Some("299_792_458m/s")),
-                ("ly", "ly", Some("365.25 light days")),
-                ("parsec", "parsecs", Some("648000AU/pi")),
-                ("kph", "kph", Some("1 km / hr")),
-                ("mph", "mph", Some("1 mile / hr")),
-                ("b", "b", Some("bit")),
-                ("byte", "bytes", Some("8 bits")),
-                ("B", "B", Some("byte")),
-                ("KB", "KB", Some("1000 bytes")),
-                ("MB", "MB", Some("1000 KB")),
-                ("GB", "GB", Some("1000 MB")),
-                ("TB", "TB", Some("1000 GB")),
-                ("KiB", "KiB", Some("1024 bytes")),
-                ("MiB", "MiB", Some("1024 KiB")),
-                ("GiB", "GiB", Some("1024 MiB")),
-                ("TiB", "TiB", Some("1024 GiB")),
-                ("Kb", "Kb", Some("1000 bits")),
-                ("Mb", "Mb", Some("1000 Kb")),
-                ("Gb", "Gb", Some("1000 Mb")),
-                ("Tb", "Tb", Some("1000 Gb")),
-                ("Kib", "Kib", Some("1024 bits")),
-                ("Mib", "Mib", Some("1024 Kib")),
-                ("Gib", "Gib", Some("1024 Mib")),
-                ("Tib", "Tib", Some("1024 Gib")),
+            &[
+                ("bit", "bits"),
+                ("inch", "inches"),
+                ("foot", "feet"),
+                ("yard", "yards"),
+                ("mile", "miles"),
+                ("pound", "pounds"),
+                ("lb", "lbs"),
+                ("ounce", "ounces"),
+                ("dram", "drams"),
+                ("grain", "grains"),
+                ("quarter", "quarters"),
+                ("hundredweight", "hundredweights"),
+                ("short_ton", "short_tons"),
+                ("newton", "newtons"),
+                ("joule", "joules"),
+                ("pascal", "pascals"),
+                ("watt", "watts"),
+                ("coulomb", "coulombs"),
+                ("volt", "volts"),
+                ("ohm", "ohms"),
+                ("second", "seconds"),
+                ("minute", "minutes"),
+                ("min", "mins"),
+                ("hour", "hours"),
+                ("day", "days"),
+                ("year", "years"),
+                ("parsec", "parsecs"),
+                ("byte", "bytes"),
             ],
-            &mut scope,
             int,
         )?;
         Ok(scope)
@@ -153,8 +71,11 @@ impl UnitValue {
     fn read_ident(input: &str) -> (&str, &str) {
         let mut count = 0;
         for ch in input.chars() {
-            if ch.is_alphabetic() || "_".contains(ch) {
+            if crate::lexer::is_valid_in_ident(ch, count == 0) {
                 count += ch.len_utf8();
+            } else if count == 0 && crate::lexer::is_valid_in_ident_char(ch) {
+                count += ch.len_utf8();
+                break;
             } else {
                 break;
             }
@@ -186,6 +107,7 @@ impl UnitValue {
             } else {
                 singular_name
             };
+            //eprintln!("Adding unit {} {} {}", singular_name, plural_name, expr);
             if expr == "!" {
                 let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
                 if plural_name != singular_name {
@@ -199,30 +121,7 @@ impl UnitValue {
                     plural_name.to_string(),
                 );
             }
-        }
-        Ok(())
-    }
-
-    fn create_units<I: Interrupt>(
-        unit_descriptions: Vec<(impl ToString, impl ToString, Option<impl ToString>)>,
-        scope: &mut Scope,
-        int: &I,
-    ) -> Result<(), IntErr<String, I>> {
-        for (singular_name, plural_name, expr) in unit_descriptions {
-            test_int(int)?;
-            if let Some(expr) = expr {
-                scope.insert_lazy_unit(
-                    expr.to_string(),
-                    singular_name.to_string(),
-                    plural_name.to_string(),
-                );
-            } else {
-                let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
-                scope.insert(singular_name.to_string().as_str(), Value::Num(unit.clone()));
-                if plural_name.to_string() != singular_name.to_string() {
-                    scope.insert(plural_name.to_string().as_str(), Value::Num(unit));
-                }
-            };
+            //crate::eval::evaluate_to_string(plural_name, scope, int).unwrap();
         }
         Ok(())
     }
