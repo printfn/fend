@@ -21,15 +21,13 @@ impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
         let mut scope = Scope::new_empty();
-        Self::parse_units(include_str!("builtin.units"), &mut scope, &[]);
+        Self::parse_units(include_str!("builtin.units"), &mut scope, &[("bit", "bits")]);
         Self::create_units(
             vec![
                 ("percent", "percent", Some("0.01")),
                 ("%", "%", Some("percent")),
                 ("\u{2030}", "\u{2030}", Some("0.001")), // per mille (‰)
-                ("s", "s", None),
                 ("second", "seconds", Some("s")),
-                ("m", "m", None),
                 ("dm", "dm", Some("0.1m")),
                 ("L", "L", Some("dm^3")),
                 ("cm", "cm", Some("0.01m")),
@@ -56,7 +54,6 @@ impl UnitValue {
                 ("NM", "NM", Some("1852m")),
                 ("km", "km", Some("1000m")),
                 ("AU", "AU", Some("149597870700m")),
-                ("kg", "kg", None),
                 ("lb", "lbs", Some("0.45359237kg")),
                 ("pound", "pounds", Some("1lb")),
                 ("ounce", "ounces", Some("1/16 lb")),
@@ -70,11 +67,7 @@ impl UnitValue {
                 ("hundredweight", "hundredweights", Some("100lb")),
                 ("cwt", "cwt", Some("1 hundredweight")),
                 ("short_ton", "short_tons", Some("2000lb")),
-                ("A", "A", None),
-                ("K", "K", None),
                 ("kelvin", "kelvin", Some("K")),
-                ("mol", "mol", None),
-                ("cd", "cd", None),
                 ("g", "g", Some("(1/1000)kg")),
                 ("mg", "mg", Some("(1/1000)g")),
                 ("N", "N", Some("1 kg m / s^2")),
@@ -118,9 +111,8 @@ impl UnitValue {
                 ("parsec", "parsecs", Some("648000AU/pi")),
                 ("kph", "kph", Some("1 km / hr")),
                 ("mph", "mph", Some("1 mile / hr")),
-                ("bit", "bits", None),
                 ("b", "b", Some("bit")),
-                ("byte", "bytes", Some("8 bit")),
+                ("byte", "bytes", Some("8 bits")),
                 ("B", "B", Some("byte")),
                 ("KB", "KB", Some("1000 bytes")),
                 ("MB", "MB", Some("1000 KB")),
