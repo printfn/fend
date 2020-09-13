@@ -21,7 +21,12 @@ impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
         let mut scope = Scope::new_empty();
-        Self::parse_units(include_str!("builtin.units"), &mut scope, &[("bit", "bits")]);
+        Self::parse_units(
+            include_str!("builtin.units"),
+            &mut scope,
+            &[("bit", "bits")],
+            int,
+        )?;
         Self::create_units(
             vec![
                 ("percent", "percent", Some("0.01")),
@@ -159,10 +164,16 @@ impl UnitValue {
         (ident, remaining.trim())
     }
 
-    fn parse_units(unit_definitions: &str, scope: &mut Scope, plurals: &[(&str, &str)]) {
+    fn parse_units<I: Interrupt>(
+        unit_definitions: &str,
+        scope: &mut Scope,
+        plurals: &[(&str, &str)],
+        int: &I,
+    ) -> Result<(), IntErr<Never, I>> {
         let lines = unit_definitions.lines();
         let mut current_plural = 0;
         for line in lines {
+            test_int(int)?;
             let line = line.split('#').next().unwrap_or(line).trim();
             if line.is_empty() {
                 continue;
@@ -186,6 +197,7 @@ impl UnitValue {
                 unimplemented!("Derived units are not currently supported");
             }
         }
+        Ok(())
     }
 
     fn create_units<I: Interrupt>(
