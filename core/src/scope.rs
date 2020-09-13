@@ -18,11 +18,12 @@ impl ScopeValue {
         scope: &mut Scope,
         int: &I,
     ) -> Result<Value, IntErr<String, I>> {
+        let options = crate::parser::ParseOptions::new_for_gnu_units();
         match self {
             ScopeValue::EagerUnit(value, _, _) => Ok(value.clone()),
             ScopeValue::LazyUnit(expr, singular_name, plural_name) => {
-                let value =
-                    crate::eval::evaluate_to_value(expr.as_str(), scope, int)?.expect_num()?;
+                let value = crate::eval::evaluate_to_value(expr.as_str(), options, scope, int)?
+                    .expect_num()?;
                 let unit = crate::num::Number::create_unit_value_from_value(
                     &value,
                     singular_name.clone(),
@@ -40,7 +41,7 @@ impl ScopeValue {
                 Ok(Value::Num(unit))
             }
             ScopeValue::LazyExpr(expr) => {
-                let value = crate::eval::evaluate_to_value(expr.as_str(), scope, int)?;
+                let value = crate::eval::evaluate_to_value(expr.as_str(), options, scope, int)?;
                 // todo add caching
                 Ok(value)
             }

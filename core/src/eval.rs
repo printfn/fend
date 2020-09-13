@@ -8,10 +8,11 @@ use crate::{
 
 pub fn evaluate_to_value<I: Interrupt>(
     input: &str,
+    options: parser::ParseOptions,
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
-    let parsed = parser::parse_string(input, int)?;
+    let parsed = parser::parse_string(input, options, int)?;
     let result = ast::evaluate(parsed, scope, int)?;
     Ok(result)
 }
@@ -21,7 +22,7 @@ pub fn evaluate_to_string<I: Interrupt>(
     scope: &mut Scope,
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
-    let value = evaluate_to_value(input, scope, int)?;
+    let value = evaluate_to_value(input, parser::ParseOptions::default(), scope, int)?;
     let s = crate::num::to_string(|f| value.format(f, int))?;
     Ok(s)
 }

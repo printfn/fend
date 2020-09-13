@@ -125,7 +125,8 @@ fn eval<I: Interrupt>(
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<Never, I>> {
-    crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
+    let options = crate::parser::ParseOptions::default();
+    crate::eval::evaluate_to_value(input, options, scope, int).map_err(crate::err::IntErr::unwrap)
 }
 
 fn resolve_identifier<I: Interrupt>(

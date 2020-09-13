@@ -55,7 +55,8 @@ mod tests {
             duration: Duration::from_millis(10),
         };
         let mut ctx = crate::Context::new();
-        let res = crate::eval::evaluate_to_value("10^1000000", &mut ctx.scope, &int);
+        let options = crate::parser::ParseOptions::default();
+        let res = crate::eval::evaluate_to_value("10^1000000", options, &mut ctx.scope, &int);
         // we must have an interrupt and not an error
         res.unwrap_err().unwrap();
     }
