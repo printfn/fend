@@ -1,3 +1,33 @@
+# pluralisations (must be in the same order as the unit definitions)
+!plural bit bits
+!plural inch inches
+!plural foot feet
+!plural yard yards
+!plural mile miles
+!plural pound pounds
+!plural lb lbs
+!plural ounce ounces
+!plural dram drams
+!plural grain grains
+!plural quarter quarters
+!plural hundredweight hundredweights
+!plural short_ton short_tons
+!plural newton newtons
+!plural joule joules
+!plural pascal pascals
+!plural watt watts
+!plural coulomb coulombs
+!plural volt volts
+!plural ohm ohms
+!plural second seconds
+!plural minute minutes
+!plural min mins
+!plural hour hours
+!plural day days
+!plural year years
+!plural parsec parsecs
+!plural byte bytes
+
 # base units
 s              !
 m              !

@@ -24,36 +24,6 @@ impl UnitValue {
         Self::parse_units(
             include_str!("builtin.units"),
             &mut scope,
-            &[
-                ("bit", "bits"),
-                ("inch", "inches"),
-                ("foot", "feet"),
-                ("yard", "yards"),
-                ("mile", "miles"),
-                ("pound", "pounds"),
-                ("lb", "lbs"),
-                ("ounce", "ounces"),
-                ("dram", "drams"),
-                ("grain", "grains"),
-                ("quarter", "quarters"),
-                ("hundredweight", "hundredweights"),
-                ("short_ton", "short_tons"),
-                ("newton", "newtons"),
-                ("joule", "joules"),
-                ("pascal", "pascals"),
-                ("watt", "watts"),
-                ("coulomb", "coulombs"),
-                ("volt", "volts"),
-                ("ohm", "ohms"),
-                ("second", "seconds"),
-                ("minute", "minutes"),
-                ("min", "mins"),
-                ("hour", "hours"),
-                ("day", "days"),
-                ("year", "years"),
-                ("parsec", "parsecs"),
-                ("byte", "bytes"),
-            ],
             int,
         )?;
         Ok(scope)
@@ -81,21 +51,31 @@ impl UnitValue {
             }
         }
         let (ident, remaining) = input.split_at(count);
+        assert!(!ident.is_empty());
         (ident, remaining.trim())
     }
 
     fn parse_units<I: Interrupt>(
         unit_definitions: &str,
         scope: &mut Scope,
-        plurals: &[(&str, &str)],
         int: &I,
     ) -> Result<(), IntErr<Never, I>> {
         let lines = unit_definitions.lines();
+        let mut plurals = vec![];
         let mut current_plural = 0;
         for line in lines {
             test_int(int)?;
             let line = line.split('#').next().unwrap_or(line).trim();
             if line.is_empty() {
+                continue;
+            }
+            let plural_prefix = "!plural";
+            if line.starts_with(plural_prefix) {
+                let line = line.split_at(plural_prefix.len()).1.trim();
+                let (singular, line) = Self::read_ident(line);
+                let (plural, line) = Self::read_ident(line);
+                assert!(line.is_empty());
+                plurals.push((singular, plural));
                 continue;
             }
             let (singular_name, expr) = Self::read_ident(line);
