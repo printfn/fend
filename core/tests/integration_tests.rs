@@ -168,6 +168,9 @@ fn test_exact_roots() {
     test_evaluation("cbrt 64", "4");
     test_evaluation("cbrt (1/8)", "0.5");
     test_evaluation("cbrt (125/8)", "2.5");
+
+    test_evaluation("sqrt(kg^2)", "1 kg");
+    test_evaluation("(sqrt kg)^2", "1 kg");
 }
 
 #[test]
