@@ -276,12 +276,22 @@ impl UnitValue {
     }
 
     pub fn root_n<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        if !self.is_unitless() || !rhs.is_unitless() {
+        if !rhs.is_unitless() {
             return Err("Roots are currently only supported for unitless numbers.".to_string())?;
         }
+        let mut new_components = vec![];
+        for unit_exp in self.unit.components {
+            new_components.push(UnitExponent {
+                unit: unit_exp.unit,
+                exponent: unit_exp.exponent.div(rhs.value.clone(), int)?,
+            });
+        }
+        let new_unit = Unit {
+            components: new_components,
+        };
         Ok(Self {
             value: self.value.root_n(&rhs.value, int)?,
-            unit: self.unit,
+            unit: new_unit,
         })
     }
 
