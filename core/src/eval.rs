@@ -8,7 +8,7 @@ use crate::{
 
 pub fn evaluate_to_value<I: Interrupt>(
     input: &str,
-    scope: &Scope,
+    scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     let parsed = parser::parse_string(input, int)?;
@@ -18,7 +18,7 @@ pub fn evaluate_to_value<I: Interrupt>(
 
 pub fn evaluate_to_string<I: Interrupt>(
     input: &str,
-    scope: &Scope,
+    scope: &mut Scope,
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
     let value = evaluate_to_value(input, scope, int)?;

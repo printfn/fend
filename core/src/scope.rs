@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 fn _eval<I: Interrupt>(
     input: &'static str,
-    scope: &Scope,
+    scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<Never, I>> {
     crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
@@ -15,6 +15,31 @@ enum ScopeValue {
     Eager(Value),
     // expr, singular name, plural name, space
     LazyUnit(String, String, String, bool),
+}
+
+impl ScopeValue {
+    fn eval<I: Interrupt>(
+        &mut self,
+        scope: &mut Scope,
+        int: &I,
+    ) -> Result<Value, IntErr<String, I>> {
+        match self {
+            ScopeValue::Eager(value) => Ok(value.clone()),
+            ScopeValue::LazyUnit(expr, singular_name, plural_name, space) => {
+                let value =
+                    crate::eval::evaluate_to_value(expr.as_str(), scope, int)?.expect_num()?;
+                let unit = crate::num::Number::create_unit_value_from_value(
+                    &value,
+                    singular_name.clone(),
+                    plural_name.clone(),
+                    *space,
+                    int,
+                )?;
+                *self = ScopeValue::Eager(Value::Num(unit.clone()));
+                Ok(Value::Num(unit))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -53,22 +78,13 @@ impl Scope {
         self.hashmap.insert(singular_name, hashmap_val);
     }
 
-    pub fn get<I: Interrupt>(&self, ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
-        if let Some(value) = self.hashmap.get(&ident.to_string()) {
-            match value {
-                ScopeValue::Eager(value) => Ok(value.clone()),
-                ScopeValue::LazyUnit(expr, singular_name, plural_name, space) => {
-                    let value = crate::eval::evaluate_to_value(expr, &self, int)?.expect_num()?;
-                    let unit = crate::num::Number::create_unit_value_from_value(
-                        &value,
-                        singular_name.clone(),
-                        plural_name.clone(),
-                        *space,
-                        int,
-                    )?;
-                    Ok(Value::Num(unit))
-                }
-            }
+    pub fn get<I: Interrupt>(&mut self, ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
+        // TODO find a way to remove this expensive clone
+        let mut s2 = self.clone();
+        let potential_value = self.hashmap.get_mut(ident);
+        if let Some(value) = potential_value {
+            let value = value.eval(&mut s2, int)?;
+            Ok(value)
         } else {
             Err(format!("Unknown identifier '{}'", ident))?
         }
@@ -82,8 +98,9 @@ mod tests {
     #[test]
     fn test_lazy_units() {
         let int = crate::interrupt::Never::default();
-        let scope = Scope::new_default(&int).unwrap();
-        for key in scope.hashmap.keys() {
+        let mut scope = Scope::new_default(&int).unwrap();
+        let hashmap = scope.hashmap.clone();
+        for key in hashmap.keys() {
             let _ = scope.get(key.as_str(), &int).unwrap();
         }
     }

@@ -94,7 +94,7 @@ pub fn evaluate_with_interrupt(
             other_info: vec![],
         });
     }
-    let result = match eval::evaluate_to_string(input, &context.scope, int) {
+    let result = match eval::evaluate_to_string(input, &mut context.scope, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
         Err(err::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),

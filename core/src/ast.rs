@@ -53,7 +53,7 @@ impl Debug for Expr {
 
 pub fn evaluate<I: Interrupt>(
     expr: Expr,
-    scope: &Scope,
+    scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     test_int(int)?;
@@ -122,7 +122,7 @@ pub fn evaluate<I: Interrupt>(
 
 fn eval<I: Interrupt>(
     input: &'static str,
-    scope: &Scope,
+    scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<Never, I>> {
     crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
@@ -130,7 +130,7 @@ fn eval<I: Interrupt>(
 
 fn resolve_identifier<I: Interrupt>(
     ident: &str,
-    scope: &Scope,
+    scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     Ok(match ident {

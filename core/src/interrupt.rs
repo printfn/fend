@@ -54,8 +54,8 @@ mod tests {
             start: Instant::now(),
             duration: Duration::from_millis(10),
         };
-        let ctx = crate::Context::new();
-        let res = crate::eval::evaluate_to_value("10^1000000", &ctx.scope, &int);
+        let mut ctx = crate::Context::new();
+        let res = crate::eval::evaluate_to_value("10^1000000", &mut ctx.scope, &int);
         // we must have an interrupt and not an error
         res.unwrap_err().unwrap();
     }
