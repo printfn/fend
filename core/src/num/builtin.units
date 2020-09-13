@@ -1,13 +1,13 @@
 # base units
-s !
-m !
-kg !
-A !
-K !
-mol !
-cd !
-bit !
-USD !
+s              !
+m              !
+kg             !
+A              !
+K              !
+mol            !
+cd             !
+bit            !
+USD            !
 
 # dimensionless units
 percent        0.01
