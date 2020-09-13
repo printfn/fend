@@ -145,6 +145,7 @@ pub trait Interrupt {
     fn test(&self) -> Result<(), Self::Int>;
 }
 
+#[derive(Default)]
 pub struct NeverInterrupt {}
 impl Interrupt for NeverInterrupt {
     type Int = std::convert::Infallible;

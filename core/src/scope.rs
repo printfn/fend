@@ -83,13 +83,23 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = ""]
+    #[ignore]
     fn test_lazy_units() {
-        let int = crate::interrupt::Never::default();
+        let int = crate::err::NeverInterrupt::default();
         let mut scope = Scope::new_default(&int).unwrap();
         let hashmap = scope.hashmap.clone();
+        let mut success = 0;
+        let mut failures = 0;
         for key in hashmap.keys() {
-            let _ = scope.get(key.as_str(), &int).unwrap();
+            match scope.get(key.as_str(), &int) {
+                Ok(_) => success += 1,
+                Err(msg) => {
+                    eprintln!("{}", msg.get_error());
+                    failures += 1;
+                }
+            }
         }
+        eprintln!("{}/{} succeeded", success, success + failures);
+        assert_eq!(failures, 0);
     }
 }
