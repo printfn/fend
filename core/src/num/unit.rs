@@ -18,13 +18,13 @@ pub struct UnitValue {
 }
 
 #[cfg(feature = "gpl")]
-const UNITS_DB: &'static str = concat!(
+const UNITS_DB: &str = concat!(
     include_str!("definitions-prepend.units"),
     include_str!("definitions.units")
 );
 
 #[cfg(not(feature = "gpl"))]
-const UNITS_DB: &'static str = include_str!("builtin.units");
+const UNITS_DB: &str = include_str!("builtin.units");
 
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
@@ -102,7 +102,7 @@ impl UnitValue {
                 skip_next = true;
                 continue;
             }
-            for ignore in ignore_rules.iter() {
+            for ignore in &ignore_rules {
                 if line.contains(ignore) {
                     continue 'process_line;
                 }
@@ -135,11 +135,7 @@ impl UnitValue {
             } else {
                 let expr = if expr == "!dimensionless" { "1" } else { expr };
                 let expr = expr.replace('|', "/");
-                scope.insert_lazy_unit(
-                    expr,
-                    singular_name.to_string(),
-                    plural_name.to_string(),
-                );
+                scope.insert_lazy_unit(expr, singular_name.to_string(), plural_name.to_string());
             }
             //crate::eval::evaluate_to_string(plural_name, scope, int).unwrap();
         }

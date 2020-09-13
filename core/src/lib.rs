@@ -2,6 +2,7 @@
 #![forbid(clippy::all)]
 #![allow(clippy::try_err)] // allow `Err(..)?`
 #![deny(clippy::pedantic)]
+#![allow(clippy::non_ascii_literal)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.3")]
 
 mod ast;
