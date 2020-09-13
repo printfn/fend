@@ -25,12 +25,11 @@
 !plural year years
 !plural inch inches
 
-NM  1852 m
-’              foot # unicode single quote
-”              inch # unicode double quote
-
-'      foot # '
-"      inch # "
+NM      nauticalmile
+’       foot # unicode single quote
+”       inch # unicode double quote
+'       foot # '
+"       inch # "
 !ignore '                       arcmin
 !ignore "                       arcsec
 !ignore ''                      "
