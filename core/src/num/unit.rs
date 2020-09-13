@@ -133,10 +133,11 @@ impl UnitValue {
             //eprintln!("Adding unit '{}' '{}' '{}'", singular_name, plural_name, expr);
             if expr == "!" {
                 let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
-                if plural_name != singular_name {
-                    scope.insert(plural_name, Value::Num(unit.clone()));
-                }
-                scope.insert(singular_name, Value::Num(unit));
+                scope.insert(
+                    singular_name.to_string(),
+                    plural_name.to_string(),
+                    Value::Num(unit),
+                );
             } else {
                 let expr = if expr == "!dimensionless" { "1" } else { expr };
                 let expr = expr.replace('|', "/");

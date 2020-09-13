@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 enum ScopeValue {
-    Eager(Value),
+    // value, singular name, plural name
+    EagerUnit(Value, String, String),
     // expr, singular name, plural name
     LazyUnit(String, String, String),
     LazyExpr(String),
@@ -18,7 +19,7 @@ impl ScopeValue {
         int: &I,
     ) -> Result<Value, IntErr<String, I>> {
         match self {
-            ScopeValue::Eager(value) => Ok(value.clone()),
+            ScopeValue::EagerUnit(value, _, _) => Ok(value.clone()),
             ScopeValue::LazyUnit(expr, singular_name, plural_name) => {
                 let value =
                     crate::eval::evaluate_to_value(expr.as_str(), scope, int)?.expect_num()?;
@@ -30,7 +31,11 @@ impl ScopeValue {
                 )?;
                 scope.insert_scope_value(
                     ident.to_string(),
-                    ScopeValue::Eager(Value::Num(unit.clone())),
+                    ScopeValue::EagerUnit(
+                        Value::Num(unit.clone()),
+                        singular_name.clone(),
+                        plural_name.clone(),
+                    ),
                 );
                 Ok(Value::Num(unit))
             }
@@ -65,8 +70,17 @@ impl Scope {
         self.hashmap.insert(ident, value);
     }
 
-    pub fn insert(&mut self, ident: &str, value: Value) {
-        self.insert_scope_value(ident.to_string(), ScopeValue::Eager(value));
+    pub fn insert(&mut self, singular: String, plural: String, value: Value) {
+        if singular != plural {
+            self.insert_scope_value(
+                plural.to_string(),
+                ScopeValue::EagerUnit(value.clone(), singular.clone(), plural.clone()),
+            );
+        }
+        self.insert_scope_value(
+            singular.to_string(),
+            ScopeValue::EagerUnit(value, singular, plural),
+        );
     }
 
     pub fn insert_lazy_unit(&mut self, expr: String, singular_name: String, plural_name: String) {
@@ -91,12 +105,29 @@ impl Scope {
             if let Some(remaining) = ident.strip_prefix(prefix) {
                 let prefix_value = scope_value.eval(prefix, self, int)?;
                 if remaining.is_empty() {
-                    return Ok(prefix_value);
+                    let unit = crate::num::Number::create_unit_value_from_value(
+                        &prefix_value.expect_num()?,
+                        prefix.clone(),
+                        prefix.clone(),
+                        int,
+                    )?;
+                    return Ok(Value::Num(unit));
                 }
                 if let Some(remaining_value) = self.hashmap.get(remaining).cloned() {
+                    let (mut singular, mut plural) = match &remaining_value {
+                        ScopeValue::EagerUnit(_, s, p) | ScopeValue::LazyUnit(_, s, p) => {
+                            (s.clone(), p.clone())
+                        }
+                        _ => ("".to_string(), "".to_string()),
+                    };
+                    singular.insert_str(0, prefix);
+                    plural.insert_str(0, prefix);
                     let value = remaining_value.eval(remaining, self, int)?;
                     let res = prefix_value.expect_num()?.mul(value.expect_num()?, int)?;
-                    return Ok(Value::Num(res));
+                    let unit = crate::num::Number::create_unit_value_from_value(
+                        &res, singular, plural, int,
+                    )?;
+                    return Ok(Value::Num(unit));
                 }
             }
         }

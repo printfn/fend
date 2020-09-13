@@ -25,22 +25,9 @@
 !plural year years
 !plural inch inches
 
-kPa 1000 Pa
 NM  1852 m
 ’              foot # unicode single quote
 ”              inch # unicode double quote
-KB             1000 byte
-MB             1000 KB
-GB             1000 MB
-TB             1000 GB
-KiB            1024 byte
-MiB            1024 KiB
-GiB            1024 MiB
-TiB            1024 GiB
-Kib            1024 bits
-Mib            1024 Kib
-Gib            1024 Mib
-Tib            1024 Gib
 
 '      foot # '
 "      inch # "
