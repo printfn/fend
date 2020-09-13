@@ -1,14 +1,6 @@
-use crate::err::{IntErr, Interrupt, Never};
+use crate::err::{IntErr, Interrupt};
 use crate::value::Value;
 use std::collections::HashMap;
-
-fn _eval<I: Interrupt>(
-    input: &'static str,
-    scope: &mut Scope,
-    int: &I,
-) -> Result<Value, IntErr<Never, I>> {
-    crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
-}
 
 #[derive(Debug, Clone)]
 enum ScopeValue {
