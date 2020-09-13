@@ -19,7 +19,8 @@ enum ScopeValue {
 
 impl ScopeValue {
     fn eval<I: Interrupt>(
-        &mut self,
+        &self,
+        ident: &str,
         scope: &mut Scope,
         int: &I,
     ) -> Result<Value, IntErr<String, I>> {
@@ -35,7 +36,10 @@ impl ScopeValue {
                     *space,
                     int,
                 )?;
-                *self = ScopeValue::Eager(Value::Num(unit.clone()));
+                scope.hashmap.insert(
+                    ident.to_string(),
+                    ScopeValue::Eager(Value::Num(unit.clone())),
+                );
                 Ok(Value::Num(unit))
             }
         }
@@ -79,11 +83,10 @@ impl Scope {
     }
 
     pub fn get<I: Interrupt>(&mut self, ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
-        // TODO find a way to remove this expensive clone
-        let mut s2 = self.clone();
-        let potential_value = self.hashmap.get_mut(ident);
+        // TODO find a way to remove this 'cloned' call without upsetting the borrow checker
+        let potential_value = self.hashmap.get(ident).cloned();
         if let Some(value) = potential_value {
-            let value = value.eval(&mut s2, int)?;
+            let value = value.eval(ident, self, int)?;
             Ok(value)
         } else {
             Err(format!("Unknown identifier '{}'", ident))?
