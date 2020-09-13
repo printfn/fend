@@ -83,6 +83,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = ""]
     fn test_lazy_units() {
         let int = crate::interrupt::Never::default();
         let mut scope = Scope::new_default(&int).unwrap();

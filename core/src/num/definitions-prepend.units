@@ -1,0 +1,52 @@
+# This file defined pluralisations for some units defined in definitions.units.
+# It also contains commands that are necessary for definitions.units to parse correctly.
+
+# Any line containing any of these should be ignored
+!ignore !locale
+!ignore !  set
+!ignore !endlocale
+!ignore !set
+!ignore !varnot
+!ignore !message
+!ignore !prompt
+!ignore !endvar
+!ignore !var
+!ignore !utf8
+!ignore !endutf8
+!ignore !include # definitions.units includes currency.units
+!ignore !unitlist
+
+!plural second seconds
+!plural bit bits
+!plural hour hours
+!plural day days
+!plural year years
+!plural inch inches
+
+millikg  1/1000 kg
+cm  1/100 m
+km  1000 m
+kPa  1000 Pa
+NM  1852 m
+’              foot # unicode single quote
+”              inch # unicode double quote
+KB             1000 byte
+MB             1000 KB
+GB             1000 MB
+TB             1000 GB
+KiB            1024 byte
+MiB            1024 KiB
+GiB            1024 MiB
+TiB            1024 GiB
+Kib            1024 bits
+Mib            1024 Kib
+Gib            1024 Mib
+Tib            1024 Gib
+
+'      foot # '
+"      inch # "
+!ignore '                       arcmin
+!ignore "                       arcsec
+!ignore ''                      "
+# '
+

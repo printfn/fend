@@ -12,4 +12,11 @@ keywords = ["calculator", "library", "conversion", "math", "tool"]
 edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
 
+[features]
+default = ["gpl"]
+
+# This enables the GNU Units database in `definitions.units`. If disabled,
+# `builtin.units` is used instead.
+gpl = []
+
 [dependencies]

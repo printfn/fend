@@ -101,14 +101,14 @@ fn repl_loop() -> i32 {
             .max_history_size(10000)
             .build(),
     );
-    rl.set_helper(Some(helper::FendHelper::default()));
+    let mut context = Context::new();
+    rl.set_helper(Some(helper::FendHelper::new(context.clone())));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
             // No previous history
         }
     }
-    let mut context = Context::new();
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();

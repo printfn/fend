@@ -17,15 +17,20 @@ pub struct UnitValue {
     unit: Unit,
 }
 
+#[cfg(feature = "gpl")]
+const UNITS_DB: &'static str = concat!(
+    include_str!("definitions-prepend.units"),
+    include_str!("definitions.units")
+);
+
+#[cfg(not(feature = "gpl"))]
+const UNITS_DB: &'static str = include_str!("builtin.units");
+
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
         let mut scope = Scope::new_empty();
-        Self::parse_units(
-            include_str!("builtin.units"),
-            &mut scope,
-            int,
-        )?;
+        Self::parse_units(UNITS_DB, &mut scope, int)?;
         Ok(scope)
     }
 
@@ -39,6 +44,7 @@ impl UnitValue {
     /// Tries to read an identifier from the beginning of the string, and returns
     /// the remaining string.
     fn read_ident(input: &str) -> (&str, &str) {
+        let input = input.trim_start();
         let mut count = 0;
         for ch in input.chars() {
             if crate::lexer::is_valid_in_ident(ch, count == 0) {
@@ -52,7 +58,7 @@ impl UnitValue {
         }
         let (ident, remaining) = input.split_at(count);
         assert!(!ident.is_empty());
-        (ident, remaining.trim())
+        (ident, remaining)
     }
 
     fn parse_units<I: Interrupt>(
@@ -63,7 +69,15 @@ impl UnitValue {
         let lines = unit_definitions.lines();
         let mut plurals = vec![];
         let mut current_plural = 0;
-        for line in lines {
+        let mut ignore_rules = vec![];
+        let mut skip_next = false;
+        'process_line: for line in lines {
+            if skip_next {
+                if !line.ends_with('\\') {
+                    skip_next = false;
+                }
+                continue;
+            }
             test_int(int)?;
             let line = line.split('#').next().unwrap_or(line).trim();
             if line.is_empty() {
@@ -78,6 +92,24 @@ impl UnitValue {
                 plurals.push((singular, plural));
                 continue;
             }
+            let ignore_prefix = "!ignore";
+            if line.starts_with(ignore_prefix) {
+                let ignore = line.split_at(ignore_prefix.len()).1.trim();
+                ignore_rules.push(ignore);
+                continue;
+            }
+            if line.ends_with('\\') {
+                skip_next = true;
+                continue;
+            }
+            for ignore in ignore_rules.iter() {
+                if line.contains(ignore) {
+                    continue 'process_line;
+                }
+            }
+            if line.starts_with('+') {
+                continue;
+            }
             let (singular_name, expr) = Self::read_ident(line);
             let plural_name = if Some(singular_name) == plurals.get(current_plural).map(|t| t.0) {
                 let plural_name = plurals[current_plural].1;
@@ -87,7 +119,13 @@ impl UnitValue {
             } else {
                 singular_name
             };
-            //eprintln!("Adding unit {} {} {}", singular_name, plural_name, expr);
+            if expr.starts_with('-') || expr.starts_with('(') {
+                // unit prefixes like `kilo-` are not currently supported
+                // function definitions are not supported
+                continue;
+            }
+            let expr = expr.trim();
+            //eprintln!("Adding unit '{}' '{}' '{}'", singular_name, plural_name, expr);
             if expr == "!" {
                 let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
                 if plural_name != singular_name {
@@ -95,8 +133,10 @@ impl UnitValue {
                 }
                 scope.insert(singular_name, Value::Num(unit));
             } else {
+                let expr = if expr == "!dimensionless" { "1" } else { expr };
+                let expr = expr.replace('|', "/");
                 scope.insert_lazy_unit(
-                    expr.to_string(),
+                    expr,
                     singular_name.to_string(),
                     plural_name.to_string(),
                 );

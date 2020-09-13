@@ -72,3 +72,7 @@ See here: [CHANGELOG.md](CHANGELOG.md)
 ## License
 
 Fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
+
+Fend optionally includes the `definitions.units` data file from
+[GNU Units](https://www.gnu.org/software/units/), which is GPLv3-licenced.
+This can be changed via the `gpl` feature defined in `core/Cargo.toml`.

@@ -30,9 +30,14 @@ impl Default for HintInterrupt {
     }
 }
 
-#[derive(Default)]
 pub struct FendHelper {
     ctx: fend_core::Context,
+}
+
+impl FendHelper {
+    pub fn new(ctx: fend_core::Context) -> Self {
+        Self { ctx }
+    }
 }
 
 impl Hinter for FendHelper {

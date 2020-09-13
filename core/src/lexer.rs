@@ -261,15 +261,13 @@ fn parse_number<I: Interrupt>(input: &mut &str, int: &I) -> Result<Token, IntErr
 
 // checks if the char is valid only by itself
 pub fn is_valid_in_ident_char(ch: char) -> bool {
-    // percent, per mille, double quote, single quote, unicode single and double quotes
-    // %‰\"'’”
-    let allowed_symbols = "%\u{2030}\"'\u{2019}\u{201d}";
+    let allowed_symbols = "%‰‱′″\"'’”";
     allowed_symbols.contains(ch)
 }
 
 // normal rules for identifiers
 pub fn is_valid_in_ident(ch: char, first: bool) -> bool {
-    ch.is_alphabetic() || "_".contains(ch) || (!first && ".0123456789".contains(ch))
+    ch.is_alphabetic() || "_⅛¼⅜½⅝¾⅞⅙⅓⅔⅚⅕⅖⅗⅘°$℃℉℧℈℥℔¢£¥€₩₪₤₨฿₡₣₦₧₫₭₮₯₱﷼﹩￠￡￥￦㍱㍲㍳㍴㍶㎀㎁㎂㎃㎄㎅㎆㎇㎈㎉㎊㎋㎌㎍㎎㎏㎐㎑㎒㎓㎔㎕㎖㎗㎘㎙㎚㎛㎜㎝㎞㎟㎠㎡㎢㎣㎤㎥㎦㎧㎨㎩㎪㎫㎬㎭㎮㎯㎰㎱㎲㎳㎴㎵㎶㎷㎸㎹㎺㎻㎼㎽㎾㎿㏀㏁㏃㏄㏅㏆㏈㏉㏊㏌㏏㏐㏓㏔㏕㏖㏗㏙㏛㏜㏝".contains(ch) || (!first && ".0123456789".contains(ch))
 }
 
 fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String, NeverInterrupt>> {
