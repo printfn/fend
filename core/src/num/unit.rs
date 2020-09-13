@@ -123,6 +123,7 @@ impl UnitValue {
             }
             //crate::eval::evaluate_to_string(plural_name, scope, int).unwrap();
         }
+        assert_eq!(current_plural, plurals.len());
         Ok(())
     }
 
