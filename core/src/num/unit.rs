@@ -20,6 +20,8 @@ pub struct UnitValue {
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
+        let mut scope = Scope::new_empty();
+        Self::parse_units("s !\nUSD !", &mut scope, &[]);
         Self::create_units(
             vec![
                 ("percent", "percent", Some("0.01")),
@@ -136,10 +138,11 @@ impl UnitValue {
                 ("Mib", "Mib", Some("1024 Kib")),
                 ("Gib", "Gib", Some("1024 Mib")),
                 ("Tib", "Tib", Some("1024 Gib")),
-                ("USD", "USD", None),
             ],
+            &mut scope,
             int,
-        )
+        )?;
+        Ok(scope)
     }
 
     pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
@@ -149,11 +152,55 @@ impl UnitValue {
         Ok(self.value.try_as_usize(int)?)
     }
 
+    /// Tries to read an identifier from the beginning of the string, and returns
+    /// the remaining string.
+    fn read_ident(input: &str) -> (&str, &str) {
+        let mut count = 0;
+        for ch in input.chars() {
+            if ch.is_alphabetic() || "_".contains(ch) {
+                count += ch.len_utf8();
+            } else {
+                break;
+            }
+        }
+        let (ident, remaining) = input.split_at(count);
+        (ident, remaining.trim())
+    }
+
+    fn parse_units(unit_definitions: &str, scope: &mut Scope, plurals: &[(&str, &str)]) {
+        let lines = unit_definitions.lines();
+        let mut current_plural = 0;
+        for line in lines {
+            let line = line.split('#').next().unwrap_or(line).trim();
+            if line.is_empty() {
+                continue;
+            }
+            let (singular_name, expr) = Self::read_ident(line);
+            let plural_name = if Some(singular_name) == plurals.get(current_plural).map(|t| t.0) {
+                let plural_name = plurals[current_plural].1;
+                current_plural += 1;
+                assert_ne!(singular_name, plural_name);
+                plural_name
+            } else {
+                singular_name
+            };
+            if expr == "!" {
+                let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
+                if plural_name != singular_name {
+                    scope.insert(plural_name, Value::Num(unit.clone()));
+                }
+                scope.insert(singular_name, Value::Num(unit));
+            } else {
+                unimplemented!("Derived units are not currently supported");
+            }
+        }
+    }
+
     fn create_units<I: Interrupt>(
         unit_descriptions: Vec<(impl ToString, impl ToString, Option<impl ToString>)>,
+        scope: &mut Scope,
         int: &I,
-    ) -> Result<Scope, IntErr<String, I>> {
-        let mut scope = Scope::new_empty();
+    ) -> Result<(), IntErr<String, I>> {
         for (singular_name, plural_name, expr) in unit_descriptions {
             test_int(int)?;
             if let Some(expr) = expr {
@@ -170,7 +217,7 @@ impl UnitValue {
                 }
             };
         }
-        Ok(scope)
+        Ok(())
     }
 
     pub fn create_unit_value_from_value<I: Interrupt>(
