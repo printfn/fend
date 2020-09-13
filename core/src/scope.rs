@@ -50,8 +50,7 @@ impl Scope {
         if singular_name != plural_name {
             self.hashmap.insert(plural_name, hashmap_val.clone());
         }
-        self.hashmap
-            .insert(singular_name, hashmap_val);
+        self.hashmap.insert(singular_name, hashmap_val);
     }
 
     pub fn get<I: Interrupt>(&self, ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
@@ -72,6 +71,20 @@ impl Scope {
             }
         } else {
             Err(format!("Unknown identifier '{}'", ident))?
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lazy_units() {
+        let int = crate::interrupt::Never::default();
+        let scope = Scope::new_default(&int).unwrap();
+        for key in scope.hashmap.keys() {
+            let _ = scope.get(key.as_str(), &int).unwrap();
         }
     }
 }
