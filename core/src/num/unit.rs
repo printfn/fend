@@ -20,7 +20,8 @@ pub struct UnitValue {
 #[cfg(feature = "gpl")]
 const UNITS_DB: &str = concat!(
     include_str!("definitions-prepend.units"),
-    include_str!("definitions.units")
+    include_str!("definitions.units"),
+    include_str!("currency.units")
 );
 
 #[cfg(not(feature = "gpl"))]
@@ -119,9 +120,13 @@ impl UnitValue {
             } else {
                 singular_name
             };
-            if expr.starts_with('-') || expr.starts_with('(') {
-                // unit prefixes like `kilo-` are not currently supported
+            if expr.starts_with('(') {
                 // function definitions are not supported
+                continue;
+            }
+            if let Some(expr) = expr.strip_prefix('-') {
+                // unit prefixes like `kilo-`
+                scope.insert_prefix(singular_name, expr.trim());
                 continue;
             }
             let expr = expr.trim();

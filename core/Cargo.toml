@@ -15,8 +15,8 @@ categories = ["command-line-utilities", "mathematics", "science"]
 [features]
 default = ["gpl"]
 
-# This enables the GNU Units database in `definitions.units`. If disabled,
-# `builtin.units` is used instead.
+# This enables the GNU Units database in `definitions.units` and
+# `currency.units`. If disabled, `builtin.units` is used instead.
 gpl = []
 
 [dependencies]

@@ -18,17 +18,14 @@
 
 !plural second seconds
 !plural bit bits
+!plural gram grams
 !plural minute minutes
 !plural hour hours
 !plural day days
 !plural year years
 !plural inch inches
 
-millikg  1/1000 kg
-cm  1/100 m
-mm  1/1000 m
-km  1000 m
-kPa  1000 Pa
+kPa 1000 Pa
 NM  1852 m
 ’              foot # unicode single quote
 ”              inch # unicode double quote
