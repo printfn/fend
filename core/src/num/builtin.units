@@ -1,3 +1,4 @@
+# base units
 s !
 m !
 kg !
@@ -5,5 +6,11 @@ A !
 K !
 mol !
 cd !
+
+# these aren't SI base units, but it's
+# still useful to consider them as base units
 bit !
 USD !
+
+# dimensionless units
+percent 0.01

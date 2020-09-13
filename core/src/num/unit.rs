@@ -29,7 +29,6 @@ impl UnitValue {
         )?;
         Self::create_units(
             vec![
-                ("percent", "percent", Some("0.01")),
                 ("%", "%", Some("percent")),
                 ("\u{2030}", "\u{2030}", Some("0.001")), // per mille (‰)
                 ("second", "seconds", Some("s")),
@@ -194,7 +193,11 @@ impl UnitValue {
                 }
                 scope.insert(singular_name, Value::Num(unit));
             } else {
-                unimplemented!("Derived units are not currently supported");
+                scope.insert_lazy_unit(
+                    expr.to_string(),
+                    singular_name.to_string(),
+                    plural_name.to_string(),
+                );
             }
         }
         Ok(())
