@@ -25,6 +25,8 @@
 !plural degree degrees
 !plural year years
 !plural inch inches
+!ignore feet                    foot
+!plural foot feet
 !plural yard yards
 !plural mile miles
 !plural fathom fathoms

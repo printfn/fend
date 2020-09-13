@@ -525,6 +525,8 @@ fn test_more_units() {
         "2 light years second^-1 lb^-1",
         "2 light years second^-1 lb^-1",
     );
+    test_evaluation("1 feet", "1 foot");
+    test_evaluation("5 foot", "5 feet");
 }
 
 #[test]
