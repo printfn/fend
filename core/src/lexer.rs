@@ -304,6 +304,7 @@ fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String, NeverInterrupt>
     }
     Ok(match ident.as_str() {
         "to" | "as" => Token::Symbol(Symbol::ArrowConversion),
+        "per" => Token::Symbol(Symbol::Div),
         _ => Token::Ident(ident),
     })
 }

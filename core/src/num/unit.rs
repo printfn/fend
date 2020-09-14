@@ -141,11 +141,8 @@ impl UnitValue {
             } else {
                 let expr = if expr == "!dimensionless" { "1" } else { expr };
                 let mut expr = expr.replace('|', "/");
-                if expr.starts_with("per ") {
-                    expr = expr.replace("per", "1/");
-                }
-                if expr.starts_with('/') {
-                    expr.insert(0, '1');
+                if expr.starts_with("per ") || expr.starts_with('/') {
+                    expr.insert_str(0, "1 ");
                 }
                 scope.insert_lazy_unit(expr, singular_name.to_string(), plural_name.to_string());
             }
