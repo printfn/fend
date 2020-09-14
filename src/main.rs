@@ -117,7 +117,7 @@ fn repl_loop() -> i32 {
         match readline {
             Ok(line) => match line.as_str() {
                 "exit" | "quit" | ":q" => break,
-                "help" => {
+                "help" | "?" => {
                     print_help(true);
                 }
                 "version" => print_version(),
