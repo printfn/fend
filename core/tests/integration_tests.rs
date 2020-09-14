@@ -441,6 +441,7 @@ fn test_exponents() {
     test_evaluation("1e10", "10000000000");
     test_evaluation("1.5e10", "15000000000");
     test_evaluation("0b1e10", "0b100");
+    test_evaluation("0b1e+10", "0b100");
     test_evaluation("0 + 0b1e100", "16");
     test_evaluation("0 + 0b1e1000", "256");
     test_evaluation("0 + 0b1e10000", "65536");
@@ -453,6 +454,11 @@ fn test_exponents() {
         "340282366920938463463374607431768211456",
     );
     test_evaluation("1.5e-1", "0.15");
+    test_evaluation("1.5e0", "1.5");
+    test_evaluation("1.5e-0", "1.5");
+    test_evaluation("1.5e+0", "1.5");
+    test_evaluation("1.5e1", "15");
+    test_evaluation("1.5e+1", "15");
     expect_error("1e -1");
     expect_error("1e- 1");
     test_evaluation("0 + 0b1e-110", "0.015625");

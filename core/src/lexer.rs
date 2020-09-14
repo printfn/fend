@@ -216,6 +216,8 @@ fn parse_basic_number<'a, I: Interrupt>(
             if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
                 negative_exponent = true;
                 input = remaining;
+            } else if let Ok((_, remaining)) = parse_fixed_char(input, '+') {
+                input = remaining;
             }
             let mut exp = Number::zero_with_base(base);
             let base_num = Number::from(u64::from(base.base_as_u8()));
