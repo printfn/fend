@@ -1,4 +1,4 @@
-# This file defined pluralisations for some units defined in definitions.units.
+# This file defines pluralisations for some units defined in definitions.units.
 # It also contains commands that are necessary for definitions.units to parse correctly.
 
 # Any line containing any of these should be ignored
@@ -18,11 +18,19 @@
 
 !plural second seconds
 !plural bit bits
+!plural newton newtons
+!plural pascal pascals
+!plural joule joules
+!plural watt watts
+!plural coulomb coulombs
+!plural volt volts
+!plural ohm ohms
 !plural gram grams
 !plural minute minutes
 !plural hour hours
 !plural day days
 !plural degree degrees
+!plural parsec parsecs
 !plural year years
 !plural inch inches
 !ignore feet                    foot
@@ -33,7 +41,9 @@
 !plural pound pounds
 !plural lb lbs
 !plural grain grains
+!plural ounce ounces
 !plural dram drams
+!plural shortton shorttons
 !plural beerkeg beerkegs
 !plural uscup uscups
 !plural ustablespoon ustablespoons
@@ -44,6 +54,8 @@
 !plural greekfinger greekfingers
 !plural aeginastater aeginastaters
 !plural atticstater atticstaters
+!plural quarter quarters
+!plural hundredweight hundredweights
 
 NM      nauticalmile
 ’       foot # unicode single quote
