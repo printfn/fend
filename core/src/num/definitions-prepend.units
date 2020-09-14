@@ -17,7 +17,18 @@
 !ignore !unitlist
 
 !plural second seconds
+!plural meter meters
+!plural metre metres
+!plural kilogram kilograms
+!plural kelvin kelvins
+!plural ampere amperes
+!plural amp amps
+!plural mole moles
+!plural candela candelas
+!plural radian radians
+!plural steradian steradians
 !plural bit bits
+
 !plural newton newtons
 !plural pascal pascals
 !plural joule joules
@@ -25,37 +36,73 @@
 !plural coulomb coulombs
 !plural volt volts
 !plural ohm ohms
+
 !plural gram grams
+!plural tonne tonnes
+!plural micron microns
+!plural bicron bicrons
+!plural liter liters
+
 !plural minute minutes
 !plural hour hours
 !plural day days
+!plural week weeks
+!plural fortnight fortnights
+!plural beat beats
+
 !plural degree degrees
+
 !plural parsec parsecs
+
 !plural year years
+!plural month months
+
 !plural inch inches
 !ignore feet                    foot
 !plural foot feet
 !plural yard yards
 !plural mile miles
+
 !plural fathom fathoms
+!plural nauticalmile nauticalmiles
+
 !plural pound pounds
 !plural lb lbs
 !plural grain grains
 !plural ounce ounces
 !plural dram drams
 !plural shortton shorttons
+
 !plural beerkeg beerkegs
+
 !plural uscup uscups
 !plural ustablespoon ustablespoons
+
 !plural ream reams
 !plural bundle bundles
+
 !plural byte bytes
+!plural octet octets
+!plural nybble nybbles
+!plural nibble nibbles
+!plural meg megs
+!plural gig gigs
+
 !plural romanpace romanpaces
+
 !plural greekfinger greekfingers
 !plural aeginastater aeginastaters
 !plural atticstater atticstaters
-!plural quarter quarters
+
 !plural hundredweight hundredweights
+!plural ton tons
+!plural quarter quarters
+!plural gallon gallons
+!plural cup cups
+!plural tablespoon tablespoons
+!plural dollar dollars
+!plural cent cents
+!plural penny pennies
 
 NM      nauticalmile
 ’       foot # unicode single quote
