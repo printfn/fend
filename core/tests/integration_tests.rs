@@ -459,12 +459,16 @@ fn test_exponents() {
     test_evaluation("1.5e+0", "1.5");
     test_evaluation("1.5e1", "15");
     test_evaluation("1.5e+1", "15");
-    expect_error("1e -1");
     expect_error("1e- 1");
     test_evaluation("0 + 0b1e-110", "0.015625");
     test_evaluation("e", "approx. 2.7182818284");
     test_evaluation("2 e", "approx. 5.4365636569");
-    expect_error("2e");
+    test_evaluation("2e", "approx. 5.4365636569");
+    test_evaluation("2e/2", "approx. 2.7182818284");
+    test_evaluation("2e / 2", "approx. 2.7182818284");
+    expect_error("2e+");
+    expect_error("2e-");
+    expect_error("2ehello");
     test_evaluation("e^10", "approx. 22026.4657948067");
 }
 

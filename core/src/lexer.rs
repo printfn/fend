@@ -211,28 +211,39 @@ fn parse_basic_number<'a, I: Interrupt>(
     // parse optional exponent, but only for base 10 and below
     if base.base_as_u8() <= 10 {
         if let Ok((_, remaining)) = parse_fixed_char(input, 'e') {
-            input = remaining;
-            let mut negative_exponent = false;
-            if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
-                negative_exponent = true;
+            // peek ahead to the next char to determine if we should continue parsing an exponent
+            let abort = if let Ok((ch, _)) = parse_char(remaining) {
+                // abort if there is a non-alphanumeric non-plus or minus char after 'e',
+                // such as '(' or '/'
+                !(ch.is_alphanumeric() || ch == '+' || ch == '-')
+            } else {
+                // if there is no more input after the 'e', abort
+                true
+            };
+            if !abort {
                 input = remaining;
-            } else if let Ok((_, remaining)) = parse_fixed_char(input, '+') {
+                let mut negative_exponent = false;
+                if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
+                    negative_exponent = true;
+                    input = remaining;
+                } else if let Ok((_, remaining)) = parse_fixed_char(input, '+') {
+                    input = remaining;
+                }
+                let mut exp = Number::zero_with_base(base);
+                let base_num = Number::from(u64::from(base.base_as_u8()));
+                let (_, remaining) = parse_integer(input, true, true, base, &mut |digit| {
+                    exp = (exp.clone().mul(base_num.clone(), int)?)
+                        .add(u64::from(digit).into(), int)?;
+                    Ok(())
+                })?;
+                if negative_exponent {
+                    exp = -exp;
+                }
+                let base_as_u64: u64 = base.base_as_u8().into();
+                let base_as_number: Number = base_as_u64.into();
+                res = res.mul(base_as_number.pow(exp, int)?, int)?;
                 input = remaining;
             }
-            let mut exp = Number::zero_with_base(base);
-            let base_num = Number::from(u64::from(base.base_as_u8()));
-            let (_, remaining) = parse_integer(input, true, true, base, &mut |digit| {
-                exp =
-                    (exp.clone().mul(base_num.clone(), int)?).add(u64::from(digit).into(), int)?;
-                Ok(())
-            })?;
-            if negative_exponent {
-                exp = -exp;
-            }
-            let base_as_u64: u64 = base.base_as_u8().into();
-            let base_as_number: Number = base_as_u64.into();
-            res = res.mul(base_as_number.pow(exp, int)?, int)?;
-            input = remaining;
         }
     }
 
