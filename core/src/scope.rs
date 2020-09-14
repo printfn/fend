@@ -152,7 +152,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
     fn test_lazy_units() {
         let int = crate::err::NeverInterrupt::default();
         let mut scope = Scope::new_default(&int).unwrap();
@@ -168,7 +167,9 @@ mod tests {
                 }
             }
         }
-        eprintln!("{}/{} succeeded", success, success + failures);
+        if failures != 0 {
+            eprintln!("{}/{} succeeded", success, success + failures);
+        }
         assert_eq!(failures, 0);
     }
 }

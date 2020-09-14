@@ -16,6 +16,13 @@
 !ignore !include # definitions.units includes currency.units
 !ignore !unitlist
 
+# broken operator precedence
+!ignore parsec                  au / tan(arcsec)
+!plural parsec parsecs
+parsec         648000 AU/pi
+!ignore nat                     (1/ln(2)) bits
+nat    (1/(ln 2)) bits
+
 !plural second seconds
 !plural meter meters
 !plural metre metres
@@ -52,7 +59,8 @@
 
 !plural degree degrees
 
-!plural parsec parsecs
+# TODO: reenable when operator precedence is fixed
+#!plural parsec parsecs
 
 !plural year years
 !plural month months
@@ -105,6 +113,7 @@
 !plural penny pennies
 
 NM      nauticalmile
+AU      au
 ’       foot # unicode single quote
 ”       inch # unicode double quote
 '       foot # '
