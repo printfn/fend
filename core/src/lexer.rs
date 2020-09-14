@@ -21,6 +21,9 @@ pub enum Symbol {
     Sub,
     Mul,
     Div,
+    // In GNU mode only: | is division with higher precedence. Otherwise
+    // it is an error
+    HighPrecDiv,
     Pow,
     ArrowConversion,
     Factorial,
@@ -35,6 +38,7 @@ impl Display for Symbol {
             Self::Sub => "-",
             Self::Mul => "*",
             Self::Div => "/",
+            Self::HighPrecDiv => "|",
             Self::Pow => "^",
             Self::ArrowConversion => "->",
             Self::Factorial => "!",
@@ -344,6 +348,7 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
                             }
                         }
                         '/' => res.push(Token::Symbol(Symbol::Div)),
+                        '|' => res.push(Token::Symbol(Symbol::HighPrecDiv)),
                         '^' => res.push(Token::Symbol(Symbol::Pow)),
                         _ => return Err(format!("Unexpected character '{}'", ch))?,
                     }
