@@ -140,11 +140,11 @@ impl UnitValue {
                 );
             } else {
                 let expr = if expr == "!dimensionless" { "1" } else { expr };
-                let mut expr = expr.to_string();
-                if expr.starts_with("per ") || expr.starts_with('/') {
-                    expr.insert_str(0, "1 ");
-                }
-                scope.insert_lazy_unit(expr, singular_name.to_string(), plural_name.to_string());
+                scope.insert_lazy_unit(
+                    expr.to_string(),
+                    singular_name.to_string(),
+                    plural_name.to_string(),
+                );
             }
             //crate::eval::evaluate_to_string(plural_name, scope, int).unwrap();
         }
