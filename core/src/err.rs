@@ -35,22 +35,6 @@ impl<E: Display, I: Interrupt> IntErr<E, I> {
     }
 }
 
-pub trait ForwardInterrupt<T, E, I: Interrupt> {
-    fn forward_interrupt(self) -> Result<T, IntErr<E, I>>;
-}
-
-impl<T, E, I: Interrupt> ForwardInterrupt<T, E, I> for Result<T, IntErr<Never, I>> {
-    fn forward_interrupt(self) -> Result<T, IntErr<E, I>> {
-        match self {
-            Ok(x) => Ok(x),
-            Err(int_err) => match int_err {
-                IntErr::Error(e) => match e {},
-                IntErr::Interrupt(i) => Err(IntErr::Interrupt(i)),
-            },
-        }
-    }
-}
-
 impl<E> IntErr<E, NeverInterrupt> {
     pub fn get_error(self) -> E {
         match self {

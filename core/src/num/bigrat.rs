@@ -1,4 +1,4 @@
-use crate::err::{ForwardInterrupt, IntErr, Interrupt, Never};
+use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, DivideByZero, FormattingStyle};
@@ -304,8 +304,8 @@ impl BigRat {
         }
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
-            num: self.num.mul(&rhs.den, int).forward_interrupt()?,
-            den: self.den.mul(&rhs.num, int).forward_interrupt()?,
+            num: self.num.mul(&rhs.den, int)?,
+            den: self.den.mul(&rhs.num, int)?,
         })
     }
 

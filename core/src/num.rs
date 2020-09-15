@@ -68,6 +68,7 @@ impl<T: Display> Display for ValueTooLarge<T> {
         Ok(())
     }
 }
+impl<T: Display> crate::err::Error for ValueTooLarge<T> {}
 
 #[derive(Debug)]
 pub enum IntegerPowerError {
@@ -83,6 +84,7 @@ impl Display for IntegerPowerError {
         }
     }
 }
+impl crate::err::Error for IntegerPowerError {}
 
 #[derive(Debug)]
 pub struct DivideByZero {}
@@ -91,3 +93,4 @@ impl Display for DivideByZero {
         write!(f, "Division by zero")
     }
 }
+impl crate::err::Error for DivideByZero {}

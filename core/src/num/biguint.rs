@@ -1,4 +1,4 @@
-use crate::err::{ForwardInterrupt, IntErr, Interrupt, Never};
+use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, DivideByZero, IntegerPowerError, ValueTooLarge};
 use std::cmp::{max, Ordering};
@@ -177,7 +177,7 @@ impl BigUint {
         if b.value_len() > 1 {
             return Err(IntegerPowerError::ExponentTooLarge)?;
         }
-        Ok(a.pow_internal(b.get(0), int).forward_interrupt()?)
+        Ok(a.pow_internal(b.get(0), int)?)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
@@ -192,9 +192,9 @@ impl BigUint {
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
         while high_guess.clone().sub(&low_guess) > 1.into() {
-            test_int(int).forward_interrupt()?;
+            test_int(int)?;
             let mut guess = low_guess.clone().add(&high_guess);
-            guess.rshift(int).forward_interrupt()?;
+            guess.rshift(int)?;
 
             let res = Self::pow(&guess, n, int)?;
             match res.cmp(&self) {
@@ -297,7 +297,7 @@ impl BigUint {
         }
         if other == &Self::from(2) {
             let mut div_result = self.clone();
-            div_result.rshift(int).forward_interrupt()?;
+            div_result.rshift(int)?;
             let modulo = self.get(0) & 1;
             return Ok((div_result, Self::from(modulo)));
         }
@@ -305,9 +305,9 @@ impl BigUint {
         let mut q = Self::from(0);
         let mut r = Self::from(0);
         for i in (0..self.value_len()).rev() {
-            test_int(int).forward_interrupt()?;
+            test_int(int)?;
             for j in (0..64).rev() {
-                r.lshift(int).forward_interrupt()?;
+                r.lshift(int)?;
                 let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
                 r.set(0, r.get(0) | bit_of_self);
                 if &r >= other {
