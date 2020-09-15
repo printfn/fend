@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, NeverInterrupt};
 use crate::interrupt::test_int;
-use crate::num::{Base, Number};
+use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{
     convert::TryInto,
     fmt::{Display, Error, Formatter},
@@ -37,8 +37,8 @@ enum LexerError {
     DigitSeparatorsNotAllowed,
     DigitSeparatorsOnlyBetweenDigits,
     NoLeadingZeroes,
-    BaseTooSmall,
-    BaseTooLarge,
+    BaseOutOfRange(BaseOutOfRangeError),
+    InvalidBasePrefix(InvalidBasePrefixError),
 }
 
 impl Display for LexerError {
@@ -55,9 +55,21 @@ impl Display for LexerError {
                 write!(f, "Digit separators can only occur between digits")
             }
             LexerError::NoLeadingZeroes => write!(f, "Integer literals cannot have leading zeroes"),
-            LexerError::BaseTooSmall => write!(f, "Base must be at least 2"),
-            LexerError::BaseTooLarge => write!(f, "Base cannot be larger than 36"),
+            LexerError::BaseOutOfRange(e) => write!(f, "{}", e),
+            LexerError::InvalidBasePrefix(e) => write!(f, "{}", e),
         }
+    }
+}
+
+impl<I: Interrupt> From<BaseOutOfRangeError> for IntErr<LexerError, I> {
+    fn from(e: BaseOutOfRangeError) -> Self {
+        LexerError::BaseOutOfRange(e).into()
+    }
+}
+
+impl<I: Interrupt> From<InvalidBasePrefixError> for IntErr<LexerError, I> {
+    fn from(e: InvalidBasePrefixError) -> Self {
+        LexerError::InvalidBasePrefix(e).into()
     }
 }
 
@@ -168,7 +180,7 @@ where
     Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverInterrupt>> {
+fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<LexerError, NeverInterrupt>> {
     // 0x -> 16
     // 0d -> 10
     // 0o -> 8
@@ -176,7 +188,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverIn
     // base# -> base (where 2 <= base <= 36)
     // case-sensitive, no whitespace allowed
     if let Ok((_, input)) = parse_fixed_char(input, '0') {
-        let (ch, input) = parse_char(input).map_err(|e| e.to_string())?;
+        let (ch, input) = parse_char(input)?;
         Ok((Base::from_zero_based_prefix_char(ch)?, input))
     } else {
         let mut custom_base: u8 = 0;
@@ -187,20 +199,19 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverIn
             Base::default(),
             &mut |digit| -> Result<(), IntErr<LexerError, NeverInterrupt>> {
                 if custom_base > 3 {
-                    return Err(LexerError::BaseTooLarge)?;
+                    return Err(BaseOutOfRangeError::BaseTooLarge)?;
                 }
                 custom_base = 10 * custom_base + digit;
                 if custom_base > 36 {
-                    return Err(LexerError::BaseTooLarge)?;
+                    return Err(BaseOutOfRangeError::BaseTooLarge)?;
                 }
                 Ok(())
             },
-        )
-        .map_err(|e| e.to_string())?;
+        )?;
         if custom_base < 2 {
-            return Err(LexerError::BaseTooSmall).map_err(|e| e.to_string())?;
+            return Err(BaseOutOfRangeError::BaseTooSmall)?;
         }
-        let (_, input) = parse_fixed_char(input, '#').map_err(|e| e.to_string())?;
+        let (_, input) = parse_fixed_char(input, '#')?;
         Ok((Base::from_custom_base(custom_base)?, input))
     }
 }

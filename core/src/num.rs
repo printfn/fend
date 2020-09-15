@@ -16,6 +16,8 @@ pub use formatting_style::FormattingStyle;
 
 pub type Number = unit::UnitValue;
 pub type Base = base::Base;
+pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
+pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
 // Small formatter helper
 pub fn to_string<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>>(

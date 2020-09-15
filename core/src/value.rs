@@ -97,7 +97,9 @@ impl Value {
                         .try_as_usize(int)?
                         .try_into()
                         .map_err(|_| "Unable to convert number to a valid base".to_string())?;
-                    return Ok(Value::Base(Base::from_plain_base(n)?));
+                    return Ok(Value::Base(
+                        Base::from_plain_base(n).map_err(|e| e.to_string())?,
+                    ));
                 } else {
                     return Err(format!("Unknown function '{}'", name))?;
                 }

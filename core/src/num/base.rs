@@ -1,3 +1,5 @@
+use std::fmt::{Display, Error, Formatter};
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Base(BaseEnum);
 
@@ -17,6 +19,32 @@ enum BaseEnum {
     Plain(u8),
 }
 
+pub struct InvalidBasePrefixError {}
+
+impl Display for InvalidBasePrefixError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(
+            f,
+            "Unable to parse a valid base prefix, expected 0b, 0o, 0d or 0x"
+        )
+    }
+}
+
+#[allow(clippy::module_name_repetitions)]
+pub enum BaseOutOfRangeError {
+    BaseTooSmall,
+    BaseTooLarge,
+}
+
+impl Display for BaseOutOfRangeError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            Self::BaseTooSmall => write!(f, "Base must be at least 2"),
+            Self::BaseTooLarge => write!(f, "Base cannot be larger than 36"),
+        }
+    }
+}
+
 impl Base {
     pub const fn base_as_u8(self) -> u8 {
         match self.0 {
@@ -28,34 +56,30 @@ impl Base {
         }
     }
 
-    pub fn from_zero_based_prefix_char(ch: char) -> Result<Self, String> {
+    pub fn from_zero_based_prefix_char(ch: char) -> Result<Self, InvalidBasePrefixError> {
         Ok(match ch {
             'x' => Self(BaseEnum::Hex),
             'd' => Self(BaseEnum::Decimal),
             'o' => Self(BaseEnum::Octal),
             'b' => Self(BaseEnum::Binary),
-            _ => {
-                return Err(
-                    "Unable to parse a valid base prefix, expected 0x, 0o or 0b".to_string()
-                )?
-            }
+            _ => return Err(InvalidBasePrefixError {}),
         })
     }
 
-    pub fn from_plain_base(base: u8) -> Result<Self, String> {
+    pub fn from_plain_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
         if base < 2 {
-            return Err("Base must be at least 2".to_string());
+            return Err(BaseOutOfRangeError::BaseTooSmall);
         } else if base > 36 {
-            return Err("Base cannot be greater than 36".to_string());
+            return Err(BaseOutOfRangeError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Plain(base)))
     }
 
-    pub fn from_custom_base(base: u8) -> Result<Self, String> {
+    pub fn from_custom_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
         if base < 2 {
-            return Err("Base must be at least 2".to_string());
+            return Err(BaseOutOfRangeError::BaseTooSmall);
         } else if base > 36 {
-            return Err("Base cannot be greater than 36".to_string());
+            return Err(BaseOutOfRangeError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Custom(base)))
     }

@@ -177,10 +177,10 @@ fn resolve_identifier<I: Interrupt>(
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
         "base" => Value::Func("base".to_string()),
-        "decimal" => Value::Base(Base::from_plain_base(10)?),
-        "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),
-        "binary" => Value::Base(Base::from_plain_base(2)?),
-        "octal" => Value::Base(Base::from_plain_base(8)?),
+        "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
+        "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
+        "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
+        "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         _ => scope.get(ident, int)?,
     })
 }
