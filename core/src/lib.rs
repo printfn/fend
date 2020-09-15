@@ -113,6 +113,8 @@ pub fn get_version() -> String {
     "0.1.4".to_string()
 }
 
+/// Returns the current extended version of `fend-core`, which includes the
+/// release date in addition to the semver number
 #[must_use]
 pub fn get_extended_version() -> String {
     "0.1.4 (2020-09-15)".to_string()
