@@ -16,13 +16,6 @@
 !ignore !include # definitions.units includes currency.units
 !ignore !unitlist
 
-# broken operator precedence
-!ignore parsec                  au / tan(arcsec)
-!plural parsec parsecs
-parsec         648000 AU/pi
-!ignore nat                     (1/ln(2)) bits
-nat    (1/(ln 2)) bits
-
 !plural second seconds
 !plural meter meters
 !plural metre metres
@@ -59,8 +52,7 @@ nat    (1/(ln 2)) bits
 
 !plural degree degrees
 
-# TODO: reenable when operator precedence is fixed
-#!plural parsec parsecs
+!plural parsec parsecs
 
 !plural year years
 !plural month months
