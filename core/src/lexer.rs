@@ -265,29 +265,32 @@ pub fn is_valid_in_ident(ch: char, first: bool) -> bool {
 }
 
 fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterrupt>> {
-    let (first_char, mut input) = parse_char(input)?;
+    let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, true) {
         if is_valid_in_ident_char(first_char) {
-            return Ok((Token::Ident(first_char.to_string()), input));
+            let (first_char_str, input) = input.split_at(first_char.len_utf8());
+            return Ok((Token::Ident(first_char_str.to_string()), input));
         }
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
             first_char
         ))?;
     }
-    let mut ident = first_char.to_string();
-    while let Ok((next_char, remaining)) = parse_char(input) {
+    let mut byte_idx = first_char.len_utf8();
+    let (_, mut remaining) = input.split_at(byte_idx);
+    while let Ok((next_char, remaining_input)) = parse_char(remaining) {
         if !is_valid_in_ident(next_char, false) {
             break;
         }
-        input = remaining;
-        ident.push(next_char);
+        remaining = remaining_input;
+        byte_idx += next_char.len_utf8();
     }
+    let (ident, input) = input.split_at(byte_idx);
     Ok((
-        match ident.as_str() {
+        match ident {
             "to" | "as" => Token::Symbol(Symbol::ArrowConversion),
             "per" => Token::Symbol(Symbol::Div),
-            _ => Token::Ident(ident),
+            _ => Token::Ident(ident.to_string()),
         },
         input,
     ))
