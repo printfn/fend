@@ -137,16 +137,6 @@ impl<E: std::fmt::Debug, I: Interrupt> std::fmt::Debug for IntErr<E, I> {
     }
 }
 
-impl<E: std::fmt::Display, I: Interrupt> std::fmt::Display for IntErr<E, I> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        match self {
-            Self::Interrupt(i) => write!(f, "{:?}", i)?,
-            Self::Error(e) => write!(f, "{}", e)?,
-        }
-        Ok(())
-    }
-}
-
 impl Error for std::fmt::Error {}
 impl Error for String {}
 
