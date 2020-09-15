@@ -47,15 +47,14 @@ impl UnitValue {
     fn read_ident(input: &str) -> (&str, &str) {
         let input = input.trim_start();
         let mut count = 0;
+        let mut prev_ch = None;
         for ch in input.chars() {
-            if crate::lexer::is_valid_in_ident(ch, count == 0) {
+            if crate::lexer::is_valid_in_ident(ch, prev_ch) {
                 count += ch.len_utf8();
-            } else if count == 0 && crate::lexer::is_valid_in_ident_char(ch) {
-                count += ch.len_utf8();
-                break;
             } else {
                 break;
             }
+            prev_ch = Some(ch);
         }
         let (ident, remaining) = input.split_at(count);
         assert!(!ident.is_empty());

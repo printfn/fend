@@ -247,24 +247,24 @@ fn parse_number<'a, I: Interrupt>(
     Ok((res, input))
 }
 
-// checks if the char is valid only by itself
-pub fn is_valid_in_ident_char(ch: char) -> bool {
-    let allowed_symbols = "%‰‱′″\"'’”";
-    allowed_symbols.contains(ch)
-}
-
-// normal rules for identifiers
-pub fn is_valid_in_ident(ch: char, first: bool) -> bool {
-    ch.is_alphabetic() || ",&_⅛¼⅜½⅝¾⅞⅙⅓⅔⅚⅕⅖⅗⅘°$℃℉℧℈℥℔¢£¥€₩₪₤₨฿₡₣₦₧₫₭₮₯₱﷼﹩￠￡￥￦㍱㍲㍳㍴㍶㎀㎁㎂㎃㎄㎅㎆㎇㎈㎉㎊㎋㎌㎍㎎㎏㎐㎑㎒㎓㎔㎕㎖㎗㎘㎙㎚㎛㎜㎝㎞㎟㎠㎡㎢㎣㎤㎥㎦㎧㎨㎩㎪㎫㎬㎭㎮㎯㎰㎱㎲㎳㎴㎵㎶㎷㎸㎹㎺㎻㎼㎽㎾㎿㏀㏁㏃㏄㏅㏆㏈㏉㏊㏌㏏㏐㏓㏔㏕㏖㏗㏙㏛㏜㏝".contains(ch) || (!first && ".0123456789".contains(ch))
+pub fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
+    let allowed_chars = ",&_⅛¼⅜½⅝¾⅞⅙⅓⅔⅚⅕⅖⅗⅘°$℃℉℧℈℥℔¢£¥€₩₪₤₨฿₡₣₦₧₫₭₮₯₱﷼﹩￠￡￥￦㍱㍲㍳㍴㍶㎀㎁㎂㎃㎄㎅㎆㎇㎈㎉㎊㎋㎌㎍㎎㎏㎐㎑㎒㎓㎔㎕㎖㎗㎘㎙㎚㎛㎜㎝㎞㎟㎠㎡㎢㎣㎤㎥㎦㎧㎨㎩㎪㎫㎬㎭㎮㎯㎰㎱㎲㎳㎴㎵㎶㎷㎸㎹㎺㎻㎼㎽㎾㎿㏀㏁㏃㏄㏅㏆㏈㏉㏊㏌㏏㏐㏓㏔㏕㏖㏗㏙㏛㏜㏝";
+    // these chars are only valid by themselves
+    let only_valid_by_themselves = "%‰‱′″\"'’”";
+    if only_valid_by_themselves.contains(ch)
+        || only_valid_by_themselves.contains(prev.unwrap_or('a'))
+    {
+        prev.is_none()
+    } else if ch.is_alphabetic() || allowed_chars.contains(ch) {
+        true
+    } else {
+        prev.is_some() && ".0123456789".contains(ch)
+    }
 }
 
 fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterrupt>> {
     let (first_char, _) = parse_char(input)?;
-    if !is_valid_in_ident(first_char, true) {
-        if is_valid_in_ident_char(first_char) {
-            let (first_char_str, input) = input.split_at(first_char.len_utf8());
-            return Ok((Token::Ident(first_char_str), input));
-        }
+    if !is_valid_in_ident(first_char, None) {
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
             first_char
@@ -272,12 +272,14 @@ fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterru
     }
     let mut byte_idx = first_char.len_utf8();
     let (_, mut remaining) = input.split_at(byte_idx);
+    let mut prev_char = first_char;
     while let Ok((next_char, remaining_input)) = parse_char(remaining) {
-        if !is_valid_in_ident(next_char, false) {
+        if !is_valid_in_ident(next_char, Some(prev_char)) {
             break;
         }
         remaining = remaining_input;
         byte_idx += next_char.len_utf8();
+        prev_char = next_char;
     }
     let (ident, input) = input.split_at(byte_idx);
     Ok((
@@ -306,7 +308,7 @@ pub fn lex<'a, I: Interrupt>(
                     let (num, remaining) = parse_number(input, int)?;
                     input = remaining;
                     res.push(Token::Num(num));
-                } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
+                } else if is_valid_in_ident(ch, None) {
                     let (ident, remaining) = parse_ident(input).map_err(IntErr::get_error)?;
                     input = remaining;
                     res.push(ident);
