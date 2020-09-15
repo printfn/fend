@@ -112,7 +112,7 @@ impl<E> IntErr<E, NeverInterrupt> {
     }
 }
 
-impl<E: Error, I: Interrupt> From<E> for IntErr<E, I> {
+impl<E, I: Interrupt> From<E> for IntErr<E, I> {
     fn from(e: E) -> Self {
         Self::Error(e)
     }
@@ -132,6 +132,16 @@ impl<E: std::fmt::Debug, I: Interrupt> std::fmt::Debug for IntErr<E, I> {
         match self {
             Self::Interrupt(i) => write!(f, "{:?}", i)?,
             Self::Error(e) => write!(f, "{:?}", e)?,
+        }
+        Ok(())
+    }
+}
+
+impl<E: std::fmt::Display, I: Interrupt> std::fmt::Display for IntErr<E, I> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        match self {
+            Self::Interrupt(i) => write!(f, "{:?}", i)?,
+            Self::Error(e) => write!(f, "{}", e)?,
         }
         Ok(())
     }

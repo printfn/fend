@@ -29,6 +29,44 @@ pub enum Symbol {
     Factorial,
 }
 
+enum LexerError {
+    ExpectedACharacter,
+    ExpectedADigit(char),
+    ExpectedChar(char, char),
+    ExpectedDigitSeparator(char),
+    DigitSeparatorsNotAllowed,
+    DigitSeparatorsOnlyBetweenDigits,
+    NoLeadingZeroes,
+    BaseTooSmall,
+    BaseTooLarge,
+}
+
+impl Display for LexerError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            LexerError::ExpectedACharacter => write!(f, "Expected a character"),
+            LexerError::ExpectedADigit(ch) => write!(f, "Expected a digit, found '{}'", ch),
+            LexerError::ExpectedChar(ex, fnd) => write!(f, "Expected '{}', found '{}'", ex, fnd),
+            LexerError::ExpectedDigitSeparator(ch) => {
+                write!(f, "Expected a digit separator, found {}", ch)
+            }
+            LexerError::DigitSeparatorsNotAllowed => write!(f, "Digit separators are not allowed"),
+            LexerError::DigitSeparatorsOnlyBetweenDigits => {
+                write!(f, "Digit separators can only occur between digits")
+            }
+            LexerError::NoLeadingZeroes => write!(f, "Integer literals cannot have leading zeroes"),
+            LexerError::BaseTooSmall => write!(f, "Base must be at least 2"),
+            LexerError::BaseTooLarge => write!(f, "Base cannot be larger than 36"),
+        }
+    }
+}
+
+impl<I: Interrupt> From<LexerError> for IntErr<String, I> {
+    fn from(e: LexerError) -> Self {
+        e.to_string().into()
+    }
+}
+
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         let s = match self {
@@ -48,56 +86,56 @@ impl Display for Symbol {
     }
 }
 
-fn parse_char(input: &str) -> Result<(char, &str), IntErr<String, NeverInterrupt>> {
+fn parse_char(input: &str) -> Result<(char, &str), LexerError> {
     if let Some(ch) = input.chars().next() {
         let (_, b) = input.split_at(ch.len_utf8());
         Ok((ch, b))
     } else {
-        Err("Expected a character".to_string())?
+        Err(LexerError::ExpectedACharacter)
     }
 }
 
-fn parse_ascii_digit(
-    input: &str,
-    base: Base,
-) -> Result<(u8, &str), IntErr<String, NeverInterrupt>> {
+fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), LexerError> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
     if let Some(digit) = possible_digit.and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok()) {
         Ok((digit, input))
     } else {
-        Err(format!("Expected a digit, found '{}'", ch))?
+        Err(LexerError::ExpectedADigit(ch))
     }
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), IntErr<String, NeverInterrupt>> {
+fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), LexerError> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == ch {
         Ok(((), input))
     } else {
-        Err(format!("Expected '{}', found '{}'", parsed_ch, ch))?
+        Err(LexerError::ExpectedChar(parsed_ch, ch))
     }
 }
 
-fn parse_digit_separator(input: &str) -> Result<((), &str), IntErr<String, NeverInterrupt>> {
+fn parse_digit_separator(input: &str) -> Result<((), &str), LexerError> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == '_' || parsed_ch == ',' {
         Ok(((), input))
     } else {
-        Err(format!("Expected a digit separator, found {}", parsed_ch))?
+        Err(LexerError::ExpectedDigitSeparator(parsed_ch))
     }
 }
 
 // Parses a plain integer with no whitespace and no base prefix.
 // Leading minus sign is not allowed.
-fn parse_integer<'a, I: Interrupt>(
+fn parse_integer<'a, E, I: Interrupt>(
     input: &'a str,
     allow_digit_separator: bool,
     allow_leading_zeroes: bool,
     base: Base,
-    process_digit: &mut impl FnMut(u8) -> Result<(), IntErr<String, I>>,
-) -> Result<((), &'a str), IntErr<String, I>> {
-    let (digit, mut input) = parse_ascii_digit(input, base).map_err(IntErr::get_error)?;
+    process_digit: &mut impl FnMut(u8) -> Result<(), IntErr<E, I>>,
+) -> Result<((), &'a str), IntErr<E, I>>
+where
+    IntErr<E, I>: From<LexerError>,
+{
+    let (digit, mut input) = parse_ascii_digit(input, base)?;
     process_digit(digit)?;
     let leading_zero = digit == 0;
     let mut parsed_digit_separator;
@@ -106,7 +144,7 @@ fn parse_integer<'a, I: Interrupt>(
             input = remaining;
             parsed_digit_separator = true;
             if !allow_digit_separator {
-                return Err("Digit separators are not allowed".to_string())?;
+                return Err(LexerError::DigitSeparatorsNotAllowed)?;
             }
         } else {
             parsed_digit_separator = false;
@@ -114,13 +152,13 @@ fn parse_integer<'a, I: Interrupt>(
         match parse_ascii_digit(input, base) {
             Err(_) => {
                 if parsed_digit_separator {
-                    return Err("Digit separators can only occur between digits".to_string())?;
+                    return Err(LexerError::DigitSeparatorsOnlyBetweenDigits)?;
                 }
                 break;
             }
             Ok((digit, next_input)) => {
                 if leading_zero && !allow_leading_zeroes {
-                    return Err("Integer literals cannot have leading zeroes".to_string())?;
+                    return Err(LexerError::NoLeadingZeroes)?;
                 }
                 process_digit(digit)?;
                 input = next_input;
@@ -138,24 +176,31 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<String, NeverIn
     // base# -> base (where 2 <= base <= 36)
     // case-sensitive, no whitespace allowed
     if let Ok((_, input)) = parse_fixed_char(input, '0') {
-        let (ch, input) = parse_char(input)?;
+        let (ch, input) = parse_char(input).map_err(|e| e.to_string())?;
         Ok((Base::from_zero_based_prefix_char(ch)?, input))
     } else {
         let mut custom_base: u8 = 0;
-        let (_, input) = parse_integer(input, false, false, Base::default(), &mut |digit| {
-            if custom_base > 3 {
-                return Err("Base cannot be larger than 36".to_string())?;
-            }
-            custom_base = 10 * custom_base + digit;
-            if custom_base > 36 {
-                return Err("Base cannot be larger than 36".to_string())?;
-            }
-            Ok(())
-        })?;
+        let (_, input) = parse_integer(
+            input,
+            false,
+            false,
+            Base::default(),
+            &mut |digit| -> Result<(), IntErr<LexerError, NeverInterrupt>> {
+                if custom_base > 3 {
+                    return Err(LexerError::BaseTooLarge)?;
+                }
+                custom_base = 10 * custom_base + digit;
+                if custom_base > 36 {
+                    return Err(LexerError::BaseTooLarge)?;
+                }
+                Ok(())
+            },
+        )
+        .map_err(|e| e.to_string())?;
         if custom_base < 2 {
-            return Err("Base must be at least 2".to_string())?;
+            return Err(LexerError::BaseTooSmall).map_err(|e| e.to_string())?;
         }
-        let (_, input) = parse_fixed_char(input, '#')?;
+        let (_, input) = parse_fixed_char(input, '#').map_err(|e| e.to_string())?;
         Ok((Base::from_custom_base(custom_base)?, input))
     }
 }
@@ -173,7 +218,7 @@ fn parse_basic_number<'a, I: Interrupt>(
         true,
         base.allow_leading_zeroes(),
         base,
-        &mut |digit| {
+        &mut |digit| -> Result<(), IntErr<String, I>> {
             let base_as_u64: u64 = base.base_as_u8().into();
             res = res
                 .clone()
@@ -185,7 +230,10 @@ fn parse_basic_number<'a, I: Interrupt>(
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
-        let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| {
+        let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| -> Result<
+            (),
+            IntErr<String, I>,
+        > {
             res.add_digit_in_base(digit.into(), base, int)?;
             Ok(())
         })?;
@@ -219,11 +267,15 @@ fn parse_basic_number<'a, I: Interrupt>(
                 }
                 let mut exp = Number::zero_with_base(base);
                 let base_num = Number::from(u64::from(base.base_as_u8()));
-                let (_, remaining) = parse_integer(input, true, true, base, &mut |digit| {
-                    exp = (exp.clone().mul(base_num.clone(), int)?)
-                        .add(u64::from(digit).into(), int)?;
-                    Ok(())
-                })?;
+                let (_, remaining) =
+                    parse_integer(input, true, true, base, &mut |digit| -> Result<
+                        (),
+                        IntErr<String, I>,
+                    > {
+                        exp = (exp.clone().mul(base_num.clone(), int)?)
+                            .add(u64::from(digit).into(), int)?;
+                        Ok(())
+                    })?;
                 if negative_exponent {
                     exp = -exp;
                 }
@@ -263,7 +315,7 @@ pub fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
 }
 
 fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterrupt>> {
-    let (first_char, _) = parse_char(input)?;
+    let (first_char, _) = parse_char(input).map_err(|e| e.to_string())?;
     if !is_valid_in_ident(first_char, None) {
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
