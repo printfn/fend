@@ -694,3 +694,10 @@ fn test_various_functions() {
     expect_error("cbrt (-2i)");
     expect_error("sin i");
 }
+
+#[test]
+fn test_unary_div() {
+    test_evaluation("/s", "1 s^-1");
+    test_evaluation("per second", "1 second^-1");
+    test_evaluation("1 Hz + /s", "2 Hz");
+}

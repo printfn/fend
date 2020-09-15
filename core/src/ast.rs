@@ -12,6 +12,7 @@ pub enum Expr {
     Parens(Box<Expr>),
     UnaryMinus(Box<Expr>),
     UnaryPlus(Box<Expr>),
+    UnaryDiv(Box<Expr>),
     Factorial(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
     Sub(Box<Expr>, Box<Expr>),
@@ -36,6 +37,7 @@ impl Debug for Expr {
             Self::Parens(x) => write!(f, "({:?})", *x),
             Self::UnaryMinus(x) => write!(f, "(-{:?})", *x),
             Self::UnaryPlus(x) => write!(f, "(+{:?})", *x),
+            Self::UnaryDiv(x) => write!(f, "(/{:?})", *x),
             Self::Factorial(x) => write!(f, "{:?}!", *x),
             Self::Add(a, b) => write!(f, "({:?}+{:?})", *a, *b),
             Self::Sub(a, b) => write!(f, "({:?}-{:?})", *a, *b),
@@ -63,6 +65,7 @@ pub fn evaluate<I: Interrupt>(
         Expr::Parens(x) => evaluate(*x, scope, int)?,
         Expr::UnaryMinus(x) => Value::Num(-evaluate(*x, scope, int)?.expect_num()?),
         Expr::UnaryPlus(x) => Value::Num(evaluate(*x, scope, int)?.expect_num()?),
+        Expr::UnaryDiv(x) => Value::Num(Number::from(1).div(evaluate(*x, scope, int)?.expect_num()?, int)?),
         Expr::Factorial(x) => Value::Num(evaluate(*x, scope, int)?.expect_num()?.factorial(int)?),
         Expr::Add(a, b) => Value::Num(
             evaluate(*a, scope, int)?

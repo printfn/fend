@@ -147,6 +147,10 @@ fn parse_power(input: &[Token], allow_unary: bool, options: ParseOptions) -> Par
             let (result, remaining) = parse_power(remaining, true, options)?;
             return Ok((Expr::UnaryPlus(Box::new(result)), remaining));
         }
+        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Div) {
+            let (result, remaining) = parse_power(remaining, true, options)?;
+            return Ok((Expr::UnaryDiv(Box::new(result)), remaining));
+        }
     }
     let (mut result, mut input) = parse_factorial(input, options)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
