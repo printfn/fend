@@ -239,10 +239,10 @@ fn test_decimal_point() {
         "0.251974862348971623412341534273261435",
         "0.251974862348971623412341534273261435",
     );
-    test_eval_simple("1.00000001 as 1 dp", "1.0");
-    test_eval_simple("1.00000001 as 2 dp", "1.0");
-    test_eval_simple("1.00000001 as 3 dp", "1.0");
-    test_eval_simple("1.00000001 as 4 dp", "1.0");
+    test_eval_simple("1.00000001 as 1 dp", "1");
+    test_eval_simple("1.00000001 as 2 dp", "1");
+    test_eval_simple("1.00000001 as 3 dp", "1");
+    test_eval_simple("1.00000001 as 4 dp", "1");
     test_evaluation("1.00000001 as 10 dp", "1.00000001");
     test_evaluation("1.00000001 as 30 dp", "1.00000001");
     test_evaluation("1.00000001 as 1000 dp", "1.00000001");
@@ -617,7 +617,7 @@ fn test_advanced_op_precedence() {
     test_evaluation("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
     test_evaluation("1L -> m^3", "0.001 m^3");
     test_evaluation("5 ft to m", "1.524 m");
-    test_evaluation("log10 4", "approx. 0.6020599912");
+    test_evaluation("log10 4", "approx. 0.6020599913");
     test_evaluation("0!", "1");
     test_evaluation("1!", "1");
     test_evaluation("2!", "2");
@@ -650,13 +650,12 @@ fn test_various_functions() {
     test_same("cos 0", "cos (2pi)");
     test_same("cos 0", "sin (pi/2)");
     test_same("tan 0", "tan pi");
-    test_evaluation("asin 1", "approx. 1.5707963266");
-    test_evaluation("asin 1", "approx. 1.5707963266");
+    test_evaluation("asin 1", "approx. 1.5707963267");
     expect_error("asin 3");
     expect_error("asin (-3)");
     expect_error("asin 1.01");
     expect_error("asin (-1.01)");
-    test_evaluation("acos 0", "approx. 1.5707963266");
+    test_evaluation("acos 0", "approx. 1.5707963267");
     expect_error("acos 3");
     expect_error("acos (-3)");
     expect_error("acos 1.01");
@@ -667,7 +666,7 @@ fn test_various_functions() {
     test_same("tanh 0", "tan 0");
     test_same("asinh 0", "asin 0");
     expect_error("acosh 0");
-    test_evaluation("acosh 2", "approx. 1.3169578968");
+    test_evaluation("acosh 2", "approx. 1.3169578969");
     test_same("atanh 0", "atan 0");
     expect_error("atanh 3");
     expect_error("atanh (-3)");
@@ -677,7 +676,7 @@ fn test_various_functions() {
     expect_error("atanh (-1)");
     test_evaluation("ln 2", "approx. 0.6931471805");
     expect_error("ln 0");
-    test_evaluation("exp 2", "approx. 7.3890560987");
+    test_evaluation("exp 2", "approx. 7.3890560989");
     test_evaluation("log10 100", "approx. 2");
     test_evaluation("log10 1000", "approx. 3");
     test_evaluation("log10 10000", "approx. 4");

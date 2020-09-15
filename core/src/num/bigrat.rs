@@ -90,36 +90,40 @@ impl BigRat {
         clippy::as_conversions,
         clippy::float_arithmetic,
         clippy::cast_possible_truncation,
-        clippy::cast_sign_loss
+        clippy::cast_sign_loss,
+        clippy::cast_precision_loss,
     )]
-    pub fn from_f64(mut f: f64) -> Self {
+    pub fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
         let negative = f < 0.0;
         if negative {
             f = -f;
         }
-        let i = (f * f64::from(u32::MAX)) as u64;
-        Self {
+        let i = (f * u64::MAX as f64) as u128;
+        let part1 = i as u64;
+        let part2 = (i >> 64) as u64;
+        Ok(Self {
             sign: if negative {
                 Sign::Negative
             } else {
                 Sign::Positive
             },
-            num: BigUint::from(i),
-            den: BigUint::from(u64::from(u32::MAX)),
-        }
+            num: BigUint::from(part1)
+                .add(&BigUint::from(part2).mul(&BigUint::from(u64::MAX), int)?),
+            den: BigUint::from(u64::MAX),
+        })
     }
 
     // sin, cos and tan work for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::sin(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::sin(self.into_f64(int)?), int)?)
     }
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::cos(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::cos(self.into_f64(int)?), int)?)
     }
 
     pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::tan(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::tan(self.into_f64(int)?), int)?)
     }
 
     // asin, acos and atan only work for values between -1 and 1
@@ -128,7 +132,7 @@ impl BigRat {
         if self > one || self < -one {
             return Err("Value must be between -1 and 1".to_string())?;
         }
-        Ok(Self::from_f64(f64::asin(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::asin(self.into_f64(int)?), int)?)
     }
 
     pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
@@ -136,28 +140,28 @@ impl BigRat {
         if self > one || self < -one {
             return Err("Value must be between -1 and 1".to_string())?;
         }
-        Ok(Self::from_f64(f64::acos(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::acos(self.into_f64(int)?), int)?)
     }
 
     // note that this works for any real number, unlike asin and acos
     pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::atan(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::atan(self.into_f64(int)?), int)?)
     }
 
     pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::sinh(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::sinh(self.into_f64(int)?), int)?)
     }
 
     pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::cosh(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::cosh(self.into_f64(int)?), int)?)
     }
 
     pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::tanh(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::tanh(self.into_f64(int)?), int)?)
     }
 
     pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::asinh(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::asinh(self.into_f64(int)?), int)?)
     }
 
     // value must not be less than 1
@@ -165,7 +169,7 @@ impl BigRat {
         if self < 1.into() {
             return Err("Value must not be less than 1".to_string())?;
         }
-        Ok(Self::from_f64(f64::acosh(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::acosh(self.into_f64(int)?), int)?)
     }
 
     // value must be between -1 and 1.
@@ -174,7 +178,7 @@ impl BigRat {
         if self >= one || self <= -one {
             return Err("Value must be between -1 and 1".to_string())?;
         }
-        Ok(Self::from_f64(f64::atanh(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::atanh(self.into_f64(int)?), int)?)
     }
 
     // For all logs: value must be greater than 0
@@ -182,25 +186,25 @@ impl BigRat {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string())?;
         }
-        Ok(Self::from_f64(f64::ln(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::ln(self.into_f64(int)?), int)?)
     }
 
     pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string())?;
         }
-        Ok(Self::from_f64(f64::log2(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::log2(self.into_f64(int)?), int)?)
     }
 
     pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self <= 0.into() {
             return Err("Value must be greater than 0".to_string())?;
         }
-        Ok(Self::from_f64(f64::log10(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
     }
 
     pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::exp(self.into_f64(int)?)))
+        Ok(Self::from_f64(f64::exp(self.into_f64(int)?), int)?)
     }
 
     pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
@@ -417,9 +421,6 @@ impl BigRat {
         }
 
         // not a fraction, will be printed as a decimal
-        if negative {
-            write!(f, "-")?;
-        }
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
             || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating()?)
         {
@@ -430,10 +431,16 @@ impl BigRat {
             Some(10)
         };
         let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
-        integer_part.format(f, base, true, int)?;
+        let print_integer_part = |f: &mut Formatter, ignore_minus_if_zero: bool| {
+            if negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
+                write!(f, "-")?;
+            }
+            integer_part.format(f, base, true, int)?;
+            Ok(())
+        };
         let integer_as_rational = Self {
             sign: Sign::Positive,
-            num: integer_part,
+            num: integer_part.clone(),
             den: 1.into(),
         };
         let remaining_fraction = x.clone().sub(integer_as_rational, int)?;
@@ -444,6 +451,7 @@ impl BigRat {
             &remaining_fraction.den,
             num_trailing_digits_to_print,
             terminating,
+            print_integer_part,
             int,
         )?;
         if imag {
@@ -468,6 +476,7 @@ impl BigRat {
         denominator: &BigUint,
         max_digits: Option<usize>,
         mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
+        print_integer_part: impl Fn(&mut Formatter, bool) -> Result<(), IntErr<Error, I>>,
         int: &I,
     ) -> Result<bool, IntErr<Error, I>> {
         enum NextDigitErr<I: Interrupt> {
@@ -478,9 +487,6 @@ impl BigRat {
             fn from(i: IntErr<Never, I>) -> Self {
                 Self::Interrupt(i)
             }
-        }
-        if max_digits != Some(0) {
-            write!(f, ".")?;
         }
 
         let base_as_u64: u64 = base.base_as_u8().into();
@@ -513,13 +519,20 @@ impl BigRat {
             let mut current_numerator = numerator.clone();
             let mut i = 0;
             let mut trailing_zeroes = 0;
+            let mut wrote_decimal_point = false;
             loop {
                 match next_digit(i, current_numerator.clone(), &b) {
                     Ok((next_n, digit)) => {
                         current_numerator = next_n;
-                        if digit == 0.into() && i > 0 {
+                        if digit == 0.into() {
                             trailing_zeroes += 1;
                         } else {
+                            if !wrote_decimal_point {
+                                // always print leading minus because we have non-zero digits
+                                print_integer_part(f, false)?;
+                                write!(f, ".")?;
+                                wrote_decimal_point = true;
+                            }
                             for _ in 0..trailing_zeroes {
                                 write!(f, "0")?;
                             }
@@ -528,6 +541,11 @@ impl BigRat {
                         }
                     }
                     Err(NextDigitErr::Terminated) => {
+                        if !wrote_decimal_point {
+                            // if we reach this point we haven't printed any non-zero digits,
+                            // so we can skip the leading minus sign if the integer part is also zero
+                            print_integer_part(f, true)?;
+                        }
                         // is the number exact, or did we need to truncate?
                         let exact = numerator == &0.into();
                         return Ok(exact);
@@ -549,7 +567,9 @@ impl BigRat {
             Ok((cycle_length, location, output)) => {
                 let (ab, _) = output.split_at(location + cycle_length);
                 let (a, b) = ab.split_at(location);
-                write!(f, "{}({})", a, b)?;
+                // we're printing non-zero digits, so always include minus sign
+                print_integer_part(f, false)?;
+                write!(f, ".{}({})", a, b)?;
             }
             Err(NextDigitErr::Terminated) => {
                 panic!("Decimal number terminated unexpectedly");
