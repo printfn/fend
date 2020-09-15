@@ -244,26 +244,13 @@ fn parse_basic_number<'a, I: Interrupt>(
     Ok((res, input))
 }
 
-fn parse_number_internal<'a, I: Interrupt>(
-    mut input: &'a str,
+fn parse_number<'a, I: Interrupt>(
+    input: &'a str,
     int: &I,
 ) -> Result<(Number, &'a str), IntErr<String, I>> {
-    let base = if let Ok((base, remaining)) = parse_base_prefix(input) {
-        input = remaining;
-        base
-    } else {
-        Base::default()
-    };
-
+    let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
     let (res, input) = parse_basic_number(input, base, true, int)?;
-
     Ok((res, input))
-}
-
-fn parse_number<I: Interrupt>(input: &mut &str, int: &I) -> Result<Token, IntErr<String, I>> {
-    let (num, remaining_input) = parse_number_internal(input, int)?;
-    *input = remaining_input;
-    Ok(Token::Num(num))
 }
 
 // checks if the char is valid only by itself
@@ -312,7 +299,9 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
                 if ch.is_whitespace() {
                     consume_char(&mut input).map_err(IntErr::get_error)?;
                 } else if ch.is_ascii_digit() {
-                    res.push(parse_number(&mut input, int)?);
+                    let (num, remaining) = parse_number(&mut input, int)?;
+                    input = remaining;
+                    res.push(Token::Num(num));
                 } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
                     res.push(parse_ident(&mut input).map_err(IntErr::get_error)?);
                 } else {
