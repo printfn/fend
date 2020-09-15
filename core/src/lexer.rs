@@ -325,7 +325,7 @@ pub fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     }
 }
 
-fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterrupt>> {
+fn parse_ident(input: &str) -> Result<(Token, &str), String> {
     let (first_char, _) = parse_char(input).map_err(|e| e.to_string())?;
     if !is_valid_in_ident(first_char, None) {
         return Err(format!(
@@ -372,7 +372,7 @@ pub fn lex<'a, I: Interrupt>(
                     input = remaining;
                     res.push(Token::Num(num));
                 } else if is_valid_in_ident(ch, None) {
-                    let (ident, remaining) = parse_ident(input).map_err(IntErr::get_error)?;
+                    let (ident, remaining) = parse_ident(input)?;
                     input = remaining;
                     res.push(ident);
                 } else {

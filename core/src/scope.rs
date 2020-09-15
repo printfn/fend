@@ -162,7 +162,11 @@ mod tests {
             match scope.get(key.as_str(), &int) {
                 Ok(_) => success += 1,
                 Err(msg) => {
-                    eprintln!("{}: {}", key, msg.get_error());
+                    let error_message = match msg {
+                        IntErr::Error(e) => e,
+                        IntErr::Interrupt(n) => match n {},
+                    };
+                    eprintln!("{}: {}", key, error_message);
                     failures += 1;
                 }
             }

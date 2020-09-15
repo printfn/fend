@@ -35,15 +35,6 @@ impl<E: Display, I: Interrupt> IntErr<E, I> {
     }
 }
 
-impl<E> IntErr<E, NeverInterrupt> {
-    pub fn get_error(self) -> E {
-        match self {
-            IntErr::Interrupt(i) => match i {},
-            IntErr::Error(e) => e,
-        }
-    }
-}
-
 impl<E, I: Interrupt> From<E> for IntErr<E, I> {
     fn from(e: E) -> Self {
         Self::Error(e)
