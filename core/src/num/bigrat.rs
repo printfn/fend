@@ -797,6 +797,7 @@ impl From<BigUint> for BigRat {
 mod tests {
     use super::sign::Sign;
     use super::BigRat;
+    use crate::err::{IntErr, Never};
     use crate::num::biguint::BigUint;
 
     #[test]
@@ -808,12 +809,11 @@ mod tests {
     }
 
     #[test]
-    fn test_addition() {
+    fn test_addition() -> Result<(), IntErr<Never, crate::interrupt::Never>> {
         let int = &crate::interrupt::Never::default();
-        assert_eq!(
-            BigRat::from(2).add(BigRat::from(2), int).unwrap(),
-            BigRat::from(4)
-        );
+        let two = BigRat::from(2);
+        assert_eq!(two.clone().add(two, int)?, BigRat::from(4));
+        Ok(())
     }
 
     #[test]
