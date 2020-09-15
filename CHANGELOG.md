@@ -2,6 +2,8 @@
 
 ## Next release
 
+* Add the GNU units database, containing several thousand unit definitions
+* Add unary division as a shorthand for `1/x` (e.g. `/ second`, `64^/2`)
 * Allow `,` as a digit separator (e.g. `1,048,576`)
 
 ## v0.1.3 (2020-09-05)
