@@ -1,11 +1,10 @@
 # Changelog
 
-## Next release
+## v0.1.4 (2020-09-15)
 
 * Add the GNU units database, containing several thousand unit definitions
 * Add support for square roots of numbers with units
 * Add unary division as a shorthand for `1/x` (e.g. `/ second`, `64^/2`)
-* Support parsing `2e` as `2 * e`, i.e. `approx. 5.4365636569`
 * Support `+` in exponential notation (e.g. `1.5e+2`)
 * Allow `,` as a digit separator (e.g. `1,048,576`)
 
