@@ -117,15 +117,15 @@ fn parse_parens_or_literal(input: &[Token], options: ParseOptions) -> ParseResul
 
 // parse inner division with the '|' operator.
 fn parse_inner_div(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_parens_or_literal(input, options)?;
+    let (mut result, mut input) = parse_parens_or_literal(input, options)?;
     if options.gnu_compatible {
         while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::InnerDiv) {
             let (rhs, remaining) = parse_parens_or_literal(remaining, options)?;
-            res = Expr::Div(Box::new(res), Box::new(rhs));
+            result = Expr::Div(Box::new(result), Box::new(rhs));
             input = remaining;
         }
     }
-    Ok((res, input))
+    Ok((result, input))
 }
 
 fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
@@ -140,21 +140,21 @@ fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> 
 fn parse_power(input: &[Token], allow_unary: bool, options: ParseOptions) -> ParseResult<Expr> {
     if allow_unary {
         if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
-            let (res, remaining) = parse_power(remaining, true, options)?;
-            return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
+            let (result, remaining) = parse_power(remaining, true, options)?;
+            return Ok((Expr::UnaryMinus(Box::new(result)), remaining));
         }
         if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
-            let (res, remaining) = parse_power(remaining, true, options)?;
-            return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
+            let (result, remaining) = parse_power(remaining, true, options)?;
+            return Ok((Expr::UnaryPlus(Box::new(result)), remaining));
         }
     }
-    let (mut res, mut input) = parse_factorial(input, options)?;
+    let (mut result, mut input) = parse_factorial(input, options)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
         let (rhs, remaining) = parse_power(remaining, true, options)?;
-        res = Expr::Pow(Box::new(res), Box::new(rhs));
+        result = Expr::Pow(Box::new(result), Box::new(rhs));
         input = remaining;
     }
-    Ok((res, input))
+    Ok((result, input))
 }
 
 fn parse_apply_cont<'a>(
