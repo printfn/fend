@@ -1,5 +1,6 @@
 # pluralisations (must be in the same order as the unit definitions)
 !plural bit bits
+!plural kilometer kilometers
 !plural inch inches
 !plural foot feet
 !plural yard yards
@@ -43,8 +44,10 @@ USD            !
 percent        0.01
 %              percent
 ‰              0.001 # per mille
+pi             3.141592653589793238
 
 # derived units
+kilometer      km
 dm             0.1 m
 L              dm^3
 cm             0.01 m
@@ -73,15 +76,15 @@ NM             1852 m
 km             1000 m
 AU             149,597,870,700 m
 
-g              1/1000 kg
-mg             1/1000 g
+g              1|1000 kg
+mg             1|1000 g
 pound          0.45359237 kg
 lb             pound
-ounce          1/16 lb
+ounce          1|16 lb
 oz             ounce
-dram           1/16 oz
+dram           1|16 oz
 dr             dram
-grain          1/7000 lb
+grain          1|7000 lb
 gr             grain
 quarter        25 lb
 qr             quarter
