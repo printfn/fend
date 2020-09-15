@@ -7,9 +7,9 @@ use std::{
 };
 
 #[derive(Clone)]
-pub enum Token {
+pub enum Token<'a> {
     Num(Number),
-    Ident(String),
+    Ident(&'a str),
     Symbol(Symbol),
 }
 
@@ -263,7 +263,7 @@ fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterru
     if !is_valid_in_ident(first_char, true) {
         if is_valid_in_ident_char(first_char) {
             let (first_char_str, input) = input.split_at(first_char.len_utf8());
-            return Ok((Token::Ident(first_char_str.to_string()), input));
+            return Ok((Token::Ident(first_char_str), input));
         }
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
@@ -284,13 +284,16 @@ fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterru
         match ident {
             "to" | "as" => Token::Symbol(Symbol::ArrowConversion),
             "per" => Token::Symbol(Symbol::Div),
-            _ => Token::Ident(ident.to_string()),
+            _ => Token::Ident(ident),
         },
         input,
     ))
 }
 
-pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<String, I>> {
+pub fn lex<'a, I: Interrupt>(
+    mut input: &'a str,
+    int: &I,
+) -> Result<Vec<Token<'a>>, IntErr<String, I>> {
     let mut res = vec![];
     loop {
         test_int(int)?;

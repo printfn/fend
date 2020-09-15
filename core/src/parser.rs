@@ -55,9 +55,9 @@ base_prefix = ['0x' '0o' '0b' (A:integer '#')]
 
 */
 
-type ParseResult<'a, T> = Result<(T, &'a [Token]), IntErr<String, NeverInterrupt>>;
+type ParseResult<'a, T> = Result<(T, &'a [Token<'a>]), IntErr<String, NeverInterrupt>>;
 
-fn parse_token(input: &[Token]) -> ParseResult<Token> {
+fn parse_token<'a>(input: &'a [Token<'a>]) -> ParseResult<Token<'a>> {
     if input.is_empty() {
         Err("Expected a token".to_string())?
     } else {
@@ -65,7 +65,7 @@ fn parse_token(input: &[Token]) -> ParseResult<Token> {
     }
 }
 
-fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<()> {
+fn parse_fixed_symbol<'a>(input: &'a [Token], symbol: Symbol) -> ParseResult<'a, ()> {
     let (token, remaining) = parse_token(input)?;
     if let Token::Symbol(sym) = token {
         if sym == symbol {
@@ -81,28 +81,28 @@ fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<()> {
     }
 }
 
-fn parse_number(input: &[Token]) -> ParseResult<Expr> {
+fn parse_number<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
         _ => Err("Expected a number".to_string())?,
     }
 }
 
-fn parse_ident(input: &[Token]) -> ParseResult<Expr> {
+fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     match parse_token(input)? {
-        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
+        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident.to_string()), remaining)),
         _ => Err("Expected an identifier".to_string())?,
     }
 }
 
-fn parse_parens(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_parens<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
     let (inner, input) = parse_expression(input, options)?;
     let (_, input) = parse_fixed_symbol(input, Symbol::CloseParens)?;
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
-fn parse_parens_or_literal(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (token, _) = parse_token(input)?;
 
     match token {
@@ -116,7 +116,7 @@ fn parse_parens_or_literal(input: &[Token], options: ParseOptions) -> ParseResul
 }
 
 // parse inner division with the '|' operator.
-fn parse_inner_div(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_inner_div<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut result, mut input) = parse_parens_or_literal(input, options)?;
     if options.gnu_compatible {
         while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::InnerDiv) {
@@ -128,7 +128,7 @@ fn parse_inner_div(input: &[Token], options: ParseOptions) -> ParseResult<Expr> 
     Ok((result, input))
 }
 
-fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_factorial<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut res, mut input) = parse_inner_div(input, options)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
         res = Expr::Factorial(Box::new(res));
@@ -137,7 +137,11 @@ fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> 
     Ok((res, input))
 }
 
-fn parse_power(input: &[Token], allow_unary: bool, options: ParseOptions) -> ParseResult<Expr> {
+fn parse_power<'a>(
+    input: &'a [Token],
+    allow_unary: bool,
+    options: ParseOptions,
+) -> ParseResult<'a, Expr> {
     if allow_unary {
         if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
             let (result, remaining) = parse_power(remaining, true, options)?;
@@ -197,7 +201,7 @@ fn parse_apply_cont<'a>(
 }
 
 // parse apply/multiply with higher precedence (left-associative)
-fn parse_inner_apply(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut res, mut input) = parse_power(input, true, options)?;
     if options.gnu_compatible {
         while let Ok((rhs, remaining)) = parse_power(input, false, options) {
@@ -208,19 +212,22 @@ fn parse_inner_apply(input: &[Token], options: ParseOptions) -> ParseResult<Expr
     Ok((res, input))
 }
 
-fn parse_multiplication_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_multiplication_cont<'a>(
+    input: &'a [Token],
+    options: ParseOptions,
+) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
     let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
 }
 
-fn parse_division_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_division_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
     let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
 }
 
-fn parse_multiplicative(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut res, mut input) = parse_inner_apply(input, options)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input, options) {
@@ -242,7 +249,7 @@ fn parse_multiplicative(input: &[Token], options: ParseOptions) -> ParseResult<E
     Ok((res, input))
 }
 
-fn parse_compound_fraction(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (res, input) = parse_multiplicative(input, options)?;
     // don't parse mixed fractions or implicit addition (e.g. 3'6") when gnu_compatible is set
     if !options.gnu_compatible {
@@ -272,19 +279,19 @@ fn parse_compound_fraction(input: &[Token], options: ParseOptions) -> ParseResul
     Ok((res, input))
 }
 
-fn parse_addition_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_addition_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Add)?;
     let (b, input) = parse_compound_fraction(input, options)?;
     Ok((b, input))
 }
 
-fn parse_subtraction_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_subtraction_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Sub)?;
     let (b, input) = parse_compound_fraction(input, options)?;
     Ok((b, input))
 }
 
-fn parse_additive(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut res, mut input) = parse_compound_fraction(input, options)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input, options) {
@@ -300,13 +307,16 @@ fn parse_additive(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
     Ok((res, input))
 }
 
-fn parse_arrow_conversion_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_arrow_conversion_cont<'a>(
+    input: &'a [Token],
+    options: ParseOptions,
+) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
     let (b, input) = parse_additive(input, options)?;
     Ok((b, input))
 }
 
-fn parse_arrow_conversion(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+fn parse_arrow_conversion<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut res, mut input) = parse_additive(input, options)?;
     while let Ok((term, remaining)) = parse_arrow_conversion_cont(input, options) {
         res = Expr::As(Box::new(res), Box::new(term));
@@ -328,7 +338,7 @@ impl ParseOptions {
     }
 }
 
-pub fn parse_expression(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+pub fn parse_expression<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     parse_arrow_conversion(input, options)
 }
 
