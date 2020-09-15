@@ -57,12 +57,6 @@ fn parse_char(input: &str) -> Result<(char, &str), IntErr<String, NeverInterrupt
     }
 }
 
-fn consume_char(input: &mut &str) -> Result<char, IntErr<String, NeverInterrupt>> {
-    let (ch, remaining_input) = parse_char(input)?;
-    *input = remaining_input;
-    Ok(ch)
-}
-
 fn parse_ascii_digit(
     input: &str,
     base: Base,
@@ -303,7 +297,8 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
         match input.chars().next() {
             Some(ch) => {
                 if ch.is_whitespace() {
-                    consume_char(&mut input).map_err(IntErr::get_error)?;
+                    let (_, remaining) = input.split_at(ch.len_utf8());
+                    input = remaining;
                 } else if ch.is_ascii_digit() {
                     let (num, remaining) = parse_number(input, int)?;
                     input = remaining;
@@ -313,14 +308,19 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
                     input = remaining;
                     res.push(ident);
                 } else {
-                    match consume_char(&mut input).map_err(IntErr::get_error)? {
+                    {
+                        let (_, remaining) = input.split_at(ch.len_utf8());
+                        input = remaining;
+                    }
+                    match ch {
                         '(' => res.push(Token::Symbol(Symbol::OpenParens)),
                         ')' => res.push(Token::Symbol(Symbol::CloseParens)),
                         '+' => res.push(Token::Symbol(Symbol::Add)),
                         '!' => res.push(Token::Symbol(Symbol::Factorial)),
                         '-' => {
                             if input.starts_with('>') {
-                                consume_char(&mut input).map_err(IntErr::get_error)?;
+                                let (_, remaining) = input.split_at('>'.len_utf8());
+                                input = remaining;
                                 res.push(Token::Symbol(Symbol::ArrowConversion))
                             } else {
                                 res.push(Token::Symbol(Symbol::Sub))
@@ -328,7 +328,8 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
                         }
                         '*' => {
                             if input.starts_with('*') {
-                                consume_char(&mut input).map_err(IntErr::get_error)?;
+                                let (_, remaining) = input.split_at('*'.len_utf8());
+                                input = remaining;
                                 res.push(Token::Symbol(Symbol::Pow))
                             } else {
                                 res.push(Token::Symbol(Symbol::Mul))
