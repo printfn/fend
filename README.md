@@ -61,7 +61,7 @@ approx. 0.7071067811 + 0.7071067811i
 ```
 
 ```
-> 1 light year to parsecs
+> 1 lightyear to parsecs
 approx. 0.3066013937 parsecs
 ```
 

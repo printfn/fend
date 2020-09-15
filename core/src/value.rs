@@ -1,5 +1,6 @@
 use crate::err::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
+use crate::scope::Scope;
 use std::fmt::{Error, Formatter};
 
 #[derive(Debug, Clone)]
@@ -24,6 +25,7 @@ impl Value {
         other: &Self,
         allow_multiplication: bool,
         force_multiplication: bool,
+        scope: &mut Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(Self::Num(match self {
@@ -57,11 +59,11 @@ impl Value {
                 } else if name == "abs" {
                     other.expect_num()?.abs(int)?
                 } else if name == "sin" {
-                    other.expect_num()?.sin(int)?
+                    other.expect_num()?.sin(scope, int)?
                 } else if name == "cos" {
-                    other.expect_num()?.cos(int)?
+                    other.expect_num()?.cos(scope, int)?
                 } else if name == "tan" {
-                    other.expect_num()?.tan(int)?
+                    other.expect_num()?.tan(scope, int)?
                 } else if name == "asin" {
                     other.expect_num()?.asin(int)?
                 } else if name == "acos" {

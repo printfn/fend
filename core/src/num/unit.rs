@@ -348,16 +348,31 @@ impl UnitValue {
         })
     }
 
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::sin, false, int)
+    fn convert_angle_to_rad<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+        if self.is_unitless() {
+            Ok(self)
+        } else {
+            Ok(self.convert_to(scope.get("radians", int)?.expect_num()?, int)?)
+        }
     }
 
-    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::cos, false, int)
+    fn unitless() -> Self {
+        Self {
+            value: 1.into(),
+            unit: Unit::unitless(),
+        }
     }
 
-    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::tan, false, int)
+    pub fn sin<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+        self.convert_angle_to_rad(scope, int)?.apply_fn(ExactBase::sin, false, int)?.convert_to(Self::unitless(), int)
+    }
+
+    pub fn cos<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+        self.convert_angle_to_rad(scope, int)?.apply_fn(ExactBase::cos, false, int)?.convert_to(Self::unitless(), int)
+    }
+
+    pub fn tan<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+        self.convert_angle_to_rad(scope, int)?.apply_fn(ExactBase::tan, false, int)?.convert_to(Self::unitless(), int)
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
