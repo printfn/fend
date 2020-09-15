@@ -136,3 +136,6 @@ ft3     ft^3
 # conflicts with the 'to' keyword
 !ignore to                   10 shou
 !ignore koku                 10 to
+
+# e is overridden to be Euler's number
+electroncharge e

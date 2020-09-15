@@ -13,7 +13,7 @@ pub fn evaluate_to_value<I: Interrupt>(
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     let parsed = parser::parse_string(input, options, int)?;
-    let result = ast::evaluate(parsed, scope, int)?;
+    let result = ast::evaluate(parsed, scope, options, int)?;
     Ok(result)
 }
 

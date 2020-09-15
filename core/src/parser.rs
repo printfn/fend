@@ -317,7 +317,7 @@ fn parse_arrow_conversion(input: &[Token], options: ParseOptions) -> ParseResult
 
 #[derive(Debug, Copy, Clone, Default)]
 pub struct ParseOptions {
-    gnu_compatible: bool,
+    pub gnu_compatible: bool,
 }
 
 impl ParseOptions {

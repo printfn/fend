@@ -1,6 +1,7 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
+use crate::parser::ParseOptions;
 use crate::scope::Scope;
 use crate::value::Value;
 use std::fmt::{Debug, Error, Formatter};
@@ -56,68 +57,56 @@ impl Debug for Expr {
 pub fn evaluate<I: Interrupt>(
     expr: Expr,
     scope: &mut Scope,
+    options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     test_int(int)?;
+    let mut evaluate = |expr: Expr| evaluate(expr, scope, options, int);
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
-        Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, int)?,
-        Expr::Parens(x) => evaluate(*x, scope, int)?,
-        Expr::UnaryMinus(x) => Value::Num(-evaluate(*x, scope, int)?.expect_num()?),
-        Expr::UnaryPlus(x) => Value::Num(evaluate(*x, scope, int)?.expect_num()?),
-        Expr::UnaryDiv(x) => {
-            Value::Num(Number::from(1).div(evaluate(*x, scope, int)?.expect_num()?, int)?)
-        }
-        Expr::Factorial(x) => Value::Num(evaluate(*x, scope, int)?.expect_num()?.factorial(int)?),
+        Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, options, int)?,
+        Expr::Parens(x) => evaluate(*x)?,
+        Expr::UnaryMinus(x) => Value::Num(-evaluate(*x)?.expect_num()?),
+        Expr::UnaryPlus(x) => Value::Num(evaluate(*x)?.expect_num()?),
+        Expr::UnaryDiv(x) => Value::Num(Number::from(1).div(evaluate(*x)?.expect_num()?, int)?),
+        Expr::Factorial(x) => Value::Num(evaluate(*x)?.expect_num()?.factorial(int)?),
         Expr::Add(a, b) => Value::Num(
-            evaluate(*a, scope, int)?
+            evaluate(*a)?
                 .expect_num()?
-                .add(evaluate(*b, scope, int)?.expect_num()?, int)?,
+                .add(evaluate(*b)?.expect_num()?, int)?,
         ),
         Expr::Sub(a, b) => Value::Num(
-            evaluate(*a, scope, int)?
+            evaluate(*a)?
                 .expect_num()?
-                .sub(evaluate(*b, scope, int)?.expect_num()?, int)?,
+                .sub(evaluate(*b)?.expect_num()?, int)?,
         ),
         Expr::Mul(a, b) => Value::Num(
-            evaluate(*a, scope, int)?
+            evaluate(*a)?
                 .expect_num()?
-                .mul(evaluate(*b, scope, int)?.expect_num()?, int)?,
+                .mul(evaluate(*b)?.expect_num()?, int)?,
         ),
-        Expr::ApplyMul(a, b) => {
-            evaluate(*a, scope, int)?.apply(&evaluate(*b, scope, int)?, true, true, int)?
-        }
+        Expr::ApplyMul(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, true, true, int)?,
         Expr::Div(a, b) => Value::Num(
-            evaluate(*a, scope, int)?
+            evaluate(*a)?
                 .expect_num()?
-                .div(evaluate(*b, scope, int)?.expect_num()?, int)?,
+                .div(evaluate(*b)?.expect_num()?, int)?,
         ),
         Expr::Pow(a, b) => Value::Num(
-            evaluate(*a, scope, int)?
+            evaluate(*a)?
                 .expect_num()?
-                .pow(evaluate(*b, scope, int)?.expect_num()?, int)?,
+                .pow(evaluate(*b)?.expect_num()?, int)?,
         ),
-        Expr::Apply(a, b) => {
-            evaluate(*a, scope, int)?.apply(&evaluate(*b, scope, int)?, true, false, int)?
-        }
-        Expr::ApplyFunctionCall(a, b) => {
-            evaluate(*a, scope, int)?.apply(&evaluate(*b, scope, int)?, false, false, int)?
-        }
-        Expr::As(a, b) => match evaluate(*b, scope, int)? {
-            Value::Num(b) => {
-                Value::Num(evaluate(*a, scope, int)?.expect_num()?.convert_to(b, int)?)
-            }
-            Value::Format(fmt) => {
-                Value::Num(evaluate(*a, scope, int)?.expect_num()?.with_format(fmt))
-            }
+        Expr::Apply(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, true, false, int)?,
+        Expr::ApplyFunctionCall(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, false, false, int)?,
+        Expr::As(a, b) => match evaluate(*b)? {
+            Value::Num(b) => Value::Num(evaluate(*a)?.expect_num()?.convert_to(b, int)?),
+            Value::Format(fmt) => Value::Num(evaluate(*a)?.expect_num()?.with_format(fmt)),
             Value::Dp => Value::Num(
-                evaluate(*a, scope, int)?
+                evaluate(*a)?
                     .expect_num()?
                     .with_format(FormattingStyle::ApproxFloat(10)),
             ),
-            Value::Base(base) => {
-                Value::Num(evaluate(*a, scope, int)?.expect_num()?.with_base(base))
-            }
+            Value::Base(base) => Value::Num(evaluate(*a)?.expect_num()?.with_base(base)),
             Value::Func(_) => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
@@ -137,8 +126,21 @@ fn eval<I: Interrupt>(
 fn resolve_identifier<I: Interrupt>(
     ident: &str,
     scope: &mut Scope,
+    options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
+    if options.gnu_compatible {
+        return Ok(match ident {
+            "exp" => Value::Func("exp".to_string()),
+            "sqrt" => Value::Func("sqrt".to_string()),
+            "ln" => Value::Func("ln".to_string()),
+            "log2" => Value::Func("log2".to_string()),
+            "log10" => Value::Func("log10".to_string()),
+            "tan" => Value::Func("tan".to_string()),
+            "asin" => Value::Func("asin".to_string()),
+            _ => scope.get(ident, int)?,
+        });
+    }
     Ok(match ident {
         "pi" => eval("approx. 3.141592653589793238", scope, int)?,
         "e" => eval("approx. 2.718281828459045235", scope, int)?,

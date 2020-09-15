@@ -541,6 +541,12 @@ fn test_more_units() {
     );
     test_evaluation("1 feet", "1 foot");
     test_evaluation("5 foot", "5 feet");
+    // this tests if "e" is parsed as the electron charge (instead of Euler's number)
+    // in unit definitions
+    test_evaluation(
+        "bohrmagneton to C J s/kg to 35 dp",
+        "0.00000000000000000000000927401007831 C J s / kg",
+    )
 }
 
 #[test]
