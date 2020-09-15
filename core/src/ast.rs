@@ -65,7 +65,9 @@ pub fn evaluate<I: Interrupt>(
         Expr::Parens(x) => evaluate(*x, scope, int)?,
         Expr::UnaryMinus(x) => Value::Num(-evaluate(*x, scope, int)?.expect_num()?),
         Expr::UnaryPlus(x) => Value::Num(evaluate(*x, scope, int)?.expect_num()?),
-        Expr::UnaryDiv(x) => Value::Num(Number::from(1).div(evaluate(*x, scope, int)?.expect_num()?, int)?),
+        Expr::UnaryDiv(x) => {
+            Value::Num(Number::from(1).div(evaluate(*x, scope, int)?.expect_num()?, int)?)
+        }
         Expr::Factorial(x) => Value::Num(evaluate(*x, scope, int)?.expect_num()?.factorial(int)?),
         Expr::Add(a, b) => Value::Num(
             evaluate(*a, scope, int)?
