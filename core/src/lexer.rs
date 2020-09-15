@@ -299,7 +299,7 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
                 if ch.is_whitespace() {
                     consume_char(&mut input).map_err(IntErr::get_error)?;
                 } else if ch.is_ascii_digit() {
-                    let (num, remaining) = parse_number(&mut input, int)?;
+                    let (num, remaining) = parse_number(input, int)?;
                     input = remaining;
                     res.push(Token::Num(num));
                 } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
