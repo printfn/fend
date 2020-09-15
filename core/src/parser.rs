@@ -115,8 +115,21 @@ fn parse_parens_or_literal(input: &[Token], options: ParseOptions) -> ParseResul
     }
 }
 
-fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+// parse inner division with the '|' operator.
+fn parse_inner_div(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
     let (mut res, mut input) = parse_parens_or_literal(input, options)?;
+    if options.gnu_compatible {
+        while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::InnerDiv) {
+            let (rhs, remaining) = parse_parens_or_literal(remaining, options)?;
+            res = Expr::Div(Box::new(res), Box::new(rhs));
+            input = remaining;
+        }
+    }
+    Ok((res, input))
+}
+
+fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_inner_div(input, options)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
         res = Expr::Factorial(Box::new(res));
         input = remaining;
@@ -124,37 +137,21 @@ fn parse_factorial(input: &[Token], options: ParseOptions) -> ParseResult<Expr> 
     Ok((res, input))
 }
 
-fn parse_unary(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
-        let (res, remaining) = parse_unary(remaining, options)?;
-        return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
-    }
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
-        let (res, remaining) = parse_unary(remaining, options)?;
-        return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
-    }
-    let (res, input) = parse_power(input, false, options)?;
-    Ok((res, input))
-}
-
-fn parse_power_cont(mut input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
-        input = remaining;
-    } else {
-        return Err("Expected ^ or **".to_string())?;
-    }
-    let (b, input) = parse_power(input, true, options)?;
-    Ok((b, input))
-}
-
 fn parse_power(input: &[Token], allow_unary: bool, options: ParseOptions) -> ParseResult<Expr> {
-    let (mut res, mut input) = if allow_unary {
-        parse_unary(input, options)?
-    } else {
-        parse_factorial(input, options)?
-    };
-    if let Ok((term, remaining)) = parse_power_cont(input, options) {
-        res = Expr::Pow(Box::new(res), Box::new(term));
+    if allow_unary {
+        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
+            let (res, remaining) = parse_power(remaining, true, options)?;
+            return Ok((Expr::UnaryMinus(Box::new(res)), remaining));
+        }
+        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
+            let (res, remaining) = parse_power(remaining, true, options)?;
+            return Ok((Expr::UnaryPlus(Box::new(res)), remaining));
+        }
+    }
+    let (mut res, mut input) = parse_factorial(input, options)?;
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
+        let (rhs, remaining) = parse_power(remaining, true, options)?;
+        res = Expr::Pow(Box::new(res), Box::new(rhs));
         input = remaining;
     }
     Ok((res, input))
@@ -166,10 +163,8 @@ fn parse_apply_cont<'a>(
     options: ParseOptions,
 ) -> ParseResult<'a, Expr> {
     let (rhs, input) = parse_power(input, false, options)?;
-    // e.g. 5 feet 5 inches needs to be parsed as a multiplication in this mode
-    if options.gnu_compatible {
-        return Ok((Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)), input));
-    }
+    // This should never be called in GNU-compatible mode
+    assert!(!options.gnu_compatible);
     Ok((
         match (lhs, &rhs) {
             (Expr::Num(_), Expr::Num(_))
@@ -197,20 +192,32 @@ fn parse_apply_cont<'a>(
     ))
 }
 
+// parse apply/multiply with higher precedence (left-associative)
+fn parse_inner_apply(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
+    let (mut res, mut input) = parse_power(input, true, options)?;
+    if options.gnu_compatible {
+        while let Ok((rhs, remaining)) = parse_power(input, false, options) {
+            res = Expr::Apply(Box::new(res), Box::new(rhs));
+            input = remaining;
+        }
+    }
+    Ok((res, input))
+}
+
 fn parse_multiplication_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
-    let (b, input) = parse_power(input, true, options)?;
+    let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
 }
 
 fn parse_division_cont(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
-    let (b, input) = parse_power(input, true, options)?;
+    let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
 }
 
 fn parse_multiplicative(input: &[Token], options: ParseOptions) -> ParseResult<Expr> {
-    let (mut res, mut input) = parse_power(input, true, options)?;
+    let (mut res, mut input) = parse_inner_apply(input, options)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input, options) {
             res = Expr::Mul(Box::new(res), Box::new(term));
@@ -218,6 +225,9 @@ fn parse_multiplicative(input: &[Token], options: ParseOptions) -> ParseResult<E
         } else if let Ok((term, remaining)) = parse_division_cont(input, options) {
             res = Expr::Div(Box::new(res), Box::new(term));
             input = remaining;
+        } else if options.gnu_compatible {
+            // apply can't be parsed here if we're GNU compatible
+            break;
         } else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res, options) {
             res = new_res;
             input = remaining;

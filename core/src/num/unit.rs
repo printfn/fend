@@ -140,7 +140,7 @@ impl UnitValue {
                 );
             } else {
                 let expr = if expr == "!dimensionless" { "1" } else { expr };
-                let mut expr = expr.replace('|', "/");
+                let mut expr = expr.to_string();
                 if expr.starts_with("per ") || expr.starts_with('/') {
                     expr.insert_str(0, "1 ");
                 }
