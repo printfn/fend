@@ -138,6 +138,7 @@ fn resolve_identifier<I: Interrupt>(
             "log10" => Value::Func("log10".to_string()),
             "tan" => Value::Func("tan".to_string()),
             "asin" => Value::Func("asin".to_string()),
+            "approx." | "approximately" => Value::Func("approximately".to_string()),
             _ => scope.get(ident, int)?,
         });
     }

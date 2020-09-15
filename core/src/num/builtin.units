@@ -44,7 +44,7 @@ USD            !
 percent        0.01
 %              percent
 ‰              0.001 # per mille
-pi             3.141592653589793238
+pi             approx. 3.141592653589793238
 
 # derived units
 kilometer      km
