@@ -537,46 +537,48 @@ impl Debug for BigUint {
 #[cfg(test)]
 mod tests {
     use super::BigUint;
+    use crate::err::{IntErr, Never};
+    type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
 
     #[test]
-    fn test_sqrt() {
+    fn test_sqrt() -> Res<crate::err::IntegerPowerError> {
         let two = &BigUint::from(2);
         let int = crate::interrupt::Never::default();
-        let test_sqrt_inner = |n, expected_root, exact| {
+        let test_sqrt_inner = |n, expected_root, exact| -> Res<crate::err::IntegerPowerError> {
             assert_eq!(
-                BigUint::from(n).root_n(two, &int).unwrap(),
+                BigUint::from(n).root_n(two, &int)?,
                 (BigUint::from(expected_root), exact)
             );
+            Ok(())
         };
-        test_sqrt_inner(0, 0, true);
-        test_sqrt_inner(1, 1, true);
-        test_sqrt_inner(2, 1, false);
-        test_sqrt_inner(3, 1, false);
-        test_sqrt_inner(4, 2, true);
-        test_sqrt_inner(5, 2, false);
-        test_sqrt_inner(6, 2, false);
-        test_sqrt_inner(7, 2, false);
-        test_sqrt_inner(8, 2, false);
-        test_sqrt_inner(9, 3, true);
-        test_sqrt_inner(10, 3, false);
-        test_sqrt_inner(11, 3, false);
-        test_sqrt_inner(12, 3, false);
-        test_sqrt_inner(13, 3, false);
-        test_sqrt_inner(14, 3, false);
-        test_sqrt_inner(15, 3, false);
-        test_sqrt_inner(16, 4, true);
-        test_sqrt_inner(17, 4, false);
-        test_sqrt_inner(18, 4, false);
-        test_sqrt_inner(19, 4, false);
-        test_sqrt_inner(20, 4, false);
-        test_sqrt_inner(200000, 447, false);
-        test_sqrt_inner(1740123984719364372, 1319137591, false);
+        test_sqrt_inner(0, 0, true)?;
+        test_sqrt_inner(1, 1, true)?;
+        test_sqrt_inner(2, 1, false)?;
+        test_sqrt_inner(3, 1, false)?;
+        test_sqrt_inner(4, 2, true)?;
+        test_sqrt_inner(5, 2, false)?;
+        test_sqrt_inner(6, 2, false)?;
+        test_sqrt_inner(7, 2, false)?;
+        test_sqrt_inner(8, 2, false)?;
+        test_sqrt_inner(9, 3, true)?;
+        test_sqrt_inner(10, 3, false)?;
+        test_sqrt_inner(11, 3, false)?;
+        test_sqrt_inner(12, 3, false)?;
+        test_sqrt_inner(13, 3, false)?;
+        test_sqrt_inner(14, 3, false)?;
+        test_sqrt_inner(15, 3, false)?;
+        test_sqrt_inner(16, 4, true)?;
+        test_sqrt_inner(17, 4, false)?;
+        test_sqrt_inner(18, 4, false)?;
+        test_sqrt_inner(19, 4, false)?;
+        test_sqrt_inner(20, 4, false)?;
+        test_sqrt_inner(200000, 447, false)?;
+        test_sqrt_inner(1740123984719364372, 1319137591, false)?;
         assert_eq!(
-            BigUint::Large(vec![0, 3260954456333195555])
-                .root_n(two, &int)
-                .unwrap(),
+            BigUint::Large(vec![0, 3260954456333195555]).root_n(two, &int)?,
             (BigUint::from(7755900482342532476), false)
         );
+        Ok(())
     }
 
     #[test]
@@ -605,100 +607,65 @@ mod tests {
     }
 
     #[test]
-    fn test_multiplication() {
+    fn test_multiplication() -> Res {
         let int = &crate::interrupt::Never::default();
         assert_eq!(
-            BigUint::from(20).mul(&BigUint::from(3), int).unwrap(),
+            BigUint::from(20).mul(&BigUint::from(3), int)?,
             BigUint::from(60)
         );
+        Ok(())
     }
 
     #[test]
-    fn test_small_division_by_two() {
+    fn test_small_division_by_two() -> Res<crate::err::DivideByZero> {
         let int = &crate::interrupt::Never::default();
-        assert_eq!(
-            BigUint::from(0).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(0)
-        );
-        assert_eq!(
-            BigUint::from(1).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(0)
-        );
-        assert_eq!(
-            BigUint::from(2).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(1)
-        );
-        assert_eq!(
-            BigUint::from(3).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(1)
-        );
-        assert_eq!(
-            BigUint::from(4).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(2)
-        );
-        assert_eq!(
-            BigUint::from(5).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(2)
-        );
-        assert_eq!(
-            BigUint::from(6).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(3)
-        );
-        assert_eq!(
-            BigUint::from(7).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(3)
-        );
-        assert_eq!(
-            BigUint::from(8).div(&BigUint::from(2), int).unwrap(),
-            BigUint::from(4)
-        );
+        let two = BigUint::from(2);
+        assert_eq!(BigUint::from(0).div(&two, int)?, BigUint::from(0));
+        assert_eq!(BigUint::from(1).div(&two, int)?, BigUint::from(0));
+        assert_eq!(BigUint::from(2).div(&two, int)?, BigUint::from(1));
+        assert_eq!(BigUint::from(3).div(&two, int)?, BigUint::from(1));
+        assert_eq!(BigUint::from(4).div(&two, int)?, BigUint::from(2));
+        assert_eq!(BigUint::from(5).div(&two, int)?, BigUint::from(2));
+        assert_eq!(BigUint::from(6).div(&two, int)?, BigUint::from(3));
+        assert_eq!(BigUint::from(7).div(&two, int)?, BigUint::from(3));
+        assert_eq!(BigUint::from(8).div(&two, int)?, BigUint::from(4));
+        Ok(())
     }
 
     #[test]
-    fn test_rem() {
+    fn test_rem() -> Res<crate::err::DivideByZero> {
         let int = &crate::interrupt::Never::default();
-        assert_eq!(
-            BigUint::from(20).rem(&BigUint::from(3), int).unwrap(),
-            BigUint::from(2)
-        );
-        assert_eq!(
-            BigUint::from(21).rem(&BigUint::from(3), int).unwrap(),
-            BigUint::from(0)
-        );
-        assert_eq!(
-            BigUint::from(22).rem(&BigUint::from(3), int).unwrap(),
-            BigUint::from(1)
-        );
-        assert_eq!(
-            BigUint::from(23).rem(&BigUint::from(3), int).unwrap(),
-            BigUint::from(2)
-        );
-        assert_eq!(
-            BigUint::from(24).rem(&BigUint::from(3), int).unwrap(),
-            BigUint::from(0)
-        );
+        let three = BigUint::from(3);
+        assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));
+        assert_eq!(BigUint::from(21).rem(&three, int)?, BigUint::from(0));
+        assert_eq!(BigUint::from(22).rem(&three, int)?, BigUint::from(1));
+        assert_eq!(BigUint::from(23).rem(&three, int)?, BigUint::from(2));
+        assert_eq!(BigUint::from(24).rem(&three, int)?, BigUint::from(0));
+        Ok(())
     }
 
     #[test]
-    fn test_lshift() {
+    fn test_lshift() -> Res {
         let int = &crate::interrupt::Never::default();
         let mut n = BigUint::from(1);
         for _ in 0..100 {
-            n.lshift(int).unwrap();
+            n.lshift(int)?;
             eprintln!("{:?}", &n);
             assert_eq!(n.get(0) & 1, 0);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_gcd() {
+    fn test_gcd() -> Res {
         let int = &crate::interrupt::Never::default();
-        assert_eq!(BigUint::gcd(2.into(), 4.into(), int).unwrap(), 2.into());
-        assert_eq!(BigUint::gcd(4.into(), 2.into(), int).unwrap(), 2.into());
-        assert_eq!(BigUint::gcd(37.into(), 43.into(), int).unwrap(), 1.into());
-        assert_eq!(BigUint::gcd(43.into(), 37.into(), int).unwrap(), 1.into());
-        assert_eq!(BigUint::gcd(215.into(), 86.into(), int).unwrap(), 43.into());
-        assert_eq!(BigUint::gcd(86.into(), 215.into(), int).unwrap(), 43.into());
+        assert_eq!(BigUint::gcd(2.into(), 4.into(), int)?, 2.into());
+        assert_eq!(BigUint::gcd(4.into(), 2.into(), int)?, 2.into());
+        assert_eq!(BigUint::gcd(37.into(), 43.into(), int)?, 1.into());
+        assert_eq!(BigUint::gcd(43.into(), 37.into(), int)?, 1.into());
+        assert_eq!(BigUint::gcd(215.into(), 86.into(), int)?, 43.into());
+        assert_eq!(BigUint::gcd(86.into(), 215.into(), int)?, 43.into());
+        Ok(())
     }
 
     #[test]
@@ -710,21 +677,21 @@ mod tests {
     }
 
     #[test]
-    fn test_large_lshift() {
+    fn test_large_lshift() -> Res {
         let int = &crate::interrupt::Never::default();
         let mut a = BigUint::from(9223372036854775808);
-        a.lshift(int).unwrap();
+        a.lshift(int)?;
         assert!(!a.is_zero());
+        Ok(())
     }
 
     #[test]
-    fn test_big_multiplication() {
+    fn test_big_multiplication() -> Res {
         let int = &crate::interrupt::Never::default();
         assert_eq!(
-            BigUint::from(1)
-                .mul(&BigUint::Large(vec![0, 1]), int)
-                .unwrap(),
+            BigUint::from(1).mul(&BigUint::Large(vec![0, 1]), int)?,
             BigUint::Large(vec![0, 1])
         );
+        Ok(())
     }
 }
