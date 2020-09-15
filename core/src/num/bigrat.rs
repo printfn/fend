@@ -91,7 +91,7 @@ impl BigRat {
         clippy::float_arithmetic,
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss,
-        clippy::cast_precision_loss,
+        clippy::cast_precision_loss
     )]
     pub fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
         let negative = f < 0.0;

@@ -264,11 +264,11 @@ pub fn is_valid_in_ident(ch: char, first: bool) -> bool {
     ch.is_alphabetic() || ",&_⅛¼⅜½⅝¾⅞⅙⅓⅔⅚⅕⅖⅗⅘°$℃℉℧℈℥℔¢£¥€₩₪₤₨฿₡₣₦₧₫₭₮₯₱﷼﹩￠￡￥￦㍱㍲㍳㍴㍶㎀㎁㎂㎃㎄㎅㎆㎇㎈㎉㎊㎋㎌㎍㎎㎏㎐㎑㎒㎓㎔㎕㎖㎗㎘㎙㎚㎛㎜㎝㎞㎟㎠㎡㎢㎣㎤㎥㎦㎧㎨㎩㎪㎫㎬㎭㎮㎯㎰㎱㎲㎳㎴㎵㎶㎷㎸㎹㎺㎻㎼㎽㎾㎿㏀㏁㏃㏄㏅㏆㏈㏉㏊㏌㏏㏐㏓㏔㏕㏖㏗㏙㏛㏜㏝".contains(ch) || (!first && ".0123456789".contains(ch))
 }
 
-fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String, NeverInterrupt>> {
-    let first_char = consume_char(input)?;
+fn parse_ident(input: &str) -> Result<(Token, &str), IntErr<String, NeverInterrupt>> {
+    let (first_char, mut input) = parse_char(input)?;
     if !is_valid_in_ident(first_char, true) {
         if is_valid_in_ident_char(first_char) {
-            return Ok(Token::Ident(first_char.to_string()));
+            return Ok((Token::Ident(first_char.to_string()), input));
         }
         return Err(format!(
             "Character '{}' is not valid at the beginning of an identifier",
@@ -276,18 +276,21 @@ fn parse_ident(input: &mut &str) -> Result<Token, IntErr<String, NeverInterrupt>
         ))?;
     }
     let mut ident = first_char.to_string();
-    while let Some(next_char) = input.chars().next() {
+    while let Ok((next_char, remaining)) = parse_char(input) {
         if !is_valid_in_ident(next_char, false) {
             break;
         }
-        consume_char(input)?;
+        input = remaining;
         ident.push(next_char);
     }
-    Ok(match ident.as_str() {
-        "to" | "as" => Token::Symbol(Symbol::ArrowConversion),
-        "per" => Token::Symbol(Symbol::Div),
-        _ => Token::Ident(ident),
-    })
+    Ok((
+        match ident.as_str() {
+            "to" | "as" => Token::Symbol(Symbol::ArrowConversion),
+            "per" => Token::Symbol(Symbol::Div),
+            _ => Token::Ident(ident),
+        },
+        input,
+    ))
 }
 
 pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<String, I>> {
@@ -303,7 +306,9 @@ pub fn lex<I: Interrupt>(mut input: &str, int: &I) -> Result<Vec<Token>, IntErr<
                     input = remaining;
                     res.push(Token::Num(num));
                 } else if is_valid_in_ident(ch, true) || is_valid_in_ident_char(ch) {
-                    res.push(parse_ident(&mut input).map_err(IntErr::get_error)?);
+                    let (ident, remaining) = parse_ident(input).map_err(IntErr::get_error)?;
+                    input = remaining;
+                    res.push(ident);
                 } else {
                     match consume_char(&mut input).map_err(IntErr::get_error)? {
                         '(' => res.push(Token::Symbol(Symbol::OpenParens)),

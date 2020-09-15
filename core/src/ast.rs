@@ -97,7 +97,9 @@ pub fn evaluate<I: Interrupt>(
                 .pow(evaluate(*b)?.expect_num()?, int)?,
         ),
         Expr::Apply(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, true, false, scope, int)?,
-        Expr::ApplyFunctionCall(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, false, false, scope, int)?,
+        Expr::ApplyFunctionCall(a, b) => {
+            evaluate(*a)?.apply(&evaluate(*b)?, false, false, scope, int)?
+        }
         Expr::As(a, b) => match evaluate(*b)? {
             Value::Num(b) => Value::Num(evaluate(*a)?.expect_num()?.convert_to(b, int)?),
             Value::Format(fmt) => Value::Num(evaluate(*a)?.expect_num()?.with_format(fmt)),
