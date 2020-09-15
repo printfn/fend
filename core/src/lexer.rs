@@ -49,28 +49,18 @@ impl Display for Symbol {
 }
 
 fn parse_char(input: &str) -> Result<(char, &str), IntErr<String, NeverInterrupt>> {
-    let mut char_indices = input.char_indices();
-    if let Some((_, ch)) = char_indices.next() {
-        if let Some((idx, _)) = char_indices.next() {
-            let (_a, b) = input.split_at(idx);
-            Ok((ch, b))
-        } else {
-            let (empty, _b) = input.split_at(0);
-            Ok((ch, empty))
-        }
+    if let Some(ch) = input.chars().next() {
+        let (_, b) = input.split_at(ch.len_utf8());
+        Ok((ch, b))
     } else {
         Err("Expected a character".to_string())?
     }
 }
 
 fn consume_char(input: &mut &str) -> Result<char, IntErr<String, NeverInterrupt>> {
-    match parse_char(input) {
-        Ok((ch, remaining_input)) => {
-            *input = remaining_input;
-            Ok(ch)
-        }
-        Err(_) => Err("Expected a character".to_string())?,
-    }
+    let (ch, remaining_input) = parse_char(input)?;
+    *input = remaining_input;
+    Ok(ch)
 }
 
 fn parse_ascii_digit(
