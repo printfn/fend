@@ -13,7 +13,7 @@ Unique features:
 * Arbitrary-precision arithmetic using rational numbers
 * Full support for complex numbers
 * Binary, octal, hexadecimal and all other bases between 2 and 36
-* Keeps track of units, with support for SI and US customary units
+* Keeps track of units, with support for SI, US and UK customary and many historical units
 * Emacs-style CLI shortcuts
 * Trigonometric functions
 
