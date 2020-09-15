@@ -53,3 +53,41 @@ pub fn to_string<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error,
     }
     Ok(string)
 }
+
+pub struct ValueTooLarge<T: Display> {
+    max_allowed: T,
+}
+
+impl<T: Display> Display for ValueTooLarge<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(
+            f,
+            "Value must be less than or equal to {}",
+            self.max_allowed
+        )?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub enum IntegerPowerError {
+    ExponentTooLarge,
+    ZeroToThePowerOfZero,
+}
+
+impl Display for IntegerPowerError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            Self::ExponentTooLarge => write!(f, "Exponent too large"),
+            Self::ZeroToThePowerOfZero => write!(f, "Zero to the power of zero is undefined"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct DivideByZero {}
+impl Display for DivideByZero {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(f, "Division by zero")
+    }
+}

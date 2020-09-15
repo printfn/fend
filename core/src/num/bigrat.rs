@@ -1,7 +1,7 @@
-use crate::err::{DivideByZero, IntErr, Interrupt, Never};
+use crate::err::{ForwardInterrupt, IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
-use crate::num::{Base, FormattingStyle};
+use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Error, Formatter};
 use std::ops::Neg;
@@ -77,7 +77,7 @@ impl BigRat {
         if self.den != 1.into() {
             return Err("Cannot convert fraction to integer".to_string())?;
         }
-        Ok(self.num.try_as_usize()?)
+        Ok(self.num.try_as_usize().map_err(|e| e.to_string())?)
     }
 
     #[allow(clippy::float_arithmetic)]
@@ -300,12 +300,12 @@ impl BigRat {
 
     pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         if rhs.num == 0.into() {
-            return DivideByZero::err();
+            return Err(DivideByZero {})?;
         }
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
-            num: self.num.mul(&rhs.den, int)?,
-            den: self.den.mul(&rhs.num, int)?,
+            num: self.num.mul(&rhs.den, int).forward_interrupt()?,
+            den: self.den.mul(&rhs.num, int).forward_interrupt()?,
         })
     }
 
@@ -649,12 +649,17 @@ impl BigRat {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
             let (inverse_res, exact) = self.pow(rhs, int)?;
-            return Ok((Self::from(1).div(&inverse_res, int)?, exact));
+            return Ok((
+                Self::from(1)
+                    .div(&inverse_res, int)
+                    .map_err(IntErr::into_string)?,
+                exact,
+            ));
         }
         let pow_res = Self {
             sign: Sign::Positive,
-            num: BigUint::pow(&self.num, &rhs.num, int)?,
-            den: BigUint::pow(&self.den, &rhs.num, int)?,
+            num: BigUint::pow(&self.num, &rhs.num, int).map_err(IntErr::into_string)?,
+            den: BigUint::pow(&self.den, &rhs.num, int).map_err(IntErr::into_string)?,
         };
         if rhs.den == 1.into() {
             Ok((pow_res, true))
@@ -682,14 +687,18 @@ impl BigRat {
             let guess = low_bound
                 .clone()
                 .add(high_bound.clone(), int)?
-                .div(&2.into(), int)?;
+                .div(&2.into(), int)
+                .map_err(IntErr::into_string)?;
             if &guess.clone().pow(n.clone(), int)?.0 < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
             }
         }
-        Ok(low_bound.add(high_bound, int)?.div(&2.into(), int)?)
+        Ok(low_bound
+            .add(high_bound, int)?
+            .div(&2.into(), int)
+            .map_err(IntErr::into_string)?)
     }
 
     // the boolean indicates whether or not the result is exact
@@ -710,8 +719,16 @@ impl BigRat {
         if self.num == 0.into() {
             return Ok((self, true));
         }
-        let (num, num_exact) = self.clone().num.root_n(n, int)?;
-        let (den, den_exact) = self.clone().den.root_n(n, int)?;
+        let (num, num_exact) = self
+            .clone()
+            .num
+            .root_n(n, int)
+            .map_err(IntErr::into_string)?;
+        let (den, den_exact) = self
+            .clone()
+            .den
+            .root_n(n, int)
+            .map_err(IntErr::into_string)?;
         if num_exact && den_exact {
             return Ok((
                 Self {
@@ -742,7 +759,10 @@ impl BigRat {
                 int,
             )?
         };
-        Ok((num_rat.div(&den_rat, int)?, false))
+        Ok((
+            num_rat.div(&den_rat, int).map_err(IntErr::into_string)?,
+            false,
+        ))
     }
 
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {

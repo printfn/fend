@@ -44,7 +44,9 @@ impl Complex {
         let y = rhs.imag;
         let sum = x.clone().mul(&x, int)?.add(y.clone().mul(&y, int)?, int)?;
         Ok(Self {
-            real: BigRat::from(1).div(&sum, int)?,
+            real: BigRat::from(1)
+                .div(&sum, int)
+                .map_err(IntErr::into_string)?,
             imag: 0.into(),
         }
         .mul(

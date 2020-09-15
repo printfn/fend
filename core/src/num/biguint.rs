@@ -1,9 +1,6 @@
-use crate::err::{
-    DivideByZero, ExponentTooLarge, IntErr, IntegerPowerError, Interrupt, Never, ValueTooLarge,
-    ZeroToThePowerOfZero,
-};
+use crate::err::{ForwardInterrupt, IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::Base;
+use crate::num::{Base, DivideByZero, IntegerPowerError, ValueTooLarge};
 use std::cmp::{max, Ordering};
 use std::fmt::{Debug, Error, Formatter};
 
@@ -55,15 +52,21 @@ impl BigUint {
         }
     }
 
-    pub fn try_as_usize(&self) -> Result<usize, ValueTooLarge> {
+    pub fn try_as_usize(&self) -> Result<usize, ValueTooLarge<usize>> {
         use std::convert::TryFrom;
+        // todo: include `self` in the error message
+        // This requires rewriting the BigUint format code to use a separate
+        // struct that implements Display
+        let error = ValueTooLarge {
+            max_allowed: usize::MAX,
+        };
 
         Ok(match self {
             Small(n) => {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return ValueTooLarge::err();
+                    return Err(error);
                 }
             }
             Large(v) => {
@@ -72,10 +75,10 @@ impl BigUint {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return ValueTooLarge::err();
+                        return Err(error);
                     }
                 } else {
-                    return ValueTooLarge::err();
+                    return Err(error);
                 }
             }
         })
@@ -166,15 +169,15 @@ impl BigUint {
         int: &I,
     ) -> Result<Self, IntErr<IntegerPowerError, I>> {
         if a.is_zero() && b.is_zero() {
-            return ZeroToThePowerOfZero::err();
+            return Err(IntegerPowerError::ZeroToThePowerOfZero)?;
         }
         if b.is_zero() {
             return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
-            return ExponentTooLarge::err();
+            return Err(IntegerPowerError::ExponentTooLarge)?;
         }
-        Ok(a.pow_internal(b.get(0), int)?)
+        Ok(a.pow_internal(b.get(0), int).forward_interrupt()?)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
@@ -189,9 +192,9 @@ impl BigUint {
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
         while high_guess.clone().sub(&low_guess) > 1.into() {
-            test_int(int)?;
+            test_int(int).forward_interrupt()?;
             let mut guess = low_guess.clone().add(&high_guess);
-            guess.rshift(int)?;
+            guess.rshift(int).forward_interrupt()?;
 
             let res = Self::pow(&guess, n, int)?;
             match res.cmp(&self) {
@@ -275,10 +278,10 @@ impl BigUint {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok((Small(div_res), Small(mod_res)));
             }
-            return DivideByZero::ierr();
+            return Err(DivideByZero {})?;
         }
         if other.is_zero() {
-            return DivideByZero::ierr();
+            return Err(DivideByZero {})?;
         }
         if other == &Self::from(1) {
             return Ok((self.clone(), Self::from(0)));
@@ -294,7 +297,7 @@ impl BigUint {
         }
         if other == &Self::from(2) {
             let mut div_result = self.clone();
-            div_result.rshift(int)?;
+            div_result.rshift(int).forward_interrupt()?;
             let modulo = self.get(0) & 1;
             return Ok((div_result, Self::from(modulo)));
         }
@@ -302,9 +305,9 @@ impl BigUint {
         let mut q = Self::from(0);
         let mut r = Self::from(0);
         for i in (0..self.value_len()).rev() {
-            test_int(int)?;
+            test_int(int).forward_interrupt()?;
             for j in (0..64).rev() {
-                r.lshift(int)?;
+                r.lshift(int).forward_interrupt()?;
                 let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
                 r.set(0, r.get(0) | bit_of_self);
                 if &r >= other {
@@ -541,10 +544,10 @@ mod tests {
     type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
 
     #[test]
-    fn test_sqrt() -> Res<crate::err::IntegerPowerError> {
+    fn test_sqrt() -> Res<crate::num::IntegerPowerError> {
         let two = &BigUint::from(2);
         let int = crate::interrupt::Never::default();
-        let test_sqrt_inner = |n, expected_root, exact| -> Res<crate::err::IntegerPowerError> {
+        let test_sqrt_inner = |n, expected_root, exact| -> Res<crate::num::IntegerPowerError> {
             assert_eq!(
                 BigUint::from(n).root_n(two, &int)?,
                 (BigUint::from(expected_root), exact)
@@ -617,7 +620,7 @@ mod tests {
     }
 
     #[test]
-    fn test_small_division_by_two() -> Res<crate::err::DivideByZero> {
+    fn test_small_division_by_two() -> Res<crate::num::DivideByZero> {
         let int = &crate::interrupt::Never::default();
         let two = BigUint::from(2);
         assert_eq!(BigUint::from(0).div(&two, int)?, BigUint::from(0));
@@ -633,7 +636,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem() -> Res<crate::err::DivideByZero> {
+    fn test_rem() -> Res<crate::num::DivideByZero> {
         let int = &crate::interrupt::Never::default();
         let three = BigUint::from(3);
         assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));
