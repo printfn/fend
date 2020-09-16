@@ -5,12 +5,9 @@
 
 version: 2
 updates:
+  # this automatically includes fend-core in "/core" as well
   - package-ecosystem: "cargo" # See documentation for possible values
     directory: "/" # Location of package manifests
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "cargo"
-    directory: "/core"
     schedule:
       interval: "daily"
   - package-ecosystem: "github-actions"
