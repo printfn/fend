@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt, NeverInterrupt};
+use crate::err::{IntErr, Interrupt};
 use crate::interrupt::test_int;
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{
@@ -66,15 +66,15 @@ impl Display for LexerError {
 }
 impl crate::err::Error for LexerError {}
 
-impl<I: Interrupt> From<BaseOutOfRangeError> for IntErr<LexerError, I> {
+impl From<BaseOutOfRangeError> for LexerError {
     fn from(e: BaseOutOfRangeError) -> Self {
-        LexerError::BaseOutOfRange(e).into()
+        LexerError::BaseOutOfRange(e)
     }
 }
 
-impl<I: Interrupt> From<InvalidBasePrefixError> for IntErr<LexerError, I> {
+impl From<InvalidBasePrefixError> for LexerError {
     fn from(e: InvalidBasePrefixError) -> Self {
-        LexerError::InvalidBasePrefix(e).into()
+        LexerError::InvalidBasePrefix(e)
     }
 }
 
@@ -142,16 +142,13 @@ fn parse_digit_separator(input: &str) -> Result<((), &str), LexerError> {
 
 // Parses a plain integer with no whitespace and no base prefix.
 // Leading minus sign is not allowed.
-fn parse_integer<'a, E, I: Interrupt>(
+fn parse_integer<'a, E: From<LexerError>>(
     input: &'a str,
     allow_digit_separator: bool,
     allow_leading_zeroes: bool,
     base: Base,
-    process_digit: &mut impl FnMut(u8) -> Result<(), IntErr<E, I>>,
-) -> Result<((), &'a str), IntErr<E, I>>
-where
-    IntErr<E, I>: From<LexerError>,
-{
+    process_digit: &mut impl FnMut(u8) -> Result<(), E>,
+) -> Result<((), &'a str), E> {
     let (digit, mut input) = parse_ascii_digit(input, base)?;
     process_digit(digit)?;
     let leading_zero = digit == 0;
@@ -185,7 +182,7 @@ where
     Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<LexerError, NeverInterrupt>> {
+fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
     // 0x -> 16
     // 0d -> 10
     // 0o -> 8
@@ -202,19 +199,22 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), IntErr<LexerError, Nev
             false,
             false,
             Base::default(),
-            &mut |digit| -> Result<(), IntErr<LexerError, NeverInterrupt>> {
+            &mut |digit| -> Result<(), LexerError> {
+                let base_too_large = BaseOutOfRangeError::BaseTooLarge;
+                let error = LexerError::BaseOutOfRange(base_too_large);
                 if custom_base > 3 {
-                    return Err(BaseOutOfRangeError::BaseTooLarge)?;
+                    return Err(error);
                 }
                 custom_base = 10 * custom_base + digit;
                 if custom_base > 36 {
-                    return Err(BaseOutOfRangeError::BaseTooLarge)?;
+                    return Err(error);
                 }
                 Ok(())
             },
         )?;
         if custom_base < 2 {
-            return Err(BaseOutOfRangeError::BaseTooSmall)?;
+            let base_too_small = BaseOutOfRangeError::BaseTooSmall;
+            return Err(LexerError::BaseOutOfRange(base_too_small));
         }
         let (_, input) = parse_fixed_char(input, '#')?;
         Ok((Base::from_custom_base(custom_base)?, input))
