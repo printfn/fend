@@ -12,7 +12,11 @@ pub fn evaluate_to_value<I: Interrupt>(
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
-    let tokens = lexer::lex(input, int)?;
+    let lex = lexer::lex(input, int);
+    let mut tokens = vec![];
+    for token in lex {
+        tokens.push(token.map_err(IntErr::into_string)?);
+    }
     let parsed = parser::parse_tokens(tokens.as_slice(), options).map_err(|e| e.to_string())?;
     let result = ast::evaluate(parsed, scope, options, int)?;
     Ok(result)

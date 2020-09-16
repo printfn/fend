@@ -1,5 +1,4 @@
 use crate::err::{IntErr, Interrupt};
-use crate::interrupt::test_int;
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{
     convert::TryInto,
@@ -29,7 +28,8 @@ pub enum Symbol {
     Factorial,
 }
 
-enum LexerError {
+#[allow(clippy::module_name_repetitions)]
+pub enum LexerError {
     ExpectedACharacter,
     ExpectedADigit(char),
     ExpectedChar(char, char),
@@ -40,6 +40,9 @@ enum LexerError {
     BaseOutOfRange(BaseOutOfRangeError),
     InvalidBasePrefix(InvalidBasePrefixError),
     InvalidCharAtBeginningOfIdent(char),
+    UnexpectedChar(char),
+    // todo remove this
+    NumberParseError(String),
 }
 
 impl Display for LexerError {
@@ -61,6 +64,8 @@ impl Display for LexerError {
             Self::InvalidCharAtBeginningOfIdent(ch) => {
                 write!(f, "'{}' is not valid at the beginning of an identifier", ch)
             }
+            Self::UnexpectedChar(ch) => write!(f, "Unexpected character '{}'", ch),
+            Self::NumberParseError(s) => write!(f, "{}", s),
         }
     }
 }
@@ -357,62 +362,86 @@ fn parse_ident(input: &str) -> Result<(Token, &str), LexerError> {
     ))
 }
 
-pub fn lex<'a, I: Interrupt>(
-    mut input: &'a str,
-    int: &I,
-) -> Result<Vec<Token<'a>>, IntErr<String, I>> {
-    let mut res = vec![];
-    loop {
-        test_int(int)?;
-        match input.chars().next() {
+struct Lexer<'a, I: Interrupt> {
+    input: &'a str,
+    int: &'a I,
+}
+
+impl<'a, I: Interrupt> Lexer<'a, I> {
+    fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<LexerError, I>> {
+        while let Some(ch) = self.input.chars().next() {
+            if !ch.is_whitespace() {
+                break;
+            }
+            let (_, remaining) = self.input.split_at(ch.len_utf8());
+            self.input = remaining;
+        }
+        Ok(Some(match self.input.chars().next() {
             Some(ch) => {
-                if ch.is_whitespace() {
-                    let (_, remaining) = input.split_at(ch.len_utf8());
-                    input = remaining;
-                } else if ch.is_ascii_digit() {
-                    let (num, remaining) = parse_number(input, int)?;
-                    input = remaining;
-                    res.push(Token::Num(num));
+                if ch.is_ascii_digit() {
+                    let (num, remaining) = parse_number(self.input, self.int)
+                        .map_err(|e| e.map(LexerError::NumberParseError))?;
+                    self.input = remaining;
+                    Token::Num(num)
                 } else if is_valid_in_ident(ch, None) {
-                    let (ident, remaining) = parse_ident(input)?;
-                    input = remaining;
-                    res.push(ident);
+                    let (ident, remaining) = parse_ident(self.input)?;
+                    self.input = remaining;
+                    ident
                 } else {
                     {
-                        let (_, remaining) = input.split_at(ch.len_utf8());
-                        input = remaining;
+                        let (_, remaining) = self.input.split_at(ch.len_utf8());
+                        self.input = remaining;
                     }
-                    match ch {
-                        '(' => res.push(Token::Symbol(Symbol::OpenParens)),
-                        ')' => res.push(Token::Symbol(Symbol::CloseParens)),
-                        '+' => res.push(Token::Symbol(Symbol::Add)),
-                        '!' => res.push(Token::Symbol(Symbol::Factorial)),
+                    Token::Symbol(match ch {
+                        '(' => Symbol::OpenParens,
+                        ')' => Symbol::CloseParens,
+                        '+' => Symbol::Add,
+                        '!' => Symbol::Factorial,
                         '-' => {
-                            if input.starts_with('>') {
-                                let (_, remaining) = input.split_at('>'.len_utf8());
-                                input = remaining;
-                                res.push(Token::Symbol(Symbol::ArrowConversion))
+                            if self.input.starts_with('>') {
+                                let (_, remaining) = self.input.split_at('>'.len_utf8());
+                                self.input = remaining;
+                                Symbol::ArrowConversion
                             } else {
-                                res.push(Token::Symbol(Symbol::Sub))
+                                Symbol::Sub
                             }
                         }
                         '*' => {
-                            if input.starts_with('*') {
-                                let (_, remaining) = input.split_at('*'.len_utf8());
-                                input = remaining;
-                                res.push(Token::Symbol(Symbol::Pow))
+                            if self.input.starts_with('*') {
+                                let (_, remaining) = self.input.split_at('*'.len_utf8());
+                                self.input = remaining;
+                                Symbol::Pow
                             } else {
-                                res.push(Token::Symbol(Symbol::Mul))
+                                Symbol::Mul
                             }
                         }
-                        '/' => res.push(Token::Symbol(Symbol::Div)),
-                        '|' => res.push(Token::Symbol(Symbol::InnerDiv)),
-                        '^' => res.push(Token::Symbol(Symbol::Pow)),
-                        _ => return Err(format!("Unexpected character '{}'", ch))?,
-                    }
+                        '/' => Symbol::Div,
+                        '|' => Symbol::InnerDiv,
+                        '^' => Symbol::Pow,
+                        _ => return Err(LexerError::UnexpectedChar(ch))?,
+                    })
                 }
             }
-            None => return Ok(res),
+            None => return Ok(None),
+        }))
+    }
+}
+
+impl<'a, I: Interrupt> Iterator for Lexer<'a, I> {
+    type Item = Result<Token<'a>, IntErr<LexerError, I>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.next_token() {
+            Err(e) => Some(Err(e)),
+            Ok(None) => None,
+            Ok(Some(t)) => Some(Ok(t)),
         }
     }
+}
+
+pub fn lex<'a, I: Interrupt>(
+    input: &'a str,
+    int: &'a I,
+) -> impl Iterator<Item = Result<Token<'a>, IntErr<LexerError, I>>> {
+    Lexer { input, int }
 }
