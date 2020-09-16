@@ -42,9 +42,9 @@ impl<E: Display, I: Interrupt> IntErr<E, I> {
     }
 }
 
-impl<E: Error, F: From<E>, I: Interrupt> From<E> for IntErr<F, I> {
+impl<E, I: Interrupt> From<E> for IntErr<E, I> {
     fn from(e: E) -> Self {
-        Self::Error(e.into())
+        Self::Error(e)
     }
 }
 
