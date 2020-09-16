@@ -39,24 +39,28 @@ enum LexerError {
     NoLeadingZeroes,
     BaseOutOfRange(BaseOutOfRangeError),
     InvalidBasePrefix(InvalidBasePrefixError),
+    InvalidCharAtBeginningOfIdent(char),
 }
 
 impl Display for LexerError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            LexerError::ExpectedACharacter => write!(f, "Expected a character"),
-            LexerError::ExpectedADigit(ch) => write!(f, "Expected a digit, found '{}'", ch),
-            LexerError::ExpectedChar(ex, fnd) => write!(f, "Expected '{}', found '{}'", ex, fnd),
-            LexerError::ExpectedDigitSeparator(ch) => {
+            Self::ExpectedACharacter => write!(f, "Expected a character"),
+            Self::ExpectedADigit(ch) => write!(f, "Expected a digit, found '{}'", ch),
+            Self::ExpectedChar(ex, fnd) => write!(f, "Expected '{}', found '{}'", ex, fnd),
+            Self::ExpectedDigitSeparator(ch) => {
                 write!(f, "Expected a digit separator, found {}", ch)
             }
-            LexerError::DigitSeparatorsNotAllowed => write!(f, "Digit separators are not allowed"),
-            LexerError::DigitSeparatorsOnlyBetweenDigits => {
+            Self::DigitSeparatorsNotAllowed => write!(f, "Digit separators are not allowed"),
+            Self::DigitSeparatorsOnlyBetweenDigits => {
                 write!(f, "Digit separators can only occur between digits")
             }
-            LexerError::NoLeadingZeroes => write!(f, "Integer literals cannot have leading zeroes"),
-            LexerError::BaseOutOfRange(e) => write!(f, "{}", e),
-            LexerError::InvalidBasePrefix(e) => write!(f, "{}", e),
+            Self::NoLeadingZeroes => write!(f, "Integer literals cannot have leading zeroes"),
+            Self::BaseOutOfRange(e) => write!(f, "{}", e),
+            Self::InvalidBasePrefix(e) => write!(f, "{}", e),
+            Self::InvalidCharAtBeginningOfIdent(ch) => {
+                write!(f, "'{}' is not valid at the beginning of an identifier", ch)
+            }
         }
     }
 }
@@ -326,13 +330,10 @@ pub fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     }
 }
 
-fn parse_ident(input: &str) -> Result<(Token, &str), String> {
-    let (first_char, _) = parse_char(input).map_err(|e| e.to_string())?;
+fn parse_ident(input: &str) -> Result<(Token, &str), LexerError> {
+    let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, None) {
-        return Err(format!(
-            "Character '{}' is not valid at the beginning of an identifier",
-            first_char
-        ))?;
+        return Err(LexerError::InvalidCharAtBeginningOfIdent(first_char))?;
     }
     let mut byte_idx = first_char.len_utf8();
     let (_, mut remaining) = input.split_at(byte_idx);
