@@ -60,6 +60,7 @@ impl Display for LexerError {
         }
     }
 }
+impl crate::err::Error for LexerError {}
 
 impl<I: Interrupt> From<BaseOutOfRangeError> for IntErr<LexerError, I> {
     fn from(e: BaseOutOfRangeError) -> Self {

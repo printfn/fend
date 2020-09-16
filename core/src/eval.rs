@@ -1,7 +1,7 @@
 use crate::{
     ast,
     err::{IntErr, Interrupt},
-    parser,
+    lexer, parser,
     scope::Scope,
     value::Value,
 };
@@ -12,7 +12,8 @@ pub fn evaluate_to_value<I: Interrupt>(
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
-    let parsed = parser::parse_string(input, options, int)?;
+    let tokens = lexer::lex(input, int)?;
+    let parsed = parser::parse_tokens(tokens.as_slice(), options).map_err(|e| e.to_string())?;
     let result = ast::evaluate(parsed, scope, options, int)?;
     Ok(result)
 }

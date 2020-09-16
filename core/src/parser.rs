@@ -1,12 +1,44 @@
 use crate::ast::Expr;
-use crate::err::{IntErr, Interrupt};
 use crate::lexer::{Symbol, Token};
+use std::fmt::{Display, Error, Formatter};
 
-type ParseResult<'a, T> = Result<(T, &'a [Token<'a>]), String>;
+pub enum ParseError {
+    ExpectedAToken,
+    ExpectedToken(Symbol, Symbol),
+    FoundInvalidTokenWhileExpecting(Symbol),
+    ExpectedANumber,
+    ExpectedIdentifier,
+    ExpectedNumIdentOrParen,
+    // TODO remove this
+    InvalidApplyOperands,
+    UnexpectedInput,
+}
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            Self::ExpectedAToken => write!(f, "Expected a token"),
+            Self::ExpectedToken(fnd, ex) => write!(f, "Found '{}' while expecting '{}'", fnd, ex),
+            Self::FoundInvalidTokenWhileExpecting(sym) => {
+                write!(f, "Found an invalid token while expecting '{}'", sym)
+            }
+            Self::ExpectedANumber => write!(f, "Expected a number"),
+            Self::ExpectedIdentifier => write!(f, "Expected an identifier"),
+            Self::ExpectedNumIdentOrParen => {
+                write!(f, "Expected a number, an identifier or an open parenthesis")
+            }
+            // TODO improve this message or remove this error type
+            Self::InvalidApplyOperands => write!(f, "Error"),
+            Self::UnexpectedInput => write!(f, "Unexpected input found"),
+        }
+    }
+}
+impl crate::err::Error for ParseError {}
+
+type ParseResult<'a, T> = Result<(T, &'a [Token<'a>]), ParseError>;
 
 fn parse_token<'a>(input: &'a [Token<'a>]) -> ParseResult<Token<'a>> {
     if input.is_empty() {
-        Err("Expected a token".to_string())?
+        Err(ParseError::ExpectedAToken)
     } else {
         Ok((input[0].clone(), &input[1..]))
     }
@@ -18,27 +50,24 @@ fn parse_fixed_symbol<'a>(input: &'a [Token], symbol: Symbol) -> ParseResult<'a,
         if sym == symbol {
             Ok(((), remaining))
         } else {
-            Err(format!("Found '{}' while expecting '{}'", sym, symbol))?
+            Err(ParseError::ExpectedToken(sym, symbol))
         }
     } else {
-        Err(format!(
-            "Found an invalid token while expecting '{}'",
-            symbol
-        ))?
+        Err(ParseError::FoundInvalidTokenWhileExpecting(symbol))
     }
 }
 
 fn parse_number<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
-        _ => Err("Expected a number".to_string())?,
+        _ => Err(ParseError::ExpectedANumber),
     }
 }
 
 fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     match parse_token(input)? {
         (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident.to_string()), remaining)),
-        _ => Err("Expected an identifier".to_string())?,
+        _ => Err(ParseError::ExpectedIdentifier),
     }
 }
 
@@ -56,9 +85,7 @@ fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> Par
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input, options),
-        Token::Symbol(..) => {
-            Err("Expected a number, an identifier or an open parenthesis".to_string())?
-        }
+        Token::Symbol(..) => Err(ParseError::ExpectedNumIdentOrParen),
     }
 }
 
@@ -127,13 +154,13 @@ fn parse_apply_cont<'a>(
             | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
                 // this may later be parsed as a compound fraction, e.g. 1 2/3
                 // or as an addition, e.g. 6 feet 1 inch
-                return Err("Error".to_string())?;
+                return Err(ParseError::InvalidApplyOperands);
             }
             (Expr::Num(_), Expr::Pow(a, _))
             | (Expr::UnaryMinus(_), Expr::Pow(a, _))
             | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
                 if let Expr::Num(_) = **a {
-                    return Err("Error".to_string())?;
+                    return Err(ParseError::InvalidApplyOperands);
                 }
                 Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
             }
@@ -289,16 +316,10 @@ pub fn parse_expression<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
     parse_arrow_conversion(input, options)
 }
 
-pub fn parse_string<I: Interrupt>(
-    input: &str,
-    options: ParseOptions,
-    int: &I,
-) -> Result<Expr, IntErr<String, I>> {
-    let tokens = crate::lexer::lex(input, int)?;
-    let (res, remaining) =
-        parse_expression(tokens.as_slice(), options)?;
+pub fn parse_tokens(input: &[Token], options: ParseOptions) -> Result<Expr, ParseError> {
+    let (res, remaining) = parse_expression(input, options)?;
     if !remaining.is_empty() {
-        return Err(format!("Unexpected input found: '{}'", input))?;
+        return Err(ParseError::UnexpectedInput);
     }
     Ok(res)
 }

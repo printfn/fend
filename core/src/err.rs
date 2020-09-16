@@ -24,6 +24,13 @@ impl<E, I: Interrupt> IntErr<E, I> {
             Self::Error(_) => panic!("Unwrap"),
         }
     }
+
+    pub fn map<F>(self, f: impl FnOnce(E) -> F) -> IntErr<F, I> {
+        match self {
+            Self::Interrupt(i) => IntErr::Interrupt(i),
+            Self::Error(e) => IntErr::Error(f(e)),
+        }
+    }
 }
 
 impl<E: Display, I: Interrupt> IntErr<E, I> {
@@ -35,9 +42,9 @@ impl<E: Display, I: Interrupt> IntErr<E, I> {
     }
 }
 
-impl<E, I: Interrupt> From<E> for IntErr<E, I> {
+impl<E: Error, F: From<E>, I: Interrupt> From<E> for IntErr<F, I> {
     fn from(e: E) -> Self {
-        Self::Error(e)
+        Self::Error(e.into())
     }
 }
 
