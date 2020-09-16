@@ -410,7 +410,7 @@ impl BigUint {
                 }
                 num = divmod_res.0;
             }
-            output = output.trim_start_matches('0').to_string();
+            let output = output.trim_start_matches('0');
             write!(f, "{}", output)?;
         }
         Ok(())
