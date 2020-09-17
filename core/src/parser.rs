@@ -305,7 +305,7 @@ pub struct ParseOptions {
 }
 
 impl ParseOptions {
-    pub fn new_for_gnu_units() -> Self {
+    pub const fn new_for_gnu_units() -> Self {
         Self {
             gnu_compatible: true,
         }

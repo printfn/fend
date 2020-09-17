@@ -56,7 +56,7 @@ impl Base {
         }
     }
 
-    pub fn from_zero_based_prefix_char(ch: char) -> Result<Self, InvalidBasePrefixError> {
+    pub const fn from_zero_based_prefix_char(ch: char) -> Result<Self, InvalidBasePrefixError> {
         Ok(match ch {
             'x' => Self(BaseEnum::Hex),
             'd' => Self(BaseEnum::Decimal),
@@ -66,7 +66,7 @@ impl Base {
         })
     }
 
-    pub fn from_plain_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
+    pub const fn from_plain_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
         if base < 2 {
             return Err(BaseOutOfRangeError::BaseTooSmall);
         } else if base > 36 {
@@ -75,7 +75,7 @@ impl Base {
         Ok(Self(BaseEnum::Plain(base)))
     }
 
-    pub fn from_custom_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
+    pub const fn from_custom_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
         if base < 2 {
             return Err(BaseOutOfRangeError::BaseTooSmall);
         } else if base > 36 {
