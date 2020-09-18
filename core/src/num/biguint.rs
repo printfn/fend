@@ -380,7 +380,6 @@ impl BigUint {
         if num.value_len() == 1 && base.base_as_u8() == 10 {
             write!(f, "{}", num.get(0))?;
         } else {
-            let mut output = String::new();
             let base_as_u128: u128 = base.base_as_u8().into();
             let mut divisor = base_as_u128;
             let mut rounds = 1;
@@ -393,6 +392,7 @@ impl BigUint {
                 divisor *= base_as_u128;
                 rounds += 1;
             }
+            let mut output = String::with_capacity(rounds);
             while !num.is_zero() {
                 test_int(int)?;
                 let divmod_res = num
@@ -411,15 +411,17 @@ impl BigUint {
                         num_zeroes += 1;
                     } else {
                         for _ in 0..num_zeroes {
-                            output.insert(0, '0');
+                            output.push('0');
                         }
                         num_zeroes = 0;
-                        output.insert(0, ch);
+                        output.push(ch);
                     }
                 }
                 num = divmod_res.0;
             }
-            write!(f, "{}", output)?;
+            for ch in output.chars().rev() {
+                write!(f, "{}", ch)?;
+            }
         }
         Ok(())
     }
