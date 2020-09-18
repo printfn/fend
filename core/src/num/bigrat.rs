@@ -3,7 +3,7 @@ use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Debug, Error, Formatter};
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::ops::Neg;
 
 mod sign {
@@ -34,6 +34,7 @@ mod sign {
     }
 }
 
+use super::biguint::FormattedBigUint;
 use sign::Sign;
 
 #[derive(Clone, Debug)]
@@ -362,7 +363,7 @@ impl BigRat {
         style: FormattingStyle,
         imag: bool,
         int: &I,
-    ) -> Result<bool, IntErr<Error, I>> {
+    ) -> Result<FormattedBigRat, IntErr<Error, I>> {
         let mut x = self.clone().simplify(int)?;
         let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
@@ -371,22 +372,28 @@ impl BigRat {
 
         // try as integer if possible
         if x.den == 1.into() {
-            if negative {
-                write!(f, "-")?;
-            }
-            if imag && !base.has_prefix() && x.num == 1.into() {
-                write!(f, "i")?;
-            } else {
-                write!(f, "{}", x.num.format(base, true, int)?)?;
-                if imag {
-                    if base.base_as_u8() >= 19 {
-                        // at this point 'i' could be a digit, so we need a space to disambiguate
-                        write!(f, " ")?;
-                    }
-                    write!(f, "i")?;
-                }
-            }
-            return Ok(true);
+            return Ok(FormattedBigRat {
+                negative,
+                exact: true,
+                ty: if imag && !base.has_prefix() && x.num == 1.into() {
+                    FormattedBigRatType::Integer(None, "i")
+                } else {
+                    FormattedBigRatType::Integer(
+                        Some(x.num.format(base, true, int)?),
+                        if imag {
+                            if base.base_as_u8() >= 19 {
+                                // at this point 'i' could be a digit,
+                                // so we need a space to disambiguate
+                                " i"
+                            } else {
+                                "i"
+                            }
+                        } else {
+                            ""
+                        },
+                    )
+                },
+            });
         }
 
         let mut terminating_res = None;
@@ -401,23 +408,26 @@ impl BigRat {
         let fraction = style == FormattingStyle::ExactFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
         if fraction {
-            if negative {
-                write!(f, "-")?;
-            }
-            if imag && !base.has_prefix() && x.num == 1.into() {
-                write!(f, "i")?;
-            } else {
-                write!(f, "{}", x.num.format(base, true, int)?)?;
-                if imag {
-                    if base.base_as_u8() >= 19 {
-                        write!(f, " ")?;
-                    }
-                    write!(f, "i")?;
-                }
-            }
-            write!(f, "/")?;
-            write!(f, "{}", x.den.format(base, true, int)?)?;
-            return Ok(true);
+            let fden = x.den.format(base, true, int)?;
+            return Ok(FormattedBigRat {
+                negative,
+                exact: true,
+                ty: if imag && !base.has_prefix() && x.num == 1.into() {
+                    FormattedBigRatType::Fraction(None, "i", fden)
+                } else {
+                    let fnum = x.num.format(base, true, int)?;
+                    let s = if imag {
+                        if base.base_as_u8() >= 19 {
+                            " i"
+                        } else {
+                            "i"
+                        }
+                    } else {
+                        ""
+                    };
+                    FormattedBigRatType::Fraction(Some(fnum), s, fden)
+                },
+            });
         }
 
         // not a fraction, will be printed as a decimal
@@ -460,7 +470,11 @@ impl BigRat {
             }
             write!(f, "i")?;
         }
-        Ok(was_exact)
+        Ok(FormattedBigRat {
+            negative: false,
+            exact: was_exact,
+            ty: FormattedBigRatType::Decimal,
+        })
     }
 
     /// Prints the decimal expansion of num/den, where num < den, in the given base.
@@ -810,6 +824,46 @@ impl From<BigUint> for BigRat {
             num: n,
             den: BigUint::from(1),
         }
+    }
+}
+
+enum FormattedBigRatType {
+    // optional int, followed by a string (empty, "i" or " i")
+    Integer(Option<FormattedBigUint>, &'static str),
+    // optional int, string (empty, "i" or " i"), '/', int
+    Fraction(Option<FormattedBigUint>, &'static str, FormattedBigUint),
+    //
+    Decimal,
+}
+
+#[must_use]
+pub struct FormattedBigRat {
+    negative: bool,
+    pub exact: bool,
+    ty: FormattedBigRatType,
+}
+
+impl Display for FormattedBigRat {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        if self.negative {
+            write!(f, "-")?;
+        }
+        match &self.ty {
+            FormattedBigRatType::Integer(int, isuf) => {
+                if let Some(int) = int {
+                    write!(f, "{}", int)?;
+                }
+                write!(f, "{}", isuf)?;
+            }
+            FormattedBigRatType::Fraction(num, isuf, den) => {
+                if let Some(num) = num {
+                    write!(f, "{}", num)?;
+                }
+                write!(f, "{}/{}", isuf, den)?;
+            }
+            FormattedBigRatType::Decimal => (),
+        }
+        Ok(())
     }
 }
 

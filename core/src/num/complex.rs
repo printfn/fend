@@ -152,23 +152,28 @@ impl Complex {
             style
         };
         if self.imag == 0.into() {
-            self.real.format(f, base, style, false, int)?;
+            let x = self.real.format(f, base, style, false, int)?;
+            write!(f, "{}", x)?;
             return Ok(());
         }
 
         if self.real == 0.into() {
-            self.imag.format(f, base, style, true, int)?;
+            let x = self.imag.format(f, base, style, true, int)?;
+            write!(f, "{}", x)?;
         } else {
             if use_parentheses_if_complex {
                 write!(f, "(")?;
             }
-            self.real.format(f, base, style, false, int)?;
+            let x = self.real.format(f, base, style, false, int)?;
+            write!(f, "{}", x)?;
             if self.imag > 0.into() {
                 write!(f, " + ")?;
-                self.imag.format(f, base, style, true, int)?;
+                let x = self.imag.format(f, base, style, true, int)?;
+                write!(f, "{}", x)?;
             } else {
                 write!(f, " - ")?;
-                (-self.imag.clone()).format(f, base, style, true, int)?;
+                let x = (-self.imag.clone()).format(f, base, style, true, int)?;
+                write!(f, "{}", x)?;
             }
             if use_parentheses_if_complex {
                 write!(f, ")")?;
