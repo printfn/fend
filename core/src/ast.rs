@@ -68,7 +68,11 @@ pub fn evaluate<I: Interrupt>(
         Expr::Parens(x) => evaluate(*x)?,
         Expr::UnaryMinus(x) => Value::Num(-evaluate(*x)?.expect_num()?),
         Expr::UnaryPlus(x) => Value::Num(evaluate(*x)?.expect_num()?),
-        Expr::UnaryDiv(x) => Value::Num(Number::from(1).div(evaluate(*x)?.expect_num()?, int)?),
+        Expr::UnaryDiv(x) => Value::Num(
+            Number::from(1)
+                .div(evaluate(*x)?.expect_num()?, int)
+                .map_err(IntErr::into_string)?,
+        ),
         Expr::Factorial(x) => Value::Num(evaluate(*x)?.expect_num()?.factorial(int)?),
         Expr::Add(a, b) => Value::Num(
             evaluate(*a)?
@@ -89,7 +93,8 @@ pub fn evaluate<I: Interrupt>(
         Expr::Div(a, b) => Value::Num(
             evaluate(*a)?
                 .expect_num()?
-                .div(evaluate(*b)?.expect_num()?, int)?,
+                .div(evaluate(*b)?.expect_num()?, int)
+                .map_err(IntErr::into_string)?,
         ),
         Expr::Pow(a, b) => Value::Num(
             evaluate(*a)?

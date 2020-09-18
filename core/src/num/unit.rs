@@ -1,7 +1,7 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::exact_base::ExactBase;
-use crate::num::{Base, FormattingStyle};
+use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use crate::value::Value;
 use std::ops::Neg;
@@ -232,7 +232,7 @@ impl UnitValue {
         })
     }
 
-    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
             components.push(UnitExponent::new(
@@ -279,7 +279,10 @@ impl UnitValue {
         for unit_exp in self.unit.components {
             new_components.push(UnitExponent {
                 unit: unit_exp.unit,
-                exponent: unit_exp.exponent.div(rhs.value.clone(), int)?,
+                exponent: unit_exp
+                    .exponent
+                    .div(rhs.value.clone(), int)
+                    .map_err(IntErr::into_string)?,
             });
         }
         let new_unit = Unit {
@@ -565,7 +568,7 @@ impl Unit {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
         if hash_a == hash_b {
-            Ok(scale_a.div(scale_b, int)?)
+            Ok(scale_a.div(scale_b, int).map_err(IntErr::into_string)?)
         } else {
             Err("Units are incompatible".to_string())?
         }

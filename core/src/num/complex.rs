@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::bigrat::BigRat;
-use crate::num::{Base, FormattingStyle};
+use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
 use std::ops::Neg;
@@ -36,7 +36,7 @@ impl Complex {
         })
     }
 
-    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;
         let v = self.imag;
@@ -44,9 +44,7 @@ impl Complex {
         let y = rhs.imag;
         let sum = x.clone().mul(&x, int)?.add(y.clone().mul(&y, int)?, int)?;
         Ok(Self {
-            real: BigRat::from(1)
-                .div(&sum, int)
-                .map_err(IntErr::into_string)?,
+            real: BigRat::from(1).div(&sum, int)?,
             imag: 0.into(),
         }
         .mul(

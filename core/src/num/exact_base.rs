@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::complex::Complex;
-use crate::num::{Base, FormattingStyle};
+use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
 use std::ops::Neg;
@@ -42,7 +42,7 @@ impl ExactBase {
         })
     }
 
-    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         Ok(Self {
             value: self.value.div(rhs.value, int)?,
             exact: require_both_exact(self.exact, rhs.exact),
