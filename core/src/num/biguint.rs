@@ -384,6 +384,7 @@ impl BigUint {
             let base_as_u128: u128 = base.base_as_u8().into();
             let mut divisor = base_as_u128;
             let mut rounds = 1;
+            let mut num_zeroes = 0;
             while divisor
                 < u128::MAX
                     .checked_div(base_as_u128)
@@ -406,11 +407,18 @@ impl BigUint {
                     let digit_value = digit_group_value % base_as_u128;
                     digit_group_value /= base_as_u128;
                     let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
-                    output.insert(0, ch);
+                    if ch == '0' {
+                        num_zeroes += 1;
+                    } else {
+                        for _ in 0..num_zeroes {
+                            output.insert(0, '0');
+                        }
+                        num_zeroes = 0;
+                        output.insert(0, ch);
+                    }
                 }
                 num = divmod_res.0;
             }
-            let output = output.trim_start_matches('0');
             write!(f, "{}", output)?;
         }
         Ok(())
