@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, DivideByZero, IntegerPowerError, ValueTooLarge};
 use std::cmp::{max, Ordering};
-use std::fmt::{Debug, Error, Formatter};
+use std::fmt::{Debug, Display, Error, Formatter};
 
 #[derive(Clone)]
 pub enum BigUint {
@@ -362,23 +362,25 @@ impl BigUint {
 
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut Formatter,
         base: Base,
         write_base_prefix: bool,
         int: &I,
-    ) -> Result<(), IntErr<Error, I>> {
-        if write_base_prefix {
-            base.write_prefix(f)?;
-        }
+    ) -> Result<FormattedBigUint, IntErr<Never, I>> {
+        let base_prefix = if write_base_prefix { Some(base) } else { None };
 
         if self.is_zero() {
-            write!(f, "0")?;
-            return Ok(());
+            return Ok(FormattedBigUint {
+                base: base_prefix,
+                ty: FormattedBigUintType::Zero,
+            });
         }
 
         let mut num = self.clone();
-        if num.value_len() == 1 && base.base_as_u8() == 10 {
-            write!(f, "{}", num.get(0))?;
+        Ok(if num.value_len() == 1 && base.base_as_u8() == 10 {
+            FormattedBigUint {
+                base: base_prefix,
+                ty: FormattedBigUintType::Simple(num.get(0)),
+            }
         } else {
             let base_as_u128: u128 = base.base_as_u8().into();
             let mut divisor = base_as_u128;
@@ -419,11 +421,11 @@ impl BigUint {
                 }
                 num = divmod_res.0;
             }
-            for ch in output.chars().rev() {
-                write!(f, "{}", ch)?;
+            FormattedBigUint {
+                base: base_prefix,
+                ty: FormattedBigUintType::Complex(output),
             }
-        }
-        Ok(())
+        })
     }
 
     // Note: 0! = 1, 1! = 1
@@ -544,6 +546,36 @@ impl Debug for BigUint {
             Small(n) => write!(f, "{}", n),
             Large(value) => write!(f, "{:?}", value),
         }
+    }
+}
+
+enum FormattedBigUintType {
+    Zero,
+    Simple(u64),
+    Complex(String),
+}
+
+#[must_use]
+pub struct FormattedBigUint {
+    base: Option<Base>,
+    ty: FormattedBigUintType,
+}
+
+impl Display for FormattedBigUint {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        if let Some(base) = self.base {
+            base.write_prefix(f)?;
+        }
+        match &self.ty {
+            FormattedBigUintType::Zero => write!(f, "0")?,
+            FormattedBigUintType::Simple(i) => write!(f, "{}", i)?,
+            FormattedBigUintType::Complex(s) => {
+                for ch in s.chars().rev() {
+                    write!(f, "{}", ch)?;
+                }
+            }
+        }
+        Ok(())
     }
 }
 

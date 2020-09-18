@@ -377,7 +377,7 @@ impl BigRat {
             if imag && !base.has_prefix() && x.num == 1.into() {
                 write!(f, "i")?;
             } else {
-                x.num.format(f, base, true, int)?;
+                write!(f, "{}", x.num.format(base, true, int)?)?;
                 if imag {
                     if base.base_as_u8() >= 19 {
                         // at this point 'i' could be a digit, so we need a space to disambiguate
@@ -407,7 +407,7 @@ impl BigRat {
             if imag && !base.has_prefix() && x.num == 1.into() {
                 write!(f, "i")?;
             } else {
-                x.num.format(f, base, true, int)?;
+                write!(f, "{}", x.num.format(base, true, int)?)?;
                 if imag {
                     if base.base_as_u8() >= 19 {
                         write!(f, " ")?;
@@ -416,7 +416,7 @@ impl BigRat {
                 }
             }
             write!(f, "/")?;
-            x.den.format(f, base, true, int)?;
+            write!(f, "{}", x.den.format(base, true, int)?)?;
             return Ok(true);
         }
 
@@ -435,7 +435,7 @@ impl BigRat {
             if negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
                 write!(f, "-")?;
             }
-            integer_part.format(f, base, true, int)?;
+            write!(f, "{}", integer_part.format(base, true, int)?)?;
             Ok(())
         };
         let integer_as_rational = Self {
@@ -510,7 +510,7 @@ impl BigRat {
             Ok((next_num, digit))
         };
         let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never, I>> {
-            let digit_str = crate::num::to_string(|f| digit.format(f, base, false, int))?;
+            let digit_str = digit.format(base, false, int)?.to_string();
             s.push_str(digit_str.as_str());
             Ok(s)
         };
@@ -537,7 +537,7 @@ impl BigRat {
                                 write!(f, "0")?;
                             }
                             trailing_zeroes = 0;
-                            digit.format(f, base, false, int)?;
+                            write!(f, "{}", digit.format(base, false, int)?)?;
                         }
                     }
                     Err(NextDigitErr::Terminated) => {
