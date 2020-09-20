@@ -114,11 +114,12 @@ pub fn evaluate<I: Interrupt>(
         Expr::As(a, b) => match evaluate(*b)? {
             Value::Num(b) => Value::Num(evaluate(*a)?.expect_num()?.convert_to(b, int)?),
             Value::Format(fmt) => Value::Num(evaluate(*a)?.expect_num()?.with_format(fmt)),
-            Value::Dp => Value::Num(
-                evaluate(*a)?
-                    .expect_num()?
-                    .with_format(FormattingStyle::ApproxFloat(10)),
-            ),
+            Value::Dp => {
+                return Err(
+                    "You need to specify what number of decimal places to use, e.g. '10 dp'"
+                        .to_string(),
+                )?;
+            }
             Value::Base(base) => Value::Num(evaluate(*a)?.expect_num()?.with_base(base)),
             Value::Func(_) | Value::Fn(_, _, _) => {
                 return Err("Unable to convert value to a function".to_string())?;
