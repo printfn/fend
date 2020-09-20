@@ -6,7 +6,7 @@ use std::fmt::{Error, Formatter};
 #[derive(Debug, Clone)]
 pub enum Value {
     Num(Number),
-    Func(String),
+    Func(&'static str),
     Format(FormattingStyle),
     Dp,
     Base(Base),
@@ -44,6 +44,7 @@ impl Value {
                 }
             }
             Self::Func(name) => {
+                let name = *name;
                 if force_multiplication {
                     return Err(format!(
                         "Cannot apply function '{}' in this context",
