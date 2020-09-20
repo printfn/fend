@@ -12,6 +12,7 @@ pub enum ParseError {
     // TODO remove this
     InvalidApplyOperands,
     UnexpectedInput,
+    ExpectedIdentifierAsArgument,
 }
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -22,7 +23,9 @@ impl Display for ParseError {
                 write!(f, "Found an invalid token while expecting '{}'", sym)
             }
             Self::ExpectedANumber => write!(f, "Expected a number"),
-            Self::ExpectedIdentifier => write!(f, "Expected an identifier"),
+            Self::ExpectedIdentifier | Self::ExpectedIdentifierAsArgument => {
+                write!(f, "Expected an identifier")
+            }
             Self::ExpectedNumIdentOrParen => {
                 write!(f, "Expected a number, an identifier or an open parenthesis")
             }
@@ -299,6 +302,19 @@ fn parse_arrow_conversion<'a>(input: &'a [Token], options: ParseOptions) -> Pars
     Ok((res, input))
 }
 
+fn parse_function<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+    let (lhs, input) = parse_arrow_conversion(input, options)?;
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
+        if let Expr::Ident(s) = lhs {
+            let (rhs, remaining) = parse_function(remaining, options)?;
+            return Ok((Expr::Fn(s, Box::new(rhs)), remaining));
+        } else {
+            return Err(ParseError::ExpectedIdentifierAsArgument);
+        }
+    }
+    Ok((lhs, input))
+}
+
 #[derive(Debug, Copy, Clone, Default)]
 pub struct ParseOptions {
     pub gnu_compatible: bool,
@@ -313,7 +329,7 @@ impl ParseOptions {
 }
 
 pub fn parse_expression<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
-    parse_arrow_conversion(input, options)
+    parse_function(input, options)
 }
 
 pub fn parse_tokens(input: &[Token], options: ParseOptions) -> Result<Expr, ParseError> {

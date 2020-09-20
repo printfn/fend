@@ -28,6 +28,7 @@ pub enum Expr {
     ApplyMul(Box<Expr>, Box<Expr>),
 
     As(Box<Expr>, Box<Expr>),
+    Fn(String, Box<Expr>),
 }
 
 impl Debug for Expr {
@@ -50,6 +51,7 @@ impl Debug for Expr {
                 write!(f, "({:?} {:?})", *a, *b)
             }
             Self::As(a, b) => write!(f, "({:?} as {:?})", *a, *b),
+            Self::Fn(a, b) => write!(f, "({:?} : {:?})", *a, *b),
         }
     }
 }
@@ -89,7 +91,9 @@ pub fn evaluate<I: Interrupt>(
                 .expect_num()?
                 .mul(evaluate(*b)?.expect_num()?, int)?,
         ),
-        Expr::ApplyMul(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, true, true, scope, int)?,
+        Expr::ApplyMul(a, b) => {
+            evaluate(*a)?.apply(&evaluate(*b)?, true, true, scope, options, int)?
+        }
         Expr::Div(a, b) => Value::Num(
             evaluate(*a)?
                 .expect_num()?
@@ -101,9 +105,11 @@ pub fn evaluate<I: Interrupt>(
                 .expect_num()?
                 .pow(evaluate(*b)?.expect_num()?, int)?,
         ),
-        Expr::Apply(a, b) => evaluate(*a)?.apply(&evaluate(*b)?, true, false, scope, int)?,
+        Expr::Apply(a, b) => {
+            evaluate(*a)?.apply(&evaluate(*b)?, true, false, scope, options, int)?
+        }
         Expr::ApplyFunctionCall(a, b) => {
-            evaluate(*a)?.apply(&evaluate(*b)?, false, false, scope, int)?
+            evaluate(*a)?.apply(&evaluate(*b)?, false, false, scope, options, int)?
         }
         Expr::As(a, b) => match evaluate(*b)? {
             Value::Num(b) => Value::Num(evaluate(*a)?.expect_num()?.convert_to(b, int)?),
@@ -114,10 +120,11 @@ pub fn evaluate<I: Interrupt>(
                     .with_format(FormattingStyle::ApproxFloat(10)),
             ),
             Value::Base(base) => Value::Num(evaluate(*a)?.expect_num()?.with_base(base)),
-            Value::Func(_) => {
+            Value::Func(_) | Value::Fn(_, _, _) => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
+        Expr::Fn(a, b) => Value::Fn(a, *b, scope.clone()),
     })
 }
 

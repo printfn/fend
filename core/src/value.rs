@@ -1,15 +1,19 @@
+use crate::ast::Expr;
 use crate::err::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
-use crate::scope::Scope;
+use crate::{parser::ParseOptions, scope::Scope};
 use std::fmt::{Error, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum Value {
     Num(Number),
+    // built-in function
     Func(&'static str),
     Format(FormattingStyle),
     Dp,
     Base(Base),
+    // user-defined function with a named parameter
+    Fn(String, Expr, Scope),
 }
 
 impl Value {
@@ -26,6 +30,7 @@ impl Value {
         allow_multiplication: bool,
         force_multiplication: bool,
         scope: &mut Scope,
+        options: ParseOptions,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(Self::Num(match self {
@@ -105,6 +110,16 @@ impl Value {
                     return Err(format!("Unknown function '{}'", name))?;
                 }
             }
+            Self::Fn(param, expr, custom_scope) => {
+                let mut new_scope = custom_scope.clone().create_nested_scope();
+                new_scope.insert_variable(param.clone(), other.clone());
+                return Ok(crate::ast::evaluate(
+                    expr.clone(),
+                    &mut new_scope,
+                    options,
+                    int,
+                )?);
+            }
             _ => {
                 return Err(format!(
                     "'{}' is not a function or a number",
@@ -121,6 +136,7 @@ impl Value {
             Self::Format(fmt) => write!(f, "{}", fmt)?,
             Self::Dp => write!(f, "dp")?,
             Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
+            Self::Fn(name, _expr, _scope) => write!(f, "function({})", name)?,
         }
         Ok(())
     }

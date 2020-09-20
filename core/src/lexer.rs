@@ -26,6 +26,7 @@ pub enum Symbol {
     Pow,
     ArrowConversion,
     Factorial,
+    Fn,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -102,6 +103,7 @@ impl Display for Symbol {
             Self::Pow => "^",
             Self::ArrowConversion => "->",
             Self::Factorial => "!",
+            Self::Fn => ":",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -418,6 +420,7 @@ impl<'a, I: Interrupt> Lexer<'a, I> {
                         '/' => Symbol::Div,
                         '|' => Symbol::InnerDiv,
                         '^' => Symbol::Pow,
+                        ':' => Symbol::Fn,
                         _ => return Err(LexerError::UnexpectedChar(ch))?,
                     })
                 }

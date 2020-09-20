@@ -9,6 +9,7 @@ enum ScopeValue {
     // expr, singular name, plural name
     LazyUnit(String, String, String),
     LazyExpr(String),
+    Variable(Value),
 }
 
 impl ScopeValue {
@@ -45,6 +46,7 @@ impl ScopeValue {
                 // todo add caching
                 Ok(value)
             }
+            ScopeValue::Variable(val) => Ok(val.clone()),
         }
     }
 }
@@ -53,6 +55,7 @@ impl ScopeValue {
 pub struct Scope {
     hashmap: HashMap<String, ScopeValue>,
     prefixes: Vec<(String, ScopeValue)>,
+    inner: Option<Box<Scope>>,
 }
 
 impl Scope {
@@ -64,6 +67,7 @@ impl Scope {
         Self {
             hashmap: HashMap::new(),
             prefixes: vec![],
+            inner: None,
         }
     }
 
@@ -90,6 +94,16 @@ impl Scope {
             self.insert_scope_value(plural_name, hashmap_val.clone());
         }
         self.insert_scope_value(singular_name, hashmap_val);
+    }
+
+    pub fn insert_variable(&mut self, name: String, value: Value) {
+        self.insert_scope_value(name, ScopeValue::Variable(value))
+    }
+
+    pub fn create_nested_scope(self) -> Self {
+        let mut res = Self::new_empty();
+        res.inner = Some(Box::from(self));
+        res
     }
 
     pub fn insert_prefix(&mut self, ident: &str, expr: &str) {
@@ -119,7 +133,7 @@ impl Scope {
                         ScopeValue::EagerUnit(_, s, p) | ScopeValue::LazyUnit(_, s, p) => {
                             (s.clone(), p.clone())
                         }
-                        _ => ("".to_string(), "".to_string()),
+                        _ => continue,
                     };
                     singular.insert_str(0, prefix);
                     plural.insert_str(0, prefix);
@@ -136,13 +150,16 @@ impl Scope {
     }
 
     pub fn get<I: Interrupt>(&mut self, ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
-        // TODO find a way to remove this 'cloned' call without upsetting the borrow checker
         let potential_value = self.hashmap.get(ident).cloned();
         if let Some(value) = potential_value {
             let value = value.eval(ident, self, int)?;
             Ok(value)
+        } else if let Ok(val) = self.test_prefixes(ident, int) {
+            Ok(val)
+        } else if let Some(inner) = &mut self.inner {
+            inner.get(ident, int)
         } else {
-            self.test_prefixes(ident, int)
+            Err(format!("Unknown identifier '{}'", ident))?
         }
     }
 }
