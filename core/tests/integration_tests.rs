@@ -706,3 +706,28 @@ fn test_unary_div() {
     test_evaluation("per second", "1 second^-1");
     test_evaluation("1 Hz + /s", "2 Hz");
 }
+
+#[test]
+fn test_lambdas() {
+    let mut ctx = Context::new();
+    test_evaluation("(x: x) 1", "1");
+    test_evaluation("(x: y: x) 1 2", "1");
+    test_evaluation(
+        "(cis: (cis (pi/3))) (x: cos x + i * (sin x))",
+        "approx. 0.4999999999 + 0.8660254037i",
+    );
+    assert!(evaluate("(x: iuwhe)", &mut ctx).is_ok());
+    test_evaluation("(b: 5 + b) 1", "6");
+    test_evaluation("(addFive: 4)(b: 5 + b)", "4");
+    test_evaluation("(addFive: addFive 4)(b: 5 + b)", "9");
+    test_evaluation("(x: y: z: x) 1 2 3", "1");
+    test_evaluation("(x: y: z: y) 1 2 3", "2");
+    test_evaluation("(x: y: z: z) 1 2 3", "3");
+    test_evaluation("(one: one + 4) 1", "5");
+    test_evaluation("(one: one + one) 1", "2");
+    test_evaluation("(x: x to kg) (5 g)", "0.005 kg");
+    test_evaluation("(p: q: p p q) (x: y: y) (x: y: y) 1 0", "0");
+    test_evaluation("(p: q: p p q) (x: y: y) (x: y: x) 1 0", "1");
+    test_evaluation("(p: q: p p q) (x: y: x) (x: y: y) 1 0", "1");
+    test_evaluation("(p: q: p p q) (x: y: x) (x: y: x) 1 0", "1");
+}
