@@ -271,29 +271,6 @@ impl UnitValue {
         })
     }
 
-    pub fn root_n<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        if !rhs.is_unitless() {
-            return Err("Roots are currently only supported for unitless numbers.".to_string())?;
-        }
-        let mut new_components = vec![];
-        for unit_exp in self.unit.components {
-            new_components.push(UnitExponent {
-                unit: unit_exp.unit,
-                exponent: unit_exp
-                    .exponent
-                    .div(rhs.value.clone(), int)
-                    .map_err(IntErr::into_string)?,
-            });
-        }
-        let new_unit = Unit {
-            components: new_components,
-        };
-        Ok(Self {
-            value: self.value.root_n(&rhs.value, int)?,
-            unit: new_unit,
-        })
-    }
-
     pub fn i() -> Self {
         Self {
             value: ExactBase::i(),
@@ -378,12 +355,6 @@ impl UnitValue {
     pub fn cos<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
         self.convert_angle_to_rad(scope, int)?
             .apply_fn(ExactBase::cos, false, int)?
-            .convert_to(Self::unitless(), int)
-    }
-
-    pub fn tan<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.convert_angle_to_rad(scope, int)?
-            .apply_fn(ExactBase::tan, false, int)?
             .convert_to(Self::unitless(), int)
     }
 

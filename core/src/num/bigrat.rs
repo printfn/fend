@@ -114,17 +114,13 @@ impl BigRat {
         })
     }
 
-    // sin, cos and tan work for all real numbers
+    // sin and cos work for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::sin(self.into_f64(int)?), int)?)
     }
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from_f64(f64::cos(self.into_f64(int)?), int)?)
-    }
-
-    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::tan(self.into_f64(int)?), int)?)
     }
 
     // asin, acos and atan only work for values between -1 and 1
@@ -655,6 +651,9 @@ impl BigRat {
     ) -> Result<(Self, bool), IntErr<String, I>> {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
+        if self.sign == Sign::Negative && rhs.den != 1.into() {
+            return Err("Roots of negative numbers are not supported".to_string())?;
+        }
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
@@ -666,8 +665,14 @@ impl BigRat {
                 exact,
             ));
         }
+        let result_sign =
+            if self.sign == Sign::Positive || rhs.num.is_even(int).map_err(IntErr::into_string)? {
+                Sign::Positive
+            } else {
+                Sign::Negative
+            };
         let pow_res = Self {
-            sign: Sign::Positive,
+            sign: result_sign,
             num: BigUint::pow(&self.num, &rhs.num, int).map_err(IntErr::into_string)?,
             den: BigUint::pow(&self.den, &rhs.num, int).map_err(IntErr::into_string)?,
         };

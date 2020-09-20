@@ -140,7 +140,7 @@ fn test_subtraction_2() {
 
 #[test]
 fn test_sqrt_half() {
-    test_evaluation("sqrt (1/2)", "approx. 0.7071067809");
+    test_evaluation("sqrt (1/2)", "approx. 0.7071067814");
 }
 
 #[test]
@@ -685,9 +685,15 @@ fn test_various_functions() {
     expect_error("log10 (-1)");
     expect_error("log2 (-1)");
     expect_error("sqrt (-2)");
+    test_evaluation("(-2)^3", "-8");
+    test_evaluation("(-2)^5", "-32");
+    test_evaluation("2^-2", "0.25");
+    test_evaluation("(-2)^-2", "0.25");
+    test_evaluation("(-2)^-3", "-0.125");
+    test_evaluation("(-2)^-4", "0.0625");
     expect_error("oishfod 3");
     test_evaluation("ln", "ln");
-    test_evaluation("sqrt", "sqrt");
+    //test_evaluation("sqrt", "x:x^(1/2)");
     test_evaluation("dp", "dp");
     test_evaluation("10 dp", "10 dp");
     test_evaluation("float", "float");

@@ -453,6 +453,10 @@ impl BigUint {
         Ok(self.divmod(other, int)?.1)
     }
 
+    pub fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<DivideByZero, I>> {
+        Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
+    }
+
     pub fn div<I: Interrupt>(
         self,
         other: &Self,

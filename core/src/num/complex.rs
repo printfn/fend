@@ -217,10 +217,6 @@ impl Complex {
         Ok(Self::from(self.expect_real()?.cos(int)?))
     }
 
-    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.tan(int)?))
-    }
-
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.asin(int)?))
     }

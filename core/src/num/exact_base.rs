@@ -166,10 +166,6 @@ impl ExactBase {
         self.apply_approx_fn(Complex::cos, int)
     }
 
-    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_approx_fn(Complex::tan, int)
-    }
-
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_approx_fn(Complex::asin, int)
     }

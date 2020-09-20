@@ -55,11 +55,6 @@ impl Value {
                         "Cannot apply function '{}' in this context",
                         crate::num::to_string(|f| self.format(f, int))?
                     ))?;
-                }
-                if name == "sqrt" {
-                    other.expect_num()?.root_n(&2.into(), int)?
-                } else if name == "cbrt" {
-                    other.expect_num()?.root_n(&3.into(), int)?
                 } else if name == "approximately" {
                     other.expect_num()?.make_approximate()
                 } else if name == "abs" {
@@ -68,8 +63,6 @@ impl Value {
                     other.expect_num()?.sin(scope, int)?
                 } else if name == "cos" {
                     other.expect_num()?.cos(scope, int)?
-                } else if name == "tan" {
-                    other.expect_num()?.tan(scope, int)?
                 } else if name == "asin" {
                     other.expect_num()?.asin(int)?
                 } else if name == "acos" {
@@ -134,7 +127,10 @@ impl Value {
             Self::Format(fmt) => write!(f, "{}", fmt)?,
             Self::Dp => write!(f, "dp")?,
             Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
-            Self::Fn(name, _expr, _scope) => write!(f, "λ{}", name)?,
+            Self::Fn(name, expr, _scope) => {
+                let expr_str = crate::num::to_string(|f| expr.format(f, int))?;
+                write!(f, "{}:{}", name, expr_str)?
+            }
         }
         Ok(())
     }

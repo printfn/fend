@@ -6,7 +6,7 @@ use crate::scope::Scope;
 use crate::value::Value;
 use std::fmt::{Debug, Error, Formatter};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expr {
     Num(Number),
     Ident(String),
@@ -31,28 +31,32 @@ pub enum Expr {
     Fn(String, Box<Expr>),
 }
 
-impl Debug for Expr {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl Expr {
+    pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
+        let g = |x: &Expr| -> Result<String, IntErr<Error, I>> {
+            Ok(crate::num::to_string(|f| (*x).format(f, int))?)
+        };
         match self {
-            Self::Num(n) => write!(f, "{:?}", n),
-            Self::Ident(ident) => write!(f, "{}", ident),
-            Self::Parens(x) => write!(f, "({:?})", *x),
-            Self::UnaryMinus(x) => write!(f, "(-{:?})", *x),
-            Self::UnaryPlus(x) => write!(f, "(+{:?})", *x),
-            Self::UnaryDiv(x) => write!(f, "(/{:?})", *x),
-            Self::Factorial(x) => write!(f, "{:?}!", *x),
-            Self::Add(a, b) => write!(f, "({:?}+{:?})", *a, *b),
-            Self::Sub(a, b) => write!(f, "({:?}-{:?})", *a, *b),
-            Self::Mul(a, b) => write!(f, "({:?}*{:?})", *a, *b),
-            Self::Div(a, b) => write!(f, "({:?}/{:?})", *a, *b),
-            Self::Pow(a, b) => write!(f, "({:?}^{:?})", *a, *b),
-            Self::Apply(a, b) => write!(f, "({:?} ({:?}))", *a, *b),
+            Self::Num(n) => n.format(f, int)?,
+            Self::Ident(ident) => write!(f, "{}", ident)?,
+            Self::Parens(x) => write!(f, "({})", g(x)?)?,
+            Self::UnaryMinus(x) => write!(f, "(-{})", g(x)?)?,
+            Self::UnaryPlus(x) => write!(f, "(+{})", g(x)?)?,
+            Self::UnaryDiv(x) => write!(f, "(/{})", g(x)?)?,
+            Self::Factorial(x) => write!(f, "{}!", g(x)?)?,
+            Self::Add(a, b) => write!(f, "({}+{})", g(a)?, g(b)?)?,
+            Self::Sub(a, b) => write!(f, "({}-{})", g(a)?, g(b)?)?,
+            Self::Mul(a, b) => write!(f, "({}*{})", g(a)?, g(b)?)?,
+            Self::Div(a, b) => write!(f, "({}/{})", g(a)?, g(b)?)?,
+            Self::Pow(a, b) => write!(f, "({}^{})", g(a)?, g(b)?)?,
+            Self::Apply(a, b) => write!(f, "({} ({}))", g(a)?, g(b)?)?,
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
-                write!(f, "({:?} {:?})", *a, *b)
+                write!(f, "({} {})", g(a)?, g(b)?)?
             }
-            Self::As(a, b) => write!(f, "({:?} as {:?})", *a, *b),
-            Self::Fn(a, b) => write!(f, "({:?} : {:?})", *a, *b),
+            Self::As(a, b) => write!(f, "({} as {})", g(a)?, g(b)?)?,
+            Self::Fn(a, b) => write!(f, "({}:{})", a, g(b)?)?,
         }
+        Ok(())
     }
 }
 
@@ -147,11 +151,14 @@ fn resolve_identifier<I: Interrupt>(
     if options.gnu_compatible {
         return Ok(match ident {
             "exp" => eval("x: e^x", scope, int)?,
-            "sqrt" => Value::Func("sqrt"),
+            "sqrt" => eval("x: x^(1/2)", scope, int)?,
             "ln" => Value::Func("ln"),
             "log2" => Value::Func("log2"),
             "log10" => Value::Func("log10"),
-            "tan" => Value::Func("tan"),
+            // sin and cos are only needed for tan
+            "sin" => Value::Func("sin"),
+            "cos" => Value::Func("cos"),
+            "tan" => eval("x: (sin x)/(cos x)", scope, int)?,
             "asin" => Value::Func("asin"),
             "approx." | "approximately" => Value::Func("approximately"),
             _ => scope.get(ident, int)?,
@@ -164,12 +171,12 @@ fn resolve_identifier<I: Interrupt>(
         // TODO: we want to forward any interrupt, but panic on any other error
         // or statically prove that no other error can occur
         //"c" => eval("299792458 m / s", scope, int)?,
-        "sqrt" => Value::Func("sqrt"),
-        "cbrt" => Value::Func("cbrt"),
+        "sqrt" => eval("x: x^(1/2)", scope, int)?,
+        "cbrt" => eval("x: x^(1/3)", scope, int)?,
         "abs" => Value::Func("abs"),
         "sin" => Value::Func("sin"),
         "cos" => Value::Func("cos"),
-        "tan" => Value::Func("tan"),
+        "tan" => eval("x: (sin x)/(cos x)", scope, int)?,
         "asin" => Value::Func("asin"),
         "acos" => Value::Func("acos"),
         "atan" => Value::Func("atan"),
