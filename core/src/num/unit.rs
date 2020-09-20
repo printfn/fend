@@ -435,10 +435,6 @@ impl UnitValue {
         self.apply_fn(ExactBase::log10, true, int)
     }
 
-    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::exp, true, int)
-    }
-
     pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
         let use_parentheses = !self.unit.components.is_empty();
         self.value.format(f, use_parentheses, int)?;

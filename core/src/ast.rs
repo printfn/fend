@@ -145,7 +145,7 @@ fn resolve_identifier<I: Interrupt>(
 ) -> Result<Value, IntErr<String, I>> {
     if options.gnu_compatible {
         return Ok(match ident {
-            "exp" => Value::Func("exp"),
+            "exp" => eval("x: e^x", scope, int)?,
             "sqrt" => Value::Func("sqrt"),
             "ln" => Value::Func("ln"),
             "log2" => Value::Func("log2"),
@@ -181,7 +181,7 @@ fn resolve_identifier<I: Interrupt>(
         "ln" => Value::Func("ln"),
         "log2" => Value::Func("log2"),
         "log10" => Value::Func("log10"),
-        "exp" => Value::Func("exp"),
+        "exp" => eval("x: e^x", scope, int)?,
         "approx." | "approximately" => Value::Func("approximately"),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),

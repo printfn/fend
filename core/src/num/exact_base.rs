@@ -218,10 +218,6 @@ impl ExactBase {
         self.apply_approx_fn(Complex::log10, int)
     }
 
-    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_approx_fn(Complex::exp, int)
-    }
-
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,

@@ -204,10 +204,6 @@ impl BigRat {
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
     }
 
-    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::exp(self.into_f64(int)?), int)?)
-    }
-
     pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {

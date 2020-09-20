@@ -94,8 +94,6 @@ impl Value {
                     other.expect_num()?.log2(int)?
                 } else if name == "log10" {
                     other.expect_num()?.log10(int)?
-                } else if name == "exp" {
-                    other.expect_num()?.exp(int)?
                 } else if name == "base" {
                     use std::convert::TryInto;
                     let n: u8 = other

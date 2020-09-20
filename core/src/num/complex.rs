@@ -269,10 +269,6 @@ impl Complex {
         Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
-    pub fn exp<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.exp(int)?))
-    }
-
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
