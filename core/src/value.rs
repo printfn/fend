@@ -136,7 +136,7 @@ impl Value {
             Self::Format(fmt) => write!(f, "{}", fmt)?,
             Self::Dp => write!(f, "dp")?,
             Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
-            Self::Fn(name, _expr, _scope) => write!(f, "function({})", name)?,
+            Self::Fn(name, _expr, _scope) => write!(f, "λ{}", name)?,
         }
         Ok(())
     }
