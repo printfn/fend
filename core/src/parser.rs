@@ -268,6 +268,12 @@ fn parse_subtraction_cont<'a>(input: &'a [Token], options: ParseOptions) -> Pars
     Ok((b, input))
 }
 
+fn parse_to_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
+    let (b, input) = parse_compound_fraction(input, options)?;
+    Ok((b, input))
+}
+
 fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (mut res, mut input) = parse_compound_fraction(input, options)?;
     loop {
@@ -277,6 +283,9 @@ fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<
         } else if let Ok((term, remaining)) = parse_subtraction_cont(input, options) {
             res = Expr::Sub(Box::new(res), Box::new(term));
             input = remaining;
+        } else if let Ok((term, remaining)) = parse_to_cont(input, options) {
+            res = Expr::As(Box::new(res), Box::new(term));
+            input = remaining;
         } else {
             break;
         }
@@ -284,26 +293,8 @@ fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<
     Ok((res, input))
 }
 
-fn parse_arrow_conversion_cont<'a>(
-    input: &'a [Token],
-    options: ParseOptions,
-) -> ParseResult<'a, Expr> {
-    let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
-    let (b, input) = parse_additive(input, options)?;
-    Ok((b, input))
-}
-
-fn parse_arrow_conversion<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
-    let (mut res, mut input) = parse_additive(input, options)?;
-    while let Ok((term, remaining)) = parse_arrow_conversion_cont(input, options) {
-        res = Expr::As(Box::new(res), Box::new(term));
-        input = remaining;
-    }
-    Ok((res, input))
-}
-
 fn parse_function<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
-    let (lhs, input) = parse_arrow_conversion(input, options)?;
+    let (lhs, input) = parse_additive(input, options)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining, options)?;
