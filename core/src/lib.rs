@@ -3,7 +3,6 @@
 #![allow(clippy::try_err)] // allow `Err(..)?`
 #![allow(clippy::too_many_arguments)] // format_trailing_digits in BigRat
 #![deny(clippy::pedantic)]
-#![allow(clippy::too_many_lines)] // BigRat::format
 #![allow(clippy::non_ascii_literal)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.4")]
 

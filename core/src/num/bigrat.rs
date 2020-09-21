@@ -345,6 +345,68 @@ impl BigRat {
         Ok(())
     }
 
+    fn format_as_integer<I: Interrupt>(
+        num: &BigUint,
+        base: Base,
+        negative: bool,
+        imag: bool,
+        int: &I,
+    ) -> Result<FormattedBigRat, IntErr<Never, I>> {
+        let ty = if imag && !base.has_prefix() && num == &1.into() {
+            FormattedBigRatType::Integer(None, "i")
+        } else {
+            FormattedBigRatType::Integer(
+                Some(num.format(base, true, int)?),
+                if imag {
+                    if base.base_as_u8() >= 19 {
+                        // at this point 'i' could be a digit,
+                        // so we need a space to disambiguate
+                        " i"
+                    } else {
+                        "i"
+                    }
+                } else {
+                    ""
+                },
+            )
+        };
+        Ok(FormattedBigRat {
+            negative,
+            exact: true,
+            ty,
+        })
+    }
+
+    fn format_as_fraction<I: Interrupt>(
+        num: &BigUint,
+        den: &BigUint,
+        base: Base,
+        negative: bool,
+        imag: bool,
+        int: &I,
+    ) -> Result<FormattedBigRat, IntErr<Never, I>> {
+        let formatted_den = den.format(base, true, int)?;
+        Ok(FormattedBigRat {
+            negative,
+            exact: true,
+            ty: if imag && !base.has_prefix() && num == &1.into() {
+                FormattedBigRatType::Fraction(None, "i", formatted_den)
+            } else {
+                let formatted_num = num.format(base, true, int)?;
+                let s = if imag {
+                    if base.base_as_u8() >= 19 {
+                        " i"
+                    } else {
+                        "i"
+                    }
+                } else {
+                    ""
+                };
+                FormattedBigRatType::Fraction(Some(formatted_num), s, formatted_den)
+            },
+        })
+    }
+
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
     // The result bool indicates whether the number was exact or not.
@@ -364,28 +426,7 @@ impl BigRat {
 
         // try as integer if possible
         if x.den == 1.into() {
-            return Ok(FormattedBigRat {
-                negative,
-                exact: true,
-                ty: if imag && !base.has_prefix() && x.num == 1.into() {
-                    FormattedBigRatType::Integer(None, "i")
-                } else {
-                    FormattedBigRatType::Integer(
-                        Some(x.num.format(base, true, int)?),
-                        if imag {
-                            if base.base_as_u8() >= 19 {
-                                // at this point 'i' could be a digit,
-                                // so we need a space to disambiguate
-                                " i"
-                            } else {
-                                "i"
-                            }
-                        } else {
-                            ""
-                        },
-                    )
-                },
-            });
+            return Ok(Self::format_as_integer(&x.num, base, negative, imag, int)?);
         }
 
         let mut terminating_res = None;
@@ -400,26 +441,9 @@ impl BigRat {
         let fraction = style == FormattingStyle::ExactFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
         if fraction {
-            let fden = x.den.format(base, true, int)?;
-            return Ok(FormattedBigRat {
-                negative,
-                exact: true,
-                ty: if imag && !base.has_prefix() && x.num == 1.into() {
-                    FormattedBigRatType::Fraction(None, "i", fden)
-                } else {
-                    let fnum = x.num.format(base, true, int)?;
-                    let s = if imag {
-                        if base.base_as_u8() >= 19 {
-                            " i"
-                        } else {
-                            "i"
-                        }
-                    } else {
-                        ""
-                    };
-                    FormattedBigRatType::Fraction(Some(fnum), s, fden)
-                },
-            });
+            return Ok(Self::format_as_fraction(
+                &x.num, &x.den, base, negative, imag, int,
+            )?);
         }
 
         // not a fraction, will be printed as a decimal
