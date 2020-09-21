@@ -421,6 +421,15 @@ impl<'a, I: Interrupt> Lexer<'a, I> {
                         '|' => Symbol::InnerDiv,
                         '^' => Symbol::Pow,
                         ':' => Symbol::Fn,
+                        '=' => {
+                            if self.input.starts_with('>') {
+                                let (_, remaining) = self.input.split_at('>'.len_utf8());
+                                self.input = remaining;
+                                Symbol::Fn
+                            } else {
+                                return Err(LexerError::UnexpectedChar(ch))?
+                            }
+                        }
                         _ => return Err(LexerError::UnexpectedChar(ch))?,
                     })
                 }
