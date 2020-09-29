@@ -4,7 +4,7 @@
 #![allow(clippy::too_many_arguments)] // format_trailing_digits in BigRat
 #![deny(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
-#![doc(html_root_url = "https://docs.rs/fend-core/0.1.4")]
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.5")]
 
 mod ast;
 mod err;
@@ -111,12 +111,12 @@ pub fn evaluate_with_interrupt(
 /// Returns the current version of `fend-core`.
 #[must_use]
 pub fn get_version() -> String {
-    "0.1.4".to_string()
+    "0.1.5".to_string()
 }
 
 /// Returns the current extended version of `fend-core`, which includes the
 /// release date in addition to the semver number
 #[must_use]
 pub fn get_extended_version() -> String {
-    "0.1.4 (2020-09-15)".to_string()
+    "0.1.5 (2020-09-29)".to_string()
 }

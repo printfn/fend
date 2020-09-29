@@ -60,7 +60,7 @@ fn print_help(explain_quitting: bool) {
 }
 
 fn print_version() {
-    println!("fend v0.1.4 (2020-09-15)");
+    println!("fend v0.1.5 (2020-09-29)");
     println!("fend-core v{}", fend_core::get_extended_version());
 }
 
