@@ -228,30 +228,34 @@ fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
 
 fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (res, input) = parse_multiplicative(input, options)?;
-    // don't parse mixed fractions or implicit addition (e.g. 3'6") when gnu_compatible is set
-    if !options.gnu_compatible {
-        if let Ok((rhs, remaining)) = parse_multiplicative(input, options) {
-            match (&res, &rhs) {
-                (Expr::Num(_), Expr::Div(b, c)) => {
-                    if let (Expr::Num(_), Expr::Num(_)) = (&**b, &**c) {
-                        return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining));
-                    }
+    if options.gnu_compatible {
+        // don't parse mixed fractions or implicit addition (e.g. 3'6") when gnu_compatible is set
+        return Ok((res, input));
+    }
+    if let Ok((rhs, remaining)) = parse_multiplicative(input, options) {
+        match (&res, &rhs) {
+            // n n/n (n: number literal)
+            (Expr::Num(_), Expr::Div(b, c)) => {
+                if let (Expr::Num(_), Expr::Num(_)) = (&**b, &**c) {
+                    return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining));
                 }
-                (Expr::UnaryMinus(a), Expr::Div(b, c)) => {
-                    if let (Expr::Num(_), Expr::Num(_), Expr::Num(_)) = (&**a, &**b, &**c) {
-                        return Ok((
-                            // note that res = '-<num>' here because unary minus has a higher precedence
-                            Expr::Sub(Box::new(res), Box::new(rhs)),
-                            remaining,
-                        ));
-                    }
+            }
+            // -n n/n
+            (Expr::UnaryMinus(a), Expr::Div(b, c)) => {
+                if let (Expr::Num(_), Expr::Num(_), Expr::Num(_)) = (&**a, &**b, &**c) {
+                    return Ok((
+                        // note that res = '-<num>' here because unary minus has a higher precedence
+                        Expr::Sub(Box::new(res), Box::new(rhs)),
+                        remaining,
+                    ));
                 }
-                (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _)) => {
-                    return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
-                }
-                _ => (),
-            };
-        }
+            }
+            // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
+            (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _)) => {
+                return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
+            }
+            _ => (),
+        };
     }
     Ok((res, input))
 }
