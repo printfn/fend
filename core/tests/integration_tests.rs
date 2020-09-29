@@ -740,4 +740,5 @@ fn test_lambdas() {
     test_evaluation("(x: y => x) 1 2", "1");
     test_evaluation("(\\x. y => x) 1 2", "1");
     test_evaluation("(\\x.\\y.x)1 2", "1");
+    expect_error("a. => 0");
 }
