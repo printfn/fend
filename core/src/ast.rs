@@ -95,9 +95,7 @@ pub fn evaluate<I: Interrupt>(
                 .expect_num()?
                 .mul(evaluate(*b)?.expect_num()?, int)?,
         ),
-        Expr::ApplyMul(a, b) => {
-            evaluate(*a)?.apply(&evaluate(*b)?, true, true, scope, options, int)?
-        }
+        Expr::ApplyMul(a, b) => evaluate(*a)?.apply(*b, true, true, scope, options, int)?,
         Expr::Div(a, b) => Value::Num(
             evaluate(*a)?
                 .expect_num()?
@@ -109,11 +107,9 @@ pub fn evaluate<I: Interrupt>(
                 .expect_num()?
                 .pow(evaluate(*b)?.expect_num()?, int)?,
         ),
-        Expr::Apply(a, b) => {
-            evaluate(*a)?.apply(&evaluate(*b)?, true, false, scope, options, int)?
-        }
+        Expr::Apply(a, b) => evaluate(*a)?.apply(*b, true, false, scope, options, int)?,
         Expr::ApplyFunctionCall(a, b) => {
-            evaluate(*a)?.apply(&evaluate(*b)?, false, false, scope, options, int)?
+            evaluate(*a)?.apply(*b, false, false, scope, options, int)?
         }
         Expr::As(a, b) => match evaluate(*b)? {
             Value::Num(b) => Value::Num(evaluate(*a)?.expect_num()?.convert_to(b, int)?),

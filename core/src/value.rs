@@ -26,7 +26,7 @@ impl Value {
 
     pub fn apply<I: Interrupt>(
         &self,
-        other: &Self,
+        other: Expr,
         allow_multiplication: bool,
         force_multiplication: bool,
         scope: &mut Scope,
@@ -35,6 +35,7 @@ impl Value {
     ) -> Result<Self, IntErr<String, I>> {
         Ok(Self::Num(match self {
             Self::Num(n) => {
+                let other = crate::ast::evaluate(other, scope, options, int)?;
                 if let Self::Dp = other {
                     let num = self.expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::ApproxFloat(num)));
@@ -49,6 +50,7 @@ impl Value {
                 }
             }
             Self::Func(name) => {
+                let other = crate::ast::evaluate(other, scope, options, int)?;
                 let name = *name;
                 if force_multiplication {
                     return Err(format!(
@@ -103,7 +105,7 @@ impl Value {
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.clone().create_nested_scope();
-                new_scope.insert_variable(param.clone(), other.clone());
+                new_scope.insert_variable(param.clone(), other, scope.clone(), options);
                 return Ok(crate::ast::evaluate(
                     expr.clone(),
                     &mut new_scope,

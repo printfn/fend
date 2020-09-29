@@ -1,5 +1,9 @@
-use crate::err::{IntErr, Interrupt};
 use crate::value::Value;
+use crate::{
+    ast::Expr,
+    err::{IntErr, Interrupt},
+    parser::ParseOptions,
+};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -9,7 +13,8 @@ enum ScopeValue {
     // expr, singular name, plural name
     LazyUnit(String, String, String),
     LazyExpr(String),
-    Variable(Value),
+    //Variable(Value),
+    LazyVariable(Expr, Scope, ParseOptions),
 }
 
 impl ScopeValue {
@@ -46,7 +51,11 @@ impl ScopeValue {
                 // todo add caching
                 Ok(value)
             }
-            ScopeValue::Variable(val) => Ok(val.clone()),
+            //ScopeValue::Variable(val) => Ok(val.clone()),
+            ScopeValue::LazyVariable(expr, scope, options) => {
+                let value = crate::ast::evaluate(expr.clone(), &mut scope.clone(), *options, int)?;
+                Ok(value)
+            }
         }
     }
 }
@@ -96,8 +105,14 @@ impl Scope {
         self.insert_scope_value(singular_name, hashmap_val);
     }
 
-    pub fn insert_variable(&mut self, name: String, value: Value) {
-        self.insert_scope_value(name, ScopeValue::Variable(value))
+    pub fn insert_variable(
+        &mut self,
+        name: String,
+        expr: Expr,
+        scope: Scope,
+        options: ParseOptions,
+    ) {
+        self.insert_scope_value(name, ScopeValue::LazyVariable(expr, scope, options))
     }
 
     pub fn create_nested_scope(self) -> Self {
