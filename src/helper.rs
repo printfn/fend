@@ -5,10 +5,7 @@ use rustyline::{
     validate::Validator,
     Helper,
 };
-use std::{
-    env,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 pub struct HintInterrupt {
     start: Instant,
@@ -30,6 +27,18 @@ impl Default for HintInterrupt {
     }
 }
 
+pub struct FendHint(String);
+
+impl rustyline::hint::Hint for FendHint {
+    fn display(&self) -> &str {
+        self.0.as_str()
+    }
+
+    fn completion(&self) -> Option<&str> {
+        None
+    }
+}
+
 pub struct FendHelper {
     ctx: fend_core::Context,
 }
@@ -41,12 +50,9 @@ impl FendHelper {
 }
 
 impl Hinter for FendHelper {
-    // TODO: Prevent the user from actually completing this hint.
-    // Blocked on a rustyline update.
-    fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context) -> Option<String> {
-        if !enable_live_output() {
-            return None;
-        }
+    type Hint = FendHint;
+
+    fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context) -> Option<FendHint> {
         let int = HintInterrupt::default();
         Some(
             match fend_core::evaluate_with_interrupt(line, &mut self.ctx.clone(), &int) {
@@ -55,7 +61,7 @@ impl Hinter for FendHelper {
                     if res.is_empty() || res.len() > 50 || res.trim() == line.trim() {
                         return None;
                     } else {
-                        format!("\n{}", res)
+                        FendHint(format!("\n{}", res))
                     }
                 }
                 Err(_msg) => return None,
@@ -83,7 +89,3 @@ impl Completer for FendHelper {
 }
 
 impl Helper for FendHelper {}
-
-fn enable_live_output() -> bool {
-    env::var_os("FEND_LIVE").is_some()
-}

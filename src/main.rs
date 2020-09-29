@@ -64,7 +64,7 @@ fn print_version() {
     println!("fend-core v{}", fend_core::get_extended_version());
 }
 
-fn save_history(rl: &Editor<helper::FendHelper>, path: &Option<PathBuf>) {
+fn save_history(rl: &mut Editor<helper::FendHelper>, path: &Option<PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
@@ -130,9 +130,9 @@ fn repl_loop() -> i32 {
                 break;
             }
         }
-        save_history(&rl, &history_path);
+        save_history(&mut rl, &history_path);
     }
-    save_history(&rl, &history_path);
+    save_history(&mut rl, &history_path);
     if last_command_success {
         0
     } else {
