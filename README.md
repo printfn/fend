@@ -13,9 +13,10 @@ Unique features:
 * Arbitrary-precision arithmetic using rational numbers
 * Full support for complex numbers
 * Binary, octal, hexadecimal and all other bases between 2 and 36
-* Keeps track of units, with support for SI, US and UK customary and many historical units
+* Keep track of units, with support for SI, US and UK customary and many historical units
 * Emacs-style CLI shortcuts
 * Trigonometric functions
+* Lambda calculus
 
 See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
 
@@ -67,6 +68,11 @@ approx. 0.7071067811 + 0.7071067811i
 ```
 > 1 lightyear to parsecs
 approx. 0.3066013937 parsecs
+```
+
+```
+> (x: 2x) pi
+approx. 6.2831853071
 ```
 
 ## Changelog
