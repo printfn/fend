@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5 (2020-09-29)
+
+* Add support for lambda functions (e.g. `\x.x`)
+* Change precedence of `to`, `as` and `->`
+* Add live CLI output
+
 ## v0.1.4 (2020-09-15)
 
 * Add the GNU units database, containing several thousand unit definitions
