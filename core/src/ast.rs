@@ -54,7 +54,7 @@ impl Expr {
                 write!(f, "({} {})", g(a)?, g(b)?)?
             }
             Self::As(a, b) => write!(f, "({} as {})", g(a)?, g(b)?)?,
-            Self::Fn(a, b) => write!(f, "({}:{})", a, g(b)?)?,
+            Self::Fn(a, b) => write!(f, "\\{}.{}", a, g(b)?)?,
         }
         Ok(())
     }

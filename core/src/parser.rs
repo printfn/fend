@@ -13,6 +13,7 @@ pub enum ParseError {
     InvalidApplyOperands,
     UnexpectedInput,
     ExpectedIdentifierAsArgument,
+    ExpectedDotInLambda,
 }
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -32,6 +33,7 @@ impl Display for ParseError {
             // TODO improve this message or remove this error type
             Self::InvalidApplyOperands => write!(f, "Error"),
             Self::UnexpectedInput => write!(f, "Unexpected input found"),
+            Self::ExpectedDotInLambda => write!(f, "Missing '.' in lambda (expected e.g. \\x.x)"),
         }
     }
 }
@@ -81,6 +83,19 @@ fn parse_parens<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
+fn parse_backslash_lambda<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::Backslash)?;
+    let (ident, input) = if let (Expr::Ident(ident), input) = parse_ident(input)? {
+        (ident, input)
+    } else {
+        return Err(ParseError::ExpectedIdentifier);
+    };
+    let (_, input) =
+        parse_fixed_symbol(input, Symbol::Dot).map_err(|_| ParseError::ExpectedDotInLambda)?;
+    let (rhs, input) = parse_function(input, options)?;
+    Ok((Expr::Fn(ident, Box::new(rhs)), input))
+}
+
 fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (token, _) = parse_token(input)?;
 
@@ -88,6 +103,7 @@ fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> Par
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input, options),
+        Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input, options),
         Token::Symbol(..) => Err(ParseError::ExpectedNumIdentOrParen),
     }
 }

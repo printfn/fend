@@ -736,4 +736,8 @@ fn test_lambdas() {
     test_evaluation("(p: q: p p q) (x: y: y) (x: y: x) 1 0", "1");
     test_evaluation("(p: q: p p q) (x: y: x) (x: y: y) 1 0", "1");
     test_evaluation("(p: q: p p q) (x: y: x) (x: y: x) 1 0", "1");
+    test_evaluation("(x => x) 1", "1");
+    test_evaluation("(x: y => x) 1 2", "1");
+    test_evaluation("(\\x. y => x) 1 2", "1");
+    test_evaluation("(\\x.\\y.x)1 2", "1");
 }

@@ -27,6 +27,8 @@ pub enum Symbol {
     ArrowConversion,
     Factorial,
     Fn,
+    Backslash,
+    Dot,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -104,6 +106,8 @@ impl Display for Symbol {
             Self::ArrowConversion => "->",
             Self::Factorial => "!",
             Self::Fn => ":",
+            Self::Backslash => "\"",
+            Self::Dot => ".",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -337,16 +341,16 @@ pub fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     }
 }
 
-fn parse_ident(input: &str) -> Result<(Token, &str), LexerError> {
+fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerError> {
     let (first_char, _) = parse_char(input)?;
-    if !is_valid_in_ident(first_char, None) {
+    if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
         return Err(LexerError::InvalidCharAtBeginningOfIdent(first_char))?;
     }
     let mut byte_idx = first_char.len_utf8();
     let (_, mut remaining) = input.split_at(byte_idx);
     let mut prev_char = first_char;
     while let Ok((next_char, remaining_input)) = parse_char(remaining) {
-        if !is_valid_in_ident(next_char, Some(prev_char)) {
+        if !is_valid_in_ident(next_char, Some(prev_char)) || next_char == '.' && !allow_dots {
             break;
         }
         remaining = remaining_input;
@@ -366,6 +370,7 @@ fn parse_ident(input: &str) -> Result<(Token, &str), LexerError> {
 
 struct Lexer<'a, I: Interrupt> {
     input: &'a str,
+    after_backslash: bool,
     int: &'a I,
 }
 
@@ -385,8 +390,9 @@ impl<'a, I: Interrupt> Lexer<'a, I> {
                         .map_err(|e| e.map(LexerError::NumberParseError))?;
                     self.input = remaining;
                     Token::Num(num)
-                } else if is_valid_in_ident(ch, None) {
-                    let (ident, remaining) = parse_ident(self.input)?;
+                } else if is_valid_in_ident(ch, None) && !(ch == '.' && self.after_backslash) {
+                    // dots aren't allowed in idents after a backslash
+                    let (ident, remaining) = parse_ident(self.input, !self.after_backslash)?;
                     self.input = remaining;
                     ident
                 } else {
@@ -427,9 +433,11 @@ impl<'a, I: Interrupt> Lexer<'a, I> {
                                 self.input = remaining;
                                 Symbol::Fn
                             } else {
-                                return Err(LexerError::UnexpectedChar(ch))?
+                                return Err(LexerError::UnexpectedChar(ch))?;
                             }
                         }
+                        '\\' => Symbol::Backslash,
+                        '.' => Symbol::Dot,
                         _ => return Err(LexerError::UnexpectedChar(ch))?,
                     })
                 }
@@ -443,11 +451,17 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, I> {
     type Item = Result<Token<'a>, IntErr<LexerError, I>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.next_token() {
+        let res = match self.next_token() {
             Err(e) => Some(Err(e)),
             Ok(None) => None,
             Ok(Some(t)) => Some(Ok(t)),
+        };
+        if let Some(Ok(Token::Symbol(Symbol::Backslash))) = res {
+            self.after_backslash = true;
+        } else {
+            self.after_backslash = false;
         }
+        res
     }
 }
 
@@ -455,5 +469,9 @@ pub fn lex<'a, I: Interrupt>(
     input: &'a str,
     int: &'a I,
 ) -> impl Iterator<Item = Result<Token<'a>, IntErr<LexerError, I>>> {
-    Lexer { input, int }
+    Lexer {
+        input,
+        after_backslash: false,
+        int,
+    }
 }
