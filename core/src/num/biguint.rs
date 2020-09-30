@@ -269,7 +269,7 @@ impl BigUint {
         Ok(())
     }
 
-    fn divmod<I: Interrupt>(
+    pub fn divmod<I: Interrupt>(
         &self,
         other: &Self,
         int: &I,

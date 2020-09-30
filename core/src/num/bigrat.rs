@@ -383,14 +383,25 @@ impl BigRat {
         base: Base,
         negative: bool,
         imag: bool,
+        mixed: bool,
         int: &I,
     ) -> Result<FormattedBigRat, IntErr<Never, I>> {
         let formatted_den = den.format(base, true, int)?;
+        let (pref, num) = if mixed {
+            let (prefix, num) = num.divmod(den, int).unwrap();
+            if prefix == 0.into() {
+                (None, num)
+            } else {
+                (Some(prefix.format(base, true, int)?), num)
+            }
+        } else {
+            (None, num.clone())
+        };
         Ok(FormattedBigRat {
             negative,
             exact: true,
-            ty: if imag && !base.has_prefix() && num == &1.into() {
-                FormattedBigRatType::Fraction(None, "i", formatted_den)
+            ty: if imag && !base.has_prefix() && num == 1.into() {
+                FormattedBigRatType::Fraction(pref, None, "i", formatted_den)
             } else {
                 let formatted_num = num.format(base, true, int)?;
                 let s = if imag {
@@ -402,7 +413,7 @@ impl BigRat {
                 } else {
                     ""
                 };
-                FormattedBigRatType::Fraction(Some(formatted_num), s, formatted_den)
+                FormattedBigRatType::Fraction(pref, Some(formatted_num), s, formatted_den)
             },
         })
     }
@@ -439,10 +450,13 @@ impl BigRat {
             Some(t) => Ok(t),
         };
         let fraction = style == FormattingStyle::ExactFraction
+            || style == FormattingStyle::MixedFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
         if fraction {
+            let mixed = style == FormattingStyle::MixedFraction
+                || style == FormattingStyle::ExactFloatWithFractionFallback;
             return Ok(Self::format_as_fraction(
-                &x.num, &x.den, base, negative, imag, int,
+                &x.num, &x.den, base, negative, imag, mixed, int,
             )?);
         }
 
@@ -855,8 +869,17 @@ impl From<BigUint> for BigRat {
 enum FormattedBigRatType {
     // optional int, followed by a string (empty, "i" or " i")
     Integer(Option<FormattedBigUint>, &'static str),
-    // optional int, string (empty, "i" or " i"), '/', int
-    Fraction(Option<FormattedBigUint>, &'static str, FormattedBigUint),
+    // optional int (for mixed fractions)
+    // optional int (numerator)
+    // string (empty, "i" or " i")
+    // '/'
+    // int (denominator)
+    Fraction(
+        Option<FormattedBigUint>,
+        Option<FormattedBigUint>,
+        &'static str,
+        FormattedBigUint,
+    ),
     //
     Decimal,
 }
@@ -880,7 +903,10 @@ impl Display for FormattedBigRat {
                 }
                 write!(f, "{}", isuf)?;
             }
-            FormattedBigRatType::Fraction(num, isuf, den) => {
+            FormattedBigRatType::Fraction(integer, num, isuf, den) => {
+                if let Some(integer) = integer {
+                    write!(f, "{} ", integer)?;
+                }
                 if let Some(num) = num {
                     write!(f, "{}", num)?;
                 }

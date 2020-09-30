@@ -66,61 +66,63 @@ pub fn evaluate<I: Interrupt>(
     options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
+    macro_rules! eval {
+        ($e:expr) => {
+            evaluate($e, scope, options, int)
+        };
+    }
     test_int(int)?;
-    let mut evaluate = |expr: Expr| evaluate(expr, scope, options, int);
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
         Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, options, int)?,
-        Expr::Parens(x) => evaluate(*x)?,
-        Expr::UnaryMinus(x) => Value::Num(-evaluate(*x)?.expect_num()?),
-        Expr::UnaryPlus(x) => Value::Num(evaluate(*x)?.expect_num()?),
+        Expr::Parens(x) => eval!(*x)?,
+        Expr::UnaryMinus(x) => Value::Num(-eval!(*x)?.expect_num()?),
+        Expr::UnaryPlus(x) => Value::Num(eval!(*x)?.expect_num()?),
         Expr::UnaryDiv(x) => Value::Num(
             Number::from(1)
-                .div(evaluate(*x)?.expect_num()?, int)
+                .div(eval!(*x)?.expect_num()?, int)
                 .map_err(IntErr::into_string)?,
         ),
-        Expr::Factorial(x) => Value::Num(evaluate(*x)?.expect_num()?.factorial(int)?),
+        Expr::Factorial(x) => Value::Num(eval!(*x)?.expect_num()?.factorial(int)?),
         Expr::Add(a, b) => Value::Num(
-            evaluate(*a)?
+            eval!(*a)?
                 .expect_num()?
-                .add(evaluate(*b)?.expect_num()?, int)?,
+                .add(eval!(*b)?.expect_num()?, int)?,
         ),
         Expr::Sub(a, b) => Value::Num(
-            evaluate(*a)?
+            eval!(*a)?
                 .expect_num()?
-                .sub(evaluate(*b)?.expect_num()?, int)?,
+                .sub(eval!(*b)?.expect_num()?, int)?,
         ),
         Expr::Mul(a, b) => Value::Num(
-            evaluate(*a)?
+            eval!(*a)?
                 .expect_num()?
-                .mul(evaluate(*b)?.expect_num()?, int)?,
+                .mul(eval!(*b)?.expect_num()?, int)?,
         ),
-        Expr::ApplyMul(a, b) => evaluate(*a)?.apply(*b, true, true, scope, options, int)?,
+        Expr::ApplyMul(a, b) => eval!(*a)?.apply(*b, true, true, scope, options, int)?,
         Expr::Div(a, b) => Value::Num(
-            evaluate(*a)?
+            eval!(*a)?
                 .expect_num()?
-                .div(evaluate(*b)?.expect_num()?, int)
+                .div(eval!(*b)?.expect_num()?, int)
                 .map_err(IntErr::into_string)?,
         ),
         Expr::Pow(a, b) => Value::Num(
-            evaluate(*a)?
+            eval!(*a)?
                 .expect_num()?
-                .pow(evaluate(*b)?.expect_num()?, int)?,
+                .pow(eval!(*b)?.expect_num()?, int)?,
         ),
-        Expr::Apply(a, b) => evaluate(*a)?.apply(*b, true, false, scope, options, int)?,
-        Expr::ApplyFunctionCall(a, b) => {
-            evaluate(*a)?.apply(*b, false, false, scope, options, int)?
-        }
-        Expr::As(a, b) => match evaluate(*b)? {
-            Value::Num(b) => Value::Num(evaluate(*a)?.expect_num()?.convert_to(b, int)?),
-            Value::Format(fmt) => Value::Num(evaluate(*a)?.expect_num()?.with_format(fmt)),
+        Expr::Apply(a, b) => eval!(*a)?.apply(*b, true, false, scope, options, int)?,
+        Expr::ApplyFunctionCall(a, b) => eval!(*a)?.apply(*b, false, false, scope, options, int)?,
+        Expr::As(a, b) => match eval!(*b)? {
+            Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
+            Value::Format(fmt) => Value::Num(eval!(*a)?.expect_num()?.with_format(fmt)),
             Value::Dp => {
                 return Err(
                     "You need to specify what number of decimal places to use, e.g. '10 dp'"
                         .to_string(),
                 )?;
             }
-            Value::Base(base) => Value::Num(evaluate(*a)?.expect_num()?.with_base(base)),
+            Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
             Value::Func(_) | Value::Fn(_, _, _) => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
@@ -190,6 +192,7 @@ fn resolve_identifier<I: Interrupt>(
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),
         "fraction" => Value::Format(FormattingStyle::ExactFraction),
+        "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
         "base" => Value::Func("base"),

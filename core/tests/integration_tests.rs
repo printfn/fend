@@ -498,7 +498,7 @@ fn test_more_units() {
     test_evaluation("0m/s + i kilometers per hour", "5i/18 m / s");
     test_evaluation("0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
     expect_error("7165928\t761528765");
-    test_evaluation("1 2/3", "5/3");
+    test_eval_simple("1 2/3 to fraction", "5/3");
     test_evaluation("abs 2", "2");
     test_evaluation("5 m", "5 m");
     test_evaluation("(4)(6)", "24");
@@ -561,8 +561,8 @@ fn test_no_adjacent_numbers() {
 
 #[test]
 fn test_compound_fraction() {
-    test_evaluation("1 2/3", "5/3");
-    test_evaluation("4 + 1 2/3", "17/3");
+    test_evaluation("5/3", "1 2/3");
+    test_evaluation("4 + 1 2/3", "5 2/3");
     test_evaluation("-8 1/2", "-8.5");
 }
 
@@ -611,8 +611,8 @@ fn test_advanced_op_precedence() {
     expect_error("1^2 2/3");
     expect_error("1 2/-3");
     test_evaluation("1 2/3 + 4 5/6", "6.5");
-    test_evaluation("1 2/3 + -4 5/6", "-19/6");
-    test_evaluation("1 2/3 - 4 5/6", "-19/6");
+    test_evaluation("1 2/3 + -4 5/6", "-3 1/6");
+    test_evaluation("1 2/3 - 4 5/6", "-3 1/6");
     test_evaluation("1 2/3 - 4 + 5/6", "-1.5");
     test_evaluation("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
     test_evaluation("1L -> m^3", "0.001 m^3");
