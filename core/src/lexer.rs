@@ -233,27 +233,31 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
 }
 
 fn parse_basic_number<'a, I: Interrupt>(
-    input: &'a str,
+    mut input: &'a str,
     base: Base,
     allow_zero: bool,
     int: &I,
 ) -> Result<(Number, &'a str), IntErr<String, I>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
-    let (_, mut input) = parse_integer(
-        input,
-        true,
-        base.allow_leading_zeroes(),
-        base,
-        &mut |digit| -> Result<(), IntErr<String, I>> {
-            let base_as_u64: u64 = base.base_as_u8().into();
-            res = res
-                .clone()
-                .mul(base_as_u64.into(), int)?
-                .add(u64::from(digit).into(), int)?;
-            Ok(())
-        },
-    )?;
+
+    if parse_fixed_char(input, '.').is_err() {
+        let (_, remaining) = parse_integer(
+            input,
+            true,
+            base.allow_leading_zeroes(),
+            base,
+            &mut |digit| -> Result<(), IntErr<String, I>> {
+                let base_as_u64: u64 = base.base_as_u8().into();
+                res = res
+                    .clone()
+                    .mul(base_as_u64.into(), int)?
+                    .add(u64::from(digit).into(), int)?;
+                Ok(())
+            },
+        )?;
+        input = remaining;
+    }
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
@@ -370,7 +374,8 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerErro
 
 struct Lexer<'a, I: Interrupt> {
     input: &'a str,
-    after_backslash: bool,
+    // normally 0; 1 after backslash; 2 after ident after backslash
+    after_backslash_state: u8,
     int: &'a I,
 }
 
@@ -385,14 +390,15 @@ impl<'a, I: Interrupt> Lexer<'a, I> {
         }
         Ok(Some(match self.input.chars().next() {
             Some(ch) => {
-                if ch.is_ascii_digit() {
+                if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
                     let (num, remaining) = parse_number(self.input, self.int)
                         .map_err(|e| e.map(LexerError::NumberParseError))?;
                     self.input = remaining;
                     Token::Num(num)
-                } else if is_valid_in_ident(ch, None) && !(ch == '.' && self.after_backslash) {
+                } else if is_valid_in_ident(ch, None) {
                     // dots aren't allowed in idents after a backslash
-                    let (ident, remaining) = parse_ident(self.input, !self.after_backslash)?;
+                    let (ident, remaining) =
+                        parse_ident(self.input, self.after_backslash_state != 1)?;
                     self.input = remaining;
                     ident
                 } else {
@@ -457,9 +463,15 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, I> {
             Ok(Some(t)) => Some(Ok(t)),
         };
         if let Some(Ok(Token::Symbol(Symbol::Backslash))) = res {
-            self.after_backslash = true;
+            self.after_backslash_state = 1;
+        } else if self.after_backslash_state == 1 {
+            if let Some(Ok(Token::Ident(_))) = res {
+                self.after_backslash_state = 2;
+            } else {
+                self.after_backslash_state = 0;
+            }
         } else {
-            self.after_backslash = false;
+            self.after_backslash_state = 0;
         }
         res
     }
@@ -471,7 +483,7 @@ pub fn lex<'a, I: Interrupt>(
 ) -> impl Iterator<Item = Result<Token<'a>, IntErr<LexerError, I>>> {
     Lexer {
         input,
-        after_backslash: false,
+        after_backslash_state: 0,
         int,
     }
 }
