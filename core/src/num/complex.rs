@@ -76,9 +76,10 @@ impl Complex {
         &mut self,
         digit: u64,
         base: u8,
+        rec: bool,
         int: &I,
     ) -> Result<(), IntErr<Never, I>> {
-        self.real.add_digit_in_base(digit, base, int)
+        self.real.add_digit_in_base(digit, base, rec, int)
     }
 
     pub fn i() -> Self {

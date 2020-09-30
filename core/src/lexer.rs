@@ -138,7 +138,7 @@ fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), LexerError> {
     if parsed_ch == ch {
         Ok(((), input))
     } else {
-        Err(LexerError::ExpectedChar(parsed_ch, ch))
+        Err(LexerError::ExpectedChar(ch, parsed_ch))
     }
 }
 
@@ -261,14 +261,49 @@ fn parse_basic_number<'a, I: Interrupt>(
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
-        let (_, remaining) = parse_integer(remaining, true, true, base, &mut |digit| -> Result<
-            (),
-            IntErr<String, I>,
-        > {
-            res.add_digit_in_base(digit.into(), base, int)?;
-            Ok(())
-        })?;
-        input = remaining;
+        if parse_fixed_char(remaining, '(').is_err() {
+            let (_, remaining) =
+                parse_integer(remaining, true, true, base, &mut |digit| -> Result<
+                    (),
+                    IntErr<String, I>,
+                > {
+                    res.add_digit_in_base(digit.into(), base, int)?;
+                    Ok(())
+                })?;
+            input = remaining;
+        } else {
+            input = remaining;
+        }
+
+        // try parsing recurring decimals
+        if let Ok((_, remaining)) = parse_fixed_char(input, '(') {
+            // let mut recurring_num = Number::zero_with_base(base);
+            // let mut recurring_den = Number::zero_with_base(base);
+            // let base_as_u64: u64 = base.base_as_u8().into();
+            let (_, remaining) =
+                parse_integer(remaining, true, true, base, &mut |digit| -> Result<
+                    (),
+                    IntErr<String, I>,
+                > {
+                    // recurring_num = recurring_num
+                    //     .clone()
+                    //     .mul(base_as_u64.into(), int)?
+                    //     .add(u64::from(digit).into(), int)?;
+                    // recurring_den = recurring_den
+                    //     .clone()
+                    //     .mul(base_as_u64.into(), int)?
+                    //     .add((base_as_u64 - 1).into(), int)?;
+                    if digit != 0 {
+                        return Err(
+                            "Recurring numbers are currently not fully supported".to_string()
+                        )?;
+                    }
+                    res.add_rec_digit_in_base(digit.into(), base, int)?;
+                    Ok(())
+                })?;
+            let (_, remaining) = parse_fixed_char(remaining, ')')?;
+            input = remaining;
+        }
     }
 
     if !allow_zero && res.is_zero() {

@@ -305,7 +305,16 @@ impl UnitValue {
         base: Base,
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
-        self.value.add_digit_in_base(digit, base, int)
+        self.value.add_digit_in_base(digit, base, false, int)
+    }
+
+    pub fn add_rec_digit_in_base<I: Interrupt>(
+        &mut self,
+        digit: u64,
+        base: Base,
+        int: &I,
+    ) -> Result<(), IntErr<String, I>> {
+        self.value.add_digit_in_base(digit, base, true, int)
     }
 
     pub fn is_zero(&self) -> bool {

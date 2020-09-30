@@ -333,8 +333,12 @@ impl BigRat {
         &mut self,
         digit: u64,
         base: u8,
+        rec: bool,
         int: &I,
     ) -> Result<(), IntErr<Never, I>> {
+        if rec {
+            return Ok(());
+        }
         let base_as_u64: u64 = base.into();
         self.num = self
             .num

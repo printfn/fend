@@ -74,6 +74,7 @@ impl ExactBase {
         &mut self,
         digit: u64,
         base: Base,
+        rec: bool,
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
         if base != self.base {
@@ -84,7 +85,7 @@ impl ExactBase {
             ))?;
         }
         self.value
-            .add_digit_in_base(digit, base.base_as_u8(), int)?;
+            .add_digit_in_base(digit, base.base_as_u8(), rec, int)?;
         Ok(())
     }
 
