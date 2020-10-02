@@ -1,5 +1,11 @@
 # Changelog
 
+## Next release
+
+* Support outputting mixed fractions (implicitly or via `to mixed_fraction`)
+* Allow numbers that start with a decimal point, such as `.1`
+* Support unmatched parentheses (e.g. `2+3)*(1+2` is `15`)
+
 ## v0.1.5 (2020-09-29)
 
 * Add support for lambda functions (e.g. `\x.x`)
