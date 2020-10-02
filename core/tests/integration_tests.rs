@@ -273,6 +273,8 @@ fn test_parens() {
     test_evaluation("1+((2 )*3)", "7");
     test_evaluation(" 1 + ( (\r\n2 ) * 3 ) ", "7");
     test_evaluation("2*(1+3", "8");
+    test_evaluation("4+5+6)*(1+2", "45");
+    test_evaluation("4+5+6))*(1+2", "45");
 }
 
 #[test]

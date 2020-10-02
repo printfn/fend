@@ -14,8 +14,16 @@ pub fn evaluate_to_value<I: Interrupt>(
 ) -> Result<Value, IntErr<String, I>> {
     let lex = lexer::lex(input, int);
     let mut tokens = vec![];
+    let mut missing_open_parens: i32 = 0;
     for token in lex {
-        tokens.push(token.map_err(IntErr::into_string)?);
+        let token = token.map_err(IntErr::into_string)?;
+        if let lexer::Token::Symbol(lexer::Symbol::CloseParens) = token {
+            missing_open_parens += 1
+        }
+        tokens.push(token);
+    }
+    for _ in 0..missing_open_parens {
+        tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
     let parsed = parser::parse_tokens(tokens.as_slice(), options).map_err(|e| e.to_string())?;
     let result = ast::evaluate(parsed, scope, options, int)?;
