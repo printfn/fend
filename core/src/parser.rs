@@ -80,8 +80,12 @@ fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
 
 fn parse_parens<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
-    let (inner, input) = parse_expression(input, options)?;
-    let (_, input) = parse_fixed_symbol(input, Symbol::CloseParens)?;
+    let (inner, mut input) = parse_expression(input, options)?;
+    // allow omitting closing parentheses at end of input
+    if !input.is_empty() {
+        let (_, remaining) = parse_fixed_symbol(input, Symbol::CloseParens)?;
+        input = remaining;
+    }
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
