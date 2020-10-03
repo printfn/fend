@@ -319,6 +319,7 @@ fn test_powers() {
     expect_error("i^3");
     expect_error("4^i");
     expect_error("i^i");
+    test_evaluation("kg^(approx. 1)", "approx. 1 kg")
 }
 
 #[test]

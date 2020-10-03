@@ -8,24 +8,17 @@ use std::ops::Neg;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ExactBase {
     value: Complex,
-    exact: bool,
     base: Base,
     format: FormattingStyle,
 }
 
 impl ExactBase {
     pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
-        if !self.exact {
-            return Err("Cannot convert inexact number to integer".to_string())?;
-        }
         Ok(self.value.try_as_usize(int)?)
     }
 
     pub fn make_approximate(self) -> Self {
-        Self {
-            exact: false,
-            ..self
-        }
+        self
     }
 
     pub fn conjugate(self) -> Self {
@@ -45,24 +38,18 @@ impl ExactBase {
     pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         Ok(Self {
             value: self.value.div(rhs.value, int)?,
-            exact: require_both_exact(self.exact, rhs.exact),
             ..self
         })
     }
 
-    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         let (value, exact_root) = self.value.pow(rhs.value, int)?;
-        Ok(Self {
-            value,
-            exact: require_both_exact(require_both_exact(self.exact, rhs.exact), exact_root),
-            ..self
-        })
+        Ok((Self { value, ..self }, exact_root))
     }
 
     pub fn zero_with_base(base: Base) -> Self {
         Self {
             value: 0.into(),
-            exact: true,
             base,
             format: FormattingStyle::default(),
         }
@@ -92,33 +79,32 @@ impl ExactBase {
     pub fn i() -> Self {
         Self {
             value: Complex::i(),
-            exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
         }
     }
 
-    pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn abs<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         let (new_value, res_exact) = self.value.abs(int)?;
-        Ok(Self {
-            value: new_value,
-            exact: require_both_exact(self.exact, res_exact),
-            ..self
-        })
+        Ok((
+            Self {
+                value: new_value,
+                ..self
+            },
+            res_exact,
+        ))
     }
 
     pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
         use_parentheses_if_complex: bool,
+        exact: bool,
         int: &I,
     ) -> Result<(), IntErr<Error, I>> {
-        if !self.exact {
-            write!(f, "approx. ")?;
-        }
         self.value.format(
             f,
-            self.exact,
+            exact,
             self.format,
             self.base,
             use_parentheses_if_complex,
@@ -138,15 +124,6 @@ impl ExactBase {
         self.format
     }
 
-    pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let (root, root_exact) = self.value.root_n(&n.value, int)?;
-        Ok(Self {
-            value: root,
-            exact: self.exact && n.exact && root_exact,
-            ..self
-        })
-    }
-
     fn apply_approx_fn<I: Interrupt>(
         self,
         f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String, I>>,
@@ -154,7 +131,6 @@ impl ExactBase {
     ) -> Result<Self, IntErr<String, I>> {
         Ok(Self {
             value: f(self.value, int)?,
-            exact: false,
             ..self
         })
     }
@@ -218,7 +194,6 @@ impl ExactBase {
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             value: self.value.mul(&rhs.value, int)?,
-            exact: require_both_exact(self.exact, rhs.exact),
             ..self
         })
     }
@@ -226,7 +201,6 @@ impl ExactBase {
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             value: self.value.add(rhs.value, int)?,
-            exact: require_both_exact(self.exact, rhs.exact),
             ..self
         })
     }
@@ -265,13 +239,8 @@ impl From<u64> for ExactBase {
     fn from(i: u64) -> Self {
         Self {
             value: i.into(),
-            exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
         }
     }
-}
-
-const fn require_both_exact(a_exact: bool, b_exact: bool) -> bool {
-    a_exact && b_exact
 }
