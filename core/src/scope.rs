@@ -215,6 +215,7 @@ mod tests {
         scope.get("tesla", &int).unwrap();
         scope.get("B_FIELD", &int).unwrap();
         scope.get("USD", &int).unwrap();
+        scope.get("ustsp", &int).unwrap();
         for key in hashmap.keys() {
             let mut scope = scope.clone();
             eprintln!("Testing {}", key);
