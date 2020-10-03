@@ -8,7 +8,6 @@ use std::ops::Neg;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ExactBase {
     value: Complex,
-    base: Base,
     format: FormattingStyle,
 }
 
@@ -47,14 +46,6 @@ impl ExactBase {
         Ok((Self { value, ..self }, exact_root))
     }
 
-    pub fn zero_with_base(base: Base) -> Self {
-        Self {
-            value: 0.into(),
-            base,
-            format: FormattingStyle::default(),
-        }
-    }
-
     // This method is dangerous!! Use this method only when the number has *not* been
     // simplified or otherwise changed.
     pub fn add_digit_in_base<I: Interrupt>(
@@ -64,13 +55,6 @@ impl ExactBase {
         rec: bool,
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
-        if base != self.base {
-            return Err(format!(
-                "Base does not match: {} != {}",
-                base.base_as_u8(),
-                self.base.base_as_u8()
-            ))?;
-        }
         self.value
             .add_digit_in_base(digit, base.base_as_u8(), rec, int)?;
         Ok(())
@@ -79,7 +63,6 @@ impl ExactBase {
     pub fn i() -> Self {
         Self {
             value: Complex::i(),
-            base: Base::default(),
             format: FormattingStyle::default(),
         }
     }
@@ -98,26 +81,17 @@ impl ExactBase {
     pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
+        base: Base,
         use_parentheses_if_complex: bool,
         exact: bool,
         int: &I,
     ) -> Result<(), IntErr<Error, I>> {
-        self.value.format(
-            f,
-            exact,
-            self.format,
-            self.base,
-            use_parentheses_if_complex,
-            int,
-        )
+        self.value
+            .format(f, exact, self.format, base, use_parentheses_if_complex, int)
     }
 
     pub fn with_format(self, format: FormattingStyle) -> Self {
         Self { format, ..self }
-    }
-
-    pub fn with_base(self, base: Base) -> Self {
-        Self { base, ..self }
     }
 
     pub const fn get_format(&self) -> FormattingStyle {
@@ -239,7 +213,6 @@ impl From<u64> for ExactBase {
     fn from(i: u64) -> Self {
         Self {
             value: i.into(),
-            base: Base::default(),
             format: FormattingStyle::default(),
         }
     }

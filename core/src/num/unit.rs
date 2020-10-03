@@ -16,6 +16,7 @@ pub struct UnitValue {
     value: ExactBase,
     unit: Unit,
     exact: bool,
+    base: Base,
 }
 
 #[cfg(feature = "gpl")]
@@ -182,14 +183,16 @@ impl UnitValue {
             value: self.value.with_format(format),
             unit: self.unit,
             exact: self.exact,
+            base: self.base,
         }
     }
 
     pub fn with_base(self, base: Base) -> Self {
         Self {
-            value: self.value.with_base(base),
+            value: self.value,
             unit: self.unit,
             exact: self.exact,
+            base,
         }
     }
 
@@ -201,6 +204,7 @@ impl UnitValue {
             value: self.value.factorial(int)?,
             unit: self.unit,
             exact: self.exact,
+            base: self.base,
         })
     }
 
@@ -211,6 +215,7 @@ impl UnitValue {
                 components: unit_components,
             },
             exact: true,
+            base: Base::default(),
         }
     }
 
@@ -220,6 +225,7 @@ impl UnitValue {
             value: self.value.add(rhs.value.mul(&scale_factor, int)?, int)?,
             unit: self.unit,
             exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
+            base: self.base,
         })
     }
 
@@ -233,6 +239,7 @@ impl UnitValue {
             value: new_value,
             unit: rhs.unit,
             exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
+            base: self.base,
         })
     }
 
@@ -242,6 +249,7 @@ impl UnitValue {
             value: self.value.sub(rhs.value.mul(&scale_factor, int)?, int)?,
             unit: self.unit,
             exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
+            base: self.base,
         })
     }
 
@@ -257,6 +265,7 @@ impl UnitValue {
             value: self.value.div(rhs.value, int)?,
             unit: Unit { components },
             exact: require_both_exact(self.exact, rhs.exact),
+            base: self.base,
         })
     }
 
@@ -284,6 +293,7 @@ impl UnitValue {
             value,
             unit: new_unit,
             exact: self.exact && rhs.exact && exact_res,
+            base: self.base,
         })
     }
 
@@ -292,6 +302,7 @@ impl UnitValue {
             value: ExactBase::i(),
             unit: Unit { components: vec![] },
             exact: true,
+            base: Base::default(),
         }
     }
 
@@ -301,6 +312,7 @@ impl UnitValue {
             value,
             unit: self.unit,
             exact: self.exact && res_exact,
+            base: self.base,
         })
     }
 
@@ -309,14 +321,16 @@ impl UnitValue {
             value: self.value.make_approximate(),
             unit: self.unit,
             exact: false,
+            base: self.base,
         }
     }
 
     pub fn zero_with_base(base: Base) -> Self {
         Self {
-            value: ExactBase::zero_with_base(base),
+            value: ExactBase::from(0),
             unit: Unit::unitless(),
             exact: true,
+            base,
         }
     }
 
@@ -326,6 +340,13 @@ impl UnitValue {
         base: Base,
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
+        if base != self.base {
+            return Err(format!(
+                "Base does not match: {} != {}",
+                base.base_as_u8(),
+                self.base.base_as_u8()
+            ))?;
+        }
         self.value.add_digit_in_base(digit, base, false, int)
     }
 
@@ -335,6 +356,13 @@ impl UnitValue {
         base: Base,
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
+        if base != self.base {
+            return Err(format!(
+                "Base does not match: {} != {}",
+                base.base_as_u8(),
+                self.base.base_as_u8()
+            ))?;
+        }
         self.value.add_digit_in_base(digit, base, true, int)
     }
 
@@ -355,6 +383,7 @@ impl UnitValue {
             value: f(self.value, int)?,
             unit: self.unit,
             exact: false,
+            base: self.base,
         })
     }
 
@@ -375,6 +404,7 @@ impl UnitValue {
             value: 1.into(),
             unit: Unit::unitless(),
             exact: true,
+            base: Base::default(),
         }
     }
 
@@ -443,7 +473,8 @@ impl UnitValue {
             write!(f, "approx. ")?;
         }
         let use_parentheses = !self.unit.components.is_empty();
-        self.value.format(f, use_parentheses, self.exact, int)?;
+        self.value
+            .format(f, self.base, use_parentheses, self.exact, int)?;
         if !self.unit.components.is_empty() {
             // Pluralisation:
             // All units should be singular, except for the last unit
@@ -482,7 +513,7 @@ impl UnitValue {
                     write!(f, "/ ")?;
                 }
                 let plural = last_component_plural && i == pluralised_idx;
-                unit_exponent.format(f, plural, invert, int)?;
+                unit_exponent.format(f, self.base, plural, invert, int)?;
             }
         }
         Ok(())
@@ -494,6 +525,7 @@ impl UnitValue {
             value: self.value.mul(&rhs.value, int)?,
             unit: Unit { components },
             exact: require_both_exact(self.exact, rhs.exact),
+            base: self.base,
         })
     }
 }
@@ -505,6 +537,7 @@ impl Neg for UnitValue {
             value: -self.value,
             unit: self.unit,
             exact: self.exact,
+            base: self.base,
         }
     }
 }
@@ -515,6 +548,7 @@ impl From<u64> for UnitValue {
             value: i.into(),
             unit: Unit::unitless(),
             exact: true,
+            base: Base::default(),
         }
     }
 }
@@ -606,6 +640,7 @@ impl UnitExponent {
     fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
+        base: Base,
         plural: bool,
         invert_exp: bool,
         int: &I,
@@ -623,7 +658,7 @@ impl UnitExponent {
         };
         if exp != 1.into() {
             write!(f, "^")?;
-            exp.format(f, true, true, int)?;
+            exp.format(f, base, true, true, int)?;
         }
         Ok(())
     }
