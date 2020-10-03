@@ -232,6 +232,42 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
     }
 }
 
+// Try and parse recurring digits in parentheses.
+// '1.0(0)' -> success
+// '1.0(a)', '1.0( 0)' -> Ok, but not parsed
+// '1.0(3a)' -> Error
+
+fn parse_recurring_digits<'a, I: Interrupt>(
+    input: &'a str,
+    number: &mut Number,
+    base: Base,
+    int: &I,
+) -> Result<((), &'a str), IntErr<String, I>> {
+    let original_input = input;
+    // If there's no '(': return Ok but don't parse anything
+    if parse_fixed_char(input, '(').is_err() {
+        return Ok(((), original_input));
+    }
+    let (_, input) = parse_fixed_char(input, '(')?;
+    if parse_ascii_digit(input, base).is_err() {
+        // return Ok if there were no digits
+        return Ok(((), original_input));
+    }
+    let (_, input) = parse_integer(input, true, true, base, &mut |digit| -> Result<
+        (),
+        IntErr<String, I>,
+    > {
+        if digit != 0 {
+            return Err("Recurring numbers are currently not fully supported".to_string())?;
+        }
+        number.add_rec_digit_in_base(digit.into(), base, int)?;
+        Ok(())
+    })?;
+    // do return an error if there are any other characters before the closing parentheses
+    let (_, input) = parse_fixed_char(input, ')')?;
+    Ok(((), input))
+}
+
 fn parse_basic_number<'a, I: Interrupt>(
     mut input: &'a str,
     base: Base,
@@ -276,23 +312,8 @@ fn parse_basic_number<'a, I: Interrupt>(
         }
 
         // try parsing recurring decimals
-        if let Ok((_, remaining)) = parse_fixed_char(input, '(') {
-            let (_, remaining) =
-                parse_integer(remaining, true, true, base, &mut |digit| -> Result<
-                    (),
-                    IntErr<String, I>,
-                > {
-                    if digit != 0 {
-                        return Err(
-                            "Recurring numbers are currently not fully supported".to_string()
-                        )?;
-                    }
-                    res.add_rec_digit_in_base(digit.into(), base, int)?;
-                    Ok(())
-                })?;
-            let (_, remaining) = parse_fixed_char(remaining, ')')?;
-            input = remaining;
-        }
+        let (_, remaining) = parse_recurring_digits(input, &mut res, base, int)?;
+        input = remaining;
     }
 
     if !allow_zero && res.is_zero() {

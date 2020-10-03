@@ -248,6 +248,11 @@ fn test_decimal_point() {
     test_evaluation("1.00000001 as 30 dp", "1.00000001");
     test_evaluation("1.00000001 as 1000 dp", "1.00000001");
     test_evaluation("1.00000001 as 0 dp", "1");
+    test_evaluation(".1(0)", "0.1");
+    test_evaluation(".1( 0)", "0");
+    test_evaluation(".1 ( 0)", "0");
+    expect_error(".1(0 )");
+    expect_error(".1(0a)");
 }
 
 #[test]
