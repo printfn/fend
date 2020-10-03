@@ -21,12 +21,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
-      run: |
-        rustup update
-        cargo build --release --workspace
+    - name: Update Rust
+      run: rustup update
     - name: Run tests
-      run: cargo test --workspace
+      run: cargo test --workspace -- --nocapture
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
