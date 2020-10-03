@@ -202,7 +202,15 @@ mod tests {
         let mut failures = 0;
         // this is needed to prevent rare stack overflows
         scope.get("beergallon", &int).unwrap();
+        scope.get("hubble", &int).unwrap();
+        scope.get("atomicvelocity", &int).unwrap();
+        scope.get("apscruple", &int).unwrap();
+        scope.get("brscruple", &int).unwrap();
+        scope.get("B_FIELD", &int).unwrap();
+        scope.get("USD", &int).unwrap();
         for key in hashmap.keys() {
+            //let mut scope = scope.clone();
+            //eprintln!("Testing {}", key);
             match scope.get(key.as_str(), &int) {
                 Ok(_) => success += 1,
                 Err(msg) => {
