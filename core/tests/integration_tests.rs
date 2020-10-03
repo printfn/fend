@@ -253,6 +253,10 @@ fn test_decimal_point() {
     test_evaluation(".1 ( 0)", "0");
     expect_error(".1(0 )");
     expect_error(".1(0a)");
+    test_evaluation("2.0(e)", "approx. 5.4365636569");
+    test_evaluation("2.0(ln 5)", "approx. 3.2188758248");
+    test_evaluation("2 (5)", "10");
+    test_evaluation("2( 5)", "10");
 }
 
 #[test]
