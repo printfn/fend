@@ -182,14 +182,26 @@ impl Scope {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::err::NeverInterrupt;
+
+    #[test]
+    fn test_alepint() -> Result<(), IntErr<String, NeverInterrupt>> {
+        let int = NeverInterrupt::default();
+        let mut scope = Scope::new_default(&int).unwrap();
+        scope.get("beergallon", &int)?;
+        scope.get("alepint", &int)?;
+        Ok(())
+    }
 
     #[test]
     fn test_lazy_units() {
-        let int = crate::err::NeverInterrupt::default();
+        let int = NeverInterrupt::default();
         let mut scope = Scope::new_default(&int).unwrap();
         let hashmap = scope.hashmap.clone();
         let mut success = 0;
         let mut failures = 0;
+        // this is needed to prevent rare stack overflows
+        scope.get("beergallon", &int).unwrap();
         for key in hashmap.keys() {
             match scope.get(key.as_str(), &int) {
                 Ok(_) => success += 1,
