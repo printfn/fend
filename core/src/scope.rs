@@ -217,8 +217,8 @@ mod tests {
         scope.get("USD", &int).unwrap();
         scope.get("ustsp", &int).unwrap();
         for key in hashmap.keys() {
-            let mut scope = scope.clone();
-            eprintln!("Testing {}", key);
+            //let mut scope = scope.clone();
+            //eprintln!("Testing {}", key);
             match scope.get(key.as_str(), &int) {
                 Ok(_) => success += 1,
                 Err(msg) => {
