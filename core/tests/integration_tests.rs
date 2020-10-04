@@ -92,6 +92,17 @@ fn test_leading_zeroes() {
 }
 
 #[test]
+fn test_parsing_recurring_digits() {
+    expect_error("0.()");
+    test_eval_simple("0.(3) to float", "0.(3)");
+    test_eval_simple("0.(33) to float", "0.(3)");
+    test_eval_simple("0.(34) to float", "0.(34)");
+    test_eval_simple("0.(12345) to float", "0.(12345)");
+    test_eval_simple("0.(0) to float", "0");
+    test_eval_simple("0.123(00) to float", "0.123");
+}
+
+#[test]
 fn test_multiplication() {
     test_evaluation("2*2", "4");
     test_evaluation("\n2\n*\n2\n", "4");

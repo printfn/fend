@@ -253,17 +253,27 @@ fn parse_recurring_digits<'a, I: Interrupt>(
         // return Ok if there were no digits
         return Ok(((), original_input));
     }
+    let mut recurring_number_num = Number::from(0);
+    let mut recurring_number_den = Number::from(1);
     let (_, input) = parse_integer(input, true, true, base, &mut |digit| -> Result<
         (),
         IntErr<String, I>,
     > {
-        if digit != 0 {
-            return Err("Recurring numbers are currently not fully supported".to_string())?;
-        }
-        number.add_rec_digit_in_base(digit.into(), base, int)?;
+        let digit_as_u64 = u64::from(digit);
+        recurring_number_num = recurring_number_num
+            .clone()
+            .mul(10.into(), int)?
+            .add(digit_as_u64.into(), int)?;
+        recurring_number_den = recurring_number_den.clone().mul(10.into(), int)?;
         Ok(())
     })?;
-    // do return an error if there are any other characters before the closing parentheses
+    *number = number.clone().add(
+        recurring_number_num
+            .div(recurring_number_den.sub(1.into(), int)?, int)
+            .map_err(IntErr::into_string)?,
+        int,
+    )?;
+    // return an error if there are any other characters before the closing parentheses
     let (_, input) = parse_fixed_char(input, ')')?;
     Ok(((), input))
 }
