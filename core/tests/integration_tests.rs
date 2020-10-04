@@ -104,6 +104,8 @@ fn test_parsing_recurring_digits() {
     test_eval_simple("0.00(34) to float", "0.00(34)");
     test_eval_simple("0.0000(34) to float", "0.0000(34)");
     test_eval_simple("0.123434(34) to float", "0.12(34)");
+    test_eval_simple("0.123434(34)i to float", "0.12(34)i");
+    test_eval_simple("0.(3) + 0.123434(34)i to float", "0.(3) + 0.12(34)i");
 }
 
 #[test]
