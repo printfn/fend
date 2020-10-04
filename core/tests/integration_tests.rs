@@ -100,6 +100,10 @@ fn test_parsing_recurring_digits() {
     test_eval_simple("0.(12345) to float", "0.(12345)");
     test_eval_simple("0.(0) to float", "0");
     test_eval_simple("0.123(00) to float", "0.123");
+    test_eval_simple("0.0(34) to float", "0.0(34)");
+    test_eval_simple("0.00(34) to float", "0.00(34)");
+    test_eval_simple("0.0000(34) to float", "0.0000(34)");
+    test_eval_simple("0.123434(34) to float", "0.12(34)");
 }
 
 #[test]

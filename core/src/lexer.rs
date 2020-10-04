@@ -240,6 +240,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
 fn parse_recurring_digits<'a, I: Interrupt>(
     input: &'a str,
     number: &mut Number,
+    num_nonrec_digits: usize,
     base: Base,
     int: &I,
 ) -> Result<((), &'a str), IntErr<String, I>> {
@@ -267,9 +268,13 @@ fn parse_recurring_digits<'a, I: Interrupt>(
         recurring_number_den = recurring_number_den.clone().mul(10.into(), int)?;
         Ok(())
     })?;
+    recurring_number_den = recurring_number_den.clone().sub(1.into(), int)?;
+    for _ in 0..num_nonrec_digits {
+        recurring_number_den = recurring_number_den.clone().mul(10.into(), int)?;
+    }
     *number = number.clone().add(
         recurring_number_num
-            .div(recurring_number_den.sub(1.into(), int)?, int)
+            .div(recurring_number_den, int)
             .map_err(IntErr::into_string)?,
         int,
     )?;
@@ -307,6 +312,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
+        let mut num_nonrec_digits = 0;
         if parse_fixed_char(remaining, '(').is_err() {
             let (_, remaining) =
                 parse_integer(remaining, true, true, base, &mut |digit| -> Result<
@@ -314,6 +320,7 @@ fn parse_basic_number<'a, I: Interrupt>(
                     IntErr<String, I>,
                 > {
                     res.add_digit_in_base(digit.into(), base, int)?;
+                    num_nonrec_digits += 1;
                     Ok(())
                 })?;
             input = remaining;
@@ -322,7 +329,7 @@ fn parse_basic_number<'a, I: Interrupt>(
         }
 
         // try parsing recurring decimals
-        let (_, remaining) = parse_recurring_digits(input, &mut res, base, int)?;
+        let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
         input = remaining;
     }
 
