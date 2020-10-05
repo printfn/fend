@@ -598,7 +598,7 @@ fn test_mixed_fractions() {
     test_evaluation("4 + 1 2/3", "5 2/3");
     test_evaluation("-8 1/2", "-8.5");
     test_evaluation("-8 1/2'", "-8.5'");
-    test_evaluation("1.(3)i", "4i/3");
+    test_evaluation("1.(3)i", "1 1/3 i");
 }
 
 #[test]

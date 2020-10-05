@@ -401,15 +401,17 @@ impl BigRat {
         } else {
             (None, num.clone())
         };
+        // mixed fractions without a prefix aren't really mixed
+        let actually_mixed = pref.is_some();
         Ok(FormattedBigRat {
             negative,
             exact: true,
-            ty: if imag && !base.has_prefix() && num == 1.into() {
-                FormattedBigRatType::Fraction(pref, None, "i", formatted_den)
+            ty: if imag && !actually_mixed && !base.has_prefix() && num == 1.into() {
+                FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "")
             } else {
                 let formatted_num = num.format(base, true, int)?;
-                let s = if imag {
-                    if base.base_as_u8() >= 19 {
+                let i_suffix = if imag {
+                    if base.base_as_u8() >= 19 || actually_mixed {
                         " i"
                     } else {
                         "i"
@@ -417,7 +419,18 @@ impl BigRat {
                 } else {
                     ""
                 };
-                FormattedBigRatType::Fraction(pref, Some(formatted_num), s, formatted_den)
+                let (isuf1, isuf2) = if actually_mixed {
+                    ("", i_suffix)
+                } else {
+                    (i_suffix, "")
+                };
+                FormattedBigRatType::Fraction(
+                    pref,
+                    Some(formatted_num),
+                    isuf1,
+                    formatted_den,
+                    isuf2,
+                )
             },
         })
     }
@@ -457,11 +470,8 @@ impl BigRat {
             || style == FormattingStyle::MixedFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
         if fraction {
-            // imaginary numbers can't be formatted as mixed fractions, because
-            // e.g. 1 i/3 doesn't parse. It should be 4i/3 instead.
-            let mixed = (style == FormattingStyle::MixedFraction
-                || style == FormattingStyle::ExactFloatWithFractionFallback)
-                && !imag;
+            let mixed = style == FormattingStyle::MixedFraction
+                || style == FormattingStyle::ExactFloatWithFractionFallback;
             return Ok(Self::format_as_fraction(
                 &x.num, &x.den, base, negative, imag, mixed, int,
             )?);
@@ -881,11 +891,13 @@ enum FormattedBigRatType {
     // string (empty, "i" or " i")
     // '/'
     // int (denominator)
+    // string (empty or " i") (used for mixed fractions, e.g. 1 2/3 i)
     Fraction(
         Option<FormattedBigUint>,
         Option<FormattedBigUint>,
         &'static str,
         FormattedBigUint,
+        &'static str,
     ),
     //
     Decimal,
@@ -910,14 +922,14 @@ impl Display for FormattedBigRat {
                 }
                 write!(f, "{}", isuf)?;
             }
-            FormattedBigRatType::Fraction(integer, num, isuf, den) => {
+            FormattedBigRatType::Fraction(integer, num, isuf, den, isuf2) => {
                 if let Some(integer) = integer {
                     write!(f, "{} ", integer)?;
                 }
                 if let Some(num) = num {
                     write!(f, "{}", num)?;
                 }
-                write!(f, "{}/{}", isuf, den)?;
+                write!(f, "{}/{}{}", isuf, den, isuf2)?;
             }
             FormattedBigRatType::Decimal => (),
         }
