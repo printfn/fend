@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::exact_base::ExactBase;
+use crate::num::complex::Complex;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use crate::value::Value;
@@ -13,10 +13,11 @@ use std::{
 #[derive(Clone, Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct UnitValue {
-    value: ExactBase,
+    value: Complex,
     unit: Unit,
     exact: bool,
     base: Base,
+    format: FormattingStyle,
 }
 
 #[cfg(feature = "gpl")]
@@ -180,10 +181,11 @@ impl UnitValue {
 
     pub fn with_format(self, format: FormattingStyle) -> Self {
         Self {
-            value: self.value.with_format(format),
+            value: self.value,
             unit: self.unit,
             exact: self.exact,
             base: self.base,
+            format,
         }
     }
 
@@ -192,6 +194,7 @@ impl UnitValue {
             value: self.value,
             unit: self.unit,
             exact: self.exact,
+            format: self.format,
             base,
         }
     }
@@ -205,10 +208,11 @@ impl UnitValue {
             unit: self.unit,
             exact: self.exact,
             base: self.base,
+            format: self.format,
         })
     }
 
-    fn new(value: impl Into<ExactBase>, unit_components: Vec<UnitExponent>) -> Self {
+    fn new(value: impl Into<Complex>, unit_components: Vec<UnitExponent>) -> Self {
         Self {
             value: value.into(),
             unit: Unit {
@@ -216,6 +220,7 @@ impl UnitValue {
             },
             exact: true,
             base: Base::default(),
+            format: FormattingStyle::default(),
         }
     }
 
@@ -226,6 +231,7 @@ impl UnitValue {
             unit: self.unit,
             exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -240,6 +246,7 @@ impl UnitValue {
             unit: rhs.unit,
             exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -250,6 +257,7 @@ impl UnitValue {
             unit: self.unit,
             exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -266,6 +274,7 @@ impl UnitValue {
             unit: Unit { components },
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -294,15 +303,17 @@ impl UnitValue {
             unit: new_unit,
             exact: self.exact && rhs.exact && exact_res,
             base: self.base,
+            format: self.format,
         })
     }
 
     pub fn i() -> Self {
         Self {
-            value: ExactBase::i(),
+            value: Complex::i(),
             unit: Unit { components: vec![] },
             exact: true,
             base: Base::default(),
+            format: FormattingStyle::default(),
         }
     }
 
@@ -313,24 +324,27 @@ impl UnitValue {
             unit: self.unit,
             exact: self.exact && res_exact,
             base: self.base,
+            format: self.format,
         })
     }
 
     pub fn make_approximate(self) -> Self {
         Self {
-            value: self.value.make_approximate(),
+            value: self.value,
             unit: self.unit,
             exact: false,
             base: self.base,
+            format: self.format,
         }
     }
 
     pub fn zero_with_base(base: Base) -> Self {
         Self {
-            value: ExactBase::from(0),
+            value: Complex::from(0),
             unit: Unit::unitless(),
             exact: true,
             base,
+            format: FormattingStyle::default(),
         }
     }
 
@@ -347,7 +361,9 @@ impl UnitValue {
                 self.base.base_as_u8()
             ))?;
         }
-        self.value.add_digit_in_base(digit, base, false, int)
+        Ok(self
+            .value
+            .add_digit_in_base(digit, base.base_as_u8(), false, int)?)
     }
 
     pub fn is_zero(&self) -> bool {
@@ -356,7 +372,7 @@ impl UnitValue {
 
     fn apply_fn<I: Interrupt>(
         self,
-        f: impl FnOnce(ExactBase, &I) -> Result<ExactBase, IntErr<String, I>>,
+        f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String, I>>,
         require_unitless: bool,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
@@ -368,6 +384,7 @@ impl UnitValue {
             unit: self.unit,
             exact: false,
             base: self.base,
+            format: self.format,
         })
     }
 
@@ -389,67 +406,68 @@ impl UnitValue {
             unit: Unit::unitless(),
             exact: true,
             base: Base::default(),
+            format: FormattingStyle::default(),
         }
     }
 
     pub fn sin<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
         self.convert_angle_to_rad(scope, int)?
-            .apply_fn(ExactBase::sin, false, int)?
+            .apply_fn(Complex::sin, false, int)?
             .convert_to(Self::unitless(), int)
     }
 
     pub fn cos<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
         self.convert_angle_to_rad(scope, int)?
-            .apply_fn(ExactBase::cos, false, int)?
+            .apply_fn(Complex::cos, false, int)?
             .convert_to(Self::unitless(), int)
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::asin, false, int)
+        self.apply_fn(Complex::asin, false, int)
     }
 
     pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::acos, false, int)
+        self.apply_fn(Complex::acos, false, int)
     }
 
     pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::atan, false, int)
+        self.apply_fn(Complex::atan, false, int)
     }
 
     pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::sinh, false, int)
+        self.apply_fn(Complex::sinh, false, int)
     }
 
     pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::cosh, false, int)
+        self.apply_fn(Complex::cosh, false, int)
     }
 
     pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::tanh, false, int)
+        self.apply_fn(Complex::tanh, false, int)
     }
 
     pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::asinh, false, int)
+        self.apply_fn(Complex::asinh, false, int)
     }
 
     pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::acosh, false, int)
+        self.apply_fn(Complex::acosh, false, int)
     }
 
     pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::atanh, false, int)
+        self.apply_fn(Complex::atanh, false, int)
     }
 
     pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::ln, true, int)
+        self.apply_fn(Complex::ln, true, int)
     }
 
     pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::log2, true, int)
+        self.apply_fn(Complex::log2, true, int)
     }
 
     pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.apply_fn(ExactBase::log10, true, int)
+        self.apply_fn(Complex::log10, true, int)
     }
 
     pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
@@ -458,7 +476,7 @@ impl UnitValue {
         }
         let use_parentheses = !self.unit.components.is_empty();
         self.value
-            .format(f, self.base, use_parentheses, self.exact, int)?;
+            .format(f, self.exact, self.format, self.base, use_parentheses, int)?;
         if !self.unit.components.is_empty() {
             // Pluralisation:
             // All units should be singular, except for the last unit
@@ -497,7 +515,7 @@ impl UnitValue {
                     write!(f, "/ ")?;
                 }
                 let plural = last_component_plural && i == pluralised_idx;
-                unit_exponent.format(f, self.base, plural, invert, int)?;
+                unit_exponent.format(f, self.base, self.format, plural, invert, int)?;
             }
         }
         Ok(())
@@ -510,6 +528,7 @@ impl UnitValue {
             unit: Unit { components },
             exact: require_both_exact(self.exact, rhs.exact),
             base: self.base,
+            format: self.format,
         })
     }
 }
@@ -522,6 +541,7 @@ impl Neg for UnitValue {
             unit: self.unit,
             exact: self.exact,
             base: self.base,
+            format: self.format,
         }
     }
 }
@@ -533,6 +553,7 @@ impl From<u64> for UnitValue {
             unit: Unit::unitless(),
             exact: true,
             base: Base::default(),
+            format: FormattingStyle::default(),
         }
     }
 }
@@ -542,15 +563,15 @@ struct Unit {
     components: Vec<UnitExponent>,
 }
 
-type HashmapScale = (HashMap<BaseUnit, ExactBase>, ExactBase, bool);
+type HashmapScale = (HashMap<BaseUnit, Complex>, Complex, bool);
 
 impl Unit {
     fn to_hashmap_and_scale<I: Interrupt>(
         &self,
         int: &I,
     ) -> Result<HashmapScale, IntErr<String, I>> {
-        let mut hashmap = HashMap::<BaseUnit, ExactBase>::new();
-        let mut scale = ExactBase::from(1);
+        let mut hashmap = HashMap::<BaseUnit, Complex>::new();
+        let mut scale = Complex::from(1);
         let mut exact = true;
         for named_unit_exp in &self.components {
             test_int(int)?;
@@ -589,7 +610,7 @@ impl Unit {
         from: &Self,
         into: &Self,
         int: &I,
-    ) -> Result<(ExactBase, bool), IntErr<String, I>> {
+    ) -> Result<(Complex, bool), IntErr<String, I>> {
         let (hash_a, scale_a, exact_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b, exact_b) = into.to_hashmap_and_scale(int)?;
         if hash_a == hash_b {
@@ -610,11 +631,11 @@ impl Unit {
 #[derive(Clone, Debug)]
 struct UnitExponent {
     unit: NamedUnit,
-    exponent: ExactBase,
+    exponent: Complex,
 }
 
 impl UnitExponent {
-    fn new(unit: NamedUnit, exponent: impl Into<ExactBase>) -> Self {
+    fn new(unit: NamedUnit, exponent: impl Into<Complex>) -> Self {
         Self {
             unit,
             exponent: exponent.into(),
@@ -625,6 +646,7 @@ impl UnitExponent {
         &self,
         f: &mut Formatter,
         base: Base,
+        format: FormattingStyle,
         plural: bool,
         invert_exp: bool,
         int: &I,
@@ -642,7 +664,7 @@ impl UnitExponent {
         };
         if exp != 1.into() {
             write!(f, "^")?;
-            exp.format(f, base, true, true, int)?;
+            exp.format(f, true, format, base, true, int)?;
         }
         Ok(())
     }
@@ -653,16 +675,16 @@ impl UnitExponent {
 struct NamedUnit {
     singular_name: String,
     plural_name: String,
-    base_units: HashMap<BaseUnit, ExactBase>,
-    scale: ExactBase,
+    base_units: HashMap<BaseUnit, Complex>,
+    scale: Complex,
 }
 
 impl NamedUnit {
     fn new(
         singular_name: String,
         plural_name: String,
-        base_units: HashMap<BaseUnit, ExactBase>,
-        scale: impl Into<ExactBase>,
+        base_units: HashMap<BaseUnit, Complex>,
+        scale: impl Into<Complex>,
     ) -> Self {
         Self {
             singular_name,
@@ -736,7 +758,7 @@ mod tests {
             "g".to_string(),
             "g".to_string(),
             hashmap,
-            ExactBase::from(1).div(1000.into(), int).unwrap(),
+            Complex::from(1).div(1000.into(), int).unwrap(),
         );
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let twelve_g = UnitValue::new(12, vec![UnitExponent::new(g.clone(), 1)]);

@@ -8,7 +8,6 @@ mod base;
 mod bigrat;
 mod biguint;
 mod complex;
-mod exact_base;
 mod formatting_style;
 mod unit;
 
