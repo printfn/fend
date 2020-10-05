@@ -392,7 +392,7 @@ impl BigRat {
     ) -> Result<FormattedBigRat, IntErr<Never, I>> {
         let formatted_den = den.format(base, true, int)?;
         let (pref, num) = if mixed {
-            let (prefix, num) = num.divmod(den, int).unwrap();
+            let (prefix, num) = num.divmod(den, int).map_err(IntErr::unwrap)?;
             if prefix == 0.into() {
                 (None, num)
             } else {
