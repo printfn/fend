@@ -15,6 +15,7 @@ pub enum ParseError {
     ExpectedIdentifierAsArgument,
     ExpectedDotInLambda,
     DotNotAllowedInLambdaArg,
+    InvalidMixedFraction,
 }
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -36,6 +37,7 @@ impl Display for ParseError {
             Self::UnexpectedInput => write!(f, "Unexpected input found"),
             Self::ExpectedDotInLambda => write!(f, "Missing '.' in lambda (expected e.g. \\x.x)"),
             Self::DotNotAllowedInLambdaArg => write!(f, "'.' is not allowed in lambda parameter"),
+            Self::InvalidMixedFraction => write!(f, "Invalid mixed fraction"),
         }
     }
 }
@@ -164,12 +166,62 @@ fn parse_power<'a>(
     Ok((result, input))
 }
 
+fn parse_mixed_fraction<'a>(
+    input: &'a [Token],
+    allow_unary: bool,
+    options: ParseOptions,
+) -> ParseResult<'a, Expr> {
+    let (a, input) = parse_power(input, allow_unary, options)?;
+    let orig_input = input;
+    if options.gnu_compatible {
+        return Ok((a, orig_input));
+    }
+    let (positive, a) = if let Expr::Num(_) = a {
+        (true, a)
+    } else if let Expr::UnaryMinus(a) = a {
+        if let Expr::Num(_) = *a {
+            (false, Expr::UnaryMinus(a))
+        } else {
+            return Ok((Expr::UnaryMinus(a), input));
+        }
+    } else {
+        return Ok((a, orig_input));
+    };
+    if let Ok((b, mut input)) = parse_power(input, false, options) {
+        if let Expr::Num(_) = b {
+        } else {
+            return Ok((a, orig_input));
+        }
+        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Div) {
+            input = remaining;
+        } else {
+            return Ok((a, orig_input));
+        }
+        if let Ok((c, input)) = parse_power(input, false, options) {
+            if let Expr::Num(_) = c {
+            } else {
+                return Ok((a, orig_input));
+            }
+            let rhs = Box::new(Expr::Div(Box::new(b), Box::new(c)));
+            if positive {
+                Ok((Expr::Add(Box::new(a), rhs), input))
+            } else {
+                Ok((Expr::Sub(Box::new(a), rhs), input))
+            }
+        } else {
+            Ok((a, orig_input))
+        }
+    } else {
+        Ok((a, orig_input))
+    }
+}
+
 fn parse_apply_cont<'a>(
     input: &'a [Token],
     lhs: &Expr,
     options: ParseOptions,
 ) -> ParseResult<'a, Expr> {
-    let (rhs, input) = parse_power(input, false, options)?;
+    let (rhs, input) = parse_mixed_fraction(input, false, options)?;
     // This should never be called in GNU-compatible mode
     assert!(!options.gnu_compatible);
     Ok((
@@ -201,9 +253,9 @@ fn parse_apply_cont<'a>(
 
 // parse apply/multiply with higher precedence (left-associative)
 fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
-    let (mut res, mut input) = parse_power(input, true, options)?;
+    let (mut res, mut input) = parse_mixed_fraction(input, true, options)?;
     if options.gnu_compatible {
-        while let Ok((rhs, remaining)) = parse_power(input, false, options) {
+        while let Ok((rhs, remaining)) = parse_mixed_fraction(input, false, options) {
             res = Expr::Apply(Box::new(res), Box::new(rhs));
             input = remaining;
         }
@@ -256,22 +308,6 @@ fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> Par
     }
     if let Ok((rhs, remaining)) = parse_compound_fraction(input, options) {
         match (&res, &rhs) {
-            // n n/n (n: number literal)
-            (Expr::Num(_), Expr::Div(b, c)) => {
-                if let (Expr::Num(_), Expr::Num(_)) = (&**b, &**c) {
-                    return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining));
-                }
-            }
-            // -n n/n
-            (Expr::UnaryMinus(a), Expr::Div(b, c)) => {
-                if let (Expr::Num(_), Expr::Num(_), Expr::Num(_)) = (&**a, &**b, &**c) {
-                    return Ok((
-                        // note that res = '-<num>' here because unary minus has a higher precedence
-                        Expr::Sub(Box::new(res), Box::new(rhs)),
-                        remaining,
-                    ));
-                }
-            }
             // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
             (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _))
             | (Expr::ApplyMul(_, _), Expr::ImplicitAdd(_, _)) => {

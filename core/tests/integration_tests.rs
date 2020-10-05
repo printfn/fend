@@ -593,10 +593,11 @@ fn test_no_adjacent_numbers() {
 }
 
 #[test]
-fn test_compound_fraction() {
+fn test_mixed_fractions() {
     test_evaluation("5/3", "1 2/3");
     test_evaluation("4 + 1 2/3", "5 2/3");
     test_evaluation("-8 1/2", "-8.5");
+    test_evaluation("-8 1/2'", "-8.5'");
 }
 
 #[test]
