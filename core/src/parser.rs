@@ -14,7 +14,6 @@ pub enum ParseError {
     UnexpectedInput,
     ExpectedIdentifierAsArgument,
     ExpectedDotInLambda,
-    DotNotAllowedInLambdaArg,
     InvalidMixedFraction,
 }
 impl Display for ParseError {
@@ -36,7 +35,6 @@ impl Display for ParseError {
             Self::InvalidApplyOperands => write!(f, "Error"),
             Self::UnexpectedInput => write!(f, "Unexpected input found"),
             Self::ExpectedDotInLambda => write!(f, "Missing '.' in lambda (expected e.g. \\x.x)"),
-            Self::DotNotAllowedInLambdaArg => write!(f, "'.' is not allowed in lambda parameter"),
             Self::InvalidMixedFraction => write!(f, "Invalid mixed fraction"),
         }
     }
@@ -361,9 +359,6 @@ fn parse_function<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining, options)?;
-            if s.contains('.') {
-                return Err(ParseError::DotNotAllowedInLambdaArg);
-            }
             return Ok((Expr::Fn(s, Box::new(rhs)), remaining));
         } else {
             return Err(ParseError::ExpectedIdentifierAsArgument);

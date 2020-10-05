@@ -55,7 +55,13 @@ impl Expr {
                 write!(f, "({} {})", g(a)?, g(b)?)?
             }
             Self::As(a, b) => write!(f, "({} as {})", g(a)?, g(b)?)?,
-            Self::Fn(a, b) => write!(f, "\\{}.{}", a, g(b)?)?,
+            Self::Fn(a, b) => {
+                if a.contains('.') {
+                    write!(f, "({}:{})", a, g(b)?)?
+                } else {
+                    write!(f, "\\{}.{}", a, g(b)?)?
+                }
+            }
         }
         Ok(())
     }
