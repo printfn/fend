@@ -11,6 +11,7 @@ license = "MIT"
 keywords = ["calculator", "cli", "conversion", "math", "tool"]
 edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
+exclude = ["deploy.sh"]
 
 [dependencies]
 rustyline = { version =  "6.2.2", default-features = false, package = "rustyline-with-hint-fix" }
