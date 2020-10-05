@@ -457,8 +457,11 @@ impl BigRat {
             || style == FormattingStyle::MixedFraction
             || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
         if fraction {
-            let mixed = style == FormattingStyle::MixedFraction
-                || style == FormattingStyle::ExactFloatWithFractionFallback;
+            // imaginary numbers can't be formatted as mixed fractions, because
+            // e.g. 1 i/3 doesn't parse. It should be 4i/3 instead.
+            let mixed = (style == FormattingStyle::MixedFraction
+                || style == FormattingStyle::ExactFloatWithFractionFallback)
+                && !imag;
             return Ok(Self::format_as_fraction(
                 &x.num, &x.den, base, negative, imag, mixed, int,
             )?);
