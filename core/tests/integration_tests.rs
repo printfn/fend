@@ -572,6 +572,8 @@ fn test_more_units() {
     );
     test_evaluation("1 feet", "1 foot");
     test_evaluation("5 foot", "5 feet");
+    test_eval_simple("5 foot 2 inches", "5 1/6 feet");
+    test_eval_simple("5 foot 1 inch 1 inch", "5 1/6 feet");
     // this tests if "e" is parsed as the electron charge (instead of Euler's number)
     // in unit definitions
     test_evaluation(
