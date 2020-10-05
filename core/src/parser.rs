@@ -298,13 +298,13 @@ fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
     Ok((res, input))
 }
 
-fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_implicit_addition<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (res, input) = parse_multiplicative(input, options)?;
     if options.gnu_compatible {
         // don't parse mixed fractions or implicit addition (e.g. 3'6") when gnu_compatible is set
         return Ok((res, input));
     }
-    if let Ok((rhs, remaining)) = parse_compound_fraction(input, options) {
+    if let Ok((rhs, remaining)) = parse_implicit_addition(input, options) {
         match (&res, &rhs) {
             // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
             (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _))
@@ -319,24 +319,24 @@ fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> Par
 
 fn parse_addition_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Add)?;
-    let (b, input) = parse_compound_fraction(input, options)?;
+    let (b, input) = parse_implicit_addition(input, options)?;
     Ok((b, input))
 }
 
 fn parse_subtraction_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Sub)?;
-    let (b, input) = parse_compound_fraction(input, options)?;
+    let (b, input) = parse_implicit_addition(input, options)?;
     Ok((b, input))
 }
 
 fn parse_to_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
     let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
-    let (b, input) = parse_compound_fraction(input, options)?;
+    let (b, input) = parse_implicit_addition(input, options)?;
     Ok((b, input))
 }
 
 fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
-    let (mut res, mut input) = parse_compound_fraction(input, options)?;
+    let (mut res, mut input) = parse_implicit_addition(input, options)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input, options) {
             res = Expr::Add(Box::new(res), Box::new(term));
