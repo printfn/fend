@@ -254,7 +254,7 @@ fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> Par
         // don't parse mixed fractions or implicit addition (e.g. 3'6") when gnu_compatible is set
         return Ok((res, input));
     }
-    if let Ok((rhs, remaining)) = parse_multiplicative(input, options) {
+    if let Ok((rhs, remaining)) = parse_compound_fraction(input, options) {
         match (&res, &rhs) {
             // n n/n (n: number literal)
             (Expr::Num(_), Expr::Div(b, c)) => {
@@ -273,8 +273,9 @@ fn parse_compound_fraction<'a>(input: &'a [Token], options: ParseOptions) -> Par
                 }
             }
             // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
-            (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _)) => {
-                return Ok((Expr::Add(Box::new(res), Box::new(rhs)), remaining))
+            (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _))
+            | (Expr::ApplyMul(_, _), Expr::ImplicitAdd(_, _)) => {
+                return Ok((Expr::ImplicitAdd(Box::new(res), Box::new(rhs)), remaining))
             }
             _ => (),
         };

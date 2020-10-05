@@ -16,6 +16,7 @@ pub enum Expr {
     UnaryDiv(Box<Expr>),
     Factorial(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
+    ImplicitAdd(Box<Expr>, Box<Expr>),
     Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
@@ -44,7 +45,7 @@ impl Expr {
             Self::UnaryPlus(x) => write!(f, "(+{})", g(x)?)?,
             Self::UnaryDiv(x) => write!(f, "(/{})", g(x)?)?,
             Self::Factorial(x) => write!(f, "{}!", g(x)?)?,
-            Self::Add(a, b) => write!(f, "({}+{})", g(a)?, g(b)?)?,
+            Self::Add(a, b) | Self::ImplicitAdd(a, b) => write!(f, "({}+{})", g(a)?, g(b)?)?,
             Self::Sub(a, b) => write!(f, "({}-{})", g(a)?, g(b)?)?,
             Self::Mul(a, b) => write!(f, "({}*{})", g(a)?, g(b)?)?,
             Self::Div(a, b) => write!(f, "({}/{})", g(a)?, g(b)?)?,
@@ -84,7 +85,7 @@ pub fn evaluate<I: Interrupt>(
                 .map_err(IntErr::into_string)?,
         ),
         Expr::Factorial(x) => Value::Num(eval!(*x)?.expect_num()?.factorial(int)?),
-        Expr::Add(a, b) => Value::Num(
+        Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => Value::Num(
             eval!(*a)?
                 .expect_num()?
                 .add(eval!(*b)?.expect_num()?, int)?,
