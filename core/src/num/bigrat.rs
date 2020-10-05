@@ -530,6 +530,7 @@ impl BigRat {
     ///     with parentheses.
     ///   * If `max_digits` is given, only up to that many digits are printed, and recurring
     ///     digits will not printed in parentheses but will instead be repeated up to `max_digits`.
+    ///     Any trailing zeroes are not printed.
     fn format_trailing_digits<I: Interrupt>(
         f: &mut Formatter,
         base: Base,
