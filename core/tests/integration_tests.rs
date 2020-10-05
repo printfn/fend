@@ -599,6 +599,16 @@ fn test_mixed_fractions() {
     test_evaluation("-8 1/2", "-8.5");
     test_evaluation("-8 1/2'", "-8.5'");
     test_evaluation("1.(3)i", "1 1/3 i");
+    test_evaluation("1*1 1/2", "1.5");
+    test_evaluation("2*1 1/2", "3");
+    test_evaluation("3*2*1 1/2", "9");
+    test_evaluation("3 + 2*1 1/2", "6");
+    test_evaluation("abs 2*1 1/2", "3");
+    expect_error("1/1 1/2");
+    expect_error("2/1 1/2");
+    test_evaluation("1 1/2 m/s^2", "1.5 m / s^2");
+    expect_error("(x:2x) 1 1/2");
+    expect_error("pi 1 1/2");
 }
 
 #[test]

@@ -164,62 +164,12 @@ fn parse_power<'a>(
     Ok((result, input))
 }
 
-fn parse_mixed_fraction<'a>(
-    input: &'a [Token],
-    allow_unary: bool,
-    options: ParseOptions,
-) -> ParseResult<'a, Expr> {
-    let (a, input) = parse_power(input, allow_unary, options)?;
-    let orig_input = input;
-    if options.gnu_compatible {
-        return Ok((a, orig_input));
-    }
-    let (positive, a) = if let Expr::Num(_) = a {
-        (true, a)
-    } else if let Expr::UnaryMinus(a) = a {
-        if let Expr::Num(_) = *a {
-            (false, Expr::UnaryMinus(a))
-        } else {
-            return Ok((Expr::UnaryMinus(a), input));
-        }
-    } else {
-        return Ok((a, orig_input));
-    };
-    if let Ok((b, mut input)) = parse_power(input, false, options) {
-        if let Expr::Num(_) = b {
-        } else {
-            return Ok((a, orig_input));
-        }
-        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Div) {
-            input = remaining;
-        } else {
-            return Ok((a, orig_input));
-        }
-        if let Ok((c, input)) = parse_power(input, false, options) {
-            if let Expr::Num(_) = c {
-            } else {
-                return Ok((a, orig_input));
-            }
-            let rhs = Box::new(Expr::Div(Box::new(b), Box::new(c)));
-            if positive {
-                Ok((Expr::Add(Box::new(a), rhs), input))
-            } else {
-                Ok((Expr::Sub(Box::new(a), rhs), input))
-            }
-        } else {
-            Ok((a, orig_input))
-        }
-    } else {
-        Ok((a, orig_input))
-    }
-}
-
 fn parse_apply_cont<'a>(
     input: &'a [Token],
     lhs: &Expr,
     options: ParseOptions,
 ) -> ParseResult<'a, Expr> {
-    let (rhs, input) = parse_mixed_fraction(input, false, options)?;
+    let (rhs, input) = parse_power(input, false, options)?;
     // This should never be called in GNU-compatible mode
     assert!(!options.gnu_compatible);
     Ok((
@@ -249,11 +199,63 @@ fn parse_apply_cont<'a>(
     ))
 }
 
+fn parse_mixed_fraction<'a>(
+    input: &'a [Token],
+    lhs: &Expr,
+    options: ParseOptions,
+) -> ParseResult<'a, Expr> {
+    let (positive, lhs, other_factor) = match lhs {
+        Expr::Num(_) => (true, lhs, None),
+        Expr::UnaryMinus(x) => {
+            if let Expr::Num(_) = &**x {
+                (false, lhs, None)
+            } else {
+                return Err(ParseError::InvalidMixedFraction);
+            }
+        }
+        Expr::Mul(a, b) => match &**b {
+            Expr::Num(_) => (true, &**b, Some(&**a)),
+            Expr::UnaryMinus(x) => {
+                if let Expr::Num(_) = &**x {
+                    (false, &**b, Some(&**a))
+                } else {
+                    return Err(ParseError::InvalidMixedFraction);
+                }
+            }
+            _ => return Err(ParseError::InvalidMixedFraction),
+        },
+        _ => return Err(ParseError::InvalidMixedFraction),
+    };
+    let (rhs_top, input) = parse_power(input, false, options)?;
+    if let Expr::Num(_) = rhs_top {
+    } else {
+        return Err(ParseError::InvalidMixedFraction);
+    }
+    let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
+    let (rhs_bottom, input) = parse_power(input, false, options)?;
+    if let Expr::Num(_) = rhs_bottom {
+    } else {
+        return Err(ParseError::InvalidMixedFraction);
+    }
+    let rhs = Box::new(Expr::Div(Box::new(rhs_top), Box::new(rhs_bottom)));
+    let mixed_fraction = if positive {
+        Expr::Add(Box::new(lhs.clone()), rhs)
+    } else {
+        Expr::Sub(Box::new(lhs.clone()), rhs)
+    };
+    let mixed_fraction = if let Some(other_factor) = other_factor {
+        Expr::Mul(Box::new(other_factor.clone()), Box::new(mixed_fraction))
+    } else {
+        mixed_fraction
+    };
+    Ok((mixed_fraction, input))
+}
+
 // parse apply/multiply with higher precedence (left-associative)
 fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
-    let (mut res, mut input) = parse_mixed_fraction(input, true, options)?;
+    let (mut res, mut input) = parse_power(input, true, options)?;
     if options.gnu_compatible {
-        while let Ok((rhs, remaining)) = parse_mixed_fraction(input, false, options) {
+        while let Ok((rhs, remaining)) = parse_power(input, false, options) {
             res = Expr::Apply(Box::new(res), Box::new(rhs));
             input = remaining;
         }
@@ -288,6 +290,9 @@ fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
         } else if options.gnu_compatible {
             // apply can't be parsed here if we're GNU compatible
             break;
+        } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res, options) {
+            res = new_res;
+            input = remaining;
         } else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res, options) {
             res = new_res;
             input = remaining;
