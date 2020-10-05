@@ -66,6 +66,11 @@ approx. 0.7071067811 + 0.7071067811i
 ```
 
 ```
+> 1 1/2' to cm
+45.72 cm
+```
+
+```
 > 1 lightyear to parsecs
 approx. 0.3066013937 parsecs
 ```

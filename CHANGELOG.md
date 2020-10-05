@@ -1,11 +1,11 @@
 # Changelog
 
-## Next release
+## v0.1.6 (2020-10-05)
 
 * Support outputting mixed fractions (implicitly or via `to mixed_fraction`)
-* Allow numbers that start with a decimal point, such as `.1`
 * Support unmatched parentheses (e.g. `2+3)*(1+2` is `15`)
 * Support parsing of numbers with recurring digits (e.g. `0.(3)` is equal to `1/3`)
+* Allow numbers that start with a decimal point, such as `.1`
 
 ## v0.1.5 (2020-09-29)
 
