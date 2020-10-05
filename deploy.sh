@@ -55,24 +55,22 @@ git --no-pager diff --cached
 confirm "'git commit -am \"Release version $VERSION\"'"
 git commit -am "Release version $VERSION"
 git status
-confirm "'git push', 'git push --tags'"
+confirm "'git push'"
 git push
-git push --tags
 manualstep "Ensure CI passes"
 echo "'(cd core && cargo publish --dry-run)'"
 (cd core && cargo publish --dry-run)
 confirm "cargo publish for fend-core"
 (cd core && cargo publish)
-echo 'cargo publish --dry-run'
+echo "Sleeping for 60 seconds to let crates.io update"
+sleep 60
+echo "'cargo publish --dry-run'"
 cargo publish --dry-run
 confirm "cargo publish for fend"
 cargo publish
 confirm "Tag and push tag to GitHub"
 git tag "v$VERSION"
 git push --tags
-manualstep "Create GitHub release (including changelog)"
+manualstep "Create GitHub release (including changelog). Download and rename artifacts."
 manualstep "Update manual: https://github.com/printfn/fend-rs/wiki"
-manualstep "Download artifacts (as zip files)"
-manualstep "Upload artifacts to GH release"
-manualstep "Rename files to 'fend-linux', 'fend-macos' and 'fend-windows'"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"
