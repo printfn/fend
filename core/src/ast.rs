@@ -155,7 +155,7 @@ fn resolve_identifier<I: Interrupt>(
 ) -> Result<Value, IntErr<String, I>> {
     if options.gnu_compatible {
         return Ok(match ident {
-            "exp" => eval("x: e^x", scope, int)?,
+            "exp" => eval("x: approx. 2.718281828459045235^x", scope, int)?,
             "sqrt" => eval("x: x^(1/2)", scope, int)?,
             "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
             "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
