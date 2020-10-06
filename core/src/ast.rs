@@ -3,7 +3,7 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
-use crate::value::Value;
+use crate::value::{Value, BuiltInFunction};
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone, Debug)]
@@ -130,7 +130,7 @@ pub fn evaluate<I: Interrupt>(
                 )?;
             }
             Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
-            Value::Func(_) | Value::Fn(_, _, _) => {
+            Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
@@ -157,15 +157,15 @@ fn resolve_identifier<I: Interrupt>(
         return Ok(match ident {
             "exp" => eval("x: e^x", scope, int)?,
             "sqrt" => eval("x: x^(1/2)", scope, int)?,
-            "ln" => Value::Func("ln"),
-            "log2" => Value::Func("log2"),
-            "log10" => Value::Func("log10"),
+            "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
+            "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
+            "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
             // sin and cos are only needed for tan
-            "sin" => Value::Func("sin"),
-            "cos" => Value::Func("cos"),
+            "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
+            "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
             "tan" => eval("x: (sin x)/(cos x)", scope, int)?,
-            "asin" => Value::Func("asin"),
-            "approx." | "approximately" => Value::Func("approximately"),
+            "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
+            "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
             _ => scope.get(ident, int)?,
         });
     }
@@ -178,31 +178,31 @@ fn resolve_identifier<I: Interrupt>(
         //"c" => eval("299792458 m / s", scope, int)?,
         "sqrt" => eval("x: x^(1/2)", scope, int)?,
         "cbrt" => eval("x: x^(1/3)", scope, int)?,
-        "abs" => Value::Func("abs"),
-        "sin" => Value::Func("sin"),
-        "cos" => Value::Func("cos"),
+        "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
+        "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
+        "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
         "tan" => eval("x: (sin x)/(cos x)", scope, int)?,
-        "asin" => Value::Func("asin"),
-        "acos" => Value::Func("acos"),
-        "atan" => Value::Func("atan"),
-        "sinh" => Value::Func("sinh"),
-        "cosh" => Value::Func("cosh"),
-        "tanh" => Value::Func("tanh"),
-        "asinh" => Value::Func("asinh"),
-        "acosh" => Value::Func("acosh"),
-        "atanh" => Value::Func("atanh"),
-        "ln" => Value::Func("ln"),
-        "log2" => Value::Func("log2"),
-        "log10" => Value::Func("log10"),
+        "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
+        "acos" => Value::BuiltInFunction(BuiltInFunction::Acos),
+        "atan" => Value::BuiltInFunction(BuiltInFunction::Atan),
+        "sinh" => Value::BuiltInFunction(BuiltInFunction::Sinh),
+        "cosh" => Value::BuiltInFunction(BuiltInFunction::Cosh),
+        "tanh" => Value::BuiltInFunction(BuiltInFunction::Tanh),
+        "asinh" => Value::BuiltInFunction(BuiltInFunction::Asinh),
+        "acosh" => Value::BuiltInFunction(BuiltInFunction::Acosh),
+        "atanh" => Value::BuiltInFunction(BuiltInFunction::Atanh),
+        "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
+        "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
+        "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
         "exp" => eval("x: e^x", scope, int)?,
-        "approx." | "approximately" => Value::Func("approximately"),
+        "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),
         "fraction" => Value::Format(FormattingStyle::ExactFraction),
         "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
-        "base" => Value::Func("base"),
+        "base" => Value::BuiltInFunction(BuiltInFunction::Base),
         "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
