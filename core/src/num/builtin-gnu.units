@@ -1,5 +1,4 @@
-# This file defines pluralisations for some units defined in definitions.units.
-# It also contains commands that are necessary for definitions.units to parse correctly.
+# This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
 # Any line containing any of these should be ignored
 !ignore !locale
@@ -137,8 +136,13 @@ ft3     ft^3
 !ignore to                   10 shou
 !ignore koku                 10 to
 
-# e is overridden to be Euler's number
-electroncharge e
+# The remainder of this file is copied from definitions.units and currency.units,
+# with the following changes:
+#
+#  * 'e' is renamed to 'electroncharge'
+#
+
+### Begin definitions.units and currency.units
 
 #
 # This file is the units database for use with GNU units, a units conversion
@@ -456,7 +460,7 @@ kelvin    K      # temperature.  It is defined by taking the fixed numerical
                  # tiny voltage fluctuations in resistors. Both variables
                  # depend directly on temperature.
 
-e         1.602176634e-19 C  # electron charge (exact)
+electroncharge   1.602176634e-19 C  # electron charge (exact)
 
 A         !      # The ampere, symbol A, is the SI unit of electric current.
 ampere    A      # It is defined by taking the fixed numerical value of the
@@ -1263,7 +1267,7 @@ gasmark[degR] \
 
 pi                      3.14159265358979323846
 light                   c
-mu0_SI                 2 alpha h / e^2 c # Vacuum magnetic permeability
+mu0_SI                 2 alpha h / electroncharge^2 c # Vacuum magnetic permeability
 mu0                     mu0_SI           # Gets overridden in CGS modes 
 epsilon0                1/mu0 c^2        # Vacuum electric permittivity
 Z0                      mu0 c            # Free space impedance
@@ -1314,7 +1318,7 @@ wiendisplacement     (h c/k)/4.9651142317442763  # Wien's Displacement Law gives
                                          #   of stars.  The constant is the
                                          #   solution to x=5(1-exp(-x)). (exact)
 K_J90 483597.9 GHz/V    # Direct measurement of the volt is difficult.  Until
-K_J   2e/h              #   recently, laboratories kept Weston cadmium cells as
+K_J   2electroncharge/h #   recently, laboratories kept Weston cadmium cells as
                         #   a reference, but they could drift.  In 1987 the
                         #   CGPM officially recommended the use of the
                         #   Josephson effect as a laboratory representation of
@@ -1328,22 +1332,22 @@ K_J   2e/h              #   recently, laboratories kept Weston cadmium cells as
                         #   potential.  Two values given, the conventional
                         #   (exact) value from 1990, which was used until the
                         #   2019 SI revision, and the current exact value.
-R_K90 25812.807 ohm     # Measurement of the ohm also presents difficulties.
-R_K   h/e^2             #   The old approach involved maintaining resistances
-                        #   that were subject to drift.  The new standard is
-                        #   based on the Hall effect.  When a current carrying
-                        #   ribbon is placed in a magnetic field, a potential
-                        #   difference develops across the ribbon.  The ratio
-                        #   of the potential difference to the current is
-                        #   called the Hall resistance.  Klaus von Klitzing
-                        #   discovered in 1980 that the Hall resistance varies
-                        #   in discrete jumps when the magnetic field is very
-                        #   large and the temperature very low.  This enables
-                        #   accurate realization of the resistance h/e^2 in the
-                        #   lab.  The 1990 value was an exact conventional 
-                        #   value used until the SI revision in 2019. This value
-                        #   did not agree with measurements.  The new value
-                        #   is exact.
+R_K90 25812.807 ohm      # Measurement of the ohm also presents difficulties.
+R_K   h/electroncharge^2 #   The old approach involved maintaining resistances
+                         #   that were subject to drift.  The new standard is
+                         #   based on the Hall effect.  When a current carrying
+                         #   ribbon is placed in a magnetic field, a potential
+                         #   difference develops across the ribbon.  The ratio
+                         #   of the potential difference to the current is
+                         #   called the Hall resistance.  Klaus von Klitzing
+                         #   discovered in 1980 that the Hall resistance varies
+                         #   in discrete jumps when the magnetic field is very
+                         #   large and the temperature very low.  This enables
+                         #   accurate realization of the resistance h/e^2 in the
+                         #   lab.  The 1990 value was an exact conventional 
+                         #   value used until the SI revision in 2019. This value
+                         #   did not agree with measurements.  The new value
+                         #   is exact.
 
 # The 2019 update to SI gives exact definitions for R_K and K_J.  Previously
 # the electromagnetic units were realized using the 1990 conventional values
@@ -1417,7 +1421,7 @@ alpha                    7.2973525693e-3 # The fine structure constant was
 bohrradius              alpha / 4 pi Rinfinity
 prout                   185.5 keV        # nuclear binding energy equal to 1|12
                                          #   binding energy of the deuteron
-conductancequantum      2 e^2 / h
+conductancequantum      2 electroncharge^2 / h
 
 # Planck constants
 
@@ -1432,7 +1436,7 @@ T_P                     plancktemperature
 
 # Particle radius
 
-electronradius    coulombconst e^2 / electronmass c^2   # Classical
+electronradius    coulombconst electroncharge^2 / electronmass c^2   # Classical
 deuteronchargeradius    2.12799e-15 m
 protonchargeradius      0.8751e-15 m
 
@@ -1488,12 +1492,12 @@ g_t                     5.957924931        # Triton g-factor
 # the reference is the nuclear magneton, and all of the particles
 # except the deuteron have spin 1/2.  
 
-bohrmagneton            e hbar / 2 electronmass  # Reference magnetic moment for
-mu_B                    bohrmagneton             #   the electron
-nuclearmagneton         e hbar /  2 protonmass   # Convenient reference magnetic
-mu_N                    nuclearmagneton          #   moment for heavy particles
+bohrmagneton            electroncharge hbar / 2 electronmass  # Reference magnetic moment for
+mu_B                    bohrmagneton                          #   the electron
+nuclearmagneton         electroncharge hbar /  2 protonmass   # Convenient reference magnetic
+mu_N                    nuclearmagneton                       #   moment for heavy particles
 mu_e                    g_e mu_B / 2             # Electron spin magnet moment
-mu_mu                   g_mu e hbar / 4 muonmass # Muon spin magnetic moment
+mu_mu                   g_mu electroncharge hbar / 4 muonmass # Muon spin magnetic moment
 mu_p                    g_p mu_N / 2             # Proton magnetic moment
 mu_n                    g_n mu_N / 2             # Neutron magnetic moment
 mu_t                    g_t mu_N / 2             # Triton magnetic moment
@@ -1517,8 +1521,8 @@ tor                     Pa         # Suggested in 1913 but seldom used [24].
 inHg                    inch Hg    
 inH2O                   inch water
 mmH2O                   mm water
-eV                      e V      # Energy acquired by a particle with charge e
-electronvolt            eV       #   when it is accelerated through 1 V
+eV                      electroncharge V      # Energy acquired by a particle with charge e
+electronvolt            eV                    #   when it is accelerated through 1 V
 lightyear               c julianyear # The 365.25 day year is specified in
 ly                      lightyear    # NIST publication 811
 lightsecond             c s
@@ -1825,8 +1829,8 @@ emu                     erg/gauss  # "electro-magnetic unit", a measure of
 +coulombconst           1                  # The gauss is the B field produced
 +gauss                  statcoulomb / cm^2 # 1 cm from a wire carrying a current
 +weber                  1e8 maxwell        # of 0.5*(c/(cm/s)) stA = 1.5e10 stA
-+bohrmagneton           e hbar / 2 electronmass c
-+nuclearmagneton        e hbar / 2 protonmass c
++bohrmagneton           electroncharge hbar / 2 electronmass c
++nuclearmagneton        electroncharge hbar / 2 protonmass c
 !endvar
 
 #
@@ -1845,16 +1849,16 @@ intohm                  1.000495 ohm  # Defined as the resistance of a
                                       #   long and maintained at 0 degC.
 daniell                 1.042 V       # Meant to be electromotive force of a
                                       #   Daniell cell, but in error by .04 V
-faraday                 N_A e mol     # Charge that must flow to deposit or
-faraday_phys            96521.9 C     #   liberate one gram equivalent of any
-faraday_chem            96495.7 C     #   element.  (The chemical and physical
-                                      #   values are off slightly from what is
-                                      #   obtained by multiplying by amu_chem
-                                      #   or amu_phys.  These values are from
-                                      #   a 1991 NIST publication.)  Note that
-                                      #   there is a Faraday constant which is
-                                      #   equal to N_A e and hence has units of
-                                      #   C/mol.
+faraday                 N_A electroncharge mol     # Charge that must flow to deposit or
+faraday_phys            96521.9 C                  #   liberate one gram equivalent of any
+faraday_chem            96495.7 C                  #   element.  (The chemical and physical
+                                                   #   values are off slightly from what is
+                                                   #   obtained by multiplying by amu_chem
+                                                   #   or amu_phys.  These values are from
+                                                   #   a 1991 NIST publication.)  Note that
+                                                   #   there is a Faraday constant which is
+                                                   #   equal to N_A e and hence has units of
+                                                   #   C/mol.
 kappline                6000 maxwell  # Named by and for Gisbert Kapp
 siemensunit             0.9534 ohm    # Resistance of a meter long column of
                                       #   mercury with a 1 mm cross section.
@@ -2682,7 +2686,7 @@ hartree                 2 rydberg  # Approximate electric potential energy of
 # Fundamental units
 
 atomicmass              electronmass
-atomiccharge            e
+atomiccharge            electroncharge
 atomicaction            hbar
 atomicenergy            hartree
 

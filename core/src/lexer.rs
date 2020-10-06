@@ -342,9 +342,11 @@ fn parse_basic_number<'a, I: Interrupt>(
         if let Ok((_, remaining)) = parse_fixed_char(input, 'e') {
             // peek ahead to the next char to determine if we should continue parsing an exponent
             let abort = if let Ok((ch, _)) = parse_char(remaining) {
-                // abort if there is a non-alphanumeric non-plus or minus char after 'e',
-                // such as '(' or '/'
-                !(ch.is_alphanumeric() || ch == '+' || ch == '-')
+                // abort if there is a non-digit non-plus or minus char after 'e',
+                // such as '(', '/' or 'a'. Note that this is only parsed in base <= 10,
+                // so letters can never be digits. We do want to include all digits even for
+                // base < 10 though to avoid 6#3e9 from being valid.
+                !(ch.is_ascii_digit() || ch == '+' || ch == '-')
             } else {
                 // if there is no more input after the 'e', abort
                 true

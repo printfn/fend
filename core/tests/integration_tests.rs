@@ -465,6 +465,10 @@ fn test_different_bases() {
     expect_error("5 to base 100");
     expect_error("5 to base i");
     expect_error("5 to base kg");
+    expect_error("6#3e9");
+    expect_error("6#3e39");
+    test_evaluation("3electroncharge", "3 electroncharge");
+    test_evaluation("ℯ to 1", "approx. 2.7182818284");
 }
 
 #[test]
