@@ -9,6 +9,7 @@ use rustyline::Editor;
 use fend_core::Context;
 use std::path::PathBuf;
 
+mod changelog;
 mod config;
 mod helper;
 mod interrupt;
@@ -59,6 +60,10 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
+fn print_changelog() {
+    println!("{}", changelog::get_changelog());
+}
+
 fn print_version() {
     println!("fend v0.1.6 (2020-10-05)");
     println!("fend-core v{}", fend_core::get_extended_version());
@@ -100,6 +105,7 @@ fn repl_loop() -> i32 {
                 "help" | "?" => {
                     print_help(true);
                 }
+                "changelog" => print_changelog(),
                 "version" => print_version(),
                 line => {
                     interrupt.reset();
@@ -150,6 +156,10 @@ fn main() {
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
             print_help(false);
+            return;
+        }
+        if expr == "changelog" || expr == "--changelog" {
+            print_changelog();
             return;
         }
         if expr == "version" || expr == "--version" || expr == "-v" || expr == "-V" {
