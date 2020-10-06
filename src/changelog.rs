@@ -11,6 +11,16 @@ mod tests {
     #[test]
     fn test_changelog() {
         let changelog = get_changelog();
-        assert!(changelog.starts_with("# Changelog\n\n## v"));
+        for line in changelog.lines() {
+            assert!(
+                line == "# Changelog"
+                    || line.is_empty()
+                    || line.starts_with("## v")
+                    || line.starts_with("* ")
+                    || line == "Initial release:",
+                "Invalid line format: {}",
+                line
+            );
+        }
     }
 }
