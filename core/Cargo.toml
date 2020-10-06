@@ -11,6 +11,10 @@ license = "MIT"
 keywords = ["calculator", "library", "conversion", "math", "tool"]
 edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
+exclude = [
+    "src/num/gnu-units-original/currency.units",
+    "src/num/gnu-units-original/definitions.units"
+]
 
 [features]
 default = ["gpl"]

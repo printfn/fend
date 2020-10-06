@@ -21,11 +21,7 @@ pub struct UnitValue {
 }
 
 #[cfg(feature = "gpl")]
-const UNITS_DB: &str = concat!(
-    include_str!("definitions-prepend.units"),
-    include_str!("definitions.units"),
-    include_str!("currency.units")
-);
+const UNITS_DB: &str = include_str!("builtin-gnu.units");
 
 #[cfg(not(feature = "gpl"))]
 const UNITS_DB: &str = include_str!("builtin.units");
