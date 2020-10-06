@@ -621,11 +621,11 @@ mod tests {
         test_sqrt_inner(18, 4, false)?;
         test_sqrt_inner(19, 4, false)?;
         test_sqrt_inner(20, 4, false)?;
-        test_sqrt_inner(200000, 447, false)?;
-        test_sqrt_inner(1740123984719364372, 1319137591, false)?;
+        test_sqrt_inner(200_000, 447, false)?;
+        test_sqrt_inner(1_740_123_984_719_364_372, 1_319_137_591, false)?;
         assert_eq!(
-            BigUint::Large(vec![0, 3260954456333195555]).root_n(two, &int)?,
-            (BigUint::from(7755900482342532476), false)
+            BigUint::Large(vec![0, 3_260_954_456_333_195_555]).root_n(two, &int)?,
+            (BigUint::from(7_755_900_482_342_532_476), false)
         );
         Ok(())
     }
@@ -635,8 +635,8 @@ mod tests {
         assert_eq!(BigUint::from(0), BigUint::from(0));
         assert!(BigUint::from(0) < BigUint::from(1));
         assert!(BigUint::from(100) > BigUint::from(1));
-        assert!(BigUint::from(10000000) > BigUint::from(1));
-        assert!(BigUint::from(10000000) > BigUint::from(9999999));
+        assert!(BigUint::from(10_000_000) > BigUint::from(1));
+        assert!(BigUint::from(10_000_000) > BigUint::from(9_999_999));
     }
 
     #[test]
@@ -644,8 +644,8 @@ mod tests {
         assert_eq!(BigUint::from(2).add(&BigUint::from(2)), BigUint::from(4));
         assert_eq!(BigUint::from(5).add(&BigUint::from(3)), BigUint::from(8));
         assert_eq!(
-            BigUint::from(0).add(&BigUint::Large(vec![0, 9223372036854775808, 0])),
-            BigUint::Large(vec![0, 9223372036854775808, 0])
+            BigUint::from(0).add(&BigUint::Large(vec![0, 9_223_372_036_854_775_808, 0])),
+            BigUint::Large(vec![0, 9_223_372_036_854_775_808, 0])
         );
     }
 
@@ -699,7 +699,6 @@ mod tests {
         let mut n = BigUint::from(1);
         for _ in 0..100 {
             n.lshift(int)?;
-            eprintln!("{:?}", &n);
             assert_eq!(n.get(0) & 1, 0);
         }
         Ok(())
@@ -728,7 +727,7 @@ mod tests {
     #[test]
     fn test_large_lshift() -> Res {
         let int = &crate::interrupt::Never::default();
-        let mut a = BigUint::from(9223372036854775808);
+        let mut a = BigUint::from(9_223_372_036_854_775_808);
         a.lshift(int)?;
         assert!(!a.is_zero());
         Ok(())

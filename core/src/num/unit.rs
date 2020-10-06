@@ -730,7 +730,7 @@ mod tests {
     use super::*;
     use crate::interrupt::Never;
 
-    fn to_string(n: UnitValue) -> String {
+    fn to_string(n: &UnitValue) -> String {
         let int = &crate::interrupt::Never::default();
         crate::num::to_string(|f| n.format(f, int)).unwrap()
     }
@@ -742,9 +742,9 @@ mod tests {
         hashmap.insert(base_kg, 1.into());
         let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), hashmap, 1);
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
-        let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg.clone(), 1)]);
+        let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg, 1)]);
         let sum = one_kg.add(two_kg, &Never::default()).unwrap();
-        assert_eq!(to_string(sum), "3 kg");
+        assert_eq!(to_string(&sum), "3 kg");
     }
 
     #[test]
@@ -752,7 +752,7 @@ mod tests {
         let int = &Never::default();
         let base_kg = BaseUnit::new("kilogram".to_string());
         let mut hashmap = HashMap::new();
-        hashmap.insert(base_kg.clone(), 1.into());
+        hashmap.insert(base_kg, 1.into());
         let kg = NamedUnit::new("kg".to_string(), "kg".to_string(), hashmap.clone(), 1);
         let g = NamedUnit::new(
             "g".to_string(),
@@ -760,12 +760,12 @@ mod tests {
             hashmap,
             Complex::from(1).div(1000.into(), int).unwrap(),
         );
-        let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
-        let twelve_g = UnitValue::new(12, vec![UnitExponent::new(g.clone(), 1)]);
+        let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg, 1)]);
+        let twelve_g = UnitValue::new(12, vec![UnitExponent::new(g, 1)]);
         assert_eq!(
-            to_string(one_kg.clone().add(twelve_g.clone(), int).unwrap()),
+            to_string(&one_kg.clone().add(twelve_g.clone(), int).unwrap()),
             "1.012 kg"
         );
-        assert_eq!(to_string(twelve_g.add(one_kg, int).unwrap()), "1012 g");
+        assert_eq!(to_string(&twelve_g.add(one_kg, int).unwrap()), "1012 g");
     }
 }
