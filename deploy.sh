@@ -42,7 +42,7 @@ fend print_version(),
 fend TOML version requirement for fend-core"
 echo "Building and running tests..."
 touch core/src/lib.rs
-cargo clippy --all-targets --all-features
+cargo clippy --workspace --all-targets --all-features
 cargo build
 cargo run -- version
 cargo test --all
