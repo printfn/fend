@@ -130,7 +130,7 @@ impl Value {
                         return Ok(Value::Base(
                             Base::from_plain_base(n).map_err(|e| e.to_string())?,
                         ));
-                    },
+                    }
                 }
             }
             Self::Fn(param, expr, custom_scope) => {

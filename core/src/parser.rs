@@ -201,6 +201,7 @@ fn parse_apply_cont<'a>(
     ))
 }
 
+#[allow(clippy::option_if_let_else)]
 fn parse_mixed_fraction<'a>(
     input: &'a [Token],
     lhs: &Expr,
