@@ -97,10 +97,7 @@ impl Base {
     }
 
     pub const fn has_prefix(self) -> bool {
-        match self.0 {
-            BaseEnum::Plain(_) => false,
-            _ => true,
-        }
+        !matches!(self.0, BaseEnum::Plain(_))
     }
 
     pub const fn digit_as_char(digit: u64) -> Option<char> {
@@ -146,10 +143,7 @@ impl Base {
     }
 
     pub const fn allow_leading_zeroes(self) -> bool {
-        match self.0 {
-            BaseEnum::Plain(10) => false,
-            _ => true,
-        }
+        !matches!(self.0, BaseEnum::Plain(10))
     }
 }
 

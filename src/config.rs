@@ -3,6 +3,7 @@ use std::env::var_os;
 use std::fs;
 use std::path::PathBuf;
 
+#[allow(clippy::option_if_let_else)]
 fn get_config_dir() -> Option<PathBuf> {
     // first try $FEND_CONFIG_DIR
     if let Some(config_dir) = var_os("FEND_CONFIG_DIR") {

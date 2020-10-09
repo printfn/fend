@@ -115,22 +115,23 @@ impl Display for Symbol {
 }
 
 fn parse_char(input: &str) -> Result<(char, &str), LexerError> {
-    if let Some(ch) = input.chars().next() {
-        let (_, b) = input.split_at(ch.len_utf8());
-        Ok((ch, b))
-    } else {
-        Err(LexerError::ExpectedACharacter)
-    }
+    input
+        .chars()
+        .next()
+        .map_or(Err(LexerError::ExpectedACharacter), |ch| {
+            let (_, b) = input.split_at(ch.len_utf8());
+            Ok((ch, b))
+        })
 }
 
 fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), LexerError> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
-    if let Some(digit) = possible_digit.and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok()) {
-        Ok((digit, input))
-    } else {
-        Err(LexerError::ExpectedADigit(ch))
-    }
+    possible_digit
+        .and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok())
+        .map_or(Err(LexerError::ExpectedADigit(ch)), |digit| {
+            Ok((digit, input))
+        })
 }
 
 fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), LexerError> {
