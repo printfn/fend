@@ -694,14 +694,13 @@ impl NamedUnit {
     /// space (between the number and the unit). This should be true for most
     /// units like kg or m, but not for % or °
     fn print_with_space(&self) -> bool {
-        if let Some(ch) = self.singular_name.chars().next() {
-            // alphabetic names like kg or m should have a space,
-            // while non-alphabetic names like %, ° or ' shouldn't
-            ch.is_alphabetic()
-        } else {
-            // empty name?!
-            true
-        }
+        // Alphabetic names like kg or m should have a space,
+        // while non-alphabetic names like %, ° or ' shouldn't.
+        // Empty names shouldn't really exist, but they might as well have a space.
+        self.singular_name
+            .chars()
+            .next()
+            .map_or(true, char::is_alphabetic)
     }
 }
 

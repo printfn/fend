@@ -3,7 +3,7 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
-use crate::value::{Value, BuiltInFunction};
+use crate::value::{BuiltInFunction, Value};
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Clone, Debug)]
