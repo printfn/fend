@@ -150,6 +150,8 @@ fn parse_power<'a>(
             let (result, remaining) = parse_power(remaining, true, options)?;
             return Ok((Expr::UnaryPlus(Box::new(result)), remaining));
         }
+        // The precedence of unary division relative to exponentiation
+        // is not important because /a^b -> (1/a)^b == 1/(a^b)
         if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Div) {
             let (result, remaining) = parse_power(remaining, true, options)?;
             return Ok((Expr::UnaryDiv(Box::new(result)), remaining));
