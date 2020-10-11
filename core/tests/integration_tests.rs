@@ -694,11 +694,32 @@ fn test_recurring_digits() {
 }
 
 #[test]
+fn test_builtin_function_names() {
+    test_evaluation("abs", "abs");
+    test_evaluation("sin", "sin");
+    test_evaluation("cos", "cos");
+    test_evaluation("tan", "tan");
+    test_evaluation("asin", "asin");
+    test_evaluation("acos", "acos");
+    test_evaluation("atan", "atan");
+    test_evaluation("sinh", "sinh");
+    test_evaluation("cosh", "cosh");
+    test_evaluation("tanh", "tanh");
+    test_evaluation("asinh", "asinh");
+    test_evaluation("acosh", "acosh");
+    test_evaluation("atanh", "atanh");
+    test_evaluation("ln", "ln");
+    test_evaluation("log2", "log2");
+    test_evaluation("log10", "log10");
+}
+
+#[test]
 fn test_various_functions() {
     test_evaluation("sin 0", "0");
     test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_same("sin pi", "sin (2pi)");
     test_evaluation("sin (1°)", "approx. 0.0174524064");
+    test_evaluation("tan (1meter)", "approx. 1.5574077246 meters");
     test_same("cos 0", "cos (2pi)");
     test_same("cos 0", "sin (pi/2)");
     test_same("tan 0", "tan pi");

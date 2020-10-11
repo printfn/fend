@@ -439,6 +439,15 @@ impl UnitValue {
         }
     }
 
+    pub fn tan<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
+            rad.apply_fn(Complex::tan, false, int)?
+                .convert_to(Self::unitless(), int)
+        } else {
+            self.apply_fn(Complex::tan, false, int)
+        }
+    }
+
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::asin, false, int)
     }

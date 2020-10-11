@@ -163,7 +163,7 @@ fn resolve_identifier<I: Interrupt>(
             // sin and cos are only needed for tan
             "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
             "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
-            "tan" => eval("x: (sin x)/(cos x)", scope, int)?,
+            "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
             "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
             "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
             _ => scope.get(ident, int)?,
@@ -181,7 +181,7 @@ fn resolve_identifier<I: Interrupt>(
         "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
         "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
         "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
-        "tan" => eval("x: (sin x)/(cos x)", scope, int)?,
+        "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
         "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
         "acos" => Value::BuiltInFunction(BuiltInFunction::Acos),
         "atan" => Value::BuiltInFunction(BuiltInFunction::Atan),
