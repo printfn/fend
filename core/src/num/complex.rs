@@ -210,8 +210,9 @@ impl Complex {
         }
     }
 
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.sin(int)?))
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
+        let (res, exact) = self.expect_real()?.sin(int)?;
+        Ok((Self::from(res), exact))
     }
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {

@@ -695,7 +695,8 @@ fn test_recurring_digits() {
 
 #[test]
 fn test_various_functions() {
-    test_same("sin 0", "sin pi");
+    test_evaluation("sin 0", "0");
+    test_same("sin pi", "sin (2pi)");
     test_same("cos 0", "cos (2pi)");
     test_same("cos 0", "sin (pi/2)");
     test_same("tan 0", "tan pi");
@@ -710,7 +711,8 @@ fn test_various_functions() {
     expect_error("acos 1.01");
     expect_error("acos (-1.01)");
     test_evaluation("atan 1", "approx. 0.7853981633");
-    test_same("sinh 0", "sin 0");
+    // TODO fix this when `sinh 0` == `0` instead of `approx. 0`
+    test_same("sinh 0", "sin pi");
     test_same("cosh 0", "cos 0");
     test_same("tanh 0", "tan 0");
     test_same("asinh 0", "asin 0");

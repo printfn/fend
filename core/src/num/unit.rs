@@ -366,6 +366,25 @@ impl UnitValue {
         self.value == 0.into()
     }
 
+    fn apply_fn_exact<I: Interrupt>(
+        self,
+        f: impl FnOnce(Complex, &I) -> Result<(Complex, bool), IntErr<String, I>>,
+        require_unitless: bool,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
+        if require_unitless && !self.is_unitless() {
+            return Err("Expected a unitless number".to_string())?;
+        }
+        let (value, exact) = f(self.value, int)?;
+        Ok(Self {
+            value,
+            unit: self.unit,
+            exact,
+            base: self.base,
+            format: self.format,
+        })
+    }
+
     fn apply_fn<I: Interrupt>(
         self,
         f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String, I>>,
@@ -408,7 +427,7 @@ impl UnitValue {
 
     pub fn sin<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
         self.convert_angle_to_rad(scope, int)?
-            .apply_fn(Complex::sin, false, int)?
+            .apply_fn_exact(Complex::sin, false, int)?
             .convert_to(Self::unitless(), int)
     }
 

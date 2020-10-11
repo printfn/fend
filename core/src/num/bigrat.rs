@@ -115,8 +115,12 @@ impl BigRat {
     }
 
     // sin and cos work for all real numbers
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::sin(self.into_f64(int)?), int)?)
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
+        if self == 0.into() {
+            Ok((0.into(), true))
+        } else {
+            Ok((Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false))
+        }
     }
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
