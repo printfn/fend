@@ -76,13 +76,13 @@ impl crate::err::Error for LexerError {}
 
 impl From<BaseOutOfRangeError> for LexerError {
     fn from(e: BaseOutOfRangeError) -> Self {
-        LexerError::BaseOutOfRange(e)
+        Self::BaseOutOfRange(e)
     }
 }
 
 impl From<InvalidBasePrefixError> for LexerError {
     fn from(e: InvalidBasePrefixError) -> Self {
-        LexerError::InvalidBasePrefix(e)
+        Self::InvalidBasePrefix(e)
     }
 }
 

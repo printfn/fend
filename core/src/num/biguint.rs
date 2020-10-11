@@ -449,7 +449,7 @@ impl BigUint {
         Ok(self)
     }
 
-    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<BigUint, IntErr<DivideByZero, I>> {
+    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         Ok(self.divmod(other, int)?.1)
     }
 
@@ -457,11 +457,7 @@ impl BigUint {
         Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
     }
 
-    pub fn div<I: Interrupt>(
-        self,
-        other: &Self,
-        int: &I,
-    ) -> Result<BigUint, IntErr<DivideByZero, I>> {
+    pub fn div<I: Interrupt>(self, other: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         Ok(self.divmod(other, int)?.0)
     }
 

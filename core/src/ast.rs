@@ -34,7 +34,7 @@ pub enum Expr {
 
 impl Expr {
     pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
-        let g = |x: &Expr| -> Result<String, IntErr<Error, I>> {
+        let g = |x: &Self| -> Result<String, IntErr<Error, I>> {
             Ok(crate::num::to_string(|f| (*x).format(f, int))?)
         };
         match self {

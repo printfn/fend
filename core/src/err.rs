@@ -10,6 +10,7 @@ pub enum IntErr<E, I: Interrupt> {
     Error(E),
 }
 
+#[allow(clippy::use_self)]
 impl<E, I: Interrupt> IntErr<E, I> {
     pub fn expect(self, msg: &'static str) -> IntErr<Never, I> {
         match self {
@@ -33,6 +34,7 @@ impl<E, I: Interrupt> IntErr<E, I> {
     }
 }
 
+#[allow(clippy::use_self)]
 impl<E: Display, I: Interrupt> IntErr<E, I> {
     pub fn into_string(self) -> IntErr<String, I> {
         match self {
@@ -48,6 +50,7 @@ impl<E, I: Interrupt> From<E> for IntErr<E, I> {
     }
 }
 
+#[allow(clippy::use_self)]
 impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
     fn from(e: IntErr<Never, I>) -> Self {
         match e {

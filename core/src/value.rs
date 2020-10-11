@@ -41,24 +41,24 @@ pub enum BuiltInFunction {
 impl fmt::Display for BuiltInFunction {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let name = match self {
-            BuiltInFunction::Approximately => "approximately",
-            BuiltInFunction::Abs => "abs",
-            BuiltInFunction::Sin => "sin",
-            BuiltInFunction::Cos => "cos",
-            BuiltInFunction::Tan => "tan",
-            BuiltInFunction::Asin => "asin",
-            BuiltInFunction::Acos => "acos",
-            BuiltInFunction::Atan => "atan",
-            BuiltInFunction::Sinh => "sinh",
-            BuiltInFunction::Cosh => "cosh",
-            BuiltInFunction::Tanh => "tanh",
-            BuiltInFunction::Asinh => "asinh",
-            BuiltInFunction::Acosh => "acosh",
-            BuiltInFunction::Atanh => "atanh",
-            BuiltInFunction::Ln => "ln",
-            BuiltInFunction::Log2 => "log2",
-            BuiltInFunction::Log10 => "log10",
-            BuiltInFunction::Base => "base",
+            Self::Approximately => "approximately",
+            Self::Abs => "abs",
+            Self::Sin => "sin",
+            Self::Cos => "cos",
+            Self::Tan => "tan",
+            Self::Asin => "asin",
+            Self::Acos => "acos",
+            Self::Atan => "atan",
+            Self::Sinh => "sinh",
+            Self::Cosh => "cosh",
+            Self::Tanh => "tanh",
+            Self::Asinh => "asinh",
+            Self::Acosh => "acosh",
+            Self::Atanh => "atanh",
+            Self::Ln => "ln",
+            Self::Log2 => "log2",
+            Self::Log10 => "log10",
+            Self::Base => "base",
         };
         write!(f, "{}", name)
     }
@@ -130,7 +130,7 @@ impl Value {
                             .try_as_usize(int)?
                             .try_into()
                             .map_err(|_| "Unable to convert number to a valid base".to_string())?;
-                        return Ok(Value::Base(
+                        return Ok(Self::Base(
                             Base::from_plain_base(n).map_err(|e| e.to_string())?,
                         ));
                     }

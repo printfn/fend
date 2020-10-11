@@ -4,6 +4,7 @@
 #![allow(clippy::too_many_arguments)] // format_trailing_digits in BigRat
 #![deny(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
+#![deny(clippy::use_self)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.6")]
 
 mod ast;

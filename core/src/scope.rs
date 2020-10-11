@@ -26,8 +26,8 @@ impl ScopeValue {
     ) -> Result<Value, IntErr<String, I>> {
         let options = crate::parser::ParseOptions::new_for_gnu_units();
         match self {
-            ScopeValue::EagerUnit(value, _, _) => Ok(value.clone()),
-            ScopeValue::LazyUnit(expr, singular_name, plural_name) => {
+            Self::EagerUnit(value, _, _) => Ok(value.clone()),
+            Self::LazyUnit(expr, singular_name, plural_name) => {
                 let value = crate::eval::evaluate_to_value(expr.as_str(), options, scope, int)?
                     .expect_num()?;
                 let unit = crate::num::Number::create_unit_value_from_value(
@@ -38,7 +38,7 @@ impl ScopeValue {
                 )?;
                 scope.insert_scope_value(
                     ident.to_string(),
-                    ScopeValue::EagerUnit(
+                    Self::EagerUnit(
                         Value::Num(unit.clone()),
                         singular_name.clone(),
                         plural_name.clone(),
@@ -46,13 +46,13 @@ impl ScopeValue {
                 );
                 Ok(Value::Num(unit))
             }
-            ScopeValue::LazyExpr(expr) => {
+            Self::LazyExpr(expr) => {
                 let value = crate::eval::evaluate_to_value(expr.as_str(), options, scope, int)?;
                 // todo add caching
                 Ok(value)
             }
-            //ScopeValue::Variable(val) => Ok(val.clone()),
-            ScopeValue::LazyVariable(expr, scope, options) => {
+            //Self::Variable(val) => Ok(val.clone()),
+            Self::LazyVariable(expr, scope, options) => {
                 let value = crate::ast::evaluate(expr.clone(), &mut scope.clone(), *options, int)?;
                 Ok(value)
             }
@@ -109,7 +109,7 @@ impl Scope {
         &mut self,
         name: String,
         expr: Expr,
-        scope: Scope,
+        scope: Self,
         options: ParseOptions,
     ) {
         self.insert_scope_value(name, ScopeValue::LazyVariable(expr, scope, options))
