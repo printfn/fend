@@ -408,11 +408,7 @@ impl UnitValue {
         scope: &mut Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        if self.is_unitless() {
-            Ok(self)
-        } else {
-            Ok(self.convert_to(scope.get("radians", int)?.expect_num()?, int)?)
-        }
+        Ok(self.convert_to(scope.get("radians", int)?.expect_num()?, int)?)
     }
 
     fn unitless() -> Self {
@@ -426,15 +422,21 @@ impl UnitValue {
     }
 
     pub fn sin<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.convert_angle_to_rad(scope, int)?
-            .apply_fn_exact(Complex::sin, false, int)?
-            .convert_to(Self::unitless(), int)
+        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
+            rad.apply_fn_exact(Complex::sin, false, int)?
+                .convert_to(Self::unitless(), int)
+        } else {
+            self.apply_fn_exact(Complex::sin, false, int)
+        }
     }
 
     pub fn cos<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
-        self.convert_angle_to_rad(scope, int)?
-            .apply_fn(Complex::cos, false, int)?
-            .convert_to(Self::unitless(), int)
+        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
+            rad.apply_fn(Complex::cos, false, int)?
+                .convert_to(Self::unitless(), int)
+        } else {
+            self.apply_fn(Complex::cos, false, int)
+        }
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {

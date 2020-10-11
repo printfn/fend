@@ -696,6 +696,7 @@ fn test_recurring_digits() {
 #[test]
 fn test_various_functions() {
     test_evaluation("sin 0", "0");
+    test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_same("sin pi", "sin (2pi)");
     test_same("cos 0", "cos (2pi)");
     test_same("cos 0", "sin (pi/2)");
