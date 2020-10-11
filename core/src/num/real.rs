@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::num::bigrat::BigRat;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Debug, Error};
+use std::fmt;
 use std::ops::Neg;
 
 #[derive(Clone, Debug)]
@@ -171,7 +171,7 @@ impl Real {
         style: FormattingStyle,
         imag: bool,
         int: &I,
-    ) -> Result<(String, bool), IntErr<Error, I>> {
+    ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
         match self {
             Self::Simple(s) => {
                 let (string, x) = crate::num::to_string(|f| {

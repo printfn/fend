@@ -1,8 +1,5 @@
 use crate::err::{IntErr, Interrupt, Never};
-use std::{
-    cell::Cell,
-    fmt::{Display, Error, Formatter},
-};
+use std::{cell::Cell, fmt};
 
 mod base;
 mod bigrat;
@@ -20,20 +17,24 @@ pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
 pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
 // Small formatter helper
-pub fn to_string<I: Interrupt, R, F: Fn(&mut Formatter) -> Result<R, IntErr<Error, I>>>(
+pub fn to_string<
+    I: Interrupt,
+    R,
+    F: Fn(&mut fmt::Formatter) -> Result<R, IntErr<fmt::Error, I>>,
+>(
     func: F,
 ) -> Result<(String, R), IntErr<Never, I>> {
-    struct Fmt<I: Interrupt, R, F: Fn(&mut Formatter) -> Result<R, IntErr<Error, I>>> {
+    struct Fmt<I: Interrupt, R, F: Fn(&mut fmt::Formatter) -> Result<R, IntErr<fmt::Error, I>>> {
         format: F,
         error: Cell<Option<IntErr<Never, I>>>,
         result: Cell<Option<R>>,
     }
 
-    impl<F, R, I: Interrupt> Display for Fmt<I, R, F>
+    impl<F, R, I: Interrupt> fmt::Display for Fmt<I, R, F>
     where
-        F: Fn(&mut Formatter) -> Result<R, IntErr<Error, I>>,
+        F: Fn(&mut fmt::Formatter) -> Result<R, IntErr<fmt::Error, I>>,
     {
-        fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
             let interrupt = match (self.format)(f) {
                 Ok(res) => {
                     self.result.set(Some(res));
@@ -59,12 +60,12 @@ pub fn to_string<I: Interrupt, R, F: Fn(&mut Formatter) -> Result<R, IntErr<Erro
     Ok((string, fmt.result.into_inner().unwrap()))
 }
 
-pub struct ValueTooLarge<T: Display> {
+pub struct ValueTooLarge<T: fmt::Display> {
     max_allowed: T,
 }
 
-impl<T: Display> Display for ValueTooLarge<T> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl<T: fmt::Display> fmt::Display for ValueTooLarge<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(
             f,
             "Value must be less than or equal to {}",
@@ -73,7 +74,7 @@ impl<T: Display> Display for ValueTooLarge<T> {
         Ok(())
     }
 }
-impl<T: Display> crate::err::Error for ValueTooLarge<T> {}
+impl<T: fmt::Display> crate::err::Error for ValueTooLarge<T> {}
 
 #[derive(Debug)]
 pub enum IntegerPowerError {
@@ -81,8 +82,8 @@ pub enum IntegerPowerError {
     ZeroToThePowerOfZero,
 }
 
-impl Display for IntegerPowerError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for IntegerPowerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::ExponentTooLarge => write!(f, "Exponent too large"),
             Self::ZeroToThePowerOfZero => write!(f, "Zero to the power of zero is undefined"),
@@ -93,8 +94,8 @@ impl crate::err::Error for IntegerPowerError {}
 
 #[derive(Debug)]
 pub struct DivideByZero {}
-impl Display for DivideByZero {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for DivideByZero {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "Division by zero")
     }
 }

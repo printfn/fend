@@ -4,7 +4,7 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
 use crate::value::{BuiltInFunction, Value};
-use std::fmt::{Debug, Error, Formatter};
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum Expr {
@@ -33,8 +33,12 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
-        let g = |x: &Self| -> Result<String, IntErr<Error, I>> {
+    pub fn format<I: Interrupt>(
+        &self,
+        f: &mut fmt::Formatter,
+        int: &I,
+    ) -> Result<(), IntErr<fmt::Error, I>> {
+        let g = |x: &Self| -> Result<String, IntErr<fmt::Error, I>> {
             Ok(crate::num::to_string(|f| (*x).format(f, int))?.0)
         };
         match self {

@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::num::real::Real;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Error, Formatter};
+use std::fmt;
 use std::ops::Neg;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -143,13 +143,13 @@ impl Complex {
 
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut Formatter,
+        f: &mut fmt::Formatter,
         exact: bool,
         style: FormattingStyle,
         base: Base,
         use_parentheses_if_complex: bool,
         int: &I,
-    ) -> Result<(), IntErr<Error, I>> {
+    ) -> Result<(), IntErr<fmt::Error, I>> {
         let style = if style == FormattingStyle::Auto {
             if exact {
                 FormattingStyle::ExactFloatWithFractionFallback

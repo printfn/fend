@@ -1,6 +1,6 @@
-use std::fmt::{Debug, Display};
+use std::fmt;
 
-pub trait Error: Display {}
+pub trait Error: fmt::Display {}
 
 pub type Never = std::convert::Infallible;
 
@@ -35,7 +35,7 @@ impl<E, I: Interrupt> IntErr<E, I> {
 }
 
 #[allow(clippy::use_self)]
-impl<E: Display, I: Interrupt> IntErr<E, I> {
+impl<E: fmt::Display, I: Interrupt> IntErr<E, I> {
     pub fn into_string(self) -> IntErr<String, I> {
         match self {
             Self::Interrupt(i) => IntErr::<String, I>::Interrupt(i),
@@ -74,7 +74,7 @@ impl Error for std::fmt::Error {}
 impl Error for String {}
 
 pub trait Interrupt {
-    type Int: Debug;
+    type Int: fmt::Debug;
     fn test(&self) -> Result<(), Self::Int>;
 }
 

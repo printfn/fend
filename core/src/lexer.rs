@@ -1,9 +1,6 @@
 use crate::err::{IntErr, Interrupt};
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
-use std::{
-    convert::TryInto,
-    fmt::{Display, Error, Formatter},
-};
+use std::{convert::TryInto, fmt};
 
 #[derive(Clone)]
 pub enum Token<'a> {
@@ -48,8 +45,8 @@ pub enum LexerError {
     NumberParseError(String),
 }
 
-impl Display for LexerError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for LexerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::ExpectedACharacter => write!(f, "Expected a character"),
             Self::ExpectedADigit(ch) => write!(f, "Expected a digit, found '{}'", ch),
@@ -92,8 +89,8 @@ impl<I: Interrupt> From<LexerError> for IntErr<String, I> {
     }
 }
 
-impl Display for Symbol {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         let s = match self {
             Self::OpenParens => "(",
             Self::CloseParens => ")",

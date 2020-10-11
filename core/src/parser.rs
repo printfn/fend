@@ -1,6 +1,6 @@
 use crate::ast::Expr;
 use crate::lexer::{Symbol, Token};
-use std::fmt::{Display, Error, Formatter};
+use std::fmt;
 
 pub enum ParseError {
     ExpectedAToken,
@@ -16,8 +16,8 @@ pub enum ParseError {
     ExpectedDotInLambda,
     InvalidMixedFraction,
 }
-impl Display for ParseError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::ExpectedAToken => write!(f, "Expected a token"),
             Self::ExpectedToken(fnd, ex) => write!(f, "Found '{}' while expecting '{}'", fnd, ex),

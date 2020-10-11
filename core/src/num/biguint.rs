@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, DivideByZero, IntegerPowerError, ValueTooLarge};
 use std::cmp::{max, Ordering};
-use std::fmt::{Debug, Display, Error, Formatter};
+use std::fmt;
 
 #[derive(Clone)]
 pub enum BigUint {
@@ -540,8 +540,8 @@ impl From<u64> for BigUint {
     }
 }
 
-impl Debug for BigUint {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Debug for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Small(n) => write!(f, "{}", n),
             Large(value) => write!(f, "{:?}", value),
@@ -561,8 +561,8 @@ pub struct FormattedBigUint {
     ty: FormattedBigUintType,
 }
 
-impl Display for FormattedBigUint {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for FormattedBigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if let Some(base) = self.base {
             base.write_prefix(f)?;
         }

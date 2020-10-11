@@ -1,4 +1,4 @@
-use std::fmt::{Display, Error, Formatter};
+use std::fmt;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Base(BaseEnum);
@@ -21,8 +21,8 @@ enum BaseEnum {
 
 pub struct InvalidBasePrefixError {}
 
-impl Display for InvalidBasePrefixError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for InvalidBasePrefixError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(
             f,
             "Unable to parse a valid base prefix, expected 0b, 0o, 0d or 0x"
@@ -36,8 +36,8 @@ pub enum BaseOutOfRangeError {
     BaseTooLarge,
 }
 
-impl Display for BaseOutOfRangeError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for BaseOutOfRangeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::BaseTooSmall => write!(f, "Base must be at least 2"),
             Self::BaseTooLarge => write!(f, "Base cannot be larger than 36"),

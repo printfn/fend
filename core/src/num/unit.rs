@@ -4,11 +4,9 @@ use crate::num::complex::Complex;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use crate::value::Value;
+use std::collections::HashMap;
+use std::fmt;
 use std::ops::Neg;
-use std::{
-    collections::HashMap,
-    fmt::{Error, Formatter},
-};
 
 #[derive(Clone, Debug)]
 #[allow(clippy::module_name_repetitions)]
@@ -507,7 +505,11 @@ impl UnitValue {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
+    pub fn format<I: Interrupt>(
+        &self,
+        f: &mut fmt::Formatter,
+        int: &I,
+    ) -> Result<(), IntErr<fmt::Error, I>> {
         let use_parentheses = !self.unit.components.is_empty();
         self.value
             .format(f, self.exact, self.format, self.base, use_parentheses, int)?;
@@ -678,13 +680,13 @@ impl UnitExponent {
 
     fn format<I: Interrupt>(
         &self,
-        f: &mut Formatter,
+        f: &mut fmt::Formatter,
         base: Base,
         format: FormattingStyle,
         plural: bool,
         invert_exp: bool,
         int: &I,
-    ) -> Result<(), IntErr<Error, I>> {
+    ) -> Result<(), IntErr<fmt::Error, I>> {
         let name = if plural {
             self.unit.plural_name.as_str()
         } else {

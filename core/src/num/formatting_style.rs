@@ -1,4 +1,4 @@
-use std::fmt::{Display, Error, Formatter};
+use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[must_use]
@@ -25,8 +25,8 @@ impl Default for FormattingStyle {
     }
 }
 
-impl Display for FormattingStyle {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for FormattingStyle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::ExactFraction => write!(f, "fraction"),
             Self::MixedFraction => write!(f, "mixed_fraction"),

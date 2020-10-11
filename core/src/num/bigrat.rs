@@ -3,7 +3,7 @@ use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Debug, Display, Error, Formatter};
+use std::fmt;
 use std::ops::Neg;
 
 mod sign {
@@ -444,12 +444,12 @@ impl BigRat {
     // The result 'exact' field indicates whether the number was exact or not.
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut Formatter,
+        f: &mut fmt::Formatter,
         base: Base,
         style: FormattingStyle,
         imag: bool,
         int: &I,
-    ) -> Result<FormattedBigRat, IntErr<Error, I>> {
+    ) -> Result<FormattedBigRat, IntErr<fmt::Error, I>> {
         let mut x = self.clone().simplify(int)?;
         let negative = x.sign == Sign::Negative && x != 0.into();
         if negative {
@@ -492,7 +492,7 @@ impl BigRat {
             Some(10)
         };
         let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
-        let print_integer_part = |f: &mut Formatter, ignore_minus_if_zero: bool| {
+        let print_integer_part = |f: &mut fmt::Formatter, ignore_minus_if_zero: bool| {
             if negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
                 write!(f, "-")?;
             }
@@ -536,15 +536,15 @@ impl BigRat {
     ///     digits will not printed in parentheses but will instead be repeated up to `max_digits`.
     ///     Any trailing zeroes are not printed.
     fn format_trailing_digits<I: Interrupt>(
-        f: &mut Formatter,
+        f: &mut fmt::Formatter,
         base: Base,
         numerator: &BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
         mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
-        print_integer_part: impl Fn(&mut Formatter, bool) -> Result<(), IntErr<Error, I>>,
+        print_integer_part: impl Fn(&mut fmt::Formatter, bool) -> Result<(), IntErr<fmt::Error, I>>,
         int: &I,
-    ) -> Result<bool, IntErr<Error, I>> {
+    ) -> Result<bool, IntErr<fmt::Error, I>> {
         enum NextDigitErr<I: Interrupt> {
             Interrupt(IntErr<Never, I>),
             Terminated,
@@ -915,8 +915,8 @@ pub struct FormattedBigRat {
     ty: FormattedBigRatType,
 }
 
-impl Display for FormattedBigRat {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+impl fmt::Display for FormattedBigRat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.negative {
             write!(f, "-")?;
         }

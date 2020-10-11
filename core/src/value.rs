@@ -2,7 +2,7 @@ use crate::ast::Expr;
 use crate::err::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::{parser::ParseOptions, scope::Scope};
-use std::fmt::{self, Error, Formatter};
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -39,7 +39,7 @@ pub enum BuiltInFunction {
 }
 
 impl fmt::Display for BuiltInFunction {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let name = match self {
             Self::Approximately => "approximately",
             Self::Abs => "abs",
@@ -155,7 +155,11 @@ impl Value {
         }))
     }
 
-    pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
+    pub fn format<I: Interrupt>(
+        &self,
+        f: &mut fmt::Formatter,
+        int: &I,
+    ) -> Result<(), IntErr<fmt::Error, I>> {
         match self {
             Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?.0)?,
             Self::BuiltInFunction(name) => write!(f, "{}", name)?,
