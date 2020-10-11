@@ -93,7 +93,7 @@ impl Value {
                 } else {
                     return Err(format!(
                         "{} is not a function",
-                        crate::num::to_string(|f| self.format(f, int))?
+                        crate::num::to_string(|f| self.format(f, int))?.0
                     ))?;
                 }
             }
@@ -102,7 +102,7 @@ impl Value {
                 if force_multiplication {
                     return Err(format!(
                         "Cannot apply function '{}' in this context",
-                        crate::num::to_string(|f| self.format(f, int))?
+                        crate::num::to_string(|f| self.format(f, int))?.0
                     ))?;
                 }
                 match name {
@@ -149,7 +149,7 @@ impl Value {
             _ => {
                 return Err(format!(
                     "'{}' is not a function or a number",
-                    crate::num::to_string(|f| self.format(f, int))?
+                    crate::num::to_string(|f| self.format(f, int))?.0
                 ))?;
             }
         }))
@@ -157,13 +157,13 @@ impl Value {
 
     pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
         match self {
-            Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?)?,
+            Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?.0)?,
             Self::BuiltInFunction(name) => write!(f, "{}", name)?,
             Self::Format(fmt) => write!(f, "{}", fmt)?,
             Self::Dp => write!(f, "dp")?,
             Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
             Self::Fn(name, expr, _scope) => {
-                let expr_str = crate::num::to_string(|f| expr.format(f, int))?;
+                let expr_str = crate::num::to_string(|f| expr.format(f, int))?.0;
                 if name.contains('.') {
                     write!(f, "{}:{}", name, expr_str)?
                 } else {

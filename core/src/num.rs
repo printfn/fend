@@ -20,21 +20,25 @@ pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
 pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
 // Small formatter helper
-pub fn to_string<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>>(
+pub fn to_string<I: Interrupt, R, F: Fn(&mut Formatter) -> Result<R, IntErr<Error, I>>>(
     func: F,
-) -> Result<String, IntErr<Never, I>> {
-    struct Fmt<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>> {
+) -> Result<(String, R), IntErr<Never, I>> {
+    struct Fmt<I: Interrupt, R, F: Fn(&mut Formatter) -> Result<R, IntErr<Error, I>>> {
         format: F,
         error: Cell<Option<IntErr<Never, I>>>,
+        result: Cell<Option<R>>,
     }
 
-    impl<F, I: Interrupt> Display for Fmt<I, F>
+    impl<F, R, I: Interrupt> Display for Fmt<I, R, F>
     where
-        F: Fn(&mut Formatter) -> Result<(), IntErr<Error, I>>,
+        F: Fn(&mut Formatter) -> Result<R, IntErr<Error, I>>,
     {
         fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
             let interrupt = match (self.format)(f) {
-                Ok(()) => return Ok(()),
+                Ok(res) => {
+                    self.result.set(Some(res));
+                    return Ok(());
+                }
                 Err(IntErr::Interrupt(i)) => i,
                 Err(IntErr::Error(e)) => return Err(e),
             };
@@ -46,12 +50,13 @@ pub fn to_string<I: Interrupt, F: Fn(&mut Formatter) -> Result<(), IntErr<Error,
     let fmt = Fmt {
         format: func,
         error: Cell::new(None),
+        result: Cell::new(None),
     };
     let string = fmt.to_string();
     if let Some(e) = fmt.error.into_inner() {
         return Err(e);
     }
-    Ok(string)
+    Ok((string, fmt.result.into_inner().unwrap()))
 }
 
 pub struct ValueTooLarge<T: Display> {

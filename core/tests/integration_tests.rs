@@ -257,14 +257,14 @@ fn test_decimal_point() {
         "0.251974862348971623412341534273261435",
         "0.251974862348971623412341534273261435",
     );
-    test_eval_simple("1.00000001 as 1 dp", "1");
-    test_eval_simple("1.00000001 as 2 dp", "1");
-    test_eval_simple("1.00000001 as 3 dp", "1");
-    test_eval_simple("1.00000001 as 4 dp", "1");
+    test_eval_simple("1.00000001 as 1 dp", "approx. 1");
+    test_eval_simple("1.00000001 as 2 dp", "approx. 1");
+    test_eval_simple("1.00000001 as 3 dp", "approx. 1");
+    test_eval_simple("1.00000001 as 4 dp", "approx. 1");
     test_evaluation("1.00000001 as 10 dp", "1.00000001");
     test_evaluation("1.00000001 as 30 dp", "1.00000001");
     test_evaluation("1.00000001 as 1000 dp", "1.00000001");
-    test_evaluation("1.00000001 as 0 dp", "1");
+    test_evaluation("1.00000001 as 0 dp", "approx. 1");
     test_evaluation(".1(0)", "0.1");
     test_evaluation(".1( 0)", "0");
     test_evaluation(".1 ( 0)", "0");
@@ -554,7 +554,7 @@ fn test_more_units() {
     test_evaluation("0.1 + 5%", "0.15");
     test_evaluation("1 + 5%", "1.05");
     // should be approx.
-    test_evaluation("1psi -> kPa -> 5dp", "6.89475 kPa");
+    test_evaluation("1psi -> kPa -> 5dp", "approx. 6.89475 kPa");
     //test_evaluation("5% * 5%", "0.25%");
     test_evaluation("1NM to m", "1852 m");
     test_evaluation("1NM + 1cm as m", "1852.01 m");
@@ -580,9 +580,9 @@ fn test_more_units() {
     test_eval_simple("5 foot 1 inch 1 inch", "5 1/6 feet");
     // this tests if "e" is parsed as the electron charge (instead of Euler's number)
     // in unit definitions
-    test_evaluation(
+    test_eval_simple(
         "bohrmagneton to C J s/kg to 35 dp",
-        "0.00000000000000000000000927401007831 C J s / kg",
+        "approx. 0.00000000000000000000000927401007831 C J s / kg",
     )
 }
 
@@ -688,7 +688,7 @@ fn test_recurring_digits() {
     test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
     test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)");
     test_eval_simple("0.25 -> fraction", "1/4");
-    test_eval_simple("0.21 -> 1 dp", "0.2");
+    test_eval_simple("0.21 -> 1 dp", "approx. 0.2");
     test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
     test_eval_simple("502938/700 -> float", "718.48(285714)");
 }

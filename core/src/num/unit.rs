@@ -508,9 +508,6 @@ impl UnitValue {
     }
 
     pub fn format<I: Interrupt>(&self, f: &mut Formatter, int: &I) -> Result<(), IntErr<Error, I>> {
-        if !self.exact {
-            write!(f, "approx. ")?;
-        }
         let use_parentheses = !self.unit.components.is_empty();
         self.value
             .format(f, self.exact, self.format, self.base, use_parentheses, int)?;
@@ -768,7 +765,7 @@ mod tests {
 
     fn to_string(n: &UnitValue) -> String {
         let int = &crate::interrupt::Never::default();
-        crate::num::to_string(|f| n.format(f, int)).unwrap()
+        crate::num::to_string(|f| n.format(f, int)).unwrap().0
     }
 
     #[test]

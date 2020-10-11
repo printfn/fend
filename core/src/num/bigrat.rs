@@ -613,7 +613,7 @@ impl BigRat {
                             print_integer_part(f, true)?;
                         }
                         // is the number exact, or did we need to truncate?
-                        let exact = numerator == &0.into();
+                        let exact = current_numerator == 0.into();
                         return Ok(exact);
                     }
                     Err(NextDigitErr::Interrupt(i)) => {

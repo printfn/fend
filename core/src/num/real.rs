@@ -1,8 +1,8 @@
 use crate::err::{IntErr, Interrupt, Never};
-use crate::num::bigrat::{BigRat, FormattedBigRat};
+use crate::num::bigrat::BigRat;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt::{Debug, Error, Formatter};
+use std::fmt::{Debug, Error};
 use std::ops::Neg;
 
 #[derive(Clone, Debug)]
@@ -167,14 +167,20 @@ impl Real {
 
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut Formatter,
         base: Base,
         style: FormattingStyle,
         imag: bool,
         int: &I,
-    ) -> Result<FormattedBigRat, IntErr<Error, I>> {
+    ) -> Result<(String, bool), IntErr<Error, I>> {
         match self {
-            Self::Simple(s) => s.format(f, base, style, imag, int),
+            Self::Simple(s) => {
+                let (string, x) = crate::num::to_string(|f| {
+                    let x = s.format(f, base, style, imag, int)?;
+                    write!(f, "{}", x)?;
+                    Ok(x)
+                })?;
+                Ok((string, x.exact))
+            }
         }
     }
 

@@ -159,30 +159,45 @@ impl Complex {
         } else {
             style
         };
+
         if self.imag == 0.into() {
-            let x = self.real.format(f, base, style, false, int)?;
+            let (x, exact2) = self.real.format(base, style, false, int)?;
+            if !exact || !exact2 {
+                write!(f, "approx. ")?;
+            }
             write!(f, "{}", x)?;
             return Ok(());
         }
 
         if self.real == 0.into() {
-            let x = self.imag.format(f, base, style, true, int)?;
+            let (x, exact2) = self.imag.format(base, style, true, int)?;
+            if !exact || !exact2 {
+                write!(f, "approx. ")?;
+            }
             write!(f, "{}", x)?;
         } else {
+            let mut exact = exact;
+            let (real_part, real_exact) = self.real.format(base, style, false, int)?;
+            exact = exact && real_exact;
+            let (positive, (imag_part, imag_exact)) = if self.imag > 0.into() {
+                (true, self.imag.format(base, style, true, int)?)
+            } else {
+                (false, (-self.imag.clone()).format(base, style, true, int)?)
+            };
+            exact = exact && imag_exact;
+            if !exact {
+                write!(f, "approx. ")?;
+            }
             if use_parentheses_if_complex {
                 write!(f, "(")?;
             }
-            let x = self.real.format(f, base, style, false, int)?;
-            write!(f, "{}", x)?;
-            if self.imag > 0.into() {
+            write!(f, "{}", real_part)?;
+            if positive {
                 write!(f, " + ")?;
-                let x = self.imag.format(f, base, style, true, int)?;
-                write!(f, "{}", x)?;
             } else {
                 write!(f, " - ")?;
-                let x = (-self.imag.clone()).format(f, base, style, true, int)?;
-                write!(f, "{}", x)?;
             }
+            write!(f, "{}", imag_part)?;
             if use_parentheses_if_complex {
                 write!(f, ")")?;
             }

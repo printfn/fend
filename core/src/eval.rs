@@ -36,6 +36,6 @@ pub fn evaluate_to_string<I: Interrupt>(
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
     let value = evaluate_to_value(input, parser::ParseOptions::default(), scope, int)?;
-    let s = crate::num::to_string(|f| value.format(f, int))?;
+    let s = crate::num::to_string(|f| value.format(f, int))?.0;
     Ok(s)
 }
