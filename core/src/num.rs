@@ -9,6 +9,7 @@ mod bigrat;
 mod biguint;
 mod complex;
 mod formatting_style;
+mod real;
 mod unit;
 
 pub use formatting_style::FormattingStyle;

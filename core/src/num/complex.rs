@@ -1,5 +1,5 @@
 use crate::err::{IntErr, Interrupt, Never};
-use crate::num::bigrat::BigRat;
+use crate::num::real::Real;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt::{Error, Formatter};
@@ -7,8 +7,8 @@ use std::ops::Neg;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Complex {
-    real: BigRat,
-    imag: BigRat,
+    real: Real,
+    imag: Real,
 }
 
 impl Complex {
@@ -44,7 +44,7 @@ impl Complex {
         let y = rhs.imag;
         let sum = x.clone().mul(&x, int)?.add(y.clone().mul(&y, int)?, int)?;
         Ok(Self {
-            real: BigRat::from(1).div(&sum, int)?,
+            real: Real::from(1).div(&sum, int)?,
             imag: 0.into(),
         }
         .mul(
@@ -202,7 +202,7 @@ impl Complex {
         ))
     }
 
-    fn expect_real<I: Interrupt>(self) -> Result<BigRat, IntErr<String, I>> {
+    fn expect_real<I: Interrupt>(self) -> Result<Real, IntErr<String, I>> {
         if self.imag == 0.into() {
             Ok(self.real)
         } else {
@@ -346,8 +346,8 @@ impl From<u64> for Complex {
     }
 }
 
-impl From<BigRat> for Complex {
-    fn from(i: BigRat) -> Self {
+impl From<Real> for Complex {
+    fn from(i: Real) -> Self {
         Self {
             real: i,
             imag: 0.into(),
