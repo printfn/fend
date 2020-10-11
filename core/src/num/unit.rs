@@ -441,10 +441,10 @@ impl UnitValue {
 
     pub fn tan<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
-            rad.apply_fn(Complex::tan, false, int)?
+            rad.apply_fn_exact(Complex::tan, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {
-            self.apply_fn(Complex::tan, false, int)
+            self.apply_fn_exact(Complex::tan, false, int)
         }
     }
 

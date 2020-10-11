@@ -219,13 +219,12 @@ impl Complex {
         Ok(Self::from(self.expect_real()?.cos(int)?))
     }
 
-    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(self
-            .clone()
-            .sin(int)?
-            .0
-            .div(self.cos(int)?, int)
-            .map_err(IntErr::into_string)?)
+    pub fn tan<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
+        let (num, exact) = self.clone().sin(int)?;
+        Ok((
+            num.div(self.cos(int)?, int).map_err(IntErr::into_string)?,
+            exact,
+        ))
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
