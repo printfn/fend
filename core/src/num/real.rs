@@ -192,7 +192,7 @@ impl Real {
         n: &Self,
         int: &I,
     ) -> Result<(Self, bool), IntErr<String, I>> {
-        // combining these match blocks is not currently possible because of
+        // TODO: Combining these match blocks is not currently possible because
         // 'binding by-move and by-ref in the same pattern is unstable'
         // https://github.com/rust-lang/rust/pull/76119
         match self {
