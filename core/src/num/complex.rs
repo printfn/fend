@@ -89,6 +89,13 @@ impl Complex {
         }
     }
 
+    pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
+        Ok(Self {
+            real: Real::pi(int)?,
+            imag: 0.into(),
+        })
+    }
+
     pub fn abs<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         Ok(if self.imag == 0.into() {
             if self.real < 0.into() {

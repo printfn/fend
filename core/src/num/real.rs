@@ -224,6 +224,12 @@ impl Real {
             (Self::Simple(a), Self::Simple(b)) => Ok(Self::Simple(a.add(b, int)?)),
         }
     }
+
+    pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
+        let num = BigRat::from(3_141_592_653_589_793_238);
+        let den = BigRat::from(1_000_000_000_000_000_000);
+        Ok(Self::Simple(num.div(&den, int).map_err(IntErr::unwrap)?))
+    }
 }
 
 impl Neg for Real {

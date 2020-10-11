@@ -313,6 +313,17 @@ impl UnitValue {
         }
     }
 
+    pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
+        Ok(Self {
+            value: Complex::pi(int)?,
+            unit: Unit { components: vec![] },
+            // TODO change this to true
+            exact: false,
+            base: Base::default(),
+            format: FormattingStyle::default(),
+        })
+    }
+
     pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (value, res_exact) = self.value.abs(int)?;
         Ok(Self {
