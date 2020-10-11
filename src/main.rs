@@ -101,7 +101,8 @@ fn repl_loop() -> i32 {
         let readline = rl.readline("> ");
         match readline {
             Ok(line) => match line.as_str() {
-                "exit" | "quit" | ":q" => break,
+                "exit" | "exit()" | ".exit" | ":exit" | "quit" | "quit()" | ":quit" | ":q"
+                | ":wq" | ":q!" | ":wq!" | ":qa" | ":wqa" | ":qa!" | ":wqa!" => break,
                 "help" | "?" => {
                     print_help(true);
                 }
