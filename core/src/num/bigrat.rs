@@ -441,7 +441,7 @@ impl BigRat {
 
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
-    // The result bool indicates whether the number was exact or not.
+    // The result 'exact' field indicates whether the number was exact or not.
     pub fn format<I: Interrupt>(
         &self,
         f: &mut Formatter,
