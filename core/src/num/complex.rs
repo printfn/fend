@@ -298,6 +298,7 @@ impl Complex {
     }
 }
 
+#[allow(clippy::use_self)]
 impl Exact<Complex> {
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         // (a + bi) * (c + di)
@@ -335,14 +336,14 @@ impl Exact<Complex> {
         let prod5 = v.mul(x.re(), int)?;
         let prod6 = u.mul(y.re(), int)?;
         let imag2 = prod5.add(-prod6, int)?;
-        let multiplicand = Exact::new(
+        let multiplicand = Self::new(
             Complex {
                 real: real2.value,
                 imag: imag2.value,
             },
             real2.exact && imag2.exact,
         );
-        let result = Exact::new(
+        let result = Self::new(
             Complex {
                 real: real_part.value,
                 imag: 0.into(),
