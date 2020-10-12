@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::complex::Complex;
+use crate::num::complex::{Complex, UseParentheses};
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use crate::value::Value;
@@ -510,7 +510,11 @@ impl UnitValue {
         f: &mut fmt::Formatter,
         int: &I,
     ) -> Result<(), IntErr<fmt::Error, I>> {
-        let use_parentheses = !self.unit.components.is_empty();
+        let use_parentheses = if self.unit.components.is_empty() {
+            UseParentheses::No
+        } else {
+            UseParentheses::IfComplex
+        };
         self.value
             .format(f, self.exact, self.format, self.base, use_parentheses, int)?;
         if !self.unit.components.is_empty() {
@@ -700,7 +704,14 @@ impl UnitExponent {
         };
         if exp != 1.into() {
             write!(f, "^")?;
-            exp.format(f, true, format, base, true, int)?;
+            exp.format(
+                f,
+                true,
+                format,
+                base,
+                UseParentheses::IfComplexOrFraction,
+                int,
+            )?;
         }
         Ok(())
     }

@@ -173,12 +173,13 @@ impl Real {
         base: Base,
         style: FormattingStyle,
         imag: bool,
+        use_parens_if_fraction: bool,
         int: &I,
     ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
         match &self.pattern {
             Pattern::Simple(s) => {
                 let (string, x) = crate::num::to_string(|f| {
-                    let x = s.format(f, base, style, imag, int)?;
+                    let x = s.format(f, base, style, imag, use_parens_if_fraction, int)?;
                     write!(f, "{}", x)?;
                     Ok(x)
                 })?;

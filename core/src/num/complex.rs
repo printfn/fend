@@ -11,6 +11,13 @@ pub struct Complex {
     imag: Real,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum UseParentheses {
+    No,
+    IfComplex,
+    IfComplexOrFraction,
+}
+
 impl Complex {
     pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
         if self.imag != 0.into() {
@@ -147,7 +154,7 @@ impl Complex {
         exact: bool,
         style: FormattingStyle,
         base: Base,
-        use_parentheses_if_complex: bool,
+        use_parentheses: UseParentheses,
         int: &I,
     ) -> Result<(), IntErr<fmt::Error, I>> {
         let style = if style == FormattingStyle::Auto {
@@ -161,7 +168,8 @@ impl Complex {
         };
 
         if self.imag == 0.into() {
-            let (x, exact2) = self.real.format(base, style, false, int)?;
+            let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
+            let (x, exact2) = self.real.format(base, style, false, use_parens, int)?;
             if !exact || !exact2 {
                 write!(f, "approx. ")?;
             }
@@ -170,25 +178,28 @@ impl Complex {
         }
 
         if self.real == 0.into() {
-            let (x, exact2) = self.imag.format(base, style, true, int)?;
+            let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
+            let (x, exact2) = self.imag.format(base, style, true, use_parens, int)?;
             if !exact || !exact2 {
                 write!(f, "approx. ")?;
             }
             write!(f, "{}", x)?;
         } else {
             let mut exact = exact;
-            let (real_part, real_exact) = self.real.format(base, style, false, int)?;
+            let (real_part, real_exact) = self.real.format(base, style, false, false, int)?;
             exact = exact && real_exact;
             let (positive, (imag_part, imag_exact)) = if self.imag > 0.into() {
-                (true, self.imag.format(base, style, true, int)?)
+                (true, self.imag.format(base, style, true, false, int)?)
             } else {
-                (false, (-self.imag.clone()).format(base, style, true, int)?)
+                (false, (-self.imag.clone()).format(base, style, true, false, int)?)
             };
             exact = exact && imag_exact;
             if !exact {
                 write!(f, "approx. ")?;
             }
-            if use_parentheses_if_complex {
+            if use_parentheses == UseParentheses::IfComplex
+                || use_parentheses == UseParentheses::IfComplexOrFraction
+            {
                 write!(f, "(")?;
             }
             write!(f, "{}", real_part)?;
@@ -198,7 +209,9 @@ impl Complex {
                 write!(f, " - ")?;
             }
             write!(f, "{}", imag_part)?;
-            if use_parentheses_if_complex {
+            if use_parentheses == UseParentheses::IfComplex
+                || use_parentheses == UseParentheses::IfComplexOrFraction
+            {
                 write!(f, ")")?;
             }
         }

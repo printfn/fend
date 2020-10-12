@@ -519,6 +519,7 @@ fn test_basic_units() {
     test_evaluation("0g + 1kg", "1000 g");
     test_evaluation("1/0.5 kg", "2 kg");
     test_evaluation("1/(1/0.5 kg)", "0.5 kg^-1");
+    test_evaluation("cbrt (1kg)", "1 kg^(1/3)");
 }
 
 #[test]

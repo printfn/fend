@@ -359,10 +359,11 @@ impl BigRat {
         base: Base,
         negative: bool,
         imag: bool,
+        use_parens_if_product: bool,
         int: &I,
     ) -> Result<FormattedBigRat, IntErr<Never, I>> {
         let ty = if imag && !base.has_prefix() && num == &1.into() {
-            FormattedBigRatType::Integer(None, "i")
+            FormattedBigRatType::Integer(None, "i", false)
         } else {
             FormattedBigRatType::Integer(
                 Some(num.format(base, true, int)?),
@@ -377,6 +378,8 @@ impl BigRat {
                 } else {
                     ""
                 },
+                // print surrounding parentheses if the number is imaginary
+                use_parens_if_product && imag
             )
         };
         Ok(FormattedBigRat {
@@ -386,6 +389,7 @@ impl BigRat {
         })
     }
 
+    #[allow(clippy::fn_params_excessive_bools)]
     fn format_as_fraction<I: Interrupt>(
         num: &BigUint,
         den: &BigUint,
@@ -393,6 +397,7 @@ impl BigRat {
         negative: bool,
         imag: bool,
         mixed: bool,
+        use_parens: bool,
         int: &I,
     ) -> Result<FormattedBigRat, IntErr<Never, I>> {
         let formatted_den = den.format(base, true, int)?;
@@ -412,7 +417,7 @@ impl BigRat {
             negative,
             exact: true,
             ty: if imag && !actually_mixed && !base.has_prefix() && num == 1.into() {
-                FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "")
+                FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "", use_parens)
             } else {
                 let formatted_num = num.format(base, true, int)?;
                 let i_suffix = if imag {
@@ -435,6 +440,7 @@ impl BigRat {
                     isuf1,
                     formatted_den,
                     isuf2,
+                    use_parens,
                 )
             },
         })
@@ -449,6 +455,7 @@ impl BigRat {
         base: Base,
         style: FormattingStyle,
         imag: bool,
+        use_parens_if_fraction: bool,
         int: &I,
     ) -> Result<FormattedBigRat, IntErr<fmt::Error, I>> {
         let mut x = self.clone().simplify(int)?;
@@ -459,7 +466,7 @@ impl BigRat {
 
         // try as integer if possible
         if x.den == 1.into() {
-            return Ok(Self::format_as_integer(&x.num, base, negative, imag, int)?);
+            return Ok(Self::format_as_integer(&x.num, base, negative, imag, use_parens_if_fraction, int)?);
         }
 
         let mut terminating_res = None;
@@ -478,7 +485,7 @@ impl BigRat {
             let mixed = style == FormattingStyle::MixedFraction
                 || style == FormattingStyle::ExactFloatWithFractionFallback;
             return Ok(Self::format_as_fraction(
-                &x.num, &x.den, base, negative, imag, mixed, int,
+                &x.num, &x.den, base, negative, imag, mixed, use_parens_if_fraction, int,
             )?);
         }
 
@@ -890,22 +897,24 @@ impl From<BigUint> for BigRat {
 }
 
 enum FormattedBigRatType {
-    // optional int, followed by a string (empty, "i" or " i")
-    Integer(Option<FormattedBigUint>, &'static str),
+    // optional int, followed by a string (empty, "i" or " i"), followed by
+    // whether to wrap the number in parentheses
+    Integer(Option<FormattedBigUint>, &'static str, bool),
     // optional int (for mixed fractions)
     // optional int (numerator)
     // string (empty, "i" or " i")
     // '/'
     // int (denominator)
     // string (empty or " i") (used for mixed fractions, e.g. 1 2/3 i)
+    // bool (whether or not to wrap the fraction in parentheses)
     Fraction(
         Option<FormattedBigUint>,
         Option<FormattedBigUint>,
         &'static str,
         FormattedBigUint,
         &'static str,
+        bool,
     ),
-    //
     Decimal,
 }
 
@@ -922,13 +931,22 @@ impl fmt::Display for FormattedBigRat {
             write!(f, "-")?;
         }
         match &self.ty {
-            FormattedBigRatType::Integer(int, isuf) => {
+            FormattedBigRatType::Integer(int, isuf, use_parens) => {
+                if *use_parens {
+                    write!(f, "(")?;
+                }
                 if let Some(int) = int {
                     write!(f, "{}", int)?;
                 }
                 write!(f, "{}", isuf)?;
+                if *use_parens {
+                    write!(f, ")")?;
+                }
             }
-            FormattedBigRatType::Fraction(integer, num, isuf, den, isuf2) => {
+            FormattedBigRatType::Fraction(integer, num, isuf, den, isuf2, use_parens) => {
+                if *use_parens {
+                    write!(f, "(")?;
+                }
                 if let Some(integer) = integer {
                     write!(f, "{} ", integer)?;
                 }
@@ -936,6 +954,9 @@ impl fmt::Display for FormattedBigRat {
                     write!(f, "{}", num)?;
                 }
                 write!(f, "{}/{}{}", isuf, den, isuf2)?;
+                if *use_parens {
+                    write!(f, ")")?;
+                }
             }
             FormattedBigRatType::Decimal => (),
         }
