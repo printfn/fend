@@ -69,9 +69,8 @@ impl UnitValue {
         let lines = unit_definitions.lines();
         let mut plurals = vec![];
         let mut current_plural = 0;
-        let mut ignore_rules = vec![];
         let mut skip_next = false;
-        'process_line: for line in lines {
+        for line in lines {
             if skip_next {
                 if !line.ends_with('\\') {
                     skip_next = false;
@@ -92,22 +91,8 @@ impl UnitValue {
                 plurals.push((singular, plural));
                 continue;
             }
-            let ignore_prefix = "!ignore";
-            if line.starts_with(ignore_prefix) {
-                let ignore = line.split_at(ignore_prefix.len()).1.trim();
-                ignore_rules.push(ignore);
-                continue;
-            }
             if line.ends_with('\\') {
                 skip_next = true;
-                continue;
-            }
-            for ignore in &ignore_rules {
-                if line.contains(ignore) {
-                    continue 'process_line;
-                }
-            }
-            if line.starts_with('+') {
                 continue;
             }
             let (singular_name, expr) = Self::read_ident(line);

@@ -1,20 +1,5 @@
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
-# Any line containing any of these should be ignored
-!ignore !locale
-!ignore !  set
-!ignore !endlocale
-!ignore !set
-!ignore !varnot
-!ignore !message
-!ignore !prompt
-!ignore !endvar
-!ignore !var
-!ignore !utf8
-!ignore !endutf8
-!ignore !include # definitions.units includes currency.units
-!ignore !unitlist
-
 !plural second seconds
 !plural meter meters
 !plural metre metres
@@ -57,7 +42,7 @@
 !plural month months
 
 !plural inch inches
-!ignore feet                    foot
+# we need to manually ignore the line 'feet                    foot'
 !plural foot feet
 !plural yard yards
 !plural mile miles
@@ -96,9 +81,9 @@
 !plural hundredweight hundredweights
 !plural ton tons
 !plural quarter quarters
-!plural gallon gallons
 !plural cup cups
 !plural tablespoon tablespoons
+!plural teaspoon teaspoons
 !plural dollar dollars
 !plural cent cents
 !plural penny pennies
@@ -109,37 +94,28 @@ AU      au
 ”       inch # unicode double quote
 '       foot # '
 "       inch # "
-!ignore '                       arcmin
-!ignore "                       arcsec
-!ignore ''                      "
-# '
+# arc minute and arc second definitions are ignored
 m2      m^2
 ft3     ft^3
 
-# air molecular weight is too complicated to parse for now
-!ignore air_1976
-!ignore polyndx_1976
-!ignore polyndx
+# air molecular weight is too complicated to parse for now,
+# so ignore air_1976, polyndx_1976 and polyndx
 
-# functions we can't parse
-!ignore ipv4subnetsize
-!ignore tempF
-!ignore normaltemp
-!ignore SB_degree
+# functions we can't parse:
+#  * ipv4subnetsize
+#  * tempF
+#  * normaltemp
+#  * SB_degree
 
-# we can't parse ' as part of a longer identifier
-!ignore tongapa'anga
-#'
-!ignore tongapa’anga
+# we can't parse ' as part of a longer identifier, so ignore tongapa'anga
 
-# conflicts with the 'to' keyword
-!ignore to                   10 shou
-!ignore koku                 10 to
+# the units 'to' and 'koku' conflict with the 'to' keyword
 
 # The remainder of this file is copied from definitions.units and currency.units,
 # with the following changes:
 #
 #  * 'e' is renamed to 'electroncharge'
+#  * a number of lines are commented out, such as any line with !set or !var
 #
 
 ### Begin definitions.units and currency.units
@@ -263,29 +239,29 @@ ft3     ft^3
 #
 ###########################################################################
 
-!locale en_US
-!  set UNITS_ENGLISH US
-!endlocale
+# !locale en_US
+# !  set UNITS_ENGLISH US
+# !endlocale
 
-!locale en_GB
-!  set UNITS_ENGLISH GB
-!endlocale
+# !locale en_GB
+# !  set UNITS_ENGLISH GB
+# !endlocale
 
-!set UNITS_ENGLISH US   # Default setting for English units
+# !set UNITS_ENGLISH US   # Default setting for English units
 
-!set UNITS_SYSTEM default   # Set a default value
+# !set UNITS_SYSTEM default   # Set a default value
 
-!varnot UNITS_SYSTEM si emu esu gaussian gauss default
-!message Unknown unit system given with -u or UNITS_SYSTEM environment variable
-!message Valid systems: si, emu, esu, gauss[ian]
-!message Using SI
-!prompt (SI)
-!endvar
+# !varnot UNITS_SYSTEM si emu esu gaussian gauss default
+# !message Unknown unit system given with -u or UNITS_SYSTEM environment variable
+# !message Valid systems: si, emu, esu, gauss[ian]
+# !message Using SI
+# !prompt (SI)
+# !endvar
 
-!var UNITS_SYSTEM si
-!message SI units selected
-!prompt (SI)
-!endvar
+# !var UNITS_SYSTEM si
+# !message SI units selected
+# !prompt (SI)
+# !endvar
 
 ###########################################################################
 #                                                                         #
@@ -1057,11 +1033,11 @@ deg                     degree
 arcdeg                  degree
 arcmin                  1|60 degree
 arcminute               arcmin
-'                       arcmin
+#'                       arcmin
 arcsec                  1|60 arcmin
 arcsecond               arcsec
-"                       arcsec
-''                      "
+#"                       arcsec
+#''                      "
 rightangle              90 degrees
 quadrant                1|4 circle
 quintant                1|5 circle
@@ -1184,9 +1160,9 @@ degC                    K
 #    is placed in the mouth so as to acquire the heat of a healthy
 #    man."  (D. G. Fahrenheit, Phil. Trans. (London) 33, 78, 1724)
 
-tempF(x) units=[1;K] domain=[-459.67,) range=[0,) \
-                (x+(-32)) degF + stdtemp ; (tempF+(-stdtemp))/degF + 32
-tempfahrenheit() tempF
+#tempF(x) units=[1;K] domain=[-459.67,) range=[0,) \
+#                (x+(-32)) degF + stdtemp ; (tempF+(-stdtemp))/degF + 32
+#tempfahrenheit() tempF
 degfahrenheit           5|9 degC
 degF                    5|9 degC
 
@@ -1378,8 +1354,8 @@ wc                      water            # water column
 mach                    331.46 m/s       # speed of sound in dry air at STP
 standardtemp            273.15 K         # standard temperature
 stdtemp                 standardtemp
-normaltemp              tempF(70)        # for gas density, from NIST
-normtemp                normaltemp       # Handbook 44
+#normaltemp              tempF(70)        # for gas density, from NIST
+#normtemp                normaltemp       # Handbook 44
 
 # Weight of mercury and water at different temperatures using the standard
 # force of gravity.
@@ -1657,14 +1633,14 @@ eotvos                  1e-9 Gal/cm     # Change in gravitational acceleration
 # units.
 # 
 
-!var UNITS_SYSTEM esu emu gaussian gauss
-sqrt_cm                 ! 
-sqrt_centimeter         sqrt_cm
-+m                      100 sqrt_cm^2
-sqrt_g                  !
-sqrt_gram               sqrt_g
-+kg                     kilo sqrt_g^2
-!endvar
+# !var UNITS_SYSTEM esu emu gaussian gauss
+# sqrt_cm                 !
+# sqrt_centimeter         sqrt_cm
+# +m                      100 sqrt_cm^2
+# sqrt_g                  !
+# sqrt_gram               sqrt_g
+# +kg                     kilo sqrt_g^2
+# !endvar
 
 # Electrostatic CGS (ESU)
 #
@@ -1686,14 +1662,14 @@ stC                     statcoulomb
 franklin                statcoulomb
 Fr                      franklin
 
-!var UNITS_SYSTEM esu
-!message CGS-ESU units selected
-!prompt (ESU)
-+statcoulomb            sqrt(dyne) cm
-+A                      0.1 statamp c/(cm/s)
-+mu0                    1/c^2
-+coulombconst           1
-!endvar
+#!var UNITS_SYSTEM esu
+#!message CGS-ESU units selected
+#!prompt (ESU)
+#+statcoulomb            sqrt(dyne) cm
+#+A                      0.1 statamp c/(cm/s)
+#+mu0                    1/c^2
+#+coulombconst           1
+#!endvar
 
 statampere              statcoulomb / s
 statamp                 statampere
@@ -1765,14 +1741,14 @@ abA                     abampere
 biot                    abampere
 Bi                      biot
 
-!var UNITS_SYSTEM emu
-!message CGS-EMU units selected
-!prompt (EMU)
-+abampere               sqrt(dyne)
-+A                      0.1 abamp
-+mu0                    1
-+coulombconst           c^2
-!endvar
+#!var UNITS_SYSTEM emu
+#!message CGS-EMU units selected
+#!prompt (EMU)
+#+abampere               sqrt(dyne)
+#+A                      0.1 abamp
+#+mu0                    1
+#+coulombconst           c^2
+#!endvar
 
 abcoulomb               abamp sec
 abcoul                  abcoulomb
@@ -1819,19 +1795,19 @@ emu                     erg/gauss  # "electro-magnetic unit", a measure of
 # This definition gives the same dimensions for the E and B fields and was also
 # known as the "symmetric system".  This system was proposed by Hertz in 1888.
 
-!var UNITS_SYSTEM gaussian gauss
-!message CGS-Gaussian units selected
-!prompt (Gaussian)
-+statcoulomb            sqrt(dyne) cm
-+A                      0.1 statamp c/(cm/s)
-+mu0                    1
-+epsilon0               1
-+coulombconst           1                  # The gauss is the B field produced
-+gauss                  statcoulomb / cm^2 # 1 cm from a wire carrying a current
-+weber                  1e8 maxwell        # of 0.5*(c/(cm/s)) stA = 1.5e10 stA
-+bohrmagneton           electroncharge hbar / 2 electronmass c
-+nuclearmagneton        electroncharge hbar / 2 protonmass c
-!endvar
+#!var UNITS_SYSTEM gaussian gauss
+#!message CGS-Gaussian units selected
+#!prompt (Gaussian)
+#+statcoulomb            sqrt(dyne) cm
+#+A                      0.1 statamp c/(cm/s)
+#+mu0                    1
+#+epsilon0               1
+#+coulombconst           1                  # The gauss is the B field produced
+#+gauss                  statcoulomb / cm^2 # 1 cm from a wire carrying a current
+#+weber                  1e8 maxwell        # of 0.5*(c/(cm/s)) stA = 1.5e10 stA
+#+bohrmagneton           electroncharge hbar / 2 electronmass c
+#+nuclearmagneton        electroncharge hbar / 2 protonmass c
+#!endvar
 
 #
 # Some historical electromagnetic units
@@ -2578,9 +2554,9 @@ vmag(mag) units=[1;lx] domain=[,]  range=(0,] \
 # functions above.
 
 # luminance from surface brightness in magnitudes per square degree
-SB_degree(sb) units=[1;cd/m^2] domain=[,] range=(0,] \
-    vmag(sb) / squaredegree ; \
-    ~vmag(SB_degree squaredegree)
+#SB_degree(sb) units=[1;cd/m^2] domain=[,] range=(0,] \
+#    vmag(sb) / squaredegree ; \
+#    ~vmag(SB_degree squaredegree)
 
 # luminance from surface brightness in magnitudes per square minute
 SB_minute(sb) units=[1;cd/m^2] domain=[,] range=(0,] \
@@ -2604,7 +2580,7 @@ SB_deg()    SB_degree
 
 # The brightness of one tenth-magnitude star per square degree outside
 # Earth's atmosphere; often used for night sky brightness.
-S10 SB_degree(10)
+#S10 SB_degree(10)
 
 # Examples for magnitude and surface brightness functions
 # Sun illuminance from visual magnitude
@@ -2753,7 +2729,7 @@ int-                    int              #   international measures
 inch                    2.54 cm
 in                      inch
 foot                    12 inch
-feet                    foot
+#feet                    foot
 ft                      foot
 yard                    3 ft
 yd                      yard
@@ -5004,15 +4980,15 @@ dvdspeed                 1385 kB/s   # This is the "1x" speed of a DVD using
 # prefix has the specified length in bits.
 #
 
-ipv4subnetsize(prefix_len) units=[1;1]  domain=[0,32] range=[1,4294967296] \
-                         2^(32-prefix_len) ; 32-log2(ipv4subnetsize)
-ipv4classA               ipv4subnetsize(8)
-ipv4classB               ipv4subnetsize(16)
-ipv4classC               ipv4subnetsize(24)
+#ipv4subnetsize(prefix_len) units=[1;1]  domain=[0,32] range=[1,4294967296] \
+#                         2^(32-prefix_len) ; 32-log2(ipv4subnetsize)
+#ipv4classA               ipv4subnetsize(8)
+#ipv4classB               ipv4subnetsize(16)
+#ipv4classC               ipv4subnetsize(24)
 
-ipv6subnetsize(prefix_len) units=[1;1] domain=[0,128] \
-                         range=[1,340282366920938463463374607431768211456] \
-                         2^(128-prefix_len) ; 128-log2(ipv6subnetsize)
+#ipv6subnetsize(prefix_len) units=[1;1] domain=[0,128] \
+#                         range=[1,340282366920938463463374607431768211456] \
+#                         2^(128-prefix_len) ; 128-log2(ipv6subnetsize)
 
 #
 # Musical measures.  Musical intervals expressed as ratios.  Multiply
@@ -5187,20 +5163,20 @@ yuan                    chinayuan
 
 # Unicode Currency Names
 
-!utf8
+#!utf8
 icelandkróna            icelandkrona
 polandzłoty             polandzloty
-tongapa’anga            tongapa'anga
+#tongapa’anga            tongapa'anga
 #venezuelabolívar        venezuelabolivar
 vietnamđồng             vietnamdong
 mongoliatögrög          mongoliatugrik
 sãotomé&príncipedobra   saotome&principedobra
-!endutf8
+#!endutf8
 
 UKP                     GBP        # Not an ISO code, but looks like one, and
                                    # sometimes used on usenet.
 
-!include currency.units
+#!include currency.units
 
 # Money on the gold standard, used in the late 19th century and early
 # 20th century.
@@ -5421,31 +5397,31 @@ lapserate       6.5 K/km        # US Std Atm (1976)
 # air molecular weight, including constituent mol wt, given
 # in Table 3, p. 3
 
-air_1976        78.084   %    28.0134 \
-              + 20.9476  %    31.9988 \
-              + 9340     ppm  39.948 \
-              +  314     ppm  44.00995 \
-              +   18.18  ppm  20.183 \
-              +    5.24  ppm   4.0026 \
-              +    2     ppm  16.04303 \
-              +    1.14  ppm  83.80 \
-              +    0.55  ppm   2.01594 \
-              +    0.087 ppm 131.30
+#air_1976        78.084   %    28.0134 \
+#              + 20.9476  %    31.9988 \
+#              + 9340     ppm  39.948 \
+#              +  314     ppm  44.00995 \
+#              +   18.18  ppm  20.183 \
+#              +    5.24  ppm   4.0026 \
+#              +    2     ppm  16.04303 \
+#              +    1.14  ppm  83.80 \
+#              +    0.55  ppm   2.01594 \
+#              +    0.087 ppm 131.30
 
 # universal gas constant
-R_1976          8.31432e3 N m/(kmol K)
+#R_1976          8.31432e3 N m/(kmol K)
 
 # polytropic index n
-polyndx_1976    air_1976 (kg/kmol) gravity/(R_1976 lapserate) - 1
+#polyndx_1976    air_1976 (kg/kmol) gravity/(R_1976 lapserate) - 1
 
 # If desired, redefine using current values for air mol wt and R
 
-polyndx         polyndx_1976
-# polyndx       air (kg/kmol) gravity/(R lapserate) - 1
+#polyndx         polyndx_1976
+#polyndx       air (kg/kmol) gravity/(R lapserate) - 1
 
 # for comparison with various references
 
-polyexpnt       (polyndx + 1) / polyndx
+#polyexpnt       (polyndx + 1) / polyndx
 
 # The model assumes the following reference values:
 # sea-level temperature and pressure
@@ -6690,10 +6666,10 @@ kanejakujou        jou
 # http://en.wikipedia.org/wiki/Taiwanese_units_of_measurement
 taichi             shaku   # http://zh.wikipedia.org/wiki/台尺
 taicun             sun     # http://zh.wikipedia.org/wiki/台制
-!utf8
+#!utf8
 台尺               taichi  # via Hanyu Pinyin romanizations
 台寸               taicun
-!endutf8
+#!endutf8
 
 # In context of clothing, shaku is different from architecture
 # http://www.scinet.co.jp/sci/sanwa/kakizaki-essay54.html
@@ -6728,12 +6704,12 @@ ping                 tsubo     # http://zh.wikipedia.org/wiki/坪
 jia                  2934 ping # http://zh.wikipedia.org/wiki/甲_(单位)
 fen                  1|10 jia  # http://zh.wikipedia.org/wiki/分
 fen_area             1|10 jia  # Protection against future collisions
-!utf8
+#!utf8
 坪                   ping      # via Hanyu Pinyin romanizations
 甲                   jia
 分                   fen
 分地                 fen_area  # Protection against future collisions
-!endutf8
+#!endutf8
 
 # Japanese architecture is based on a "standard" size of tatami mat.
 # Room sizes today are given in number of tatami, and this number
@@ -6768,8 +6744,8 @@ shou                 (4.9*4.9*2.7) sun^3   # The character shou which is
                                            # Sake is sometimes served in a masu
                                            # Note that it happens to be
                                            # EXACTLY 7^4/11^3 liters.
-to                   10 shou
-koku                 10 to  # No longer used; historically a measure of rice
+#to                   10 shou
+#koku                 10 to  # No longer used; historically a measure of rice
 
 # Japanese Weight Measures
 #
@@ -6793,11 +6769,11 @@ kwan                 kan         # This was the old pronounciation of the unit.
 taijin               kin      # http://zh.wikipedia.org/wiki/台斤
 tailiang             10 monme # http://zh.wikipedia.org/wiki/台斤
 taiqian              monme    # http://zh.wikipedia.org/wiki/台制
-!utf8
+#!utf8
 台斤                 taijin # via Hanyu Pinyin romanizations
 台兩                 tailiang
 台錢                 taiqian
-!endutf8
+#!endutf8
 
 #
 # Australian unit
@@ -7387,7 +7363,7 @@ blanc                   1|24 periot
 # Localization
 #
 
-!var UNITS_ENGLISH US
+#!var UNITS_ENGLISH US
 hundredweight           ushundredweight
 ton                     uston
 scruple                 apscruple
@@ -7406,37 +7382,37 @@ pony                    ponyvolume
 grand                   usgrand
 firkin                  usfirkin
 hogshead                ushogshead
-!endvar
+#!endvar
 
-!var UNITS_ENGLISH GB
-hundredweight           brhundredweight
-ton                     brton
-scruple                 brscruple
-fluidounce              brfluidounce
-gallon                  brgallon
-bushel                  brbushel
-quarter                 brquarter
-chaldron                brchaldron
-cup                     brcup
-teacup                  brteacup
-tablespoon              brtablespoon
-teaspoon                brteaspoon
-dollar                  US$
-cent                    $ 0.01
-penny                   brpenny
-minim                   minimnote
-pony                    brpony
-grand                   brgrand
-firkin                  brfirkin
-hogshead                brhogshead
-!endvar
+#!var UNITS_ENGLISH GB
+#hundredweight           brhundredweight
+#ton                     brton
+#scruple                 brscruple
+#fluidounce              brfluidounce
+#gallon                  brgallon
+#bushel                  brbushel
+#quarter                 brquarter
+#chaldron                brchaldron
+#cup                     brcup
+#teacup                  brteacup
+#tablespoon              brtablespoon
+#teaspoon                brteaspoon
+#dollar                  US$
+#cent                    $ 0.01
+#penny                   brpenny
+#minim                   minimnote
+#pony                    brpony
+#grand                   brgrand
+#firkin                  brfirkin
+#hogshead                brhogshead
+#!endvar
 
-!varnot UNITS_ENGLISH GB US
-!message Unknown value for environment variable UNITS_ENGLISH.  Should be GB or US.
-!endvar
+#!varnot UNITS_ENGLISH GB US
+#!message Unknown value for environment variable UNITS_ENGLISH.  Should be GB or US.
+#!endvar
 
 
-!utf8
+#!utf8
 ⅛-                      1|8
 ¼-                      1|4
 ⅜-                      3|8
@@ -7635,7 +7611,7 @@ röntgen                 roentgen
 #㏟                      A/m     Invalid on Mac
 #㏿                      gal     Invalid on Mac
 
-!endutf8
+#!endutf8
 
 ############################################################################
 #
@@ -7645,13 +7621,13 @@ röntgen                 roentgen
 #
 ############################################################################
 
-!unitlist hms hr;min;sec
-!unitlist time year;day;hr;min;sec
-!unitlist dms deg;arcmin;arcsec
-!unitlist ftin ft;in;1|8 in
-!unitlist inchfine in;1|8 in;1|16 in;1|32 in;1|64 in
-!unitlist usvol cup;3|4 cup;2|3 cup;1|2 cup;1|3 cup;1|4 cup;\
-                tbsp;tsp;1|2 tsp;1|4 tsp;1|8 tsp
+# !unitlist hms hr;min;sec
+# !unitlist time year;day;hr;min;sec
+# !unitlist dms deg;arcmin;arcsec
+# !unitlist ftin ft;in;1|8 in
+# !unitlist inchfine in;1|8 in;1|16 in;1|32 in;1|64 in
+# !unitlist usvol cup;3|4 cup;2|3 cup;1|2 cup;1|3 cup;1|4 cup;\
+#                 tbsp;tsp;1|2 tsp;1|4 tsp;1|8 tsp
 
 ############################################################################
 #
@@ -7830,7 +7806,7 @@ THB                    thailandbaht
 TJS                    tajikistansomoni
 TMT                    turkmenistanmanat
 TND                    tunisiadinar
-TOP                    tongapa'anga
+#TOP                    tongapa'anga
 TRY                    turkeylira
 TTD                    trinidadandtobagodollar
 TWD                    taiwandollar
@@ -7851,7 +7827,7 @@ ZMW                    zambiakwacha
 
 # Currency exchange rates source 
 
-!message Currency exchange rates from FloatRates (USD base) on 2019-05-31
+#!message Currency exchange rates from FloatRates (USD base) on 2019-05-31
 
 austriaschilling          1|13.7603 euro
 belgiumfranc              1|40.3399 euro
@@ -8005,7 +7981,7 @@ thailandbaht              0.0314820697102 USD
 tajikistansomoni          0.106008233005 USD
 turkmenistanmanat         0.286192631879 USD
 tunisiadinar              0.334199179178 USD
-tongapa'anga              0.439815055328 USD
+#tongapa'anga              0.439815055328 USD
 turkeylira                0.169734054462 USD
 trinidadandtobagodollar   0.147877811834 USD
 taiwandollar              0.0316263165797 USD
