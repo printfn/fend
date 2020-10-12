@@ -718,7 +718,8 @@ fn test_various_functions() {
     test_evaluation("sin 0", "0");
     test_evaluation("sin (-3/2*pi)", "approx. 1");
     test_evaluation("sin (1m)", "approx. 0.8414709848 m");
-    test_same("sin pi", "sin (2pi)");
+    test_evaluation("sin pi", "approx. 0");
+    test_evaluation("sin (2pi)", "approx. 0");
     test_evaluation("sin (1°)", "approx. 0.0174524064");
     test_evaluation("tan 0", "0");
     test_evaluation("tan (1meter)", "approx. 1.5574077246 meters");
@@ -738,10 +739,9 @@ fn test_various_functions() {
     expect_error("acos (-1.01)");
     test_evaluation("atan 1", "approx. 0.7853981633");
 
-    // TODO fix this when `sinh 0` == `0` instead of `approx. 0`
-    test_same("sinh 0", "sin pi");
-    test_same("cosh 0", "cos 0");
-    test_same("tanh 0", "tan pi");
+    test_same("sinh 0", "approx. 0");
+    test_same("cosh 0", "approx. 1");
+    test_same("tanh 0", "approx. 0");
 
     test_same("asinh 0", "asin 0");
     expect_error("acosh 0");

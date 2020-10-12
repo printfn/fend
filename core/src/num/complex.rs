@@ -89,11 +89,11 @@ impl Complex {
         }
     }
 
-    pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self {
-            real: Real::pi(int)?,
+    pub fn pi() -> Self {
+        Self {
+            real: Real::pi(),
             imag: 0.into(),
-        })
+        }
     }
 
     pub fn abs<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
@@ -150,12 +150,8 @@ impl Complex {
         use_parentheses_if_complex: bool,
         int: &I,
     ) -> Result<(), IntErr<fmt::Error, I>> {
-        let style = if style == FormattingStyle::Auto {
-            if exact {
-                FormattingStyle::ExactFloatWithFractionFallback
-            } else {
-                FormattingStyle::ApproxFloat(10)
-            }
+        let style = if !exact && style == FormattingStyle::Auto {
+            FormattingStyle::ApproxFloat(10)
         } else {
             style
         };
@@ -239,7 +235,7 @@ impl Complex {
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         // cos(self) == sin(pi/2 - self)
-        let pi = Self::pi(int)?;
+        let pi = Self::pi();
         let half_pi = pi.div(2.into(), int).map_err(IntErr::into_string)?;
         let (res, _exact) = half_pi.sub(self, int)?.expect_real()?.sin(int)?;
         Ok(Self::from(res))

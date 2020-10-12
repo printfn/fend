@@ -311,15 +311,14 @@ impl UnitValue {
         }
     }
 
-    pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self {
-            value: Complex::pi(int)?,
+    pub fn pi() -> Self {
+        Self {
+            value: Complex::pi(),
             unit: Unit { components: vec![] },
-            // TODO change this to true
             exact: false,
             base: Base::default(),
             format: FormattingStyle::default(),
-        })
+        }
     }
 
     pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
