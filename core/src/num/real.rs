@@ -261,21 +261,30 @@ impl Real {
         }
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         match self.pattern {
             Pattern::Simple(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok(Self::from(a.mul(b, int)?)),
-                Pattern::Pi(b) => Ok(Self {
-                    pattern: Pattern::Pi(a.mul(b, int)?),
-                }),
+                Pattern::Simple(b) => Ok((Self::from(a.mul(b, int)?), true)),
+                Pattern::Pi(b) => Ok((
+                    Self {
+                        pattern: Pattern::Pi(a.mul(b, int)?),
+                    },
+                    true,
+                )),
             },
             Pattern::Pi(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok(Self {
-                    pattern: Pattern::Pi(a.mul(b, int)?),
-                }),
-                Pattern::Pi(_) => Ok(Self {
-                    pattern: Pattern::Pi(a.mul(&rhs.clone().approximate(int)?, int)?),
-                }),
+                Pattern::Simple(b) => Ok((
+                    Self {
+                        pattern: Pattern::Pi(a.mul(b, int)?),
+                    },
+                    true,
+                )),
+                Pattern::Pi(_) => Ok((
+                    Self {
+                        pattern: Pattern::Pi(a.mul(&rhs.clone().approximate(int)?, int)?),
+                    },
+                    false,
+                )),
             },
         }
     }
@@ -302,21 +311,24 @@ impl Real {
         }
     }
 
-    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         if self == 0.into() {
-            return Ok(rhs);
+            return Ok((rhs, true));
         } else if rhs == 0.into() {
-            return Ok(self);
+            return Ok((self, true));
         }
         match (self.clone().pattern, rhs.clone().pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => Ok(Self::from(a.add(b, int)?)),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Ok(Self {
-                pattern: Pattern::Pi(a.add(b, int)?),
-            }),
+            (Pattern::Simple(a), Pattern::Simple(b)) => Ok((Self::from(a.add(b, int)?), true)),
+            (Pattern::Pi(a), Pattern::Pi(b)) => Ok((
+                Self {
+                    pattern: Pattern::Pi(a.add(b, int)?),
+                },
+                true,
+            )),
             _ => {
                 let a = self.approximate(int)?;
                 let b = rhs.approximate(int)?;
-                Ok(Self::from(a.add(b, int)?))
+                Ok((Self::from(a.add(b, int)?), false))
             }
         }
     }

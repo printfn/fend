@@ -206,10 +206,11 @@ impl UnitValue {
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (scale_factor, exact_conv) = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         let (scaled, exact_scale) = rhs.value.mul(&scale_factor, int)?;
+        let (value, exact_value) = self.value.add(scaled, int)?;
         Ok(Self {
-            value: self.value.add(scaled, int)?,
+            value,
             unit: self.unit,
-            exact: require_both_exact(self.exact, rhs.exact) && exact_conv && exact_scale,
+            exact: self.exact && rhs.exact && exact_conv && exact_scale && exact_value,
             base: self.base,
             format: self.format,
         })
@@ -233,10 +234,11 @@ impl UnitValue {
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (scale_factor, exact_conv) = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         let (scaled, exact_scale) = rhs.value.mul(&scale_factor, int)?;
+        let (value, exact_value) = self.value.sub(scaled, int)?;
         Ok(Self {
-            value: self.value.sub(scaled, int)?,
+            value,
             unit: self.unit,
-            exact: require_both_exact(self.exact, rhs.exact) && exact_conv && exact_scale,
+            exact: self.exact && rhs.exact && exact_conv && exact_scale && exact_value,
             base: self.base,
             format: self.format,
         })
@@ -593,8 +595,8 @@ impl Unit {
                 test_int(int)?;
                 if let Some(exp) = hashmap.get_mut(base_unit) {
                     let (product, exact_product) = overall_exp.clone().mul(&base_exp, int)?;
-                    exact = exact && exact_product;
-                    let new_exp = exp.clone().add(product, int)?;
+                    let (new_exp, exact_exp) = exp.clone().add(product, int)?;
+                    exact = exact && exact_product && exact_exp;
                     if new_exp == 0.into() {
                         hashmap.remove(base_unit);
                     } else {
