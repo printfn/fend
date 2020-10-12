@@ -728,6 +728,7 @@ fn test_builtin_function_names() {
 
 #[test]
 fn test_exact_sin() {
+    // values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
     test_evaluation("sin 0", "0");
     test_evaluation("sin pi", "0");
     test_evaluation("sin (2pi)", "0");
@@ -742,6 +743,14 @@ fn test_exact_sin() {
     test_evaluation("sin (-5pi/2)", "-1");
     test_evaluation("sin (-7pi/2)", "1");
     test_evaluation("sin (-1023pi/2)", "1");
+    test_evaluation("sin (pi/6)", "0.5");
+    test_evaluation("sin (5pi/6)", "0.5");
+    test_evaluation("sin (7pi/6)", "-0.5");
+    test_evaluation("sin (11pi/6)", "-0.5");
+    test_evaluation("sin (-pi/6)", "-0.5");
+    test_evaluation("sin (-5pi/6)", "-0.5");
+    test_evaluation("sin (-7pi/6)", "0.5");
+    test_evaluation("sin (-11pi/6)", "0.5");
 }
 
 #[test]
@@ -760,6 +769,14 @@ fn test_exact_cos() {
     test_evaluation("cos (-5pi/2)", "0");
     test_evaluation("cos (-7pi/2)", "0");
     test_evaluation("cos (-1023pi/2)", "0");
+    test_evaluation("cos (pi/3)", "0.5");
+    test_evaluation("cos (2pi/3)", "-0.5");
+    test_evaluation("cos (4pi/3)", "-0.5");
+    test_evaluation("cos (5pi/3)", "0.5");
+    test_evaluation("cos (-pi/3)", "0.5");
+    test_evaluation("cos (-2pi/3)", "-0.5");
+    test_evaluation("cos (-4pi/3)", "-0.5");
+    test_evaluation("cos (-5pi/3)", "0.5");
 }
 
 #[test]

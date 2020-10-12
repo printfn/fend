@@ -90,22 +90,31 @@ impl Real {
                     let s = Self {
                         pattern: Pattern::Pi(n),
                     };
+                    // sin(-x) == -sin(x)
                     return Ok(-Self::sin(-s, int)?);
                 }
-                if let Ok(integer) = n.clone().mul(&2.into(), int)?.try_as_usize(int) {
-                    if integer % 2 == 0 {
-                        Exact::new(Self::from(0), true)
-                    } else if integer % 4 == 1 {
-                        Exact::new(Self::from(1), true)
-                    } else {
-                        Exact::new(-Self::from(1), true)
+                if let Ok(integer) = n.clone().mul(&6.into(), int)?.try_as_usize(int) {
+                    // values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
+                    if integer % 6 == 0 {
+                        return Ok(Exact::new(Self::from(0), true));
+                    } else if integer % 12 == 3 {
+                        return Ok(Exact::new(Self::from(1), true));
+                    } else if integer % 12 == 9 {
+                        return Ok(Exact::new(-Self::from(1), true));
+                    } else if integer % 12 == 1 || integer % 12 == 5 {
+                        return Ok(Exact::new(Self::from(1), true)
+                            .div(&Exact::new(2.into(), true), int)
+                            .map_err(IntErr::unwrap)?);
+                    } else if integer % 12 == 7 || integer % 12 == 11 {
+                        return Ok(Exact::new(-Self::from(1), true)
+                            .div(&Exact::new(2.into(), true), int)
+                            .map_err(IntErr::unwrap)?);
                     }
-                } else {
-                    let s = Self {
-                        pattern: Pattern::Pi(n),
-                    };
-                    s.approximate(int)?.sin(int)?.apply(Self::from)
                 }
+                let s = Self {
+                    pattern: Pattern::Pi(n),
+                };
+                s.approximate(int)?.sin(int)?.apply(Self::from)
             }
         })
     }
