@@ -300,7 +300,7 @@ impl UnitValue {
         Self {
             value: Complex::pi(),
             unit: Unit { components: vec![] },
-            exact: false,
+            exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
         }
@@ -350,12 +350,11 @@ impl UnitValue {
         if require_unitless && !self.is_unitless() {
             return Err("Expected a unitless number".to_string())?;
         }
-        let (value, exact) = f(self.value, int)?;
+        let (value, res_exact) = f(self.value, int)?;
         Ok(Self {
             value,
             unit: self.unit,
-            // TODO: this should be exact && self.exact
-            exact,
+            exact: self.exact && res_exact,
             base: self.base,
             format: self.format,
         })
