@@ -150,6 +150,7 @@ fn test_subtraction() {
         "-611918823914002783233712",
     );
     test_evaluation("3pi - 2pi", "approx. 3.1415926535");
+    test_evaluation("4pi-1)/pi", "approx. 3.6816901138");
 }
 
 #[test]

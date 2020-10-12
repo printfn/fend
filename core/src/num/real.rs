@@ -303,7 +303,7 @@ impl Real {
             _ => {
                 let a = self.approximate(int)?;
                 let b = rhs.approximate(int)?;
-                Ok(Self::from(a.sub(b, int)?))
+                Ok(Self::from(a.add(b, int)?))
             }
         }
     }
