@@ -44,41 +44,6 @@ impl Complex {
         })
     }
 
-    pub fn div<I: Interrupt>(
-        self,
-        rhs: Self,
-        int: &I,
-    ) -> Result<(Self, bool), IntErr<DivideByZero, I>> {
-        // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
-        let u = Exact::new(self.real, true);
-        let v = Exact::new(self.imag, true);
-        let x = Exact::new(rhs.real, true);
-        let y = Exact::new(rhs.imag, true);
-        let prod1 = x.clone().mul(x.re(), int)?;
-        let prod2 = y.clone().mul(y.re(), int)?;
-        let sum = prod1.add(prod2, int)?;
-        let real_part = Exact::new(Real::from(1), true).div(&sum, int)?;
-        let prod3 = u.clone().mul(x.re(), int)?;
-        let prod4 = v.clone().mul(y.re(), int)?;
-        let real2 = prod3.add(prod4, int)?;
-        let prod5 = v.mul(x.re(), int)?;
-        let prod6 = u.mul(y.re(), int)?;
-        let imag2 = prod5.add(-prod6, int)?;
-        let multiplicand = Self {
-            real: real2.value,
-            imag: imag2.value,
-        };
-        let (result, result_exact) = Self {
-            real: real_part.value,
-            imag: 0.into(),
-        }
-        .mul(&multiplicand, int)?;
-        Ok((
-            result,
-            real_part.exact && real2.exact && imag2.exact && result_exact,
-        ))
-    }
-
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err("Exponentiation is currently unsupported for complex numbers".to_string())?;
@@ -254,21 +219,22 @@ impl Complex {
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         // cos(self) == sin(pi/2 - self)
-        let pi = Self::pi();
-        let (half_pi, exact) = pi.div(2.into(), int).map_err(IntErr::into_string)?;
-        let (sin_arg, exact2) = half_pi.add(-self, int)?;
+        let pi = Exact::new(Self::pi(), true);
+        let half_pi = pi
+            .div(Exact::new(2.into(), true), int)
+            .map_err(IntErr::into_string)?;
+        let (sin_arg, exact2) = half_pi.value.add(-self, int)?;
         Ok(sin_arg
             .expect_real()?
             .sin(int)?
-            .combine(exact && exact2)
+            .combine(half_pi.exact && exact2)
             .apply(Self::from))
     }
 
     pub fn tan<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         let num = self.clone().sin(int)?;
         let den = self.cos(int)?;
-        num.combine(den.exact)
-            .apply_x(|num| num.div(den.value, int).map_err(IntErr::into_string))
+        num.div(den, int).map_err(IntErr::into_string)
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
@@ -319,30 +285,6 @@ impl Complex {
         Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        // (a + bi) * (c + di)
-        //     => ac + bci + adi - bd
-        //     => (ac - bd) + (bc + ad)i
-        let self_real = Exact::new(self.real, true);
-        let self_imag = Exact::new(self.imag, true);
-        let rhs_real = Exact::new(&rhs.real, true);
-        let rhs_imag = Exact::new(&rhs.imag, true);
-
-        let prod1 = self_real.clone().mul(rhs_real, int)?;
-        let prod2 = self_imag.clone().mul(rhs_imag, int)?;
-        let real_part = prod1.add(-prod2, int)?;
-        let prod3 = self_real.mul(rhs_imag, int)?;
-        let prod4 = self_imag.mul(rhs_real, int)?;
-        let imag_part = prod3.add(prod4, int)?;
-        Ok((
-            Self {
-                real: real_part.value,
-                imag: imag_part.value,
-            },
-            real_part.exact && imag_part.exact,
-        ))
-    }
-
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         let real = Exact::new(self.real, true).add(Exact::new(rhs.real, true), int)?;
         let imag = Exact::new(self.imag, true).add(Exact::new(rhs.imag, true), int)?;
@@ -353,6 +295,62 @@ impl Complex {
             },
             real.exact && imag.exact,
         ))
+    }
+}
+
+impl Exact<Complex> {
+    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+        // (a + bi) * (c + di)
+        //     => ac + bci + adi - bd
+        //     => (ac - bd) + (bc + ad)i
+        let (self_real, self_imag) = self.apply(|x| (x.real, x.imag)).pair();
+        let (rhs_real, rhs_imag) = rhs.clone().apply(|x| (x.real, x.imag)).pair();
+
+        let prod1 = self_real.clone().mul(rhs_real.re(), int)?;
+        let prod2 = self_imag.clone().mul(rhs_imag.re(), int)?;
+        let real_part = prod1.add(-prod2, int)?;
+        let prod3 = self_real.mul(rhs_imag.re(), int)?;
+        let prod4 = self_imag.mul(rhs_real.re(), int)?;
+        let imag_part = prod3.add(prod4, int)?;
+        Self::new_ok(
+            Complex {
+                real: real_part.value,
+                imag: imag_part.value,
+            },
+            real_part.exact && imag_part.exact,
+        )
+    }
+
+    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+        // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
+        let (u, v) = self.apply(|x| (x.real, x.imag)).pair();
+        let (x, y) = rhs.apply(|x| (x.real, x.imag)).pair();
+        let prod1 = x.clone().mul(x.re(), int)?;
+        let prod2 = y.clone().mul(y.re(), int)?;
+        let sum = prod1.add(prod2, int)?;
+        let real_part = Exact::new(Real::from(1), true).div(&sum, int)?;
+        let prod3 = u.clone().mul(x.re(), int)?;
+        let prod4 = v.clone().mul(y.re(), int)?;
+        let real2 = prod3.add(prod4, int)?;
+        let prod5 = v.mul(x.re(), int)?;
+        let prod6 = u.mul(y.re(), int)?;
+        let imag2 = prod5.add(-prod6, int)?;
+        let multiplicand = Exact::new(
+            Complex {
+                real: real2.value,
+                imag: imag2.value,
+            },
+            real2.exact && imag2.exact,
+        );
+        let result = Exact::new(
+            Complex {
+                real: real_part.value,
+                imag: 0.into(),
+            },
+            real_part.exact,
+        )
+        .mul(&multiplicand, int)?;
+        Ok(result)
     }
 }
 

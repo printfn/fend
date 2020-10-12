@@ -20,7 +20,7 @@ impl<T: Copy> Copy for Exact<T> {}
 
 #[allow(clippy::use_self)]
 impl<T> Exact<T> {
-    pub fn new(value: impl Into<T>, exact: bool) -> Self {
+    pub fn new(value: T, exact: bool) -> Self {
         Self {
             value: value.into(),
             exact,
@@ -28,7 +28,7 @@ impl<T> Exact<T> {
     }
 
     pub fn new_ok<E>(value: impl Into<T>, exact: bool) -> Result<Self, E> {
-        Ok(Self::new(value, exact))
+        Ok(Self::new(value.into(), exact))
     }
 
     pub fn apply<R, F: FnOnce(T) -> R>(self, f: F) -> Exact<R> {
@@ -58,6 +58,21 @@ impl<T> Exact<T> {
             value: &self.value,
             exact: self.exact,
         }
+    }
+}
+
+impl<A, B> Exact<(A, B)> {
+    pub fn pair(self) -> (Exact<A>, Exact<B>) {
+        (
+            Exact {
+                value: self.value.0,
+                exact: self.exact,
+            },
+            Exact {
+                value: self.value.1,
+                exact: self.exact,
+            },
+        )
     }
 }
 
