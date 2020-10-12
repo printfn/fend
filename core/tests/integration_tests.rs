@@ -743,7 +743,6 @@ fn test_exact_sin() {
     test_evaluation("sin (-1023pi/2)", "1");
 }
 
-
 #[test]
 fn test_exact_cos() {
     test_evaluation("cos 0", "1");
