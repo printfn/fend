@@ -55,20 +55,18 @@ impl Complex {
         let y = rhs.imag;
         let sum = x.clone().mul(&x, int)?.add(y.clone().mul(&y, int)?, int)?;
         let (real_part, exact) = Real::from(1).div(&sum, int)?;
-        Ok((
-            Self {
-                real: real_part,
-                imag: 0.into(),
-            }
-            .mul(
-                &Self {
-                    real: u.clone().mul(&x, int)?.add(v.clone().mul(&y, int)?, int)?,
-                    imag: v.mul(&x, int)?.sub(u.mul(&y, int)?, int)?,
-                },
-                int,
-            )?,
-            exact,
-        ))
+        let real2 = u.clone().mul(&x, int)?.add(v.clone().mul(&y, int)?, int)?;
+        let (imag2, exact2) = v.mul(&x, int)?.sub(u.mul(&y, int)?, int)?;
+        let multiplicand = Self {
+            real: real2,
+            imag: imag2,
+        };
+        let (result, exact3) = Self {
+            real: real_part,
+            imag: 0.into(),
+        }
+        .mul(&multiplicand, int)?;
+        Ok((result, exact && exact2 && exact3))
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
@@ -308,21 +306,25 @@ impl Complex {
         Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
-        Ok(Self {
-            real: self
-                .real
-                .clone()
-                .mul(&rhs.real, int)?
-                .sub(self.imag.clone().mul(&rhs.imag, int)?, int)?,
-            imag: self
-                .real
-                .mul(&rhs.imag, int)?
-                .add(self.imag.mul(&rhs.real, int)?, int)?,
-        })
+        let (real_part, exact) = self
+            .real
+            .clone()
+            .mul(&rhs.real, int)?
+            .sub(self.imag.clone().mul(&rhs.imag, int)?, int)?;
+        Ok((
+            Self {
+                real: real_part,
+                imag: self
+                    .real
+                    .mul(&rhs.imag, int)?
+                    .add(self.imag.mul(&rhs.real, int)?, int)?,
+            },
+            exact,
+        ))
     }
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {

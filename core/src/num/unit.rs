@@ -143,10 +143,10 @@ impl UnitValue {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let (hashmap, scale, exact) = value.unit.to_hashmap_and_scale(int)?;
-        let scale = scale.mul(&value.value, int)?;
+        let (scale, exact2) = scale.mul(&value.value, int)?;
         let resulting_unit = NamedUnit::new(singular_name, plural_name, hashmap, scale);
         let mut result = Self::new(1, vec![UnitExponent::new(resulting_unit, 1)]);
-        result.exact = result.exact && value.exact && exact;
+        result.exact = result.exact && value.exact && exact && exact2;
         Ok(result)
     }
 
@@ -205,10 +205,11 @@ impl UnitValue {
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (scale_factor, exact_conv) = Unit::try_convert(&rhs.unit, &self.unit, int)?;
+        let (scaled, exact_scale) = rhs.value.mul(&scale_factor, int)?;
         Ok(Self {
-            value: self.value.add(rhs.value.mul(&scale_factor, int)?, int)?,
+            value: self.value.add(scaled, int)?,
             unit: self.unit,
-            exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
+            exact: require_both_exact(self.exact, rhs.exact) && exact_conv && exact_scale,
             base: self.base,
             format: self.format,
         })
@@ -219,11 +220,11 @@ impl UnitValue {
             return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
         }
         let (scale_factor, exact_conv) = Unit::try_convert(&self.unit, &rhs.unit, int)?;
-        let new_value = self.value.mul(&scale_factor, int)?;
+        let (new_value, exact_scale) = self.value.mul(&scale_factor, int)?;
         Ok(Self {
             value: new_value,
             unit: rhs.unit,
-            exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
+            exact: require_both_exact(self.exact, rhs.exact) && exact_conv && exact_scale,
             base: self.base,
             format: self.format,
         })
@@ -231,10 +232,11 @@ impl UnitValue {
 
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (scale_factor, exact_conv) = Unit::try_convert(&rhs.unit, &self.unit, int)?;
+        let (scaled, exact_scale) = rhs.value.mul(&scale_factor, int)?;
         Ok(Self {
-            value: self.value.sub(rhs.value.mul(&scale_factor, int)?, int)?,
+            value: self.value.sub(scaled, int)?,
             unit: self.unit,
-            exact: require_both_exact(self.exact, rhs.exact) && exact_conv,
+            exact: require_both_exact(self.exact, rhs.exact) && exact_conv && exact_scale,
             base: self.base,
             format: self.format,
         })
@@ -268,20 +270,23 @@ impl UnitValue {
             return Err("Only unitless exponents are currently supported".to_string())?;
         }
         let mut new_components = vec![];
+        let mut exact_res = true;
         for unit_exp in self.unit.components {
+            let (exponent, exact_exp) = unit_exp.exponent.mul(&rhs.value, int)?;
+            exact_res = exact_res && exact_exp;
             new_components.push(UnitExponent {
                 unit: unit_exp.unit,
-                exponent: unit_exp.exponent.mul(&rhs.value, int)?,
+                exponent,
             });
         }
         let new_unit = Unit {
             components: new_components,
         };
-        let (value, exact_res) = self.value.pow(rhs.value, int)?;
+        let (value, exact2) = self.value.pow(rhs.value, int)?;
         Ok(Self {
             value,
             unit: new_unit,
-            exact: self.exact && rhs.exact && exact_res,
+            exact: self.exact && rhs.exact && exact_res && exact2,
             base: self.base,
             format: self.format,
         })
@@ -530,10 +535,11 @@ impl UnitValue {
 
     pub fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         let components = [self.unit.components, rhs.unit.components].concat();
+        let (value, exact) = self.value.mul(&rhs.value, int)?;
         Ok(Self {
-            value: self.value.mul(&rhs.value, int)?,
+            value,
             unit: Unit { components },
-            exact: require_both_exact(self.exact, rhs.exact),
+            exact: require_both_exact(self.exact, rhs.exact) && exact,
             base: self.base,
             format: self.format,
         })
@@ -586,18 +592,21 @@ impl Unit {
             for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
                 test_int(int)?;
                 if let Some(exp) = hashmap.get_mut(base_unit) {
-                    let new_exp = exp
-                        .clone()
-                        .add(overall_exp.clone().mul(&base_exp, int)?, int)?;
+                    let (product, exact_product) = overall_exp.clone().mul(&base_exp, int)?;
+                    exact = exact && exact_product;
+                    let new_exp = exp.clone().add(product, int)?;
                     if new_exp == 0.into() {
                         hashmap.remove(base_unit);
                     } else {
                         *exp = new_exp;
                     }
                 } else {
-                    let new_exp = overall_exp.clone().mul(&base_exp, int)?;
+                    let (new_exp, new_exp_exact) = overall_exp.clone().mul(&base_exp, int)?;
+                    exact = exact && new_exp_exact;
                     if new_exp != 0.into() {
-                        hashmap.insert(base_unit.clone(), overall_exp.clone().mul(&base_exp, int)?);
+                        let (adj_exp, adj_exp_exact) = overall_exp.clone().mul(&base_exp, int)?;
+                        hashmap.insert(base_unit.clone(), adj_exp);
+                        exact = exact && adj_exp_exact;
                     }
                 }
             }
@@ -606,8 +615,9 @@ impl Unit {
                 .scale
                 .clone()
                 .pow(overall_exp.clone(), int)?;
-            scale = scale.mul(&pow_result, int)?;
-            exact = exact && pow_result_exact;
+            let (new_scale, new_scale_exact) = scale.mul(&pow_result, int)?;
+            scale = new_scale;
+            exact = exact && pow_result_exact && new_scale_exact;
         }
         Ok((hashmap, scale, exact))
     }

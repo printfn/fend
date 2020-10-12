@@ -280,21 +280,24 @@ impl Real {
         }
     }
 
-    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         if rhs == 0.into() {
-            return Ok(self);
+            return Ok((self, true));
         } else if self == 0.into() {
-            return Ok(-rhs);
+            return Ok((-rhs, true));
         }
         match (self.clone().pattern, rhs.clone().pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => Ok(Self::from(a.sub(b, int)?)),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Ok(Self {
-                pattern: Pattern::Pi(a.sub(b, int)?),
-            }),
+            (Pattern::Simple(a), Pattern::Simple(b)) => Ok((Self::from(a.sub(b, int)?), true)),
+            (Pattern::Pi(a), Pattern::Pi(b)) => Ok((
+                Self {
+                    pattern: Pattern::Pi(a.sub(b, int)?),
+                },
+                true,
+            )),
             _ => {
                 let a = self.approximate(int)?;
                 let b = rhs.approximate(int)?;
-                Ok(Self::from(a.sub(b, int)?))
+                Ok((Self::from(a.sub(b, int)?), false))
             }
         }
     }
