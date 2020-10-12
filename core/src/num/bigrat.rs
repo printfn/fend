@@ -72,7 +72,6 @@ impl PartialEq for BigRat {
 
 impl Eq for BigRat {}
 
-#[allow(clippy::fn_params_excessive_bools)]
 impl BigRat {
     pub fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, IntErr<String, I>> {
         if self.sign == Sign::Negative && self.num != 0.into() {
@@ -339,7 +338,7 @@ impl BigRat {
     fn format_as_integer<I: Interrupt>(
         num: &BigUint,
         base: Base,
-        negative: bool,
+        sign: Sign,
         imag: bool,
         use_parens_if_product: bool,
         int: &I,
@@ -365,7 +364,7 @@ impl BigRat {
             )
         };
         Ok(FormattedBigRat {
-            negative,
+            sign,
             exact: true,
             ty,
         })
@@ -375,7 +374,7 @@ impl BigRat {
         num: &BigUint,
         den: &BigUint,
         base: Base,
-        negative: bool,
+        sign: Sign,
         imag: bool,
         mixed: bool,
         use_parens: bool,
@@ -395,7 +394,7 @@ impl BigRat {
         // mixed fractions without a prefix aren't really mixed
         let actually_mixed = pref.is_some();
         Ok(FormattedBigRat {
-            negative,
+            sign,
             exact: true,
             ty: if imag && !actually_mixed && !base.has_prefix() && num == 1.into() {
                 FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "", use_parens)
@@ -440,17 +439,19 @@ impl BigRat {
         int: &I,
     ) -> Result<FormattedBigRat, IntErr<fmt::Error, I>> {
         let mut x = self.clone().simplify(int)?;
-        let negative = x.sign == Sign::Negative && x != 0.into();
-        if negative {
-            x.sign = Sign::Positive;
+        let sign = if x.sign == Sign::Positive || x == 0.into() {
+            Sign::Positive
+        } else {
+            Sign::Negative
         };
+        x.sign = Sign::Positive;
 
         // try as integer if possible
         if x.den == 1.into() {
             return Ok(Self::format_as_integer(
                 &x.num,
                 base,
-                negative,
+                sign,
                 imag,
                 use_parens_if_fraction,
                 int,
@@ -476,7 +477,7 @@ impl BigRat {
                 &x.num,
                 &x.den,
                 base,
-                negative,
+                sign,
                 imag,
                 mixed,
                 use_parens_if_fraction,
@@ -496,7 +497,7 @@ impl BigRat {
         };
         let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
         let print_integer_part = |f: &mut fmt::Formatter, ignore_minus_if_zero: bool| {
-            if negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
+            if sign == Sign::Negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
                 write!(f, "-")?;
             }
             write!(f, "{}", integer_part.format(base, true, int)?)?;
@@ -525,7 +526,7 @@ impl BigRat {
             write!(f, "i")?;
         }
         Ok(FormattedBigRat {
-            negative: false,
+            sign: Sign::Positive,
             exact: was_exact,
             ty: FormattedBigRatType::Decimal,
         })
@@ -911,14 +912,15 @@ enum FormattedBigRatType {
 
 #[must_use]
 pub struct FormattedBigRat {
-    negative: bool,
+    // whether or not to print a minus sign
+    sign: Sign,
     pub exact: bool,
     ty: FormattedBigRatType,
 }
 
 impl fmt::Display for FormattedBigRat {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        if self.negative {
+        if self.sign == Sign::Negative {
             write!(f, "-")?;
         }
         match &self.ty {
