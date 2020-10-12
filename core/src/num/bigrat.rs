@@ -72,6 +72,7 @@ impl PartialEq for BigRat {
 
 impl Eq for BigRat {}
 
+#[allow(clippy::fn_params_excessive_bools)]
 impl BigRat {
     pub fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, IntErr<String, I>> {
         self = self.simplify(int)?;
@@ -367,7 +368,6 @@ impl BigRat {
         })
     }
 
-    #[allow(clippy::fn_params_excessive_bools)]
     fn format_as_fraction<I: Interrupt>(
         num: &BigUint,
         den: &BigUint,
