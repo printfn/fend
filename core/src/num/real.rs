@@ -7,8 +7,10 @@ use std::ops::Neg;
 
 #[derive(Clone, Debug)]
 pub enum Real {
+    /// a simple fraction
     Simple(BigRat),
-    //Pi,
+    // n * pi
+    //Pi(BigRat),
 }
 
 impl Ord for Real {
