@@ -21,8 +21,7 @@ pub enum Pattern {
 impl Ord for Real {
     fn cmp(&self, other: &Self) -> Ordering {
         match (&self.pattern, &other.pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => a.cmp(b),
-            (Pattern::Pi(a), Pattern::Pi(b)) => a.cmp(b),
+            (Pattern::Simple(a), Pattern::Simple(b)) | (Pattern::Pi(a), Pattern::Pi(b)) => a.cmp(b),
             _ => {
                 let int = &crate::interrupt::Never::default();
                 let a = self.clone().approximate(int).unwrap();
@@ -92,7 +91,11 @@ impl Real {
                 if let Ok(_integer) = n.clone().try_as_usize(int) {
                     Ok((Self::from(0), true))
                 } else {
-                    let (res, _) = Self { pattern: Pattern::Pi(n) }.approximate(int)?.sin(int)?;
+                    let (res, _) = Self {
+                        pattern: Pattern::Pi(n),
+                    }
+                    .approximate(int)?
+                    .sin(int)?;
                     Ok((Self::from(res), false))
                 }
             }
@@ -158,11 +161,13 @@ impl Real {
         match self.pattern {
             Pattern::Simple(a) => match &rhs.pattern {
                 Pattern::Simple(b) => Ok(Self::from(a.div(b, int)?)),
-                Pattern::Pi(_) => Ok(Self::from(a.div(&rhs.clone().approximate(int)?, int)?))
+                Pattern::Pi(_) => Ok(Self::from(a.div(&rhs.clone().approximate(int)?, int)?)),
             },
             Pattern::Pi(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok(Self { pattern: Pattern::Pi(a.div(b, int)?) }),
-                Pattern::Pi(b) => Ok(Self::from(a.div(b, int)?))
+                Pattern::Simple(b) => Ok(Self {
+                    pattern: Pattern::Pi(a.div(b, int)?),
+                }),
+                Pattern::Pi(b) => Ok(Self::from(a.div(b, int)?)),
             },
         }
     }
@@ -205,15 +210,14 @@ impl Real {
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
-        match (self.clone().pattern, rhs.clone().pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => {
-                let (result, exact) = a.pow(b, int)?;
-                Ok((Self::from(result), exact))
-            }
-            _ => {
-                let (result, _) = self.approximate(int)?.pow(rhs.approximate(int)?, int)?;
-                Ok((Self::from(result), false))
-            }
+        if let (Pattern::Simple(a), Pattern::Simple(b)) =
+            (self.clone().pattern, rhs.clone().pattern)
+        {
+            let (result, exact) = a.pow(b, int)?;
+            Ok((Self::from(result), exact))
+        } else {
+            let (result, _) = self.approximate(int)?.pow(rhs.approximate(int)?, int)?;
+            Ok((Self::from(result), false))
         }
     }
 
@@ -250,19 +254,27 @@ impl Real {
         match self.pattern {
             Pattern::Simple(a) => match &rhs.pattern {
                 Pattern::Simple(b) => Ok(Self::from(a.mul(b, int)?)),
-                Pattern::Pi(b) => Ok(Self { pattern: Pattern::Pi(a.mul(b, int)?) }),
+                Pattern::Pi(b) => Ok(Self {
+                    pattern: Pattern::Pi(a.mul(b, int)?),
+                }),
             },
             Pattern::Pi(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok(Self { pattern: Pattern::Pi(a.mul(b, int)?) }),
-                Pattern::Pi(_) => Ok(Self { pattern: Pattern::Pi(a.mul(&rhs.clone().approximate(int)?, int)?) })
-            }
+                Pattern::Simple(b) => Ok(Self {
+                    pattern: Pattern::Pi(a.mul(b, int)?),
+                }),
+                Pattern::Pi(_) => Ok(Self {
+                    pattern: Pattern::Pi(a.mul(&rhs.clone().approximate(int)?, int)?),
+                }),
+            },
         }
     }
 
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         match (self.clone().pattern, rhs.clone().pattern) {
             (Pattern::Simple(a), Pattern::Simple(b)) => Ok(Self::from(a.sub(b, int)?)),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Ok(Self { pattern: Pattern::Pi(a.sub(b, int)?) }),
+            (Pattern::Pi(a), Pattern::Pi(b)) => Ok(Self {
+                pattern: Pattern::Pi(a.sub(b, int)?),
+            }),
             _ => {
                 let a = self.approximate(int)?;
                 let b = rhs.approximate(int)?;
@@ -273,13 +285,15 @@ impl Real {
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         if self == 0.into() {
-            return Ok(rhs)
+            return Ok(rhs);
         } else if rhs == 0.into() {
-            return Ok(self)
+            return Ok(self);
         }
         match (self.clone().pattern, rhs.clone().pattern) {
             (Pattern::Simple(a), Pattern::Simple(b)) => Ok(Self::from(a.add(b, int)?)),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Ok(Self { pattern: Pattern::Pi(a.add(b, int)?) }),
+            (Pattern::Pi(a), Pattern::Pi(b)) => Ok(Self {
+                pattern: Pattern::Pi(a.add(b, int)?),
+            }),
             _ => {
                 let a = self.approximate(int)?;
                 let b = rhs.approximate(int)?;
@@ -289,7 +303,9 @@ impl Real {
     }
 
     pub fn pi() -> Self {
-        Self { pattern: Pattern::Pi(1.into()) }
+        Self {
+            pattern: Pattern::Pi(1.into()),
+        }
     }
 }
 
@@ -299,7 +315,9 @@ impl Neg for Real {
     fn neg(self) -> Self {
         match self.pattern {
             Pattern::Simple(s) => Self::from(-s),
-            Pattern::Pi(n) => Self { pattern: Pattern::Pi(-n) }
+            Pattern::Pi(n) => Self {
+                pattern: Pattern::Pi(-n),
+            },
         }
     }
 }
