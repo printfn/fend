@@ -75,6 +75,9 @@ impl Eq for BigRat {}
 #[allow(clippy::fn_params_excessive_bools)]
 impl BigRat {
     pub fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, IntErr<String, I>> {
+        if self.sign == Sign::Negative && self.num != 0.into() {
+            return Err("Negative numbers are not allowed".to_string())?;
+        }
         self = self.simplify(int)?;
         if self.den != 1.into() {
             return Err("Cannot convert fraction to integer".to_string())?;

@@ -471,6 +471,7 @@ fn test_different_bases() {
     expect_error("5 to base pi");
     expect_error("5 to base (0pi)");
     expect_error("5 to base 1");
+    expect_error("5 to base (-5)");
     expect_error("5 to base 1000000000");
     expect_error("5 to base 100");
     expect_error("5 to base i");
@@ -731,11 +732,38 @@ fn test_exact_sin() {
     test_evaluation("sin (2pi)", "0");
     test_evaluation("sin (-pi)", "0");
     test_evaluation("sin (-1000pi)", "0");
+    test_evaluation("sin (pi/2)", "1");
+    test_evaluation("sin (3pi/2)", "-1");
+    test_evaluation("sin (5pi/2)", "1");
+    test_evaluation("sin (7pi/2)", "-1");
+    test_evaluation("sin (-pi/2)", "-1");
+    test_evaluation("sin (-3pi/2)", "1");
+    test_evaluation("sin (-5pi/2)", "-1");
+    test_evaluation("sin (-7pi/2)", "1");
+    test_evaluation("sin (-1023pi/2)", "1");
+}
+
+
+#[test]
+fn test_exact_cos() {
+    test_evaluation("cos 0", "1");
+    test_evaluation("cos pi", "-1");
+    test_evaluation("cos (2pi)", "1");
+    test_evaluation("cos (-pi)", "-1");
+    test_evaluation("cos (-1000pi)", "1");
+    test_evaluation("cos (pi/2)", "0");
+    test_evaluation("cos (3pi/2)", "0");
+    test_evaluation("cos (5pi/2)", "0");
+    test_evaluation("cos (7pi/2)", "0");
+    test_evaluation("cos (-pi/2)", "0");
+    test_evaluation("cos (-3pi/2)", "0");
+    test_evaluation("cos (-5pi/2)", "0");
+    test_evaluation("cos (-7pi/2)", "0");
+    test_evaluation("cos (-1023pi/2)", "0");
 }
 
 #[test]
 fn test_various_functions() {
-    test_evaluation("sin (-3/2*pi)", "approx. 1");
     test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_evaluation("sin (1°)", "approx. 0.0174524064");
     test_evaluation("tan 0", "0");

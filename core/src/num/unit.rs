@@ -407,10 +407,10 @@ impl UnitValue {
 
     pub fn cos<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
-            rad.apply_fn(Complex::cos, false, int)?
+            rad.apply_fn_exact(Complex::cos, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {
-            self.apply_fn(Complex::cos, false, int)
+            self.apply_fn_exact(Complex::cos, false, int)
         }
     }
 

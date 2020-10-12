@@ -88,8 +88,21 @@ impl Real {
                 Ok((Self::from(res), exact))
             }
             Pattern::Pi(n) => {
-                if let Ok(_integer) = n.clone().try_as_usize(int) {
-                    Ok((Self::from(0), true))
+                if n < 0.into() {
+                    let s = Self {
+                        pattern: Pattern::Pi(n),
+                    };
+                    let (inv_res, exact) = Self::sin(-s, int)?;
+                    return Ok((-inv_res, exact));
+                }
+                if let Ok(integer) = n.clone().mul(&2.into(), int)?.try_as_usize(int) {
+                    if integer % 2 == 0 {
+                        Ok((Self::from(0), true))
+                    } else if integer % 4 == 1 {
+                        Ok((Self::from(1), true))
+                    } else {
+                        Ok((-Self::from(1), true))
+                    }
                 } else {
                     let (res, _) = Self {
                         pattern: Pattern::Pi(n),
