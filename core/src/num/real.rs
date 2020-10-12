@@ -170,17 +170,27 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.factorial(int)?))
     }
 
-    pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub fn div<I: Interrupt>(
+        self,
+        rhs: &Self,
+        int: &I,
+    ) -> Result<(Self, bool), IntErr<DivideByZero, I>> {
         match self.pattern {
             Pattern::Simple(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok(Self::from(a.div(b, int)?)),
-                Pattern::Pi(_) => Ok(Self::from(a.div(&rhs.clone().approximate(int)?, int)?)),
+                Pattern::Simple(b) => Ok((Self::from(a.div(b, int)?), true)),
+                Pattern::Pi(_) => Ok((
+                    Self::from(a.div(&rhs.clone().approximate(int)?, int)?),
+                    false,
+                )),
             },
             Pattern::Pi(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok(Self {
-                    pattern: Pattern::Pi(a.div(b, int)?),
-                }),
-                Pattern::Pi(b) => Ok(Self::from(a.div(b, int)?)),
+                Pattern::Simple(b) => Ok((
+                    Self {
+                        pattern: Pattern::Pi(a.div(b, int)?),
+                    },
+                    true,
+                )),
+                Pattern::Pi(b) => Ok((Self::from(a.div(b, int)?), true)),
             },
         }
     }

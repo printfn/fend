@@ -120,6 +120,7 @@ fn test_multiplication() {
         "292510755072077978255166497050046859223676982480",
     );
     test_evaluation("pi * pi", "approx. 9.869604401");
+    test_evaluation("4pi + 1", "approx. 13.5663706143");
 }
 
 #[test]

@@ -43,24 +43,32 @@ impl Complex {
         })
     }
 
-    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub fn div<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<(Self, bool), IntErr<DivideByZero, I>> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let u = self.real;
         let v = self.imag;
         let x = rhs.real;
         let y = rhs.imag;
         let sum = x.clone().mul(&x, int)?.add(y.clone().mul(&y, int)?, int)?;
-        Ok(Self {
-            real: Real::from(1).div(&sum, int)?,
-            imag: 0.into(),
-        }
-        .mul(
-            &Self {
-                real: u.clone().mul(&x, int)?.add(v.clone().mul(&y, int)?, int)?,
-                imag: v.mul(&x, int)?.sub(u.mul(&y, int)?, int)?,
-            },
-            int,
-        )?)
+        let (real_part, exact) = Real::from(1).div(&sum, int)?;
+        Ok((
+            Self {
+                real: real_part,
+                imag: 0.into(),
+            }
+            .mul(
+                &Self {
+                    real: u.clone().mul(&x, int)?.add(v.clone().mul(&y, int)?, int)?,
+                    imag: v.mul(&x, int)?.sub(u.mul(&y, int)?, int)?,
+                },
+                int,
+            )?,
+            exact,
+        ))
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
@@ -240,18 +248,16 @@ impl Complex {
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         // cos(self) == sin(pi/2 - self)
         let pi = Self::pi();
-        let half_pi = pi.div(2.into(), int).map_err(IntErr::into_string)?;
-        let (res, exact) = half_pi.sub(self, int)?.expect_real()?.sin(int)?;
-        Ok((Self::from(res), exact))
+        let (half_pi, exact) = pi.div(2.into(), int).map_err(IntErr::into_string)?;
+        let (res, exact2) = half_pi.sub(self, int)?.expect_real()?.sin(int)?;
+        Ok((Self::from(res), exact && exact2))
     }
 
     pub fn tan<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
         let (num, exact) = self.clone().sin(int)?;
         let (den, exact2) = self.cos(int)?;
-        Ok((
-            num.div(den, int).map_err(IntErr::into_string)?,
-            exact && exact2,
-        ))
+        let (res, exact3) = num.div(den, int).map_err(IntErr::into_string)?;
+        Ok((res, exact && exact2 && exact3))
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {

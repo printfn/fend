@@ -248,10 +248,11 @@ impl UnitValue {
                 -rhs_component.exponent,
             ));
         }
+        let (value, exact) = self.value.div(rhs.value, int)?;
         Ok(Self {
-            value: self.value.div(rhs.value, int)?,
+            value,
             unit: Unit { components },
-            exact: require_both_exact(self.exact, rhs.exact),
+            exact: exact && self.exact && rhs.exact,
             base: self.base,
             format: self.format,
         })
@@ -620,10 +621,8 @@ impl Unit {
         let (hash_a, scale_a, exact_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b, exact_b) = into.to_hashmap_and_scale(int)?;
         if hash_a == hash_b {
-            Ok((
-                scale_a.div(scale_b, int).map_err(IntErr::into_string)?,
-                exact_a && exact_b,
-            ))
+            let (result, exact_result) = scale_a.div(scale_b, int).map_err(IntErr::into_string)?;
+            Ok((result, exact_a && exact_b && exact_result))
         } else {
             Err("Units are incompatible".to_string())?
         }
@@ -770,7 +769,7 @@ mod tests {
             "g".to_string(),
             "g".to_string(),
             hashmap,
-            Complex::from(1).div(1000.into(), int).unwrap(),
+            Complex::from(1).div(1000.into(), int).unwrap().0,
         );
         let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg, 1)]);
         let twelve_g = UnitValue::new(12, vec![UnitExponent::new(g, 1)]);
