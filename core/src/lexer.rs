@@ -254,6 +254,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     }
     let mut recurring_number_num = Number::from(0);
     let mut recurring_number_den = Number::from(1);
+    let base_as_u64 = u64::from(base.base_as_u8());
     let (_, input) = parse_integer(input, true, true, base, &mut |digit| -> Result<
         (),
         IntErr<String, I>,
@@ -261,14 +262,14 @@ fn parse_recurring_digits<'a, I: Interrupt>(
         let digit_as_u64 = u64::from(digit);
         recurring_number_num = recurring_number_num
             .clone()
-            .mul(10.into(), int)?
+            .mul(base_as_u64.into(), int)?
             .add(digit_as_u64.into(), int)?;
-        recurring_number_den = recurring_number_den.clone().mul(10.into(), int)?;
+        recurring_number_den = recurring_number_den.clone().mul(base_as_u64.into(), int)?;
         Ok(())
     })?;
     recurring_number_den = recurring_number_den.clone().sub(1.into(), int)?;
     for _ in 0..num_nonrec_digits {
-        recurring_number_den = recurring_number_den.clone().mul(10.into(), int)?;
+        recurring_number_den = recurring_number_den.clone().mul(base_as_u64.into(), int)?;
     }
     *number = number.clone().add(
         recurring_number_num
