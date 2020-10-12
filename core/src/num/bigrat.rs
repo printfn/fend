@@ -1,6 +1,7 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
+use crate::num::Exact;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
@@ -123,11 +124,11 @@ impl BigRat {
     }
 
     // sin works for all real numbers
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
         if self == 0.into() {
-            Ok((0.into(), true))
+            Exact::new_ok(0, true)
         } else {
-            Ok((Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false))
+            Exact::new_ok(Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false)
         }
     }
 

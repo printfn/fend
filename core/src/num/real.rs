@@ -83,10 +83,9 @@ impl Real {
 
     // sin works for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
-        match self.pattern {
+        Ok(match self.pattern {
             Pattern::Simple(s) => {
-                let (res, exact) = s.sin(int)?;
-                Exact::new_ok(Self::from(res), exact)
+                s.sin(int)?.apply(Self::from)
             }
             Pattern::Pi(n) => {
                 if n < 0.into() {
@@ -97,22 +96,20 @@ impl Real {
                 }
                 if let Ok(integer) = n.clone().mul(&2.into(), int)?.try_as_usize(int) {
                     if integer % 2 == 0 {
-                        Exact::new_ok(Self::from(0), true)
+                        Exact::new(Self::from(0), true)
                     } else if integer % 4 == 1 {
-                        Exact::new_ok(Self::from(1), true)
+                        Exact::new(Self::from(1), true)
                     } else {
-                        Exact::new_ok(-Self::from(1), true)
+                        Exact::new(-Self::from(1), true)
                     }
                 } else {
-                    let (res, _) = Self {
+                    let s = Self {
                         pattern: Pattern::Pi(n),
-                    }
-                    .approximate(int)?
-                    .sin(int)?;
-                    Exact::new_ok(Self::from(res), false)
+                    };
+                    s.approximate(int)?.sin(int)?.apply(Self::from)
                 }
             }
-        }
+        })
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
