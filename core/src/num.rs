@@ -5,6 +5,7 @@ mod base;
 mod bigrat;
 mod biguint;
 mod complex;
+mod exact;
 mod formatting_style;
 mod real;
 mod unit;
@@ -13,6 +14,7 @@ pub use formatting_style::FormattingStyle;
 
 pub type Number = unit::UnitValue;
 pub type Base = base::Base;
+type Exact<T> = exact::Exact<T>;
 pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
 pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 

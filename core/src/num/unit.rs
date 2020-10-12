@@ -8,6 +8,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops::Neg;
 
+use super::Exact;
+
 #[derive(Clone, Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct UnitValue {
@@ -351,18 +353,18 @@ impl UnitValue {
 
     fn apply_fn_exact<I: Interrupt>(
         self,
-        f: impl FnOnce(Complex, &I) -> Result<(Complex, bool), IntErr<String, I>>,
+        f: impl FnOnce(Complex, &I) -> Result<Exact<Complex>, IntErr<String, I>>,
         require_unitless: bool,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if require_unitless && !self.is_unitless() {
             return Err("Expected a unitless number".to_string())?;
         }
-        let (value, res_exact) = f(self.value, int)?;
+        let exact = f(self.value, int)?;
         Ok(Self {
-            value,
+            value: exact.value,
             unit: self.unit,
-            exact: self.exact && res_exact,
+            exact: self.exact && exact.exact,
             base: self.base,
             format: self.format,
         })

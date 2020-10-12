@@ -1,5 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::real::Real;
+use crate::num::Exact;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
@@ -56,7 +57,7 @@ impl Complex {
         let (prod1, exact) = x.clone().mul(&x, int)?;
         let (prod2, exact2) = y.clone().mul(&y, int)?;
         let (sum, exact3) = prod1.add(prod2, int)?;
-        let (real_part, exact4) = Real::from(1).div(&sum, int)?;
+        let (real_part, exact4) = Real::from(1).div(&Exact::new(sum, exact3), int)?;
         let (prod3, exact5) = u.clone().mul(&x, int)?;
         let (prod4, exact6) = v.clone().mul(&y, int)?;
         let (real2, exact7) = prod3.add(prod4, int)?;
@@ -72,7 +73,7 @@ impl Complex {
             imag: 0.into(),
         }
         .mul(&multiplicand, int)?;
-        let overall_exact = exact && exact2 && exact3 && exact4 && exact5 && exact6;
+        let overall_exact = exact && exact2 && exact4 && exact5 && exact6;
         let overall_exact = overall_exact && exact7 && exact8 && exact9 && exact10 && exact11;
         Ok((result, overall_exact))
     }
@@ -245,25 +246,27 @@ impl Complex {
         }
     }
 
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
-        let (res, exact) = self.expect_real()?.sin(int)?;
-        Ok((Self::from(res), exact))
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+        Ok(self.expect_real()?.sin(int)?.apply(Self::from))
     }
 
-    pub fn cos<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
+    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         // cos(self) == sin(pi/2 - self)
         let pi = Self::pi();
         let (half_pi, exact) = pi.div(2.into(), int).map_err(IntErr::into_string)?;
         let (sin_arg, exact2) = half_pi.sub(self, int)?;
-        let (res, exact3) = sin_arg.expect_real()?.sin(int)?;
-        Ok((Self::from(res), exact && exact2 && exact3))
+        Ok(sin_arg
+            .expect_real()?
+            .sin(int)?
+            .combine(exact && exact2)
+            .apply(Self::from))
     }
 
-    pub fn tan<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
-        let (num, exact) = self.clone().sin(int)?;
-        let (den, exact2) = self.cos(int)?;
-        let (res, exact3) = num.div(den, int).map_err(IntErr::into_string)?;
-        Ok((res, exact && exact2 && exact3))
+    pub fn tan<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+        let num = self.clone().sin(int)?;
+        let den = self.cos(int)?;
+        num.combine(den.exact)
+            .apply_x(|num| num.div(den.value, int).map_err(IntErr::into_string))
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {

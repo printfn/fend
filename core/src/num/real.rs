@@ -1,5 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::bigrat::BigRat;
+use crate::num::Exact;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
@@ -81,27 +82,26 @@ impl Real {
     }
 
     // sin works for all real numbers
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
+    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
         match self.pattern {
             Pattern::Simple(s) => {
                 let (res, exact) = s.sin(int)?;
-                Ok((Self::from(res), exact))
+                Exact::new_ok(Self::from(res), exact)
             }
             Pattern::Pi(n) => {
                 if n < 0.into() {
                     let s = Self {
                         pattern: Pattern::Pi(n),
                     };
-                    let (inv_res, exact) = Self::sin(-s, int)?;
-                    return Ok((-inv_res, exact));
+                    return Ok(-Self::sin(-s, int)?);
                 }
                 if let Ok(integer) = n.clone().mul(&2.into(), int)?.try_as_usize(int) {
                     if integer % 2 == 0 {
-                        Ok((Self::from(0), true))
+                        Exact::new_ok(Self::from(0), true)
                     } else if integer % 4 == 1 {
-                        Ok((Self::from(1), true))
+                        Exact::new_ok(Self::from(1), true)
                     } else {
-                        Ok((-Self::from(1), true))
+                        Exact::new_ok(-Self::from(1), true)
                     }
                 } else {
                     let (res, _) = Self {
@@ -109,7 +109,7 @@ impl Real {
                     }
                     .approximate(int)?
                     .sin(int)?;
-                    Ok((Self::from(res), false))
+                    Exact::new_ok(Self::from(res), false)
                 }
             }
         }
@@ -172,18 +172,21 @@ impl Real {
 
     pub fn div<I: Interrupt>(
         self,
-        rhs: &Self,
+        rhs: &Exact<Self>,
         int: &I,
     ) -> Result<(Self, bool), IntErr<DivideByZero, I>> {
+        if self == 0.into() {
+            return Ok((self, true));
+        }
         match self.pattern {
-            Pattern::Simple(a) => match &rhs.pattern {
+            Pattern::Simple(a) => match &rhs.value.pattern {
                 Pattern::Simple(b) => Ok((Self::from(a.div(b, int)?), true)),
                 Pattern::Pi(_) => Ok((
-                    Self::from(a.div(&rhs.clone().approximate(int)?, int)?),
+                    Self::from(a.div(&rhs.value.clone().approximate(int)?, int)?),
                     false,
                 )),
             },
-            Pattern::Pi(a) => match &rhs.pattern {
+            Pattern::Pi(a) => match &rhs.value.pattern {
                 Pattern::Simple(b) => Ok((
                     Self {
                         pattern: Pattern::Pi(a.div(b, int)?),
