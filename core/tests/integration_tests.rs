@@ -73,6 +73,7 @@ fn test_div_by_zero() {
     assert_err_msg("1/0", msg);
     assert_err_msg("0/0", msg);
     assert_err_msg("-1/0", msg);
+    assert_err_msg("(3pi) / (0pi)", msg);
     assert_err_msg("-1/(2-2)", msg);
 }
 
@@ -118,6 +119,7 @@ fn test_multiplication() {
         "315427679023453451289740 * 927346502937456234523452",
         "292510755072077978255166497050046859223676982480",
     );
+    test_evaluation("pi * pi", "approx. 9.869604401");
 }
 
 #[test]
@@ -147,6 +149,7 @@ fn test_subtraction() {
         "315427679023453451289740 - 927346502937456234523452",
         "-611918823914002783233712",
     );
+    test_evaluation("3pi - 2pi", "approx. 3.1415926535");
 }
 
 #[test]
@@ -195,6 +198,7 @@ fn test_exact_roots() {
 #[test]
 fn test_approx_roots() {
     test_evaluation("sqrt 2", "approx. 1.4142135619");
+    test_evaluation("sqrt pi", "approx. 1.7724538509");
 }
 
 #[test]
@@ -242,6 +246,8 @@ fn test_exact_division() {
         "184467440737095516160000000000000/2",
         "92233720368547758080000000000000",
     );
+    // TODO fix this
+    test_evaluation("(3pi) / (2pi)", "approx. 1.5");
 }
 
 #[test]
@@ -462,6 +468,8 @@ fn test_different_bases() {
     test_eval_simple("65536 to hex", "10000");
     test_eval_simple("65536 to octal", "200000");
     expect_error("5 to base 1.5");
+    expect_error("5 to base pi");
+    expect_error("5 to base (0pi)");
     expect_error("5 to base 1");
     expect_error("5 to base 1000000000");
     expect_error("5 to base 100");

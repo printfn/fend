@@ -175,7 +175,10 @@ impl Complex {
             let (positive, (imag_part, imag_exact)) = if self.imag > 0.into() {
                 (true, self.imag.format(base, style, true, false, int)?)
             } else {
-                (false, (-self.imag.clone()).format(base, style, true, false, int)?)
+                (
+                    false,
+                    (-self.imag.clone()).format(base, style, true, false, int)?,
+                )
             };
             exact = exact && imag_exact;
             if !exact {

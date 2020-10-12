@@ -358,7 +358,7 @@ impl BigRat {
                     ""
                 },
                 // print surrounding parentheses if the number is imaginary
-                use_parens_if_product && imag
+                use_parens_if_product && imag,
             )
         };
         Ok(FormattedBigRat {
@@ -444,7 +444,14 @@ impl BigRat {
 
         // try as integer if possible
         if x.den == 1.into() {
-            return Ok(Self::format_as_integer(&x.num, base, negative, imag, use_parens_if_fraction, int)?);
+            return Ok(Self::format_as_integer(
+                &x.num,
+                base,
+                negative,
+                imag,
+                use_parens_if_fraction,
+                int,
+            )?);
         }
 
         let mut terminating_res = None;
@@ -463,7 +470,14 @@ impl BigRat {
             let mixed = style == FormattingStyle::MixedFraction
                 || style == FormattingStyle::ExactFloatWithFractionFallback;
             return Ok(Self::format_as_fraction(
-                &x.num, &x.den, base, negative, imag, mixed, use_parens_if_fraction, int,
+                &x.num,
+                &x.den,
+                base,
+                negative,
+                imag,
+                mixed,
+                use_parens_if_fraction,
+                int,
             )?);
         }
 
