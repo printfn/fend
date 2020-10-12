@@ -134,26 +134,26 @@ impl Complex {
 
         if self.imag == 0.into() {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
-            let (x, exact2) = self.real.format(base, style, false, use_parens, int)?;
-            if !exact || !exact2 {
+            let x = self.real.format(base, style, false, use_parens, int)?;
+            if !exact || !x.exact {
                 write!(f, "approx. ")?;
             }
-            write!(f, "{}", x)?;
+            write!(f, "{}", x.value)?;
             return Ok(());
         }
 
         if self.real == 0.into() {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
-            let (x, exact2) = self.imag.format(base, style, true, use_parens, int)?;
-            if !exact || !exact2 {
+            let x = self.imag.format(base, style, true, use_parens, int)?;
+            if !exact || !x.exact {
                 write!(f, "approx. ")?;
             }
-            write!(f, "{}", x)?;
+            write!(f, "{}", x.value)?;
         } else {
             let mut exact = exact;
-            let (real_part, real_exact) = self.real.format(base, style, false, false, int)?;
-            exact = exact && real_exact;
-            let (positive, (imag_part, imag_exact)) = if self.imag > 0.into() {
+            let real_part = self.real.format(base, style, false, false, int)?;
+            exact = exact && real_part.exact;
+            let (positive, imag_part) = if self.imag > 0.into() {
                 (true, self.imag.format(base, style, true, false, int)?)
             } else {
                 (
@@ -161,7 +161,7 @@ impl Complex {
                     (-self.imag.clone()).format(base, style, true, false, int)?,
                 )
             };
-            exact = exact && imag_exact;
+            exact = exact && imag_part.exact;
             if !exact {
                 write!(f, "approx. ")?;
             }
@@ -170,13 +170,13 @@ impl Complex {
             {
                 write!(f, "(")?;
             }
-            write!(f, "{}", real_part)?;
+            write!(f, "{}", real_part.value)?;
             if positive {
                 write!(f, " + ")?;
             } else {
                 write!(f, " - ")?;
             }
-            write!(f, "{}", imag_part)?;
+            write!(f, "{}", imag_part.value)?;
             if use_parentheses == UseParentheses::IfComplex
                 || use_parentheses == UseParentheses::IfComplexOrFraction
             {

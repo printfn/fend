@@ -84,9 +84,7 @@ impl Real {
     // sin works for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
         Ok(match self.pattern {
-            Pattern::Simple(s) => {
-                s.sin(int)?.apply(Self::from)
-            }
+            Pattern::Simple(s) => s.sin(int)?.apply(Self::from),
             Pattern::Pi(n) => {
                 if n < 0.into() {
                     let s = Self {
@@ -174,7 +172,7 @@ impl Real {
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<String>, IntErr<fmt::Error, I>> {
         if style == FormattingStyle::Auto {
             if let Pattern::Pi(_) = self.pattern {
                 style = FormattingStyle::ApproxFloat(10);
@@ -189,7 +187,7 @@ impl Real {
             write!(f, "{}", x)?;
             Ok(x)
         })?;
-        Ok((string, x.exact))
+        Exact::new_ok(string, x.exact)
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
