@@ -9,12 +9,14 @@ pub struct Exact<T: ?Sized> {
 
 impl<T: Clone> Clone for Exact<T> {
     fn clone(&self) -> Self {
-        Self { value: self.value.clone(), exact: self.exact }
+        Self {
+            value: self.value.clone(),
+            exact: self.exact,
+        }
     }
 }
 
-impl<T: Copy> Copy for Exact<T> {
-}
+impl<T: Copy> Copy for Exact<T> {}
 
 #[allow(clippy::use_self)]
 impl<T> Exact<T> {
@@ -54,7 +56,7 @@ impl<T> Exact<T> {
     pub fn re<'a>(&'a self) -> Exact<&'a T> {
         Exact::<&'a T> {
             value: &self.value,
-            exact: self.exact
+            exact: self.exact,
         }
     }
 }

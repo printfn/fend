@@ -714,7 +714,7 @@ impl BigRat {
     ) -> Result<(Self, bool), IntErr<String, I>> {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
-        if self.sign == Sign::Negative && rhs.den != 1.into() {
+        if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
             return Err("Roots of negative numbers are not supported".to_string())?;
         }
         if rhs.sign == Sign::Negative {
@@ -786,7 +786,7 @@ impl BigRat {
         n: &Self,
         int: &I,
     ) -> Result<(Self, bool), IntErr<String, I>> {
-        if self.sign == Sign::Negative {
+        if self.num != 0.into() && self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string())?;
         }
         let n = n.clone().simplify(int)?;

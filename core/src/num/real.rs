@@ -268,29 +268,6 @@ impl Exact<Real> {
         }
     }
 
-    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        if rhs.exact && rhs.value == 0.into() {
-            return Ok(self);
-        } else if self.exact && self.value == 0.into() {
-            return Ok(-rhs);
-        }
-        let args_exact = self.exact && rhs.exact;
-        match (self.clone().value.pattern, rhs.clone().value.pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => Self::new_ok(a.sub(b, int)?, args_exact),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Self::new_ok(
-                Real {
-                    pattern: Pattern::Pi(a.sub(b, int)?),
-                },
-                args_exact,
-            ),
-            _ => {
-                let a = self.value.approximate(int)?;
-                let b = rhs.value.approximate(int)?;
-                Self::new_ok(a.sub(b, int)?, false)
-            }
-        }
-    }
-
     pub fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> Result<Self, IntErr<Never, I>> {
         let args_exact = self.exact && rhs.exact;
         match self.value.pattern {

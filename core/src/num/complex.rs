@@ -63,7 +63,7 @@ impl Complex {
         let real2 = prod3.add(prod4, int)?;
         let prod5 = v.mul(x.re(), int)?;
         let prod6 = u.mul(y.re(), int)?;
-        let imag2 = prod5.sub(prod6, int)?;
+        let imag2 = prod5.add(-prod6, int)?;
         let multiplicand = Self {
             real: real2.value,
             imag: imag2.value,
@@ -73,7 +73,10 @@ impl Complex {
             imag: 0.into(),
         }
         .mul(&multiplicand, int)?;
-        Ok((result, real_part.exact && real2.exact && imag2.exact && result_exact))
+        Ok((
+            result,
+            real_part.exact && real2.exact && imag2.exact && result_exact,
+        ))
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
@@ -327,7 +330,7 @@ impl Complex {
 
         let prod1 = self_real.clone().mul(rhs_real, int)?;
         let prod2 = self_imag.clone().mul(rhs_imag, int)?;
-        let real_part = prod1.sub(prod2, int)?;
+        let real_part = prod1.add(-prod2, int)?;
         let prod3 = self_real.mul(rhs_imag, int)?;
         let prod4 = self_imag.mul(rhs_real, int)?;
         let imag_part = prod3.add(prod4, int)?;
@@ -343,7 +346,13 @@ impl Complex {
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         let real = Exact::new(self.real, true).add(Exact::new(rhs.real, true), int)?;
         let imag = Exact::new(self.imag, true).add(Exact::new(rhs.imag, true), int)?;
-        Ok((Self { real: real.value, imag: imag.value }, real.exact && imag.exact))
+        Ok((
+            Self {
+                real: real.value,
+                imag: imag.value,
+            },
+            real.exact && imag.exact,
+        ))
     }
 
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
