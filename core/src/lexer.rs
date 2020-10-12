@@ -290,6 +290,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 ) -> Result<(Number, &'a str), IntErr<String, I>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
+    let base_as_u64 = u64::from(base.base_as_u8());
 
     if parse_fixed_char(input, '.').is_err() {
         let (_, remaining) = parse_integer(
@@ -298,7 +299,6 @@ fn parse_basic_number<'a, I: Interrupt>(
             base.allow_leading_zeroes(),
             base,
             &mut |digit| -> Result<(), IntErr<String, I>> {
-                let base_as_u64: u64 = base.base_as_u8().into();
                 res = res
                     .clone()
                     .mul(base_as_u64.into(), int)?
@@ -312,13 +312,19 @@ fn parse_basic_number<'a, I: Interrupt>(
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
         let mut num_nonrec_digits = 0;
+        let mut numerator = Number::zero_with_base(base);
+        let mut denominator = Number::zero_with_base(base).add(1.into(), int)?;
         if parse_fixed_char(remaining, '(').is_err() {
             let (_, remaining) =
                 parse_integer(remaining, true, true, base, &mut |digit| -> Result<
                     (),
                     IntErr<String, I>,
                 > {
-                    res.add_digit_in_base(digit.into(), base, int)?;
+                    numerator = numerator
+                        .clone()
+                        .mul(base_as_u64.into(), int)?
+                        .add(u64::from(digit).into(), int)?;
+                    denominator = denominator.clone().mul(base_as_u64.into(), int)?;
                     num_nonrec_digits += 1;
                     Ok(())
                 })?;
@@ -326,6 +332,12 @@ fn parse_basic_number<'a, I: Interrupt>(
         } else {
             input = remaining;
         }
+        res = res.add(
+            numerator
+                .div(denominator, int)
+                .map_err(IntErr::into_string)?,
+            int,
+        )?;
 
         // try parsing recurring decimals
         let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
@@ -373,7 +385,6 @@ fn parse_basic_number<'a, I: Interrupt>(
                 if negative_exponent {
                     exp = -exp;
                 }
-                let base_as_u64: u64 = base.base_as_u8().into();
                 let base_as_number: Number = base_as_u64.into();
                 res = res.mul(base_as_number.pow(exp, int)?, int)?;
                 input = remaining;

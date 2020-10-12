@@ -311,15 +311,14 @@ impl UnitValue {
         }
     }
 
-    pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self {
-            value: Complex::pi(int)?,
+    pub fn pi() -> Self {
+        Self {
+            value: Complex::pi(),
             unit: Unit { components: vec![] },
-            // TODO change this to true
             exact: false,
             base: Base::default(),
             format: FormattingStyle::default(),
-        })
+        }
     }
 
     pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
@@ -351,24 +350,6 @@ impl UnitValue {
             base,
             format: FormattingStyle::default(),
         }
-    }
-
-    pub fn add_digit_in_base<I: Interrupt>(
-        &mut self,
-        digit: u64,
-        base: Base,
-        int: &I,
-    ) -> Result<(), IntErr<String, I>> {
-        if base != self.base {
-            return Err(format!(
-                "Base does not match: {} != {}",
-                base.base_as_u8(),
-                self.base.base_as_u8()
-            ))?;
-        }
-        Ok(self
-            .value
-            .add_digit_in_base(digit, base.base_as_u8(), false, int)?)
     }
 
     pub fn is_zero(&self) -> bool {
