@@ -236,7 +236,7 @@ impl UnitValue {
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let (scale_factor, exact_conv) = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         let (scaled, exact_scale) = rhs.value.mul(&scale_factor, int)?;
-        let (value, exact_value) = self.value.sub(scaled, int)?;
+        let (value, exact_value) = self.value.add(-scaled, int)?;
         Ok(Self {
             value,
             unit: self.unit,

@@ -256,7 +256,7 @@ impl Complex {
         // cos(self) == sin(pi/2 - self)
         let pi = Self::pi();
         let (half_pi, exact) = pi.div(2.into(), int).map_err(IntErr::into_string)?;
-        let (sin_arg, exact2) = half_pi.sub(self, int)?;
+        let (sin_arg, exact2) = half_pi.add(-self, int)?;
         Ok(sin_arg
             .expect_real()?
             .sin(int)?
@@ -353,10 +353,6 @@ impl Complex {
             },
             real.exact && imag.exact,
         ))
-    }
-
-    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        self.add(-rhs, int)
     }
 }
 

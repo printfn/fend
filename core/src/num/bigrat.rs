@@ -47,7 +47,7 @@ pub struct BigRat {
 impl Ord for BigRat {
     fn cmp(&self, other: &Self) -> Ordering {
         let int = &crate::interrupt::Never::default();
-        let diff = self.clone().sub(other.clone(), int).unwrap();
+        let diff = self.clone().add(-other.clone(), int).unwrap();
         if diff.num == 0.into() {
             Ordering::Equal
         } else if diff.sign == Sign::Positive {
@@ -507,7 +507,7 @@ impl BigRat {
             num: integer_part.clone(),
             den: 1.into(),
         };
-        let remaining_fraction = x.clone().sub(integer_as_rational, int)?;
+        let remaining_fraction = x.clone().add(-integer_as_rational, int)?;
         let was_exact = Self::format_trailing_digits(
             f,
             base,
@@ -849,10 +849,6 @@ impl BigRat {
             num: self.num.mul(&rhs.num, int)?,
             den: self.den.mul(&rhs.den, int)?,
         })
-    }
-
-    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(self.add_internal(-rhs, int)?)
     }
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
