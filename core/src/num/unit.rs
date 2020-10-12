@@ -354,6 +354,7 @@ impl UnitValue {
         Ok(Self {
             value,
             unit: self.unit,
+            // TODO: this should be exact && self.exact
             exact,
             base: self.base,
             format: self.format,
