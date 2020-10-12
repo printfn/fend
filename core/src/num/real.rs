@@ -6,7 +6,12 @@ use std::fmt;
 use std::ops::Neg;
 
 #[derive(Clone, Debug)]
-pub enum Real {
+pub struct Real {
+    pattern: Pattern,
+}
+
+#[derive(Clone, Debug)]
+pub enum Pattern {
     /// a simple fraction
     Simple(BigRat),
     // n * pi
@@ -15,8 +20,8 @@ pub enum Real {
 
 impl Ord for Real {
     fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (Self::Simple(a), Self::Simple(b)) => a.cmp(b),
+        match (&self.pattern, &other.pattern) {
+            (Pattern::Simple(a), Pattern::Simple(b)) => a.cmp(b),
         }
     }
 }
@@ -37,116 +42,116 @@ impl Eq for Real {}
 
 impl Real {
     pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => s.try_as_usize(int),
+        match self.pattern {
+            Pattern::Simple(s) => s.try_as_usize(int),
         }
     }
 
     pub fn into_f64<I: Interrupt>(self, int: &I) -> Result<f64, IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => s.into_f64(int),
+        match self.pattern {
+            Pattern::Simple(s) => s.into_f64(int),
         }
     }
 
     pub fn from_f64<I: Interrupt>(f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::Simple(BigRat::from_f64(f, int)?))
+        Ok(Self::from(BigRat::from_f64(f, int)?))
     }
 
     // sin works for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => {
+        match self.pattern {
+            Pattern::Simple(s) => {
                 let (res, exact) = s.sin(int)?;
-                Ok((Self::Simple(res), exact))
+                Ok((Self::from(res), exact))
             }
         }
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.asin(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.asin(int)?)),
         }
     }
 
     pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.acos(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.acos(int)?)),
         }
     }
 
     // note that this works for any real number, unlike asin and acos
     pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.atan(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.atan(int)?)),
         }
     }
 
     pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.sinh(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.sinh(int)?)),
         }
     }
 
     pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.cosh(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.cosh(int)?)),
         }
     }
 
     pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.tanh(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.tanh(int)?)),
         }
     }
 
     pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.asinh(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.asinh(int)?)),
         }
     }
 
     pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.acosh(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.acosh(int)?)),
         }
     }
 
     // value must be between -1 and 1.
     pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.atanh(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.atanh(int)?)),
         }
     }
 
     // For all logs: value must be greater than 0
     pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.ln(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.ln(int)?)),
         }
     }
 
     pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.log2(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.log2(int)?)),
         }
     }
 
     pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.log10(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.log10(int)?)),
         }
     }
 
     pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        match self {
-            Self::Simple(s) => Ok(Self::Simple(s.factorial(int)?)),
+        match self.pattern {
+            Pattern::Simple(s) => Ok(Self::from(s.factorial(int)?)),
         }
     }
 
     pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
-        match self {
-            Self::Simple(a) => match rhs {
-                Self::Simple(b) => Ok(Self::Simple(a.div(b, int)?)),
+        match self.pattern {
+            Pattern::Simple(a) => match &rhs.pattern {
+                Pattern::Simple(b) => Ok(Self::from(a.div(b, int)?)),
             },
         }
     }
@@ -158,8 +163,8 @@ impl Real {
         rec: bool,
         int: &I,
     ) -> Result<(), IntErr<Never, I>> {
-        match self {
-            Self::Simple(s) => s.add_digit_in_base(digit, base, rec, int),
+        match &mut self.pattern {
+            Pattern::Simple(s) => s.add_digit_in_base(digit, base, rec, int),
         }
     }
 
@@ -170,8 +175,8 @@ impl Real {
         imag: bool,
         int: &I,
     ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
-        match self {
-            Self::Simple(s) => {
+        match &self.pattern {
+            Pattern::Simple(s) => {
                 let (string, x) = crate::num::to_string(|f| {
                     let x = s.format(f, base, style, imag, int)?;
                     write!(f, "{}", x)?;
@@ -183,10 +188,10 @@ impl Real {
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
-        match (self, rhs) {
-            (Self::Simple(a), Self::Simple(b)) => {
+        match (self.pattern, rhs.pattern) {
+            (Pattern::Simple(a), Pattern::Simple(b)) => {
                 let (result, exact) = a.pow(b, int)?;
-                Ok((Self::Simple(result), exact))
+                Ok((Self::from(result), exact))
             }
         }
     }
@@ -199,40 +204,40 @@ impl Real {
         // TODO: Combining these match blocks is not currently possible because
         // 'binding by-move and by-ref in the same pattern is unstable'
         // https://github.com/rust-lang/rust/pull/76119
-        match self {
-            Self::Simple(a) => match n {
-                Self::Simple(b) => {
+        match self.pattern {
+            Pattern::Simple(a) => match &n.pattern {
+                Pattern::Simple(b) => {
                     let (res, exact) = a.root_n(b, int)?;
-                    Ok((Self::Simple(res), exact))
+                    Ok((Self::from(res), exact))
                 }
             },
         }
     }
 
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match self {
-            Self::Simple(a) => match rhs {
-                Self::Simple(b) => Ok(Self::Simple(a.mul(b, int)?)),
+        match self.pattern {
+            Pattern::Simple(a) => match &rhs.pattern {
+                Pattern::Simple(b) => Ok(Self::from(a.mul(b, int)?)),
             },
         }
     }
 
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match (self, rhs) {
-            (Self::Simple(a), Self::Simple(b)) => Ok(Self::Simple(a.sub(b, int)?)),
+        match (self.pattern, rhs.pattern) {
+            (Pattern::Simple(a), Pattern::Simple(b)) => Ok(Self::from(a.sub(b, int)?)),
         }
     }
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        match (self, rhs) {
-            (Self::Simple(a), Self::Simple(b)) => Ok(Self::Simple(a.add(b, int)?)),
+        match (self.pattern, rhs.pattern) {
+            (Pattern::Simple(a), Pattern::Simple(b)) => Ok(Self::from(a.add(b, int)?)),
         }
     }
 
     pub fn pi<I: Interrupt>(int: &I) -> Result<Self, IntErr<Never, I>> {
         let num = BigRat::from(3_141_592_653_589_793_238);
         let den = BigRat::from(1_000_000_000_000_000_000);
-        Ok(Self::Simple(num.div(&den, int).map_err(IntErr::unwrap)?))
+        Ok(Self::from(num.div(&den, int).map_err(IntErr::unwrap)?))
     }
 }
 
@@ -240,20 +245,24 @@ impl Neg for Real {
     type Output = Self;
 
     fn neg(self) -> Self {
-        match self {
-            Self::Simple(s) => Self::Simple(-s),
+        match self.pattern {
+            Pattern::Simple(s) => Self::from(-s),
         }
     }
 }
 
 impl From<u64> for Real {
     fn from(i: u64) -> Self {
-        Self::Simple(i.into())
+        Self {
+            pattern: Pattern::Simple(i.into()),
+        }
     }
 }
 
 impl From<BigRat> for Real {
     fn from(n: BigRat) -> Self {
-        Self::Simple(n)
+        Self {
+            pattern: Pattern::Simple(n),
+        }
     }
 }
