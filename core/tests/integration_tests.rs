@@ -714,12 +714,18 @@ fn test_builtin_function_names() {
 }
 
 #[test]
-fn test_various_functions() {
+fn test_exact_sin() {
     test_evaluation("sin 0", "0");
-    test_evaluation("sin (-3/2*pi)", "approx. 1");
-    test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_evaluation("sin pi", "0");
     test_evaluation("sin (2pi)", "0");
+    test_evaluation("sin (-pi)", "0");
+    test_evaluation("sin (-1000pi)", "0");
+}
+
+#[test]
+fn test_various_functions() {
+    test_evaluation("sin (-3/2*pi)", "approx. 1");
+    test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_evaluation("sin (1°)", "approx. 0.0174524064");
     test_evaluation("tan 0", "0");
     test_evaluation("tan (1meter)", "approx. 1.5574077246 meters");
