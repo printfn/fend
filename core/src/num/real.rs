@@ -243,6 +243,7 @@ impl Real {
     }
 }
 
+#[allow(clippy::use_self)]
 impl Exact<Real> {
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         if self.exact && self.value == 0.into() {
