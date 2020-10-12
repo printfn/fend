@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::{Base, DivideByZero, IntegerPowerError, ValueTooLarge};
+use crate::num::{Base, DivideByZero, Exact, IntegerPowerError, ValueTooLarge};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
@@ -185,9 +185,9 @@ impl BigUint {
         self,
         n: &Self,
         int: &I,
-    ) -> Result<(Self, bool), IntErr<IntegerPowerError, I>> {
+    ) -> Result<Exact<Self>, IntErr<IntegerPowerError, I>> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
-            return Ok((self, true));
+            return Ok(Exact::new(self, true));
         }
         let mut low_guess = Self::from(1);
         let mut high_guess = self.clone();
@@ -198,12 +198,12 @@ impl BigUint {
 
             let res = Self::pow(&guess, n, int)?;
             match res.cmp(&self) {
-                Ordering::Equal => return Ok((guess, true)),
+                Ordering::Equal => return Ok(Exact::new(guess, true)),
                 Ordering::Greater => high_guess = guess,
                 Ordering::Less => low_guess = guess,
             }
         }
-        Ok((low_guess, false))
+        Ok(Exact::new(low_guess, false))
     }
 
     fn pow_internal<I: Interrupt>(
@@ -590,10 +590,9 @@ mod tests {
         let two = &BigUint::from(2);
         let int = crate::interrupt::Never::default();
         let test_sqrt_inner = |n, expected_root, exact| -> Res<crate::num::IntegerPowerError> {
-            assert_eq!(
-                BigUint::from(n).root_n(two, &int)?,
-                (BigUint::from(expected_root), exact)
-            );
+            let actual = BigUint::from(n).root_n(two, &int)?;
+            assert_eq!(actual.value, BigUint::from(expected_root));
+            assert_eq!(actual.exact, exact);
             Ok(())
         };
         test_sqrt_inner(0, 0, true)?;
@@ -619,10 +618,9 @@ mod tests {
         test_sqrt_inner(20, 4, false)?;
         test_sqrt_inner(200_000, 447, false)?;
         test_sqrt_inner(1_740_123_984_719_364_372, 1_319_137_591, false)?;
-        assert_eq!(
-            BigUint::Large(vec![0, 3_260_954_456_333_195_555]).root_n(two, &int)?,
-            (BigUint::from(7_755_900_482_342_532_476), false)
-        );
+        let val = BigUint::Large(vec![0, 3_260_954_456_333_195_555]).root_n(two, &int)?;
+        assert_eq!(val.value, BigUint::from(7_755_900_482_342_532_476));
+        assert_eq!(val.exact, false);
         Ok(())
     }
 

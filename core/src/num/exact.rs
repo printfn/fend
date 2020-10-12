@@ -24,23 +24,11 @@ impl<T> Exact<T> {
         Self { value, exact }
     }
 
-    pub fn new_ok<E>(value: impl Into<T>, exact: bool) -> Result<Self, E> {
-        Ok(Self::new(value.into(), exact))
-    }
-
     pub fn apply<R, F: FnOnce(T) -> R>(self, f: F) -> Exact<R> {
         Exact::<R> {
             value: f(self.value),
             exact: self.exact,
         }
-    }
-
-    pub fn apply_x<R, E, F: FnOnce(T) -> Result<(R, bool), E>>(self, f: F) -> Result<Exact<R>, E> {
-        let (value, exact) = f(self.value)?;
-        Ok(Exact::<R> {
-            value,
-            exact: self.exact && exact,
-        })
     }
 
     pub fn combine(self, x: bool) -> Self {

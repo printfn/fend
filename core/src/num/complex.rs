@@ -44,17 +44,17 @@ impl Complex {
         })
     }
 
-    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
+    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err("Exponentiation is currently unsupported for complex numbers".to_string())?;
         }
-        let (real, exact) = self.real.pow(rhs.real, int)?;
-        Ok((
+        let real = self.real.pow(rhs.real, int)?;
+        Ok(Exact::new(
             Self {
-                real,
+                real: real.value,
                 imag: 0.into(),
             },
-            exact,
+            real.exact,
         ))
     }
 
@@ -72,10 +72,10 @@ impl Complex {
         }
     }
 
-    pub fn abs<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
+    pub fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         Ok(if self.imag == 0.into() {
             if self.real < 0.into() {
-                (
+                Exact::new(
                     Self {
                         real: -self.real,
                         imag: 0.into(),
@@ -83,11 +83,11 @@ impl Complex {
                     true,
                 )
             } else {
-                (self, true)
+                Exact::new(self, true)
             }
         } else if self.real == 0.into() {
             if self.imag < 0.into() {
-                (
+                Exact::new(
                     Self {
                         real: -self.imag,
                         imag: 0.into(),
@@ -95,7 +95,7 @@ impl Complex {
                     true,
                 )
             } else {
-                (
+                Exact::new(
                     Self {
                         real: self.imag,
                         imag: 0.into(),
@@ -104,16 +104,15 @@ impl Complex {
                 )
             }
         } else {
-            let (power, exact) = self.real.pow(2.into(), int)?;
-            let (power2, exact2) = self.imag.pow(2.into(), int)?;
-            let real = Exact::new(power, exact).add(Exact::new(power2, exact2), int)?;
+            let power = self.real.pow(2.into(), int)?;
+            let power2 = self.imag.pow(2.into(), int)?;
+            let real = power.add(power2, int)?;
             let res_squared = Self {
-                // we can ignore the 'exact' bool because integer powers are always exact
                 real: real.value,
                 imag: 0.into(),
             };
-            let (result, exact3) = res_squared.root_n(&Self::from(2), int)?;
-            (result, real.exact && exact3)
+            let result = res_squared.root_n(&Self::from(2), int)?;
+            result.combine(real.exact)
         })
     }
 
@@ -187,21 +186,17 @@ impl Complex {
         Ok(())
     }
 
-    pub fn root_n<I: Interrupt>(
-        self,
-        n: &Self,
-        int: &I,
-    ) -> Result<(Self, bool), IntErr<String, I>> {
+    pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("Roots are currently unsupported for complex numbers".to_string())?;
         }
-        let (real_root, real_root_exact) = self.real.root_n(&n.real, int)?;
-        Ok((
+        let real_root = self.real.root_n(&n.real, int)?;
+        Ok(Exact::new(
             Self {
-                real: real_root,
+                real: real_root.value,
                 imag: 0.into(),
             },
-            real_root_exact,
+            real_root.exact,
         ))
     }
 
@@ -223,11 +218,12 @@ impl Complex {
         let half_pi = pi
             .div(Exact::new(2.into(), true), int)
             .map_err(IntErr::into_string)?;
-        let (sin_arg, exact2) = half_pi.value.add(-self, int)?;
+        let sin_arg = half_pi.add(-Exact::new(self, true), int)?;
         Ok(sin_arg
+            .value
             .expect_real()?
             .sin(int)?
-            .combine(half_pi.exact && exact2)
+            .combine(sin_arg.exact)
             .apply(Self::from))
     }
 
@@ -284,22 +280,24 @@ impl Complex {
     pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.expect_real()?.log10(int)?))
     }
+}
 
-    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        let real = Exact::new(self.real, true).add(Exact::new(rhs.real, true), int)?;
-        let imag = Exact::new(self.imag, true).add(Exact::new(rhs.imag, true), int)?;
-        Ok((
-            Self {
+#[allow(clippy::use_self)]
+impl Exact<Complex> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+        let (self_real, self_imag) = self.apply(|x| (x.real, x.imag)).pair();
+        let (rhs_real, rhs_imag) = rhs.apply(|x| (x.real, x.imag)).pair();
+        let real = self_real.add(rhs_real, int)?;
+        let imag = self_imag.add(rhs_imag, int)?;
+        Ok(Self::new(
+            Complex {
                 real: real.value,
                 imag: imag.value,
             },
             real.exact && imag.exact,
         ))
     }
-}
 
-#[allow(clippy::use_self)]
-impl Exact<Complex> {
     pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
@@ -313,13 +311,13 @@ impl Exact<Complex> {
         let prod3 = self_real.mul(rhs_imag.re(), int)?;
         let prod4 = self_imag.mul(rhs_real.re(), int)?;
         let imag_part = prod3.add(prod4, int)?;
-        Self::new_ok(
+        Ok(Self::new(
             Complex {
                 real: real_part.value,
                 imag: imag_part.value,
             },
             real_part.exact && imag_part.exact,
-        )
+        ))
     }
 
     pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {

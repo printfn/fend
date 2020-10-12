@@ -125,11 +125,11 @@ impl BigRat {
 
     // sin works for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
-        if self == 0.into() {
-            Exact::new_ok(0, true)
+        Ok(if self == 0.into() {
+            Exact::new(Self::from(0), true)
         } else {
-            Exact::new_ok(Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false)
-        }
+            Exact::new(Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false)
+        })
     }
 
     // asin, acos and atan only work for values between -1 and 1
@@ -713,7 +713,7 @@ impl BigRat {
         mut self,
         mut rhs: Self,
         int: &I,
-    ) -> Result<(Self, bool), IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<String, I>> {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
@@ -722,12 +722,12 @@ impl BigRat {
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
             rhs.sign = Sign::Positive;
-            let (inverse_res, exact) = self.pow(rhs, int)?;
-            return Ok((
+            let inverse_res = self.pow(rhs, int)?;
+            return Ok(Exact::new(
                 Self::from(1)
-                    .div(&inverse_res, int)
+                    .div(&inverse_res.value, int)
                     .map_err(IntErr::into_string)?,
-                exact,
+                inverse_res.exact,
             ));
         }
         let result_sign =
@@ -742,7 +742,7 @@ impl BigRat {
             den: BigUint::pow(&self.den, &rhs.num, int).map_err(IntErr::into_string)?,
         };
         if rhs.den == 1.into() {
-            Ok((pow_res, true))
+            Ok(Exact::new(pow_res, true))
         } else {
             Ok(pow_res.root_n(
                 &Self {
@@ -769,7 +769,7 @@ impl BigRat {
                 .add(high_bound.clone(), int)?
                 .div(&2.into(), int)
                 .map_err(IntErr::into_string)?;
-            if &guess.clone().pow(n.clone(), int)?.0 < val {
+            if &guess.clone().pow(n.clone(), int)?.value < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
@@ -783,11 +783,7 @@ impl BigRat {
 
     // the boolean indicates whether or not the result is exact
     // n must be an integer
-    pub fn root_n<I: Interrupt>(
-        self,
-        n: &Self,
-        int: &I,
-    ) -> Result<(Self, bool), IntErr<String, I>> {
+    pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.num != 0.into() && self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string())?;
         }
@@ -797,49 +793,50 @@ impl BigRat {
         }
         let n = &n.num;
         if self.num == 0.into() {
-            return Ok((self, true));
+            return Ok(Exact::new(self, true));
         }
-        let (num, num_exact) = self
+        let num = self
             .clone()
             .num
             .root_n(n, int)
             .map_err(IntErr::into_string)?;
-        let (den, den_exact) = self
+        let den = self
             .clone()
             .den
             .root_n(n, int)
             .map_err(IntErr::into_string)?;
-        if num_exact && den_exact {
-            return Ok((
+        if num.exact && den.exact {
+            return Ok(Exact::new(
                 Self {
                     sign: Sign::Positive,
-                    num,
-                    den,
+                    num: num.value,
+                    den: den.value,
                 },
                 true,
             ));
         }
-        let num_rat = if num_exact {
-            Self::from(num)
+        // TODO check in which cases this might still be exact
+        let num_rat = if num.exact {
+            Self::from(num.value)
         } else {
             Self::iter_root_n(
-                Self::from(num),
+                Self::from(num.value),
                 &Self::from(self.num),
                 &Self::from(n.clone()),
                 int,
             )?
         };
-        let den_rat = if den_exact {
-            Self::from(den)
+        let den_rat = if den.exact {
+            Self::from(den.value)
         } else {
             Self::iter_root_n(
-                Self::from(den),
+                Self::from(den.value),
                 &Self::from(self.den),
                 &Self::from(n.clone()),
                 int,
             )?
         };
-        Ok((
+        Ok(Exact::new(
             num_rat.div(&den_rat, int).map_err(IntErr::into_string)?,
             false,
         ))
