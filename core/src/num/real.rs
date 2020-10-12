@@ -52,7 +52,7 @@ impl Real {
         Ok(Self::Simple(BigRat::from_f64(f, int)?))
     }
 
-    // sin and cos work for all real numbers
+    // sin works for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         match self {
             Self::Simple(s) => {
@@ -60,10 +60,6 @@ impl Real {
                 Ok((Self::Simple(res), exact))
             }
         }
-    }
-
-    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::cos(self.into_f64(int)?), int)?)
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {

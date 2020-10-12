@@ -238,7 +238,11 @@ impl Complex {
     }
 
     pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.cos(int)?))
+        // cos(self) == sin(pi/2 - self)
+        let pi = Self::pi(int)?;
+        let half_pi = pi.div(2.into(), int).map_err(IntErr::into_string)?;
+        let (res, _exact) = half_pi.sub(self, int)?.expect_real()?.sin(int)?;
+        Ok(Self::from(res))
     }
 
     pub fn tan<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {

@@ -84,7 +84,12 @@ impl BigRat {
     #[allow(clippy::float_arithmetic)]
     pub fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, IntErr<Never, I>> {
         self = self.simplify(int)?;
-        Ok(self.num.as_f64() / self.den.as_f64())
+        let positive_result = self.num.as_f64() / self.den.as_f64();
+        if self.sign == Sign::Positive {
+            Ok(positive_result)
+        } else {
+            Ok(-positive_result)
+        }
     }
 
     #[allow(
@@ -114,17 +119,13 @@ impl BigRat {
         })
     }
 
-    // sin and cos work for all real numbers
+    // sin works for all real numbers
     pub fn sin<I: Interrupt>(self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
         if self == 0.into() {
             Ok((0.into(), true))
         } else {
             Ok((Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false))
         }
-    }
-
-    pub fn cos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::cos(self.into_f64(int)?), int)?)
     }
 
     // asin, acos and atan only work for values between -1 and 1

@@ -716,12 +716,14 @@ fn test_builtin_function_names() {
 #[test]
 fn test_various_functions() {
     test_evaluation("sin 0", "0");
+    test_evaluation("sin (-3/2*pi)", "approx. 1");
     test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_same("sin pi", "sin (2pi)");
     test_evaluation("sin (1°)", "approx. 0.0174524064");
     test_evaluation("tan 0", "0");
     test_evaluation("tan (1meter)", "approx. 1.5574077246 meters");
     test_same("cos 0", "cos (2pi)");
+    test_evaluation("cos 1", "approx. 0.5403023058");
     test_same("cos 0", "sin (pi/2)");
     test_same("tan (2pi)", "tan pi");
     test_evaluation("asin 1", "approx. 1.5707963267");
@@ -797,7 +799,7 @@ fn test_lambdas() {
     test_evaluation("(x: y: x) 1 2", "1");
     test_evaluation(
         "(cis: (cis (pi/3))) (x: cos x + i * (sin x))",
-        "approx. 0.4999999999 + 0.8660254037i",
+        "approx. 0.5 + 0.8660254037i",
     );
     assert!(evaluate("(x: iuwhe)", &mut ctx).is_ok());
     test_evaluation("(b: 5 + b) 1", "6");
