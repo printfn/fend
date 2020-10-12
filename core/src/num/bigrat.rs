@@ -332,28 +332,6 @@ impl BigRat {
         Ok(x.den == 1.into())
     }
 
-    // This method is dangerous!! Use this method only when the number has *not* been
-    // simplified or otherwise changed.
-    pub fn add_digit_in_base<I: Interrupt>(
-        &mut self,
-        digit: u64,
-        base: u8,
-        rec: bool,
-        int: &I,
-    ) -> Result<(), IntErr<Never, I>> {
-        if rec {
-            return Ok(());
-        }
-        let base_as_u64: u64 = base.into();
-        self.num = self
-            .num
-            .clone()
-            .mul(&base_as_u64.into(), int)?
-            .add(&digit.into());
-        self.den = self.den.clone().mul(&base_as_u64.into(), int)?;
-        Ok(())
-    }
-
     fn format_as_integer<I: Interrupt>(
         num: &BigUint,
         base: Base,

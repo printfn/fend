@@ -352,24 +352,6 @@ impl UnitValue {
         }
     }
 
-    pub fn add_digit_in_base<I: Interrupt>(
-        &mut self,
-        digit: u64,
-        base: Base,
-        int: &I,
-    ) -> Result<(), IntErr<String, I>> {
-        if base != self.base {
-            return Err(format!(
-                "Base does not match: {} != {}",
-                base.base_as_u8(),
-                self.base.base_as_u8()
-            ))?;
-        }
-        Ok(self
-            .value
-            .add_digit_in_base(digit, base.base_as_u8(), false, int)?)
-    }
-
     pub fn is_zero(&self) -> bool {
         self.value == 0.into()
     }

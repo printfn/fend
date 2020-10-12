@@ -172,19 +172,6 @@ impl Real {
         }
     }
 
-    pub fn add_digit_in_base<I: Interrupt>(
-        &mut self,
-        digit: u64,
-        base: u8,
-        rec: bool,
-        int: &I,
-    ) -> Result<(), IntErr<Never, I>> {
-        match &mut self.pattern {
-            Pattern::Simple(s) => s.add_digit_in_base(digit, base, rec, int),
-            Pattern::Pi(_) => panic!("Invalid number type while trying to add a digit"),
-        }
-    }
-
     pub fn format<I: Interrupt>(
         &self,
         base: Base,
