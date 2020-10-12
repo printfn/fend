@@ -50,32 +50,30 @@ impl Complex {
         int: &I,
     ) -> Result<(Self, bool), IntErr<DivideByZero, I>> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
-        let u = self.real;
-        let v = self.imag;
-        let x = rhs.real;
-        let y = rhs.imag;
-        let (prod1, exact) = x.clone().mul(&x, int)?;
-        let (prod2, exact2) = y.clone().mul(&y, int)?;
-        let (sum, exact3) = prod1.add(prod2, int)?;
-        let (real_part, exact4) = Real::from(1).div(&Exact::new(sum, exact3), int)?;
-        let (prod3, exact5) = u.clone().mul(&x, int)?;
-        let (prod4, exact6) = v.clone().mul(&y, int)?;
-        let (real2, exact7) = prod3.add(prod4, int)?;
-        let (prod5, exact8) = v.mul(&x, int)?;
-        let (prod6, exact9) = u.mul(&y, int)?;
-        let (imag2, exact10) = prod5.sub(prod6, int)?;
+        let u = Exact::new(self.real, true);
+        let v = Exact::new(self.imag, true);
+        let x = Exact::new(rhs.real, true);
+        let y = Exact::new(rhs.imag, true);
+        let prod1 = x.clone().mul(x.re(), int)?;
+        let prod2 = y.clone().mul(y.re(), int)?;
+        let sum = prod1.add(prod2, int)?;
+        let real_part = Exact::new(Real::from(1), true).div(&sum, int)?;
+        let prod3 = u.clone().mul(x.re(), int)?;
+        let prod4 = v.clone().mul(y.re(), int)?;
+        let real2 = prod3.add(prod4, int)?;
+        let prod5 = v.mul(x.re(), int)?;
+        let prod6 = u.mul(y.re(), int)?;
+        let imag2 = prod5.sub(prod6, int)?;
         let multiplicand = Self {
-            real: real2,
-            imag: imag2,
+            real: real2.value,
+            imag: imag2.value,
         };
-        let (result, exact11) = Self {
-            real: real_part,
+        let (result, result_exact) = Self {
+            real: real_part.value,
             imag: 0.into(),
         }
         .mul(&multiplicand, int)?;
-        let overall_exact = exact && exact2 && exact4 && exact5 && exact6;
-        let overall_exact = overall_exact && exact7 && exact8 && exact9 && exact10 && exact11;
-        Ok((result, overall_exact))
+        Ok((result, real_part.exact && real2.exact && imag2.exact && result_exact))
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<String, I>> {
@@ -139,14 +137,15 @@ impl Complex {
             }
         } else {
             let (power, exact) = self.real.pow(2.into(), int)?;
-            let (real, exact2) = power.add(self.imag.pow(2.into(), int)?.0, int)?;
+            let (power2, exact2) = self.imag.pow(2.into(), int)?;
+            let real = Exact::new(power, exact).add(Exact::new(power2, exact2), int)?;
             let res_squared = Self {
                 // we can ignore the 'exact' bool because integer powers are always exact
-                real,
+                real: real.value,
                 imag: 0.into(),
             };
             let (result, exact3) = res_squared.root_n(&Self::from(2), int)?;
-            (result, exact && exact2 && exact3)
+            (result, real.exact && exact3)
         })
     }
 
@@ -321,25 +320,30 @@ impl Complex {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
-        let (prod1, exact) = self.real.clone().mul(&rhs.real, int)?;
-        let (prod2, exact2) = self.imag.clone().mul(&rhs.imag, int)?;
-        let (real_part, exact3) = prod1.sub(prod2, int)?;
-        let (prod3, exact4) = self.real.mul(&rhs.imag, int)?;
-        let (prod4, exact5) = self.imag.mul(&rhs.real, int)?;
-        let (imag_part, exact6) = prod3.add(prod4, int)?;
+        let self_real = Exact::new(self.real, true);
+        let self_imag = Exact::new(self.imag, true);
+        let rhs_real = Exact::new(&rhs.real, true);
+        let rhs_imag = Exact::new(&rhs.imag, true);
+
+        let prod1 = self_real.clone().mul(rhs_real, int)?;
+        let prod2 = self_imag.clone().mul(rhs_imag, int)?;
+        let real_part = prod1.sub(prod2, int)?;
+        let prod3 = self_real.mul(rhs_imag, int)?;
+        let prod4 = self_imag.mul(rhs_real, int)?;
+        let imag_part = prod3.add(prod4, int)?;
         Ok((
             Self {
-                real: real_part,
-                imag: imag_part,
+                real: real_part.value,
+                imag: imag_part.value,
             },
-            exact && exact2 && exact3 && exact4 && exact5 && exact6,
+            real_part.exact && imag_part.exact,
         ))
     }
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        let (real, exact) = self.real.add(rhs.real, int)?;
-        let (imag, exact2) = self.imag.add(rhs.imag, int)?;
-        Ok((Self { real, imag }, exact && exact2))
+        let real = Exact::new(self.real, true).add(Exact::new(rhs.real, true), int)?;
+        let imag = Exact::new(self.imag, true).add(Exact::new(rhs.imag, true), int)?;
+        Ok((Self { real: real.value, imag: imag.value }, real.exact && imag.exact))
     }
 
     pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {

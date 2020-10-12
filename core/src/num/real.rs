@@ -170,34 +170,6 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.factorial(int)?))
     }
 
-    pub fn div<I: Interrupt>(
-        self,
-        rhs: &Exact<Self>,
-        int: &I,
-    ) -> Result<(Self, bool), IntErr<DivideByZero, I>> {
-        if self == 0.into() {
-            return Ok((self, true));
-        }
-        match self.pattern {
-            Pattern::Simple(a) => match &rhs.value.pattern {
-                Pattern::Simple(b) => Ok((Self::from(a.div(b, int)?), true)),
-                Pattern::Pi(_) => Ok((
-                    Self::from(a.div(&rhs.value.clone().approximate(int)?, int)?),
-                    false,
-                )),
-            },
-            Pattern::Pi(a) => match &rhs.value.pattern {
-                Pattern::Simple(b) => Ok((
-                    Self {
-                        pattern: Pattern::Pi(a.div(b, int)?),
-                    },
-                    true,
-                )),
-                Pattern::Pi(b) => Ok((Self::from(a.div(b, int)?), true)),
-            },
-        }
-    }
-
     pub fn format<I: Interrupt>(
         &self,
         base: Base,
@@ -264,81 +236,109 @@ impl Real {
         }
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        match self.pattern {
-            Pattern::Simple(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok((Self::from(a.mul(b, int)?), true)),
-                Pattern::Pi(b) => Ok((
-                    Self {
-                        pattern: Pattern::Pi(a.mul(b, int)?),
-                    },
-                    true,
-                )),
-            },
-            Pattern::Pi(a) => match &rhs.pattern {
-                Pattern::Simple(b) => Ok((
-                    Self {
-                        pattern: Pattern::Pi(a.mul(b, int)?),
-                    },
-                    true,
-                )),
-                Pattern::Pi(_) => Ok((
-                    Self {
-                        pattern: Pattern::Pi(a.mul(&rhs.clone().approximate(int)?, int)?),
-                    },
-                    false,
-                )),
-            },
-        }
-    }
-
-    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        if rhs == 0.into() {
-            return Ok((self, true));
-        } else if self == 0.into() {
-            return Ok((-rhs, true));
-        }
-        match (self.clone().pattern, rhs.clone().pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => Ok((Self::from(a.sub(b, int)?), true)),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Ok((
-                Self {
-                    pattern: Pattern::Pi(a.sub(b, int)?),
-                },
-                true,
-            )),
-            _ => {
-                let a = self.approximate(int)?;
-                let b = rhs.approximate(int)?;
-                Ok((Self::from(a.sub(b, int)?), false))
-            }
-        }
-    }
-
-    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<(Self, bool), IntErr<Never, I>> {
-        if self == 0.into() {
-            return Ok((rhs, true));
-        } else if rhs == 0.into() {
-            return Ok((self, true));
-        }
-        match (self.clone().pattern, rhs.clone().pattern) {
-            (Pattern::Simple(a), Pattern::Simple(b)) => Ok((Self::from(a.add(b, int)?), true)),
-            (Pattern::Pi(a), Pattern::Pi(b)) => Ok((
-                Self {
-                    pattern: Pattern::Pi(a.add(b, int)?),
-                },
-                true,
-            )),
-            _ => {
-                let a = self.approximate(int)?;
-                let b = rhs.approximate(int)?;
-                Ok((Self::from(a.add(b, int)?), false))
-            }
-        }
-    }
-
     pub fn pi() -> Self {
         Self {
             pattern: Pattern::Pi(1.into()),
+        }
+    }
+}
+
+impl Exact<Real> {
+    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+        if self.exact && self.value == 0.into() {
+            return Ok(rhs);
+        } else if rhs.exact && rhs.value == 0.into() {
+            return Ok(self);
+        }
+        let args_exact = self.exact && rhs.exact;
+        match (self.clone().value.pattern, rhs.clone().value.pattern) {
+            (Pattern::Simple(a), Pattern::Simple(b)) => Self::new_ok(a.add(b, int)?, args_exact),
+            (Pattern::Pi(a), Pattern::Pi(b)) => Self::new_ok(
+                Real {
+                    pattern: Pattern::Pi(a.add(b, int)?),
+                },
+                args_exact,
+            ),
+            _ => {
+                let a = self.value.approximate(int)?;
+                let b = rhs.value.approximate(int)?;
+                Self::new_ok(a.add(b, int)?, false)
+            }
+        }
+    }
+
+    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+        if rhs.exact && rhs.value == 0.into() {
+            return Ok(self);
+        } else if self.exact && self.value == 0.into() {
+            return Ok(-rhs);
+        }
+        let args_exact = self.exact && rhs.exact;
+        match (self.clone().value.pattern, rhs.clone().value.pattern) {
+            (Pattern::Simple(a), Pattern::Simple(b)) => Self::new_ok(a.sub(b, int)?, args_exact),
+            (Pattern::Pi(a), Pattern::Pi(b)) => Self::new_ok(
+                Real {
+                    pattern: Pattern::Pi(a.sub(b, int)?),
+                },
+                args_exact,
+            ),
+            _ => {
+                let a = self.value.approximate(int)?;
+                let b = rhs.value.approximate(int)?;
+                Self::new_ok(a.sub(b, int)?, false)
+            }
+        }
+    }
+
+    pub fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> Result<Self, IntErr<Never, I>> {
+        let args_exact = self.exact && rhs.exact;
+        match self.value.pattern {
+            Pattern::Simple(a) => match &rhs.value.pattern {
+                Pattern::Simple(b) => Self::new_ok(a.mul(b, int)?, args_exact),
+                Pattern::Pi(b) => Self::new_ok(
+                    Real {
+                        pattern: Pattern::Pi(a.mul(b, int)?),
+                    },
+                    args_exact,
+                ),
+            },
+            Pattern::Pi(a) => match &rhs.value.pattern {
+                Pattern::Simple(b) => Self::new_ok(
+                    Real {
+                        pattern: Pattern::Pi(a.mul(b, int)?),
+                    },
+                    args_exact,
+                ),
+                Pattern::Pi(_) => Self::new_ok(
+                    Real {
+                        pattern: Pattern::Pi(a.mul(&rhs.value.clone().approximate(int)?, int)?),
+                    },
+                    false,
+                ),
+            },
+        }
+    }
+
+    pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+        if self.exact && self.value == 0.into() {
+            return Ok(self);
+        }
+        match self.value.pattern {
+            Pattern::Simple(a) => match &rhs.value.pattern {
+                Pattern::Simple(b) => Self::new_ok(a.div(b, int)?, self.exact && rhs.exact),
+                Pattern::Pi(_) => {
+                    Self::new_ok(a.div(&rhs.value.clone().approximate(int)?, int)?, false)
+                }
+            },
+            Pattern::Pi(a) => match &rhs.value.pattern {
+                Pattern::Simple(b) => Self::new_ok(
+                    Real {
+                        pattern: Pattern::Pi(a.div(b, int)?),
+                    },
+                    self.exact && rhs.exact,
+                ),
+                Pattern::Pi(b) => Self::new_ok(a.div(b, int)?, self.exact && rhs.exact),
+            },
         }
     }
 }
