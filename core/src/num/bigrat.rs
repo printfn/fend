@@ -50,11 +50,7 @@ impl fmt::Debug for BigRat {
         if self.sign == Sign::Negative {
             write!(f, "-")?;
         }
-        write!(f, "{:?}", self.num)?;
-        if self.den != 1.into() {
-            write!(f, "/{:?}", self.den)?;
-        }
-        Ok(())
+        write!(f, "{:?}/{:?}", self.num, self.den)
     }
 }
 
