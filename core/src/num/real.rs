@@ -182,6 +182,13 @@ impl Real {
         use_parens_if_fraction: bool,
         int: &I,
     ) -> Result<Exact<String>, IntErr<fmt::Error, I>> {
+        let mut override_exact = true;
+        if self != &0.into() {
+            if let Pattern::Pi(_) = self.pattern {
+                override_exact = false;
+            }
+        }
+
         if style == FormattingStyle::Auto {
             if let Pattern::Pi(_) = self.pattern {
                 style = FormattingStyle::ApproxFloat(10);
@@ -196,7 +203,7 @@ impl Real {
             write!(f, "{}", x)?;
             Ok(x)
         })?;
-        Ok(Exact::new(string, x.exact))
+        Ok(Exact::new(string, x.exact && override_exact))
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {

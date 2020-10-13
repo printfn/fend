@@ -65,6 +65,11 @@ fn test_pi() {
     test_evaluation("pi", "approx. 3.1415926535");
     test_evaluation("pi * 2", "approx. 6.2831853071");
     test_evaluation("2 pi", "approx. 6.2831853071");
+    let mut ctx = Context::new();
+    assert!(evaluate("pi to fraction", &mut ctx)
+        .unwrap()
+        .get_main_result()
+        .starts_with("approx."));
 }
 
 #[test]
