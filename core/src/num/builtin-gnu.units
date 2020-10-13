@@ -1241,7 +1241,7 @@ gasmark[degR] \
 
 # Basic constants
 
-pi                      3.14159265358979323846
+#pi                      3.14159265358979323846
 light                   c
 mu0_SI                 2 alpha h / electroncharge^2 c # Vacuum magnetic permeability
 mu0                     mu0_SI           # Gets overridden in CGS modes 
