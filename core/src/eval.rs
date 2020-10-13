@@ -31,12 +31,18 @@ pub fn evaluate_to_value<I: Interrupt>(
 }
 
 pub fn evaluate_to_string<I: Interrupt>(
-    input: &str,
+    mut input: &str,
     scope: &mut Scope,
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
+    let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {
+        input = remaining;
+        true
+    });
     let value = evaluate_to_value(input, parser::ParseOptions::default(), scope, int)?;
-    let s = crate::num::to_string(|f| value.format(f, int))?.0;
-    //let s = format!("{:?}", value);
-    Ok(s)
+    Ok(if debug {
+        format!("{:?}", value)
+    } else {
+        crate::num::to_string(|f| value.format(f, int))?.0
+    })
 }
