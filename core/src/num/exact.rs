@@ -1,10 +1,23 @@
 // helper struct for keeping track of which values are exact
 
+use std::fmt;
 use std::ops::Neg;
 
 pub struct Exact<T: ?Sized> {
     pub exact: bool,
     pub value: T,
+}
+
+impl<T: fmt::Debug> fmt::Debug for Exact<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.exact {
+            write!(f, "exactly ")?;
+        } else {
+            write!(f, "approx. ")?;
+        }
+        write!(f, "{:?}", self.value)?;
+        Ok(())
+    }
 }
 
 impl<T: Clone> Clone for Exact<T> {

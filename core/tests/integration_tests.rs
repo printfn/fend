@@ -253,7 +253,7 @@ fn test_exact_division() {
         "184467440737095516160000000000000/2",
         "92233720368547758080000000000000",
     );
-    test_evaluation("(3pi) / (2pi)", "approx. 1.5");
+    test_evaluation("(3pi) / (2pi)", "1.5");
 }
 
 #[test]

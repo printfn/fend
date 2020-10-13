@@ -6,9 +6,18 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Real {
     pattern: Pattern,
+}
+
+impl fmt::Debug for Real {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.pattern {
+            Pattern::Simple(x) => write!(f, "{:?}", x),
+            Pattern::Pi(x) => write!(f, "pi * {:?}", x),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -278,6 +287,11 @@ impl Exact<Real> {
     }
 
     pub fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> Result<Self, IntErr<Never, I>> {
+        if self.exact && self.value == 0.into() {
+            return Ok(self);
+        } else if rhs.exact && rhs.value == &0.into() {
+            return Ok(Self::new(rhs.value.clone(), rhs.exact));
+        }
         let args_exact = self.exact && rhs.exact;
         Ok(match self.value.pattern {
             Pattern::Simple(a) => match &rhs.value.pattern {
@@ -307,6 +321,9 @@ impl Exact<Real> {
     }
 
     pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+        if rhs.value == 0.into() {
+            return Err(DivideByZero {})?;
+        }
         if self.exact && self.value == 0.into() {
             return Ok(self);
         }

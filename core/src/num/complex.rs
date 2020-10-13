@@ -6,10 +6,20 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Complex {
     real: Real,
     imag: Real,
+}
+
+impl fmt::Debug for Complex {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.real)?;
+        if self.imag != 0.into() {
+            write!(f, " + {:?}i", self.imag)?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -324,6 +334,13 @@ impl Exact<Complex> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let (u, v) = self.apply(|x| (x.real, x.imag)).pair();
         let (x, y) = rhs.apply(|x| (x.real, x.imag)).pair();
+        // if both numbers are real, use this simplified algorithm
+        if v.exact && v.value == 0.into() && y.exact && y.value == 0.into() {
+            return Ok(u.div(&x, int)?.apply(|real| Complex {
+                real,
+                imag: 0.into(),
+            }));
+        }
         let prod1 = x.clone().mul(x.re(), int)?;
         let prod2 = y.clone().mul(y.re(), int)?;
         let sum = prod1.add(prod2, int)?;

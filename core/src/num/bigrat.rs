@@ -38,11 +38,24 @@ mod sign {
 use super::biguint::FormattedBigUint;
 use sign::Sign;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct BigRat {
     sign: Sign,
     num: BigUint,
     den: BigUint,
+}
+
+impl fmt::Debug for BigRat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.sign == Sign::Negative {
+            write!(f, "-")?;
+        }
+        write!(f, "{:?}", self.num)?;
+        if self.den != 1.into() {
+            write!(f, "/{:?}", self.den)?;
+        }
+        Ok(())
+    }
 }
 
 impl Ord for BigRat {
