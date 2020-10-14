@@ -42,8 +42,8 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.artifact-name }}
-        path: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-path }}
+        name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-name }}
+        path: ${{ matrix.artifact-path }}
         if-no-files-found: error
 
 
