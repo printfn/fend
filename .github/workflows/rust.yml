@@ -32,9 +32,9 @@ jobs:
       with:
         name: fend-${{ matrix.platform }}
         path: |
-          target/release/fend*
-          !target/release/fend.d*
-          !target/release/fend.pdb
+          target/release/fend
+          target/release/fend.exe
+        if-no-files-found: error
 
 
   clippy:
