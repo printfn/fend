@@ -18,12 +18,15 @@ jobs:
           - platform: ubuntu-latest
             artifact-path: target/release/fend
             artifact-platform-name: linux
+            env-command: ">> $GITHUB_ENV"
           - platform: macos-latest
             artifact-path: target/release/fend
             artifact-platform-name: macos
+            env-command: ">> $GITHUB_ENV"
           - platform: windows-latest
             artifact-path: target/release/fend.exe
             artifact-platform-name: windows
+            env-command: "| Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
 
     runs-on: ${{ matrix.platform }}
 
@@ -36,7 +39,7 @@ jobs:
         rustup update
         cargo build --release --workspace
     - name: Get version
-      run: echo "FEND_VERSION=$(cargo run --release -- short-version)" >> $GITHUB_ENV
+      run: echo "FEND_VERSION=$(cargo run --release -- short-version)" ${{ matrix.env-command }}
     - name: Run tests
       run: cargo test --workspace -- --nocapture
     - name: Upload artifacts
