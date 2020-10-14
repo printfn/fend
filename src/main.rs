@@ -65,7 +65,7 @@ fn print_changelog() {
 }
 
 fn print_version() {
-    println!("fend v0.1.6 (2020-10-05)");
+    println!("fend v0.1.7 (2020-10-14)");
     println!("fend-core v{}", fend_core::get_extended_version());
 }
 

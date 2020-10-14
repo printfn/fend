@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.7 (2020-10-14)
+
+* Ensure that approximate numbers are always marked as such
+* Fix a bug involving sin/cos/tan of negative numbers
+* Make some calculations involving pi exact
+* Fix parsing of recurring decimals in bases other than 10
+* Add a changelog command to the command-line interface
+
 ## v0.1.6 (2020-10-05)
 
 * Support outputting mixed fractions (implicitly or via `to mixed_fraction`)

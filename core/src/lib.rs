@@ -5,7 +5,7 @@
 #![deny(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 #![deny(clippy::use_self)]
-#![doc(html_root_url = "https://docs.rs/fend-core/0.1.6")]
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.7")]
 
 mod ast;
 mod err;
@@ -112,12 +112,12 @@ pub fn evaluate_with_interrupt(
 /// Returns the current version of `fend-core`.
 #[must_use]
 pub fn get_version() -> String {
-    "0.1.6".to_string()
+    "0.1.7".to_string()
 }
 
 /// Returns the current extended version of `fend-core`, which includes the
-/// release date in addition to the semver number
+/// release date in addition to the semver number.
 #[must_use]
 pub fn get_extended_version() -> String {
-    "0.1.6 (2020-10-05)".to_string()
+    "0.1.7 (2020-10-14)".to_string()
 }
