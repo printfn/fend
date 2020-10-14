@@ -34,10 +34,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Update Rust
+      run: rustup update
+    - name: Clippy
+      if: ${{ matrix.platform == "ubuntu-latest" }}
       run: |
-        rustup update
-        cargo build --release --workspace
+        rustup component add clippy
+        cargo clippy --workspace --all-targets --all-features -- -D warnings
+    - name: Build
+      run: cargo build --release --workspace
     - name: Get version
       run: echo "FEND_VERSION=$(cargo run --release -- short-version)" ${{ matrix.env-command }}
     - name: Run tests
@@ -48,15 +53,3 @@ jobs:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
         if-no-files-found: error
-
-
-  clippy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-    - uses: actions/checkout@v2
-    - name: Run clippy
-      run: |
-        rustup update
-        rustup component add clippy
-        cargo clippy --workspace --all-targets --all-features -- -D warnings
