@@ -37,7 +37,7 @@ jobs:
     - name: Update Rust
       run: rustup update
     - name: Clippy
-      if: ${{ matrix.platform == "ubuntu-latest" }}
+      if: ${{ matrix.platform == 'ubuntu-latest' }}
       run: |
         rustup component add clippy
         cargo clippy --workspace --all-targets --all-features -- -D warnings
