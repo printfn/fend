@@ -62,8 +62,8 @@ echo "'(cd core && cargo publish --dry-run)'"
 (cd core && cargo publish --dry-run)
 confirm "cargo publish for fend-core"
 (cd core && cargo publish)
-echo "Sleeping for 60 seconds to let crates.io update"
-sleep 60
+echo "Sleeping for 30 seconds to let crates.io update"
+sleep 30
 echo "'cargo publish --dry-run'"
 cargo publish --dry-run
 confirm "cargo publish for fend"
