@@ -26,4 +26,4 @@ path = "./core"
 members = ["core"]
 
 [profile.release]
-debug = true
+lto = true
