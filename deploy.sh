@@ -38,6 +38,7 @@ fend-core docs attr,
 fend-core get_version(),
 fend-core get_extended_version() function,
 fend TOML,
+fend short_version(),
 fend print_version(),
 fend TOML version requirement for fend-core"
 echo "Building and running tests..."

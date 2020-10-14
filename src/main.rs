@@ -64,8 +64,12 @@ fn print_changelog() {
     println!("{}", changelog::get_changelog());
 }
 
+fn short_version() -> &'static str {
+    "0.1.7"
+}
+
 fn print_version() {
-    println!("fend v0.1.7 (2020-10-14)");
+    println!("fend v{} (2020-10-14)", short_version());
     println!("fend-core v{}", fend_core::get_extended_version());
 }
 
@@ -165,6 +169,10 @@ fn main() {
         }
         if expr == "version" || expr == "--version" || expr == "-v" || expr == "-V" {
             print_version();
+            return;
+        }
+        if expr == "short-version" {
+            println!("{}", short_version());
             return;
         }
         std::process::exit(

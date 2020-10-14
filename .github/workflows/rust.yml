@@ -17,13 +17,13 @@ jobs:
         include:
           - platform: ubuntu-latest
             artifact-path: target/release/fend
-            artifact-name: fend-latest-linux
+            artifact-platform-name: linux
           - platform: macos-latest
             artifact-path: target/release/fend
-            artifact-name: fend-latest-macos
+            artifact-platform-name: macos
           - platform: windows-latest
             artifact-path: target/release/fend.exe
-            artifact-name: fend-latest-windows
+            artifact-platform-name: windows
 
     runs-on: ${{ matrix.platform }}
 
@@ -35,13 +35,15 @@ jobs:
       run: |
         rustup update
         cargo build --release --workspace
+    - name: Get version
+      run: echo "FEND_VERSION=$(cargo run --release -- short-version)" >> $GITHUB_ENV
     - name: Run tests
       run: cargo test --workspace -- --nocapture
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.artifact-name }}
-        path: ${{ matrix.artifact-path }}
+        path: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-path }}
         if-no-files-found: error
 
 
