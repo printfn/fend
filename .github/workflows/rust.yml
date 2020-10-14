@@ -41,6 +41,9 @@ jobs:
       run: |
         rustup component add clippy
         cargo clippy --workspace --all-targets --all-features -- -D warnings
+    - name: Check format
+      if: ${{ matrix.platform == 'ubuntu-latest' }}
+      run: cargo fmt -- --check
     - name: Build
       run: cargo build --release --workspace
     - name: Get version
