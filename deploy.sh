@@ -73,13 +73,11 @@ confirm "Tag and push tag to GitHub"
 git tag "v$VERSION"
 git push --tags
 manualstep "Create GitHub release (including changelog):
-  * Download and rename artifacts
+  * Download artifacts
   * Title: Version $VERSION
   * Text:
 Changes in this version:
 
-* ...
-
-Artifacts fend-$VERSION-windows, fend-$VERSION-linux, fend-$VERSION-macos"
+* ..."
 manualstep "Update manual: https://github.com/printfn/fend-rs/wiki"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"
