@@ -14,6 +14,16 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - platform: ubuntu-latest
+            artifact-path: target/release/fend
+            artifact-name: fend-latest-linux
+          - platform: macos-latest
+            artifact-path: target/release/fend
+            artifact-name: fend-latest-macos
+          - platform: windows-latest
+            artifact-path: target/release/fend.exe
+            artifact-name: fend-latest-windows
 
     runs-on: ${{ matrix.platform }}
 
@@ -30,10 +40,8 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: fend-${{ matrix.platform }}
-        path: |
-          target/release/fend
-          target/release/fend.exe
+        name: ${{ matrix.artifact-name }}
+        path: ${{ matrix.artifact-path }}
         if-no-files-found: error
 
 
