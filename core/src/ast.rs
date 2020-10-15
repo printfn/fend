@@ -119,7 +119,7 @@ pub fn evaluate<I: Interrupt>(
             scope,
         )?,
         Expr::ApplyMul(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyMultiply, scope, options, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?
         }
         Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,

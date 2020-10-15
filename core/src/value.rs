@@ -83,7 +83,6 @@ impl fmt::Display for BuiltInFunction {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum ApplyMulHandling {
-    OnlyMultiply,
     OnlyApply,
     Both,
 }
@@ -144,7 +143,7 @@ impl Value {
         options: ParseOptions,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::Num(match self {
+        Ok(match self {
             Self::Num(n) => {
                 let other = crate::ast::evaluate(other, scope, options, int)?;
                 if let Self::Dp = other {
@@ -158,18 +157,12 @@ impl Value {
                         crate::num::to_string(|f| self_.format(f, int))?.0
                     ))?;
                 } else {
-                    n.mul(other.expect_num()?, int)?
+                    Self::Num(n.mul(other.expect_num()?, int)?)
                 }
             }
             Self::BuiltInFunction(name) => {
                 let other = crate::ast::evaluate(other, scope, options, int)?;
-                if apply_mul_handling == ApplyMulHandling::OnlyMultiply {
-                    return Err(format!(
-                        "Cannot apply function '{}' in this context",
-                        crate::num::to_string(|f| self.format(f, int))?.0
-                    ))?;
-                }
-                match name {
+                Self::Num(match name {
                     BuiltInFunction::Approximately => other.expect_num()?.make_approximate(),
                     BuiltInFunction::Abs => other.expect_num()?.abs(int)?,
                     BuiltInFunction::Sin => other.expect_num()?.sin(scope, int)?,
@@ -198,7 +191,7 @@ impl Value {
                             Base::from_plain_base(n).map_err(|e| e.to_string())?,
                         ));
                     }
-                }
+                })
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
@@ -211,7 +204,7 @@ impl Value {
                     crate::num::to_string(|f| self.format(f, int))?.0
                 ))?;
             }
-        }))
+        })
     }
 
     pub fn format<I: Interrupt>(
