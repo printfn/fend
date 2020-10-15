@@ -145,6 +145,18 @@ fn test_implicit_lambdas() {
     test_evaluation("cos! 0", "1");
     test_evaluation("sqrt! 16", "24");
     test_evaluation("///sqrt! 16", "1/24");
+    test_evaluation("(x: sin^2 x + cos^2 x) 1", "approx. 1");
+    test_evaluation("cos^2 pi", "1");
+    test_evaluation("sin pi/cos pi", "0");
+    test_evaluation("sin + 1) pi", "1");
+}
+
+#[test]
+fn test_implicit_subtraction_lambdas() {
+    test_evaluation("(sqrt - 1) 16", "3");
+    test_evaluation("(1 - sqrt) 16", "-3");
+    test_evaluation("((\\x.sqrt x) - 1) 16", "3");
+    test_evaluation("(1 - \\x.sqrt x) 16", "-3");
 }
 
 #[test]

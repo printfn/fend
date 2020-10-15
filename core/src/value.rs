@@ -38,6 +38,23 @@ pub enum BuiltInFunction {
     Base,
 }
 
+impl BuiltInFunction {
+    pub fn wrap_with_expr(
+        self,
+        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        scope: &mut Scope,
+    ) -> Value {
+        Value::Fn(
+            "x".to_string(),
+            lazy_fn(Box::new(Expr::ApplyFunctionCall(
+                Box::new(Expr::Ident(self.to_string())),
+                Box::new(Expr::Ident("x".to_string())),
+            ))),
+            scope.clone(),
+        )
+    }
+}
+
 impl fmt::Display for BuiltInFunction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let name = match self {
@@ -81,14 +98,33 @@ impl Value {
         Ok(match self {
             Self::Num(n) => Self::Num(eval_fn(n)?),
             Self::Fn(param, expr, scope) => Self::Fn(param, lazy_fn(Box::new(expr)), scope),
-            Self::BuiltInFunction(f) => Self::Fn(
-                "x".to_string(),
-                lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                    Box::new(Expr::Ident(f.to_string())),
-                    Box::new(Expr::Ident("x".to_string())),
-                ))),
-                scope.clone(),
-            ),
+            Self::BuiltInFunction(f) => f.wrap_with_expr(lazy_fn, scope),
+            _ => return Err("Expected a number".to_string())?,
+        })
+    }
+
+    pub fn handle_two_nums<
+        I: Interrupt,
+        F1: FnOnce(Box<Expr>) -> Expr,
+        F2: FnOnce(Box<Expr>) -> Expr,
+    >(
+        self,
+        rhs: Self,
+        eval_fn: impl FnOnce(Number, Number) -> Result<Number, IntErr<String, I>>,
+        lazy_fn_lhs: impl FnOnce(Number) -> F1,
+        lazy_fn_rhs: impl FnOnce(Number) -> F2,
+        scope: &mut Scope,
+    ) -> Result<Self, IntErr<String, I>> {
+        Ok(match (self, rhs) {
+            (Self::Num(a), Self::Num(b)) => Self::Num(eval_fn(a, b)?),
+            (Self::BuiltInFunction(f), Self::Num(a)) => f.wrap_with_expr(lazy_fn_lhs(a), scope),
+            (Self::Num(a), Self::BuiltInFunction(f)) => f.wrap_with_expr(lazy_fn_rhs(a), scope),
+            (Self::Fn(param, expr, scope), Self::Num(a)) => {
+                Self::Fn(param, lazy_fn_lhs(a)(Box::new(expr)), scope)
+            }
+            (Self::Num(a), Self::Fn(param, expr, scope)) => {
+                Self::Fn(param, lazy_fn_rhs(a)(Box::new(expr)), scope)
+            }
             _ => return Err("Expected a number".to_string())?,
         })
     }

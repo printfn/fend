@@ -97,43 +97,42 @@ pub fn evaluate<I: Interrupt>(
         Expr::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => Value::Num(
-            eval!(*a)?
-                .expect_num()?
-                .add(eval!(*b)?.expect_num()?, int)?,
-        ),
-        Expr::Sub(a, b) => match (eval!(*a)?, eval!(*b)?) {
-            (Value::Num(a), Value::Num(b)) => Value::Num(a.sub(b, int)?),
-            (Value::BuiltInFunction(f), Value::Num(a)) => Value::Fn(
-                "x".to_string(),
-                Expr::Sub(
-                    Box::new(Expr::ApplyFunctionCall(
-                        Box::new(Expr::Ident(f.to_string())),
-                        Box::new(Expr::Ident("x".to_string())),
-                    )),
-                    Box::new(Expr::Num(a)),
-                ),
-                scope.clone(),
-            ),
-            _ => return Err("Expected a number".to_string())?,
-        },
-        Expr::Mul(a, b) => Value::Num(
-            eval!(*a)?
-                .expect_num()?
-                .mul(eval!(*b)?.expect_num()?, int)?,
-        ),
+        Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
+            eval!(*b)?,
+            |a, b| a.add(b, int),
+            |a| |f| Expr::Add(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
+            scope,
+        )?,
+        Expr::Sub(a, b) => eval!(*a)?.handle_two_nums(
+            eval!(*b)?,
+            |a, b| a.sub(b, int),
+            |a| |f| Expr::Sub(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Sub(Box::new(Expr::Num(a)), f),
+            scope,
+        )?,
+        Expr::Mul(a, b) => eval!(*a)?.handle_two_nums(
+            eval!(*b)?,
+            |a, b| a.mul(b, int).map_err(IntErr::into_string),
+            |a| |f| Expr::Mul(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
+            scope,
+        )?,
         Expr::ApplyMul(a, b) => eval!(*a)?.apply(*b, true, true, scope, options, int)?,
-        Expr::Div(a, b) => Value::Num(
-            eval!(*a)?
-                .expect_num()?
-                .div(eval!(*b)?.expect_num()?, int)
-                .map_err(IntErr::into_string)?,
-        ),
-        Expr::Pow(a, b) => Value::Num(
-            eval!(*a)?
-                .expect_num()?
-                .pow(eval!(*b)?.expect_num()?, int)?,
-        ),
+        Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
+            eval!(*b)?,
+            |a, b| a.div(b, int).map_err(IntErr::into_string),
+            |a| |f| Expr::Div(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
+            scope,
+        )?,
+        Expr::Pow(a, b) => eval!(*a)?.handle_two_nums(
+            eval!(*b)?,
+            |a, b| a.pow(b, int),
+            |a| |f| Expr::Pow(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
+            scope,
+        )?,
         Expr::Apply(a, b) => eval!(*a)?.apply(*b, true, false, scope, options, int)?,
         Expr::ApplyFunctionCall(a, b) => eval!(*a)?.apply(*b, false, false, scope, options, int)?,
         Expr::As(a, b) => match eval!(*b)? {
