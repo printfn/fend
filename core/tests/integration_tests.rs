@@ -61,6 +61,15 @@ fn test_blank_input() {
 }
 
 #[test]
+fn test_version() {
+    let mut ctx = Context::new();
+    let result = evaluate("version", &mut ctx).unwrap();
+    for c in result.get_main_result().chars() {
+        assert!(c.is_ascii_digit() || c == '.');
+    }
+}
+
+#[test]
 fn test_pi() {
     test_evaluation("pi", "approx. 3.1415926535");
     test_evaluation("pi * 2", "approx. 6.2831853071");
