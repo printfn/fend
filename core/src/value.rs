@@ -157,7 +157,12 @@ impl Value {
                         crate::num::to_string(|f| self_.format(f, int))?.0
                     ))?;
                 } else {
-                    Self::Num(n.mul(other.expect_num()?, int)?)
+                    let n2 = n.clone();
+                    other.handle_num(
+                        |x| n.mul(x, int).map_err(IntErr::into_string),
+                        |x| Expr::Mul(Box::new(Expr::Num(n2)), x),
+                        scope,
+                    )?
                 }
             }
             Self::BuiltInFunction(name) => {

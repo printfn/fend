@@ -149,6 +149,7 @@ fn test_implicit_lambdas() {
     test_evaluation("cos^2 pi", "1");
     test_evaluation("sin pi/cos pi", "0");
     test_evaluation("sin + 1) pi", "1");
+    test_evaluation("3sin pi", "0");
 }
 
 #[test]
