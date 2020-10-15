@@ -87,27 +87,13 @@ pub fn evaluate<I: Interrupt>(
         Expr::Num(n) => Value::Num(n),
         Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, options, int)?,
         Expr::Parens(x) => eval!(*x)?,
-        Expr::UnaryMinus(x) => match eval!(*x)? {
-            Value::Num(n) => Value::Num(-n),
-            Value::Fn(param, expr, scope) => {
-                Value::Fn(param, Expr::UnaryMinus(Box::new(expr)), scope)
-            }
-            Value::BuiltInFunction(f) => Value::Fn(
-                "x".to_string(),
-                Expr::UnaryMinus(Box::new(Expr::ApplyFunctionCall(
-                    Box::new(Expr::Ident(f.to_string())),
-                    Box::new(Expr::Ident("x".to_string())),
-                ))),
-                scope.clone(),
-            ),
-            _ => return Err("Expected a number".to_string())?,
-        },
-        Expr::UnaryPlus(x) => Value::Num(eval!(*x)?.expect_num()?),
-        Expr::UnaryDiv(x) => Value::Num(
-            Number::from(1)
-                .div(eval!(*x)?.expect_num()?, int)
-                .map_err(IntErr::into_string)?,
-        ),
+        Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
+        Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
+        Expr::UnaryDiv(x) => eval!(*x)?.handle_num(
+            |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
+            Expr::UnaryDiv,
+            scope,
+        )?,
         Expr::Factorial(x) => Value::Num(eval!(*x)?.expect_num()?.factorial(int)?),
         Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => Value::Num(
             eval!(*a)?

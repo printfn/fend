@@ -7,7 +7,6 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum Value {
     Num(Number),
-    // built-in function
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
     Dp,
@@ -71,6 +70,27 @@ impl Value {
             Self::Num(bigrat) => Ok(bigrat),
             _ => Err("Expected a number".to_string())?,
         }
+    }
+
+    pub fn handle_num<I: Interrupt>(
+        self,
+        eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<String, I>>,
+        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        scope: &mut Scope,
+    ) -> Result<Self, IntErr<String, I>> {
+        Ok(match self {
+            Self::Num(n) => Self::Num(eval_fn(n)?),
+            Self::Fn(param, expr, scope) => Self::Fn(param, lazy_fn(Box::new(expr)), scope),
+            Self::BuiltInFunction(f) => Self::Fn(
+                "x".to_string(),
+                lazy_fn(Box::new(Expr::ApplyFunctionCall(
+                    Box::new(Expr::Ident(f.to_string())),
+                    Box::new(Expr::Ident("x".to_string())),
+                ))),
+                scope.clone(),
+            ),
+            _ => return Err("Expected a number".to_string())?,
+        })
     }
 
     pub fn apply<I: Interrupt>(

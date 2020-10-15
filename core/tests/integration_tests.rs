@@ -129,6 +129,13 @@ fn test_multiplication() {
 }
 
 #[test]
+fn test_implicit_lambdas() {
+    test_evaluation("-sin (-pi/2)", "1");
+    test_evaluation("+sin (-pi/2)", "-1");
+    test_evaluation("/sin (-pi/2)", "-1");
+}
+
+#[test]
 fn test_addition() {
     test_evaluation("2+2", "4");
     test_evaluation("\n2\n+\n2\n", "4");

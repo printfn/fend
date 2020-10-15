@@ -72,6 +72,8 @@
 !plural meg megs
 !plural gig gigs
 
+!plural person people
+
 !plural romanpace romanpaces
 
 !plural greekfinger greekfingers
@@ -6559,8 +6561,7 @@ air            78.08% nitrogen 2 \
 # population units
 #
 
-people                  1
-person                  people
+person                  1
 death                   people
 capita                  people
 percapita               per capita
