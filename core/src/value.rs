@@ -66,15 +66,15 @@ impl fmt::Display for BuiltInFunction {
 }
 
 impl Value {
-    pub fn expect_num<I: Interrupt>(&self) -> Result<Number, IntErr<String, I>> {
+    pub fn expect_num<I: Interrupt>(self) -> Result<Number, IntErr<String, I>> {
         match self {
-            Self::Num(bigrat) => Ok(bigrat.clone()),
+            Self::Num(bigrat) => Ok(bigrat),
             _ => Err("Expected a number".to_string())?,
         }
     }
 
     pub fn apply<I: Interrupt>(
-        &self,
+        self,
         other: Expr,
         allow_multiplication: bool,
         force_multiplication: bool,
@@ -86,15 +86,16 @@ impl Value {
             Self::Num(n) => {
                 let other = crate::ast::evaluate(other, scope, options, int)?;
                 if let Self::Dp = other {
-                    let num = self.expect_num()?.try_as_usize(int)?;
+                    let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::ApproxFloat(num)));
                 }
                 if allow_multiplication {
                     n.clone().mul(other.expect_num()?, int)?
                 } else {
+                    let self_ = Self::Num(n);
                     return Err(format!(
                         "{} is not a function",
-                        crate::num::to_string(|f| self.format(f, int))?.0
+                        crate::num::to_string(|f| self_.format(f, int))?.0
                     ))?;
                 }
             }
