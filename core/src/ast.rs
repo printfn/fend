@@ -94,7 +94,9 @@ pub fn evaluate<I: Interrupt>(
             Expr::UnaryDiv,
             scope,
         )?,
-        Expr::Factorial(x) => Value::Num(eval!(*x)?.expect_num()?.factorial(int)?),
+        Expr::Factorial(x) => {
+            eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
+        }
         Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => Value::Num(
             eval!(*a)?
                 .expect_num()?

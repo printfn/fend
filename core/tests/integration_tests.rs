@@ -142,6 +142,9 @@ fn test_implicit_lambdas() {
     test_evaluation("-sin (-pi/2)", "1");
     test_evaluation("+sin (-pi/2)", "-1");
     test_evaluation("/sin (-pi/2)", "-1");
+    test_evaluation("cos! 0", "1");
+    test_evaluation("sqrt! 16", "24");
+    test_evaluation("///sqrt! 16", "1/24");
 }
 
 #[test]
