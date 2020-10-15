@@ -90,7 +90,7 @@ impl Value {
                     return Ok(Self::Format(FormattingStyle::ApproxFloat(num)));
                 }
                 if allow_multiplication {
-                    n.clone().mul(other.expect_num()?, int)?
+                    n.mul(other.expect_num()?, int)?
                 } else {
                     let self_ = Self::Num(n);
                     return Err(format!(
@@ -139,14 +139,9 @@ impl Value {
                 }
             }
             Self::Fn(param, expr, custom_scope) => {
-                let mut new_scope = custom_scope.clone().create_nested_scope();
-                new_scope.insert_variable(param.clone(), other, scope.clone(), options);
-                return Ok(crate::ast::evaluate(
-                    expr.clone(),
-                    &mut new_scope,
-                    options,
-                    int,
-                )?);
+                let mut new_scope = custom_scope.create_nested_scope();
+                new_scope.insert_variable(param, other, scope.clone(), options);
+                return Ok(crate::ast::evaluate(expr, &mut new_scope, options, int)?);
             }
             _ => {
                 return Err(format!(
