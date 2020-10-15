@@ -102,11 +102,21 @@ pub fn evaluate<I: Interrupt>(
                 .expect_num()?
                 .add(eval!(*b)?.expect_num()?, int)?,
         ),
-        Expr::Sub(a, b) => Value::Num(
-            eval!(*a)?
-                .expect_num()?
-                .sub(eval!(*b)?.expect_num()?, int)?,
-        ),
+        Expr::Sub(a, b) => match (eval!(*a)?, eval!(*b)?) {
+            (Value::Num(a), Value::Num(b)) => Value::Num(a.sub(b, int)?),
+            (Value::BuiltInFunction(f), Value::Num(a)) => Value::Fn(
+                "x".to_string(),
+                Expr::Sub(
+                    Box::new(Expr::ApplyFunctionCall(
+                        Box::new(Expr::Ident(f.to_string())),
+                        Box::new(Expr::Ident("x".to_string())),
+                    )),
+                    Box::new(Expr::Num(a)),
+                ),
+                scope.clone(),
+            ),
+            _ => return Err("Expected a number".to_string())?,
+        },
         Expr::Mul(a, b) => Value::Num(
             eval!(*a)?
                 .expect_num()?
