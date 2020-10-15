@@ -3,7 +3,7 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
-use crate::value::{BuiltInFunction, Value};
+use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::fmt;
 
 #[derive(Clone, Debug)]
@@ -118,7 +118,9 @@ pub fn evaluate<I: Interrupt>(
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::ApplyMul(a, b) => eval!(*a)?.apply(*b, true, true, scope, options, int)?,
+        Expr::ApplyMul(a, b) => {
+            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyMultiply, scope, options, int)?
+        }
         Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
@@ -133,8 +135,10 @@ pub fn evaluate<I: Interrupt>(
             |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Apply(a, b) => eval!(*a)?.apply(*b, true, false, scope, options, int)?,
-        Expr::ApplyFunctionCall(a, b) => eval!(*a)?.apply(*b, false, false, scope, options, int)?,
+        Expr::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?,
+        Expr::ApplyFunctionCall(a, b) => {
+            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, options, int)?
+        }
         Expr::As(a, b) => match eval!(*b)? {
             Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
             Value::Format(fmt) => Value::Num(eval!(*a)?.expect_num()?.with_format(fmt)),

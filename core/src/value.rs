@@ -81,6 +81,13 @@ impl fmt::Display for BuiltInFunction {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum ApplyMulHandling {
+    OnlyMultiply,
+    OnlyApply,
+    Both,
+}
+
 impl Value {
     pub fn expect_num<I: Interrupt>(self) -> Result<Number, IntErr<String, I>> {
         match self {
@@ -132,8 +139,7 @@ impl Value {
     pub fn apply<I: Interrupt>(
         self,
         other: Expr,
-        allow_multiplication: bool,
-        force_multiplication: bool,
+        apply_mul_handling: ApplyMulHandling,
         scope: &mut Scope,
         options: ParseOptions,
         int: &I,
@@ -145,19 +151,19 @@ impl Value {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::ApproxFloat(num)));
                 }
-                if allow_multiplication {
-                    n.mul(other.expect_num()?, int)?
-                } else {
+                if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
                     return Err(format!(
                         "{} is not a function",
                         crate::num::to_string(|f| self_.format(f, int))?.0
                     ))?;
+                } else {
+                    n.mul(other.expect_num()?, int)?
                 }
             }
             Self::BuiltInFunction(name) => {
                 let other = crate::ast::evaluate(other, scope, options, int)?;
-                if force_multiplication {
+                if apply_mul_handling == ApplyMulHandling::OnlyMultiply {
                     return Err(format!(
                         "Cannot apply function '{}' in this context",
                         crate::num::to_string(|f| self.format(f, int))?.0
