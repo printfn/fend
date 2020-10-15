@@ -53,6 +53,18 @@ impl BuiltInFunction {
             scope.clone(),
         )
     }
+
+    pub fn invert(self) -> Result<Self, String> {
+        Ok(match self {
+            Self::Sin => Self::Asin,
+            Self::Cos => Self::Acos,
+            Self::Tan => Self::Atan,
+            Self::Asin => Self::Sin,
+            Self::Acos => Self::Cos,
+            Self::Atan => Self::Tan,
+            _ => return Err(format!("Unable to invert function {}", self)),
+        })
+    }
 }
 
 impl fmt::Display for BuiltInFunction {

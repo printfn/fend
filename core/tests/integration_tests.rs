@@ -161,6 +161,13 @@ fn test_implicit_subtraction_lambdas() {
 }
 
 #[test]
+fn test_function_inverse() {
+    test_evaluation("sin^-1", "asin");
+    test_evaluation("sin^-1 0.5", "approx. 0.5235987755");
+    test_evaluation("sin^-1 (sin 0.5", "approx. 0.5");
+}
+
+#[test]
 fn test_addition() {
     test_evaluation("2+2", "4");
     test_evaluation("\n2\n+\n2\n", "4");

@@ -71,6 +71,26 @@ impl Expr {
     }
 }
 
+/// returns true if rhs is '-1' or '(-1)'
+fn should_compute_inverse(rhs: &Expr) -> bool {
+    if let Expr::UnaryMinus(inner) = &*rhs {
+        if let Expr::Num(n) = &**inner {
+            if n.is_unitless_one() {
+                return true;
+            }
+        }
+    } else if let Expr::Parens(inner) = &*rhs {
+        if let Expr::UnaryMinus(inner2) = &**inner {
+            if let Expr::Num(n) = &**inner2 {
+                if n.is_unitless_one() {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 pub fn evaluate<I: Interrupt>(
     expr: Expr,
     scope: &mut Scope,
@@ -128,13 +148,30 @@ pub fn evaluate<I: Interrupt>(
             |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Pow(a, b) => eval!(*a)?.handle_two_nums(
-            eval!(*b)?,
-            |a, b| a.pow(b, int),
-            |a| |f| Expr::Pow(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
-            scope,
-        )?,
+        Expr::Pow(a, b) => {
+            let lhs = eval!(*a)?;
+            if should_compute_inverse(&*b) {
+                let result = match &lhs {
+                    Value::BuiltInFunction(f) => Some(Value::BuiltInFunction(f.invert()?)),
+                    Value::Fn(_, _, _) => {
+                        return Err(
+                            "Inverses of lambda functions are not currently supported".to_string()
+                        )?
+                    }
+                    _ => None,
+                };
+                if let Some(res) = result {
+                    return Ok(res);
+                }
+            }
+            lhs.handle_two_nums(
+                eval!(*b)?,
+                |a, b| a.pow(b, int),
+                |a| |f| Expr::Pow(f, Box::new(Expr::Num(a))),
+                |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
+                scope,
+            )?
+        }
         Expr::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?,
         Expr::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, options, int)?

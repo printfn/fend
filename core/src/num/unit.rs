@@ -270,6 +270,10 @@ impl UnitValue {
         self.unit.components.is_empty()
     }
 
+    pub fn is_unitless_one(&self) -> bool {
+        self.is_unitless() && self.exact && self.value == Complex::from(1)
+    }
+
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !rhs.is_unitless() {
             return Err("Only unitless exponents are currently supported".to_string())?;
