@@ -698,7 +698,7 @@ fn test_advanced_op_precedence() {
     test_evaluation("((1/4) kg)^-2", "16 kg^-2");
     test_evaluation("1 N - 1 kg m s^-2", "0 N");
     test_evaluation("1 J - 1 kg m^2 s^-2 + 1 kg / (m^-2 s^2)", "1 J");
-    expect_error("2^abs 1");
+    test_evaluation("2^abs 1", "2");
     expect_error("2 4^3");
     expect_error("-2 4^3");
     test_evaluation("3*-2", "-6");
