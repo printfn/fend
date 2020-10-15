@@ -165,6 +165,18 @@ fn test_function_inverse() {
     test_evaluation("sin^-1", "asin");
     test_evaluation("sin^-1 0.5", "approx. 0.5235987755");
     test_evaluation("sin^-1 (sin 0.5", "approx. 0.5");
+    test_evaluation("(sin^-1)^-1", "sin");
+    test_evaluation("cos^-1", "acos");
+    test_evaluation("tan^-1", "atan");
+    test_evaluation("asin^-1", "sin");
+    test_evaluation("acos^-1", "cos");
+    test_evaluation("atan^-1", "tan");
+    test_evaluation("sinh^-1", "asinh");
+    test_evaluation("cosh^-1", "acosh");
+    test_evaluation("tanh^-1", "atanh");
+    test_evaluation("asinh^-1", "sinh");
+    test_evaluation("acosh^-1", "cosh");
+    test_evaluation("atanh^-1", "tanh");
 }
 
 #[test]

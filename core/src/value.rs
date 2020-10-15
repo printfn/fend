@@ -54,14 +54,20 @@ impl BuiltInFunction {
         )
     }
 
-    pub fn invert(self) -> Result<Self, String> {
+    pub fn invert(self) -> Result<Value, String> {
         Ok(match self {
-            Self::Sin => Self::Asin,
-            Self::Cos => Self::Acos,
-            Self::Tan => Self::Atan,
-            Self::Asin => Self::Sin,
-            Self::Acos => Self::Cos,
-            Self::Atan => Self::Tan,
+            Self::Sin => Value::BuiltInFunction(Self::Asin),
+            Self::Cos => Value::BuiltInFunction(Self::Acos),
+            Self::Tan => Value::BuiltInFunction(Self::Atan),
+            Self::Asin => Value::BuiltInFunction(Self::Sin),
+            Self::Acos => Value::BuiltInFunction(Self::Cos),
+            Self::Atan => Value::BuiltInFunction(Self::Tan),
+            Self::Sinh => Value::BuiltInFunction(Self::Asinh),
+            Self::Cosh => Value::BuiltInFunction(Self::Acosh),
+            Self::Tanh => Value::BuiltInFunction(Self::Atanh),
+            Self::Asinh => Value::BuiltInFunction(Self::Sinh),
+            Self::Acosh => Value::BuiltInFunction(Self::Cosh),
+            Self::Atanh => Value::BuiltInFunction(Self::Tanh),
             _ => return Err(format!("Unable to invert function {}", self)),
         })
     }

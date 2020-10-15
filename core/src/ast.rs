@@ -152,7 +152,7 @@ pub fn evaluate<I: Interrupt>(
             let lhs = eval!(*a)?;
             if should_compute_inverse(&*b) {
                 let result = match &lhs {
-                    Value::BuiltInFunction(f) => Some(Value::BuiltInFunction(f.invert()?)),
+                    Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => {
                         return Err(
                             "Inverses of lambda functions are not currently supported".to_string()
