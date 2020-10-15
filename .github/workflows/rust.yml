@@ -49,7 +49,7 @@ jobs:
     - name: Get version
       run: echo "FEND_VERSION=$(cargo run --release -- --version)" ${{ matrix.env-command }}
     - name: Run tests
-      run: cargo test --release --workspace -- --nocapture
+      run: cargo test --workspace -- --nocapture
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
