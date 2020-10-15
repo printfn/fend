@@ -48,13 +48,15 @@ fn eval_and_print_res(
 }
 
 fn print_help(explain_quitting: bool) {
-    println!(concat!(
-        "For more information on how to use fend, ",
-        "please take a look at the manual:\n",
-        "https://github.com/printfn/fend-rs/wiki\n\n",
-        "Version:"
-    ));
-    print_version();
+    println!(
+        concat!(
+            "For more information on how to use fend, ",
+            "please take a look at the manual:\n",
+            "https://github.com/printfn/fend-rs/wiki\n\n",
+            "Version: {}"
+        ),
+        fend_core::get_version()
+    );
     if explain_quitting {
         println!("\nTo quit, type `quit`.")
     }
@@ -62,15 +64,6 @@ fn print_help(explain_quitting: bool) {
 
 fn print_changelog() {
     println!("{}", changelog::get_changelog());
-}
-
-fn short_version() -> &'static str {
-    "0.1.7"
-}
-
-fn print_version() {
-    println!("fend v{} (2020-10-14)", short_version());
-    println!("fend-core v{}", fend_core::get_extended_version());
 }
 
 fn save_history(rl: &mut Editor<helper::FendHelper>, path: &Option<PathBuf>) {
@@ -111,7 +104,6 @@ fn repl_loop() -> i32 {
                     print_help(true);
                 }
                 "changelog" => print_changelog(),
-                "version" => print_version(),
                 line => {
                     interrupt.reset();
                     match eval_and_print_res(line, &mut context, &interrupt, true) {
@@ -167,12 +159,9 @@ fn main() {
             print_changelog();
             return;
         }
-        if expr == "version" || expr == "--version" || expr == "-v" || expr == "-V" {
-            print_version();
-            return;
-        }
-        if expr == "short-version" {
-            println!("{}", short_version());
+        // 'version' is already handled by fend itself
+        if expr == "--version" || expr == "-v" || expr == "-V" {
+            println!("{}", fend_core::get_version());
             return;
         }
         std::process::exit(

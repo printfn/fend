@@ -134,7 +134,7 @@ pub fn evaluate<I: Interrupt>(
                 )?;
             }
             Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
-            Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
+            Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
@@ -212,6 +212,7 @@ fn resolve_identifier<I: Interrupt>(
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
+        "version" => Value::Version,
         _ => scope.get(ident, int)?,
     })
 }

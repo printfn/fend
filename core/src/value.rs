@@ -14,6 +14,7 @@ pub enum Value {
     Base(Base),
     // user-defined function with a named parameter
     Fn(String, Expr, Scope),
+    Version,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -174,6 +175,7 @@ impl Value {
                     write!(f, "\\{}.{}", name, expr_str)?
                 }
             }
+            Self::Version => write!(f, "{}", crate::get_version())?,
         }
         Ok(())
     }
