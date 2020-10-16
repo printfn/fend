@@ -81,8 +81,8 @@ function update() {
         output = '<i class="error">Calculation timed out</i>';
     } else if (result.startsWith('Error: ')) {
         output = `<i class="error">${result}</i>`;
-    } else if (result != '') {
-        output = `Result: ${result}`;
+    } else if (result != '' && result.trim() != input.trim()) {
+        output = `→ ${result}`;
     }
     document.getElementById("output").innerHTML = output;
 }
