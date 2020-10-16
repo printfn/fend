@@ -68,6 +68,7 @@ jobs:
       run: |
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
+        rm web/pkg/.gitignore
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v3
