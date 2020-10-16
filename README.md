@@ -20,13 +20,17 @@ Unique features:
 
 See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
 
+## [Web Interface](https://fend.printfn.nz)
+
+fend is now available on the web at [https://fend.printfn.nz](https://fend.printfn.nz)
+
 ## Installation
 
 <a href="https://repology.org/project/fend/versions">
     <img src="https://repology.org/badge/vertical-allrepos/fend.svg" alt="Packaging status">
 </a>
 
-Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend-rs/releases/latest). Fend is also available in the [AUR](https://aur.archlinux.org/packages/fend/).
+Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend-rs/releases/latest). fend is also available in the [AUR](https://aur.archlinux.org/packages/fend/).
 
 You can then run `fend` to start a REPL session:
 
