@@ -56,3 +56,9 @@ jobs:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
         if-no-files-found: error
+    - name: Compile and publish website
+      if: ${{ matrix.platform == 'ubuntu-latest' }}
+      run: |
+        # install wasm-pack
+        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)

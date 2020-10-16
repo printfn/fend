@@ -23,7 +23,8 @@ version = "0.1.7"
 path = "./core"
 
 [workspace]
-members = ["core"]
+members = ["core", "wasm"]
 
 [profile.release]
 lto = true
+opt-level = "s" # small code size

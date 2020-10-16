@@ -1,0 +1,33 @@
+<html>
+<head>
+    <title>fend</title>
+    <script src="pkg/fend_wasm.js"></script>
+</head>
+<body>
+
+<input type="text" id="input" oninput="update()">
+<span id="output"></span>
+
+<script>
+const { initialise, evaluate_fend } = wasm_bindgen;
+
+async function run() {
+    await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
+    initialise();
+
+    const result = evaluate_fend("1 + 2");
+    console.log(`1 + 2 = ${result}`);
+}
+
+run();
+
+function update() {
+    let input = document.getElementById("input").value;
+    let result = evaluate_fend(input);
+    document.getElementById("output").innerHTML = result;
+}
+
+</script>
+
+</body>
+</html>
