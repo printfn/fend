@@ -56,9 +56,25 @@ jobs:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
         if-no-files-found: error
-    - name: Compile and publish website
+
+  web:
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - name: Update Rust
+      run: rustup update
+    - name: Compile fend-wasm
       if: ${{ matrix.platform == 'ubuntu-latest' }}
       run: |
-        # install wasm-pack
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        personal_token: ${{ secrets.MY_TOKEN }}
+        publish_dir: ./web
+        external_repository: printfn/fend-website
+        force_orphan: true
+        # cname: custom.website
