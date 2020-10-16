@@ -65,7 +65,6 @@ jobs:
     - name: Update Rust
       run: rustup update
     - name: Compile fend-wasm
-      if: ${{ matrix.platform == 'ubuntu-latest' }}
       run: |
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
