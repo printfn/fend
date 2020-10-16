@@ -22,7 +22,7 @@ See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
 
 ## [Web Interface](https://fend.printfn.nz)
 
-fend is now available on the web at [https://fend.printfn.nz](https://fend.printfn.nz)
+fend is now available on the web at [https://fend.printfn.nz](https://fend.printfn.nz).
 
 ## Installation
 
