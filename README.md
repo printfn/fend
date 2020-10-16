@@ -1,4 +1,4 @@
-# Fend
+# fend
 
 [![build](https://github.com/printfn/fend-rs/workflows/build/badge.svg)](https://github.com/printfn/fend-rs)
 [![codecov](https://codecov.io/gh/printfn/fend-rs/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend-rs)
@@ -6,7 +6,7 @@
 [![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
 [![docs.rs](https://docs.rs/fend-core/badge.svg)](https://docs.rs/fend-core)
 
-Fend is an arbitrary-precision unit-aware calculator.
+fend is an arbitrary-precision unit-aware calculator.
 
 Unique features:
 
@@ -41,7 +41,7 @@ $ fend
 
 ## [Manual](https://github.com/printfn/fend-rs/wiki)
 
-You can find the Fend manual [here](https://github.com/printfn/fend-rs/wiki).
+You can find the fend manual [here](https://github.com/printfn/fend-rs/wiki).
 
 ## Examples
 
@@ -86,8 +86,8 @@ See here: [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-Fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
+fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
 
-Fend optionally includes the GPLv3-licenced `definitions.units` and
+fend optionally includes the GPLv3-licenced `definitions.units` and
 `currency.units` data files from [GNU Units](https://www.gnu.org/software/units/).
 This can be changed via the `gpl` feature defined in `core/Cargo.toml`.
