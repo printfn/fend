@@ -77,4 +77,4 @@ jobs:
         publish_dir: ./web
         external_repository: printfn/fend-website
         force_orphan: true
-        # cname: custom.website
+        cname: fend.printfn.nz
