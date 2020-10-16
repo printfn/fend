@@ -38,6 +38,6 @@ pub fn evaluate_fend(input: &str) -> String {
     let interrupt = TimeoutInterrupt::new();
     match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
         Ok(res) => res.get_main_result().to_string(),
-        Err(msg) => msg,
+        Err(msg) => format!("Error: {}", msg),
     }
 }

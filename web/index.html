@@ -1,12 +1,64 @@
 <html>
 <head>
-    <title>fend</title>
-    <script src="pkg/fend_wasm.js"></script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1">
+<title>fend</title>
+<script src="pkg/fend_wasm.js"></script>
+<style>
+body {
+    font: 1em/150% -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background: rgb(241 241 241);
+    margin-top: 5ch;
+}
+#wrap {
+    max-width: 60ch;
+    margin: auto;
+}
+#input {
+    width: 100%;
+    font-size: large;
+}
+#output {
+    font-size: large;
+    margin: 2ch 0;
+}
+.error {
+    color: red;
+}
+#examples-title {
+    margin-bottom: -0.5em;
+}
+#examples {
+    white-space: pre;
+}
+</style>
+
 </head>
 <body>
 
-<input type="text" id="input" oninput="update()">
-<span id="output"></span>
+<div id="wrap">
+    <h1>fend</h1>
+    <input placeholder="Enter a query..." type="text" id="input" oninput="update()">
+    <div id="output"></div>
+    <p><a target="_blank" rel="noreferrer noopener" href="https://github.com/printfn/fend-rs">fend</a> is an arbitrary-precision unit-aware calculator.</p>
+    <p><a target="_blank" rel="noreferrer noopener" href="https://github.com/printfn/fend-rs/wiki">fend manual</a></p>
+    <h3 id="examples-title">Examples:</h3>
+<p id="examples">> 5'10" to cm
+177.8 cm
+> cos (pi/4) + i * (sin (pi/4))
+approx. 0.7071067811 + 0.7071067811i
+> 0b1001 + 3
+0b1100
+> 0xffff to decimal
+65535
+> 1 1/2' to cm
+45.72 cm
+> 1 lightyear to parsecs
+approx. 0.3066013937 parsecs</p>
+</div>
 
 <script>
 const { initialise, evaluate_fend } = wasm_bindgen;
@@ -24,7 +76,15 @@ run();
 function update() {
     let input = document.getElementById("input").value;
     let result = evaluate_fend(input);
-    document.getElementById("output").innerHTML = result;
+    let output = '';
+    if (result == 'Interrupted') {
+        output = '<i class="error">Calculation timed out</i>';
+    } else if (result.startsWith('Error: ')) {
+        output = `<i class="error">${result}</i>`;
+    } else if (result != '') {
+        output = `Result: ${result}`;
+    }
+    document.getElementById("output").innerHTML = output;
 }
 
 </script>
