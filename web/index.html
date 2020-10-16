@@ -41,7 +41,7 @@ body {
 
 <div id="wrap">
     <h1>fend</h1>
-    <input placeholder="enter a query..." type="text" id="input" oninput="update()">
+    <input placeholder="enter a query..." type="text" id="input" oninput="update()" autofocus>
     <div id="output"></div>
     <p><a target="_blank" rel="noreferrer noopener" href="https://github.com/printfn/fend-rs">fend</a> is an arbitrary-precision unit-aware calculator.</p>
     <p><a target="_blank" rel="noreferrer noopener" href="https://github.com/printfn/fend-rs/wiki">fend manual</a></p>
@@ -63,12 +63,17 @@ cos (pi/4) + i * (sin (pi/4))
 <script>
 const { initialise, evaluate_fend } = wasm_bindgen;
 
+let wasmInitialised = false;
 async function run() {
+    if (wasmInitialised) {
+        return;
+    }
     await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
     initialise();
 
     const result = evaluate_fend("1 + 2");
     console.log(`1 + 2 = ${result}`);
+    wasmInitialised = true;
 }
 
 function update() {
@@ -86,13 +91,16 @@ function update() {
     document.getElementById("output").innerHTML = output;
 }
 
-window.onload = async function() {
+async function load() {
     await run();
     let hash = document.location.hash.substring(1);
     let input = decodeURIComponent(hash);
     document.getElementById("input").value = input;
     update();
 };
+
+window.onload = load;
+window.onhashchange = load;
 
 </script>
 
