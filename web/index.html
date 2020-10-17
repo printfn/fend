@@ -24,6 +24,7 @@ body {
 #output {
     font-size: large;
     margin: 2ch 0;
+    overflow-wrap: break-word;
 }
 .error {
     color: red;
@@ -42,7 +43,7 @@ body {
 <div id="wrap">
     <h1>fend</h1>
     <input autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="enter a query..." type="text" id="input" oninput="update()" autofocus>
-    <div id="output"></div>
+    <div id="output"><span id="output-text"></span></div>
     <p><a target="_blank" rel="noreferrer noopener" href="https://github.com/printfn/fend-rs">fend</a> is an arbitrary-precision unit-aware calculator.</p>
     <p><a target="_blank" rel="noreferrer noopener" href="https://github.com/printfn/fend-rs/wiki">fend manual</a></p>
     <h3 id="examples-title">examples:</h3>
@@ -85,9 +86,9 @@ async function update() {
     } else if (result.startsWith('Error: ')) {
         output = `<i class="error">${result}</i>`;
     } else if (result != '' && result.trim() != input.trim()) {
-        output = `→ ${result}`;
+        output = `→&nbsp;${result}`;
     }
-    document.getElementById("output").innerHTML = output;
+    document.getElementById("output-text").innerHTML = output;
 }
 
 async function load() {
