@@ -65,15 +65,15 @@ cos (pi/4) + i * (sin (pi/4))
 
 let wasmInitialised = false;
 async function evaluateFend(input) {
-    const { initialise, evaluate_fend } = wasm_bindgen;
+    const { initialise, evaluate_fend_with_timeout } = wasm_bindgen;
     if (!wasmInitialised) {
         await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
         initialise();
-        const result = evaluate_fend("1 + 2");
+        const result = evaluate_fend_with_timeout("1 + 2", 500);
         console.log(`1 + 2 = ${result}`);
         wasmInitialised = true;
     }
-    return evaluate_fend(input);
+    return evaluate_fend_with_timeout(input, 500);
 }
 
 async function update() {
