@@ -80,7 +80,7 @@ async function update() {
     history.replaceState(undefined, undefined, `#${encodeURIComponent(input)}`)
     let result = await evaluateFend(input);
     let output = '';
-    if (result == 'Interrupted') {
+    if (result == 'Error: Interrupted') {
         output = '<i class="error">Calculation timed out</i>';
     } else if (result.startsWith('Error: ')) {
         output = `<i class="error">${result}</i>`;
