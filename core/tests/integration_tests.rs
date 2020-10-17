@@ -807,6 +807,8 @@ fn test_exact_sin() {
     test_evaluation("sin (-5pi/6)", "-0.5");
     test_evaluation("sin (-7pi/6)", "0.5");
     test_evaluation("sin (-11pi/6)", "0.5");
+    test_evaluation("sin (180°)", "0");
+    test_evaluation("sin (30°)", "0.5");
 }
 
 #[test]

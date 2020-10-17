@@ -216,18 +216,23 @@ impl Real {
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
-        Ok(
-            if let (Pattern::Simple(a), Pattern::Simple(b)) =
-                (self.clone().pattern, rhs.clone().pattern)
-            {
-                a.pow(b, int)?.apply(Self::from)
-            } else {
-                self.approximate(int)?
-                    .pow(rhs.approximate(int)?, int)?
-                    .combine(false)
-                    .apply(Self::from)
-            },
-        )
+        if let Pattern::Simple(n) = &rhs.pattern {
+            if n == &1.into() {
+                return Ok(Exact::new(self, true));
+            }
+        }
+
+        if let (Pattern::Simple(a), Pattern::Simple(b)) =
+            (self.clone().pattern, rhs.clone().pattern)
+        {
+            Ok(a.pow(b, int)?.apply(Self::from))
+        } else {
+            Ok(self
+                .approximate(int)?
+                .pow(rhs.approximate(int)?, int)?
+                .combine(false)
+                .apply(Self::from))
+        }
     }
 
     pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
