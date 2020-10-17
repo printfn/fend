@@ -61,25 +61,24 @@ cos (pi/4) + i * (sin (pi/4))
 </div>
 
 <script>
-const { initialise, evaluate_fend } = wasm_bindgen;
 
 let wasmInitialised = false;
-async function run() {
-    if (wasmInitialised) {
-        return;
+async function evaluateFend(input) {
+    const { initialise, evaluate_fend } = wasm_bindgen;
+    if (!wasmInitialised) {
+        await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
+        initialise();
+        const result = evaluate_fend("1 + 2");
+        console.log(`1 + 2 = ${result}`);
+        wasmInitialised = true;
     }
-    await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
-    initialise();
-
-    const result = evaluate_fend("1 + 2");
-    console.log(`1 + 2 = ${result}`);
-    wasmInitialised = true;
+    return evaluate_fend(input);
 }
 
-function update() {
+async function update() {
     let input = document.getElementById("input").value;
     history.replaceState(undefined, undefined, `#${encodeURIComponent(input)}`)
-    let result = evaluate_fend(input);
+    let result = await evaluateFend(input);
     let output = '';
     if (result == 'Interrupted') {
         output = '<i class="error">Calculation timed out</i>';
@@ -92,7 +91,6 @@ function update() {
 }
 
 async function load() {
-    await run();
     let hash = document.location.hash.substring(1);
     let input = decodeURIComponent(hash);
     document.getElementById("input").value = input;
