@@ -76,5 +76,5 @@ manualstep "Create GitHub release (including changelog):
 Changes in this version:
 
 * ..."
-manualstep "Update manual: https://github.com/printfn/fend-rs/wiki"
+manualstep "Update manual: https://github.com/printfn/fend/wiki"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"

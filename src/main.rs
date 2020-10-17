@@ -52,7 +52,7 @@ fn print_help(explain_quitting: bool) {
         concat!(
             "For more information on how to use fend, ",
             "please take a look at the manual:\n",
-            "https://github.com/printfn/fend-rs/wiki\n\n",
+            "https://github.com/printfn/fend/wiki\n\n",
             "Version: {}"
         ),
         fend_core::get_version()

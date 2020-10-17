@@ -1,7 +1,7 @@
 # [fend](https://fend.printfn.nz)
 
-[![build](https://github.com/printfn/fend-rs/workflows/build/badge.svg)](https://github.com/printfn/fend-rs)
-[![codecov](https://codecov.io/gh/printfn/fend-rs/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend-rs)
+[![build](https://github.com/printfn/fend/workflows/build/badge.svg)](https://github.com/printfn/fend)
+[![codecov](https://codecov.io/gh/printfn/fend/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
 [![docs.rs](https://docs.rs/fend-core/badge.svg)](https://docs.rs/fend-core)
@@ -18,7 +18,7 @@ Unique features:
 * Trigonometric functions
 * Lambda calculus
 
-See the [manual](https://github.com/printfn/fend-rs/wiki) for more information.
+See the [manual](https://github.com/printfn/fend/wiki) for more information.
 
 ## [Web Interface](https://fend.printfn.nz)
 
@@ -30,7 +30,7 @@ fend is now available on the web at [https://fend.printfn.nz](https://fend.print
     <img src="https://repology.org/badge/vertical-allrepos/fend.svg" alt="Packaging status">
 </a>
 
-Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend-rs/releases/latest). fend is also available in the [AUR](https://aur.archlinux.org/packages/fend/).
+Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest). fend is also available in the [AUR](https://aur.archlinux.org/packages/fend/).
 
 You can then run `fend` to start a REPL session:
 
@@ -43,9 +43,9 @@ $ fend
 >
 ```
 
-## [Manual](https://github.com/printfn/fend-rs/wiki)
+## [Manual](https://github.com/printfn/fend/wiki)
 
-You can find the fend manual [here](https://github.com/printfn/fend-rs/wiki).
+You can find the fend manual [here](https://github.com/printfn/fend/wiki).
 
 ## Examples
 
