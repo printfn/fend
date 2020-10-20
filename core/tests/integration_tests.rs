@@ -835,12 +835,14 @@ fn test_exact_cos() {
     test_evaluation("cos (-2pi/3)", "-0.5");
     test_evaluation("cos (-4pi/3)", "-0.5");
     test_evaluation("cos (-5pi/3)", "0.5");
+    test_evaluation("π", "approx. 3.1415926535");
 }
 
 #[test]
 fn test_tau() {
     test_evaluation("tau", "approx. 6.2831853071");
     test_evaluation("sin (tau / 2)", "0");
+    test_evaluation("τ", "approx. 6.2831853071");
 }
 
 #[test]

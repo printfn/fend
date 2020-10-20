@@ -227,8 +227,8 @@ fn resolve_identifier<I: Interrupt>(
         });
     }
     Ok(match ident {
-        "pi" => Value::Num(Number::pi()),
-        "tau" => Value::Num(Number::pi().mul(2.into(), int)?),
+        "pi" | "π" => Value::Num(Number::pi()),
+        "tau" | "τ" => Value::Num(Number::pi().mul(2.into(), int)?),
         "e" => eval("approx. 2.718281828459045235", scope, int)?,
         "i" => Value::Num(Number::i()),
         // TODO: we want to forward any interrupt, but panic on any other error
