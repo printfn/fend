@@ -838,6 +838,12 @@ fn test_exact_cos() {
 }
 
 #[test]
+fn test_tau() {
+    test_evaluation("tau", "approx. 6.2831853071");
+    test_evaluation("sin (tau / 2)", "0");
+}
+
+#[test]
 fn test_various_functions() {
     test_evaluation("sin (1m)", "approx. 0.8414709848 m");
     test_evaluation("sin (1°)", "approx. 0.0174524064");
