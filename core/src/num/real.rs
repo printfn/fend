@@ -200,7 +200,7 @@ impl Real {
 
         if style == FormattingStyle::Auto {
             if let Pattern::Pi(_) = self.pattern {
-                style = FormattingStyle::ApproxFloat(10);
+                style = FormattingStyle::DecimalPlaces(10);
             } else {
                 style = FormattingStyle::ExactFloatWithFractionFallback;
             }

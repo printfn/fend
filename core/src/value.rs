@@ -166,7 +166,7 @@ impl Value {
                 let other = crate::ast::evaluate(other, scope, options, int)?;
                 if let Self::Dp = other {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
-                    return Ok(Self::Format(FormattingStyle::ApproxFloat(num)));
+                    return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
                 }
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);

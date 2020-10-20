@@ -132,7 +132,7 @@ impl Complex {
         int: &I,
     ) -> Result<(), IntErr<fmt::Error, I>> {
         let style = if !exact && style == FormattingStyle::Auto {
-            FormattingStyle::ApproxFloat(10)
+            FormattingStyle::DecimalPlaces(10)
         } else {
             style
         };

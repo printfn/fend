@@ -500,7 +500,7 @@ impl BigRat {
             || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating()?)
         {
             None
-        } else if let FormattingStyle::ApproxFloat(n) = style {
+        } else if let FormattingStyle::DecimalPlaces(n) = style {
             Some(n)
         } else {
             Some(10)
