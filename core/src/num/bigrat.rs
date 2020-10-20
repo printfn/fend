@@ -506,12 +506,13 @@ impl BigRat {
             Some(10)
         };
         let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
-        let print_integer_part = |f: &mut fmt::Formatter, ignore_minus_if_zero: bool| {
+        let print_integer_part = |ignore_minus_if_zero: bool| {
+            let mut res = String::new();
             if sign == Sign::Negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
-                write!(f, "-")?;
+                res.push('-');
             }
-            write!(f, "{}", integer_part.format(base, true, int)?)?;
-            Ok(())
+            res.push_str(&integer_part.format(base, true, int)?.to_string());
+            Ok(res)
         };
         let integer_as_rational = Self {
             sign: Sign::Positive,
@@ -519,8 +520,7 @@ impl BigRat {
             den: 1.into(),
         };
         let remaining_fraction = x.clone().add(-integer_as_rational, int)?;
-        let was_exact = Self::format_trailing_digits(
-            f,
+        let (trailing_digit_str, was_exact) = Self::format_trailing_digits(
             base,
             &remaining_fraction.num,
             &remaining_fraction.den,
@@ -529,6 +529,7 @@ impl BigRat {
             print_integer_part,
             int,
         )?;
+        write!(f, "{}", trailing_digit_str)?;
         if imag {
             if base.base_as_u8() >= 19 {
                 write!(f, " ")?;
@@ -550,15 +551,14 @@ impl BigRat {
     ///     digits will not printed in parentheses but will instead be repeated up to `max_digits`.
     ///     Any trailing zeroes are not printed.
     fn format_trailing_digits<I: Interrupt>(
-        f: &mut fmt::Formatter,
         base: Base,
         numerator: &BigUint,
         denominator: &BigUint,
         max_digits: Option<usize>,
         mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
-        print_integer_part: impl Fn(&mut fmt::Formatter, bool) -> Result<(), IntErr<fmt::Error, I>>,
+        print_integer_part: impl Fn(bool) -> Result<String, IntErr<Never, I>>,
         int: &I,
-    ) -> Result<bool, IntErr<fmt::Error, I>> {
+    ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
         enum NextDigitErr<I: Interrupt> {
             Interrupt(IntErr<Never, I>),
             Terminated,
@@ -568,6 +568,8 @@ impl BigRat {
                 Self::Interrupt(i)
             }
         }
+
+        let mut trailing_digits = String::new();
 
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
@@ -609,26 +611,26 @@ impl BigRat {
                         } else {
                             if !wrote_decimal_point {
                                 // always print leading minus because we have non-zero digits
-                                print_integer_part(f, false)?;
-                                write!(f, ".")?;
+                                trailing_digits.push_str(&print_integer_part(false)?);
+                                trailing_digits.push('.');
                                 wrote_decimal_point = true;
                             }
                             for _ in 0..trailing_zeroes {
-                                write!(f, "0")?;
+                                trailing_digits.push('0');
                             }
                             trailing_zeroes = 0;
-                            write!(f, "{}", digit.format(base, false, int)?)?;
+                            trailing_digits.push_str(&digit.format(base, false, int)?.to_string());
                         }
                     }
                     Err(NextDigitErr::Terminated) => {
                         if !wrote_decimal_point {
                             // if we reach this point we haven't printed any non-zero digits,
                             // so we can skip the leading minus sign if the integer part is also zero
-                            print_integer_part(f, true)?;
+                            trailing_digits.push_str(&print_integer_part(true)?);
                         }
                         // is the number exact, or did we need to truncate?
                         let exact = current_numerator == 0.into();
-                        return Ok(exact);
+                        return Ok((trailing_digits, exact));
                     }
                     Err(NextDigitErr::Interrupt(i)) => {
                         return Err(i.into());
@@ -648,8 +650,12 @@ impl BigRat {
                 let (ab, _) = output.split_at(location + cycle_length);
                 let (a, b) = ab.split_at(location);
                 // we're printing non-zero digits, so always include minus sign
-                print_integer_part(f, false)?;
-                write!(f, ".{}({})", a, b)?;
+                trailing_digits.push_str(&print_integer_part(false)?);
+                trailing_digits.push('.');
+                trailing_digits.push_str(a);
+                trailing_digits.push('(');
+                trailing_digits.push_str(b);
+                trailing_digits.push(')');
             }
             Err(NextDigitErr::Terminated) => {
                 panic!("Decimal number terminated unexpectedly");
@@ -658,7 +664,7 @@ impl BigRat {
                 return Err(i.into());
             }
         }
-        Ok(true) // the recurring decimal is exact
+        Ok((trailing_digits, true)) // the recurring decimal is exact
     }
 
     // Brent's cycle detection algorithm (based on pseudocode from Wikipedia)
