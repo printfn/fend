@@ -3,9 +3,10 @@
 use std::fmt;
 use std::ops::Neg;
 
-pub struct Exact<T: ?Sized> {
-    pub exact: bool,
+#[derive(Copy, Clone)]
+pub struct Exact<T: fmt::Debug> {
     pub value: T,
+    pub exact: bool,
 }
 
 impl<T: fmt::Debug> fmt::Debug for Exact<T> {
@@ -20,24 +21,13 @@ impl<T: fmt::Debug> fmt::Debug for Exact<T> {
     }
 }
 
-impl<T: Clone> Clone for Exact<T> {
-    fn clone(&self) -> Self {
-        Self {
-            value: self.value.clone(),
-            exact: self.exact,
-        }
-    }
-}
-
-impl<T: Copy> Copy for Exact<T> {}
-
 #[allow(clippy::use_self)]
-impl<T> Exact<T> {
+impl<T: fmt::Debug> Exact<T> {
     pub fn new(value: T, exact: bool) -> Self {
         Self { value, exact }
     }
 
-    pub fn apply<R, F: FnOnce(T) -> R>(self, f: F) -> Exact<R> {
+    pub fn apply<R: fmt::Debug, F: FnOnce(T) -> R>(self, f: F) -> Exact<R> {
         Exact::<R> {
             value: f(self.value),
             exact: self.exact,
@@ -60,7 +50,7 @@ impl<T> Exact<T> {
 }
 
 #[allow(clippy::use_self)]
-impl<A, B> Exact<(A, B)> {
+impl<A: fmt::Debug, B: fmt::Debug> Exact<(A, B)> {
     pub fn pair(self) -> (Exact<A>, Exact<B>) {
         (
             Exact {
@@ -75,7 +65,7 @@ impl<A, B> Exact<(A, B)> {
     }
 }
 
-impl<T: Neg + Neg<Output = T>> Neg for Exact<T> {
+impl<T: fmt::Debug + Neg + Neg<Output = T>> Neg for Exact<T> {
     type Output = Self;
     fn neg(self) -> Self {
         Self {
