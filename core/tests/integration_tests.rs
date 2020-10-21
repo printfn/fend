@@ -785,6 +785,7 @@ fn test_builtin_function_names() {
     test_evaluation("ln", "ln");
     test_evaluation("log2", "log2");
     test_evaluation("log10", "log10");
+    test_evaluation("base", "base");
 }
 
 #[test]
@@ -916,6 +917,7 @@ fn test_various_functions() {
     expect_error("cbrt i");
     expect_error("cbrt (-2i)");
     expect_error("sin i");
+    expect_error("dp 1");
 }
 
 #[test]
