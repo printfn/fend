@@ -441,13 +441,12 @@ impl BigRat {
     // The result 'exact' field indicates whether the number was exact or not.
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut fmt::Formatter,
         base: Base,
         style: FormattingStyle,
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<FormattedBigRat, IntErr<fmt::Error, I>> {
+    ) -> Result<FormattedBigRat, IntErr<Never, I>> {
         let mut x = self.clone().simplify(int)?;
         let sign = if x.sign == Sign::Positive || x == 0.into() {
             Sign::Positive
@@ -520,7 +519,7 @@ impl BigRat {
             den: 1.into(),
         };
         let remaining_fraction = x.clone().add(-integer_as_rational, int)?;
-        let (trailing_digit_str, was_exact) = Self::format_trailing_digits(
+        let (mut trailing_digit_str, was_exact) = Self::format_trailing_digits(
             base,
             &remaining_fraction.num,
             &remaining_fraction.den,
@@ -529,17 +528,16 @@ impl BigRat {
             print_integer_part,
             int,
         )?;
-        write!(f, "{}", trailing_digit_str)?;
         if imag {
             if base.base_as_u8() >= 19 {
-                write!(f, " ")?;
+                trailing_digit_str.push(' ');
             }
-            write!(f, "i")?;
+            trailing_digit_str.push('i');
         }
         Ok(FormattedBigRat {
             sign: Sign::Positive,
             exact: was_exact,
-            ty: FormattedBigRatType::Decimal,
+            ty: FormattedBigRatType::Decimal(trailing_digit_str),
         })
     }
 
@@ -558,7 +556,7 @@ impl BigRat {
         mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
         print_integer_part: impl Fn(bool) -> Result<String, IntErr<Never, I>>,
         int: &I,
-    ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
+    ) -> Result<(String, bool), IntErr<Never, I>> {
         enum NextDigitErr<I: Interrupt> {
             Interrupt(IntErr<Never, I>),
             Terminated,
@@ -633,7 +631,7 @@ impl BigRat {
                         return Ok((trailing_digits, exact));
                     }
                     Err(NextDigitErr::Interrupt(i)) => {
-                        return Err(i.into());
+                        return Err(i);
                     }
                 }
                 i += 1;
@@ -661,7 +659,7 @@ impl BigRat {
                 panic!("Decimal number terminated unexpectedly");
             }
             Err(NextDigitErr::Interrupt(i)) => {
-                return Err(i.into());
+                return Err(i);
             }
         }
         Ok((trailing_digits, true)) // the recurring decimal is exact
@@ -920,7 +918,8 @@ enum FormattedBigRatType {
         &'static str,
         bool,
     ),
-    Decimal,
+    // string representation of decimal number (may or may not contain recurring digits)
+    Decimal(String),
 }
 
 #[must_use]
@@ -964,7 +963,7 @@ impl fmt::Display for FormattedBigRat {
                     write!(f, ")")?;
                 }
             }
-            FormattedBigRatType::Decimal => (),
+            FormattedBigRatType::Decimal(s) => write!(f, "{}", s)?,
         }
         Ok(())
     }

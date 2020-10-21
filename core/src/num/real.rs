@@ -207,12 +207,11 @@ impl Real {
         }
 
         let s = self.clone().approximate(int)?;
-        let (string, x) = crate::num::to_string(|f| {
-            let x = s.format(f, base, style, imag, use_parens_if_fraction, int)?;
-            write!(f, "{}", x)?;
-            Ok(x)
-        })?;
-        Ok(Exact::new(string, x.exact && override_exact))
+        let formatted = s.format(base, style, imag, use_parens_if_fraction, int)?;
+        Ok(Exact::new(
+            formatted.to_string(),
+            formatted.exact && override_exact,
+        ))
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
