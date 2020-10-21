@@ -1,5 +1,5 @@
 use crate::err::{IntErr, Interrupt, Never};
-use crate::num::bigrat::BigRat;
+use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
@@ -190,7 +190,7 @@ impl Real {
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<Exact<String>, IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<FormattedReal>, IntErr<fmt::Error, I>> {
         let mut override_exact = true;
         if self != &0.into() {
             if let Pattern::Pi(_) = self.pattern {
@@ -208,9 +208,12 @@ impl Real {
 
         let s = self.clone().approximate(int)?;
         let formatted = s.format(base, style, imag, use_parens_if_fraction, int)?;
+        let exact = formatted.exact && override_exact;
         Ok(Exact::new(
-            formatted.to_string(),
-            formatted.exact && override_exact,
+            FormattedReal {
+                num: formatted.value,
+            },
+            exact,
         ))
     }
 
@@ -378,5 +381,17 @@ impl From<BigRat> for Real {
         Self {
             pattern: Pattern::Simple(n),
         }
+    }
+}
+
+#[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
+pub struct FormattedReal {
+    num: FormattedBigRat,
+}
+
+impl fmt::Display for FormattedReal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.num)
     }
 }

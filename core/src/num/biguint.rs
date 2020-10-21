@@ -549,6 +549,7 @@ impl fmt::Debug for BigUint {
     }
 }
 
+#[derive(Debug)]
 enum FormattedBigUintType {
     Zero,
     Simple(u64),
@@ -556,6 +557,7 @@ enum FormattedBigUintType {
 }
 
 #[must_use]
+#[derive(Debug)]
 pub struct FormattedBigUint {
     base: Option<Base>,
     ty: FormattedBigUintType,
