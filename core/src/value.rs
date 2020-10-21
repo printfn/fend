@@ -1,4 +1,4 @@
-use crate::ast::Expr;
+use crate::ast::{Expr, Expr2};
 use crate::err::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::{parser::ParseOptions, scope::Scope};
@@ -155,7 +155,7 @@ impl Value {
 
     pub fn apply<I: Interrupt>(
         self,
-        other: Expr,
+        other: Expr2,
         apply_mul_handling: ApplyMulHandling,
         scope: &mut Scope,
         options: ParseOptions,
@@ -218,8 +218,8 @@ impl Value {
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
-                new_scope.insert_variable(param.into(), other, scope.clone(), options);
-                return Ok(crate::ast::evaluate(expr, &mut new_scope, options, int)?);
+                new_scope.insert_variable(param.into(), other.into(), scope.clone(), options);
+                return Ok(crate::ast::evaluate(Expr2::from(expr), &mut new_scope, options, int)?);
             }
             _ => {
                 return Err(format!(

@@ -54,7 +54,7 @@ impl ScopeValue {
             }
             //Self::Variable(val) => Ok(val.clone()),
             Self::LazyVariable(expr, scope, options) => {
-                let value = crate::ast::evaluate(expr.clone(), &mut scope.clone(), *options, int)?;
+                let value = crate::ast::evaluate(expr.clone().into(), &mut scope.clone(), *options, int)?;
                 Ok(value)
             }
         }

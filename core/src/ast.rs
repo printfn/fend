@@ -89,6 +89,37 @@ impl<'a> From<Expr2<'a>> for Expr {
     }
 }
 
+impl<'a> From<Box<Expr>> for Box<Expr2<'a>> {
+    fn from(expr: Box<Expr>) -> Self {
+        Box::new(Expr2::<'a>::from(*expr))
+    }
+}
+
+impl<'a> From<Expr> for Expr2<'a> {
+    fn from(expr: Expr) -> Self {
+        match expr {
+            Expr::Num(n) => Self::Num(n),
+            Expr::Ident(ident) => Self::Ident(Box::leak(Box::new(ident)).as_str()),
+            Expr::Parens(x) => Self::Parens(x.into()),
+            Expr::UnaryMinus(x) => Self::UnaryMinus(x.into()),
+            Expr::UnaryPlus(x) => Self::UnaryPlus(x.into()),
+            Expr::UnaryDiv(x) => Self::UnaryDiv(x.into()),
+            Expr::Factorial(x) => Self::Factorial(x.into()),
+            Expr::Add(a, b) => Self::Add(a.into(), b.into()),
+            Expr::ImplicitAdd(a, b) => Self::ImplicitAdd(a.into(), b.into()),
+            Expr::Sub(a, b) => Self::Sub(a.into(), b.into()),
+            Expr::Mul(a, b) => Self::Mul(a.into(), b.into()),
+            Expr::Div(a, b) => Self::Div(a.into(), b.into()),
+            Expr::Pow(a, b) => Self::Pow(a.into(), b.into()),
+            Expr::Apply(a, b) => Self::Apply(a.into(), b.into()),
+            Expr::ApplyFunctionCall(a, b) => Self::ApplyFunctionCall(a.into(), b.into()),
+            Expr::ApplyMul(a, b) => Self::ApplyMul(a.into(), b.into()),
+            Expr::As(a, b) => Self::As(a.into(), b.into()),
+            Expr::Fn(a, b) => Self::Fn(Box::leak(Box::new(a)).as_str(), b.into()),
+        }
+    }
+}
+
 impl Expr {
     pub fn format<I: Interrupt>(
         &self,
@@ -148,8 +179,8 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
     false
 }
 
-pub fn evaluate<I: Interrupt>(
-    expr: Expr,
+pub fn evaluate<'a, I: Interrupt>(
+    expr: Expr2<'a>,
     scope: &mut Scope,
     options: ParseOptions,
     int: &I,
@@ -161,53 +192,53 @@ pub fn evaluate<I: Interrupt>(
     }
     test_int(int)?;
     Ok(match expr {
-        Expr::Num(n) => Value::Num(n),
-        Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, options, int)?,
-        Expr::Parens(x) => eval!(*x)?,
-        Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
-        Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
-        Expr::UnaryDiv(x) => eval!(*x)?.handle_num(
+        Expr2::<'a>::Num(n) => Value::Num(n),
+        Expr2::<'a>::Ident(ident) => resolve_identifier(ident, scope, options, int)?,
+        Expr2::<'a>::Parens(x) => eval!(*x)?,
+        Expr2::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
+        Expr2::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
+        Expr2::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
             |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
             Expr::UnaryDiv,
             scope,
         )?,
-        Expr::Factorial(x) => {
+        Expr2::<'a>::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
+        Expr2::<'a>::Add(a, b) | Expr2::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.add(b, int),
             |a| |f| Expr::Add(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Sub(a, b) => eval!(*a)?.handle_two_nums(
+        Expr2::<'a>::Sub(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.sub(b, int),
             |a| |f| Expr::Sub(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Sub(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Mul(a, b) => eval!(*a)?.handle_two_nums(
+        Expr2::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),
             |a| |f| Expr::Mul(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::ApplyMul(a, b) => {
+        Expr2::<'a>::ApplyMul(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?
         }
-        Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
+        Expr2::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
             |a| |f| Expr::Div(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Pow(a, b) => {
+        Expr2::<'a>::Pow(a, b) => {
             let lhs = eval!(*a)?;
-            if should_compute_inverse(&*b) {
+            if should_compute_inverse(&(*b.clone()).into()) {
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => {
@@ -229,11 +260,11 @@ pub fn evaluate<I: Interrupt>(
                 scope,
             )?
         }
-        Expr::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?,
-        Expr::ApplyFunctionCall(a, b) => {
+        Expr2::<'a>::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?,
+        Expr2::<'a>::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, options, int)?
         }
-        Expr::As(a, b) => match eval!(*b)? {
+        Expr2::<'a>::As(a, b) => match eval!(*b)? {
             Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
             Value::Format(fmt) => Value::Num(eval!(*a)?.expect_num()?.with_format(fmt)),
             Value::Dp => {
@@ -247,7 +278,7 @@ pub fn evaluate<I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr::Fn(a, b) => Value::Fn(a, *b, scope.clone()),
+        Expr2::<'a>::Fn(a, b) => Value::Fn(a.to_string(), (*b).into(), scope.clone()),
     })
 }
 
