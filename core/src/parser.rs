@@ -1,4 +1,4 @@
-use crate::ast::Expr;
+use crate::ast::Expr2 as Expr;
 use crate::lexer::{Symbol, Token};
 use std::fmt;
 
@@ -41,7 +41,7 @@ impl fmt::Display for ParseError {
 }
 impl crate::err::Error for ParseError {}
 
-type ParseResult<'a, T> = Result<(T, &'a [Token<'a>]), ParseError>;
+type ParseResult<'a, T = Expr<'a>> = Result<(T, &'a [Token<'a>]), ParseError>;
 
 fn parse_token<'a>(input: &'a [Token<'a>]) -> ParseResult<Token<'a>> {
     if input.is_empty() {
@@ -64,21 +64,21 @@ fn parse_fixed_symbol<'a>(input: &'a [Token], symbol: Symbol) -> ParseResult<'a,
     }
 }
 
-fn parse_number<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_number<'a>(input: &'a [Token]) -> ParseResult<'a> {
     match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
         _ => Err(ParseError::ExpectedANumber),
     }
 }
 
-fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a> {
     match parse_token(input)? {
-        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident.to_string()), remaining)),
+        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
         _ => Err(ParseError::ExpectedIdentifier),
     }
 }
 
-fn parse_parens<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_parens<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
     let (inner, mut input) = parse_expression(input, options)?;
     // allow omitting closing parentheses at end of input
@@ -89,7 +89,7 @@ fn parse_parens<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
-fn parse_backslash_lambda<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_backslash_lambda<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Backslash)?;
     let (ident, input) = if let (Expr::Ident(ident), input) = parse_ident(input)? {
         (ident, input)
@@ -102,7 +102,7 @@ fn parse_backslash_lambda<'a>(input: &'a [Token], options: ParseOptions) -> Pars
     Ok((Expr::Fn(ident, Box::new(rhs)), input))
 }
 
-fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (token, _) = parse_token(input)?;
 
     match token {
@@ -115,7 +115,7 @@ fn parse_parens_or_literal<'a>(input: &'a [Token], options: ParseOptions) -> Par
 }
 
 // parse inner division with the '|' operator.
-fn parse_inner_div<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_inner_div<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (mut result, mut input) = parse_parens_or_literal(input, options)?;
     if options.gnu_compatible {
         while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::InnerDiv) {
@@ -127,7 +127,7 @@ fn parse_inner_div<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult
     Ok((result, input))
 }
 
-fn parse_factorial<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_factorial<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (mut res, mut input) = parse_inner_div(input, options)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
         res = Expr::Factorial(Box::new(res));
@@ -140,7 +140,7 @@ fn parse_power<'a>(
     input: &'a [Token],
     allow_unary: bool,
     options: ParseOptions,
-) -> ParseResult<'a, Expr> {
+) -> ParseResult<'a> {
     if allow_unary {
         if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
             let (result, remaining) = parse_power(remaining, true, options)?;
@@ -168,14 +168,14 @@ fn parse_power<'a>(
 
 fn parse_apply_cont<'a>(
     input: &'a [Token],
-    lhs: &Expr,
+    lhs: Expr<'a>,
     options: ParseOptions,
-) -> ParseResult<'a, Expr> {
+) -> ParseResult<'a> {
     let (rhs, input) = parse_power(input, false, options)?;
     // This should never be called in GNU-compatible mode
     assert!(!options.gnu_compatible);
     Ok((
-        match (lhs, &rhs) {
+        match (&lhs, &rhs) {
             (Expr::Num(_), Expr::Num(_))
             | (Expr::UnaryMinus(_), Expr::Num(_))
             | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
@@ -204,14 +204,14 @@ fn parse_apply_cont<'a>(
 #[allow(clippy::option_if_let_else)]
 fn parse_mixed_fraction<'a>(
     input: &'a [Token],
-    lhs: &Expr,
+    lhs: Expr<'a>,
     options: ParseOptions,
-) -> ParseResult<'a, Expr> {
-    let (positive, lhs, other_factor) = match lhs {
-        Expr::Num(_) => (true, lhs, None),
+) -> ParseResult<'a> {
+    let (positive, lhs, other_factor) = match &lhs {
+        Expr::Num(_) => (true, &lhs, None),
         Expr::UnaryMinus(x) => {
             if let Expr::Num(_) = &**x {
-                (false, lhs, None)
+                (false, &lhs, None)
             } else {
                 return Err(ParseError::InvalidMixedFraction);
             }
@@ -255,7 +255,7 @@ fn parse_mixed_fraction<'a>(
 }
 
 // parse apply/multiply with higher precedence (left-associative)
-fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (mut res, mut input) = parse_power(input, true, options)?;
     if options.gnu_compatible {
         while let Ok((rhs, remaining)) = parse_power(input, false, options) {
@@ -269,19 +269,19 @@ fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResu
 fn parse_multiplication_cont<'a>(
     input: &'a [Token],
     options: ParseOptions,
-) -> ParseResult<'a, Expr> {
+) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
     let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
 }
 
-fn parse_division_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_division_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
     let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
 }
 
-fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (mut res, mut input) = parse_inner_apply(input, options)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input, options) {
@@ -293,10 +293,10 @@ fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
         } else if options.gnu_compatible {
             // apply can't be parsed here if we're GNU compatible
             break;
-        } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res, options) {
+        } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, res.clone(), options) {
             res = new_res;
             input = remaining;
-        } else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res, options) {
+        } else if let Ok((new_res, remaining)) = parse_apply_cont(input, res.clone(), options) {
             res = new_res;
             input = remaining;
         } else {
@@ -306,7 +306,7 @@ fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
     Ok((res, input))
 }
 
-fn parse_implicit_addition<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_implicit_addition<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (res, input) = parse_multiplicative(input, options)?;
     if options.gnu_compatible {
         // don't parse mixed fractions or implicit addition (e.g. 3'6") when gnu_compatible is set
@@ -325,25 +325,25 @@ fn parse_implicit_addition<'a>(input: &'a [Token], options: ParseOptions) -> Par
     Ok((res, input))
 }
 
-fn parse_addition_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_addition_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Add)?;
     let (b, input) = parse_implicit_addition(input, options)?;
     Ok((b, input))
 }
 
-fn parse_subtraction_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_subtraction_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Sub)?;
     let (b, input) = parse_implicit_addition(input, options)?;
     Ok((b, input))
 }
 
-fn parse_to_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_to_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
     let (b, input) = parse_implicit_addition(input, options)?;
     Ok((b, input))
 }
 
-fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (mut res, mut input) = parse_implicit_addition(input, options)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input, options) {
@@ -362,7 +362,7 @@ fn parse_additive<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<
     Ok((res, input))
 }
 
-fn parse_function<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+fn parse_function<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (lhs, input) = parse_additive(input, options)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
@@ -388,11 +388,11 @@ impl ParseOptions {
     }
 }
 
-pub fn parse_expression<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a, Expr> {
+pub fn parse_expression<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     parse_function(input, options)
 }
 
-pub fn parse_tokens(input: &[Token], options: ParseOptions) -> Result<Expr, ParseError> {
+pub fn parse_tokens<'a>(input: &'a [Token], options: ParseOptions) -> Result<Expr<'a>, ParseError> {
     let (res, remaining) = parse_expression(input, options)?;
     if !remaining.is_empty() {
         return Err(ParseError::UnexpectedInput);

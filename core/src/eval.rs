@@ -26,7 +26,7 @@ pub fn evaluate_to_value<I: Interrupt>(
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
     let parsed = parser::parse_tokens(tokens.as_slice(), options).map_err(|e| e.to_string())?;
-    let result = ast::evaluate(parsed, scope, options, int)?;
+    let result = ast::evaluate(parsed.into(), scope, options, int)?;
     Ok(result)
 }
 
