@@ -239,7 +239,7 @@ impl Value {
             Self::BuiltInFunction(name) => FormattedValue::Str(name.as_str()),
             Self::Format(fmt) => FormattedValue::String(fmt.to_string()),
             Self::Dp => FormattedValue::Str("dp"),
-            Self::Base(b) => FormattedValue::String(format!("base {}", b.base_as_u8())),
+            Self::Base(b) => FormattedValue::Base(b.base_as_u8()),
             Self::Fn(name, expr, _scope) => {
                 let expr_str = expr.format(int)?;
                 let res = if name.contains('.') {
@@ -259,6 +259,7 @@ impl Value {
 pub enum FormattedValue {
     Str(&'static str),
     String(String),
+    Base(u8),
     Number(Box<FormattedNumber>),
 }
 
@@ -268,6 +269,7 @@ impl fmt::Display for FormattedValue {
             Self::Str(s) => write!(f, "{}", s),
             Self::String(s) => write!(f, "{}", s),
             Self::Number(n) => write!(f, "{}", n),
+            Self::Base(n) => write!(f, "base {}", n),
         }
     }
 }
