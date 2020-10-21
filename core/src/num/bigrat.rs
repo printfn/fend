@@ -352,7 +352,7 @@ impl BigRat {
         imag: bool,
         use_parens_if_product: bool,
         int: &I,
-    ) -> Result<FormattedBigRat, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
         let ty = if imag && !base.has_prefix() && num == &1.into() {
             FormattedBigRatType::Integer(None, "i", false)
         } else {
@@ -373,11 +373,7 @@ impl BigRat {
                 use_parens_if_product && imag,
             )
         };
-        Ok(FormattedBigRat {
-            sign,
-            exact: true,
-            ty,
-        })
+        Ok(Exact::new(FormattedBigRat { sign, ty }, true))
     }
 
     fn format_as_fraction<I: Interrupt>(
@@ -389,7 +385,7 @@ impl BigRat {
         mixed: bool,
         use_parens: bool,
         int: &I,
-    ) -> Result<FormattedBigRat, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
         let formatted_den = den.format(base, true, int)?;
         let (pref, num) = if mixed {
             let (prefix, num) = num.divmod(den, int).map_err(IntErr::unwrap)?;
@@ -403,37 +399,39 @@ impl BigRat {
         };
         // mixed fractions without a prefix aren't really mixed
         let actually_mixed = pref.is_some();
-        Ok(FormattedBigRat {
-            sign,
-            exact: true,
-            ty: if imag && !actually_mixed && !base.has_prefix() && num == 1.into() {
-                FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "", use_parens)
-            } else {
-                let formatted_num = num.format(base, true, int)?;
-                let i_suffix = if imag {
-                    if base.base_as_u8() >= 19 || actually_mixed {
-                        " i"
+        Ok(Exact::new(
+            FormattedBigRat {
+                sign,
+                ty: if imag && !actually_mixed && !base.has_prefix() && num == 1.into() {
+                    FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "", use_parens)
+                } else {
+                    let formatted_num = num.format(base, true, int)?;
+                    let i_suffix = if imag {
+                        if base.base_as_u8() >= 19 || actually_mixed {
+                            " i"
+                        } else {
+                            "i"
+                        }
                     } else {
-                        "i"
-                    }
-                } else {
-                    ""
-                };
-                let (isuf1, isuf2) = if actually_mixed {
-                    ("", i_suffix)
-                } else {
-                    (i_suffix, "")
-                };
-                FormattedBigRatType::Fraction(
-                    pref,
-                    Some(formatted_num),
-                    isuf1,
-                    formatted_den,
-                    isuf2,
-                    use_parens,
-                )
+                        ""
+                    };
+                    let (isuf1, isuf2) = if actually_mixed {
+                        ("", i_suffix)
+                    } else {
+                        (i_suffix, "")
+                    };
+                    FormattedBigRatType::Fraction(
+                        pref,
+                        Some(formatted_num),
+                        isuf1,
+                        formatted_den,
+                        isuf2,
+                        use_parens,
+                    )
+                },
             },
-        })
+            true,
+        ))
     }
 
     // Formats as an integer if possible, or a terminating float, otherwise as
@@ -441,13 +439,12 @@ impl BigRat {
     // The result 'exact' field indicates whether the number was exact or not.
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut fmt::Formatter,
         base: Base,
         style: FormattingStyle,
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<FormattedBigRat, IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
         let mut x = self.clone().simplify(int)?;
         let sign = if x.sign == Sign::Positive || x == 0.into() {
             Sign::Positive
@@ -520,7 +517,7 @@ impl BigRat {
             den: 1.into(),
         };
         let remaining_fraction = x.clone().add(-integer_as_rational, int)?;
-        let (trailing_digit_str, was_exact) = Self::format_trailing_digits(
+        let mut formatted_trailing_digits = Self::format_trailing_digits(
             base,
             &remaining_fraction.num,
             &remaining_fraction.den,
@@ -529,18 +526,19 @@ impl BigRat {
             print_integer_part,
             int,
         )?;
-        write!(f, "{}", trailing_digit_str)?;
         if imag {
             if base.base_as_u8() >= 19 {
-                write!(f, " ")?;
+                formatted_trailing_digits.value.push(' ');
             }
-            write!(f, "i")?;
+            formatted_trailing_digits.value.push('i');
         }
-        Ok(FormattedBigRat {
-            sign: Sign::Positive,
-            exact: was_exact,
-            ty: FormattedBigRatType::Decimal,
-        })
+        Ok(Exact::new(
+            FormattedBigRat {
+                sign: Sign::Positive,
+                ty: FormattedBigRatType::Decimal(formatted_trailing_digits.value),
+            },
+            formatted_trailing_digits.exact,
+        ))
     }
 
     /// Prints the decimal expansion of num/den, where num < den, in the given base.
@@ -558,7 +556,7 @@ impl BigRat {
         mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
         print_integer_part: impl Fn(bool) -> Result<String, IntErr<Never, I>>,
         int: &I,
-    ) -> Result<(String, bool), IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<String>, IntErr<Never, I>> {
         enum NextDigitErr<I: Interrupt> {
             Interrupt(IntErr<Never, I>),
             Terminated,
@@ -630,10 +628,10 @@ impl BigRat {
                         }
                         // is the number exact, or did we need to truncate?
                         let exact = current_numerator == 0.into();
-                        return Ok((trailing_digits, exact));
+                        return Ok(Exact::new(trailing_digits, exact));
                     }
                     Err(NextDigitErr::Interrupt(i)) => {
-                        return Err(i.into());
+                        return Err(i);
                     }
                 }
                 i += 1;
@@ -661,10 +659,10 @@ impl BigRat {
                 panic!("Decimal number terminated unexpectedly");
             }
             Err(NextDigitErr::Interrupt(i)) => {
-                return Err(i.into());
+                return Err(i);
             }
         }
-        Ok((trailing_digits, true)) // the recurring decimal is exact
+        Ok(Exact::new(trailing_digits, true)) // the recurring decimal is exact
     }
 
     // Brent's cycle detection algorithm (based on pseudocode from Wikipedia)
@@ -901,6 +899,7 @@ impl From<BigUint> for BigRat {
     }
 }
 
+#[derive(Debug)]
 enum FormattedBigRatType {
     // optional int, followed by a string (empty, "i" or " i"), followed by
     // whether to wrap the number in parentheses
@@ -920,14 +919,15 @@ enum FormattedBigRatType {
         &'static str,
         bool,
     ),
-    Decimal,
+    // string representation of decimal number (may or may not contain recurring digits)
+    Decimal(String),
 }
 
 #[must_use]
+#[derive(Debug)]
 pub struct FormattedBigRat {
     // whether or not to print a minus sign
     sign: Sign,
-    pub exact: bool,
     ty: FormattedBigRatType,
 }
 
@@ -964,7 +964,7 @@ impl fmt::Display for FormattedBigRat {
                     write!(f, ")")?;
                 }
             }
-            FormattedBigRatType::Decimal => (),
+            FormattedBigRatType::Decimal(s) => write!(f, "{}", s)?,
         }
         Ok(())
     }

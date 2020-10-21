@@ -43,6 +43,6 @@ pub fn evaluate_to_string<I: Interrupt>(
     Ok(if debug {
         format!("{:?}", value)
     } else {
-        crate::num::to_string(|f| value.format(f, int))?.0
+        value.format(int)?.to_string()
     })
 }

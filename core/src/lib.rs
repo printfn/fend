@@ -109,10 +109,14 @@ pub fn evaluate_with_interrupt(
     })
 }
 
+fn get_version_as_str() -> &'static str {
+    "0.1.7"
+}
+
 /// Returns the current version of `fend-core`.
 #[must_use]
 pub fn get_version() -> String {
-    "0.1.7".to_string()
+    get_version_as_str().to_string()
 }
 
 /// Deprecated: use `get_version()` instead.

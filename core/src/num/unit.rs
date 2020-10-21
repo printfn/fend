@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::complex::{Complex, UseParentheses};
+use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use crate::value::Value;
@@ -480,18 +480,17 @@ impl UnitValue {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub fn format<I: Interrupt>(
-        &self,
-        f: &mut fmt::Formatter,
-        int: &I,
-    ) -> Result<(), IntErr<fmt::Error, I>> {
+    pub fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedUnitValue, IntErr<Never, I>> {
         let use_parentheses = if self.unit.components.is_empty() {
             UseParentheses::No
         } else {
             UseParentheses::IfComplex
         };
-        self.value
-            .format(f, self.exact, self.format, self.base, use_parentheses, int)?;
+        let formatted_value =
+            self.value
+                .format(self.exact, self.format, self.base, use_parentheses, int)?;
+        let mut exact = formatted_value.exact;
+        let mut unit_string = String::new();
         if !self.unit.components.is_empty() {
             // Pluralisation:
             // All units should be singular, except for the last unit
@@ -523,17 +522,25 @@ impl UnitValue {
             let last_component_plural = self.value != 1.into();
             for (i, (unit_exponent, invert)) in merged_components.into_iter().enumerate() {
                 if !first || unit_exponent.unit.print_with_space() {
-                    write!(f, " ")?;
+                    unit_string.push(' ');
                 }
                 first = false;
                 if invert {
-                    write!(f, "/ ")?;
+                    unit_string.push('/');
+                    unit_string.push(' ');
                 }
                 let plural = last_component_plural && i == pluralised_idx;
-                unit_exponent.format(f, self.base, self.format, plural, invert, int)?;
+                let formatted_exp =
+                    unit_exponent.format(self.base, self.format, plural, invert, int)?;
+                unit_string.push_str(formatted_exp.value.to_string().as_str());
+                exact = exact && formatted_exp.exact;
             }
         }
-        Ok(())
+        Ok(FormattedUnitValue {
+            number: formatted_value.value,
+            exact,
+            unit_str: unit_string,
+        })
     }
 
     pub fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
@@ -572,6 +579,24 @@ impl From<u64> for UnitValue {
             base: Base::default(),
             format: FormattingStyle::default(),
         }
+    }
+}
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
+pub struct FormattedUnitValue {
+    exact: bool,
+    number: FormattedComplex,
+    unit_str: String,
+}
+
+impl fmt::Display for FormattedUnitValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.exact {
+            write!(f, "approx. ")?;
+        }
+        write!(f, "{}{}", self.number, self.unit_str)?;
+        Ok(())
     }
 }
 
@@ -665,34 +690,50 @@ impl UnitExponent {
 
     fn format<I: Interrupt>(
         &self,
-        f: &mut fmt::Formatter,
         base: Base,
         format: FormattingStyle,
         plural: bool,
         invert_exp: bool,
         int: &I,
-    ) -> Result<(), IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<FormattedExponent>, IntErr<Never, I>> {
         let name = if plural {
             self.unit.plural_name.as_ref()
         } else {
             self.unit.singular_name.as_ref()
         };
-        write!(f, "{}", name)?;
         let exp = if invert_exp {
             -self.exponent.clone()
         } else {
             self.exponent.clone()
         };
-        if exp != 1.into() {
-            write!(f, "^")?;
-            exp.format(
-                f,
-                true,
-                format,
-                base,
-                UseParentheses::IfComplexOrFraction,
-                int,
-            )?;
+        let (exact, exponent) = if exp == 1.into() {
+            (true, None)
+        } else {
+            let formatted =
+                exp.format(true, format, base, UseParentheses::IfComplexOrFraction, int)?;
+            (formatted.exact, Some(formatted.value))
+        };
+        Ok(Exact::new(
+            FormattedExponent {
+                name,
+                number: exponent,
+            },
+            exact,
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct FormattedExponent<'a> {
+    name: &'a str,
+    number: Option<FormattedComplex>,
+}
+
+impl<'a> fmt::Display for FormattedExponent<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)?;
+        if let Some(number) = &self.number {
+            write!(f, "^{}", number)?;
         }
         Ok(())
     }
@@ -755,7 +796,8 @@ mod tests {
 
     fn to_string(n: &UnitValue) -> String {
         let int = &crate::interrupt::Never::default();
-        crate::num::to_string(|f| n.format(f, int)).unwrap().0
+        // TODO: this unwrap call should be unnecessary
+        n.format(int).unwrap().to_string()
     }
 
     #[test]

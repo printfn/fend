@@ -4,7 +4,6 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum Expr {
@@ -121,41 +120,35 @@ impl<'a> From<Expr> for Expr2<'a> {
 }
 
 impl Expr {
-    pub fn format<I: Interrupt>(
-        &self,
-        f: &mut fmt::Formatter,
-        int: &I,
-    ) -> Result<(), IntErr<fmt::Error, I>> {
-        let g = |x: &Self| -> Result<String, IntErr<fmt::Error, I>> {
-            Ok(crate::num::to_string(|f| (*x).format(f, int))?.0)
-        };
-        match self {
-            Self::Num(n) => n.format(f, int)?,
-            Self::Ident(ident) => write!(f, "{}", ident)?,
-            Self::Parens(x) => write!(f, "({})", g(x)?)?,
-            Self::UnaryMinus(x) => write!(f, "(-{})", g(x)?)?,
-            Self::UnaryPlus(x) => write!(f, "(+{})", g(x)?)?,
-            Self::UnaryDiv(x) => write!(f, "(/{})", g(x)?)?,
-            Self::Factorial(x) => write!(f, "{}!", g(x)?)?,
-            Self::Add(a, b) | Self::ImplicitAdd(a, b) => write!(f, "({}+{})", g(a)?, g(b)?)?,
-            Self::Sub(a, b) => write!(f, "({}-{})", g(a)?, g(b)?)?,
-            Self::Mul(a, b) => write!(f, "({}*{})", g(a)?, g(b)?)?,
-            Self::Div(a, b) => write!(f, "({}/{})", g(a)?, g(b)?)?,
-            Self::Pow(a, b) => write!(f, "({}^{})", g(a)?, g(b)?)?,
-            Self::Apply(a, b) => write!(f, "({} ({}))", g(a)?, g(b)?)?,
-            Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
-                write!(f, "({} {})", g(a)?, g(b)?)?
+    pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
+        Ok(match self {
+            Self::Num(n) => n.format(int)?.to_string(),
+            Self::Ident(ident) => ident.to_string(),
+            Self::Parens(x) => format!("({})", x.format(int)?),
+            Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
+            Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
+            Self::UnaryDiv(x) => format!("(/{})", x.format(int)?),
+            Self::Factorial(x) => format!("{}!", x.format(int)?),
+            Self::Add(a, b) | Self::ImplicitAdd(a, b) => {
+                format!("({}+{})", a.format(int)?, b.format(int)?)
             }
-            Self::As(a, b) => write!(f, "({} as {})", g(a)?, g(b)?)?,
+            Self::Sub(a, b) => format!("({}-{})", a.format(int)?, b.format(int)?),
+            Self::Mul(a, b) => format!("({}*{})", a.format(int)?, b.format(int)?),
+            Self::Div(a, b) => format!("({}/{})", a.format(int)?, b.format(int)?),
+            Self::Pow(a, b) => format!("({}^{})", a.format(int)?, b.format(int)?),
+            Self::Apply(a, b) => format!("({} ({}))", a.format(int)?, b.format(int)?),
+            Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
+                format!("({} {})", a.format(int)?, b.format(int)?)
+            }
+            Self::As(a, b) => format!("({} as {})", a.format(int)?, b.format(int)?),
             Self::Fn(a, b) => {
                 if a.contains('.') {
-                    write!(f, "({}:{})", a, g(b)?)?
+                    format!("({}:{})", a, b.format(int)?)
                 } else {
-                    write!(f, "\\{}.{}", a, g(b)?)?
+                    format!("\\{}.{}", a, b.format(int)?)
                 }
             }
-        }
-        Ok(())
+        })
     }
 }
 

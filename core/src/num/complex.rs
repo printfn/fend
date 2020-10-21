@@ -1,5 +1,5 @@
 use crate::err::{IntErr, Interrupt, Never};
-use crate::num::real::Real;
+use crate::num::real::{FormattedReal, Real};
 use crate::num::Exact;
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
@@ -124,13 +124,12 @@ impl Complex {
 
     pub fn format<I: Interrupt>(
         &self,
-        f: &mut fmt::Formatter,
         exact: bool,
         style: FormattingStyle,
         base: Base,
         use_parentheses: UseParentheses,
         int: &I,
-    ) -> Result<(), IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<FormattedComplex>, IntErr<Never, I>> {
         let style = if !exact && style == FormattingStyle::Auto {
             FormattingStyle::DecimalPlaces(10)
         } else {
@@ -140,20 +139,29 @@ impl Complex {
         if self.imag == 0.into() {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
             let x = self.real.format(base, style, false, use_parens, int)?;
-            if !exact || !x.exact {
-                write!(f, "approx. ")?;
-            }
-            write!(f, "{}", x.value)?;
-            return Ok(());
+            return Ok(Exact::new(
+                FormattedComplex {
+                    first_component: x.value,
+                    separator: "",
+                    second_component: None,
+                    use_parentheses: false,
+                },
+                exact && x.exact,
+            ));
         }
 
-        if self.real == 0.into() {
+        Ok(if self.real == 0.into() {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
             let x = self.imag.format(base, style, true, use_parens, int)?;
-            if !exact || !x.exact {
-                write!(f, "approx. ")?;
-            }
-            write!(f, "{}", x.value)?;
+            Exact::new(
+                FormattedComplex {
+                    first_component: x.value,
+                    separator: "",
+                    second_component: None,
+                    use_parentheses: false,
+                },
+                exact && x.exact,
+            )
         } else {
             let mut exact = exact;
             let real_part = self.real.format(base, style, false, false, int)?;
@@ -167,29 +175,18 @@ impl Complex {
                 )
             };
             exact = exact && imag_part.exact;
-            if !exact {
-                write!(f, "approx. ")?;
-            }
-            if use_parentheses == UseParentheses::IfComplex
-                || use_parentheses == UseParentheses::IfComplexOrFraction
-            {
-                write!(f, "(")?;
-            }
-            write!(f, "{}", real_part.value)?;
-            if positive {
-                write!(f, " + ")?;
-            } else {
-                write!(f, " - ")?;
-            }
-            write!(f, "{}", imag_part.value)?;
-            if use_parentheses == UseParentheses::IfComplex
-                || use_parentheses == UseParentheses::IfComplexOrFraction
-            {
-                write!(f, ")")?;
-            }
-        }
-
-        Ok(())
+            let separator = if positive { " + " } else { " - " };
+            Exact::new(
+                FormattedComplex {
+                    first_component: real_part.value,
+                    separator,
+                    second_component: Some(imag_part.value),
+                    use_parentheses: use_parentheses == UseParentheses::IfComplex
+                        || use_parentheses == UseParentheses::IfComplexOrFraction,
+                },
+                exact,
+            )
+        })
     }
 
     pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
@@ -414,5 +411,30 @@ impl From<Real> for Complex {
             real: i,
             imag: 0.into(),
         }
+    }
+}
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
+pub struct FormattedComplex {
+    first_component: FormattedReal,
+    separator: &'static str,
+    second_component: Option<FormattedReal>,
+    use_parentheses: bool,
+}
+
+impl fmt::Display for FormattedComplex {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.use_parentheses {
+            write!(f, "(")?;
+        }
+        write!(f, "{}{}", self.first_component, self.separator)?;
+        if let Some(second_component) = &self.second_component {
+            write!(f, "{}", second_component)?;
+        }
+        if self.use_parentheses {
+            write!(f, ")")?;
+        }
+        Ok(())
     }
 }
