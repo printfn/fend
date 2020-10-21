@@ -32,6 +32,63 @@ pub enum Expr {
     Fn(String, Box<Expr>),
 }
 
+#[derive(Clone, Debug)]
+pub enum Expr2<'a> {
+    Num(Number),
+    Ident(&'a str),
+    Parens(Box<Expr2<'a>>),
+    UnaryMinus(Box<Expr2<'a>>),
+    UnaryPlus(Box<Expr2<'a>>),
+    UnaryDiv(Box<Expr2<'a>>),
+    Factorial(Box<Expr2<'a>>),
+    Add(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    ImplicitAdd(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Sub(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Mul(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Div(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Pow(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    // Call a function or multiply the expressions
+    Apply(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    // Call a function, or throw an error if lhs is not a function
+    ApplyFunctionCall(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    // Multiply the expressions
+    ApplyMul(Box<Expr2<'a>>, Box<Expr2<'a>>),
+
+    As(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Fn(&'a str, Box<Expr2<'a>>),
+}
+
+impl<'a> From<Box<Expr2<'a>>> for Box<Expr> {
+    fn from(expr: Box<Expr2<'a>>) -> Self {
+        Box::new(Expr::from(*expr))
+    }
+}
+
+impl<'a> From<Expr2<'a>> for Expr {
+    fn from(expr: Expr2<'a>) -> Self {
+        match expr {
+            Expr2::<'a>::Num(n) => Self::Num(n),
+            Expr2::<'a>::Ident(ident) => Self::Ident(ident.to_string()),
+            Expr2::<'a>::Parens(x) => Self::Parens(x.into()),
+            Expr2::<'a>::UnaryMinus(x) => Self::UnaryMinus(x.into()),
+            Expr2::<'a>::UnaryPlus(x) => Self::UnaryPlus(x.into()),
+            Expr2::<'a>::UnaryDiv(x) => Self::UnaryDiv(x.into()),
+            Expr2::<'a>::Factorial(x) => Self::Factorial(x.into()),
+            Expr2::<'a>::Add(a, b) => Self::Add(a.into(), b.into()),
+            Expr2::<'a>::ImplicitAdd(a, b) => Self::ImplicitAdd(a.into(), b.into()),
+            Expr2::<'a>::Sub(a, b) => Self::Sub(a.into(), b.into()),
+            Expr2::<'a>::Mul(a, b) => Self::Mul(a.into(), b.into()),
+            Expr2::<'a>::Div(a, b) => Self::Div(a.into(), b.into()),
+            Expr2::<'a>::Pow(a, b) => Self::Pow(a.into(), b.into()),
+            Expr2::<'a>::Apply(a, b) => Self::Apply(a.into(), b.into()),
+            Expr2::<'a>::ApplyFunctionCall(a, b) => Self::ApplyFunctionCall(a.into(), b.into()),
+            Expr2::<'a>::ApplyMul(a, b) => Self::ApplyMul(a.into(), b.into()),
+            Expr2::<'a>::As(a, b) => Self::As(a.into(), b.into()),
+            Expr2::<'a>::Fn(a, b) => Self::Fn(a.to_string(), b.into()),
+        }
+    }
+}
+
 impl Expr {
     pub fn format<I: Interrupt>(
         &self,
