@@ -596,12 +596,16 @@ gibi-                   2^30     # powers of two, the International
 tebi-                   2^40     # Electrotechnical Commission aproved these
 pebi-                   2^50     # binary prefixes for use in 1998.  If you
 exbi-                   2^60     # want to refer to "megabytes" using the
-Ki-                     kibi     # binary definition, use these prefixes.
+zebi-                   2^70     # binary definition, use these prefixes.
+yobi-                   2^80
+Ki-                     kibi
 Mi-                     mebi
 Gi-                     gibi
 Ti-                     tebi
 Pi-                     pebi
 Ei-                     exbi
+Zi-                     zebi
+Yi-                     yobi
 
 Y-                      yotta
 Z-                      zetta

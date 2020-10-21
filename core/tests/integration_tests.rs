@@ -281,6 +281,11 @@ fn test_basic_order_of_operations() {
 }
 
 #[test]
+fn test_large_stupid_bin_prefixes() {
+    test_same("1 YiB to bytes", "2^80 bytes")
+}
+
+#[test]
 fn test_exact_division() {
     test_evaluation("1/1", "1");
     test_evaluation("1/2", "0.5");
