@@ -30,7 +30,6 @@ manualstep() {
 confirm "Releasing version $VERSION"
 echo "Running cargo fmt..."
 cargo fmt
-manualstep "Update changelog"
 manualstep "Update README"
 manualstep "Bump version number in these places:
 fend-core TOML,
@@ -76,5 +75,5 @@ manualstep "Create GitHub release (including changelog):
 Changes in this version:
 
 * ..."
-manualstep "Update manual: https://github.com/printfn/fend/wiki"
+manualstep "Update manual (including changelog): https://github.com/printfn/fend/wiki"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"

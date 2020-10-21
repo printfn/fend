@@ -9,7 +9,6 @@ use rustyline::Editor;
 use fend_core::Context;
 use std::path::PathBuf;
 
-mod changelog;
 mod config;
 mod helper;
 mod interrupt;
@@ -62,10 +61,6 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn print_changelog() {
-    println!("{}", changelog::get_changelog());
-}
-
 fn save_history(rl: &mut Editor<helper::FendHelper>, path: &Option<PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
@@ -103,7 +98,6 @@ fn repl_loop() -> i32 {
                 "help" | "?" => {
                     print_help(true);
                 }
-                "changelog" => print_changelog(),
                 line => {
                     interrupt.reset();
                     match eval_and_print_res(line, &mut context, &interrupt, true) {
@@ -153,10 +147,6 @@ fn main() {
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
             print_help(false);
-            return;
-        }
-        if expr == "changelog" || expr == "--changelog" {
-            print_changelog();
             return;
         }
         // 'version' is already handled by fend itself

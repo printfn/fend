@@ -84,10 +84,6 @@ approx. 0.3066013937 parsecs
 approx. 6.2831853071
 ```
 
-## Changelog
-
-See here: [CHANGELOG.md](CHANGELOG.md)
-
 ## License
 
 fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
