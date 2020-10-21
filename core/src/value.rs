@@ -1,6 +1,6 @@
 use crate::ast::Expr;
-use crate::err::{IntErr, Interrupt};
-use crate::num::{Base, FormattingStyle, Number};
+use crate::err::{IntErr, Interrupt, Never};
+use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::{parser::ParseOptions, scope::Scope};
 use std::fmt;
 
@@ -71,11 +71,9 @@ impl BuiltInFunction {
             _ => return Err(format!("Unable to invert function {}", self)),
         })
     }
-}
 
-impl fmt::Display for BuiltInFunction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let name = match self {
+    fn as_str(self) -> &'static str {
+        match self {
             Self::Approximately => "approximately",
             Self::Abs => "abs",
             Self::Sin => "sin",
@@ -94,8 +92,13 @@ impl fmt::Display for BuiltInFunction {
             Self::Log2 => "log2",
             Self::Log10 => "log10",
             Self::Base => "base",
-        };
-        write!(f, "{}", name)
+        }
+    }
+}
+
+impl fmt::Display for BuiltInFunction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -172,7 +175,7 @@ impl Value {
                     let self_ = Self::Num(n);
                     return Err(format!(
                         "{} is not a function",
-                        crate::num::to_string(|f| self_.format(f, int))?.0
+                        self_.format(int)?.to_string()
                     ))?;
                 } else {
                     let n2 = n.clone();
@@ -224,33 +227,47 @@ impl Value {
             _ => {
                 return Err(format!(
                     "'{}' is not a function or a number",
-                    crate::num::to_string(|f| self.format(f, int))?.0
+                    self.format(int)?.to_string()
                 ))?;
             }
         })
     }
 
-    pub fn format<I: Interrupt>(
-        &self,
-        f: &mut fmt::Formatter,
-        int: &I,
-    ) -> Result<(), IntErr<fmt::Error, I>> {
-        match self {
-            Self::Num(n) => write!(f, "{}", n.format(int)?)?,
-            Self::BuiltInFunction(name) => write!(f, "{}", name)?,
-            Self::Format(fmt) => write!(f, "{}", fmt)?,
-            Self::Dp => write!(f, "dp")?,
-            Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
+    pub fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, IntErr<Never, I>> {
+        Ok(match self {
+            Self::Num(n) => FormattedValue::Number(Box::new(n.format(int)?)),
+            Self::BuiltInFunction(name) => FormattedValue::Str(name.as_str()),
+            Self::Format(fmt) => FormattedValue::String(fmt.to_string()),
+            Self::Dp => FormattedValue::Str("dp"),
+            Self::Base(b) => FormattedValue::String(format!("base {}", b.base_as_u8())),
             Self::Fn(name, expr, _scope) => {
                 let expr_str = expr.format(int)?;
-                if name.contains('.') {
-                    write!(f, "{}:{}", name, expr_str)?
+                let res = if name.contains('.') {
+                    format!("{}:{}", name, expr_str)
                 } else {
-                    write!(f, "\\{}.{}", name, expr_str)?
-                }
+                    format!("\\{}.{}", name, expr_str)
+                };
+                FormattedValue::String(res)
             }
-            Self::Version => write!(f, "{}", crate::get_version())?,
+            Self::Version => FormattedValue::Str(crate::get_version_as_str()),
+        })
+    }
+}
+
+#[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
+pub enum FormattedValue {
+    Str(&'static str),
+    String(String),
+    Number(Box<FormattedNumber>),
+}
+
+impl fmt::Display for FormattedValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Str(s) => write!(f, "{}", s),
+            Self::String(s) => write!(f, "{}", s),
+            Self::Number(n) => write!(f, "{}", n),
         }
-        Ok(())
     }
 }

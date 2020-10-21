@@ -4,7 +4,6 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum Expr {
@@ -33,7 +32,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<fmt::Error, I>> {
+    pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
             Self::Ident(ident) => ident.to_string(),
