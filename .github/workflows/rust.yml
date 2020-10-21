@@ -47,7 +47,7 @@ jobs:
     - name: Build
       run: cargo build --release --workspace
     - name: Get version
-      run: echo "FEND_VERSION=$(cargo run --release -- --version)" ${{ matrix.env-command }}
+      run: echo "FEND_VERSION=$(./${{ matrix.artifact-path }} --version)" ${{ matrix.env-command }}
     - name: Run tests
       run: cargo test -q --workspace -- --nocapture
     - name: Upload artifacts

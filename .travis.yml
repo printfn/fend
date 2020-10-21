@@ -10,7 +10,7 @@ cache: cargo
 script:
   - rm -rvf target/debug
   - cargo build --all
-  - cargo test --all -q
+  - cargo test --all --no-run
 
 addons:
   apt:
