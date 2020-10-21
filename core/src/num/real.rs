@@ -190,7 +190,7 @@ impl Real {
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<Exact<FormattedReal>, IntErr<fmt::Error, I>> {
+    ) -> Result<Exact<FormattedReal>, IntErr<Never, I>> {
         let mut override_exact = true;
         if self != &0.into() {
             if let Pattern::Pi(_) = self.pattern {

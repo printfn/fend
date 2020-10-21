@@ -236,7 +236,7 @@ impl Value {
         int: &I,
     ) -> Result<(), IntErr<fmt::Error, I>> {
         match self {
-            Self::Num(n) => write!(f, "{}", crate::num::to_string(|f| n.format(f, int))?.0)?,
+            Self::Num(n) => write!(f, "{}", n.format(int)?)?,
             Self::BuiltInFunction(name) => write!(f, "{}", name)?,
             Self::Format(fmt) => write!(f, "{}", fmt)?,
             Self::Dp => write!(f, "dp")?,

@@ -42,7 +42,7 @@ impl Expr {
             Ok(crate::num::to_string(|f| (*x).format(f, int))?.0)
         };
         match self {
-            Self::Num(n) => n.format(f, int)?,
+            Self::Num(n) => write!(f, "{}", n.format(int)?)?,
             Self::Ident(ident) => write!(f, "{}", ident)?,
             Self::Parens(x) => write!(f, "({})", g(x)?)?,
             Self::UnaryMinus(x) => write!(f, "(-{})", g(x)?)?,
