@@ -1,29 +1,6 @@
 use fend_core::{evaluate, Context};
 
 #[track_caller]
-pub fn test_evaluation(input: &str, expected: &str) {
-    let mut context = Context::new();
-    assert_eq!(
-        evaluate(input, &mut context).unwrap().get_main_result(),
-        expected.to_string()
-    );
-    // try parsing the output again, and make sure it matches
-    assert_eq!(
-        evaluate(expected, &mut context).unwrap().get_main_result(),
-        expected.to_string()
-    );
-}
-
-#[track_caller]
-fn test_same(a: &str, b: &str) {
-    let mut context = Context::new();
-    assert_eq!(
-        evaluate(a, &mut context).unwrap().get_main_result(),
-        evaluate(b, &mut context).unwrap().get_main_result()
-    );
-}
-
-#[track_caller]
 fn test_eval_simple(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
@@ -32,36 +9,69 @@ fn test_eval_simple(input: &str, expected: &str) {
     );
 }
 
-#[track_caller]
-fn expect_error(input: &str) {
-    let mut context = Context::new();
-    assert!(evaluate(input, &mut context).is_err());
+macro_rules! test_eval {
+    ($e:ident, $input:literal, $expected:literal) => {
+        #[test]
+        fn $e() {
+            let mut context = Context::new();
+            assert_eq!(
+                evaluate($input, &mut context).unwrap().get_main_result(),
+                $expected
+            );
+            // try parsing the output again, and make sure it matches
+            assert_eq!(
+                evaluate($expected, &mut context).unwrap().get_main_result(),
+                $expected
+            );
+        }
+    };
 }
 
-#[track_caller]
-fn assert_err_msg(input: &str, error: &str) {
-    let mut context = Context::new();
-    assert_eq!(evaluate(input, &mut context), Err(error.to_string()));
+macro_rules! test_same {
+    ($e:ident, $a:literal, $b:literal) => {
+        #[test]
+        fn $e() {
+            let mut context = Context::new();
+            assert_eq!(
+                evaluate($a, &mut context).unwrap().get_main_result(),
+                evaluate($b, &mut context).unwrap().get_main_result()
+            );
+        }
+    };
 }
+
+macro_rules! expect_error {
+    ($e:ident, $input:literal) => {
+        #[test]
+        fn $e() {
+            let mut context = Context::new();
+            assert!(evaluate($input, &mut context).is_err());
+        }
+    };
+    ($e:ident, $input:literal, $message:expr) => {
+        #[test]
+        fn $e() {
+            let mut context = Context::new();
+            assert_eq!(evaluate($input, &mut context), Err($message.to_string()));
+        }
+    };
+}
+
+test_eval!(two, "2", "2");
+test_eval!(nine, "9", "9");
+test_eval!(ten, "10", "10");
+test_eval!(
+    large_integer,
+    "39456720983475234523452345",
+    "39456720983475234523452345"
+);
+test_eval!(ten_whitespace_after, "10 ", "10");
+test_eval!(ten_whitespace_before, " 10", "10");
+test_eval!(ten_whitespace_both, " 10\n\r\n", "10");
+test_eval!(blank_input, "", "");
 
 #[test]
-fn test_basic_integers() {
-    test_evaluation("2", "2");
-    test_evaluation("9", "9");
-    test_evaluation("10", "10");
-    test_evaluation("39456720983475234523452345", "39456720983475234523452345");
-    test_evaluation("10 ", "10");
-    test_evaluation(" 10", "10");
-    test_evaluation(" 10\n\r\n", "10");
-}
-
-#[test]
-fn test_blank_input() {
-    test_evaluation("", "");
-}
-
-#[test]
-fn test_version() {
+fn version() {
     let mut ctx = Context::new();
     let result = evaluate("version", &mut ctx).unwrap();
     for c in result.get_main_result().chars() {
@@ -69,11 +79,12 @@ fn test_version() {
     }
 }
 
+test_eval!(pi, "pi", "approx. 3.1415926535");
+test_eval!(pi_times_two, "pi * 2", "approx. 6.2831853071");
+test_eval!(two_pi, "2 pi", "approx. 6.2831853071");
+
 #[test]
-fn test_pi() {
-    test_evaluation("pi", "approx. 3.1415926535");
-    test_evaluation("pi * 2", "approx. 6.2831853071");
-    test_evaluation("2 pi", "approx. 6.2831853071");
+fn pi_to_fraction() {
     let mut ctx = Context::new();
     assert!(evaluate("pi to fraction", &mut ctx)
         .unwrap()
@@ -81,34 +92,46 @@ fn test_pi() {
         .starts_with("approx."));
 }
 
-#[test]
-fn test_div_by_zero() {
-    let msg = "Division by zero";
-    assert_err_msg("1/0", msg);
-    assert_err_msg("0/0", msg);
-    assert_err_msg("-1/0", msg);
-    assert_err_msg("(3pi) / (0pi)", msg);
-    assert_err_msg("-1/(2-2)", msg);
-}
+const DIVISION_BY_ZERO_ERROR: &str = "Division by zero";
+expect_error!(one_over_zero, "1/0", DIVISION_BY_ZERO_ERROR);
+expect_error!(zero_over_zero, "0/0", DIVISION_BY_ZERO_ERROR);
+expect_error!(minus_one_over_zero, "-1/0", DIVISION_BY_ZERO_ERROR);
+expect_error!(
+    three_pi_over_zero_pi,
+    "(3pi) / (0pi)",
+    DIVISION_BY_ZERO_ERROR
+);
+expect_error!(
+    minus_one_over_zero_indirect,
+    "-1/(2-2)",
+    DIVISION_BY_ZERO_ERROR
+);
 
-#[test]
-fn test_leading_zeroes() {
-    let msg = "Integer literals cannot have leading zeroes";
-    assert_err_msg("00", msg);
-    assert_err_msg("000000", msg);
-    assert_err_msg("000000.01", msg);
-    assert_err_msg("0000001.01", msg);
-    test_evaluation("0b01", "0b1");
-    test_evaluation("0x0000_00ff", "0xff");
-    test_evaluation("10#04", "10#4");
-    test_evaluation("1.001", "1.001");
-    test_evaluation("1e01", "10");
-    test_evaluation("1e-01", "0.1");
-}
+const LEADING_ZEROES_ERROR: &str = "Integer literals cannot have leading zeroes";
+expect_error!(two_zeroes, "00", LEADING_ZEROES_ERROR);
+expect_error!(six_zeroes, "000000", LEADING_ZEROES_ERROR);
+expect_error!(
+    multiple_zeroes_with_decimal_point,
+    "000000.01",
+    LEADING_ZEROES_ERROR
+);
+expect_error!(
+    leading_zeroes_and_decimal_point,
+    "0000001.01",
+    LEADING_ZEROES_ERROR
+);
+
+test_eval!(binary_leading_zeroes, "0b01", "0b1");
+test_eval!(hex_leading_zeroes, "0x0000_00ff", "0xff");
+test_eval!(explicit_base_10_leading_zeroes, "10#04", "10#4");
+test_eval!(leading_zeroes_after_decimal_point, "1.001", "1.001");
+test_eval!(leading_zeroes_in_exponent, "1e01", "10");
+test_eval!(leading_zeroes_in_negative_exponent, "1e-01", "0.1");
+
+expect_error!(no_recurring_digits, "0.()");
 
 #[test]
 fn test_parsing_recurring_digits() {
-    expect_error("0.()");
     test_eval_simple("0.(3) to float", "0.(3)");
     test_eval_simple("0.(33) to float", "0.(3)");
     test_eval_simple("0.(34) to float", "0.(34)");
@@ -125,636 +148,624 @@ fn test_parsing_recurring_digits() {
     test_eval_simple("6#0.(1) to float to base 10", "0.2");
 }
 
-#[test]
-fn test_multiplication() {
-    test_evaluation("2*2", "4");
-    test_evaluation("\n2\n*\n2\n", "4");
-    test_evaluation(
-        "315427679023453451289740 * 927346502937456234523452",
-        "292510755072077978255166497050046859223676982480",
-    );
-    test_evaluation("pi * pi", "approx. 9.869604401");
-    test_evaluation("4pi + 1", "approx. 13.5663706143");
-}
+test_eval!(two_times_two, "2*2", "4");
+test_eval!(two_times_two_whitespace, "\n2\n*\n2\n", "4");
+test_eval!(
+    large_multiplication,
+    "315427679023453451289740 * 927346502937456234523452",
+    "292510755072077978255166497050046859223676982480"
+);
+test_eval!(pi_times_pi, "pi * pi", "approx. 9.869604401");
+test_eval!(four_pi_plus_one, "4pi + 1", "approx. 13.5663706143");
+
+test_eval!(implicit_lambda_1, "-sin (-pi/2)", "1");
+test_eval!(implicit_lambda_2, "+sin (-pi/2)", "-1");
+test_eval!(implicit_lambda_3, "/sin (-pi/2)", "-1");
+test_eval!(implicit_lambda_4, "cos! 0", "1");
+test_eval!(implicit_lambda_5, "sqrt! 16", "24");
+test_eval!(implicit_lambda_6, "///sqrt! 16", "1/24");
+test_eval!(implicit_lambda_7, "(x: sin^2 x + cos^2 x) 1", "approx. 1");
+test_eval!(implicit_lambda_8, "cos^2 pi", "1");
+test_eval!(implicit_lambda_9, "sin pi/cos pi", "0");
+test_eval!(implicit_lambda_10, "sin + 1) pi", "1");
+test_eval!(implicit_lambda_11, "3sin pi", "0");
+test_eval!(implicit_lambda_12, "(sqrt - 1) 16", "3");
+test_eval!(implicit_lambda_13, "(1 - sqrt) 16", "-3");
+test_eval!(implicit_lambda_14, "((\\x.sqrt x) - 1) 16", "3");
+test_eval!(implicit_lambda_15, "(1 - \\x.sqrt x) 16", "-3");
+
+test_eval!(inverse_sin, "sin^-1", "asin");
+test_eval!(inverse_sin_point_five, "sin^-1 0.5", "approx. 0.5235987755");
+test_eval!(inverse_sin_nested, "sin^-1 (sin 0.5", "approx. 0.5");
+test_eval!(inverse_sin_nested_2, "(sin^-1)^-1", "sin");
+test_eval!(inverse_cos, "cos^-1", "acos");
+test_eval!(inverse_tan, "tan^-1", "atan");
+test_eval!(inverse_asin, "asin^-1", "sin");
+test_eval!(inverse_acos, "acos^-1", "cos");
+test_eval!(inverse_atan, "atan^-1", "tan");
+test_eval!(inverse_sinh, "sinh^-1", "asinh");
+test_eval!(inverse_cosh, "cosh^-1", "acosh");
+test_eval!(inverse_tanh, "tanh^-1", "atanh");
+test_eval!(inverse_asinh, "asinh^-1", "sinh");
+test_eval!(inverse_acosh, "acosh^-1", "cosh");
+test_eval!(inverse_atanh, "atanh^-1", "tanh");
+
+test_eval!(two_plus_two, "2+2", "4");
+test_eval!(two_plus_two_whitespace, "\n2\n+\n2\n", "4");
+test_eval!(plus_two, "+2", "2");
+test_eval!(unary_pluses_two, "++++2", "2");
+test_eval!(
+    large_simple_addition,
+    "315427679023453451289740 + 927346502937456234523452",
+    "1242774181960909685813192"
+);
+
+test_eval!(minus_zero, "-0", "0");
+test_eval!(two_minus_two, "2-2", "0");
+test_eval!(three_minus_two, "3-2", "1");
+test_eval!(two_minus_three, "2-3", "-1");
+test_eval!(minus_two, "-2", "-2");
+test_eval!(minus_minus_two, "--2", "2");
+test_eval!(minus_minus_minus_two, "---2", "-2");
+test_eval!(minus_minus_minus_two_parens, "-(--2)", "-2");
+test_eval!(two_minus_64, "\n2\n-\n64\n", "-62");
+test_eval!(
+    large_simple_subtraction,
+    "315427679023453451289740 - 927346502937456234523452",
+    "-611918823914002783233712"
+);
+test_eval!(three_pi_minus_two_pi, "3pi - 2pi", "approx. 3.1415926535");
+test_eval!(
+    four_pi_plus_one_over_pi,
+    "4pi-1)/pi",
+    "approx. 3.6816901138"
+);
+test_eval!(
+    large_simple_subtraction_2,
+    "36893488123704996004 - 18446744065119617025",
+    "18446744058585378979"
+);
+
+test_eval!(sqrt_half, "sqrt (1/2)", "approx. 0.7071067814");
+
+test_eval!(sqrt_0, "sqrt 0", "0");
+test_eval!(sqrt_1, "sqrt 1", "1");
+test_eval!(sqrt_2, "sqrt 2", "approx. 1.4142135619");
+test_eval!(sqrt_pi, "sqrt pi", "approx. 1.7724538509");
+test_eval!(sqrt_4, "sqrt 4", "2");
+test_eval!(sqrt_9, "sqrt 9", "3");
+test_eval!(sqrt_16, "sqrt 16", "4");
+test_eval!(sqrt_25, "sqrt 25", "5");
+test_eval!(sqrt_36, "sqrt 36", "6");
+test_eval!(sqrt_49, "sqrt 49", "7");
+test_eval!(sqrt_64, "sqrt 64", "8");
+test_eval!(sqrt_81, "sqrt 81", "9");
+test_eval!(sqrt_100, "sqrt 100", "10");
+test_eval!(sqrt_10000, "sqrt 10000", "100");
+test_eval!(sqrt_1000000, "sqrt 1000000", "1000");
+test_eval!(sqrt_quarter, "sqrt 0.25", "0.5");
+test_eval!(sqrt_sixteenth, "sqrt 0.0625", "0.25");
+
+test_eval!(cbrt_0, "cbrt 0", "0");
+test_eval!(cbrt_1, "cbrt 1", "1");
+test_eval!(cbrt_8, "cbrt 8", "2");
+test_eval!(cbrt_27, "cbrt 27", "3");
+test_eval!(cbrt_64, "cbrt 64", "4");
+test_eval!(cbrt_eighth, "cbrt (1/8)", "0.5");
+test_eval!(cbrt_1_over_125, "cbrt (125/8)", "2.5");
+
+test_eval!(sqrt_kg_squared_1, "sqrt(kg^2)", "1 kg");
+test_eval!(sqrt_kg_squared_2, "(sqrt kg)^2", "1 kg");
+
+test_eval!(order_of_operations_1, "2+2*3", "8");
+test_eval!(order_of_operations_2, "2*2+3", "7");
+test_eval!(order_of_operations_3, "2+2+3", "7");
+test_eval!(order_of_operations_4, "2+2-3", "1");
+test_eval!(order_of_operations_5, "2-2+3", "3");
+test_eval!(order_of_operations_6, "2-2-3", "-3");
+test_eval!(order_of_operations_7, "2*2*3", "12");
+test_eval!(order_of_operations_8, "2*2*-3", "-12");
+test_eval!(order_of_operations_9, "2*-2*3", "-12");
+test_eval!(order_of_operations_10, "-2*2*3", "-12");
+test_eval!(order_of_operations_11, "-2*-2*3", "12");
+test_eval!(order_of_operations_12, "-2*2*-3", "12");
+test_eval!(order_of_operations_13, "2*-2*-3", "12");
+test_eval!(order_of_operations_14, "-2*-2*-3", "-12");
+test_eval!(order_of_operations_15, "-2*-2*-3/2", "-6");
+test_eval!(order_of_operations_16, "-2*-2*-3/-2", "6");
+test_eval!(order_of_operations_17, "-3 -1/2", "-3.5");
+
+test_eval!(
+    yobibyte,
+    "1 YiB to bytes",
+    "1208925819614629174706176 bytes"
+);
+
+test_eval!(div_1_over_1, "1/1", "1");
+test_eval!(div_1_over_2, "1/2", "0.5");
+test_eval!(div_1_over_4, "1/4", "0.25");
+test_eval!(div_1_over_8, "1/8", "0.125");
+test_eval!(div_1_over_16, "1/16", "0.0625");
+test_eval!(div_1_over_32, "1/32", "0.03125");
+test_eval!(div_1_over_64, "1/64", "0.015625");
+test_eval!(div_2_over_64, "2/64", "0.03125");
+test_eval!(div_4_over_64, "4/64", "0.0625");
+test_eval!(div_8_over_64, "8/64", "0.125");
+test_eval!(div_16_over_64, "16/64", "0.25");
+test_eval!(div_32_over_64, "32/64", "0.5");
+test_eval!(div_64_over_64, "64/64", "1");
+test_eval!(div_2_over_1, "2/1", "2");
+test_eval!(div_27_over_3, "27/3", "9");
+test_eval!(div_100_over_4, "100/4", "25");
+test_eval!(div_100_over_5, "100/5", "20");
+test_eval!(div_large_1, "18446744073709551616/2", "9223372036854775808");
+test_eval!(
+    div_large_2,
+    "184467440737095516160000000000000/2",
+    "92233720368547758080000000000000"
+);
+test_eval!(div_exact_pi, "(3pi) / (2pi)", "1.5");
+
+test_eval!(zero_point_zero, "0.0", "0");
+test_eval!(zero_point_multiple_zeroes, "0.000000", "0");
+test_eval!(zero_point_zero_one, "0.01", "0.01");
+test_eval!(zero_point_zero_one_zeroes, "0.01000", "0.01");
+test_eval!(zero_point_two_five, "0.25", "0.25");
+expect_error!(one_point, "1.");
+test_eval!(point_one, ".1", "0.1");
+test_eval!(point_one_e_minus_one, ".1e-1", "0.01");
+expect_error!(leading_zeroes_with_dp, "001.01000");
+test_eval!(
+    very_long_decimal,
+    "0.251974862348971623412341534273261435",
+    "0.251974862348971623412341534273261435"
+);
+test_eval!(
+    one_point_zeroes_1_as_1_dp,
+    "1.00000001 as 1 dp",
+    "approx. 1"
+);
+test_eval!(
+    one_point_zeroes_1_as_2_dp,
+    "1.00000001 as 2 dp",
+    "approx. 1"
+);
+test_eval!(
+    one_point_zeroes_1_as_3_dp,
+    "1.00000001 as 3 dp",
+    "approx. 1"
+);
+test_eval!(
+    one_point_zeroes_1_as_4_dp,
+    "1.00000001 as 4 dp",
+    "approx. 1"
+);
+test_eval!(
+    one_point_zeroes_1_as_10_dp,
+    "1.00000001 as 10 dp",
+    "1.00000001"
+);
+test_eval!(
+    one_point_zeroes_1_as_30_dp,
+    "1.00000001 as 30 dp",
+    "1.00000001"
+);
+test_eval!(
+    one_point_zeroes_1_as_1000_dp,
+    "1.00000001 as 1000 dp",
+    "1.00000001"
+);
+test_eval!(
+    one_point_zeroes_1_as_0_dp,
+    "1.00000001 as 0 dp",
+    "approx. 1"
+);
+test_eval!(point_1_zero_recurring, ".1(0)", "0.1");
+test_eval!(recurring_product_whitespace_1, ".1( 0)", "0");
+test_eval!(recurring_product_whitespace_2, ".1 ( 0)", "0");
+expect_error!(point_1_zero_recurring_whitespace_error, ".1(0 )");
+expect_error!(point_1_zero_recurring_letters_error, ".1(0a)");
+test_eval!(recurring_product_with_e, "2.0(e)", "approx. 5.4365636569");
+test_eval!(
+    recurring_product_with_function,
+    "2.0(ln 5)",
+    "approx. 3.2188758248"
+);
+test_eval!(integer_product_whitespace_1, "2 (5)", "10");
+test_eval!(integer_product_whitespace_2, "2( 5)", "10");
+test_eval!(
+    large_division,
+    "60153992292001127921539815855494266880 / 9223372036854775808",
+    "6521908912666391110"
+);
+
+test_eval!(parentheses_1, "(1)", "1");
+test_eval!(parentheses_2, "(0.0)", "0");
+test_eval!(parentheses_3, "(1+-2)", "-1");
+test_eval!(parentheses_4, "1+2*3", "7");
+test_eval!(parentheses_5, "(1+2)*3", "9");
+test_eval!(parentheses_6, "((1+2))*3", "9");
+test_eval!(parentheses_7, "((1)+2)*3", "9");
+test_eval!(parentheses_8, "(1+(2))*3", "9");
+test_eval!(parentheses_9, "(1+(2)*3)", "7");
+test_eval!(parentheses_10, "1+(2*3)", "7");
+test_eval!(parentheses_11, "1+((2 )*3)", "7");
+test_eval!(parentheses_12, " 1 + ( (\r\n2 ) * 3 ) ", "7");
+test_eval!(parentheses_13, "2*(1+3", "8");
+test_eval!(parentheses_14, "4+5+6)*(1+2", "45");
+test_eval!(parentheses_15, "4+5+6))*(1+2", "45");
+
+test_eval!(powers_1, "1^1", "1");
+test_eval!(powers_2, "1**1", "1");
+test_eval!(powers_3, "1**1.0", "1");
+test_eval!(powers_4, "1.0**1", "1");
+test_eval!(powers_5, "2^4", "16");
+test_eval!(powers_6, "4^2", "16");
+test_eval!(powers_7, "4^3", "64");
+test_eval!(powers_8, "4^(3^1)", "64");
+test_eval!(powers_9, "4^3^1", "64");
+test_eval!(powers_10, "(4^3)^1", "64");
+test_eval!(powers_11, "(2^3)^4", "4096");
+test_eval!(powers_12, "2^3^2", "512");
+test_eval!(powers_13, "(2^3)^2", "64");
+test_eval!(powers_14, "4^0.5", "2");
+test_eval!(powers_15, "4^(1/2)", "2");
+test_eval!(powers_16, "4^(1/4)", "approx. 1.4142135619");
+test_eval!(powers_17, "(2/3)^(4/5)", "approx. 0.7229811807");
+test_eval!(
+    powers_18,
+    "5.2*10^15*300^(3/2)",
+    "approx. 27019992598076723515.9873962402"
+);
+test_eval!(pi_to_the_power_of_ten, "pi^10", "approx. 93648.047476083");
+expect_error!(zero_to_the_power_of_zero, "0^0");
+test_eval!(zero_to_the_power_of_one, "0^1", "0");
+test_eval!(one_to_the_power_of_zero, "1^0", "1");
+expect_error!(exponent_too_large, "1^1e1000");
+expect_error!(i_cubed, "i^3");
+expect_error!(four_to_the_power_of_i, "4^i");
+expect_error!(i_to_the_power_of_i, "i^i");
+test_eval!(unit_to_approx_power, "kg^(approx. 1)", "approx. 1 kg");
+
+test_eval!(negative_decimal, "-0.125", "-0.125");
+test_eval!(two_pow_one_pow_two, "2^1^2", "2");
+test_eval!(two_pow_one_parens_one_pow_two, "2^(1^2)", "2");
+test_eval!(two_pow_parens_one, "2^(1)", "2");
+test_eval!(negative_power_1, "2 * (-2^3)", "-16");
+test_eval!(negative_power_2, "2 * -2^3", "-16");
+test_eval!(negative_power_3, "2^-3 * 4", "0.5");
+test_eval!(negative_power_4, "2^3 * 4", "32");
+test_eval!(negative_power_5, "-2^-3", "-0.125");
+test_eval!(negative_product, "2 * -3 * 4", "-24");
+test_eval!(negative_power_6, "4^-1^2", "0.25");
+test_same!(negative_power_7, "2^-3^4", "1 / 2^81");
+
+test_eval!(i, "i", "i");
+test_eval!(three_i, "3i", "3i");
+test_eval!(three_i_plus_four, "3i+4", "4 + 3i");
+test_eval!(three_i_plus_four_plus_i, "(3i+4) + i", "4 + 4i");
+test_eval!(three_i_plus_four_plus_i_2, "3i+(4 + i)", "4 + 4i");
+test_eval!(minus_three_i, "-3i", "-3i");
+test_eval!(i_over_i, "i/i", "1");
+test_eval!(i_times_i, "i*i", "-1");
+test_eval!(i_times_i_times_i, "i*i*i", "-i");
+test_eval!(i_times_i_times_i_times_i, "i*i*i*i", "1");
+test_eval!(minus_three_plus_i, "-3+i", "-3 + i");
+test_eval!(i_plus_i, "1+i", "1 + i");
+test_eval!(i_minus_i, "1-i", "1 - i");
+test_eval!(minus_one_plus_i, "-1 + i", "-1 + i");
+test_eval!(minus_one_minus_i, "-1 - i", "-1 - i");
+test_eval!(minus_one_minus_two_i, "-1 - 2i", "-1 - 2i");
+test_eval!(minus_one_minus_half_i, "-1 - 0.5i", "-1 - 0.5i");
+test_eval!(
+    minus_one_minus_half_i_plus_half_i,
+    "-1 - 0.5i + 1.5i",
+    "-1 + i"
+);
+test_eval!(minus_i, "-i", "-i");
+test_eval!(plus_i, "+i", "i");
+test_eval!(two_i, "2i", "2i");
+test_eval!(i_over_3, "i/3", "i/3");
+test_eval!(two_i_over_three, "2i/3", "2i/3");
+test_eval!(two_i_over_minus_three_minus_one, "2i/-3-1", "-1 - 2i/3");
+expect_error!(i_is_not_a_binary_digit, "2#i");
+
+test_eval!(digit_separators_1, "1_1", "11");
+test_eval!(digit_separators_2, "11_1", "111");
+test_eval!(digit_separators_3, "1_1_1", "111");
+test_eval!(digit_separators_4, "123_456_789_123", "123456789123");
+test_eval!(digit_separators_5, "1_2_3_4_5_6", "123456");
+test_eval!(digit_separators_6, "1.1_1", "1.11");
+test_eval!(digit_separators_7, "1_1.1_1", "11.11");
+expect_error!(digit_separators_8, "_1");
+expect_error!(digit_separators_9, "1_");
+expect_error!(digit_separators_10, "1__1");
+expect_error!(digit_separators_11, "_");
+expect_error!(digit_separators_12, "1_.1");
+expect_error!(digit_separators_13, "1._1");
+expect_error!(digit_separators_14, "1.1_");
+test_eval!(digit_separators_15, "1,1", "11");
+test_eval!(digit_separators_16, "11,1", "111");
+test_eval!(digit_separators_17, "1,1,1", "111");
+test_eval!(digit_separators_18, "123,456,789,123", "123456789123");
+test_eval!(digit_separators_19, "1,2,3,4,5,6", "123456");
+test_eval!(digit_separators_20, "1.1,1", "1.11");
+test_eval!(digit_separators_21, "1,1.1,1", "11.11");
+expect_error!(digit_separators_22, ",1");
+expect_error!(digit_separators_23, "1,");
+expect_error!(digit_separators_24, "1,,1");
+expect_error!(digit_separators_25, ",");
+expect_error!(digit_separators_26, "1,.1");
+expect_error!(digit_separators_27, "1.,1");
+expect_error!(digit_separators_28, "1.1,");
+
+test_eval!(different_base_1, "0x10", "0x10");
+test_eval!(different_base_2, "0o10", "0o10");
+test_eval!(different_base_3, "0b10", "0b10");
+test_eval!(different_base_4, "0x10 - 1", "0xf");
+test_eval!(different_base_5, "0x0 + sqrt 16", "0x4");
+test_eval!(different_base_6, "16#0 + sqrt 16", "16#4");
+test_eval!(different_base_7, "0 + 6#100", "36");
+test_eval!(different_base_8, "0 + 36#z", "35");
+test_eval!(different_base_9, "16#dead_beef", "16#deadbeef");
+test_eval!(different_base_10, "16#DEAD_BEEF", "16#deadbeef");
+expect_error!(different_base_11, "#");
+expect_error!(different_base_12, "0#0");
+expect_error!(different_base_13, "1#0");
+expect_error!(different_base_14, "2_2#0");
+expect_error!(different_base_15, "22 #0");
+expect_error!(different_base_16, "22# 0");
+test_eval!(different_base_17, "36#i i", "36#i i");
+test_eval!(different_base_18, "16#1i", "16#1i");
+test_eval!(different_base_19, "16#fi", "16#fi");
+test_eval!(different_base_20, "0 + 36#ii", "666");
+expect_error!(different_base_21, "18#i/i");
+test_eval!(different_base_22, "19#i/i", "-19#i i");
+// verified using a ruby program
+test_eval!(
+    different_base_23,
+    "0+36#0123456789abcdefghijklmnopqrstuvwxyz",
+    "86846823611197163108337531226495015298096208677436155"
+);
+test_eval!(
+    different_base_24,
+    "36#0 + 86846823611197163108337531226495015298096208677436155",
+    "36#123456789abcdefghijklmnopqrstuvwxyz"
+);
+test_eval!(different_base_25, "18#100/65537 i", "18#100i/18#b44h");
+test_eval!(different_base_26, "19#100/65537 i", "19#100 i/19#9aa6");
+expect_error!(different_base_27, "5 to base 1.5");
+expect_error!(different_base_28, "5 to base pi");
+expect_error!(different_base_29, "5 to base (0pi)");
+expect_error!(different_base_30, "5 to base 1");
+expect_error!(different_base_31, "5 to base (-5)");
+expect_error!(different_base_32, "5 to base 1000000000");
+expect_error!(different_base_33, "5 to base 100");
+expect_error!(different_base_34, "5 to base i");
+expect_error!(different_base_35, "5 to base kg");
+expect_error!(different_base_36, "6#3e9");
+expect_error!(different_base_37, "6#3e39");
+
+test_eval!(three_electroncharge, "3electroncharge", "3 electroncharge");
+test_eval!(e_to_1, "ℯ to 1", "approx. 2.7182818284");
 
 #[test]
-fn test_implicit_lambdas() {
-    test_evaluation("-sin (-pi/2)", "1");
-    test_evaluation("+sin (-pi/2)", "-1");
-    test_evaluation("/sin (-pi/2)", "-1");
-    test_evaluation("cos! 0", "1");
-    test_evaluation("sqrt! 16", "24");
-    test_evaluation("///sqrt! 16", "1/24");
-    test_evaluation("(x: sin^2 x + cos^2 x) 1", "approx. 1");
-    test_evaluation("cos^2 pi", "1");
-    test_evaluation("sin pi/cos pi", "0");
-    test_evaluation("sin + 1) pi", "1");
-    test_evaluation("3sin pi", "0");
-}
-
-#[test]
-fn test_implicit_subtraction_lambdas() {
-    test_evaluation("(sqrt - 1) 16", "3");
-    test_evaluation("(1 - sqrt) 16", "-3");
-    test_evaluation("((\\x.sqrt x) - 1) 16", "3");
-    test_evaluation("(1 - \\x.sqrt x) 16", "-3");
-}
-
-#[test]
-fn test_function_inverse() {
-    test_evaluation("sin^-1", "asin");
-    test_evaluation("sin^-1 0.5", "approx. 0.5235987755");
-    test_evaluation("sin^-1 (sin 0.5", "approx. 0.5");
-    test_evaluation("(sin^-1)^-1", "sin");
-    test_evaluation("cos^-1", "acos");
-    test_evaluation("tan^-1", "atan");
-    test_evaluation("asin^-1", "sin");
-    test_evaluation("acos^-1", "cos");
-    test_evaluation("atan^-1", "tan");
-    test_evaluation("sinh^-1", "asinh");
-    test_evaluation("cosh^-1", "acosh");
-    test_evaluation("tanh^-1", "atanh");
-    test_evaluation("asinh^-1", "sinh");
-    test_evaluation("acosh^-1", "cosh");
-    test_evaluation("atanh^-1", "tanh");
-}
-
-#[test]
-fn test_addition() {
-    test_evaluation("2+2", "4");
-    test_evaluation("\n2\n+\n2\n", "4");
-    test_evaluation("+2", "2");
-    test_evaluation("++++2", "2");
-    test_evaluation(
-        "315427679023453451289740 + 927346502937456234523452",
-        "1242774181960909685813192",
-    );
-}
-
-#[test]
-fn test_subtraction() {
-    test_evaluation("-0", "0");
-    test_evaluation("2-2", "0");
-    test_evaluation("3-2", "1");
-    test_evaluation("2-3", "-1");
-    test_evaluation("-2", "-2");
-    test_evaluation("--2", "2");
-    test_evaluation("---2", "-2");
-    test_evaluation("-(--2)", "-2");
-    test_evaluation("\n2\n-\n64\n", "-62");
-    test_evaluation(
-        "315427679023453451289740 - 927346502937456234523452",
-        "-611918823914002783233712",
-    );
-    test_evaluation("3pi - 2pi", "approx. 3.1415926535");
-    test_evaluation("4pi-1)/pi", "approx. 3.6816901138");
-}
-
-#[test]
-fn test_subtraction_2() {
-    test_evaluation(
-        "36893488123704996004 - 18446744065119617025",
-        "18446744058585378979",
-    );
-}
-
-#[test]
-fn test_sqrt_half() {
-    test_evaluation("sqrt (1/2)", "approx. 0.7071067814");
-}
-
-#[test]
-fn test_exact_roots() {
-    test_evaluation("sqrt 0", "0");
-    test_evaluation("sqrt 1", "1");
-    test_evaluation("sqrt 4", "2");
-    test_evaluation("sqrt 9", "3");
-    test_evaluation("sqrt 16", "4");
-    test_evaluation("sqrt 25", "5");
-    test_evaluation("sqrt 36", "6");
-    test_evaluation("sqrt 49", "7");
-    test_evaluation("sqrt 64", "8");
-    test_evaluation("sqrt 81", "9");
-    test_evaluation("sqrt 100", "10");
-    test_evaluation("sqrt 10000", "100");
-    test_evaluation("sqrt 1000000", "1000");
-    test_evaluation("sqrt 0.25", "0.5");
-    test_evaluation("sqrt 0.0625", "0.25");
-
-    test_evaluation("cbrt 0", "0");
-    test_evaluation("cbrt 1", "1");
-    test_evaluation("cbrt 8", "2");
-    test_evaluation("cbrt 27", "3");
-    test_evaluation("cbrt 64", "4");
-    test_evaluation("cbrt (1/8)", "0.5");
-    test_evaluation("cbrt (125/8)", "2.5");
-
-    test_evaluation("sqrt(kg^2)", "1 kg");
-    test_evaluation("(sqrt kg)^2", "1 kg");
-}
-
-#[test]
-fn test_approx_roots() {
-    test_evaluation("sqrt 2", "approx. 1.4142135619");
-    test_evaluation("sqrt pi", "approx. 1.7724538509");
-}
-
-#[test]
-fn test_basic_order_of_operations() {
-    test_evaluation("2+2*3", "8");
-    test_evaluation("2*2+3", "7");
-    test_evaluation("2+2+3", "7");
-    test_evaluation("2+2-3", "1");
-    test_evaluation("2-2+3", "3");
-    test_evaluation("2-2-3", "-3");
-    test_evaluation("2*2*3", "12");
-    test_evaluation("2*2*-3", "-12");
-    test_evaluation("2*-2*3", "-12");
-    test_evaluation("-2*2*3", "-12");
-    test_evaluation("-2*-2*3", "12");
-    test_evaluation("-2*2*-3", "12");
-    test_evaluation("2*-2*-3", "12");
-    test_evaluation("-2*-2*-3", "-12");
-    test_evaluation("-2*-2*-3/2", "-6");
-    test_evaluation("-2*-2*-3/-2", "6");
-    test_evaluation("-3 -1/2", "-3.5");
-}
-
-#[test]
-fn test_large_stupid_bin_prefixes() {
-    test_same("1 YiB to bytes", "2^80 bytes")
-}
-
-#[test]
-fn test_exact_division() {
-    test_evaluation("1/1", "1");
-    test_evaluation("1/2", "0.5");
-    test_evaluation("1/4", "0.25");
-    test_evaluation("1/8", "0.125");
-    test_evaluation("1/16", "0.0625");
-    test_evaluation("1/32", "0.03125");
-    test_evaluation("1/64", "0.015625");
-    test_evaluation("2/64", "0.03125");
-    test_evaluation("4/64", "0.0625");
-    test_evaluation("8/64", "0.125");
-    test_evaluation("16/64", "0.25");
-    test_evaluation("32/64", "0.5");
-    test_evaluation("64/64", "1");
-    test_evaluation("2/1", "2");
-    test_evaluation("27/3", "9");
-    test_evaluation("100/4", "25");
-    test_evaluation("100/5", "20");
-    test_evaluation("18446744073709551616/2", "9223372036854775808");
-    test_evaluation(
-        "184467440737095516160000000000000/2",
-        "92233720368547758080000000000000",
-    );
-    test_evaluation("(3pi) / (2pi)", "1.5");
-}
-
-#[test]
-fn test_decimal_point() {
-    test_evaluation("0.0", "0");
-    test_evaluation("0.000000", "0");
-    test_evaluation("0.01", "0.01");
-    test_evaluation("0.01000", "0.01");
-    test_evaluation("0.25", "0.25");
-    expect_error("1.");
-    test_evaluation(".1", "0.1");
-    test_evaluation(".1e-1", "0.01");
-    expect_error("001.01000");
-    test_evaluation(
-        "0.251974862348971623412341534273261435",
-        "0.251974862348971623412341534273261435",
-    );
-    test_eval_simple("1.00000001 as 1 dp", "approx. 1");
-    test_eval_simple("1.00000001 as 2 dp", "approx. 1");
-    test_eval_simple("1.00000001 as 3 dp", "approx. 1");
-    test_eval_simple("1.00000001 as 4 dp", "approx. 1");
-    test_evaluation("1.00000001 as 10 dp", "1.00000001");
-    test_evaluation("1.00000001 as 30 dp", "1.00000001");
-    test_evaluation("1.00000001 as 1000 dp", "1.00000001");
-    test_evaluation("1.00000001 as 0 dp", "approx. 1");
-    test_evaluation(".1(0)", "0.1");
-    test_evaluation(".1( 0)", "0");
-    test_evaluation(".1 ( 0)", "0");
-    expect_error(".1(0 )");
-    expect_error(".1(0a)");
-    test_evaluation("2.0(e)", "approx. 5.4365636569");
-    test_evaluation("2.0(ln 5)", "approx. 3.2188758248");
-    test_evaluation("2 (5)", "10");
-    test_evaluation("2( 5)", "10");
-}
-
-#[test]
-fn test_slow_division() {
-    test_evaluation(
-        "60153992292001127921539815855494266880 / 9223372036854775808",
-        "6521908912666391110",
-    )
-}
-
-#[test]
-fn test_parens() {
-    test_evaluation("(1)", "1");
-    test_evaluation("(0.0)", "0");
-    test_evaluation("(1+-2)", "-1");
-    test_evaluation("1+2*3", "7");
-    test_evaluation("(1+2)*3", "9");
-    test_evaluation("((1+2))*3", "9");
-    test_evaluation("((1)+2)*3", "9");
-    test_evaluation("(1+(2))*3", "9");
-    test_evaluation("(1+(2)*3)", "7");
-    test_evaluation("1+(2*3)", "7");
-    test_evaluation("1+((2 )*3)", "7");
-    test_evaluation(" 1 + ( (\r\n2 ) * 3 ) ", "7");
-    test_evaluation("2*(1+3", "8");
-    test_evaluation("4+5+6)*(1+2", "45");
-    test_evaluation("4+5+6))*(1+2", "45");
-}
-
-#[test]
-fn test_powers() {
-    test_evaluation("1^1", "1");
-    test_evaluation("1**1", "1");
-    test_evaluation("1**1.0", "1");
-    test_evaluation("1.0**1", "1");
-    test_evaluation("2^4", "16");
-    test_evaluation("4^2", "16");
-    test_evaluation("4^3", "64");
-    test_evaluation("4^(3^1)", "64");
-    test_evaluation("4^3^1", "64");
-    test_evaluation("(4^3)^1", "64");
-    test_evaluation("(2^3)^4", "4096");
-    test_evaluation("2^3^2", "512");
-    test_evaluation("(2^3)^2", "64");
-    // non-integer powers
-    test_evaluation("4^0.5", "2");
-    test_evaluation("4^(1/2)", "2");
-    test_evaluation("4^(1/4)", "approx. 1.4142135619");
-    test_evaluation("(2/3)^(4/5)", "approx. 0.7229811807");
-    test_evaluation(
-        "5.2*10^15*300^(3/2)",
-        "approx. 27019992598076723515.9873962402",
-    );
-    test_evaluation("pi^10", "approx. 93648.047476083");
-    expect_error("0^0");
-    test_evaluation("0^1", "0");
-    test_evaluation("1^0", "1");
-    // this exponent is currently too large
-    expect_error("1^1e1000");
-    expect_error("i^3");
-    expect_error("4^i");
-    expect_error("i^i");
-    test_evaluation("kg^(approx. 1)", "approx. 1 kg")
-}
-
-#[test]
-fn test_tricky_power_negation() {
-    test_evaluation("-0.125", "-0.125");
-    test_evaluation("2^1^2", "2");
-    test_evaluation("2^(1^2)", "2");
-    test_evaluation("2^(1)", "2");
-    test_evaluation("2 * (-2^3)", "-16");
-    test_evaluation("2 * -2^3", "-16");
-    test_evaluation("2^-3 * 4", "0.5");
-    test_evaluation("2^3 * 4", "32");
-    test_evaluation("2 * -3 * 4", "-24");
-    test_evaluation("-2^-3", "-0.125");
-    test_same("2^-3^4", "1 / 2^81");
-    test_evaluation("4^-1^2", "0.25");
-}
-
-#[test]
-fn test_basic_complex_numbers() {
-    test_evaluation("i", "i");
-    test_evaluation("3i", "3i");
-    test_evaluation("3i+4", "4 + 3i");
-    test_evaluation("(3i+4) + i", "4 + 4i");
-    test_evaluation("3i+(4 + i)", "4 + 4i");
-    test_evaluation("-3i", "-3i");
-    test_evaluation("i/i", "1");
-    test_evaluation("i*i", "-1");
-    test_evaluation("i*i*i", "-i");
-    test_evaluation("i*i*i*i", "1");
-    test_evaluation("-3+i", "-3 + i");
-    test_evaluation("1+i", "1 + i");
-    test_evaluation("1-i", "1 - i");
-    test_evaluation("-1 + i", "-1 + i");
-    test_evaluation("-1 - i", "-1 - i");
-    test_evaluation("-1 - 2i", "-1 - 2i");
-    test_evaluation("-1 - 0.5i", "-1 - 0.5i");
-    test_evaluation("-1 - 0.5i + 1.5i", "-1 + i");
-    test_evaluation("-3i", "-3i");
-    test_evaluation("-i", "-i");
-    test_evaluation("+i", "i");
-    test_evaluation("2i", "2i");
-    test_evaluation("i/3", "i/3");
-    test_evaluation("2i/3", "2i/3");
-    test_evaluation("2i/-3-1", "-1 - 2i/3");
-    // i is an identifier, not a number; cf. 0bi
-    expect_error("2#i");
-}
-
-#[test]
-fn test_digit_separators() {
-    test_evaluation("1_1", "11");
-    test_evaluation("11_1", "111");
-    test_evaluation("1_1_1", "111");
-    test_evaluation("123_456_789_123", "123456789123");
-    test_evaluation("1_2_3_4_5_6", "123456");
-    test_evaluation("1.1_1", "1.11");
-    test_evaluation("1_1.1_1", "11.11");
-    expect_error("_1");
-    expect_error("1_");
-    expect_error("1__1");
-    expect_error("_");
-    expect_error("1_.1");
-    expect_error("1._1");
-    expect_error("1.1_");
-    test_evaluation("1,1", "11");
-    test_evaluation("11,1", "111");
-    test_evaluation("1,1,1", "111");
-    test_evaluation("123,456,789,123", "123456789123");
-    test_evaluation("1,2,3,4,5,6", "123456");
-    test_evaluation("1.1,1", "1.11");
-    test_evaluation("1,1.1,1", "11.11");
-    expect_error(",1");
-    expect_error("1,");
-    expect_error("1,,1");
-    expect_error(",");
-    expect_error("1,.1");
-    expect_error("1.,1");
-    expect_error("1.1,");
-}
-
-#[test]
-fn test_different_bases() {
-    test_evaluation("0x10", "0x10");
-    test_evaluation("0o10", "0o10");
-    test_evaluation("0b10", "0b10");
-    test_evaluation("0x10 - 1", "0xf");
-    test_evaluation("0x0 + sqrt 16", "0x4");
-    test_evaluation("16#0 + sqrt 16", "16#4");
-    test_evaluation("0 + 6#100", "36");
-    test_evaluation("0 + 36#z", "35");
-    test_evaluation("16#dead_beef", "16#deadbeef");
-    test_evaluation("16#DEAD_BEEF", "16#deadbeef");
-    expect_error("#");
-    expect_error("0#0");
-    expect_error("1#0");
-    expect_error("2_2#0");
-    expect_error("22 #0");
-    expect_error("22# 0");
-    test_evaluation("36#i i", "36#i i");
-    test_evaluation("16#1i", "16#1i");
-    test_evaluation("16#fi", "16#fi");
-    test_evaluation("0 + 36#ii", "666");
-    expect_error("18#i/i");
-    test_evaluation("19#i/i", "-19#i i");
-    // verified using a ruby program
-    test_evaluation(
-        "0+36#0123456789abcdefghijklmnopqrstuvwxyz",
-        "86846823611197163108337531226495015298096208677436155",
-    );
-    test_evaluation(
-        "36#0 + 86846823611197163108337531226495015298096208677436155",
-        "36#123456789abcdefghijklmnopqrstuvwxyz",
-    );
-    test_evaluation("18#100/65537 i", "18#100i/18#b44h");
-    test_evaluation("19#100/65537 i", "19#100 i/19#9aa6");
+fn test_base_conversions() {
     test_eval_simple("16 to base 2", "10000");
     test_eval_simple("0x10ffff to decimal", "1114111");
     test_eval_simple("0o400 to decimal", "256");
     test_eval_simple("100 to base 6", "244");
     test_eval_simple("65536 to hex", "10000");
     test_eval_simple("65536 to octal", "200000");
-    expect_error("5 to base 1.5");
-    expect_error("5 to base pi");
-    expect_error("5 to base (0pi)");
-    expect_error("5 to base 1");
-    expect_error("5 to base (-5)");
-    expect_error("5 to base 1000000000");
-    expect_error("5 to base 100");
-    expect_error("5 to base i");
-    expect_error("5 to base kg");
-    expect_error("6#3e9");
-    expect_error("6#3e39");
-    test_evaluation("3electroncharge", "3 electroncharge");
-    test_evaluation("ℯ to 1", "approx. 2.7182818284");
 }
 
-#[test]
-fn test_exponents() {
-    test_evaluation("1e10", "10000000000");
-    test_evaluation("1.5e10", "15000000000");
-    test_evaluation("0b1e10", "0b100");
-    test_evaluation("0b1e+10", "0b100");
-    test_evaluation("0 + 0b1e100", "16");
-    test_evaluation("0 + 0b1e1000", "256");
-    test_evaluation("0 + 0b1e10000", "65536");
-    test_evaluation("0 + 0b1e100000", "4294967296");
-    test_evaluation("16#1e10", "16#1e10");
-    test_evaluation("0d1e10", "0d10000000000");
-    expect_error("11#1e10");
-    test_evaluation(
-        "0 + 0b1e10000000",
-        "340282366920938463463374607431768211456",
-    );
-    test_evaluation("1.5e-1", "0.15");
-    test_evaluation("1.5e0", "1.5");
-    test_evaluation("1.5e-0", "1.5");
-    test_evaluation("1.5e+0", "1.5");
-    test_evaluation("1.5e1", "15");
-    test_evaluation("1.5e+1", "15");
-    expect_error("1e- 1");
-    test_evaluation("0 + 0b1e-110", "0.015625");
-    test_evaluation("e", "approx. 2.7182818284");
-    test_evaluation("2 e", "approx. 5.4365636569");
-    test_evaluation("2e", "approx. 5.4365636569");
-    test_evaluation("2e/2", "approx. 2.7182818284");
-    test_evaluation("2e / 2", "approx. 2.7182818284");
-    expect_error("2e+");
-    expect_error("2e-");
-    expect_error("2ehello");
-    test_evaluation("e^10", "approx. 22026.4657948067");
-}
+test_eval!(exponents_1, "1e10", "10000000000");
+test_eval!(exponents_2, "1.5e10", "15000000000");
+test_eval!(exponents_3, "0b1e10", "0b100");
+test_eval!(exponents_4, "0b1e+10", "0b100");
+test_eval!(exponents_5, "0 + 0b1e100", "16");
+test_eval!(exponents_6, "0 + 0b1e1000", "256");
+test_eval!(exponents_7, "0 + 0b1e10000", "65536");
+test_eval!(exponents_8, "0 + 0b1e100000", "4294967296");
+test_eval!(exponents_9, "16#1e10", "16#1e10");
+test_eval!(exponents_10, "0d1e10", "0d10000000000");
+expect_error!(exponents_11, "11#1e10");
+test_eval!(
+    binary_exponent,
+    "0 + 0b1e10000000",
+    "340282366920938463463374607431768211456"
+);
+test_eval!(exponents_12, "1.5e-1", "0.15");
+test_eval!(exponents_13, "1.5e0", "1.5");
+test_eval!(exponents_14, "1.5e-0", "1.5");
+test_eval!(exponents_15, "1.5e+0", "1.5");
+test_eval!(exponents_16, "1.5e1", "15");
+test_eval!(exponents_17, "1.5e+1", "15");
+expect_error!(exponents_18, "1e- 1");
+test_eval!(exponents_19, "0 + 0b1e-110", "0.015625");
+test_eval!(exponents_20, "e", "approx. 2.7182818284");
+test_eval!(exponents_21, "2 e", "approx. 5.4365636569");
+test_eval!(exponents_22, "2e", "approx. 5.4365636569");
+test_eval!(exponents_23, "2e/2", "approx. 2.7182818284");
+test_eval!(exponents_24, "2e / 2", "approx. 2.7182818284");
+expect_error!(exponents_25, "2e+");
+expect_error!(exponents_26, "2e-");
+expect_error!(exponents_27, "2ehello");
+test_eval!(exponents_28, "e^10", "approx. 22026.4657948067");
+
+test_eval!(one_kg, "1kg", "1 kg");
+test_eval!(one_g, "1g", "1 g");
+test_eval!(one_kg_plus_one_g, "1kg + 1g", "1.001 kg");
+test_eval!(one_kg_plus_100_g, "1kg + 100g", "1.1 kg");
+test_eval!(zero_g_plus_1_kg_plus_100_g, "0g + 1kg + 100g", "1100 g");
+test_eval!(zero_g_plus_1_kg, "0g + 1kg", "1000 g");
+test_eval!(one_over_half_kg, "1/0.5 kg", "2 kg");
+test_eval!(one_over_one_over_half_kg, "1/(1/0.5 kg)", "0.5 kg^-1");
+test_eval!(cbrt_kg, "cbrt (1kg)", "1 kg^(1/3)");
+
+test_eval!(one_kg_plug_i_g, "1 kg + i g", "(1 + 0.001i) kg");
+
+test_eval!(abs_2, "abs 2", "2");
+test_eval!(five_meters, "5 m", "5 m");
+test_eval!(parentheses_multiplication, "(4)(6)", "24");
+test_eval!(parentheses_multiplication_2, "5(6)", "30");
+expect_error!(multiply_number_without_parentheses, "(5)6");
+expect_error!(simple_adjacent_numbers, "7165928\t761528765");
+
+test_eval!(three_feet_six_inches, "3’6”", "3.5’");
+test_eval!(five_feet_twelve_inches, "5 feet 12 inch", "6 feet");
+test_eval!(three_feet_six_inches_ascii, "3'6\"", "3.5'");
+test_eval!(three_meters_15_cm, "3 m 15 cm", "3.15 m");
+
+test_eval!(five_percent, "5%", "5%");
+test_eval!(five_percent_plus_point_one, "5% + 0.1", "15%");
+test_eval!(five_percent_plus_one, "5% + 1", "105%");
+test_eval!(point_one_plus_five_percent, "0.1 + 5%", "0.15");
+test_eval!(one_plus_five_percent, "1 + 5%", "1.05");
+//test_eval!(five_percent_times_five_percent, "5% * 5%", "0.25%");
+
+test_eval!(units_1, "0m + 1kph * 1 hr", "1000 m");
+test_eval!(units_2, "0GiB + 1GB", "0.931322574615478515625 GiB");
+test_eval!(units_3, "0m/s + 1 km/hr", "5/18 m / s");
+test_eval!(units_4, "0m/s + i km/hr", "5i/18 m / s");
+test_eval!(units_5, "0m/s + i kilometers per hour", "5i/18 m / s");
+test_eval!(units_6, "0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
+test_eval!(units_9, "365.25 light days -> ly", "1 ly");
+test_eval!(units_10, "365.25 light days as ly", "1 ly");
+test_eval!(units_11, "1 light year", "1 light year");
+expect_error!(units_12, "1 2 m");
+test_eval!(units_13, "5pi", "approx. 15.7079632679");
+test_eval!(units_14, "5 pi/2", "approx. 7.8539816339");
+test_eval!(units_15, "5 i/2", "2.5i");
+test_eval!(units_22, "1psi -> kPa -> 5dp", "approx. 6.89475 kPa");
+test_eval!(units_23, "1NM to m", "1852 m");
+test_eval!(units_24, "1NM + 1cm as m", "1852.01 m");
+test_eval!(units_25, "1 m / (s kg cd)", "1 m s^-1 kg^-1 cd^-1");
+test_eval!(units_26, "1 watt hour / lb", "1 watt hour / lb");
+test_eval!(units_27, "4 watt hours / lb", "4 watt hours / lb");
+test_eval!(units_28, "1 second second", "1 second second");
+test_eval!(units_29, "2 second seconds", "2 second seconds");
+test_eval!(units_30, "1 lb^-1", "1 lb^-1");
+test_eval!(units_31, "2 lb^-1", "2 lb^-1");
+test_eval!(units_32, "2 lb^-1 kg^-1", "2 lb^-1 kg^-1");
+test_eval!(units_33, "1 lb^-1 kg^-1", "1 lb^-1 kg^-1");
+test_eval!(units_34, "1 light year", "1 light year");
+test_eval!(units_35, "1 light year / second", "1 light year / second");
+test_eval!(units_36, "2 light years / second", "2 light years / second");
+test_eval!(
+    units_37,
+    "2 light years second^-1 lb^-1",
+    "2 light years second^-1 lb^-1"
+);
+test_eval!(units_38, "1 feet", "1 foot");
+test_eval!(units_39, "5 foot", "5 feet");
+test_eval!(units_40, "5 foot 2 inches", "5 1/6 feet");
+test_eval!(units_41, "5 foot 1 inch 1 inch", "5 1/6 feet");
+
+// this tests if "e" is parsed as the electron charge (instead of Euler's number)
+// in unit definitions
+test_eval!(
+    electroncharge_and_bohrmagneton,
+    "(bohrmagneton to C J s/kg) * 1e35",
+    "approx. 927401007831.8305442879 C J s / kg"
+);
+
+expect_error!(plain_adjacent_numbers, "1 2");
+expect_error!(multiple_plain_adjacent_numbers, "1 2 3 4 5");
+expect_error!(implicit_sum_missing_unit, "1 inch 5");
+expect_error!(implicit_sum_incompatible_unit, "1 inch 5 kg");
+
+expect_error!(too_many_args, "abs 1 2");
+test_eval!(abs_4_with_coefficient, "5 (abs 4)", "20");
 
 #[test]
-fn test_basic_units() {
-    test_evaluation("1kg", "1 kg");
-    test_evaluation("1g", "1 g");
-    test_evaluation("1kg + 1g", "1.001 kg");
-    test_evaluation("1kg + 100g", "1.1 kg");
-    test_evaluation("0g + 1kg + 100g", "1100 g");
-    test_evaluation("0g + 1kg", "1000 g");
-    test_evaluation("1/0.5 kg", "2 kg");
-    test_evaluation("1/(1/0.5 kg)", "0.5 kg^-1");
-    test_evaluation("cbrt (1kg)", "1 kg^(1/3)");
-}
-
-#[test]
-fn test_complex_number_with_unit() {
-    test_evaluation("1 kg + i g", "(1 + 0.001i) kg");
-}
-
-#[test]
-fn test_more_units() {
-    test_evaluation("0m + 1kph * 1 hr", "1000 m");
-    test_evaluation("0GiB + 1GB", "0.931322574615478515625 GiB");
-    test_evaluation("0m/s + 1 km/hr", "5/18 m / s");
-    test_evaluation("0m/s + i km/hr", "5i/18 m / s");
-    test_evaluation("0m/s + i kilometers per hour", "5i/18 m / s");
-    test_evaluation("0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
-    expect_error("7165928\t761528765");
+fn mixed_fractions_to_improper_fraction() {
     test_eval_simple("1 2/3 to fraction", "5/3");
-    test_evaluation("abs 2", "2");
-    test_evaluation("5 m", "5 m");
-    test_evaluation("(4)(6)", "24");
-    test_evaluation("5(6)", "30");
-    expect_error("(5)6");
-    test_evaluation("3’6”", "3.5’");
-    test_evaluation("365.25 light days -> ly", "1 ly");
-    test_evaluation("365.25 light days as ly", "1 ly");
-    test_evaluation("1 light year", "1 light year");
-    expect_error("1 2 m");
-    test_evaluation("5pi", "approx. 15.7079632679");
-    test_evaluation("5 pi/2", "approx. 7.8539816339");
-    test_evaluation("5 i/2", "2.5i");
-    test_evaluation("3 m 15 cm", "3.15 m");
-    test_evaluation("5%", "5%");
-    test_evaluation("5% + 0.1", "15%");
-    test_evaluation("5% + 1", "105%");
-    test_evaluation("0.1 + 5%", "0.15");
-    test_evaluation("1 + 5%", "1.05");
-    // should be approx.
-    test_evaluation("1psi -> kPa -> 5dp", "approx. 6.89475 kPa");
-    //test_evaluation("5% * 5%", "0.25%");
-    test_evaluation("1NM to m", "1852 m");
-    test_evaluation("1NM + 1cm as m", "1852.01 m");
-    test_evaluation("1 m / (s kg cd)", "1 m s^-1 kg^-1 cd^-1");
-    test_evaluation("1 watt hour / lb", "1 watt hour / lb");
-    test_evaluation("4 watt hours / lb", "4 watt hours / lb");
-    test_evaluation("1 second second", "1 second second");
-    test_evaluation("2 second seconds", "2 second seconds");
-    test_evaluation("1 lb^-1", "1 lb^-1");
-    test_evaluation("2 lb^-1", "2 lb^-1");
-    test_evaluation("2 lb^-1 kg^-1", "2 lb^-1 kg^-1");
-    test_evaluation("1 lb^-1 kg^-1", "1 lb^-1 kg^-1");
-    test_evaluation("1 light year", "1 light year");
-    test_evaluation("1 light year / second", "1 light year / second");
-    test_evaluation("2 light years / second", "2 light years / second");
-    test_evaluation(
-        "2 light years second^-1 lb^-1",
-        "2 light years second^-1 lb^-1",
-    );
-    test_evaluation("1 feet", "1 foot");
-    test_evaluation("5 foot", "5 feet");
-    test_eval_simple("5 foot 2 inches", "5 1/6 feet");
-    test_eval_simple("5 foot 1 inch 1 inch", "5 1/6 feet");
-    // this tests if "e" is parsed as the electron charge (instead of Euler's number)
-    // in unit definitions
-    test_eval_simple(
-        "bohrmagneton to C J s/kg to 35 dp",
-        "approx. 0.00000000000000000000000927401007831 C J s / kg",
-    )
 }
 
-#[test]
-fn test_no_adjacent_numbers() {
-    expect_error("1 2");
-    expect_error("1 2 3 4 5");
-    expect_error("1 inch 5");
-    expect_error("abs 1 2");
-    expect_error("1 inch 5 kg");
-    test_evaluation("5 (abs 4)", "20");
-}
+test_eval!(mixed_fractions_1, "5/3", "1 2/3");
+test_eval!(mixed_fractions_2, "4 + 1 2/3", "5 2/3");
+test_eval!(mixed_fractions_3, "-8 1/2", "-8.5");
+test_eval!(mixed_fractions_4, "-8 1/2'", "-8.5'");
+test_eval!(mixed_fractions_5, "1.(3)i", "1 1/3 i");
+test_eval!(mixed_fractions_6, "1*1 1/2", "1.5");
+test_eval!(mixed_fractions_7, "2*1 1/2", "3");
+test_eval!(mixed_fractions_8, "3*2*1 1/2", "9");
+test_eval!(mixed_fractions_9, "3 + 2*1 1/2", "6");
+test_eval!(mixed_fractions_10, "abs 2*1 1/2", "3");
+expect_error!(mixed_fractions_11, "1/1 1/2");
+expect_error!(mixed_fractions_12, "2/1 1/2");
+test_eval!(mixed_fractions_13, "1 1/2 m/s^2", "1.5 m / s^2");
+expect_error!(mixed_fractions_14, "(x:2x) 1 1/2");
+expect_error!(mixed_fractions_15, "pi 1 1/2");
 
-#[test]
-fn test_mixed_fractions() {
-    test_evaluation("5/3", "1 2/3");
-    test_evaluation("4 + 1 2/3", "5 2/3");
-    test_evaluation("-8 1/2", "-8.5");
-    test_evaluation("-8 1/2'", "-8.5'");
-    test_evaluation("1.(3)i", "1 1/3 i");
-    test_evaluation("1*1 1/2", "1.5");
-    test_evaluation("2*1 1/2", "3");
-    test_evaluation("3*2*1 1/2", "9");
-    test_evaluation("3 + 2*1 1/2", "6");
-    test_evaluation("abs 2*1 1/2", "3");
-    expect_error("1/1 1/2");
-    expect_error("2/1 1/2");
-    test_evaluation("1 1/2 m/s^2", "1.5 m / s^2");
-    expect_error("(x:2x) 1 1/2");
-    expect_error("pi 1 1/2");
-}
+expect_error!(lone_conversion_arrow, "->");
+expect_error!(conversion_arrow_no_rhs, "1m->");
+expect_error!(conversion_arrow_with_space_in_the_middle, "1m - >");
+expect_error!(conversion_arrow_no_lhs, "->1ft");
+expect_error!(meter_to_feet, "1m -> 45ft");
+expect_error!(meter_to_kg_ft, "1m -> 45 kg ft");
+test_eval!(one_foot_to_inches, "1' -> inches", "12 inches");
 
-#[test]
-fn test_unit_sums() {
-    test_evaluation("5 feet 12 inch", "6 feet");
-    test_evaluation("3'6\"", "3.5'");
-    test_evaluation("3’6”", "3.5’");
-}
+test_eval!(abs_1, "abs 1", "1");
+test_eval!(abs_i, "abs i", "1");
+test_eval!(abs_minus_1, "abs (-1)", "1");
+test_eval!(abs_minus_i, "abs (-i)", "1");
+test_eval!(abs_2_i, "abs (2i)", "2");
+test_eval!(abs_1_plus_i, "abs (1 + i)", "approx. 1.4142135619");
 
-#[test]
-fn test_unit_conversions() {
-    expect_error("->");
-    expect_error("1m->");
-    expect_error("1m - >");
-    expect_error("->1ft");
-    expect_error("1m -> 45ft");
-    expect_error("1m -> 45 kg ft");
-    test_evaluation("1' -> inches", "12 inches");
-}
+test_eval!(two_kg_squared, "2 kg^2", "2 kg^2");
+test_eval!(quarter_kg_pow_minus_two, "((1/4) kg)^-2", "16 kg^-2");
+test_eval!(newton_subtraction, "1 N - 1 kg m s^-2", "0 N");
+test_eval!(
+    joule_subtraction,
+    "1 J - 1 kg m^2 s^-2 + 1 kg / (m^-2 s^2)",
+    "1 J"
+);
+test_eval!(two_to_the_power_of_abs_one, "2^abs 1", "2");
+expect_error!(adjacent_numbers_rhs_cubed, "2 4^3");
+expect_error!(negative_adjacent_numbers_rhs_cubed, "-2 4^3");
+test_eval!(product_with_unary_minus_1, "3*-2", "-6");
+test_eval!(product_with_unary_minus_2, "-3*-2", "6");
+test_eval!(product_with_unary_minus_3, "-3*2", "-6");
+expect_error!(illegal_mixed_fraction_with_pow_1, "1 2/3^2");
+expect_error!(illegal_mixed_fraction_with_pow_2, "1 2^2/3");
+expect_error!(illegal_mixed_fraction_with_pow_3, "1^2 2/3");
+expect_error!(illegal_mixed_fraction_with_pow_4, "1 2/-3");
+test_eval!(positive_mixed_fraction_sum, "1 2/3 + 4 5/6", "6.5");
+test_eval!(negative_mixed_fraction_sum, "1 2/3 + -4 5/6", "-3 1/6");
+test_eval!(
+    positive_mixed_fraction_subtraction,
+    "1 2/3 - 4 5/6",
+    "-3 1/6"
+);
+test_eval!(
+    negative_mixed_fraction_subtraction,
+    "1 2/3 - 4 + 5/6",
+    "-1.5"
+);
+test_eval!(
+    barn_to_meters_squared,
+    "1 barn -> m^2",
+    "0.0000000000000000000000000001 m^2"
+);
+test_eval!(liter_to_cubic_meters, "1L -> m^3", "0.001 m^3");
+test_eval!(five_feet_to_meters, "5 ft to m", "1.524 m");
+test_eval!(log10_4, "log10 4", "approx. 0.6020599913");
 
-#[test]
-fn test_abs() {
-    test_evaluation("abs 1", "1");
-    test_evaluation("abs i", "1");
-    test_evaluation("abs (-1)", "1");
-    test_evaluation("abs (-i)", "1");
-    test_evaluation("abs (2i)", "2");
-    test_evaluation("abs (1 + i)", "approx. 1.4142135619");
-}
-
-#[test]
-fn test_advanced_op_precedence() {
-    test_evaluation("2 kg^2", "2 kg^2");
-    test_evaluation("((1/4) kg)^-2", "16 kg^-2");
-    test_evaluation("1 N - 1 kg m s^-2", "0 N");
-    test_evaluation("1 J - 1 kg m^2 s^-2 + 1 kg / (m^-2 s^2)", "1 J");
-    test_evaluation("2^abs 1", "2");
-    expect_error("2 4^3");
-    expect_error("-2 4^3");
-    test_evaluation("3*-2", "-6");
-    test_evaluation("-3*-2", "6");
-    test_evaluation("-3*2", "-6");
-    expect_error("1 2/3^2");
-    expect_error("1 2^2/3");
-    expect_error("1^2 2/3");
-    expect_error("1 2/-3");
-    test_evaluation("1 2/3 + 4 5/6", "6.5");
-    test_evaluation("1 2/3 + -4 5/6", "-3 1/6");
-    test_evaluation("1 2/3 - 4 5/6", "-3 1/6");
-    test_evaluation("1 2/3 - 4 + 5/6", "-1.5");
-    test_evaluation("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
-    test_evaluation("1L -> m^3", "0.001 m^3");
-    test_evaluation("5 ft to m", "1.524 m");
-    test_evaluation("log10 4", "approx. 0.6020599913");
-    test_evaluation("0!", "1");
-    test_evaluation("1!", "1");
-    test_evaluation("2!", "2");
-    test_evaluation("3!", "6");
-    test_evaluation("4!", "24");
-    test_evaluation("5!", "120");
-    test_evaluation("6!", "720");
-    test_evaluation("7!", "5040");
-    test_evaluation("8!", "40320");
-    expect_error("0.5!");
-    expect_error("(-2)!");
-    expect_error("3i!");
-    expect_error("(3 kg)!");
-}
+test_eval!(factorial_of_0, "0!", "1");
+test_eval!(factorial_of_1, "1!", "1");
+test_eval!(factorial_of_2, "2!", "2");
+test_eval!(factorial_of_3, "3!", "6");
+test_eval!(factorial_of_4, "4!", "24");
+test_eval!(factorial_of_5, "5!", "120");
+test_eval!(factorial_of_6, "6!", "720");
+test_eval!(factorial_of_7, "7!", "5040");
+test_eval!(factorial_of_8, "8!", "40320");
+expect_error!(factorial_of_half, "0.5!");
+expect_error!(factorial_of_minus_two, "(-2)!");
+expect_error!(factorial_of_three_i, "3i!");
+expect_error!(factorial_of_three_kg, "(3 kg)!");
 
 #[test]
 fn test_recurring_digits() {
@@ -767,192 +778,169 @@ fn test_recurring_digits() {
     test_eval_simple("502938/700 -> float", "718.48(285714)");
 }
 
-#[test]
-fn test_builtin_function_names() {
-    test_evaluation("abs", "abs");
-    test_evaluation("sin", "sin");
-    test_evaluation("cos", "cos");
-    test_evaluation("tan", "tan");
-    test_evaluation("asin", "asin");
-    test_evaluation("acos", "acos");
-    test_evaluation("atan", "atan");
-    test_evaluation("sinh", "sinh");
-    test_evaluation("cosh", "cosh");
-    test_evaluation("tanh", "tanh");
-    test_evaluation("asinh", "asinh");
-    test_evaluation("acosh", "acosh");
-    test_evaluation("atanh", "atanh");
-    test_evaluation("ln", "ln");
-    test_evaluation("log2", "log2");
-    test_evaluation("log10", "log10");
-    test_evaluation("base", "base");
-}
+test_eval!(builtin_function_name_abs, "abs", "abs");
+test_eval!(builtin_function_name_sin, "sin", "sin");
+test_eval!(builtin_function_name_cos, "cos", "cos");
+test_eval!(builtin_function_name_tan, "tan", "tan");
+test_eval!(builtin_function_name_asin, "asin", "asin");
+test_eval!(builtin_function_name_acos, "acos", "acos");
+test_eval!(builtin_function_name_atan, "atan", "atan");
+test_eval!(builtin_function_name_sinh, "sinh", "sinh");
+test_eval!(builtin_function_name_cosh, "cosh", "cosh");
+test_eval!(builtin_function_name_tanh, "tanh", "tanh");
+test_eval!(builtin_function_name_asinh, "asinh", "asinh");
+test_eval!(builtin_function_name_acosh, "acosh", "acosh");
+test_eval!(builtin_function_name_atanh, "atanh", "atanh");
+test_eval!(builtin_function_name_ln, "ln", "ln");
+test_eval!(builtin_function_name_log2, "log2", "log2");
+test_eval!(builtin_function_name_log10, "log10", "log10");
+test_eval!(builtin_function_name_base, "base", "base");
 
-#[test]
-fn test_exact_sin() {
-    // values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
-    test_evaluation("sin 0", "0");
-    test_evaluation("sin pi", "0");
-    test_evaluation("sin (2pi)", "0");
-    test_evaluation("sin (-pi)", "0");
-    test_evaluation("sin (-1000pi)", "0");
-    test_evaluation("sin (pi/2)", "1");
-    test_evaluation("sin (3pi/2)", "-1");
-    test_evaluation("sin (5pi/2)", "1");
-    test_evaluation("sin (7pi/2)", "-1");
-    test_evaluation("sin (-pi/2)", "-1");
-    test_evaluation("sin (-3pi/2)", "1");
-    test_evaluation("sin (-5pi/2)", "-1");
-    test_evaluation("sin (-7pi/2)", "1");
-    test_evaluation("sin (-1023pi/2)", "1");
-    test_evaluation("sin (pi/6)", "0.5");
-    test_evaluation("sin (5pi/6)", "0.5");
-    test_evaluation("sin (7pi/6)", "-0.5");
-    test_evaluation("sin (11pi/6)", "-0.5");
-    test_evaluation("sin (-pi/6)", "-0.5");
-    test_evaluation("sin (-5pi/6)", "-0.5");
-    test_evaluation("sin (-7pi/6)", "0.5");
-    test_evaluation("sin (-11pi/6)", "0.5");
-    test_evaluation("sin (180°)", "0");
-    test_evaluation("sin (30°)", "0.5");
-}
+// values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
+test_eval!(sin_0, "sin 0", "0");
+test_eval!(sin_1, "sin 1", "approx. 0.8414709848");
+test_eval!(sin_1m, "sin (1m)", "approx. 0.8414709848 m");
+test_eval!(sin_pi, "sin pi", "0");
+test_eval!(sin_2_pi, "sin (2pi)", "0");
+test_eval!(sin_minus_pi, "sin (-pi)", "0");
+test_eval!(sin_minus_1000_pi, "sin (-1000pi)", "0");
+test_eval!(sin_pi_over_2, "sin (pi/2)", "1");
+test_eval!(sin_3_pi_over_2, "sin (3pi/2)", "-1");
+test_eval!(sin_5_pi_over_2, "sin (5pi/2)", "1");
+test_eval!(sin_7_pi_over_2, "sin (7pi/2)", "-1");
+test_eval!(sin_minus_pi_over_2, "sin (-pi/2)", "-1");
+test_eval!(sin_minus_3_pi_over_2, "sin (-3pi/2)", "1");
+test_eval!(sin_minus_5_pi_over_2, "sin (-5pi/2)", "-1");
+test_eval!(sin_minus_7_pi_over_2, "sin (-7pi/2)", "1");
+test_eval!(sin_minus_1023_pi_over_2, "sin (-1023pi/2)", "1");
+test_eval!(sin_pi_over_6, "sin (pi/6)", "0.5");
+test_eval!(sin_5_pi_over_6, "sin (5pi/6)", "0.5");
+test_eval!(sin_7_pi_over_6, "sin (7pi/6)", "-0.5");
+test_eval!(sin_11_pi_over_6, "sin (11pi/6)", "-0.5");
+test_eval!(sin_minus_pi_over_6, "sin (-pi/6)", "-0.5");
+test_eval!(sin_minus_5_pi_over_6, "sin (-5pi/6)", "-0.5");
+test_eval!(sin_minus_7_pi_over_6, "sin (-7pi/6)", "0.5");
+test_eval!(sin_minus_11_pi_over_6, "sin (-11pi/6)", "0.5");
+test_eval!(sin_180_degrees, "sin (180°)", "0");
+test_eval!(sin_30_degrees, "sin (30°)", "0.5");
+test_eval!(sin_one_degree, "sin (1°)", "approx. 0.0174524064");
 
-#[test]
-fn test_exact_cos() {
-    test_evaluation("cos 0", "1");
-    test_evaluation("cos pi", "-1");
-    test_evaluation("cos (2pi)", "1");
-    test_evaluation("cos (-pi)", "-1");
-    test_evaluation("cos (-1000pi)", "1");
-    test_evaluation("cos (pi/2)", "0");
-    test_evaluation("cos (3pi/2)", "0");
-    test_evaluation("cos (5pi/2)", "0");
-    test_evaluation("cos (7pi/2)", "0");
-    test_evaluation("cos (-pi/2)", "0");
-    test_evaluation("cos (-3pi/2)", "0");
-    test_evaluation("cos (-5pi/2)", "0");
-    test_evaluation("cos (-7pi/2)", "0");
-    test_evaluation("cos (-1023pi/2)", "0");
-    test_evaluation("cos (pi/3)", "0.5");
-    test_evaluation("cos (2pi/3)", "-0.5");
-    test_evaluation("cos (4pi/3)", "-0.5");
-    test_evaluation("cos (5pi/3)", "0.5");
-    test_evaluation("cos (-pi/3)", "0.5");
-    test_evaluation("cos (-2pi/3)", "-0.5");
-    test_evaluation("cos (-4pi/3)", "-0.5");
-    test_evaluation("cos (-5pi/3)", "0.5");
-    test_evaluation("π", "approx. 3.1415926535");
-}
+test_eval!(cos_0, "cos 0", "1");
+test_eval!(cos_1, "cos 1", "approx. 0.5403023058");
+test_eval!(cos_pi, "cos pi", "-1");
+test_eval!(cos_2_pi, "cos (2pi)", "1");
+test_eval!(cos_minus_pi, "cos (-pi)", "-1");
+test_eval!(cos_minus_1000_pi, "cos (-1000pi)", "1");
+test_eval!(cos_pi_over_2, "cos (pi/2)", "0");
+test_eval!(cos_3_pi_over_2, "cos (3pi/2)", "0");
+test_eval!(cos_5_pi_over_2, "cos (5pi/2)", "0");
+test_eval!(cos_7_pi_over_2, "cos (7pi/2)", "0");
+test_eval!(cos_minus_pi_over_2, "cos (-pi/2)", "0");
+test_eval!(cos_minus_3_pi_over_2, "cos (-3pi/2)", "0");
+test_eval!(cos_minus_5_pi_over_2, "cos (-5pi/2)", "0");
+test_eval!(cos_minus_7_pi_over_2, "cos (-7pi/2)", "0");
+test_eval!(cos_minus_1023_pi_over_2, "cos (-1023pi/2)", "0");
+test_eval!(cos_pi_over_3, "cos (pi/3)", "0.5");
+test_eval!(cos_2_pi_over_3, "cos (2pi/3)", "-0.5");
+test_eval!(cos_4_pi_over_3, "cos (4pi/3)", "-0.5");
+test_eval!(cos_5_pi_over_3, "cos (5pi/3)", "0.5");
+test_eval!(cos_minus_pi_over_3, "cos (-pi/3)", "0.5");
+test_eval!(cos_minus_2_pi_over_3, "cos (-2pi/3)", "-0.5");
+test_eval!(cos_minus_4_pi_over_3, "cos (-4pi/3)", "-0.5");
+test_eval!(cos_minus_5_pi_over_3, "cos (-5pi/3)", "0.5");
 
-#[test]
-fn test_tau() {
-    test_evaluation("tau", "approx. 6.2831853071");
-    test_evaluation("sin (tau / 2)", "0");
-    test_evaluation("τ", "approx. 6.2831853071");
-}
+test_eval!(tau, "tau", "approx. 6.2831853071");
+test_eval!(sin_tau_over_two, "sin (tau / 2)", "0");
+test_eval!(greek_pi_symbol, "π", "approx. 3.1415926535");
+test_eval!(greek_tau_symbol, "τ", "approx. 6.2831853071");
 
-#[test]
-fn test_various_functions() {
-    test_evaluation("sin (1m)", "approx. 0.8414709848 m");
-    test_evaluation("sin (1°)", "approx. 0.0174524064");
-    test_evaluation("tan 0", "0");
-    test_evaluation("tan (1meter)", "approx. 1.5574077246 meters");
-    test_same("cos 0", "cos (2pi)");
-    test_evaluation("cos 1", "approx. 0.5403023058");
-    test_same("cos 0", "sin (pi/2)");
-    test_same("tan (2pi)", "tan pi");
-    test_evaluation("asin 1", "approx. 1.5707963267");
-    expect_error("asin 3");
-    expect_error("asin (-3)");
-    expect_error("asin 1.01");
-    expect_error("asin (-1.01)");
-    test_evaluation("acos 0", "approx. 1.5707963267");
-    expect_error("acos 3");
-    expect_error("acos (-3)");
-    expect_error("acos 1.01");
-    expect_error("acos (-1.01)");
-    test_evaluation("atan 1", "approx. 0.7853981633");
+test_eval!(tan_0, "tan 0", "0");
+test_eval!(tan_1m, "tan (1meter)", "approx. 1.5574077246 meters");
+test_eval!(tan_pi, "tan pi", "0");
+test_eval!(tan_2pi, "tan (2pi)", "0");
+test_eval!(asin_1, "asin 1", "approx. 1.5707963267");
+expect_error!(asin_3, "asin 3");
+expect_error!(asin_minus_3, "asin (-3)");
+expect_error!(asin_one_point_zero_one, "asin 1.01");
+expect_error!(asin_minus_one_point_zero_one, "asin (-1.01)");
 
-    test_same("sinh 0", "approx. 0");
-    test_same("cosh 0", "approx. 1");
-    test_same("tanh 0", "approx. 0");
+test_eval!(acos_0, "acos 0", "approx. 1.5707963267");
+expect_error!(acos_3, "acos 3");
+expect_error!(acos_minus_3, "acos (-3)");
+expect_error!(acos_one_point_zero_one, "acos 1.01");
+expect_error!(acos_minus_one_point_zero_one, "acos (-1.01)");
+test_eval!(atan_1, "atan 1", "approx. 0.7853981633");
+test_eval!(sinh_0, "sinh 0", "approx. 0");
+test_eval!(cosh_0, "cosh 0", "approx. 1");
+test_eval!(tanh_0, "tanh 0", "approx. 0");
+test_eval!(asinh_0, "asinh 0", "approx. 0");
+expect_error!(acosh_0, "acosh 0");
+test_eval!(acosh_2, "acosh 2", "approx. 1.3169578969");
+test_eval!(atanh_0, "atanh 0", "approx. 0");
+expect_error!(atanh_3, "atanh 3");
+expect_error!(atanh_minus_3, "atanh (-3)");
+expect_error!(atanh_one_point_zero_one, "atanh 1.01");
+expect_error!(atanh_minus_one_point_zero_one, "atanh (-1.01)");
+expect_error!(atanh_1, "atanh 1");
+expect_error!(atanh_minus_1, "atanh (-1)");
+test_eval!(ln_2, "ln 2", "approx. 0.6931471805");
+expect_error!(ln_0, "ln 0");
+test_eval!(exp_2, "exp 2", "approx. 7.3890560989");
+test_eval!(log10_100, "log10 100", "approx. 2");
+test_eval!(log10_1000, "log10 1000", "approx. 3");
+test_eval!(log10_10000, "log10 10000", "approx. 4");
+test_eval!(log10_100000, "log10 100000", "approx. 5");
+test_eval!(log2_65536, "log2 65536", "approx. 16");
+expect_error!(log10_minus_1, "log10 (-1)");
+expect_error!(log2_minus_1, "log2 (-1)");
+expect_error!(sqrt_minus_two, "sqrt (-2)");
+test_eval!(minus_two_cubed, "(-2)^3", "-8");
+test_eval!(minus_two_pow_five, "(-2)^5", "-32");
+test_eval!(two_pow_minus_two, "2^-2", "0.25");
+test_eval!(minus_two_to_the_power_of_minus_two, "(-2)^-2", "0.25");
+test_eval!(minus_two_to_the_power_of_minus_three, "(-2)^-3", "-0.125");
+test_eval!(minus_two_to_the_power_of_minus_four, "(-2)^-4", "0.0625");
+expect_error!(invalid_function_call, "oishfod 3");
+test_eval!(ln, "ln", "ln");
+test_eval!(dp, "dp", "dp");
+test_eval!(ten_dp, "10 dp", "10 dp");
+test_eval!(float, "float", "float");
+test_eval!(fraction, "fraction", "fraction");
+test_eval!(auto, "auto", "auto");
+expect_error!(sqrt_i, "sqrt i");
+expect_error!(sqrt_minus_two_i, "sqrt (-2i)");
+expect_error!(cbrt_i, "cbrt i");
+expect_error!(cbrt_minus_two_i, "cbrt (-2i)");
+expect_error!(sin_i, "sin i");
+expect_error!(dp_1, "dp 1");
 
-    test_same("asinh 0", "asin 0");
-    expect_error("acosh 0");
-    test_evaluation("acosh 2", "approx. 1.3169578969");
-    test_same("atanh 0", "atan 0");
-    expect_error("atanh 3");
-    expect_error("atanh (-3)");
-    expect_error("atanh 1.01");
-    expect_error("atanh (-1.01)");
-    expect_error("atanh 1");
-    expect_error("atanh (-1)");
-    test_evaluation("ln 2", "approx. 0.6931471805");
-    expect_error("ln 0");
-    test_evaluation("exp 2", "approx. 7.3890560989");
-    test_evaluation("log10 100", "approx. 2");
-    test_evaluation("log10 1000", "approx. 3");
-    test_evaluation("log10 10000", "approx. 4");
-    test_evaluation("log10 100000", "approx. 5");
-    test_evaluation("log2 65536", "approx. 16");
-    expect_error("log10 (-1)");
-    expect_error("log2 (-1)");
-    expect_error("sqrt (-2)");
-    test_evaluation("(-2)^3", "-8");
-    test_evaluation("(-2)^5", "-32");
-    test_evaluation("2^-2", "0.25");
-    test_evaluation("(-2)^-2", "0.25");
-    test_evaluation("(-2)^-3", "-0.125");
-    test_evaluation("(-2)^-4", "0.0625");
-    expect_error("oishfod 3");
-    test_evaluation("ln", "ln");
-    //test_evaluation("sqrt", "x:x^(1/2)");
-    test_evaluation("dp", "dp");
-    test_evaluation("10 dp", "10 dp");
-    test_evaluation("float", "float");
-    test_evaluation("fraction", "fraction");
-    test_evaluation("auto", "auto");
-    expect_error("sqrt i");
-    expect_error("sqrt (-2i)");
-    expect_error("cbrt i");
-    expect_error("cbrt (-2i)");
-    expect_error("sin i");
-    expect_error("dp 1");
-}
+test_eval!(unary_div_seconds, "/s", "1 s^-1");
+test_eval!(per_second, "per second", "1 second^-1");
+test_eval!(hertz_plus_unary_div_seconds, "1 Hz + /s", "2 Hz");
 
-#[test]
-fn test_unary_div() {
-    test_evaluation("/s", "1 s^-1");
-    test_evaluation("per second", "1 second^-1");
-    test_evaluation("1 Hz + /s", "2 Hz");
-}
-
-#[test]
-fn test_lambdas() {
-    let mut ctx = Context::new();
-    test_evaluation("(x: x) 1", "1");
-    test_evaluation("(x: y: x) 1 2", "1");
-    test_evaluation(
-        "(cis: (cis (pi/3))) (x: cos x + i * (sin x))",
-        "approx. 0.5 + 0.8660254037i",
-    );
-    assert!(evaluate("(x: iuwhe)", &mut ctx).is_ok());
-    test_evaluation("(b: 5 + b) 1", "6");
-    test_evaluation("(addFive: 4)(b: 5 + b)", "4");
-    test_evaluation("(addFive: addFive 4)(b: 5 + b)", "9");
-    test_evaluation("(x: y: z: x) 1 2 3", "1");
-    test_evaluation("(x: y: z: y) 1 2 3", "2");
-    test_evaluation("(x: y: z: z) 1 2 3", "3");
-    test_evaluation("(one: one + 4) 1", "5");
-    test_evaluation("(one: one + one) 1", "2");
-    test_evaluation("(x: x to kg) (5 g)", "0.005 kg");
-    test_evaluation("(p: q: p p q) (x: y: y) (x: y: y) 1 0", "0");
-    test_evaluation("(p: q: p p q) (x: y: y) (x: y: x) 1 0", "1");
-    test_evaluation("(p: q: p p q) (x: y: x) (x: y: y) 1 0", "1");
-    test_evaluation("(p: q: p p q) (x: y: x) (x: y: x) 1 0", "1");
-    test_evaluation("(x => x) 1", "1");
-    test_evaluation("(x: y => x) 1 2", "1");
-    test_evaluation("(\\x. y => x) 1 2", "1");
-    test_evaluation("(\\x.\\y.x)1 2", "1");
-    test_evaluation("a. => 0", "a.:0");
-}
+test_eval!(lambda_1, "(x: x) 1", "1");
+test_eval!(lambda_2, "(x: y: x) 1 2", "1");
+test_eval!(
+    lambda_3,
+    "(cis: (cis (pi/3))) (x: cos x + i * (sin x))",
+    "approx. 0.5 + 0.8660254037i"
+);
+test_eval!(lambda_4, "(x: iuwhe)", "\\x.iuwhe");
+test_eval!(lambda_5, "(b: 5 + b) 1", "6");
+test_eval!(lambda_6, "(addFive: 4)(b: 5 + b)", "4");
+test_eval!(lambda_7, "(addFive: addFive 4)(b: 5 + b)", "9");
+test_eval!(lambda_8, "(x: y: z: x) 1 2 3", "1");
+test_eval!(lambda_9, "(x: y: z: y) 1 2 3", "2");
+test_eval!(lambda_10, "(x: y: z: z) 1 2 3", "3");
+test_eval!(lambda_11, "(one: one + 4) 1", "5");
+test_eval!(lambda_12, "(one: one + one) 1", "2");
+test_eval!(lambda_13, "(x: x to kg) (5 g)", "0.005 kg");
+test_eval!(lambda_14, "(p: q: p p q) (x: y: y) (x: y: y) 1 0", "0");
+test_eval!(lambda_15, "(p: q: p p q) (x: y: y) (x: y: x) 1 0", "1");
+test_eval!(lambda_16, "(p: q: p p q) (x: y: x) (x: y: y) 1 0", "1");
+test_eval!(lambda_17, "(p: q: p p q) (x: y: x) (x: y: x) 1 0", "1");
+test_eval!(lambda_18, "(x => x) 1", "1");
+test_eval!(lambda_19, "(x: y => x) 1 2", "1");
+test_eval!(lambda_20, "(\\x. y => x) 1 2", "1");
+test_eval!(lambda_21, "(\\x.\\y.x)1 2", "1");
+test_eval!(lambda_22, "a. => 0", "a.:0");

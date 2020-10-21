@@ -9,8 +9,8 @@ cache: cargo
 
 script:
   - rm -rvf target/debug
-  - cargo build --all --verbose
-  - cargo test --all --verbose
+  - cargo build --all
+  - cargo test --all -q
 
 addons:
   apt:
