@@ -984,7 +984,7 @@ pfu                    / cm^2 sr s # particle flux unit -- Used to measure
                                    #   a spacecraft as particles per solid
                                    #   angle per detector area per second. [18]
 pyron            cal_IT / cm^2 min # Measures heat flow from solar radiation,
-                                   #   from Greek work "pyr" for fire.
+                                   #   from Greek word "pyr" for fire.
 katal                   mol/sec    # Measure of the amount of a catalyst.  One
 kat                     katal      #   katal of catalyst enables the reaction
                                    #   to consume or produce on mol/sec.
