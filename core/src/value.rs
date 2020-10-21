@@ -242,7 +242,7 @@ impl Value {
             Self::Dp => write!(f, "dp")?,
             Self::Base(b) => write!(f, "base {}", b.base_as_u8())?,
             Self::Fn(name, expr, _scope) => {
-                let expr_str = crate::num::to_string(|f| expr.format(f, int))?.0;
+                let expr_str = expr.format(int)?;
                 if name.contains('.') {
                     write!(f, "{}:{}", name, expr_str)?
                 } else {
