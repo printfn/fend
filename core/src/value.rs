@@ -218,7 +218,7 @@ impl Value {
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
-                new_scope.insert_variable(param, other, scope.clone(), options);
+                new_scope.insert_variable(param.into(), other, scope.clone(), options);
                 return Ok(crate::ast::evaluate(expr, &mut new_scope, options, int)?);
             }
             _ => {

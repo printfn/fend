@@ -4,6 +4,7 @@ use crate::num::complex::{Complex, UseParentheses};
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use crate::value::Value;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::Neg;
@@ -64,7 +65,7 @@ impl UnitValue {
     }
 
     fn parse_units<I: Interrupt>(
-        unit_definitions: &str,
+        unit_definitions: &'static str,
         scope: &mut Scope,
         int: &I,
     ) -> Result<(), IntErr<Never, I>> {
@@ -112,25 +113,17 @@ impl UnitValue {
             }
             if let Some(expr) = expr.strip_prefix('-') {
                 // unit prefixes like `kilo-`
-                scope.insert_prefix(singular_name, expr.trim());
+                scope.insert_prefix(singular_name.into(), expr.trim());
                 continue;
             }
             let expr = expr.trim();
             //eprintln!("Adding unit '{}' '{}' '{}'", singular_name, plural_name, expr);
             if expr == "!" {
-                let unit = Self::new_base_unit(singular_name.to_string(), plural_name.to_string());
-                scope.insert(
-                    singular_name.to_string(),
-                    plural_name.to_string(),
-                    Value::Num(unit),
-                );
+                let unit = Self::new_base_unit(singular_name, plural_name);
+                scope.insert(singular_name, plural_name, Value::Num(unit));
             } else {
                 let expr = if expr == "!dimensionless" { "1" } else { expr };
-                scope.insert_lazy_unit(
-                    expr.to_string(),
-                    singular_name.to_string(),
-                    plural_name.to_string(),
-                );
+                scope.insert_lazy_unit(expr.to_string(), singular_name.into(), plural_name.into());
             }
             //crate::eval::evaluate_to_string(plural_name, scope, int).unwrap();
         }
@@ -140,8 +133,8 @@ impl UnitValue {
 
     pub fn create_unit_value_from_value<I: Interrupt>(
         value: &Self,
-        singular_name: String,
-        plural_name: String,
+        singular_name: Cow<'static, str>,
+        plural_name: Cow<'static, str>,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let (hashmap, scale, exact) = value.unit.to_hashmap_and_scale(int)?;
@@ -152,8 +145,8 @@ impl UnitValue {
         Ok(result)
     }
 
-    fn new_base_unit(singular_name: String, plural_name: String) -> Self {
-        let base_kg = BaseUnit::new(singular_name.clone());
+    fn new_base_unit(singular_name: &'static str, plural_name: &'static str) -> Self {
+        let base_kg = BaseUnit::new(singular_name);
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
         let kg = NamedUnit::new(singular_name, plural_name, hashmap, 1);
@@ -680,9 +673,9 @@ impl UnitExponent {
         int: &I,
     ) -> Result<(), IntErr<fmt::Error, I>> {
         let name = if plural {
-            self.unit.plural_name.as_str()
+            self.unit.plural_name.as_ref()
         } else {
-            self.unit.singular_name.as_str()
+            self.unit.singular_name.as_ref()
         };
         write!(f, "{}", name)?;
         let exp = if invert_exp {
@@ -708,22 +701,22 @@ impl UnitExponent {
 /// A named unit, like kilogram, megabyte or percent.
 #[derive(Clone, Debug)]
 struct NamedUnit {
-    singular_name: String,
-    plural_name: String,
+    singular_name: Cow<'static, str>,
+    plural_name: Cow<'static, str>,
     base_units: HashMap<BaseUnit, Complex>,
     scale: Complex,
 }
 
 impl NamedUnit {
     fn new(
-        singular_name: String,
-        plural_name: String,
+        singular_name: impl Into<Cow<'static, str>>,
+        plural_name: impl Into<Cow<'static, str>>,
         base_units: HashMap<BaseUnit, Complex>,
         scale: impl Into<Complex>,
     ) -> Self {
         Self {
-            singular_name,
-            plural_name,
+            singular_name: singular_name.into(),
+            plural_name: plural_name.into(),
             base_units,
             scale: scale.into(),
         }
@@ -746,12 +739,12 @@ impl NamedUnit {
 /// Represents a base unit, identified solely by its name. The name is not exposed to the user.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 struct BaseUnit {
-    name: String,
+    name: Cow<'static, str>,
 }
 
 impl BaseUnit {
-    const fn new(name: String) -> Self {
-        Self { name }
+    fn new(name: impl Into<Cow<'static, str>>) -> Self {
+        Self { name: name.into() }
     }
 }
 

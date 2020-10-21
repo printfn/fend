@@ -223,7 +223,7 @@ fn resolve_identifier<I: Interrupt>(
             "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
             "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
             "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
-            _ => scope.get(ident, int)?,
+            _ => scope.get(ident.to_string(), int)?,
         });
     }
     Ok(match ident {
@@ -256,7 +256,7 @@ fn resolve_identifier<I: Interrupt>(
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),
-        "fraction" => Value::Format(FormattingStyle::ExactFraction),
+        "fraction" | "frac" => Value::Format(FormattingStyle::ExactFraction),
         "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
@@ -266,6 +266,6 @@ fn resolve_identifier<I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
-        _ => scope.get(ident, int)?,
+        _ => scope.get(ident.to_string(), int)?,
     })
 }

@@ -4,14 +4,15 @@ use crate::{
     err::{IntErr, Interrupt},
     parser::ParseOptions,
 };
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 enum ScopeValue {
     // value, singular name, plural name
-    EagerUnit(Value, String, String),
+    EagerUnit(Value, Cow<'static, str>, Cow<'static, str>),
     // expr, singular name, plural name
-    LazyUnit(String, String, String),
+    LazyUnit(String, Cow<'static, str>, Cow<'static, str>),
     LazyExpr(String),
     //Variable(Value),
     LazyVariable(Expr, Scope, ParseOptions),
@@ -20,7 +21,7 @@ enum ScopeValue {
 impl ScopeValue {
     fn eval<I: Interrupt>(
         &self,
-        ident: &str,
+        ident: Cow<'static, str>,
         scope: &mut Scope,
         int: &I,
     ) -> Result<Value, IntErr<String, I>> {
@@ -37,7 +38,7 @@ impl ScopeValue {
                     int,
                 )?;
                 scope.insert_scope_value(
-                    ident.to_string(),
+                    ident,
                     Self::EagerUnit(
                         Value::Num(unit.clone()),
                         singular_name.clone(),
@@ -62,8 +63,8 @@ impl ScopeValue {
 
 #[derive(Debug, Clone)]
 pub struct Scope {
-    hashmap: HashMap<String, ScopeValue>,
-    prefixes: Vec<(String, ScopeValue)>,
+    hashmap: HashMap<Cow<'static, str>, ScopeValue>,
+    prefixes: Vec<(Cow<'static, str>, ScopeValue)>,
     inner: Option<Box<Scope>>,
 }
 
@@ -80,24 +81,36 @@ impl Scope {
         }
     }
 
-    fn insert_scope_value(&mut self, ident: String, value: ScopeValue) {
+    fn insert_scope_value(&mut self, ident: Cow<'static, str>, value: ScopeValue) {
         self.hashmap.insert(ident, value);
     }
 
-    pub fn insert(&mut self, singular: String, plural: String, value: Value) {
+    pub fn insert(
+        &mut self,
+        singular: impl Into<Cow<'static, str>>,
+        plural: impl Into<Cow<'static, str>>,
+        value: Value,
+    ) {
+        let singular = singular.into();
+        let plural = plural.into();
         if singular != plural {
             self.insert_scope_value(
-                plural.to_string(),
+                plural.clone(),
                 ScopeValue::EagerUnit(value.clone(), singular.clone(), plural.clone()),
             );
         }
         self.insert_scope_value(
-            singular.to_string(),
+            singular.clone(),
             ScopeValue::EagerUnit(value, singular, plural),
         );
     }
 
-    pub fn insert_lazy_unit(&mut self, expr: String, singular_name: String, plural_name: String) {
+    pub fn insert_lazy_unit(
+        &mut self,
+        expr: String,
+        singular_name: Cow<'static, str>,
+        plural_name: Cow<'static, str>,
+    ) {
         let hashmap_val = ScopeValue::LazyUnit(expr, singular_name.clone(), plural_name.clone());
         if singular_name != plural_name {
             self.insert_scope_value(plural_name, hashmap_val.clone());
@@ -107,7 +120,7 @@ impl Scope {
 
     pub fn insert_variable(
         &mut self,
-        name: String,
+        name: Cow<'static, str>,
         expr: Expr,
         scope: Self,
         options: ParseOptions,
@@ -121,9 +134,9 @@ impl Scope {
         res
     }
 
-    pub fn insert_prefix(&mut self, ident: &str, expr: &str) {
+    pub fn insert_prefix(&mut self, ident: Cow<'static, str>, expr: &str) {
         self.prefixes
-            .push((ident.to_string(), ScopeValue::LazyExpr(expr.to_string())))
+            .push((ident, ScopeValue::LazyExpr(expr.to_string())))
     }
 
     fn test_prefixes<I: Interrupt>(
@@ -132,8 +145,8 @@ impl Scope {
         int: &I,
     ) -> Result<Value, IntErr<String, I>> {
         for (prefix, scope_value) in &self.prefixes.clone() {
-            if let Some(remaining) = ident.strip_prefix(prefix) {
-                let prefix_value = scope_value.eval(prefix, self, int)?;
+            if let Some(remaining) = ident.strip_prefix(prefix.as_ref()) {
+                let prefix_value = scope_value.eval(prefix.clone(), self, int)?;
                 if remaining.is_empty() {
                     let unit = crate::num::Number::create_unit_value_from_value(
                         &prefix_value.expect_num()?,
@@ -146,16 +159,19 @@ impl Scope {
                 if let Some(remaining_value) = self.hashmap.get(remaining).cloned() {
                     let (mut singular, mut plural) = match &remaining_value {
                         ScopeValue::EagerUnit(_, s, p) | ScopeValue::LazyUnit(_, s, p) => {
-                            (s.clone(), p.clone())
+                            (s.clone().into_owned(), p.clone().into_owned())
                         }
                         _ => continue,
                     };
                     singular.insert_str(0, prefix);
                     plural.insert_str(0, prefix);
-                    let value = remaining_value.eval(remaining, self, int)?;
+                    let value = remaining_value.eval(remaining.to_string().into(), self, int)?;
                     let res = prefix_value.expect_num()?.mul(value.expect_num()?, int)?;
                     let unit = crate::num::Number::create_unit_value_from_value(
-                        &res, singular, plural, int,
+                        &res,
+                        singular.into(),
+                        plural.into(),
+                        int,
                     )?;
                     return Ok(Value::Num(unit));
                 }
@@ -164,12 +180,17 @@ impl Scope {
         Err(format!("Unknown identifier '{}'", ident))?
     }
 
-    pub fn get<I: Interrupt>(&mut self, ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
-        let potential_value = self.hashmap.get(ident).cloned();
+    pub fn get<I: Interrupt>(
+        &mut self,
+        ident: impl Into<Cow<'static, str>>,
+        int: &I,
+    ) -> Result<Value, IntErr<String, I>> {
+        let ident = ident.into();
+        let potential_value = self.hashmap.get(ident.as_ref()).cloned();
         if let Some(value) = potential_value {
             let value = value.eval(ident, self, int)?;
             Ok(value)
-        } else if let Ok(val) = self.test_prefixes(ident, int) {
+        } else if let Ok(val) = self.test_prefixes(ident.as_ref(), int) {
             Ok(val)
         } else if let Some(inner) = &mut self.inner {
             inner.get(ident, int)
@@ -219,7 +240,7 @@ mod tests {
         for key in hashmap.keys() {
             //let mut scope = scope.clone();
             //eprintln!("Testing {}", key);
-            match scope.get(key.as_str(), &int) {
+            match scope.get(key.clone(), &int) {
                 Ok(_) => success += 1,
                 Err(msg) => {
                     let error_message = match msg {
