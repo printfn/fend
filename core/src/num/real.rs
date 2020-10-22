@@ -191,23 +191,38 @@ impl Real {
         use_parens_if_fraction: bool,
         int: &I,
     ) -> Result<Exact<FormattedReal>, IntErr<Never, I>> {
+        let mut pi = false;
+        if style == FormattingStyle::Exact && self != &0.into() {
+            if let Pattern::Pi(_) = self.pattern {
+                pi = true;
+            }
+        }
+
+        let term = match (imag, pi) {
+            (false, false) => "",
+            (false, true) => "pi",
+            (true, false) => "i",
+            (true, true) => "pi i",
+        };
+
         let mut override_exact = true;
-        if self != &0.into() {
-            if let Pattern::Pi(_) = self.pattern {
-                override_exact = false;
-            }
-        }
 
-        if style == FormattingStyle::Auto {
-            if let Pattern::Pi(_) = self.pattern {
-                style = FormattingStyle::DecimalPlaces(10);
-            } else {
-                style = FormattingStyle::ExactFloatWithFractionFallback;
-            }
-        }
+        let rat = match &self.pattern {
+            Pattern::Simple(f) => f.clone(),
+            Pattern::Pi(f) => {
+                if pi {
+                    f.clone()
+                } else {
+                    override_exact = false;
+                    if style == FormattingStyle::Auto {
+                        style = FormattingStyle::DecimalPlaces(10);
+                    }
+                    self.clone().approximate(int)?
+                }
+            },
+        };
 
-        let s = self.clone().approximate(int)?;
-        let formatted = s.format(base, style, imag, use_parens_if_fraction, int)?;
+        let formatted = rat.format(base, style, term, use_parens_if_fraction, int)?;
         let exact = formatted.exact && override_exact;
         Ok(Exact::new(
             FormattedReal {

@@ -163,7 +163,7 @@ test_eval!(implicit_lambda_2, "+sin (-pi/2)", "-1");
 test_eval!(implicit_lambda_3, "/sin (-pi/2)", "-1");
 test_eval!(implicit_lambda_4, "cos! 0", "1");
 test_eval!(implicit_lambda_5, "sqrt! 16", "24");
-test_eval!(implicit_lambda_6, "///sqrt! 16", "1/24");
+test_eval!(implicit_lambda_6, "///sqrt! 16", "approx. 0.0416666666");
 test_eval!(implicit_lambda_7, "(x: sin^2 x + cos^2 x) 1", "approx. 1");
 test_eval!(implicit_lambda_8, "cos^2 pi", "1");
 test_eval!(implicit_lambda_9, "sin pi/cos pi", "0");
@@ -514,8 +514,8 @@ expect_error!(different_base_14, "2_2#0");
 expect_error!(different_base_15, "22 #0");
 expect_error!(different_base_16, "22# 0");
 test_eval!(different_base_17, "36#i i", "36#i i");
-test_eval!(different_base_18, "16#1i", "16#1i");
-test_eval!(different_base_19, "16#fi", "16#fi");
+test_eval!(different_base_18, "16#1 i", "16#1 i");
+test_eval!(different_base_19, "16#f i", "16#f i");
 test_eval!(different_base_20, "0 + 36#ii", "666");
 expect_error!(different_base_21, "18#i/i");
 test_eval!(different_base_22, "19#i/i", "-19#i i");
@@ -543,6 +543,7 @@ expect_error!(different_base_34, "5 to base i");
 expect_error!(different_base_35, "5 to base kg");
 expect_error!(different_base_36, "6#3e9");
 expect_error!(different_base_37, "6#3e39");
+test_eval!(different_base_38, "9#5i", "9#5i");
 
 test_eval!(three_electroncharge, "3electroncharge", "3 electroncharge");
 test_eval!(e_to_1, "ℯ to 1", "approx. 2.7182818284");
@@ -624,7 +625,7 @@ test_eval!(one_plus_five_percent, "1 + 5%", "1.05");
 
 test_eval!(units_1, "0m + 1kph * 1 hr", "1000 m");
 test_eval!(units_2, "0GiB + 1GB", "0.931322574615478515625 GiB");
-test_eval!(units_3, "0m/s + 1 km/hr", "5/18 m / s");
+test_eval!(units_3, "0m/s + 1 km/hr", "approx. 0.2777777777 m / s");
 test_eval!(units_4, "0m/s + i km/hr", "5i/18 m / s");
 test_eval!(units_5, "0m/s + i kilometers per hour", "5i/18 m / s");
 test_eval!(units_6, "0m/s + (1 + i) km/hr", "(5/18 + 5i/18) m / s");
@@ -657,8 +658,8 @@ test_eval!(
 );
 test_eval!(units_38, "1 feet", "1 foot");
 test_eval!(units_39, "5 foot", "5 feet");
-test_eval!(units_40, "5 foot 2 inches", "5 1/6 feet");
-test_eval!(units_41, "5 foot 1 inch 1 inch", "5 1/6 feet");
+test_eval!(units_40, "5 foot 2 inches", "approx. 5.1666666666 feet");
+test_eval!(units_41, "5 foot 1 inch 1 inch", "approx. 5.1666666666 feet");
 
 // this tests if "e" is parsed as the electron charge (instead of Euler's number)
 // in unit definitions
@@ -681,8 +682,8 @@ fn mixed_fractions_to_improper_fraction() {
     test_eval_simple("1 2/3 to fraction", "5/3");
 }
 
-test_eval!(mixed_fractions_1, "5/3", "1 2/3");
-test_eval!(mixed_fractions_2, "4 + 1 2/3", "5 2/3");
+test_eval!(mixed_fractions_1, "5/3", "approx. 1.6666666666");
+test_eval!(mixed_fractions_2, "4 + 1 2/3", "approx. 5.6666666666");
 test_eval!(mixed_fractions_3, "-8 1/2", "-8.5");
 test_eval!(mixed_fractions_4, "-8 1/2'", "-8.5'");
 test_eval!(mixed_fractions_5, "1.(3)i", "1 1/3 i");
@@ -731,11 +732,11 @@ expect_error!(illegal_mixed_fraction_with_pow_2, "1 2^2/3");
 expect_error!(illegal_mixed_fraction_with_pow_3, "1^2 2/3");
 expect_error!(illegal_mixed_fraction_with_pow_4, "1 2/-3");
 test_eval!(positive_mixed_fraction_sum, "1 2/3 + 4 5/6", "6.5");
-test_eval!(negative_mixed_fraction_sum, "1 2/3 + -4 5/6", "-3 1/6");
+test_eval!(negative_mixed_fraction_sum, "1 2/3 + -4 5/6", "approx. -3.1666666666");
 test_eval!(
     positive_mixed_fraction_subtraction,
     "1 2/3 - 4 5/6",
-    "-3 1/6"
+    "approx. -3.1666666666"
 );
 test_eval!(
     negative_mixed_fraction_subtraction,
@@ -943,4 +944,4 @@ test_eval!(lambda_20, "(\\x. y => x) 1 2", "1");
 test_eval!(lambda_21, "(\\x.\\y.x)1 2", "1");
 test_eval!(lambda_22, "a. => 0", "a.:0");
 
-test_eval!(unit_to_the_power_of_pi, "a^pi", "approx. 1 a^3.1415926535");
+test_eval!(unit_to_the_power_of_pi, "a^pi", "approx. 1 a^pi");

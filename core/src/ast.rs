@@ -256,7 +256,7 @@ fn resolve_identifier<I: Interrupt>(
         "exp" => eval("x: e^x", scope, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
-        "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),
+        "exact" => Value::Format(FormattingStyle::Exact),
         "fraction" | "frac" => Value::Format(FormattingStyle::ExactFraction),
         "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
