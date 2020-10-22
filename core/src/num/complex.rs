@@ -132,6 +132,8 @@ impl Complex {
     ) -> Result<Exact<FormattedComplex>, IntErr<Never, I>> {
         let style = if !exact && style == FormattingStyle::Auto {
             FormattingStyle::DecimalPlaces(10)
+        } else if self.imag != 0.into() && style == FormattingStyle::Auto {
+            FormattingStyle::Exact
         } else {
             style
         };

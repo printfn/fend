@@ -530,8 +530,13 @@ impl UnitValue {
                     unit_string.push(' ');
                 }
                 let plural = last_component_plural && i == pluralised_idx;
+                let exp_format = if self.format == FormattingStyle::Auto {
+                    FormattingStyle::Exact
+                } else {
+                    self.format
+                };
                 let formatted_exp =
-                    unit_exponent.format(self.base, self.format, plural, invert, int)?;
+                    unit_exponent.format(self.base, exp_format, plural, invert, int)?;
                 unit_string.push_str(formatted_exp.value.to_string().as_str());
                 exact = exact && formatted_exp.exact;
             }
