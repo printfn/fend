@@ -659,7 +659,11 @@ test_eval!(
 test_eval!(units_38, "1 feet", "1 foot");
 test_eval!(units_39, "5 foot", "5 feet");
 test_eval!(units_40, "5 foot 2 inches", "approx. 5.1666666666 feet");
-test_eval!(units_41, "5 foot 1 inch 1 inch", "approx. 5.1666666666 feet");
+test_eval!(
+    units_41,
+    "5 foot 1 inch 1 inch",
+    "approx. 5.1666666666 feet"
+);
 
 // this tests if "e" is parsed as the electron charge (instead of Euler's number)
 // in unit definitions
@@ -732,7 +736,11 @@ expect_error!(illegal_mixed_fraction_with_pow_2, "1 2^2/3");
 expect_error!(illegal_mixed_fraction_with_pow_3, "1^2 2/3");
 expect_error!(illegal_mixed_fraction_with_pow_4, "1 2/-3");
 test_eval!(positive_mixed_fraction_sum, "1 2/3 + 4 5/6", "6.5");
-test_eval!(negative_mixed_fraction_sum, "1 2/3 + -4 5/6", "approx. -3.1666666666");
+test_eval!(
+    negative_mixed_fraction_sum,
+    "1 2/3 + -4 5/6",
+    "approx. -3.1666666666"
+);
 test_eval!(
     positive_mixed_fraction_subtraction,
     "1 2/3 - 4 5/6",

@@ -219,7 +219,7 @@ impl Real {
                     }
                     self.clone().approximate(int)?
                 }
-            },
+            }
         };
 
         let formatted = rat.format(base, style, term, use_parens_if_fraction, int)?;

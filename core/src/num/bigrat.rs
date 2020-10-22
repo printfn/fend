@@ -393,8 +393,17 @@ impl BigRat {
         Ok(Exact::new(
             FormattedBigRat {
                 sign,
-                ty: if !term.is_empty() && !actually_mixed && !base.has_prefix() && num == 1.into() {
-                    FormattedBigRatType::Fraction(pref, None, false, term, formatted_den, "", use_parens)
+                ty: if !term.is_empty() && !actually_mixed && !base.has_prefix() && num == 1.into()
+                {
+                    FormattedBigRatType::Fraction(
+                        pref,
+                        None,
+                        false,
+                        term,
+                        formatted_den,
+                        "",
+                        use_parens,
+                    )
                 } else {
                     let formatted_num = num.format(base, true, int)?;
                     let i_suffix = term;
