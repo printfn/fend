@@ -118,13 +118,20 @@ pub fn evaluate<I: Interrupt>(
             |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Sub(a, b) => eval!(*a)?.handle_two_nums(
-            eval!(*b)?,
-            |a, b| a.sub(b, int),
-            |a| |f| Expr::Sub(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Sub(Box::new(Expr::Num(a)), f),
-            scope,
-        )?,
+        Expr::Sub(a, b) => {
+            let a = eval!(*a)?;
+            match a {
+                Value::Num(a) => Value::Num(a.sub(eval!(*b)?.expect_num()?, int)?),
+                f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => f.apply(
+                    Expr::UnaryMinus(b),
+                    ApplyMulHandling::OnlyApply,
+                    scope,
+                    options,
+                    int,
+                )?,
+                _ => Err("Invalid operands for subtraction".to_string())?,
+            }
+        }
         Expr::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),

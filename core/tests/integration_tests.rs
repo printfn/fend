@@ -169,10 +169,8 @@ test_eval!(implicit_lambda_8, "cos^2 pi", "1");
 test_eval!(implicit_lambda_9, "sin pi/cos pi", "0");
 test_eval!(implicit_lambda_10, "sin + 1) pi", "1");
 test_eval!(implicit_lambda_11, "3sin pi", "0");
-test_eval!(implicit_lambda_12, "(sqrt - 1) 16", "3");
-test_eval!(implicit_lambda_13, "(1 - sqrt) 16", "-3");
-test_eval!(implicit_lambda_14, "((\\x.sqrt x) - 1) 16", "3");
-test_eval!(implicit_lambda_15, "(1 - \\x.sqrt x) 16", "-3");
+test_eval!(implicit_lambda_12, "(-sqrt) 4", "-2");
+//test_eval!(implicit_lambda_13, "-sqrt 4", "-2");
 
 test_eval!(inverse_sin, "sin^-1", "asin");
 test_eval!(inverse_sin_point_five, "sin^-1 0.5", "approx. 0.5235987755");
