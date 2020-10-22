@@ -184,7 +184,7 @@ pub fn evaluate<I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr::Fn(a, b) => Value::Fn(a, *b, scope.clone()),
+        Expr::Fn(a, b) => Value::Fn(a, Box::new(*b), scope.clone()),
     })
 }
 
