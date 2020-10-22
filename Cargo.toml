@@ -27,4 +27,4 @@ members = ["core", "wasm"]
 
 [profile.release]
 lto = true
-opt-level = "s" # small code size
+opt-level = "z" # small code size
