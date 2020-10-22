@@ -4,11 +4,12 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
 use crate::scope::Scope;
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
+use std::borrow::Cow;
 
 #[derive(Clone, Debug)]
 pub enum Expr {
     Num(Number),
-    Ident(String),
+    Ident(Cow<'static, str>),
     Parens(Box<Expr>),
     UnaryMinus(Box<Expr>),
     UnaryPlus(Box<Expr>),
@@ -28,7 +29,7 @@ pub enum Expr {
     ApplyMul(Box<Expr>, Box<Expr>),
 
     As(Box<Expr>, Box<Expr>),
-    Fn(String, Box<Expr>),
+    Fn(Cow<'static, str>, Box<Expr>),
 }
 
 impl Expr {
@@ -98,7 +99,7 @@ pub fn evaluate<I: Interrupt>(
     test_int(int)?;
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
-        Expr::Ident(ident) => resolve_identifier(ident.as_str(), scope, options, int)?,
+        Expr::Ident(ident) => resolve_identifier(ident.as_ref(), scope, options, int)?,
         Expr::Parens(x) => eval!(*x)?,
         Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,

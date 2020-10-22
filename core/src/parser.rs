@@ -73,7 +73,7 @@ fn parse_number<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
 
 fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     match parse_token(input)? {
-        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident.to_string()), remaining)),
+        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident.to_string().into()), remaining)),
         _ => Err(ParseError::ExpectedIdentifier),
     }
 }
