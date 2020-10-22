@@ -85,6 +85,7 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
     false
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn evaluate<I: Interrupt>(
     expr: Expr,
     scope: &mut Scope,
