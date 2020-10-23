@@ -200,9 +200,9 @@ impl Real {
 
         let term = match (imag, pi) {
             (false, false) => "",
-            (false, true) => "pi",
+            (false, true) => "π",
             (true, false) => "i",
-            (true, true) => "pi i",
+            (true, true) => "πi",
         };
 
         let mut override_exact = true;
