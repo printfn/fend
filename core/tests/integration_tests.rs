@@ -954,7 +954,11 @@ test_eval!(lambda_21, "(\\x.\\y.x)1 2", "1");
 test_eval!(lambda_22, "a. => 0", "a.:0");
 
 test_eval!(unit_to_the_power_of_pi, "kg^pi", "1 kg^π");
-test_eval!(more_complex_unit_power_of_pi, "kg^(2pi) / kg^(2pi) to 1", "1");
+test_eval!(
+    more_complex_unit_power_of_pi,
+    "kg^(2pi) / kg^(2pi) to 1",
+    "1"
+);
 
 test_eval!(cis_0, "cis 0", "1");
 test_eval!(cis_pi, "cis pi", "-1");
