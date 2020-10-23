@@ -953,3 +953,10 @@ test_eval!(lambda_21, "(\\x.\\y.x)1 2", "1");
 test_eval!(lambda_22, "a. => 0", "a.:0");
 
 test_eval!(unit_to_the_power_of_pi, "a^pi", "approx. 1 a^π");
+
+test_eval!(cis_0, "cis 0", "1");
+test_eval!(cis_pi, "cis pi", "-1");
+test_eval!(cis_half_pi, "cis (pi/2)", "i");
+test_eval!(cis_three_pi_over_two, "cis (3pi/2)", "-i");
+test_eval!(cis_two_pi, "cis (2pi)", "1");
+test_eval!(cis_minus_two_pi, "cis -(2pi)", "1");

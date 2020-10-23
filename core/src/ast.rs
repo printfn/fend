@@ -251,6 +251,7 @@ fn resolve_identifier<I: Interrupt>(
         "asinh" => Value::BuiltInFunction(BuiltInFunction::Asinh),
         "acosh" => Value::BuiltInFunction(BuiltInFunction::Acosh),
         "atanh" => Value::BuiltInFunction(BuiltInFunction::Atanh),
+        "cis" => eval("θ => cos θ + i (sin θ)", scope, int)?,
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
