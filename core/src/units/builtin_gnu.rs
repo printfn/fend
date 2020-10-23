@@ -25,7 +25,6 @@ pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<St
     /*
     # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
-    !plural gram grams
     !plural tonne tonnes
     !plural micron microns
     !plural bicron bicrons
@@ -894,7 +893,7 @@ pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<St
     // units derived easily from SI units
     //
 
-    ("gram"                    "1/1000 kg")
+    ("gram"/"grams"            "1/1000 kg")
     ("gm"                      "gram")
     ("g"                       "gram")
 /*
