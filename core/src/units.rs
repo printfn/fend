@@ -4,7 +4,11 @@ use crate::num::Number;
 use crate::scope::Scope;
 use crate::value::Value;
 
-mod builtin_units;
+#[cfg(feature = "gpl")]
+mod builtin_gnu;
+
+#[cfg(not(feature = "gpl"))]
+mod builtin;
 
 fn expr_unit<I: Interrupt>(
     singular: &'static str,
@@ -20,6 +24,12 @@ fn expr_unit<I: Interrupt>(
     Ok(Value::Num(unit))
 }
 
+#[cfg(feature = "gpl")]
 pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
-    builtin_units::query_unit(ident, int)
+    builtin_gnu::query_unit(ident, int)
+}
+
+#[cfg(not(feature = "gpl"))]
+pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
+    builtin::query_unit(ident, int)
 }
