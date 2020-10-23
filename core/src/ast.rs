@@ -251,6 +251,6 @@ pub fn resolve_identifier<I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
-        _ => return crate::units::query_unit(ident, int),
+        _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
 }

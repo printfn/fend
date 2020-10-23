@@ -28,6 +28,15 @@ impl<'a> fmt::Display for GetIdentError<'a> {
     }
 }
 
+impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> {
+    fn from(e: IntErr<String, I>) -> Self {
+        match e {
+            IntErr::Interrupt(i) => IntErr::Interrupt(i),
+            IntErr::Error(s) => IntErr::Error(GetIdentError::EvalError(s)),
+        }
+    }
+}
+
 impl ScopeValue {
     fn eval<I: Interrupt>(&self, int: &I) -> Result<Value, IntErr<String, I>> {
         match self {

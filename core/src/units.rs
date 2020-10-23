@@ -1,7 +1,7 @@
 use crate::ast::eval;
 use crate::err::{IntErr, Interrupt};
 use crate::num::Number;
-use crate::scope::Scope;
+use crate::scope::{GetIdentError, Scope};
 use crate::value::Value;
 
 #[cfg(feature = "gpl")]
@@ -15,7 +15,7 @@ fn expr_unit<I: Interrupt>(
     plural: &'static str,
     definition: &'static str,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value, IntErr<GetIdentError<'static>, I>> {
     let definition = definition.trim();
     if definition == "!" {
         return Ok(Value::Num(Number::new_base_unit(singular, plural)));
@@ -31,13 +31,25 @@ fn expr_unit<I: Interrupt>(
     }
     Ok(Value::Num(num))
 }
+pub fn query_unit<'a, I: Interrupt>(
+    ident: &'a str,
+    int: &I,
+) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
+    query_unit_internal(ident, int)
+}
 
 #[cfg(feature = "gpl")]
-pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
+fn query_unit_internal<'a, I: Interrupt>(
+    ident: &'a str,
+    int: &I,
+) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
     builtin_gnu::query_unit(ident, int)
 }
 
 #[cfg(not(feature = "gpl"))]
-pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
+fn query_unit_internal<'a, I: Interrupt>(
+    ident: &'a str,
+    int: &I,
+) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
     builtin::query_unit(ident, int)
 }
