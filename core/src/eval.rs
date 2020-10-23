@@ -8,7 +8,6 @@ use crate::{
 
 pub fn evaluate_to_value<I: Interrupt>(
     input: &str,
-    options: parser::ParseOptions,
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
@@ -25,8 +24,8 @@ pub fn evaluate_to_value<I: Interrupt>(
     for _ in 0..missing_open_parens {
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
-    let parsed = parser::parse_tokens(tokens.as_slice(), options).map_err(|e| e.to_string())?;
-    let result = ast::evaluate(parsed, scope, options, int)?;
+    let parsed = parser::parse_tokens(tokens.as_slice()).map_err(|e| e.to_string())?;
+    let result = ast::evaluate(parsed, scope, int)?;
     Ok(result)
 }
 
@@ -39,7 +38,7 @@ pub fn evaluate_to_string<I: Interrupt>(
         input = remaining;
         true
     });
-    let value = evaluate_to_value(input, parser::ParseOptions::default(), scope, int)?;
+    let value = evaluate_to_value(input, scope, int)?;
     Ok(if debug {
         format!("{:?}", value)
     } else {

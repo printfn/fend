@@ -1,7 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
-use crate::parser::ParseOptions;
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::borrow::Cow;
@@ -89,18 +88,17 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
 pub fn evaluate<I: Interrupt>(
     expr: Expr,
     scope: &mut Scope,
-    options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     macro_rules! eval {
         ($e:expr) => {
-            evaluate($e, scope, options, int)
+            evaluate($e, scope, int)
         };
     }
     test_int(int)?;
     Ok(match expr {
         Expr::Num(n) => Value::Num(n),
-        Expr::Ident(ident) => resolve_identifier(ident.as_ref(), scope, options, int)?,
+        Expr::Ident(ident) => resolve_identifier(ident.as_ref(), scope, int)?,
         Expr::Parens(x) => eval!(*x)?,
         Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
@@ -123,13 +121,9 @@ pub fn evaluate<I: Interrupt>(
             let a = eval!(*a)?;
             match a {
                 Value::Num(a) => Value::Num(a.sub(eval!(*b)?.expect_num()?, int)?),
-                f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => f.apply(
-                    Expr::UnaryMinus(b),
-                    ApplyMulHandling::OnlyApply,
-                    scope,
-                    options,
-                    int,
-                )?,
+                f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => {
+                    f.apply(Expr::UnaryMinus(b), ApplyMulHandling::OnlyApply, scope, int)?
+                }
                 _ => Err("Invalid operands for subtraction".to_string())?,
             }
         }
@@ -140,9 +134,7 @@ pub fn evaluate<I: Interrupt>(
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::ApplyMul(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?
-        }
+        Expr::ApplyMul(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?,
         Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
@@ -174,9 +166,9 @@ pub fn evaluate<I: Interrupt>(
                 scope,
             )?
         }
-        Expr::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?,
+        Expr::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?,
         Expr::ApplyFunctionCall(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, options, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
         }
         Expr::As(a, b) => match eval!(*b)? {
             Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
@@ -196,43 +188,26 @@ pub fn evaluate<I: Interrupt>(
     })
 }
 
-fn eval<I: Interrupt>(
+pub fn eval<I: Interrupt>(
     input: &'static str,
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<Never, I>> {
-    let options = crate::parser::ParseOptions::default();
-    crate::eval::evaluate_to_value(input, options, scope, int).map_err(crate::err::IntErr::unwrap)
+    crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
 }
 
-fn resolve_identifier<I: Interrupt>(
+pub fn resolve_identifier<I: Interrupt>(
     ident: &str,
     scope: &mut Scope,
-    options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     match scope.get(ident, int) {
         Ok(val) => return Ok(val),
         Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
-        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => return Err(IntErr::Error(err.to_string())),
-    }
-    if options.gnu_compatible {
-        return Ok(match ident {
-            "pi" => Value::Num(Number::pi()),
-            "exp" => eval("x: approx. 2.718281828459045235^x", scope, int)?,
-            "sqrt" => eval("x: x^(1/2)", scope, int)?,
-            "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
-            "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
-            "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
-            // sin and cos are only needed for tan
-            "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
-            "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
-            "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
-            "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
-            "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
-            _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
-        });
+        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
+            return Err(IntErr::Error(err.to_string()))
+        }
     }
     Ok(match ident {
         "pi" | "π" => Value::Num(Number::pi()),
@@ -275,6 +250,6 @@ fn resolve_identifier<I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
-        _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
+        _ => return crate::units::query_unit(ident, int),
     })
 }

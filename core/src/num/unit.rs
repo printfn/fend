@@ -1,9 +1,9 @@
+use crate::ast;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
-use crate::value::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
@@ -21,20 +21,13 @@ pub struct UnitValue {
     format: FormattingStyle,
 }
 
-#[cfg(feature = "gpl")]
-const UNITS_DB: &str = include_str!("builtin-gnu.units");
+// #[cfg(feature = "gpl")]
+// const UNITS_DB: &str = include_str!("builtin-gnu.units");
 
-#[cfg(not(feature = "gpl"))]
-const UNITS_DB: &str = include_str!("builtin.units");
+// #[cfg(not(feature = "gpl"))]
+//const UNITS_DB: &str = include_str!("builtin.units");
 
 impl UnitValue {
-    #[allow(clippy::too_many_lines)]
-    pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
-        let mut scope = Scope::new_empty_with_capacity(3500);
-        Self::parse_units(UNITS_DB, &mut scope, int)?;
-        Ok(scope)
-    }
-
     pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
         if !self.is_unitless() {
             return Err("Cannot convert number with unit to integer".to_string())?;
@@ -43,92 +36,6 @@ impl UnitValue {
             return Err("Cannot convert inexact number to integer".to_string())?;
         }
         Ok(self.value.try_as_usize(int)?)
-    }
-
-    /// Tries to read an identifier from the beginning of the string, and returns
-    /// the remaining string.
-    fn read_ident(input: &str) -> (&str, &str) {
-        let input = input.trim_start();
-        let mut count = 0;
-        let mut prev_ch = None;
-        for ch in input.chars() {
-            if crate::lexer::is_valid_in_ident(ch, prev_ch) {
-                count += ch.len_utf8();
-            } else {
-                break;
-            }
-            prev_ch = Some(ch);
-        }
-        let (ident, remaining) = input.split_at(count);
-        assert!(!ident.is_empty());
-        (ident, remaining)
-    }
-
-    fn parse_units<I: Interrupt>(
-        unit_definitions: &'static str,
-        scope: &mut Scope,
-        int: &I,
-    ) -> Result<(), IntErr<Never, I>> {
-        let lines = unit_definitions.lines();
-        let mut plurals = vec![];
-        let mut current_plural = 0;
-        let mut skip_next = false;
-        for line in lines {
-            if skip_next {
-                if !line.ends_with('\\') {
-                    skip_next = false;
-                }
-                continue;
-            }
-            test_int(int)?;
-            let line = line.split('#').next().unwrap_or(line).trim();
-            if line.is_empty() {
-                continue;
-            }
-            let plural_prefix = "!plural";
-            if line.starts_with(plural_prefix) {
-                let line = line.split_at(plural_prefix.len()).1.trim();
-                let (singular, line) = Self::read_ident(line);
-                let (plural, line) = Self::read_ident(line);
-                assert!(line.is_empty());
-                plurals.push((singular, plural));
-                continue;
-            }
-            if line.ends_with('\\') {
-                skip_next = true;
-                continue;
-            }
-            let (singular_name, expr) = Self::read_ident(line);
-            let plural_name = if Some(singular_name) == plurals.get(current_plural).map(|t| t.0) {
-                let plural_name = plurals[current_plural].1;
-                current_plural += 1;
-                assert_ne!(singular_name, plural_name);
-                plural_name
-            } else {
-                singular_name
-            };
-            if expr.starts_with('(') {
-                // function definitions are not supported
-                continue;
-            }
-            if let Some(expr) = expr.strip_prefix('-') {
-                // unit prefixes like `kilo-`
-                scope.insert_prefix(singular_name.into(), expr.trim());
-                continue;
-            }
-            let expr = expr.trim();
-            //eprintln!("Adding unit '{}' '{}' '{}'", singular_name, plural_name, expr);
-            if expr == "!" {
-                let unit = Self::new_base_unit(singular_name, plural_name);
-                scope.insert(singular_name, plural_name, Value::Num(unit));
-            } else {
-                let expr = if expr == "!dimensionless" { "1" } else { expr };
-                scope.insert_lazy_unit(expr.to_string(), singular_name.into(), plural_name.into());
-            }
-            //crate::eval::evaluate_to_string(plural_name, scope, int).unwrap();
-        }
-        assert_eq!(current_plural, plurals.len());
-        Ok(())
     }
 
     pub fn create_unit_value_from_value<I: Interrupt>(
@@ -145,12 +52,12 @@ impl UnitValue {
         Ok(result)
     }
 
-    fn new_base_unit(singular_name: &'static str, plural_name: &'static str) -> Self {
-        let base_kg = BaseUnit::new(singular_name);
+    pub fn new_base_unit(singular_name: &'static str, plural_name: &'static str) -> Self {
+        let base_unit = BaseUnit::new(singular_name);
         let mut hashmap = HashMap::new();
-        hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new(singular_name, plural_name, hashmap, 1);
-        Self::new(1, vec![UnitExponent::new(kg, 1)])
+        hashmap.insert(base_unit, 1.into());
+        let unit = NamedUnit::new(singular_name, plural_name, hashmap, 1);
+        Self::new(1, vec![UnitExponent::new(unit, 1)])
     }
 
     pub fn with_format(self, format: FormattingStyle) -> Self {
@@ -392,7 +299,8 @@ impl UnitValue {
         scope: &mut Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        Ok(self.convert_to(scope.get("radians", int).map_err(IntErr::into_string)?.expect_num()?, int)?)
+        let radians = ast::resolve_identifier("radians", scope, int)?.expect_num()?;
+        Ok(self.convert_to(radians, int)?)
     }
 
     fn unitless() -> Self {
