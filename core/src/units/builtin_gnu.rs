@@ -889,14 +889,15 @@ pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<St
     D_FLUX                  D_FIELD AREA
     B_FLUX                  B_FIELD AREA
     H_FLUX                  H_FIELD AREA
+*/
+    //
+    // units derived easily from SI units
+    //
 
-    #
-    # units derived easily from SI units
-    #
-
-    gram                    millikg
-    gm                      gram
-    g                       gram
+    ("gram"                    "1/1000 kg")
+    ("gm"                      "gram")
+    ("g"                       "gram")
+/*
     tonne                   1000 kg
     t                       tonne
     metricton               tonne
