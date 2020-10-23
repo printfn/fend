@@ -1,12 +1,16 @@
 use fend_core::{evaluate, Context};
 
-#[track_caller]
-fn test_eval_simple(input: &str, expected: &str) {
-    let mut context = Context::new();
-    assert_eq!(
-        evaluate(input, &mut context).unwrap().get_main_result(),
-        expected.to_string()
-    );
+macro_rules! test_eval_simple {
+    ($e:ident, $input:literal, $expected:literal) => {
+        #[test]
+        fn $e() {
+            let mut context = Context::new();
+            assert_eq!(
+                evaluate($input, &mut context).unwrap().get_main_result(),
+                $expected
+            );
+        }
+    };
 }
 
 macro_rules! test_eval {
@@ -130,23 +134,24 @@ test_eval!(leading_zeroes_in_negative_exponent, "1e-01", "0.1");
 
 expect_error!(no_recurring_digits, "0.()");
 
-#[test]
-fn test_parsing_recurring_digits() {
-    test_eval_simple("0.(3) to float", "0.(3)");
-    test_eval_simple("0.(33) to float", "0.(3)");
-    test_eval_simple("0.(34) to float", "0.(34)");
-    test_eval_simple("0.(12345) to float", "0.(12345)");
-    test_eval_simple("0.(0) to float", "0");
-    test_eval_simple("0.123(00) to float", "0.123");
-    test_eval_simple("0.0(34) to float", "0.0(34)");
-    test_eval_simple("0.00(34) to float", "0.00(34)");
-    test_eval_simple("0.0000(34) to float", "0.0000(34)");
-    test_eval_simple("0.123434(34) to float", "0.12(34)");
-    test_eval_simple("0.123434(34)i to float", "0.12(34)i");
-    test_eval_simple("0.(3) + 0.123434(34)i to float", "0.(3) + 0.12(34)i");
-    test_eval_simple("6#0.(1) to float", "6#0.(1)");
-    test_eval_simple("6#0.(1) to float to base 10", "0.2");
-}
+test_eval_simple!(to_float_1, "0.(3) to float", "0.(3)");
+test_eval_simple!(to_float_2, "0.(33) to float", "0.(3)");
+test_eval_simple!(to_float_3, "0.(34) to float", "0.(34)");
+test_eval_simple!(to_float_4, "0.(12345) to float", "0.(12345)");
+test_eval_simple!(to_float_5, "0.(0) to float", "0");
+test_eval_simple!(to_float_6, "0.123(00) to float", "0.123");
+test_eval_simple!(to_float_7, "0.0(34) to float", "0.0(34)");
+test_eval_simple!(to_float_8, "0.00(34) to float", "0.00(34)");
+test_eval_simple!(to_float_9, "0.0000(34) to float", "0.0000(34)");
+test_eval_simple!(to_float_10, "0.123434(34) to float", "0.12(34)");
+test_eval_simple!(to_float_11, "0.123434(34)i to float", "0.12(34)i");
+test_eval_simple!(
+    to_float_12,
+    "0.(3) + 0.123434(34)i to float",
+    "0.(3) + 0.12(34)i"
+);
+test_eval_simple!(to_float_13, "6#0.(1) to float", "6#0.(1)");
+test_eval_simple!(to_float_14, "6#0.(1) to float to base 10", "0.2");
 
 test_eval!(two_times_two, "2*2", "4");
 test_eval!(two_times_two_whitespace, "\n2\n*\n2\n", "4");
@@ -548,15 +553,12 @@ test_eval!(different_base_38, "9#5i", "9#5i");
 test_eval!(three_electroncharge, "3electroncharge", "3 electroncharge");
 test_eval!(e_to_1, "ℯ to 1", "approx. 2.7182818284");
 
-#[test]
-fn test_base_conversions() {
-    test_eval_simple("16 to base 2", "10000");
-    test_eval_simple("0x10ffff to decimal", "1114111");
-    test_eval_simple("0o400 to decimal", "256");
-    test_eval_simple("100 to base 6", "244");
-    test_eval_simple("65536 to hex", "10000");
-    test_eval_simple("65536 to octal", "200000");
-}
+test_eval_simple!(base_conversion_1, "16 to base 2", "10000");
+test_eval_simple!(base_conversion_2, "0x10ffff to decimal", "1114111");
+test_eval_simple!(base_conversion_3, "0o400 to decimal", "256");
+test_eval_simple!(base_conversion_4, "100 to base 6", "244");
+test_eval_simple!(base_conversion_5, "65536 to hex", "10000");
+test_eval_simple!(base_conversion_6, "65536 to octal", "200000");
 
 test_eval!(exponents_1, "1e10", "10000000000");
 test_eval!(exponents_2, "1.5e10", "15000000000");
@@ -681,10 +683,11 @@ expect_error!(implicit_sum_incompatible_unit, "1 inch 5 kg");
 expect_error!(too_many_args, "abs 1 2");
 test_eval!(abs_4_with_coefficient, "5 (abs 4)", "20");
 
-#[test]
-fn mixed_fractions_to_improper_fraction() {
-    test_eval_simple("1 2/3 to fraction", "5/3");
-}
+test_eval_simple!(
+    mixed_fraction_to_improper_fraction,
+    "1 2/3 to fraction",
+    "5/3"
+);
 
 test_eval!(mixed_fractions_1, "5/3", "approx. 1.6666666666");
 test_eval!(mixed_fractions_2, "4 + 1 2/3", "approx. 5.6666666666");
@@ -774,16 +777,13 @@ expect_error!(factorial_of_minus_two, "(-2)!");
 expect_error!(factorial_of_three_i, "3i!");
 expect_error!(factorial_of_three_kg, "(3 kg)!");
 
-#[test]
-fn test_recurring_digits() {
-    test_eval_simple("9/11 -> float", "0.(81)");
-    test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
-    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)");
-    test_eval_simple("0.25 -> fraction", "1/4");
-    test_eval_simple("0.21 -> 1 dp", "approx. 0.2");
-    test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
-    test_eval_simple("502938/700 -> float", "718.48(285714)");
-}
+test_eval_simple!(recurring_digits_1, "9/11 -> float", "0.(81)");
+test_eval_simple!(recurring_digits_2, "6#1 / 11 -> float", "6#0.(0313452421)");
+test_eval_simple!(recurring_digits_3, "6#0 + 6#1 / 7 -> float", "6#0.(05)");
+test_eval_simple!(recurring_digits_4, "0.25 -> fraction", "1/4");
+test_eval_simple!(recurring_digits_5, "0.21 -> 1 dp", "approx. 0.2");
+test_eval_simple!(recurring_digits_6, "0.21 -> 1 dp -> auto", "0.21");
+test_eval_simple!(recurring_digits_7, "502938/700 -> float", "718.48(285714)");
 
 test_eval!(builtin_function_name_abs, "abs", "abs");
 test_eval!(builtin_function_name_sin, "sin", "sin");
