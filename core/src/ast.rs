@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
-use crate::scope::Scope;
+use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::borrow::Cow;
 
@@ -211,6 +211,12 @@ fn resolve_identifier<I: Interrupt>(
     options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
+    match scope.get(ident, int) {
+        Ok(val) => return Ok(val),
+        Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
+        Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
+        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => return Err(IntErr::Error(err.to_string())),
+    }
     if options.gnu_compatible {
         return Ok(match ident {
             "pi" => Value::Num(Number::pi()),
@@ -225,7 +231,7 @@ fn resolve_identifier<I: Interrupt>(
             "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
             "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
             "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
-            _ => scope.get(ident.to_string(), int)?,
+            _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
         });
     }
     Ok(match ident {
@@ -269,6 +275,6 @@ fn resolve_identifier<I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
-        _ => scope.get(ident.to_string(), int)?,
+        _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
     })
 }

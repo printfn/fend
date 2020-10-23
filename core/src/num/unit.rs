@@ -392,7 +392,7 @@ impl UnitValue {
         scope: &mut Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        Ok(self.convert_to(scope.get("radians", int)?.expect_num()?, int)?)
+        Ok(self.convert_to(scope.get("radians", int).map_err(IntErr::into_string)?.expect_num()?, int)?)
     }
 
     fn unitless() -> Self {

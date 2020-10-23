@@ -6,6 +6,7 @@ use crate::{
 };
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 enum ScopeValue {
@@ -16,6 +17,21 @@ enum ScopeValue {
     LazyExpr(String),
     //Variable(Value),
     LazyVariable(Expr, Scope, ParseOptions),
+}
+
+#[derive(Debug)]
+pub enum GetIdentError<'a> {
+    EvalError(String),
+    IdentifierNotFound(&'a str),
+}
+
+impl<'a> fmt::Display for GetIdentError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::EvalError(s) => write!(f, "{}", s),
+            Self::IdentifierNotFound(s) => write!(f, "Unknown identifier '{}'", s),
+        }
+    }
 }
 
 impl ScopeValue {
@@ -180,22 +196,21 @@ impl Scope {
         Err(format!("Unknown identifier '{}'", ident))?
     }
 
-    pub fn get<I: Interrupt>(
+    pub fn get<'a, I: Interrupt>(
         &mut self,
-        ident: impl Into<Cow<'static, str>>,
+        ident: &'a str,
         int: &I,
-    ) -> Result<Value, IntErr<String, I>> {
-        let ident = ident.into();
-        let potential_value = self.hashmap.get(ident.as_ref()).cloned();
+    ) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
+        let potential_value = self.hashmap.get(ident).cloned();
         if let Some(value) = potential_value {
-            let value = value.eval(ident, self, int)?;
+            let value = value.eval(ident.to_string().into(), self, int).map_err(|e| e.map(GetIdentError::EvalError))?;
             Ok(value)
         } else if let Ok(val) = self.test_prefixes(ident.as_ref(), int) {
             Ok(val)
         } else if let Some(inner) = &mut self.inner {
             inner.get(ident, int)
         } else {
-            Err(format!("Unknown identifier '{}'", ident))?
+            Err(GetIdentError::IdentifierNotFound(ident.as_ref()))?
         }
     }
 }
@@ -206,7 +221,7 @@ mod tests {
     use crate::err::NeverInterrupt;
 
     #[test]
-    fn test_alepint() -> Result<(), IntErr<String, NeverInterrupt>> {
+    fn test_alepint() -> Result<(), IntErr<GetIdentError<'static>, NeverInterrupt>> {
         let int = NeverInterrupt::default();
         let mut scope = Scope::new_default(&int).unwrap();
         scope.get("beergallon", &int)?;
@@ -240,7 +255,7 @@ mod tests {
         for key in hashmap.keys() {
             //let mut scope = scope.clone();
             //eprintln!("Testing {}", key);
-            match scope.get(key.clone(), &int) {
+            match scope.get(key.as_ref(), &int) {
                 Ok(_) => success += 1,
                 Err(msg) => {
                     let error_message = match msg {
