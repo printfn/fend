@@ -73,9 +73,9 @@ impl Scope {
         crate::num::Number::create_initial_units(int)
     }
 
-    pub fn new_empty() -> Self {
+    pub fn new_empty_with_capacity(capacity: usize) -> Self {
         Self {
-            hashmap: HashMap::new(),
+            hashmap: HashMap::with_capacity(capacity),
             prefixes: vec![],
             inner: None,
         }
@@ -129,7 +129,7 @@ impl Scope {
     }
 
     pub fn create_nested_scope(self) -> Self {
-        let mut res = Self::new_empty();
+        let mut res = Self::new_empty_with_capacity(10);
         res.inner = Some(Box::from(self));
         res
     }

@@ -30,7 +30,7 @@ const UNITS_DB: &str = include_str!("builtin.units");
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
-        let mut scope = Scope::new_empty();
+        let mut scope = Scope::new_empty_with_capacity(3500);
         Self::parse_units(UNITS_DB, &mut scope, int)?;
         Ok(scope)
     }
