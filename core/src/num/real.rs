@@ -233,9 +233,17 @@ impl Real {
     }
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+        // x^1 == x
         if let Pattern::Simple(n) = &rhs.pattern {
             if n == &1.into() {
                 return Ok(Exact::new(self, true));
+            }
+        }
+
+        // 1^x == 1
+        if let Pattern::Simple(n) = &self.pattern {
+            if n == &1.into() {
+                return Ok(Exact::new(1.into(), true));
             }
         }
 

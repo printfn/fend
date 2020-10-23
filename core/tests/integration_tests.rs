@@ -424,7 +424,8 @@ test_eval!(pi_to_the_power_of_ten, "pi^10", "approx. 93648.047476083");
 expect_error!(zero_to_the_power_of_zero, "0^0");
 test_eval!(zero_to_the_power_of_one, "0^1", "0");
 test_eval!(one_to_the_power_of_zero, "1^0", "1");
-expect_error!(exponent_too_large, "1^1e1000");
+test_eval!(one_to_the_power_of_huge_exponent, "1^1e1000", "1");
+expect_error!(exponent_too_large, "2^1e1000");
 expect_error!(i_cubed, "i^3");
 expect_error!(four_to_the_power_of_i, "4^i");
 expect_error!(i_to_the_power_of_i, "i^i");
@@ -952,7 +953,8 @@ test_eval!(lambda_20, "(\\x. y => x) 1 2", "1");
 test_eval!(lambda_21, "(\\x.\\y.x)1 2", "1");
 test_eval!(lambda_22, "a. => 0", "a.:0");
 
-test_eval!(unit_to_the_power_of_pi, "a^pi", "approx. 1 a^π");
+test_eval!(unit_to_the_power_of_pi, "kg^pi", "1 kg^π");
+test_eval!(more_complex_unit_power_of_pi, "kg^(2pi) / kg^(2pi) to 1", "1");
 
 test_eval!(cis_0, "cis 0", "1");
 test_eval!(cis_pi, "cis pi", "-1");
