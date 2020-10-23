@@ -960,3 +960,4 @@ test_eval!(cis_half_pi, "cis (pi/2)", "i");
 test_eval!(cis_three_pi_over_two, "cis (3pi/2)", "-i");
 test_eval!(cis_two_pi, "cis (2pi)", "1");
 test_eval!(cis_minus_two_pi, "cis -(2pi)", "1");
+test_eval!(cis_pi_over_six, "cis (pi/6)", "approx. 0.8660254037 + 0.5i");
