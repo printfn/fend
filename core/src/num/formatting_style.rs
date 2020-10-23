@@ -4,7 +4,7 @@ use std::fmt;
 #[must_use]
 pub enum FormattingStyle {
     /// Print value as an improper fraction
-    ExactFraction,
+    ImproperFraction,
     /// Print as a mixed fraction, e.g. 1 1/2
     MixedFraction,
     /// Print as a float, possibly indicating recurring digits
@@ -29,7 +29,7 @@ impl Default for FormattingStyle {
 impl fmt::Display for FormattingStyle {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            Self::ExactFraction => write!(f, "fraction"),
+            Self::ImproperFraction => write!(f, "fraction"),
             Self::MixedFraction => write!(f, "mixed_fraction"),
             Self::ExactFloat => write!(f, "float"),
             Self::Exact => write!(f, "exact"),

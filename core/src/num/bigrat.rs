@@ -468,7 +468,7 @@ impl BigRat {
             }
             Some(t) => Ok(t),
         };
-        let fraction = style == FormattingStyle::ExactFraction
+        let fraction = style == FormattingStyle::ImproperFraction
             || style == FormattingStyle::MixedFraction
             || (style == FormattingStyle::Exact && !terminating()?);
         if fraction {
