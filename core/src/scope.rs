@@ -203,14 +203,16 @@ impl Scope {
     ) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
         let potential_value = self.hashmap.get(ident).cloned();
         if let Some(value) = potential_value {
-            let value = value.eval(ident.to_string().into(), self, int).map_err(|e| e.map(GetIdentError::EvalError))?;
+            let value = value
+                .eval(ident.to_string().into(), self, int)
+                .map_err(|e| e.map(GetIdentError::EvalError))?;
             Ok(value)
         } else if let Ok(val) = self.test_prefixes(ident.as_ref(), int) {
             Ok(val)
         } else if let Some(inner) = &mut self.inner {
             inner.get(ident, int)
         } else {
-            Err(GetIdentError::IdentifierNotFound(ident.as_ref()))?
+            Err(GetIdentError::IdentifierNotFound(ident))?
         }
     }
 }

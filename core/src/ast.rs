@@ -215,7 +215,9 @@ fn resolve_identifier<I: Interrupt>(
         Ok(val) => return Ok(val),
         Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
-        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => return Err(IntErr::Error(err.to_string())),
+        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
+            return Err(IntErr::Error(err.to_string()))
+        }
     }
     if options.gnu_compatible {
         return Ok(match ident {
