@@ -1,8 +1,8 @@
-use crate::err::{Interrupt, IntErr};
-use crate::value::Value;
+use crate::ast::eval;
+use crate::err::{IntErr, Interrupt};
 use crate::num::Number;
 use crate::scope::Scope;
-use crate::ast::eval;
+use crate::value::Value;
 
 mod builtin_units;
 

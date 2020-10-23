@@ -1,8 +1,9 @@
-use crate::scope::GetIdentError;
-use crate::err::{Interrupt, IntErr};
-use crate::value::Value;
 use super::expr_unit;
+use crate::err::{IntErr, Interrupt};
+use crate::scope::GetIdentError;
+use crate::value::Value;
 
+#[allow(clippy::too_many_lines)]
 pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
     macro_rules! define_units {
         (expr $name:literal $expr:literal) => {

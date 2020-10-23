@@ -83,7 +83,7 @@ impl Scope {
         } else if let Some(inner) = &mut self.inner {
             inner.get(ident, int)
         } else {
-            Err(GetIdentError::IdentifierNotFound(ident.as_ref()))?
+            Err(GetIdentError::IdentifierNotFound(ident))?
         }
     }
 }

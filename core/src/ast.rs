@@ -134,7 +134,9 @@ pub fn evaluate<I: Interrupt>(
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::ApplyMul(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?,
+        Expr::Apply(a, b) | Expr::ApplyMul(a, b) => {
+            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?
+        }
         Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
@@ -166,7 +168,6 @@ pub fn evaluate<I: Interrupt>(
                 scope,
             )?
         }
-        Expr::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?,
         Expr::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
         }
