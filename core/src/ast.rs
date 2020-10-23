@@ -193,8 +193,8 @@ pub fn eval<I: Interrupt>(
     input: &'static str,
     scope: &mut Scope,
     int: &I,
-) -> Result<Value, IntErr<Never, I>> {
-    crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
+) -> Result<Value, IntErr<String, I>> {
+    crate::eval::evaluate_to_value(input, scope, int)
 }
 
 pub fn resolve_identifier<I: Interrupt>(
