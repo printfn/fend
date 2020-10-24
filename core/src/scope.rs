@@ -28,6 +28,7 @@ impl<'a> fmt::Display for GetIdentError<'a> {
     }
 }
 
+#[allow(clippy::use_self)]
 impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> {
     fn from(e: IntErr<String, I>) -> Self {
         match e {
