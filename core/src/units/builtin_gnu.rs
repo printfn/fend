@@ -331,28 +331,28 @@ pub fn query_unit<'a, I: Interrupt>(
 # given below.
 #
 */
-("s"                   "!") // The second, symbol s, is the SI unit of time.  It is defined
-("second"/"seconds"    "s") // by taking the fixed numerical value of the unperturbed
-                            // ground-state hyperfine transition frequency of the
-                            // cesium-133 atom to be 9 192 1631 770 when expressed in the
-                            // unit Hz, which is equal to 1/s.
-                            //
-                            // This definition is a restatement of the previous one, the
-                            // duration of 9192631770 periods of the radiation corresponding
-                            // to the cesium-133 transition.
+("s"                   "!")   // The second, symbol s, is the SI unit of time.  It is defined
+("second"/"seconds"    "l@s") // by taking the fixed numerical value of the unperturbed
+                              // ground-state hyperfine transition frequency of the
+                              // cesium-133 atom to be 9 192 1631 770 when expressed in the
+                              // unit Hz, which is equal to 1/s.
+                              //
+                              // This definition is a restatement of the previous one, the
+                              // duration of 9192631770 periods of the radiation corresponding
+                              // to the cesium-133 transition.
 
 ("c"         "=299792458 m/s") // speed of light in vacuum (exact)
 
-("m"                  "!") // The metre, symbol m, is the SI unit of length.  It is
-("meter"/"meters"     "m") // defined by taking the fixed numerical value of the speed
-("metre"/"metres"     "m") // of light in vacuum, c, to be 299 792 458 when expressed in
-                           // units of m/s.
-                           //
-                           // This definition is a rewording of the previous one and is
-                           // equivalent to defining the meter as the distance light
-                           // travels in 1|299792458 seconds.  The meter was originally
-                           // intended to be 1e-7 of the length along a meridian from the
-                           // equator to a pole.
+("m"                  "!")   // The metre, symbol m, is the SI unit of length.  It is
+("meter"/"meters"     "l@m") // defined by taking the fixed numerical value of the speed
+("metre"/"metres"     "l@m") // of light in vacuum, c, to be 299 792 458 when expressed in
+                             // units of m/s.
+                             //
+                             // This definition is a rewording of the previous one and is
+                             // equivalent to defining the meter as the distance light
+                             // travels in 1|299792458 seconds.  The meter was originally
+                             // intended to be 1e-7 of the length along a meridian from the
+                             // equator to a pole.
 
 ("h"                     "=6.62607015e-34 J s") // Planck constant (exact)
 
@@ -405,127 +405,127 @@ pub fn query_unit<'a, I: Interrupt>(
 ("boltzmann" "=1.380649e-23 J/K")   // Boltzmann constant (exact)
 ("k"         "=boltzmann")
 
-("K"         "!") // The kelvin, symbol K, is the SI unit of thermodynamic
-("kelvin"    "K") // temperature.  It is defined by taking the fixed numerical
-                  // value of the Boltzmann constant, k, to be 1.380 649 * 10^-23
-                  // when expressed in the unit J/K, which is equal to
-                  // kg m^2/s^2 K.
-                  //
-                  // The boltzmann constant establishes the relationship between
-                  // energy and temperature.  The average thermal energy carried
-                  // by each degree of freedom is kT/2.  A monatomic ideal gas
-                  // has three degrees of freedom corresponding to the three
-                  // spatial directions, which means its thermal energy is
-                  // (3/2) k T.
-                  //
-                  // The previous definition of the kelvin was based on the
-                  // triple point of water.  The change in the definition of the
-                  // kelvin will not have much effect on measurement practice.
-                  // Practical temperature calibration makes use of two scales,
-                  // the International Temperature Scale of 1990 (ITS-90), which
-                  // covers the range of 0.65 K to 1357.77K and the Provisional
-                  // Low Temperature Scale of 2000 (PLTS-2000), which covers the
-                  // range of 0.9 mK to 1 K.
-                  // https://www.bipm.org/en/committees/cc/cct/publications-cc.html
-                  //
-                  // The ITS-90 contains 17 reference points including things
-                  // like the triple point of hydrogen (13.8033 K) or the
-                  // freezing point of gold (1337.33 K), and of course the triple
-                  // point of water.  The PLTS-2000 specifies four reference
-                  // points, all based on properties of helium-3.
-                  //
-                  // The redefinition of the kelvin will not affect the values of
-                  // these reference points, which have been determined by
-                  // primary thermometry, using thermometers that rely only on
-                  // relationships that allow temperature to be calculated
-                  // directly without using any unknown quantities. Examples
-                  // include acoustic thermometers, which measure the speed of
-                  // sound in a gas, or electronic thermometers, which measure
-                  // tiny voltage fluctuations in resistors. Both variables
-                  // depend directly on temperature.
+("K"         "!")   // The kelvin, symbol K, is the SI unit of thermodynamic
+("kelvin"    "l@K") // temperature.  It is defined by taking the fixed numerical
+                    // value of the Boltzmann constant, k, to be 1.380 649 * 10^-23
+                    // when expressed in the unit J/K, which is equal to
+                    // kg m^2/s^2 K.
+                    //
+                    // The boltzmann constant establishes the relationship between
+                    // energy and temperature.  The average thermal energy carried
+                    // by each degree of freedom is kT/2.  A monatomic ideal gas
+                    // has three degrees of freedom corresponding to the three
+                    // spatial directions, which means its thermal energy is
+                    // (3/2) k T.
+                    //
+                    // The previous definition of the kelvin was based on the
+                    // triple point of water.  The change in the definition of the
+                    // kelvin will not have much effect on measurement practice.
+                    // Practical temperature calibration makes use of two scales,
+                    // the International Temperature Scale of 1990 (ITS-90), which
+                    // covers the range of 0.65 K to 1357.77K and the Provisional
+                    // Low Temperature Scale of 2000 (PLTS-2000), which covers the
+                    // range of 0.9 mK to 1 K.
+                    // https://www.bipm.org/en/committees/cc/cct/publications-cc.html
+                    //
+                    // The ITS-90 contains 17 reference points including things
+                    // like the triple point of hydrogen (13.8033 K) or the
+                    // freezing point of gold (1337.33 K), and of course the triple
+                    // point of water.  The PLTS-2000 specifies four reference
+                    // points, all based on properties of helium-3.
+                    //
+                    // The redefinition of the kelvin will not affect the values of
+                    // these reference points, which have been determined by
+                    // primary thermometry, using thermometers that rely only on
+                    // relationships that allow temperature to be calculated
+                    // directly without using any unknown quantities. Examples
+                    // include acoustic thermometers, which measure the speed of
+                    // sound in a gas, or electronic thermometers, which measure
+                    // tiny voltage fluctuations in resistors. Both variables
+                    // depend directly on temperature.
 
 ("electroncharge"   "=1.602176634e-19 C") // electron charge (exact)
 
-("A"                   "!")      // The ampere, symbol A, is the SI unit of electric current.
-("ampere"/"amperes"    "A")      // It is defined by taking the fixed numerical value of the
-("amp"/"amps"          "ampere") // elementary charge, e, to be 1.602 176 634 * 10^-19 when
-                                 // expressed in the unit C, which is equal to A*s.
-                                 //
-                                 // The previous definition was the current which produces a
-                                 // force of 2e-7 N/m between two infinitely long wires a meter
-                                 // apart.  This definition was difficult to realize accurately.
-                                 //
-                                 // The ampere is actually realized by establishing the volt and
-                                 // the ohm, since A = V / ohm.  These measurements can be done
-                                 // using the Josephson effect and the quantum Hall effect,
-                                 // which accurately measure voltage and resistance, respectively,
-                                 // with reference to two fixed constants, the Josephson
-                                 // constant, K_J=2e/h and the von Klitzing constant, R_K=h/e^2.
-                                 // Under the previous SI system, these constants had official
-                                 // fixed values, defined in 1990.  This created a situation
-                                 // where the standard values for the volt and ohm were in some
-                                 // sense outside of SI because they depended primarily on
-                                 // constants different from the ones used to define SI. After
-                                 // the revision, since e and h have exact definitions, the
-                                 // Josephson and von Klitzing constants will also have exact
-                                 // definitions that derive from SI instead of the conventional
-                                 // 1990 values.
-                                 //
-                                 // In fact we know that there is a small offset between the
-                                 // conventional values of the electrical units based on the
-                                 // conventional 1990 values and the SI values.  The new
-                                 // definition, which brings the practical electrical units back
-                                 // into SI, will lead to a one time change of +0.1ppm for
-                                 // voltage values and +0.02ppm for resistance values.
-                                 //
-                                 // The previous definition resulted in fixed exact values for
-                                 // the vacuum permeability (mu0), the impedance of free space
-                                 // (Z0), the vacuum permittivity (epsilon0), and the Coulomb
-                                 // constant. With the new definition, these four values are
-                                 // subject to experimental error.
+("A"                   "!")        // The ampere, symbol A, is the SI unit of electric current.
+("ampere"/"amperes"    "l@A")      // It is defined by taking the fixed numerical value of the
+("amp"/"amps"          "l@ampere") // elementary charge, e, to be 1.602 176 634 * 10^-19 when
+                                   // expressed in the unit C, which is equal to A*s.
+                                   //
+                                   // The previous definition was the current which produces a
+                                   // force of 2e-7 N/m between two infinitely long wires a meter
+                                   // apart.  This definition was difficult to realize accurately.
+                                   //
+                                   // The ampere is actually realized by establishing the volt and
+                                   // the ohm, since A = V / ohm.  These measurements can be done
+                                   // using the Josephson effect and the quantum Hall effect,
+                                   // which accurately measure voltage and resistance, respectively,
+                                   // with reference to two fixed constants, the Josephson
+                                   // constant, K_J=2e/h and the von Klitzing constant, R_K=h/e^2.
+                                   // Under the previous SI system, these constants had official
+                                   // fixed values, defined in 1990.  This created a situation
+                                   // where the standard values for the volt and ohm were in some
+                                   // sense outside of SI because they depended primarily on
+                                   // constants different from the ones used to define SI. After
+                                   // the revision, since e and h have exact definitions, the
+                                   // Josephson and von Klitzing constants will also have exact
+                                   // definitions that derive from SI instead of the conventional
+                                   // 1990 values.
+                                   //
+                                   // In fact we know that there is a small offset between the
+                                   // conventional values of the electrical units based on the
+                                   // conventional 1990 values and the SI values.  The new
+                                   // definition, which brings the practical electrical units back
+                                   // into SI, will lead to a one time change of +0.1ppm for
+                                   // voltage values and +0.02ppm for resistance values.
+                                   //
+                                   // The previous definition resulted in fixed exact values for
+                                   // the vacuum permeability (mu0), the impedance of free space
+                                   // (Z0), the vacuum permittivity (epsilon0), and the Coulomb
+                                   // constant. With the new definition, these four values are
+                                   // subject to experimental error.
 
 ("avogadro"  "=6.02214076e23 / mol") // Size of a mole (exact)
 ("N_A"       "=avogadro")
 
-("mol"           "!")   // The mole, symbol mol, is the SI unit of amount of
-("mole"/"moles"  "mol") // substance.  One mole contains exactly 6.022 140 76 * 10^23
-                        // elementary entities.  This number is the fixed numerical
-                        // value of the Avogadro constant, N_A, when expressed in the
-                        // unit 1/mol and is called the Avogadro number.  The amount of
-                        // substance, symbol n, of a system is a measure of the number
-                        // of specified elementary entities.  An elementary entity may
-                        // be an atom, a molecule, an ion, an electron, any other
-                        // particle or specified group of particles.
-                        //
-                        // The atomic mass unit (u) is defined as 1/12 the mass of
-                        // carbon-12.  Previously the mole was defined so that a mole
-                        // of carbon-12 weighed exactly 12g, or N_A u = 1 g/mol
-                        // exactly. This relationship is now an experimental,
-                        // approximate relationship.
-                        //
-                        // To determine the size of the mole, researchers used spheres
-                        // of very pure silicon-28 that weighed a kilogram.  They
-                        // measured the molar mass of Si-28 using mass spectrometry and
-                        // used X-ray diffraction interferometry to determine the
-                        // spacing of the silicon atoms in the sphere.  Using the
-                        // sphere's volume it was then possible to determine the number
-                        // of silicon atoms in the sphere, and hence determine the
-                        // Avogadro constant.  The results of this experiment were used to
-                        // define N_A, which is henceforth a fixed, unchanging quantity.
+("mol"           "!")     // The mole, symbol mol, is the SI unit of amount of
+("mole"/"moles"  "l@mol") // substance.  One mole contains exactly 6.022 140 76 * 10^23
+                          // elementary entities.  This number is the fixed numerical
+                          // value of the Avogadro constant, N_A, when expressed in the
+                          // unit 1/mol and is called the Avogadro number.  The amount of
+                          // substance, symbol n, of a system is a measure of the number
+                          // of specified elementary entities.  An elementary entity may
+                          // be an atom, a molecule, an ion, an electron, any other
+                          // particle or specified group of particles.
+                          //
+                          // The atomic mass unit (u) is defined as 1/12 the mass of
+                          // carbon-12.  Previously the mole was defined so that a mole
+                          // of carbon-12 weighed exactly 12g, or N_A u = 1 g/mol
+                          // exactly. This relationship is now an experimental,
+                          // approximate relationship.
+                          //
+                          // To determine the size of the mole, researchers used spheres
+                          // of very pure silicon-28 that weighed a kilogram.  They
+                          // measured the molar mass of Si-28 using mass spectrometry and
+                          // used X-ray diffraction interferometry to determine the
+                          // spacing of the silicon atoms in the sphere.  Using the
+                          // sphere's volume it was then possible to determine the number
+                          // of silicon atoms in the sphere, and hence determine the
+                          // Avogadro constant.  The results of this experiment were used to
+                          // define N_A, which is henceforth a fixed, unchanging quantity.
 
-("cd"                   "!")  // The candela, symbol cd, is the SI unit of luminous intensity
-("candela"/"candelas"   "cd") // in a given direction.  It is defined by taking the fixed
-                              // numerical value of the luminous efficacy of monochromatic
-                              // radiation of the frequency 540e12 Hz to be 683 when
-                              // expressed in the unit lumen/watt, which is equal to
-                              // cd sr/W, or cd sr s^3/kg m^2
-                              //
-                              // This definition is a rewording of the previous definition.
-                              // Luminous intensity differs from radiant intensity (W/sr) in
-                              // that it is adjusted for human perceptual dependence on
-                              // wavelength.  The frequency of 540e12 Hz (yellow;
-                              // wavelength approximately 555 nm in vacuum) is where human
-                              // perception is most efficient.
+("cd"                   "!")    // The candela, symbol cd, is the SI unit of luminous intensity
+("candela"/"candelas"   "l@cd") // in a given direction.  It is defined by taking the fixed
+                                // numerical value of the luminous efficacy of monochromatic
+                                // radiation of the frequency 540e12 Hz to be 683 when
+                                // expressed in the unit lumen/watt, which is equal to
+                                // cd sr/W, or cd sr s^3/kg m^2
+                                //
+                                // This definition is a rewording of the previous definition.
+                                // Luminous intensity differs from radiant intensity (W/sr) in
+                                // that it is adjusted for human perceptual dependence on
+                                // wavelength.  The frequency of 540e12 Hz (yellow;
+                                // wavelength approximately 555 nm in vacuum) is where human
+                                // perception is most efficient.
 //
 // The radian and steradian are defined as dimensionless primitive units.
 // The radian is equal to m/m and the steradian to m^2/m^2 so these units are
@@ -535,23 +535,23 @@ pub fn query_unit<'a, I: Interrupt>(
 // arguments to functions.
 //
 
-("radian"/"radians"       "1")   // The angle subtended at the center of a circle by
-                                 //   an arc equal in length to the radius of the
-                                 //   circle
-("sr"                     "1")   // Solid angle which cuts off an area of the surface
-("steradian"/"steradians" "sr")  //   of the sphere equal to that of a square with
-                                 //   sides of length equal to the radius of the
-                                 //   sphere
+("radian"/"radians"       "l@1")  // The angle subtended at the center of a circle by
+                                  //   an arc equal in length to the radius of the
+                                  //   circle
+("sr"                     "1")    // Solid angle which cuts off an area of the surface
+("steradian"/"steradians" "l@sr") //   of the sphere equal to that of a square with
+                                  //   sides of length equal to the radius of the
+                                  //   sphere
 
 //
 // A primitive non-SI unit
 //
 
-("bit"/"bits"       "!") // Basic unit of information (entropy).  The entropy in bits
-                         //   of a random variable over a finite alphabet is defined
-                         //   to be the sum of -p(i)*log2(p(i)) over the alphabet where
-                         //   p(i) is the probability that the random variable takes
-                         //   on the value i.
+("bit"/"bits"       "l@!") // Basic unit of information (entropy).  The entropy in bits
+                           //   of a random variable over a finite alphabet is defined
+                           //   to be the sum of -p(i)*log2(p(i)) over the alphabet where
+                           //   p(i) is the probability that the random variable takes
+                           //   on the value i.
 
 //
 // Currency: the primitive unit of currency is defined in currency.units.
