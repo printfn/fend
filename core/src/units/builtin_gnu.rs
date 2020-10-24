@@ -7689,361 +7689,361 @@ röntgen                 roentgen
 ############################################################################
 
 # ISO Currency Codes
-
-ATS                    austriaschilling
-BEF                    belgiumfranc
-CYP                    cypruspound
-EEK                    estoniakroon
-FIM                    finlandmarkka
-FRF                    francefranc
-DEM                    germanymark
-GRD                    greecedrachma
-IEP                    irelandpunt
-ITL                    italylira
-LVL                    latvialats
-LTL                    lithuanialitas
-LUF                    luxembourgfranc
-MTL                    maltalira
-SKK                    slovakiakornua
-SIT                    sloveniatolar
-ESP                    spainpeseta
-NLG                    netherlandsguilder
-PTE                    portugalescudo
-CVE                    capeverdeescudo
-BGN                    bulgarialev
-BAM                    bosniaconvertiblemark
-KMF                    comorosfranc
-XOF                    westafricafranc
-XPF                    cfpfranc
-XAF                    centralafricacfafranc
-AED                    uaedirham
-AFN                    afghanafghani
-ALL                    albanialek
-AMD                    armeniadram
-ANG                    antillesguilder
-AOA                    angolakwanza
-ARS                    argentinapeso
-AUD                    australiadollar
-AWG                    arubaflorin
-AZN                    azerbaijanmanat
-BBD                    barbadosdollar
-BDT                    bangladeshtaka
-BHD                    bahraindinar
-BIF                    burundifranc
-BND                    bruneidollar
-BOB                    boliviaboliviano
-BRL                    brazilreal
-BSD                    bahamasdollar
-BWP                    botswanapula
-BYN                    belarusruble
-BYR                    oldbelarusruble
-BZD                    belizedollar
-CAD                    canadadollar
-CDF                    drcfranccongolais
-CHF                    swissfranc
-CLP                    chilepeso
-CNY                    chinayuan
-COP                    colombiapeso
-CRC                    costaricacolon
-CUP                    cubapeso
-CZK                    czechkoruna
-DJF                    djiboutifranc
-DKK                    denmarkkrona
-DOP                    dominicanrepublicpeso
-DZD                    algeriadinar
-EGP                    egyptpound
-ERN                    eritreanakfa
-ETB                    ethiopiabirr
-EUR                    euro
-FJD                    fijidollar
-GBP                    ukpound
-GEL                    georgialari
-GHS                    ghanacedi
-GIP                    gibraltarpound
-GMD                    gambiadalasi
-GNF                    guineafranc
-GTQ                    guatemalaquetzal
-GYD                    guyanadollar
-HKD                    hongkongdollar
-HNL                    honduraslempira
-HRK                    croatiakuna
-HTG                    haitigourde
-HUF                    hungariaforint
-IDR                    indonesiarupiah
-ILS                    israelnewshekel
-INR                    indiarupee
-IQD                    iraqdinar
-IRR                    iranrial
-ISK                    icelandkrona
-JMD                    jamaicadollar
-JOD                    jordandinar
-JPY                    japanyen
-KES                    kenyaschilling
-KGS                    kyrgyzstansom
-KHR                    cambodiariel
-KRW                    southkoreawon
-KWD                    kuwaitdinar
-KZT                    kazakhstantenge
-LAK                    laokip
-LBP                    lebanonpound
-LKR                    srilankarupee
-LRD                    liberiadollar
-LSL                    lesotholoti
-LYD                    libyadinar
-MAD                    moroccodirham
-MDL                    moldovaleu
-MGA                    madagascarariary
-MKD                    macedoniadenar
-MMK                    myanmarkyat
-MNT                    mongoliatugrik
-MOP                    macaupataca
-MRO                    mauritaniaoldouguiya
-MRU                    mauritaniaouguiya
-MUR                    mauritiusrupee
-MVR                    maldiverufiyaa
-MWK                    malawikwacha
-MXN                    mexicopeso
-MYR                    malaysiaringgit
-MZN                    mozambiquemetical
-NAD                    namibiadollar
-NGN                    nigerianaira
-NIO                    nicaraguacordobaoro
-NOK                    norwaykrone
-NPR                    nepalrupee
-NZD                    newzealanddollar
-OMR                    omanrial
-PAB                    panamabalboa
-PEN                    perunuevosol
-PGK                    papuanewguineakina
-PHP                    philippinepeso
-PKR                    pakistanrupee
-PLN                    polandzloty
-PYG                    paraguayguarani
-QAR                    qatarrial
-RON                    romanianewlei
-RSD                    serbiadinar
-RUB                    russiaruble
-RWF                    rwandafranc
-SAR                    saudiarabiariyal
-SBD                    solomonislandsdollar
-SCR                    seychellesrupee
-SDG                    sudanpound
-SEK                    swedenkrona
-SGD                    singaporedollar
-SLL                    sierraleoneleone
-SOS                    somaliaschilling
-SRD                    surinamedollar
-SSP                    southsudanpound
-STN                    saotome&principedobra
-SVC                    elsalvadorcolon
-SYP                    syriapound
-SZL                    swazilandlilangeni
-THB                    thailandbaht
-TJS                    tajikistansomoni
-TMT                    turkmenistanmanat
-TND                    tunisiadinar
-#TOP                    tongapa'anga
-TRY                    turkeylira
-TTD                    trinidadandtobagodollar
-TWD                    taiwandollar
-TZS                    tanzaniashilling
-UAH                    ukrainehryvnia
-UGX                    ugandaschilling
-USD                    US$
-UYU                    uruguaypeso
-UZS                    uzbekistansum
-VES                    venezuelabolivarsoberano
-VND                    vietnamdong
-VUV                    vanuatuvatu
-WST                    samoatala
-XCD                    eastcaribbeandollar
-YER                    yemenrial
-ZAR                    southafricarand
-ZMW                    zambiakwacha
-
-# Currency exchange rates source
-
-#!message Currency exchange rates from FloatRates (USD base) on 2019-05-31
-
-austriaschilling          1|13.7603 euro
-belgiumfranc              1|40.3399 euro
-cypruspound               1|0.585274 euro
-estoniakroon              1|15.6466 euro # Equal to 1|8 germanymark
-finlandmarkka             1|5.94573 euro
-francefranc               1|6.55957 euro
-germanymark               1|1.95583 euro
-greecedrachma             1|340.75 euro
-irelandpunt               1|0.787564 euro
-italylira                 1|1936.27 euro
-latvialats                1|0.702804 euro
-lithuanialitas            1|3.4528 euro
-luxembourgfranc           1|40.3399 euro
-maltalira                 1|0.4293 euro
-slovakiakornua            1|30.1260 euro
-sloveniatolar             1|239.640 euro
-spainpeseta               1|166.386 euro
-netherlandsguilder        1|2.20371 euro
-portugalescudo            1|200.482 euro
-capeverdeescudo           0.0101044210089 USD
-bulgarialev               0.569832695195 USD
-bosniaconvertiblemark     0.571172528443 USD
-comorosfranc              0.00227440386514 USD
-westafricafranc           1|655.957 euro
-cfpfranc                  1|119.33 euro
-centralafricacfafranc     0.00168809696578 USD
-uaedirham                 0.272294233532 USD
-afghanafghani             0.0125076627357 USD
-albanialek                0.00908047171282 USD
-armeniadram               0.00208237913772 USD
-antillesguilder           0.534183593953 USD
-angolakwanza              0.00303911891527 USD
-argentinapeso             0.022425572153 USD
-australiadollar           0.691924138002 USD
-arubaflorin               0.553301470206 USD
-azerbaijanmanat           0.589424489635 USD
-barbadosdollar            0.500137771884 USD
-bangladeshtaka            0.0118358067087 USD
-bahraindinar              2.65432622511 USD
-burundifranc              0.000546002389735 USD
-bruneidollar              0.724959291959 USD
-boliviaboliviano          0.14519949806 USD
-brazilreal                0.251192789606 USD
-bahamasdollar             1.00145462102 USD
-botswanapula              0.0928468743331 USD
-belarusruble              0.477369511625 USD
-oldbelarusruble           1|10000 BYN
-belizedollar              0.496908930334 USD
-canadadollar              0.738998182015 USD
-drcfranccongolais         0.000608343290561 USD
-swissfranc                0.994429717702 USD
-chilepeso                 0.00141176656462 USD
-chinayuan                 0.144801330126 USD
-colombiapeso              0.000297363808638 USD
-costaricacolon            0.00170175074365 USD
-cubapeso                  1.00145462102 USD
-czechkoruna               0.0431115375124 USD
-djiboutifranc             0.00562600654579 USD
-denmarkkrona              0.149253655362 USD
-dominicanrepublicpeso     0.0198192113876 USD
-algeriadinar              0.00835430970538 USD
-egyptpound                0.0595867283947 USD
-eritreanakfa              0.0664450101304 USD
-ethiopiabirr              0.0346771260845 USD
-euro                      1.11429646845 USD
-fijidollar                0.464257883526 USD
-ukpound                   1.26153920067 USD
-georgialari               0.357706893865 USD
-ghanacedi                 0.188789028001 USD
-gibraltarpound            1.26614369578 USD
-gambiadalasi              0.0198451867629 USD
-guineafranc               0.000109616083952 USD
-guatemalaquetzal          0.129902852096 USD
-guyanadollar              0.00477037768196 USD
-hongkongdollar            0.127440900637 USD
-honduraslempira           0.0409371915424 USD
-croatiakuna               0.150134699061 USD
-haitigourde               0.0109616083952 USD
-hungariaforint            0.0034294207435 USD
-indonesiarupiah           6.95865312836e-05 USD
-israelnewshekel           0.275704154063 USD
-indiarupee                0.0143233712752 USD
-iraqdinar                 0.000839524131124 USD
-iranrial                  2.38529210867e-05 USD
-icelandkrona              0.00804248688156 USD
-jamaicadollar             0.0073510312224 USD
-jordandinar               1.41233493639 USD
-japanyen                  0.00918008626144 USD
-kenyaschilling            0.00988207179594 USD
-kyrgyzstansom             0.0142898470647 USD
-cambodiariel              0.000245467297002 USD
-southkoreawon             0.000839675225101 USD
-kuwaitdinar               3.28846922998 USD
-kazakhstantenge           0.00261577255379 USD
-laokip                    0.000115070912775 USD
-lebanonpound              0.000660752285911 USD
-srilankarupee             0.00568107434152 USD
-liberiadollar             0.00529897657021 USD
-lesotholoti               0.0674580497688 USD
-libyadinar                0.715361836979 USD
-moroccodirham             0.10286107151 USD
-moldovaleu                0.0549249984388 USD
-madagascarariary          0.000273001194867 USD
-macedoniadenar            0.0181645799782 USD
-myanmarkyat               0.000652501428646 USD
-mongoliatugrik            0.000378720972518 USD
-macaupataca               0.123876565016 USD
-mauritaniaoldouguiya      1|10 MRU
-mauritaniaouguiya         0.0270143903579 USD
-mauritiusrupee            0.0282229704927 USD
-maldiverufiyaa            0.0647825861084 USD
-malawikwacha              0.0013512390254 USD
-mexicopeso                0.0515379189303 USD
-malaysiaringgit           0.238302191557 USD
-mozambiquemetical         0.0161047327134 USD
-namibiadollar             0.0674060990181 USD
-nigerianaira              0.0032628410721 USD
-nicaraguacordobaoro       0.0303517893009 USD
-norwaykrone               0.113999227235 USD
-nepalrupee                0.00894591926853 USD
-newzealanddollar          0.651260761699 USD
-omanrial                  2.59826484493 USD
-panamabalboa              1.00145462102 USD
-perunuevosol              0.297608988204 USD
-papuanewguineakina        0.29551750023 USD
-philippinepeso            0.0191643579797 USD
-pakistanrupee             0.00662852410795 USD
-polandzloty               0.259643935488 USD
-paraguayguarani           0.000158409745144 USD
-qatarrial                 0.273546677749 USD
-romanianewlei             0.234502601246 USD
-serbiadinar               0.009461386826 USD
-russiaruble               0.0153344749757 USD
-rwandafranc               0.00110213517585 USD
-saudiarabiariyal          0.266645771679 USD
-solomonislandsdollar      0.124889604655 USD
-seychellesrupee           0.0732245830952 USD
-sudanpound                0.0222089459193 USD
-swedenkrona               0.104589432619 USD
-singaporedollar           0.725207344 USD
-sierraleoneleone          0.000110655098966 USD
-somaliaschilling          0.00173125876669 USD
-surinamedollar            0.133980986025 USD
-southsudanpound           0.00633980986025 USD
-saotome&principedobra     0.0455348329783 USD
-elsalvadorcolon           0.114421528391 USD
-syriapound                0.00194815315081 USD
-swazilandlilangeni        0.0674320743935 USD
-thailandbaht              0.0314820697102 USD
-tajikistansomoni          0.106008233005 USD
-turkmenistanmanat         0.286192631879 USD
-tunisiadinar              0.334199179178 USD
-#tongapa'anga              0.439815055328 USD
-turkeylira                0.169734054462 USD
-trinidadandtobagodollar   0.147877811834 USD
-taiwandollar              0.0316263165797 USD
-tanzaniashilling          0.000435866798275 USD
-ukrainehryvnia            0.037214106022 USD
-ugandaschilling           0.000266507351031 USD
-US$                       !           # Base unit, the primitive unit of currency
-uruguaypeso               0.0284695723084 USD
-uzbekistansum             0.000117908173048 USD
-venezuelabolivarsoberano  0.000172888964033 USD
-vietnamdong               4.27328581423e-05 USD
-vanuatuvatu               0.00856538001974 USD
-samoatala                 0.378045612759 USD
-eastcaribbeandollar       0.369915320276 USD
-yemenrial                 0.00401111746065 USD
-southafricarand           0.0679688184146 USD
-zambiakwacha              0.075172736246 USD
-bitcoin                   8512.16 US$ # From services.packetizer.com/btc
-
-
-# Precious metals prices from Packetizer (services.packetizer.com/spotprices)
-
-silverprice        14.52 US$/troyounce
-goldprice          1288.30 US$/troyounce
-platinumprice      797.00 US$/troyounce
 */
+
+("ATS"                    "austriaschilling")
+("BEF"                    "belgiumfranc")
+("CYP"                    "cypruspound")
+("EEK"                    "estoniakroon")
+("FIM"                    "finlandmarkka")
+("FRF"                    "francefranc")
+("DEM"                    "germanymark")
+("GRD"                    "greecedrachma")
+("IEP"                    "irelandpunt")
+("ITL"                    "italylira")
+("LVL"                    "latvialats")
+("LTL"                    "lithuanialitas")
+("LUF"                    "luxembourgfranc")
+("MTL"                    "maltalira")
+("SKK"                    "slovakiakornua")
+("SIT"                    "sloveniatolar")
+("ESP"                    "spainpeseta")
+("NLG"                    "netherlandsguilder")
+("PTE"                    "portugalescudo")
+("CVE"                    "capeverdeescudo")
+("BGN"                    "bulgarialev")
+("BAM"                    "bosniaconvertiblemark")
+("KMF"                    "comorosfranc")
+("XOF"                    "westafricafranc")
+("XPF"                    "cfpfranc")
+("XAF"                    "centralafricacfafranc")
+("AED"                    "uaedirham")
+("AFN"                    "afghanafghani")
+("ALL"                    "albanialek")
+("AMD"                    "armeniadram")
+("ANG"                    "antillesguilder")
+("AOA"                    "angolakwanza")
+("ARS"                    "argentinapeso")
+("AUD"                    "australiadollar")
+("AWG"                    "arubaflorin")
+("AZN"                    "azerbaijanmanat")
+("BBD"                    "barbadosdollar")
+("BDT"                    "bangladeshtaka")
+("BHD"                    "bahraindinar")
+("BIF"                    "burundifranc")
+("BND"                    "bruneidollar")
+("BOB"                    "boliviaboliviano")
+("BRL"                    "brazilreal")
+("BSD"                    "bahamasdollar")
+("BWP"                    "botswanapula")
+("BYN"                    "belarusruble")
+("BYR"                    "oldbelarusruble")
+("BZD"                    "belizedollar")
+("CAD"                    "canadadollar")
+("CDF"                    "drcfranccongolais")
+("CHF"                    "swissfranc")
+("CLP"                    "chilepeso")
+("CNY"                    "chinayuan")
+("COP"                    "colombiapeso")
+("CRC"                    "costaricacolon")
+("CUP"                    "cubapeso")
+("CZK"                    "czechkoruna")
+("DJF"                    "djiboutifranc")
+("DKK"                    "denmarkkrona")
+("DOP"                    "dominicanrepublicpeso")
+("DZD"                    "algeriadinar")
+("EGP"                    "egyptpound")
+("ERN"                    "eritreanakfa")
+("ETB"                    "ethiopiabirr")
+("EUR"                    "euro")
+("FJD"                    "fijidollar")
+("GBP"                    "ukpound")
+("GEL"                    "georgialari")
+("GHS"                    "ghanacedi")
+("GIP"                    "gibraltarpound")
+("GMD"                    "gambiadalasi")
+("GNF"                    "guineafranc")
+("GTQ"                    "guatemalaquetzal")
+("GYD"                    "guyanadollar")
+("HKD"                    "hongkongdollar")
+("HNL"                    "honduraslempira")
+("HRK"                    "croatiakuna")
+("HTG"                    "haitigourde")
+("HUF"                    "hungariaforint")
+("IDR"                    "indonesiarupiah")
+("ILS"                    "israelnewshekel")
+("INR"                    "indiarupee")
+("IQD"                    "iraqdinar")
+("IRR"                    "iranrial")
+("ISK"                    "icelandkrona")
+("JMD"                    "jamaicadollar")
+("JOD"                    "jordandinar")
+("JPY"                    "japanyen")
+("KES"                    "kenyaschilling")
+("KGS"                    "kyrgyzstansom")
+("KHR"                    "cambodiariel")
+("KRW"                    "southkoreawon")
+("KWD"                    "kuwaitdinar")
+("KZT"                    "kazakhstantenge")
+("LAK"                    "laokip")
+("LBP"                    "lebanonpound")
+("LKR"                    "srilankarupee")
+("LRD"                    "liberiadollar")
+("LSL"                    "lesotholoti")
+("LYD"                    "libyadinar")
+("MAD"                    "moroccodirham")
+("MDL"                    "moldovaleu")
+("MGA"                    "madagascarariary")
+("MKD"                    "macedoniadenar")
+("MMK"                    "myanmarkyat")
+("MNT"                    "mongoliatugrik")
+("MOP"                    "macaupataca")
+("MRO"                    "mauritaniaoldouguiya")
+("MRU"                    "mauritaniaouguiya")
+("MUR"                    "mauritiusrupee")
+("MVR"                    "maldiverufiyaa")
+("MWK"                    "malawikwacha")
+("MXN"                    "mexicopeso")
+("MYR"                    "malaysiaringgit")
+("MZN"                    "mozambiquemetical")
+("NAD"                    "namibiadollar")
+("NGN"                    "nigerianaira")
+("NIO"                    "nicaraguacordobaoro")
+("NOK"                    "norwaykrone")
+("NPR"                    "nepalrupee")
+("NZD"                    "newzealanddollar")
+("OMR"                    "omanrial")
+("PAB"                    "panamabalboa")
+("PEN"                    "perunuevosol")
+("PGK"                    "papuanewguineakina")
+("PHP"                    "philippinepeso")
+("PKR"                    "pakistanrupee")
+("PLN"                    "polandzloty")
+("PYG"                    "paraguayguarani")
+("QAR"                    "qatarrial")
+("RON"                    "romanianewlei")
+("RSD"                    "serbiadinar")
+("RUB"                    "russiaruble")
+("RWF"                    "rwandafranc")
+("SAR"                    "saudiarabiariyal")
+("SBD"                    "solomonislandsdollar")
+("SCR"                    "seychellesrupee")
+("SDG"                    "sudanpound")
+("SEK"                    "swedenkrona")
+("SGD"                    "singaporedollar")
+("SLL"                    "sierraleoneleone")
+("SOS"                    "somaliaschilling")
+("SRD"                    "surinamedollar")
+("SSP"                    "southsudanpound")
+("STN"                    "saotome&principedobra")
+("SVC"                    "elsalvadorcolon")
+("SYP"                    "syriapound")
+("SZL"                    "swazilandlilangeni")
+("THB"                    "thailandbaht")
+("TJS"                    "tajikistansomoni")
+("TMT"                    "turkmenistanmanat")
+("TND"                    "tunisiadinar")
+//TOP                    tongapa'anga
+("TRY"                    "turkeylira")
+("TTD"                    "trinidadandtobagodollar")
+("TWD"                    "taiwandollar")
+("TZS"                    "tanzaniashilling")
+("UAH"                    "ukrainehryvnia")
+("UGX"                    "ugandaschilling")
+("USD"                    "US$")
+("UYU"                    "uruguaypeso")
+("UZS"                    "uzbekistansum")
+("VES"                    "venezuelabolivarsoberano")
+("VND"                    "vietnamdong")
+("VUV"                    "vanuatuvatu")
+("WST"                    "samoatala")
+("XCD"                    "eastcaribbeandollar")
+("YER"                    "yemenrial")
+("ZAR"                    "southafricarand")
+("ZMW"                    "zambiakwacha")
+
+// Currency exchange rates source
+
+// !message Currency exchange rates from FloatRates (USD base) on 2019-05-31
+
+("austriaschilling"          "1/13.7603 euro")
+("belgiumfranc"              "1/40.3399 euro")
+("cypruspound"               "1/0.585274 euro")
+("estoniakroon"              "1/15.6466 euro") // Equal to 1|8 germanymark
+("finlandmarkka"             "1/5.94573 euro")
+("francefranc"               "1/6.55957 euro")
+("germanymark"               "1/1.95583 euro")
+("greecedrachma"             "1/340.75 euro")
+("irelandpunt"               "1/0.787564 euro")
+("italylira"                 "1/1936.27 euro")
+("latvialats"                "1/0.702804 euro")
+("lithuanialitas"            "1/3.4528 euro")
+("luxembourgfranc"           "1/40.3399 euro")
+("maltalira"                 "1/0.4293 euro")
+("slovakiakornua"            "1/30.1260 euro")
+("sloveniatolar"             "1/239.640 euro")
+("spainpeseta"               "1/166.386 euro")
+("netherlandsguilder"        "1/2.20371 euro")
+("portugalescudo"            "1/200.482 euro")
+("capeverdeescudo"           "0.0101044210089 USD")
+("bulgarialev"               "0.569832695195 USD")
+("bosniaconvertiblemark"     "0.571172528443 USD")
+("comorosfranc"              "0.00227440386514 USD")
+("westafricafranc"           "1/655.957 euro")
+("cfpfranc"                  "1/119.33 euro")
+("centralafricacfafranc"     "0.00168809696578 USD")
+("uaedirham"                 "0.272294233532 USD")
+("afghanafghani"             "0.0125076627357 USD")
+("albanialek"                "0.00908047171282 USD")
+("armeniadram"               "0.00208237913772 USD")
+("antillesguilder"           "0.534183593953 USD")
+("angolakwanza"              "0.00303911891527 USD")
+("argentinapeso"             "0.022425572153 USD")
+("australiadollar"           "0.691924138002 USD")
+("arubaflorin"               "0.553301470206 USD")
+("azerbaijanmanat"           "0.589424489635 USD")
+("barbadosdollar"            "0.500137771884 USD")
+("bangladeshtaka"            "0.0118358067087 USD")
+("bahraindinar"              "2.65432622511 USD")
+("burundifranc"              "0.000546002389735 USD")
+("bruneidollar"              "0.724959291959 USD")
+("boliviaboliviano"          "0.14519949806 USD")
+("brazilreal"                "0.251192789606 USD")
+("bahamasdollar"             "1.00145462102 USD")
+("botswanapula"              "0.0928468743331 USD")
+("belarusruble"              "0.477369511625 USD")
+("oldbelarusruble"           "1/10000 BYN")
+("belizedollar"              "0.496908930334 USD")
+("canadadollar"              "0.738998182015 USD")
+("drcfranccongolais"         "0.000608343290561 USD")
+("swissfranc"                "0.994429717702 USD")
+("chilepeso"                 "0.00141176656462 USD")
+("chinayuan"                 "0.144801330126 USD")
+("colombiapeso"              "0.000297363808638 USD")
+("costaricacolon"            "0.00170175074365 USD")
+("cubapeso"                  "1.00145462102 USD")
+("czechkoruna"               "0.0431115375124 USD")
+("djiboutifranc"             "0.00562600654579 USD")
+("denmarkkrona"              "0.149253655362 USD")
+("dominicanrepublicpeso"     "0.0198192113876 USD")
+("algeriadinar"              "0.00835430970538 USD")
+("egyptpound"                "0.0595867283947 USD")
+("eritreanakfa"              "0.0664450101304 USD")
+("ethiopiabirr"              "0.0346771260845 USD")
+("euro"                      "1.11429646845 USD")
+("fijidollar"                "0.464257883526 USD")
+("ukpound"                   "1.26153920067 USD")
+("georgialari"               "0.357706893865 USD")
+("ghanacedi"                 "0.188789028001 USD")
+("gibraltarpound"            "1.26614369578 USD")
+("gambiadalasi"              "0.0198451867629 USD")
+("guineafranc"               "0.000109616083952 USD")
+("guatemalaquetzal"          "0.129902852096 USD")
+("guyanadollar"              "0.00477037768196 USD")
+("hongkongdollar"            "0.127440900637 USD")
+("honduraslempira"           "0.0409371915424 USD")
+("croatiakuna"               "0.150134699061 USD")
+("haitigourde"               "0.0109616083952 USD")
+("hungariaforint"            "0.0034294207435 USD")
+("indonesiarupiah"           "6.95865312836e-05 USD")
+("israelnewshekel"           "0.275704154063 USD")
+("indiarupee"                "0.0143233712752 USD")
+("iraqdinar"                 "0.000839524131124 USD")
+("iranrial"                  "2.38529210867e-05 USD")
+("icelandkrona"              "0.00804248688156 USD")
+("jamaicadollar"             "0.0073510312224 USD")
+("jordandinar"               "1.41233493639 USD")
+("japanyen"                  "0.00918008626144 USD")
+("kenyaschilling"            "0.00988207179594 USD")
+("kyrgyzstansom"             "0.0142898470647 USD")
+("cambodiariel"              "0.000245467297002 USD")
+("southkoreawon"             "0.000839675225101 USD")
+("kuwaitdinar"               "3.28846922998 USD")
+("kazakhstantenge"           "0.00261577255379 USD")
+("laokip"                    "0.000115070912775 USD")
+("lebanonpound"              "0.000660752285911 USD")
+("srilankarupee"             "0.00568107434152 USD")
+("liberiadollar"             "0.00529897657021 USD")
+("lesotholoti"               "0.0674580497688 USD")
+("libyadinar"                "0.715361836979 USD")
+("moroccodirham"             "0.10286107151 USD")
+("moldovaleu"                "0.0549249984388 USD")
+("madagascarariary"          "0.000273001194867 USD")
+("macedoniadenar"            "0.0181645799782 USD")
+("myanmarkyat"               "0.000652501428646 USD")
+("mongoliatugrik"            "0.000378720972518 USD")
+("macaupataca"               "0.123876565016 USD")
+("mauritaniaoldouguiya"      "1/10 MRU")
+("mauritaniaouguiya"         "0.0270143903579 USD")
+("mauritiusrupee"            "0.0282229704927 USD")
+("maldiverufiyaa"            "0.0647825861084 USD")
+("malawikwacha"              "0.0013512390254 USD")
+("mexicopeso"                "0.0515379189303 USD")
+("malaysiaringgit"           "0.238302191557 USD")
+("mozambiquemetical"         "0.0161047327134 USD")
+("namibiadollar"             "0.0674060990181 USD")
+("nigerianaira"              "0.0032628410721 USD")
+("nicaraguacordobaoro"       "0.0303517893009 USD")
+("norwaykrone"               "0.113999227235 USD")
+("nepalrupee"                "0.00894591926853 USD")
+("newzealanddollar"          "0.651260761699 USD")
+("omanrial"                  "2.59826484493 USD")
+("panamabalboa"              "1.00145462102 USD")
+("perunuevosol"              "0.297608988204 USD")
+("papuanewguineakina"        "0.29551750023 USD")
+("philippinepeso"            "0.0191643579797 USD")
+("pakistanrupee"             "0.00662852410795 USD")
+("polandzloty"               "0.259643935488 USD")
+("paraguayguarani"           "0.000158409745144 USD")
+("qatarrial"                 "0.273546677749 USD")
+("romanianewlei"             "0.234502601246 USD")
+("serbiadinar"               "0.009461386826 USD")
+("russiaruble"               "0.0153344749757 USD")
+("rwandafranc"               "0.00110213517585 USD")
+("saudiarabiariyal"          "0.266645771679 USD")
+("solomonislandsdollar"      "0.124889604655 USD")
+("seychellesrupee"           "0.0732245830952 USD")
+("sudanpound"                "0.0222089459193 USD")
+("swedenkrona"               "0.104589432619 USD")
+("singaporedollar"           "0.725207344 USD")
+("sierraleoneleone"          "0.000110655098966 USD")
+("somaliaschilling"          "0.00173125876669 USD")
+("surinamedollar"            "0.133980986025 USD")
+("southsudanpound"           "0.00633980986025 USD")
+("saotome&principedobra"     "0.0455348329783 USD")
+("elsalvadorcolon"           "0.114421528391 USD")
+("syriapound"                "0.00194815315081 USD")
+("swazilandlilangeni"        "0.0674320743935 USD")
+("thailandbaht"              "0.0314820697102 USD")
+("tajikistansomoni"          "0.106008233005 USD")
+("turkmenistanmanat"         "0.286192631879 USD")
+("tunisiadinar"              "0.334199179178 USD")
+//tongapa'anga              0.439815055328 USD
+("turkeylira"                "0.169734054462 USD")
+("trinidadandtobagodollar"   "0.147877811834 USD")
+("taiwandollar"              "0.0316263165797 USD")
+("tanzaniashilling"          "0.000435866798275 USD")
+("ukrainehryvnia"            "0.037214106022 USD")
+("ugandaschilling"           "0.000266507351031 USD")
+("US$"                       "!")           // Base unit, the primitive unit of currency
+("uruguaypeso"               "0.0284695723084 USD")
+("uzbekistansum"             "0.000117908173048 USD")
+("venezuelabolivarsoberano"  "0.000172888964033 USD")
+("vietnamdong"               "4.27328581423e-05 USD")
+("vanuatuvatu"               "0.00856538001974 USD")
+("samoatala"                 "0.378045612759 USD")
+("eastcaribbeandollar"       "0.369915320276 USD")
+("yemenrial"                 "0.00401111746065 USD")
+("southafricarand"           "0.0679688184146 USD")
+("zambiakwacha"              "0.075172736246 USD")
+("bitcoin"                   "8512.16 US$") // From services.packetizer.com/btc
+
+
+// Precious metals prices from Packetizer (services.packetizer.com/spotprices)
+
+("silverprice"        "14.52 US$/troyounce")
+("goldprice"          "1288.30 US$/troyounce")
+("platinumprice"      "797.00 US$/troyounce")
 ;
 return Err(GetIdentError::IdentifierNotFound(ident))?
     ))
