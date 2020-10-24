@@ -1004,54 +1004,54 @@ H_FLUX                  H_FIELD AREA
 //
 
 ("sec"/"secs"              "s")
-("minute"/"minutes"        "60 s")
+("minute"/"minutes"        "l@60 s")
 ("min"/"mins"              "minute")
-("hour"/"hours"            "60 min")
+("hour"/"hours"            "l@60 min")
 ("hr"/"hrs"                "hour")
-("day"/"days"              "24 hr")
+("day"/"days"              "l@24 hr")
 ("d"                       "day")
 ("da"                      "day")
-("week"/"weeks"            "7 day")
+("week"/"weeks"            "l@7 day")
 ("wk"                      "week")
-("sennight"                "7 day")
-("fortnight"/"fortnights"  "14 day")
-("blink"/"blinks"          "1e-5 day")   // Actual human blink takes 1|3 second
+("sennight"                "l@7 day")
+("fortnight"/"fortnights"  "l@14 day")
+("blink"/"blinks"          "l@1e-5 day")   // Actual human blink takes 1|3 second
 ("ce"                      "1e-2 day")
 ("cron"                    "1e6 years")
-("watch"/"watches"         "4 hours")    // time a sentry stands watch or a ship's
-                                         // crew is on duty.
-("bell"/"bells"            "1/8 watch")  // Bell would be sounded every 30 minutes.
+("watch"/"watches"         "l@4 hours")    // time a sentry stands watch or a ship's
+                                           // crew is on duty.
+("bell"/"bells"            "l@1/8 watch")  // Bell would be sounded every 30 minutes.
 
 // French Revolutionary Time or Decimal Time.  It was Proposed during
 // the French Revolution.  A few clocks were made, but it never caught
 // on.  In 1998 Swatch defined a time measurement called ".beat" and
 // sold some watches that displayed time in this unit.
 
-("decimalhour"/"decimalhours"       "1/10 day")
-("decimalminute"/"decimalminutes"   "1/100 decimalhour")
-("decimalsecond"/"decimalseconds"   "1/100 decimalminute")
-("beat"/"beats"                     "decimalminute")       // Swatch Internet Time
+("decimalhour"/"decimalhours"       "l@1/10 day")
+("decimalminute"/"decimalminutes"   "l@1/100 decimalhour")
+("decimalsecond"/"decimalseconds"   "l@1/100 decimalminute")
+("beat"/"beats"                     "l@decimalminute")       // Swatch Internet Time
 (".beat"                            "beat")
 
 //
 // angular measure
 //
 
-("circle"                  "2 pi radian")
-("degree"                  "1/360 circle")
+("circle"                  "l@2 pi radian")
+("degree"                  "l@1/360 circle")
 ("deg"                     "degree")
 ("arcdeg"                  "degree")
 ("arcmin"                  "1/60 degree")
-("arcminute"               "arcmin")
+("arcminute"               "l@arcmin")
 //'                       arcmin
 ("arcsec"                  "1/60 arcmin")
-("arcsecond"               "arcsec")
+("arcsecond"               "l@arcsec")
 //"                       arcsec
 //''                      "
-("rightangle"              "90 degrees")
-("quadrant"                "1/4 circle")
-("quintant"                "1/5 circle")
-("sextant"                 "1/6 circle")
+("rightangle"              "l@90 degrees")
+("quadrant"                "l@1/4 circle")
+("quintant"                "l@1/5 circle")
+("sextant"                 "l@1/6 circle")
 /*
 
 sign                    1|12 circle # Angular extent of one sign of the zodiac
