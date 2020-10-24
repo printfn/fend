@@ -9,8 +9,8 @@ cache: cargo
 
 script:
   - rm -rvf target/debug
-  - cargo build --all
-  - cargo test --all --no-run
+  - RUST_MIN_STACK=8388608 cargo build --all
+  - RUST_MIN_STACK=8388608 cargo test --all --no-run
 
 addons:
   apt:
