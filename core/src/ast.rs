@@ -1,9 +1,9 @@
 use crate::err::{IntErr, Interrupt, Never};
+use crate::eval::evaluate_to_value;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use crate::eval::evaluate_to_value;
 use std::borrow::Cow;
 
 #[derive(Clone, Debug)]

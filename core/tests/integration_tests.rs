@@ -551,7 +551,11 @@ expect_error!(different_base_36, "6#3e9");
 expect_error!(different_base_37, "6#3e39");
 test_eval!(different_base_38, "9#5i", "9#5i");
 
-test_eval!(three_electroncharge, "3electroncharge", "3 electroncharge");
+test_eval!(
+    three_electroncharge,
+    "3electroncharge",
+    "0.0000000000000000004806529902 C"
+);
 test_eval!(e_to_1, "ℯ to 1", "approx. 2.7182818284");
 
 test_eval_simple!(base_conversion_1, "16 to base 2", "10000");

@@ -1,5 +1,5 @@
-use crate::eval::evaluate_to_value;
 use crate::err::{IntErr, Interrupt};
+use crate::eval::evaluate_to_value;
 use crate::num::Number;
 use crate::scope::{GetIdentError, Scope};
 use crate::value::Value;
@@ -10,13 +10,16 @@ mod builtin_gnu;
 #[cfg(not(feature = "gpl"))]
 mod builtin;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum PrefixRule {
     NoPrefixesAllowed,
     LongPrefixAllowed,
     LongPrefix,
+    ShortPrefixAllowed,
+    ShortPrefix,
 }
 
+#[derive(Debug)]
 pub struct UnitDef {
     singular: &'static str,
     plural: &'static str,
@@ -39,6 +42,14 @@ fn expr_unit<I: Interrupt>(
     if let Some(remaining) = definition.strip_prefix("lp@") {
         definition = remaining;
         rule = PrefixRule::LongPrefix;
+    }
+    if let Some(remaining) = definition.strip_prefix("s@") {
+        definition = remaining;
+        rule = PrefixRule::ShortPrefixAllowed;
+    }
+    if let Some(remaining) = definition.strip_prefix("sp@") {
+        definition = remaining;
+        rule = PrefixRule::ShortPrefix;
     }
     if definition == "!" {
         return Ok(UnitDef {
@@ -82,34 +93,31 @@ pub fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
     int: &I,
 ) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
-    match query_unit_internal(ident, int) {
+    match query_unit_internal(ident, false, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),
         Ok(unit) => {
-            if unit.prefix_rule == PrefixRule::NoPrefixesAllowed
-                || unit.prefix_rule == PrefixRule::LongPrefixAllowed
-                || unit.prefix_rule == PrefixRule::LongPrefix
-            {
-                // return value without prefix
-                return Ok(unit.value);
-            }
-            return Err(GetIdentError::IdentifierNotFound(ident))?;
+            // Return value without prefix. Note that lone short prefixes
+            // won't be returned here.
+            return Ok(unit.value);
         }
     }
     let mut split_idx = ident.chars().next().unwrap().len_utf8();
     while split_idx < ident.len() {
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         match (
-            query_unit_internal(prefix, int),
-            query_unit_internal(remaining_ident, int),
+            query_unit_internal(prefix, true, int),
+            query_unit_internal(remaining_ident, false, int),
         ) {
             (Err(e @ IntErr::Interrupt(_)), _)
             | (_, Err(e @ IntErr::Interrupt(_)))
             | (Err(e @ IntErr::Error(GetIdentError::EvalError(_))), _)
             | (_, Err(e @ IntErr::Error(GetIdentError::EvalError(_)))) => return Err(e),
             (Ok(a), Ok(b)) => {
-                if a.prefix_rule == PrefixRule::LongPrefix
-                    && b.prefix_rule == PrefixRule::LongPrefixAllowed
+                if (a.prefix_rule == PrefixRule::LongPrefix
+                    && b.prefix_rule == PrefixRule::LongPrefixAllowed)
+                    || (a.prefix_rule == PrefixRule::ShortPrefix
+                        && b.prefix_rule == PrefixRule::ShortPrefixAllowed)
                 {
                     // now construct a new unit!
                     return Ok(construct_prefixed_unit(a, b, int)?);
@@ -126,15 +134,17 @@ pub fn query_unit<'a, I: Interrupt>(
 #[cfg(feature = "gpl")]
 fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
+    short_prefixes: bool,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    builtin_gnu::query_unit(ident, int)
+    builtin_gnu::query_unit(ident, short_prefixes, int)
 }
 
 #[cfg(not(feature = "gpl"))]
 fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
+    short_prefixes: bool,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    builtin::query_unit(ident, int)
+    builtin::query_unit(ident, short_prefixes, int)
 }

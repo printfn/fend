@@ -6,6 +6,7 @@ use crate::scope::GetIdentError;
 #[rustfmt::skip::macros(define_units)]
 pub fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
+    short_prefixes: bool,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
     macro_rules! define_units {
@@ -17,14 +18,58 @@ pub fn query_unit<'a, I: Interrupt>(
         };
         (
             $(($expr_name_s:literal $(/ $expr_name_p:literal)? $expr_def:literal))+
+            ;
+            $end:expr
         ) => {
-            Ok(match ident {
+            match ident {
                 $($expr_name_s $(| $expr_name_p)? => define_units!(expr $expr_name_s $($expr_name_p)? $expr_def)?,)+
-                _ => return Err(GetIdentError::IdentifierNotFound(ident))?
-            })
+                _ => $end
+            }
         };
     }
-    define_units!(
+    if short_prefixes {
+        let res: UnitDef = define_units!(
+            ("Ki" "sp@kibi")
+            ("Mi" "sp@mebi")
+            ("Gi" "sp@gibi")
+            ("Ti" "sp@tebi")
+            ("Pi" "sp@pebi")
+            ("Ei" "sp@exbi")
+            ("Zi" "sp@zebi")
+            ("Yi" "sp@yobi")
+
+            ("Y"  "sp@yotta")
+            ("Z"  "sp@zetta")
+            ("E"  "sp@exa")
+            ("P"  "sp@peta")
+            ("T"  "sp@tera")
+            ("G"  "sp@giga")
+            ("M"  "sp@mega")
+            ("k"  "sp@kilo")
+            ("h"  "sp@hecto")
+            ("da" "sp@deka")
+            ("d"  "sp@deci")
+            ("c"  "sp@centi")
+            ("m"  "sp@milli")
+            ("u"  "sp@micro")   // it should be a mu but u is easy to type
+            ("n"  "sp@nano")
+            ("p"  "sp@pico")
+            ("f"  "sp@femto")
+            ("a"  "sp@atto")
+            ("z"  "sp@zepto")
+            ("y"  "sp@yocto");
+            UnitDef {
+                singular: "",
+                plural: "",
+                value: crate::value::Value::Version,
+                prefix_rule: super::PrefixRule::LongPrefix
+            }
+        );
+        if !res.singular.is_empty() {
+            return Ok(res);
+        }
+    }
+    Ok(define_units!(
 /*
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
@@ -326,7 +371,7 @@ pub fn query_unit<'a, I: Interrupt>(
 # given below.
 #
 */
-("s"                   "!")   // The second, symbol s, is the SI unit of time.  It is defined
+("s"                   "s@!") // The second, symbol s, is the SI unit of time.  It is defined
 ("second"/"seconds"    "l@s") // by taking the fixed numerical value of the unperturbed
                               // ground-state hyperfine transition frequency of the
                               // cesium-133 atom to be 9 192 1631 770 when expressed in the
@@ -336,9 +381,9 @@ pub fn query_unit<'a, I: Interrupt>(
                               // duration of 9192631770 periods of the radiation corresponding
                               // to the cesium-133 transition.
 
-("c"         "=299792458 m/s") // speed of light in vacuum (exact)
+("c"         "s@=299792458 m/s") // speed of light in vacuum (exact)
 
-("m"                  "!")   // The metre, symbol m, is the SI unit of length.  It is
+("m"                  "s@!") // The metre, symbol m, is the SI unit of length.  It is
 ("meter"/"meters"     "l@m") // defined by taking the fixed numerical value of the speed
 ("metre"/"metres"     "l@m") // of light in vacuum, c, to be 299 792 458 when expressed in
                              // units of m/s.
@@ -349,7 +394,7 @@ pub fn query_unit<'a, I: Interrupt>(
                              // intended to be 1e-7 of the length along a meridian from the
                              // equator to a pole.
 
-("h"                     "=6.62607015e-34 J s") // Planck constant (exact)
+("h"                     "s@=6.62607015e-34 J s") // Planck constant (exact)
 
 ("kg"                    "!")  // The kilogram, symbol kg, is the SI unit of mass.  It is
 ("kilogram"/"kilograms"  "kg") // defined by taking the fixed numerical value of the Planck
@@ -400,7 +445,7 @@ pub fn query_unit<'a, I: Interrupt>(
 ("boltzmann" "=1.380649e-23 J/K")   // Boltzmann constant (exact)
 ("k"         "=boltzmann")
 
-("K"         "!")   // The kelvin, symbol K, is the SI unit of thermodynamic
+("K"         "s@!") // The kelvin, symbol K, is the SI unit of thermodynamic
 ("kelvin"    "l@K") // temperature.  It is defined by taking the fixed numerical
                     // value of the Boltzmann constant, k, to be 1.380 649 * 10^-23
                     // when expressed in the unit J/K, which is equal to
@@ -441,7 +486,7 @@ pub fn query_unit<'a, I: Interrupt>(
 
 ("electroncharge"   "=1.602176634e-19 C") // electron charge (exact)
 
-("A"                   "!")        // The ampere, symbol A, is the SI unit of electric current.
+("A"                   "s@!")      // The ampere, symbol A, is the SI unit of electric current.
 ("ampere"/"amperes"    "l@A")      // It is defined by taking the fixed numerical value of the
 ("amp"/"amps"          "l@ampere") // elementary charge, e, to be 1.602 176 634 * 10^-19 when
                                    // expressed in the unit C, which is equal to A*s.
@@ -482,7 +527,7 @@ pub fn query_unit<'a, I: Interrupt>(
 ("avogadro"  "=6.02214076e23 / mol") // Size of a mole (exact)
 ("N_A"       "=avogadro")
 
-("mol"           "!")     // The mole, symbol mol, is the SI unit of amount of
+("mol"           "s@!")   // The mole, symbol mol, is the SI unit of amount of
 ("mole"/"moles"  "l@mol") // substance.  One mole contains exactly 6.022 140 76 * 10^23
                           // elementary entities.  This number is the fixed numerical
                           // value of the Avogadro constant, N_A, when expressed in the
@@ -508,7 +553,7 @@ pub fn query_unit<'a, I: Interrupt>(
                           // Avogadro constant.  The results of this experiment were used to
                           // define N_A, which is henceforth a fixed, unchanging quantity.
 
-("cd"                   "!")    // The candela, symbol cd, is the SI unit of luminous intensity
+("cd"                   "s@!")  // The candela, symbol cd, is the SI unit of luminous intensity
 ("candela"/"candelas"   "l@cd") // in a given direction.  It is defined by taking the fixed
                                 // numerical value of the luminous efficacy of monochromatic
                                 // radiation of the frequency 540e12 Hz to be 683 when
@@ -533,7 +578,7 @@ pub fn query_unit<'a, I: Interrupt>(
 ("radian"/"radians"       "l@1")  // The angle subtended at the center of a circle by
                                   //   an arc equal in length to the radius of the
                                   //   circle
-("sr"                     "1")    // Solid angle which cuts off an area of the surface
+("sr"                     "s@1")  // Solid angle which cuts off an area of the surface
 ("steradian"/"steradians" "l@sr") //   of the sphere equal to that of a square with
                                   //   sides of length equal to the radius of the
                                   //   sphere
@@ -599,37 +644,7 @@ pub fn query_unit<'a, I: Interrupt>(
 ("exbi"                   "lp@2^60")     // want to refer to "megabytes" using the
 ("zebi"                   "lp@2^70")     // binary definition, use these prefixes.
 ("yobi"                   "lp@2^80")
-/*
-Ki-                     kibi
-Mi-                     mebi
-Gi-                     gibi
-Ti-                     tebi
-Pi-                     pebi
-Ei-                     exbi
-Zi-                     zebi
-Yi-                     yobi
 
-Y-                      yotta
-Z-                      zetta
-E-                      exa
-P-                      peta
-T-                      tera
-G-                      giga
-M-                      mega
-k-                      kilo
-h-                      hecto
-da-                     deka
-d-                      deci
-c-                      centi
-m-                      milli
-u-                      micro   # it should be a mu but u is easy to type
-n-                      nano
-p-                      pico
-f-                      femto
-a-                      atto
-z-                      zepto
-y-                      yocto
-*/
 //
 // Names of some numbers
 //
@@ -815,30 +830,30 @@ y-                      yocto
 //
 
 ("newton"/"newtons"        "l@kg m / s^2")   // force
-("N"                       "newton")
+("N"                       "s@newton")
 ("pascal"/"pascals"        "l@N/m^2")        // pressure or stress
-("Pa"                      "pascal")
+("Pa"                      "s@pascal")
 ("joule"/"joules"          "l@N m")          // energy
-("J"                       "joule")
+("J"                       "s@joule")
 ("watt"/"watts"            "l@J/s")          // power
-("W"                       "watt")
+("W"                       "s@watt")
 ("coulomb"/"coulombs"      "l@A s")          // charge
-("C"                       "coulomb")
+("C"                       "s@coulomb")
 ("volt"/"volts"            "l@W/A")          // potential difference
-("V"                       "volt")
+("V"                       "s@volt")
 ("ohm"/"ohms"              "l@V/A")          // electrical resistance
 ("siemens"                 "l@A/V")          // electrical conductance
-("S"                       "siemens")
+("S"                       "s@siemens")
 ("farad"                   "l@C/V")          // capacitance
-("F"                       "farad")
+("F"                       "s@farad")
 ("weber"                   "l@V s")          // magnetic flux
-("Wb"                      "weber")
+("Wb"                      "s@weber")
 ("henry"                   "l@V s / A")      // inductance
-("H"                       "henry")
+("H"                       "s@henry")
 ("tesla"                   "l@Wb/m^2")       // magnetic flux density
-("T"                       "tesla")
+("T"                       "s@tesla")
 ("hertz"                   "l@/s")           // frequency
-("Hz"                      "hertz")
+("Hz"                      "s@hertz")
 /*
 #
 # Dimensions.  These are here to help with dimensional analysis and
@@ -895,27 +910,27 @@ H_FLUX                  H_FIELD AREA
 //
 
 ("gram"/"grams"            "l@1/1000 kg")
-("gm"                      "gram")
-("g"                       "gram")
+("gm"                      "s@gram")
+("g"                       "s@gram")
 ("tonne"/"tonnes"          "l@1000 kg")
-("t"                       "tonne")
+("t"                       "s@tonne")
 ("metricton"/"metrictons"  "l@tonne")
 ("sthene"                  "l@tonne m / s^2")
 ("funal"                   "l@sthene")
 ("pieze"                   "l@sthene / m^2")
 ("quintal"                 "l@100 kg")
 ("bar"                     "l@1e5 Pa") // About 1 atm
-("b"                       "bar")
+("b"                       "s@bar")
 ("vac"                     "l@millibar")
 ("micron"/"microns"        "l@micrometer") // One millionth of a meter
 ("bicron"/"bicrons"        "l@picometer") // One billionth of a meter
 ("cc"                      "cm^3")
 ("are"                     "l@100 m^2")
-("a"                       "are")
+("a"                       "s@are")
 ("liter"/"liters"          "l@1000 cc")       // The liter was defined in 1901 as the
 ("oldliter"                "l@1.000028 dm^3") // space occupied by 1 kg of pure water at
-("L"                       "liter")           // the temperature of its maximum density
-("l"                       "liter")           // under a pressure of 1 atm.  This was
+("L"                       "s@liter")         // the temperature of its maximum density
+("l"                       "s@liter")         // under a pressure of 1 atm.  This was
                                               // supposed to be 1000 cubic cm, but it
                                               // was discovered that the original
                                               // measurement was off.  In 1964, the
@@ -967,7 +982,7 @@ H_FLUX                  H_FIELD AREA
 ("daraf"                   "l@1/farad")    // elastance (farad spelled backwards)
 ("leo"                     "l@10 m/s^2")
 ("poiseuille"              "l@N s / m^2")  // viscosity
-("mayer"                   "l@J/g K")      // specific heat
+("mayer"                   "l@J/(g K)")    // specific heat
 ("mired"                   "l@/ microK")   // reciprocal color temperature.  The name
                                            //   abbreviates micro reciprocal degree.
 ("crocodile"               "l@megavolt")   // used informally in UK physics labs
@@ -975,21 +990,21 @@ H_FLUX                  H_FIELD AREA
 ("mounce"                  "l@metricounce")
 ("finsenunit"              "l@1e5 W/m^2")  // Measures intensity of ultraviolet light
                                            // with wavelength 296.7 nm.
-("fluxunit"                "l@1e-26 W/m^2 Hz") // Used in radio astronomy to measure
-                                               //   the energy incident on the receiving
-                                               //   body across a specified frequency
-                                               //   bandwidth.  [12]
+("fluxunit"                "l@1e-26 W/(m^2 Hz)") // Used in radio astronomy to measure
+                                                 //   the energy incident on the receiving
+                                                 //   body across a specified frequency
+                                                 //   bandwidth.  [12]
 ("jansky"                  "l@fluxunit")   // K. G. Jansky identified radio waves coming
-("Jy"                      "jansky")       // from outer space in 1931.
+("Jy"                      "s@jansky")     // from outer space in 1931.
 ("flick"       "l@W / cm^2 sr micrometer") // Spectral radiance or irradiance
-("pfu"                    "l@/ cm^2 sr s") // particle flux unit -- Used to measure
+("pfu"                  "l@/ (cm^2 sr s)") // particle flux unit -- Used to measure
                                            //   rate at which particles are received by
                                            //   a spacecraft as particles per solid
                                            //   angle per detector area per second. [18]
-("pyron"            "l@cal_IT / cm^2 min") // Measures heat flow from solar radiation,
+("pyron"          "l@cal_IT / (cm^2 min)") // Measures heat flow from solar radiation,
                                            //   from Greek word "pyr" for fire.
 ("katal"                   "l@mol/sec")    // Measure of the amount of a catalyst.  One
-("kat"                     "katal")        //   katal of catalyst enables the reaction
+("kat"                     "s@katal")      //   katal of catalyst enables the reaction
                                            //   to consume or produce on mol/sec.
 ("solarluminosity"         "l@382.8e24 W") // A common yardstick for comparing the
                                            //   output of different stars.
@@ -997,26 +1012,26 @@ H_FLUX                  H_FIELD AREA
 // at mean earth-sun distance
 ("solarirradiance"     "l@solarluminosity / (4 pi sundist^2)")
 ("solarconstant"       "solarirradiance")
-("TSI"         "solarirradiance")     // total solar irradiance
+("TSI"         "s@solarirradiance")     // total solar irradiance
 
 //
 // time
 //
 
-("sec"/"secs"              "s")
+("sec"/"secs"              "s@s")
 ("minute"/"minutes"        "l@60 s")
-("min"/"mins"              "minute")
+("min"/"mins"              "s@minute")
 ("hour"/"hours"            "l@60 min")
-("hr"/"hrs"                "hour")
+("hr"/"hrs"                "s@hour")
 ("day"/"days"              "l@24 hr")
-("d"                       "day")
-("da"                      "day")
+("d"                       "s@day")
+("da"                      "s@day")
 ("week"/"weeks"            "l@7 day")
-("wk"                      "week")
+("wk"                      "s@week")
 ("sennight"                "l@7 day")
 ("fortnight"/"fortnights"  "l@14 day")
 ("blink"/"blinks"          "l@1e-5 day")   // Actual human blink takes 1|3 second
-("ce"                      "1e-2 day")
+("ce"                      "s@1e-2 day")
 ("cron"                    "1e6 years")
 ("watch"/"watches"         "l@4 hours")    // time a sentry stands watch or a ship's
                                            // crew is on duty.
@@ -1039,7 +1054,7 @@ H_FLUX                  H_FIELD AREA
 
 ("circle"                  "l@2 pi radian")
 ("degree"                  "l@1/360 circle")
-("deg"                     "degree")
+("deg"                     "s@degree")
 ("arcdeg"                  "degree")
 ("arcmin"                  "1/60 degree")
 ("arcminute"               "l@arcmin")
@@ -1250,29 +1265,31 @@ gasmark[degR] \
 #
 # Physical constants
 #
+*/
+// Basic constants
 
-# Basic constants
-
-#pi                      3.14159265358979323846
-light                   c
-mu0_SI                 2 alpha h / electroncharge^2 c # Vacuum magnetic permeability
-mu0                     mu0_SI           # Gets overridden in CGS modes
-epsilon0                1/mu0 c^2        # Vacuum electric permittivity
-Z0                      mu0 c            # Free space impedance
-energy                  c^2              # Convert mass to energy
-hbar                    h / 2 pi
-spin                    hbar
+//pi                      3.14159265358979323846
+("light"                   "c")
+("mu0_SI"                 "2 alpha h / (electroncharge^2 c)") // Vacuum magnetic permeability
+("mu0"                     "mu0_SI")           // Gets overridden in CGS modes
+("epsilon0"                "1/(mu0 c^2)")      // Vacuum electric permittivity
+("Z0"                      "mu0 c")            // Free space impedance
+("energy"                  "c^2")              // Convert mass to energy
+("hbar"                    "h / (2 pi)")
+("spin"                    "hbar")
+/*
 G               6.67430e-11 N m^2 / kg^2 # Newtonian gravitational constant
 coulombconst            1/4 pi epsilon0  # Listed as k or k_C sometimes
 k_C                     coulombconst
+*/
+// Physico-chemical constants
 
-# Physico-chemical constants
-
-atomicmassunit      1.66053906660e-27 kg # Unified atomic mass unit, defined as
-u                       atomicmassunit   #   1|12 of the mass of carbon 12.
-amu                     atomicmassunit   #   The relationship N_A u = 1 g/mol
-dalton                  u                #   is approximately, but not exactly
-Da                      dalton           #   true (with the 2019 SI).
+("atomicmassunit"      "1.66053906660e-27 kg") // Unified atomic mass unit, defined as
+("u"                       "atomicmassunit")   //   1|12 of the mass of carbon 12.
+("amu"                     "atomicmassunit")   //   The relationship N_A u = 1 g/mol
+("dalton"                  "u")                //   is approximately, but not exactly
+("Da"                      "dalton")           //   true (with the 2019 SI).
+/*
                                          #   Previously the mole was defined to
                                          #   make this relationship exact.
 amu_chem                1.66026e-27 kg   # 1|16 of the weighted average mass of
@@ -1351,27 +1368,27 @@ henry90 (R_K/R_K90) H
 ohm90 (R_K/R_K90) ohm
 volt90 (K_J90/K_J) V
 watt90 (K_J90^2 R_K90 / K_J^2 R_K) W
+*/
+// Various conventional values
 
-# Various conventional values
+("gravity"                 "9.80665 m/s^2")    // std acceleration of gravity (exact)
+("force"                   "gravity")          // use to turn masses into forces
+("atm"                     "101325 Pa")        // Standard atmospheric pressure
+("atmosphere"              "atm")
+("Hg"             "13.5951 gram force / cm^3") // Standard weight of mercury (exact)
+("water"                   "gram force/cm^3")  // Standard weight of water (exact)
+("waterdensity"            "gram / cm^3")      // Density of water
+("H2O"                     "water")
+("wc"                      "water")            // water column
+("mach"                    "331.46 m/s")       // speed of sound in dry air at STP
+("standardtemp"            "273.15 K")         // standard temperature
+("stdtemp"                 "standardtemp")
+//normaltemp              tempF(70)        # for gas density, from NIST
+//normtemp                normaltemp       # Handbook 44
 
-gravity                 9.80665 m/s^2    # std acceleration of gravity (exact)
-force                   gravity          # use to turn masses into forces
-atm                     101325 Pa        # Standard atmospheric pressure
-atmosphere              atm
-Hg             13.5951 gram force / cm^3 # Standard weight of mercury (exact)
-water                   gram force/cm^3  # Standard weight of water (exact)
-waterdensity            gram / cm^3      # Density of water
-H2O                     water
-wc                      water            # water column
-mach                    331.46 m/s       # speed of sound in dry air at STP
-standardtemp            273.15 K         # standard temperature
-stdtemp                 standardtemp
-#normaltemp              tempF(70)        # for gas density, from NIST
-#normtemp                normaltemp       # Handbook 44
-
-# Weight of mercury and water at different temperatures using the standard
-# force of gravity.
-
+// Weight of mercury and water at different temperatures using the standard
+// force of gravity.
+/*
 Hg10C         13.5708 force gram / cm^3  # These units, when used to form
 Hg20C         13.5462 force gram / cm^3  # pressure measures, are not accurate
 Hg23C         13.5386 force gram / cm^3  # because of considerations of the
@@ -1427,31 +1444,31 @@ T_P                     plancktemperature
 electronradius    coulombconst electroncharge^2 / electronmass c^2   # Classical
 deuteronchargeradius    2.12799e-15 m
 protonchargeradius      0.8751e-15 m
+*/
+// Masses of elementary particles
 
-# Masses of elementary particles
+("electronmass"            "5.48579909065e-4 u")
+("m_e"                     "electronmass")
+("muonmass"                "0.1134289259 u")
+("m_mu"                    "muonmass")
+("taumass"                 "1.90754 u")
+("m_tau"                   "taumass")
+("protonmass"              "1.007276466621 u")
+("m_p"                     "protonmass")
+("neutronmass"             "1.00866491595 u")
+("m_n"                     "neutronmass")
+("deuteronmass"            "2.013553212745 u")    // Nucleus of deuterium, one
+("m_d"                     "deuteronmass")        //   proton and one neutron
+("alphaparticlemass"       "4.001506179127 u")    // Nucleus of He, two protons
+("m_alpha"                 "alphaparticlemass")   //   and two neutrons
+("tritonmass"              "3.01550071621 u")     // Nucleius of H3, one proton
+("m_t"                     "tritonmass")          //   and two neutrons
+("helionmass"              "3.014932247175 u")    // Nucleus of He3, two protons
+("m_h"                     "helionmass")          //   and one neutron
 
-electronmass            5.48579909065e-4 u
-m_e                     electronmass
-muonmass                0.1134289259 u
-m_mu                    muonmass
-taumass                 1.90754 u
-m_tau                   taumass
-protonmass              1.007276466621 u
-m_p                     protonmass
-neutronmass             1.00866491595 u
-m_n                     neutronmass
-deuteronmass            2.013553212745 u    # Nucleus of deuterium, one
-m_d                     deuteronmass        #   proton and one neutron
-alphaparticlemass       4.001506179127 u    # Nucleus of He, two protons
-m_alpha                 alphaparticlemass   #   and two neutrons
-tritonmass              3.01550071621 u     # Nucleius of H3, one proton
-m_t                     tritonmass          #   and two neutrons
-helionmass              3.014932247175 u    # Nucleus of He3, two protons
-m_h                     helionmass          #   and one neutron
-
-# particle wavelengths: the compton wavelength of a particle is
-# defined as h / m c where m is the mass of the particle.
-
+// particle wavelengths: the compton wavelength of a particle is
+// defined as h / m c where m is the mass of the particle.
+/*
 electronwavelength      h / m_e c
 lambda_C                electronwavelength
 protonwavelength        h / m_p c
@@ -1479,19 +1496,19 @@ g_t                     5.957924931        # Triton g-factor
 # The magnetic moment is g * mu_ref * spin where in most cases
 # the reference is the nuclear magneton, and all of the particles
 # except the deuteron have spin 1/2.
-
-bohrmagneton            electroncharge hbar / 2 electronmass  # Reference magnetic moment for
-mu_B                    bohrmagneton                          #   the electron
-nuclearmagneton         electroncharge hbar /  2 protonmass   # Convenient reference magnetic
-mu_N                    nuclearmagneton                       #   moment for heavy particles
-mu_e                    g_e mu_B / 2             # Electron spin magnet moment
-mu_mu                   g_mu electroncharge hbar / 4 muonmass # Muon spin magnetic moment
-mu_p                    g_p mu_N / 2             # Proton magnetic moment
-mu_n                    g_n mu_N / 2             # Neutron magnetic moment
-mu_t                    g_t mu_N / 2             # Triton magnetic moment
-mu_d                    g_d mu_N            # Deuteron magnetic moment, spin 1
-mu_h                    g_h mu_N / 2             # Helion magnetic moment
-
+*/
+("bohrmagneton"            "electroncharge hbar / (2 electronmass)")  // Reference magnetic moment for
+("mu_B"                    "bohrmagneton")                            //   the electron
+("nuclearmagneton"         "electroncharge hbar /  (2 protonmass)")   // Convenient reference magnetic
+("mu_N"                    "nuclearmagneton")                         //   moment for heavy particles
+("mu_e"                    "g_e mu_B / 2")             // Electron spin magnet moment
+("mu_mu"                   "g_mu electroncharge hbar / (4 muonmass)") // Muon spin magnetic moment
+("mu_p"                    "g_p mu_N / 2")             // Proton magnetic moment
+("mu_n"                    "g_n mu_N / 2")             // Neutron magnetic moment
+("mu_t"                    "g_t mu_N / 2")             // Triton magnetic moment
+("mu_d"                    "g_d mu_N")            // Deuteron magnetic moment, spin 1
+("mu_h"                    "g_h mu_N / 2")             // Helion magnetic moment
+/*
 #
 # Units derived from physical constants
 #
@@ -1511,8 +1528,10 @@ inH2O                   inch water
 mmH2O                   mm water
 eV                      electroncharge V      # Energy acquired by a particle with charge e
 electronvolt            eV                    #   when it is accelerated through 1 V
-lightyear               c julianyear # The 365.25 day year is specified in
-ly                      lightyear    # NIST publication 811
+*/
+("lightyear"/"lightyears"  "c julianyear") // The 365.25 day year is specified in
+("ly"                      "lightyear")    // NIST publication 811
+/*
 lightsecond             c s
 lightminute             c min
 parsec                  au / tan(arcsec)    # Unit of length equal to distance
@@ -2164,143 +2183,142 @@ fnumber(x)      units=[1;1] domain=[0.5,) range=[0.5,) x ; fnumber
 #    pictorial still camera negative film/process systems --
 #    Determination of ISO Speed.
 
+*/
+//
+// Astronomical time measurements
+//
+// Astronomical time measurement is a complicated matter.  The length of the
+// true day at a given place can be 21 seconds less than 24 hours or 30 seconds
+// over 24 hours.  The two main reasons for this are the varying speed of the
+// earth in its elliptical orbit and the fact that the sun moves on the ecliptic
+// instead of along the celestial equator.  To devise a workable system for time
+// measurement, Simon Newcomb (1835-1909) used a fictitious "mean sun".
+// Consider a first fictitious sun traveling along the ecliptic at a constant
+// speed and coinciding with the true sun at perigee and apogee.  Then
+// considering a second fictitious sun traveling along the celestial equator at
+// a constant speed and coinciding with the first fictitious sun at the
+// equinoxes.  The second fictitious sun is the "mean sun".  From this equations
+// can be written out to determine the length of the mean day, and the tropical
+// year.  The length of the second was determined based on the tropical year
+// from such a calculation and was officially used from 1960-1967 until atomic
+// clocks replaced astronomical measurements for a standard of time.  All of the
+// values below give the mean time for the specified interval.
+//
+// See "Mathematical Astronomy Morsels" by Jean Meeus for more details
+// and a description of how to compute the correction to mean time.
+//
 
-#
-# Astronomical time measurements
-#
-# Astronomical time measurement is a complicated matter.  The length of the
-# true day at a given place can be 21 seconds less than 24 hours or 30 seconds
-# over 24 hours.  The two main reasons for this are the varying speed of the
-# earth in its elliptical orbit and the fact that the sun moves on the ecliptic
-# instead of along the celestial equator.  To devise a workable system for time
-# measurement, Simon Newcomb (1835-1909) used a fictitious "mean sun".
-# Consider a first fictitious sun traveling along the ecliptic at a constant
-# speed and coinciding with the true sun at perigee and apogee.  Then
-# considering a second fictitious sun traveling along the celestial equator at
-# a constant speed and coinciding with the first fictitious sun at the
-# equinoxes.  The second fictitious sun is the "mean sun".  From this equations
-# can be written out to determine the length of the mean day, and the tropical
-# year.  The length of the second was determined based on the tropical year
-# from such a calculation and was officially used from 1960-1967 until atomic
-# clocks replaced astronomical measurements for a standard of time.  All of the
-# values below give the mean time for the specified interval.
-#
-# See "Mathematical Astronomy Morsels" by Jean Meeus for more details
-# and a description of how to compute the correction to mean time.
-#
+// TIME                    second
 
-TIME                    second
-
-anomalisticyear         365.2596 days       # The time between successive
-                                            #   perihelion passages of the
-                                            #   earth.
-siderealyear            365.256360417 day   # The time for the earth to make
-                                            #   one revolution around the sun
-                                            #   relative to the stars.
-tropicalyear            365.242198781 day   # The time needed for the mean sun
-                                            #   as defined above to increase
-                                            #   its longitude by 360 degrees.
-                                            #   Most references defined the
-                                            #   tropical year as the interval
-                                            #   between vernal equinoxes, but
-                                            #   this is misleading.  The length
-                                            #   of the season changes over time
-                                            #   because of the eccentricity of
-                                            #   the earth's orbit.  The time
-                                            #   between vernal equinoxes is
-                                            #   approximately 365.24237 days
-                                            #   around the year 2000.  See
-                                            #   "Mathematical Astronomy
-                                            #   Morsels" for more details.
-eclipseyear             346.62 days         # The line of nodes is the
-                                            #   intersection of the plane of
-                                            #   Earth's orbit around the sun
-                                            #   with the plane of the moon's
-                                            #   orbit around earth.  Eclipses
-                                            #   can only occur when the moon
-                                            #   and sun are close to this
-                                            #   line.  The line rotates and
-                                            #   appearances of the sun on the
-                                            #   line of nodes occur every
-                                            #   eclipse year.
-saros                   223 synodicmonth    # The earth, moon and sun appear in
-                                            #   the same arrangement every
-                                            #   saros, so if an eclipse occurs,
-                                            #   then one saros later, a similar
-                                            #   eclipse will occur.  (The saros
-                                            #   is close to 19 eclipse years.)
-                                            #   The eclipse will occur about
-                                            #   120 degrees west of the
-                                            #   preceding one because the
-                                            #   saros is not an even number of
-                                            #   days.  After 3 saros, an
-                                            #   eclipse will occur at
-                                            #   approximately the same place.
-siderealday             86164.09054 s       # The sidereal day is the interval
-siderealhour            1|24 siderealday    #   between two successive transits
-siderealminute          1|60 siderealhour   #   of a star over the meridian,
-siderealsecond          1|60 siderealminute #   or the time required  for the
-                                            #   earth to make one rotation
-                                            #   relative to the stars.  The
-                                            #   more usual solar day is the
-                                            #   time required to make a
-                                            #   rotation relative to the sun.
-                                            #   Because the earth moves in its
-                                            #   orbit, it has to turn a bit
-                                            #   extra to face the sun again,
-                                            #   hence the solar day is slightly
-                                            #   longer.
-anomalisticmonth        27.55454977 day     # Time for the moon to travel from
-                                            #   perigee to perigee
-nodicalmonth            27.2122199 day      # The nodes are the points where
-draconicmonth           nodicalmonth        #   an orbit crosses the ecliptic.
-draconiticmonth         nodicalmonth        #   This is the time required to
-                                            #   travel from the ascending node
-                                            #   to the next ascending node.
-siderealmonth           27.321661 day       # Time required for the moon to
-                                            #   orbit the earth
-lunarmonth              29 days + 12 hours + 44 minutes + 2.8 seconds
-                                            # Mean time between full moons.
-synodicmonth            lunarmonth          #   Full moons occur when the sun
-lunation                synodicmonth        #   and moon are on opposite sides
-lune                    1|30 lunation       #   of the earth.  Since the earth
-lunour                  1|24 lune           #   moves around the sun, the moon
-                                            #   has to revolve a bit extra to
-                                            #   get into the full moon
-                                            #   configuration.
-year                    tropicalyear
-yr                      year
-month                   1|12 year
-mo                      month
-lustrum                 5 years             # The Lustrum was a Roman
-                                            #   purification ceremony that took
-                                            #   place every five years.
-                                            #   Classically educated Englishmen
-                                            #   used this term.
-decade                  10 years
-century                 100 years
-millennium              1000 years
-millennia               millennium
-solaryear               year
-lunaryear               12 lunarmonth
-calendaryear            365 day
-commonyear              365 day
-leapyear                366 day
-julianyear              365.25 day
-gregorianyear           365.2425 day
-islamicyear             354 day          # A year of 12 lunar months. They
-islamicleapyear         355 day          # began counting on July 16, AD 622
-                                         # when Muhammad emigrated to Medina
-                                         # (the year of the Hegira).  They need
-                                         # 11 leap days in 30 years to stay in
-                                         # sync with the lunar year which is a
-                                         # bit longer than the 29.5 days of the
-                                         # average month.  The months do not
-                                         # keep to the same seasons, but
-                                         # regress through the seasons every
-                                         # 32.5 years.
-islamicmonth            1|12 islamicyear # They have 29 day and 30 day months.
-
+("anomalisticyear"         "365.2596 days")       // The time between successive
+                                                  //   perihelion passages of the
+                                                  //   earth.
+("siderealyear"            "365.256360417 day")   // The time for the earth to make
+                                                  //   one revolution around the sun
+                                                  //   relative to the stars.
+("tropicalyear"            "365.242198781 day")   // The time needed for the mean sun
+                                                  //   as defined above to increase
+                                                  //   its longitude by 360 degrees.
+                                                  //   Most references defined the
+                                                  //   tropical year as the interval
+                                                  //   between vernal equinoxes, but
+                                                  //   this is misleading.  The length
+                                                  //   of the season changes over time
+                                                  //   because of the eccentricity of
+                                                  //   the earth's orbit.  The time
+                                                  //   between vernal equinoxes is
+                                                  //   approximately 365.24237 days
+                                                  //   around the year 2000.  See
+                                                  //   "Mathematical Astronomy
+                                                  //   Morsels" for more details.
+("eclipseyear"             "346.62 days")         // The line of nodes is the
+                                                  //   intersection of the plane of
+                                                  //   Earth's orbit around the sun
+                                                  //   with the plane of the moon's
+                                                  //   orbit around earth.  Eclipses
+                                                  //   can only occur when the moon
+                                                  //   and sun are close to this
+                                                  //   line.  The line rotates and
+                                                  //   appearances of the sun on the
+                                                  //   line of nodes occur every
+                                                  //   eclipse year.
+("saros"                   "223 synodicmonth")    // The earth, moon and sun appear in
+                                                  //   the same arrangement every
+                                                  //   saros, so if an eclipse occurs,
+                                                  //   then one saros later, a similar
+                                                  //   eclipse will occur.  (The saros
+                                                  //   is close to 19 eclipse years.)
+                                                  //   The eclipse will occur about
+                                                  //   120 degrees west of the
+                                                  //   preceding one because the
+                                                  //   saros is not an even number of
+                                                  //   days.  After 3 saros, an
+                                                  //   eclipse will occur at
+                                                  //   approximately the same place.
+("siderealday"             "86164.09054 s")       // The sidereal day is the interval
+("siderealhour"            "1/24 siderealday")    //   between two successive transits
+("siderealminute"          "1/60 siderealhour")   //   of a star over the meridian,
+("siderealsecond"          "1/60 siderealminute") //   or the time required  for the
+                                                  //   earth to make one rotation
+                                                  //   relative to the stars.  The
+                                                  //   more usual solar day is the
+                                                  //   time required to make a
+                                                  //   rotation relative to the sun.
+                                                  //   Because the earth moves in its
+                                                  //   orbit, it has to turn a bit
+                                                  //   extra to face the sun again,
+                                                  //   hence the solar day is slightly
+                                                  //   longer.
+("anomalisticmonth"        "27.55454977 day")     // Time for the moon to travel from
+                                                  //   perigee to perigee
+("nodicalmonth"            "27.2122199 day")      // The nodes are the points where
+("draconicmonth"           "nodicalmonth")        //   an orbit crosses the ecliptic.
+("draconiticmonth"         "nodicalmonth")        //   This is the time required to
+                                                  //   travel from the ascending node
+                                                  //   to the next ascending node.
+("siderealmonth"           "27.321661 day")       // Time required for the moon to
+                                                  //   orbit the earth
+("lunarmonth"              "29 days + 12 hours + 44 minutes + 2.8 seconds")
+                                                  // Mean time between full moons.
+("synodicmonth"            "lunarmonth")          //   Full moons occur when the sun
+("lunation"                "synodicmonth")        //   and moon are on opposite sides
+("lune"                    "1/30 lunation")       //   of the earth.  Since the earth
+("lunour"                  "1/24 lune")           //   moves around the sun, the moon
+                                                  //   has to revolve a bit extra to
+                                                  //   get into the full moon
+                                                  //   configuration.
+("year"/"years"            "tropicalyear")
+("yr"                      "year")
+("month"/"months"          "1/12 year")
+("mo"                      "month")
+("lustrum"                 "5 years")                   // The Lustrum was a Roman
+                                                  //   purification ceremony that took
+                                                  //   place every five years.
+                                                  //   Classically educated Englishmen
+                                                  //   used this term.
+("decade"/"decades"        "10 years")
+("century"/"centuries"     "100 years")
+("millennium"/"millennia"  "1000 years")
+("solaryear"               "year")
+("lunaryear"               "12 lunarmonth")
+("calendaryear"            "365 day")
+("commonyear"              "365 day")
+("leapyear"                "366 day")
+("julianyear"              "365.25 day")
+("gregorianyear"           "365.2425 day")
+("islamicyear"             "354 day")    // A year of 12 lunar months. They
+("islamicleapyear"         "355 day")    // began counting on July 16, AD 622
+                                         // when Muhammad emigrated to Medina
+                                         // (the year of the Hegira).  They need
+                                         // 11 leap days in 30 years to stay in
+                                         // sync with the lunar year which is a
+                                         // bit longer than the 29.5 days of the
+                                         // average month.  The months do not
+                                         // keep to the same seasons, but
+                                         // regress through the seasons every
+                                         // 32.5 years.
+("islamicmonth"            "1/12 islamicyear") // They have 29 day and 30 day months.
+/*
 # The Hebrew year is also based on lunar months, but synchronized to the solar
 # calendar.  The months vary irregularly between 29 and 30 days in length, and
 # the years likewise vary.  The regular year is 353, 354, or 355 days long.  To
@@ -2737,25 +2755,25 @@ survey-                 US               #   US Survey measures
 geodetic-               US
 int                     3937|1200 ft/m   # Convert US Survey measures to
 int-                    int              #   international measures
-
-inch                    2.54 cm
-in                      inch
-foot                    12 inch
-#feet                    foot
-ft                      foot
-yard                    3 ft
-yd                      yard
-mile                    5280 ft          # The mile was enlarged from 5000 ft
-                                         # to this number in order to make
-                                         # it an even number of furlongs.
-                                         # (The Roman mile is 5000 romanfeet.)
-line                    1|12 inch  # Also defined as '.1 in' or as '1e-8 Wb'
-rod                     5.5 yard
-perch                   rod
-furlong                 40 rod           # From "furrow long"
-statutemile             mile
-league                  3 mile           # Intended to be an an hour's walk
-
+*/
+("inch"/"inches"           "2.54 cm")
+("in"                      "inch")
+("foot"/"feet"             "12 inch")
+//feet                    foot
+("ft"                      "foot")
+("yard"/"yards"            "3 ft")
+("yd"                      "yard")
+("mile"/"miles"            "5280 ft")    // The mile was enlarged from 5000 ft
+                                         // to this number in order to make
+                                         // it an even number of furlongs.
+                                         // (The Roman mile is 5000 romanfeet.)
+("line"/"lines"            "1/12 inch")  // Also defined as '.1 in' or as '1e-8 Wb'
+("rod"                     "5.5 yard")
+("perch"                   "rod")
+("furlong"                 "40 rod")     // From "furrow long"
+("statutemile"             "mile")
+("league"                  "3 mile")     // Intended to be an an hour's walk
+/*
 # surveyor's measure
 
 surveyorschain          66 surveyft
@@ -2805,20 +2823,20 @@ troughtonyard           914.42190 mm
 bronzeyard11            914.39980 mm
 mendenhallyard          surveyyard
 internationalyard       yard
+*/
+// nautical measure
 
-# nautical measure
-
-fathom                  6 ft     # Originally defined as the distance from
-                                 #   fingertip to fingertip with arms fully
-                                 #   extended.
-nauticalmile            1852 m   # Supposed to be one minute of latitude at
-                                 # the equator.  That value is about 1855 m.
-                                 # Early estimates of the earth's circumference
-                                 # were a bit off.  The value of 1852 m was
-                                 # made the international standard in 1929.
-                                 # The US did not accept this value until
-                                 # 1954.  The UK switched in 1970.
-
+("fathom"                  "6 ft")   // Originally defined as the distance from
+                                     //   fingertip to fingertip with arms fully
+                                     //   extended.
+("nauticalmile"            "1852 m") // Supposed to be one minute of latitude at
+                                     // the equator.  That value is about 1855 m.
+                                     // Early estimates of the earth's circumference
+                                     // were a bit off.  The value of 1852 m was
+                                     // made the international standard in 1929.
+                                     // The US did not accept this value until
+                                     // 1954.  The UK switched in 1970.
+/*
 cable                   1|10 nauticalmile
 intcable                cable              # international cable
 cablelength             cable
@@ -2829,29 +2847,29 @@ geographicalmile        brnauticalmile
 knot                    nauticalmile / hr
 click                   km       # US military slang
 klick                   click
+*/
+// Avoirdupois weight
 
-# Avoirdupois weight
-
-pound                   0.45359237 kg   # The one normally used
-lb                      pound           # From the latin libra
-grain                   1|7000 pound    # The grain is the same in all three
-                                        # weight systems.  It was originally
-                                        # defined as the weight of a barley
-                                        # corn taken from the middle of the
-                                        # ear.
-ounce                   1|16 pound
-oz                      ounce
-dram                    1|16 ounce
-dr                      dram
-ushundredweight         100 pounds
-cwt                     hundredweight
-shorthundredweight      ushundredweight
-uston                   shortton
-shortton                2000 lb
-quarterweight           1|4 uston
-shortquarterweight      1|4 shortton
-shortquarter            shortquarterweight
-
+("pound"/"pounds"          "0.45359237 kg")   // The one normally used
+("lb"/"lbs"                "pound")           // From the latin libra
+("grain"/"grains"          "1/7000 pound")    // The grain is the same in all three
+                                              // weight systems.  It was originally
+                                              // defined as the weight of a barley
+                                              // corn taken from the middle of the
+                                              // ear.
+("ounce"/"ounces"          "1/16 pound")
+("oz"                      "ounce")
+("dram"/"drams"            "1/16 ounce")
+("dr"                      "dram")
+("ushundredweight"         "100 pounds")
+("cwt"                     "hundredweight")
+("shorthundredweight"      "ushundredweight")
+("uston"/"ustons"          "shortton")
+("shortton"/"shorttons"    "2000 lb")
+("quarterweight"           "1/4 uston")
+("shortquarterweight"      "1/4 shortton")
+("shortquarter"            "shortquarterweight")
+/*
 # Troy Weight.  In 1828 the troy pound was made the first United States
 # standard weight.  It was to be used to regulate coinage.
 
@@ -4114,7 +4132,9 @@ poundal                 lb ft / s^2     # same thing for a pound
 tondal                  longton ft / s^2    # and for a ton
 pdl                     poundal
 osi                     ounce force / inch^2   # used in aviation
-psi                     pound force / inch^2
+*/
+("psi"                     "pound force / inch^2")
+/*
 psia                    psi             # absolute pressure
                                         #   Note that gauge pressure can be given
                                         #   using the gaugepressure() and
@@ -4913,20 +4933,21 @@ dit                     hartley              # from Decimal digIT
 #
 # Computer
 #
-
-bps                     bit/sec              # Sometimes the term "baud" is
-                                             #   incorrectly used to refer to
-                                             #   bits per second.  Baud refers
-                                             #   to symbols per second.  Modern
-                                             #   modems transmit several bits
-                                             #   per symbol.
-byte                    8 bit                # Not all machines had 8 bit
-B                       byte                 #   bytes, but these days most of
-                                             #   them do.  But beware: for
-                                             #   transmission over modems, a
-                                             #   few extra bits are used so
-                                             #   there are actually 10 bits per
-                                             #   byte.
+*/
+("bps"                     "bit/sec")        // Sometimes the term "baud" is
+                                             //   incorrectly used to refer to
+                                             //   bits per second.  Baud refers
+                                             //   to symbols per second.  Modern
+                                             //   modems transmit several bits
+                                             //   per symbol.
+("byte"/"bytes"            "l@8 bit")        // Not all machines had 8 bit
+("B"                       "s@byte")         //   bytes, but these days most of
+                                             //   them do.  But beware: for
+                                             //   transmission over modems, a
+                                             //   few extra bits are used so
+                                             //   there are actually 10 bits per
+                                             //   byte.
+/*
 octet                   8 bits               # The octet is always 8 bits
 nybble                  4 bits               # Half of a byte. Sometimes
                                              #   equal to different lengths
@@ -6324,33 +6345,33 @@ jpringsize(n)  units=[1;mm] domain=[1,) range=[0.040840704,) \
 # The European ring sizes are the length of the circumference in mm minus 40.
 
 euringsize(n)  units=[1;mm] (n+40) mm ; euringsize/mm + (-40)
+*/
+//
+// Abbreviations
+//
 
-#
-# Abbreviations
-#
-
-mph                     mile/hr
-mpg                     mile/gal
-kph                     km/hr
-fL                      footlambert
-fpm                     ft/min
-fps                     ft/s
-rpm                     rev/min
-rps                     rev/sec
-mi                      mile
-smi                     mile
-nmi                     nauticalmile
-mbh                     1e3 btu/hour
-mcm                     1e3 circularmil
-ipy                     inch/year    # used for corrosion rates
-ccf                     100 ft^3     # used for selling water [18]
-Mcf                     1000 ft^3    # not million cubic feet [18]
-kp                      kilopond
-kpm                     kp meter
-Wh                      W hour
-hph                     hp hour
-plf                     lb / foot    # pounds per linear foot
-
+("mph"                     "mile/hr")
+("mpg"                     "mile/gal")
+("kph"                     "km/hr")
+("fL"                      "footlambert")
+("fpm"                     "ft/min")
+("fps"                     "ft/s")
+("rpm"                     "rev/min")
+("rps"                     "rev/sec")
+("mi"                      "mile")
+("smi"                     "mile")
+("nmi"                     "nauticalmile")
+("mbh"                     "1e3 btu/hour")
+("mcm"                     "1e3 circularmil")
+("ipy"                     "inch/year")    // used for corrosion rates
+("ccf"                     "100 ft^3")     // used for selling water [18]
+("Mcf"                     "1000 ft^3")    // not million cubic feet [18]
+("kp"                      "kilopond")
+("kpm"                     "kp meter")
+("Wh"                      "W hour")
+("hph"                     "hp hour")
+("plf"                     "lb / foot")    // pounds per linear foot
+/*
 #
 # Compatibility units with Unix version
 #
@@ -7445,7 +7466,9 @@ hogshead                ushogshead
 #⅐-               1|7   # fails under MacOS
 #⅑-               1|9   # fails under MacOS
 #⅒-               1|10  # fails under MacOS
-ℯ                       exp(1)      # U+212F, base of natural log
+*/
+("ℯ"                       "exp(1)") // U+212F, base of natural log
+/*
 µ-                      micro       # micro sign U+00B5
 μ-                      micro       # small mu U+03BC
 ångström                angstrom
@@ -7456,7 +7479,9 @@ röntgen                 roentgen
 °F                      degF
 °K                      K           # °K is incorrect notation
 °R                      degR
-°                       degree
+*/
+("°"                       "degree")
+/*
 ℃                       degC
 ℉                       degF
 K                       K          # Kelvin symbol, U+212A
@@ -8019,5 +8044,7 @@ silverprice        14.52 US$/troyounce
 goldprice          1288.30 US$/troyounce
 platinumprice      797.00 US$/troyounce
 */
-    )
+;
+return Err(GetIdentError::IdentifierNotFound(ident))?
+    ))
 }
