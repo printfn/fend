@@ -1,7 +1,7 @@
 use crate::ast::Expr;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
-use crate::{parser::ParseOptions, scope::Scope};
+use crate::scope::Scope;
 use std::borrow::Cow;
 use std::fmt;
 
@@ -162,12 +162,11 @@ impl Value {
         other: Expr,
         apply_mul_handling: ApplyMulHandling,
         scope: &mut Scope,
-        options: ParseOptions,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
             Self::Num(n) => {
-                let other = crate::ast::evaluate(other, scope, options, int)?;
+                let other = crate::ast::evaluate(other, scope, int)?;
                 if let Self::Dp = other {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
@@ -188,7 +187,7 @@ impl Value {
                 }
             }
             Self::BuiltInFunction(name) => {
-                let other = crate::ast::evaluate(other, scope, options, int)?;
+                let other = crate::ast::evaluate(other, scope, int)?;
                 Self::Num(match name {
                     BuiltInFunction::Approximately => other.expect_num()?.make_approximate(),
                     BuiltInFunction::Abs => other.expect_num()?.abs(int)?,
@@ -222,8 +221,8 @@ impl Value {
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
-                new_scope.insert_variable(param, other, scope.clone(), options);
-                return Ok(crate::ast::evaluate(*expr, &mut new_scope, options, int)?);
+                new_scope.insert_variable(param, other, scope.clone());
+                return Ok(crate::ast::evaluate(*expr, &mut new_scope, int)?);
             }
             _ => {
                 return Err(format!(
