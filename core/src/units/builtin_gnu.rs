@@ -28,11 +28,6 @@ pub fn query_unit<'a, I: Interrupt>(
 /*
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
-!plural tonne tonnes
-!plural micron microns
-!plural bicron bicrons
-!plural liter liters
-
 !plural minute minutes
 !plural hour hours
 !plural day days
@@ -819,30 +814,30 @@ y-                      yocto
 // Named SI derived units (officially accepted)
 //
 
-("newton"/"newtons"        "kg m / s^2")   // force
+("newton"/"newtons"        "l@kg m / s^2")   // force
 ("N"                       "newton")
-("pascal"/"pascals"        "N/m^2")        // pressure or stress
+("pascal"/"pascals"        "l@N/m^2")        // pressure or stress
 ("Pa"                      "pascal")
-("joule"/"joules"          "N m")          // energy
+("joule"/"joules"          "l@N m")          // energy
 ("J"                       "joule")
-("watt"/"watts"            "J/s")          // power
+("watt"/"watts"            "l@J/s")          // power
 ("W"                       "watt")
-("coulomb"/"coulombs"      "A s")          // charge
+("coulomb"/"coulombs"      "l@A s")          // charge
 ("C"                       "coulomb")
-("volt"/"volts"            "W/A")          // potential difference
+("volt"/"volts"            "l@W/A")          // potential difference
 ("V"                       "volt")
-("ohm"/"ohms"              "V/A")          // electrical resistance
-("siemens"                 "A/V")          // electrical conductance
+("ohm"/"ohms"              "l@V/A")          // electrical resistance
+("siemens"                 "l@A/V")          // electrical conductance
 ("S"                       "siemens")
-("farad"                   "C/V")          // capacitance
+("farad"                   "l@C/V")          // capacitance
 ("F"                       "farad")
-("weber"                   "V s")          // magnetic flux
+("weber"                   "l@V s")          // magnetic flux
 ("Wb"                      "weber")
-("henry"                   "V s / A")      // inductance
+("henry"                   "l@V s / A")      // inductance
 ("H"                       "henry")
-("tesla"                   "Wb/m^2")       // magnetic flux density
+("tesla"                   "l@Wb/m^2")       // magnetic flux density
 ("T"                       "tesla")
-("hertz"                   "/s")           // frequency
+("hertz"                   "l@/s")           // frequency
 ("Hz"                      "hertz")
 /*
 #
@@ -902,9 +897,9 @@ H_FLUX                  H_FIELD AREA
 ("gram"/"grams"            "l@1/1000 kg")
 ("gm"                      "gram")
 ("g"                       "gram")
-("tonne"                   "l@1000 kg")
+("tonne"/"tonnes"          "l@1000 kg")
 ("t"                       "tonne")
-("metricton"               "l@tonne")
+("metricton"/"metrictons"  "l@tonne")
 ("sthene"                  "l@tonne m / s^2")
 ("funal"                   "l@sthene")
 ("pieze"                   "l@sthene / m^2")
@@ -912,12 +907,12 @@ H_FLUX                  H_FIELD AREA
 ("bar"                     "l@1e5 Pa") // About 1 atm
 ("b"                       "bar")
 ("vac"                     "l@millibar")
-("micron"                  "l@micrometer") // One millionth of a meter
-("bicron"                  "l@picometer") // One billionth of a meter
+("micron"/"microns"        "l@micrometer") // One millionth of a meter
+("bicron"/"bicrons"        "l@picometer") // One billionth of a meter
 ("cc"                      "cm^3")
 ("are"                     "l@100 m^2")
 ("a"                       "are")
-("liter"                   "l@1000 cc")       // The liter was defined in 1901 as the
+("liter"/"liters"          "l@1000 cc")       // The liter was defined in 1901 as the
 ("oldliter"                "l@1.000028 dm^3") // space occupied by 1 kg of pure water at
 ("L"                       "liter")           // the temperature of its maximum density
 ("l"                       "liter")           // under a pressure of 1 atm.  This was
@@ -926,137 +921,138 @@ H_FLUX                  H_FIELD AREA
                                               // measurement was off.  In 1964, the
                                               // liter was redefined to be exactly 1000
                                               // cubic centimeters.
+("mho"                     "l@siemens")    // Inverse of ohm, hence ohm spelled backward
+("galvat"                  "l@ampere")     // Named after Luigi Galvani
+("angstrom"                "l@1e-10 m")    // Convenient for describing molecular sizes
+("xunit"                   "l@xunit_cu")      // Used for measuring x-ray wavelengths.
+("siegbahn"                "l@xunit")         // Originally defined to be 1|3029.45 of
+("xunit_cu"             "1.00207697e-13 m")   // the spacing of calcite planes at 18
+("xunit_mo"             "1.00209952e-13 m")   // degC.  It was intended to be exactly
+                                              // 1e-13 m, but was later found to be
+                                              // slightly off.  Current usage is with
+                                              // reference to common x-ray lines, either
+                                              // the K-alpha 1 line of copper or the
+                                              // same line of molybdenum.
+("angstromstar"   "l@1.00001495 angstrom") // Defined by JA Bearden in 1965 to replace
+                                           //   the X unit.  The wavelength of the
+                                           //   tungsten K alpha1 line was defined as
+                                           //   exactly 0.20901 angstrom star, with the
+                                           //   valule chosen to try to make the new
+                                           //   unit close to the angstrom.
+("silicon_d220"     "1.920155716e-10 m") // Silicon lattice spacing
+("siliconlattice" "sqrt(8) * silicon_d220") // Silicon lattice parameter, (a), the side
+                                            //   length of the unit cell for the diamond
+                                            //   centered cubic structure of silicon.
+("fermi"                   "l@1e-15 m")    // Convenient for describing nuclear sizes
+                                           //   Nuclear radius is from 1 to 10 fermis
+("barn"                    "l@1e-28 m^2")  // Used to measure cross section for
+                                           //   particle physics collision, said to
+                                           //   have originated in the phrase "big as
+                                           //   a barn".
+("shed"                    "l@1e-24 barn") // Defined to be a smaller companion to the
+                                           //   barn, but it's too small to be of
+                                           //   much use.
+("brewster"                "l@micron^2/N") // measures stress-optical coef
+("diopter"                 "l@/m")         // measures reciprocal of lens focal length
+("fresnel"                 "l@1e12 Hz")    // occasionally used in spectroscopy
+("shake"                   "l@1e-8 sec")
+("svedberg"                "l@1e-13 s")    // Used for measuring the sedimentation
+                                           // coefficient for centrifuging.
+("gamma"                   "l@microgram")  // Also used for 1e-9 tesla
+("lambda"                  "l@microliter")
+("spat"                    "l@1e12 m")     // Rarely used for astronomical measurements
+("preece"                  "l@1e13 ohm m") // resistivity
+("planck"                  "l@J s")        // action of one joule over one second
+("sturgeon"                "l@/henry")     // magnetic reluctance
+("daraf"                   "l@1/farad")    // elastance (farad spelled backwards)
+("leo"                     "l@10 m/s^2")
+("poiseuille"              "l@N s / m^2")  // viscosity
+("mayer"                   "l@J/g K")      // specific heat
+("mired"                   "l@/ microK")   // reciprocal color temperature.  The name
+                                           //   abbreviates micro reciprocal degree.
+("crocodile"               "l@megavolt")   // used informally in UK physics labs
+("metricounce"             "l@25 g")
+("mounce"                  "l@metricounce")
+("finsenunit"              "l@1e5 W/m^2")  // Measures intensity of ultraviolet light
+                                           // with wavelength 296.7 nm.
+("fluxunit"                "l@1e-26 W/m^2 Hz") // Used in radio astronomy to measure
+                                               //   the energy incident on the receiving
+                                               //   body across a specified frequency
+                                               //   bandwidth.  [12]
+("jansky"                  "l@fluxunit")   // K. G. Jansky identified radio waves coming
+("Jy"                      "jansky")       // from outer space in 1931.
+("flick"       "l@W / cm^2 sr micrometer") // Spectral radiance or irradiance
+("pfu"                    "l@/ cm^2 sr s") // particle flux unit -- Used to measure
+                                           //   rate at which particles are received by
+                                           //   a spacecraft as particles per solid
+                                           //   angle per detector area per second. [18]
+("pyron"            "l@cal_IT / cm^2 min") // Measures heat flow from solar radiation,
+                                           //   from Greek word "pyr" for fire.
+("katal"                   "l@mol/sec")    // Measure of the amount of a catalyst.  One
+("kat"                     "katal")        //   katal of catalyst enables the reaction
+                                           //   to consume or produce on mol/sec.
+("solarluminosity"         "l@382.8e24 W") // A common yardstick for comparing the
+                                           //   output of different stars.
+                                           // http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
+// at mean earth-sun distance
+("solarirradiance"     "l@solarluminosity / (4 pi sundist^2)")
+("solarconstant"       "solarirradiance")
+("TSI"         "solarirradiance")     // total solar irradiance
+
+//
+// time
+//
+
+("sec"/"secs"              "s")
+("minute"/"minutes"        "60 s")
+("min"/"mins"              "minute")
+("hour"/"hours"            "60 min")
+("hr"/"hrs"                "hour")
+("day"/"days"              "24 hr")
+("d"                       "day")
+("da"                      "day")
+("week"/"weeks"            "7 day")
+("wk"                      "week")
+("sennight"                "7 day")
+("fortnight"/"fortnights"  "14 day")
+("blink"/"blinks"          "1e-5 day")   // Actual human blink takes 1|3 second
+("ce"                      "1e-2 day")
+("cron"                    "1e6 years")
+("watch"/"watches"         "4 hours")    // time a sentry stands watch or a ship's
+                                         // crew is on duty.
+("bell"/"bells"            "1/8 watch")  // Bell would be sounded every 30 minutes.
+
+// French Revolutionary Time or Decimal Time.  It was Proposed during
+// the French Revolution.  A few clocks were made, but it never caught
+// on.  In 1998 Swatch defined a time measurement called ".beat" and
+// sold some watches that displayed time in this unit.
+
+("decimalhour"/"decimalhours"       "1/10 day")
+("decimalminute"/"decimalminutes"   "1/100 decimalhour")
+("decimalsecond"/"decimalseconds"   "1/100 decimalminute")
+("beat"/"beats"                     "decimalminute")       // Swatch Internet Time
+(".beat"                            "beat")
+
+//
+// angular measure
+//
+
+("circle"                  "2 pi radian")
+("degree"                  "1/360 circle")
+("deg"                     "degree")
+("arcdeg"                  "degree")
+("arcmin"                  "1/60 degree")
+("arcminute"               "arcmin")
+//'                       arcmin
+("arcsec"                  "1/60 arcmin")
+("arcsecond"               "arcsec")
+//"                       arcsec
+//''                      "
+("rightangle"              "90 degrees")
+("quadrant"                "1/4 circle")
+("quintant"                "1/5 circle")
+("sextant"                 "1/6 circle")
 /*
-mho                     siemens    # Inverse of ohm, hence ohm spelled backward
-galvat                  ampere     # Named after Luigi Galvani
-angstrom                1e-10 m    # Convenient for describing molecular sizes
-xunit                   xunit_cu      # Used for measuring x-ray wavelengths.
-siegbahn                xunit         # Originally defined to be 1|3029.45 of
-xunit_cu             1.00207697e-13 m # the spacing of calcite planes at 18
-xunit_mo             1.00209952e-13 m # degC.  It was intended to be exactly
-                                      # 1e-13 m, but was later found to be
-                                      # slightly off.  Current usage is with
-                                      # reference to common x-ray lines, either
-                                      # the K-alpha 1 line of copper or the
-                                      # same line of molybdenum.
-angstromstar   1.00001495 angstrom # Defined by JA Bearden in 1965 to replace
-                                   #   the X unit.  The wavelength of the
-                                   #   tungsten K alpha1 line was defined as
-                                   #   exactly 0.20901 angstrom star, with the
-                                   #   valule chosen to try to make the new
-                                   #   unit close to the angstrom.
-silicon_d220     1.920155716e-10 m # Silicon lattice spacing
-siliconlattice sqrt(8) silicon_d220# Silicon lattice parameter, (a), the side
-                                   #   length of the unit cell for the diamond
-                                   #   centered cubic structure of silicon.
-fermi                   1e-15 m    # Convenient for describing nuclear sizes
-                                   #   Nuclear radius is from 1 to 10 fermis
-barn                    1e-28 m^2  # Used to measure cross section for
-                                   #   particle physics collision, said to
-                                   #   have originated in the phrase "big as
-                                   #   a barn".
-shed                    1e-24 barn # Defined to be a smaller companion to the
-                                   #   barn, but it's too small to be of
-                                   #   much use.
-brewster                micron^2/N # measures stress-optical coef
-diopter                 /m         # measures reciprocal of lens focal length
-fresnel                 1e12 Hz    # occasionally used in spectroscopy
-shake                   1e-8 sec
-svedberg                1e-13 s    # Used for measuring the sedimentation
-                                   # coefficient for centrifuging.
-gamma                   microgram  # Also used for 1e-9 tesla
-lambda                  microliter
-spat                    1e12 m     # Rarely used for astronomical measurements
-preece                  1e13 ohm m # resistivity
-planck                  J s        # action of one joule over one second
-sturgeon                /henry     # magnetic reluctance
-daraf                   1/farad    # elastance (farad spelled backwards)
-leo                     10 m/s^2
-poiseuille              N s / m^2  # viscosity
-mayer                   J/g K      # specific heat
-mired                   / microK   # reciprocal color temperature.  The name
-                                   #   abbreviates micro reciprocal degree.
-crocodile               megavolt   # used informally in UK physics labs
-metricounce             25 g
-mounce                  metricounce
-finsenunit              1e5 W/m^2  # Measures intensity of ultraviolet light
-                                   # with wavelength 296.7 nm.
-fluxunit                1e-26 W/m^2 Hz # Used in radio astronomy to measure
-                                       #   the energy incident on the receiving
-                                       #   body across a specified frequency
-                                       #   bandwidth.  [12]
-jansky                  fluxunit   # K. G. Jansky identified radio waves coming
-Jy                      jansky     # from outer space in 1931.
-flick       W / cm^2 sr micrometer # Spectral radiance or irradiance
-pfu                    / cm^2 sr s # particle flux unit -- Used to measure
-                                   #   rate at which particles are received by
-                                   #   a spacecraft as particles per solid
-                                   #   angle per detector area per second. [18]
-pyron            cal_IT / cm^2 min # Measures heat flow from solar radiation,
-                                   #   from Greek word "pyr" for fire.
-katal                   mol/sec    # Measure of the amount of a catalyst.  One
-kat                     katal      #   katal of catalyst enables the reaction
-                                   #   to consume or produce on mol/sec.
-solarluminosity         382.8e24 W # A common yardstick for comparing the
-                                   #   output of different stars.
-                # http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
-# at mean earth-sun distance
-solarirradiance     solarluminosity / (4 pi sundist^2)
-solarconstant       solarirradiance
-TSI         solarirradiance     # total solar irradiance
-
-#
-# time
-#
-
-sec                     s
-minute                  60 s
-min                     minute
-hour                    60 min
-hr                      hour
-day                     24 hr
-d                       day
-da                      day
-week                    7 day
-wk                      week
-sennight                7 day
-fortnight               14 day
-blink                   1e-5 day   # Actual human blink takes 1|3 second
-ce                      1e-2 day
-cron                    1e6 years
-watch                   4 hours    # time a sentry stands watch or a ship's
-                                   # crew is on duty.
-bell                    1|8 watch  # Bell would be sounded every 30 minutes.
-
-# French Revolutionary Time or Decimal Time.  It was Proposed during
-# the French Revolution.  A few clocks were made, but it never caught
-# on.  In 1998 Swatch defined a time measurement called ".beat" and
-# sold some watches that displayed time in this unit.
-
-decimalhour             1|10 day
-decimalminute           1|100 decimalhour
-decimalsecond           1|100 decimalminute
-beat                    decimalminute          # Swatch Internet Time
-
-#
-# angular measure
-#
-
-circle                  2 pi radian
-degree                  1|360 circle
-deg                     degree
-arcdeg                  degree
-arcmin                  1|60 degree
-arcminute               arcmin
-#'                       arcmin
-arcsec                  1|60 arcmin
-arcsecond               arcsec
-#"                       arcsec
-#''                      "
-rightangle              90 degrees
-quadrant                1|4 circle
-quintant                1|5 circle
-sextant                 1|6 circle
 
 sign                    1|12 circle # Angular extent of one sign of the zodiac
 turn                    circle
@@ -1103,9 +1099,10 @@ octant                  0.5 pi sr
 #
 # Concentration measures
 #
-
-percent                 0.01
-%                       percent
+*/
+("percent"                 "0.01")
+("%"                       "percent")
+/*
 mill                    0.001     # Originally established by Congress in 1791
                                   # as a unit of money equal to 0.001 dollars,
                                   # it has come to refer to 0.001 in general.
