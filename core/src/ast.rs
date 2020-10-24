@@ -208,8 +208,6 @@ pub fn resolve_identifier<I: Interrupt>(
         "tau" | "τ" => Value::Num(Number::pi().mul(2.into(), int)?),
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, int)?,
         "i" => Value::Num(Number::i()),
-        // TODO: we want to forward any interrupt, but panic on any other error
-        // or statically prove that no other error can occur
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, int)?,
         "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
@@ -233,15 +231,15 @@ pub fn resolve_identifier<I: Interrupt>(
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::Exact),
-        "fraction" | "frac" => Value::Format(FormattingStyle::ImproperFraction),
+        "frac" | "fraction" => Value::Format(FormattingStyle::ImproperFraction),
         "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
         "base" => Value::BuiltInFunction(BuiltInFunction::Base),
-        "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
+        "dec" | "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
-        "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
+        "oct" | "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
