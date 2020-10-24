@@ -4591,30 +4591,30 @@ perm_0                  perm_0C
 perm                    perm_0C
 perm_23C                grain / hr ft^2 in Hg23C
 perm_twentythree        perm_23C
+*/
+//
+// Counting measures
+//
 
-#
-# Counting measures
-#
-
-pair                    2
-brace                   2
-nest                    3     # often used for items like bowls that
-                              #   nest together
-hattrick                3     # Used in sports, especially cricket and ice
-                              #   hockey to report the number of goals.
-dicker                  10
-dozen                   12
-bakersdozen             13
-score                   20
-flock                   40
-timer                   40
-shock                   60
-toncount                100   # Used in sports in the UK
-longhundred             120   # From a germanic counting system
-gross                   144
-greatgross              12 gross
-tithe                   1|10  # From Anglo-Saxon word for tenth
-
+("pair"                    "=2")
+("brace"                   "=2")
+("nest"                    "=3")     // often used for items like bowls that
+                                    //   nest together
+("hattrick"                "=3")     // Used in sports, especially cricket and ice
+                                    //   hockey to report the number of goals.
+("dicker"                  "=10")
+("dozen"                   "=12")
+("bakersdozen"             "=13")
+("score"                   "=20")
+("flock"                   "=40")
+("timer"                   "=40")
+("shock"                   "=60")
+("toncount"                "=100")   // Used in sports in the UK
+("longhundred"             "=120")   // From a germanic counting system
+("gross"                   "=144")
+("greatgross"              "=12 gross")
+("tithe"                   "=1/10")  // From Anglo-Saxon word for tenth
+/*
 # Paper counting measure
 
 shortquire              24

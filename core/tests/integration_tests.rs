@@ -971,3 +971,156 @@ test_eval!(cis_three_pi_over_two, "cis (3pi/2)", "-i");
 test_eval!(cis_two_pi, "cis (2pi)", "1");
 test_eval!(cis_minus_two_pi, "cis -(2pi)", "1");
 test_eval!(cis_pi_over_six, "cis (pi/6)", "approx. 0.8660254037 + 0.5i");
+
+test_eval!(name_one, "one", "1");
+test_eval!(name_two, "two", "2");
+test_eval!(name_pair, "pair", "2");
+test_eval!(name_three, "three", "3");
+test_eval!(name_four, "four", "4");
+test_eval!(name_five, "five", "5");
+test_eval!(name_six, "six", "6");
+test_eval!(name_seven, "seven", "7");
+test_eval!(name_eight, "eight", "8");
+test_eval!(name_nine, "nine", "9");
+test_eval!(name_ten, "ten", "10");
+test_eval!(name_eleven, "eleven", "11");
+test_eval!(name_twelve, "twelve", "12");
+test_eval!(name_thirteen, "thirteen", "13");
+test_eval!(name_fourteen, "fourteen", "14");
+test_eval!(name_fifteen, "fifteen", "15");
+test_eval!(name_sixteen, "sixteen", "16");
+test_eval!(name_seventeen, "seventeen", "17");
+test_eval!(name_eighteen, "eighteen", "18");
+test_eval!(name_nineteen, "nineteen", "19");
+test_eval!(name_twenty, "twenty", "20");
+test_eval!(name_thirty, "thirty", "30");
+test_eval!(name_forty, "forty", "40");
+test_eval!(name_fifty, "fifty", "50");
+test_eval!(name_sixty, "sixty", "60");
+test_eval!(name_seventy, "seventy", "70");
+test_eval!(name_eighty, "eighty", "80");
+test_eval!(name_ninety, "ninety", "90");
+test_eval!(name_hundred, "hundred", "100");
+test_eval!(name_thousand, "thousand", "1000");
+test_eval!(name_million, "million", "1000000");
+
+test_eval!(name_dozen, "dozen", "12");
+test_eval!(name_one_dozen, "one dozen", "12");
+test_eval!(name_two_dozen, "two dozen", "24");
+test_eval!(name_three_dozen, "three dozen", "36");
+test_eval!(name_four_dozen, "four dozen", "48");
+test_eval!(name_five_dozen, "five dozen", "60");
+test_eval!(name_six_dozen, "six dozen", "72");
+test_eval!(name_seven_dozen, "seven dozen", "84");
+test_eval!(name_eight_dozen, "eight dozen", "96");
+test_eval!(name_nine_dozen, "nine dozen", "108");
+test_eval!(name_ten_dozen, "ten dozen", "120");
+test_eval!(name_eleven_dozen, "eleven dozen", "132");
+test_eval!(name_twelve_dozen, "twelve dozen", "144");
+test_eval!(name_gross, "gross", "144");
+test_eval!(name_thirteen_dozen, "thirteen dozen", "156");
+test_eval!(name_fourteen_dozen, "fourteen dozen", "168");
+test_eval!(name_fifteen_dozen, "fifteen dozen", "180");
+test_eval!(name_sixteen_dozen, "sixteen dozen", "192");
+test_eval!(name_seventeen_dozen, "seventeen dozen", "204");
+test_eval!(name_eighteen_dozen, "eighteen dozen", "216");
+test_eval!(name_nineteen_dozen, "nineteen dozen", "228");
+test_eval!(name_twenty_dozen, "twenty dozen", "240");
+test_eval!(name_thirty_dozen, "thirty dozen", "360");
+test_eval!(name_forty_dozen, "forty dozen", "480");
+test_eval!(name_fifty_dozen, "fifty dozen", "600");
+test_eval!(name_sixty_dozen, "sixty dozen", "720");
+test_eval!(name_seventy_dozen, "seventy dozen", "840");
+test_eval!(name_eighty_dozen, "eighty dozen", "960");
+test_eval!(name_ninety_dozen, "ninety dozen", "1080");
+test_eval!(name_hundred_dozen, "hundred dozen", "1200");
+test_eval!(name_thousand_dozen, "thousand dozen", "12000");
+test_eval!(name_million_dozen, "million dozen", "12000000");
+
+test_eval!(lone_prefix_yotta, "yotta", "1000000000000000000000000");
+test_eval!(lone_prefix_zetta, "zetta", "1000000000000000000000");
+test_eval!(lone_prefix_exa, "exa", "1000000000000000000");
+test_eval!(lone_prefix_peta, "peta", "1000000000000000");
+test_eval!(lone_prefix_tera, "tera", "1000000000000");
+test_eval!(lone_prefix_giga, "giga", "1000000000");
+test_eval!(lone_prefix_mega, "mega", "1000000");
+test_eval!(lone_prefix_myria, "myria", "10000");
+test_eval!(lone_prefix_kilo, "kilo", "1000");
+test_eval!(lone_prefix_hecto, "hecto", "100");
+test_eval!(lone_prefix_deca, "deca", "10");
+test_eval!(lone_prefix_deka, "deka", "10");
+test_eval!(lone_prefix_deci, "deci", "0.1");
+test_eval!(lone_prefix_centi, "centi", "0.01");
+test_eval!(lone_prefix_milli, "milli", "0.001");
+test_eval!(lone_prefix_micro, "micro", "0.000001");
+test_eval!(lone_prefix_nano, "nano", "0.000000001");
+test_eval!(lone_prefix_pico, "pico", "0.000000000001");
+test_eval!(lone_prefix_femto, "femto", "0.000000000000001");
+test_eval!(lone_prefix_atto, "atto", "0.000000000000000001");
+test_eval!(lone_prefix_zepto, "zepto", "0.000000000000000000001");
+test_eval!(lone_prefix_yocto, "yocto", "0.000000000000000000000001");
+
+test_eval!(billion, "billion", "1000000000");
+test_eval!(trillion, "trillion", "1000000000000");
+test_eval!(quadrillion, "quadrillion", "1000000000000000");
+test_eval!(quintillion, "quintillion", "1000000000000000000");
+test_eval!(sextillion, "sextillion", "1000000000000000000000");
+test_eval!(septillion, "septillion", "1000000000000000000000000");
+test_eval!(octillion, "octillion", "1000000000000000000000000000");
+test_eval!(nonillion, "nonillion", "1000000000000000000000000000000");
+test_eval!(
+    noventillion,
+    "noventillion",
+    "1000000000000000000000000000000"
+);
+test_eval!(decillion, "decillion", "1000000000000000000000000000000000");
+test_eval!(
+    undecillion,
+    "undecillion",
+    "1000000000000000000000000000000000000"
+);
+test_eval!(
+    duodecillion,
+    "duodecillion",
+    "1000000000000000000000000000000000000000"
+);
+test_eval!(
+    tredecillion,
+    "tredecillion",
+    "1000000000000000000000000000000000000000000"
+);
+test_eval!(
+    quattuordecillion,
+    "quattuordecillion",
+    "1000000000000000000000000000000000000000000000"
+);
+test_eval!(
+    quindecillion,
+    "quindecillion",
+    "1000000000000000000000000000000000000000000000000"
+);
+test_eval!(
+    sexdecillion,
+    "sexdecillion",
+    "1000000000000000000000000000000000000000000000000000"
+);
+test_eval!(
+    septendecillion,
+    "septendecillion",
+    "1000000000000000000000000000000000000000000000000000000"
+);
+test_eval!(
+    octodecillion,
+    "octodecillion",
+    "1000000000000000000000000000000000000000000000000000000000"
+);
+test_eval!(
+    novemdecillion,
+    "novemdecillion",
+    "1000000000000000000000000000000000000000000000000000000000000"
+);
+test_eval!(
+    vigintillion,
+    "vigintillion",
+    "1000000000000000000000000000000000000000000000000000000000000000"
+);
