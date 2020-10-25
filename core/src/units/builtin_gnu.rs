@@ -1042,221 +1042,220 @@ H_FLUX                  H_FIELD AREA
 ("quadrant"                "l@1/4 circle")
 ("quintant"                "l@1/5 circle")
 ("sextant"                 "l@1/6 circle")
-/*
 
-sign                    1|12 circle # Angular extent of one sign of the zodiac
-turn                    circle
-revolution              turn
-rev                     turn
-pulsatance              radian / sec
-gon                     1|100 rightangle  # measure of grade
-grade                   gon
-centesimalminute        1|100 grade
-centesimalsecond        1|100 centesimalminute
-milangle                1|6400 circle     # Official NIST definition.
-                                          # Another choice is 1e-3 radian.
-pointangle              1|32 circle  # Used for reporting compass readings
-centrad                 0.01 radian  # Used for angular deviation of light
-                                     # through a prism.
-mas                     milli arcsec # Used by astronomers
-seclongitude            circle (seconds/day) # Astronomers measure longitude
-                                     # (which they call right ascension) in
-                                     # time units by dividing the equator into
-                                     # 24 hours instead of 360 degrees.
-#
-# Some geometric formulas
-#
+("sign"                      "1/12 circle") // Angular extent of one sign of the zodiac
+("turn"/"turns"              "circle")
+("revolution"/"revolutions"  "turn")
+("rev"                       "turn")
+("pulsatance"                "radian / sec")
+("gon"                       "1/100 rightangle")  // measure of grade
+("grade"                     "gon")
+("centesimalminute"          "1/100 grade")
+("centesimalsecond"          "1/100 centesimalminute")
+("milangle"                  "1/6400 circle")     // Official NIST definition.
+                                                  // Another choice is 1e-3 radian.
+("pointangle"                "1/32 circle")  // Used for reporting compass readings
+("centrad"                   "0.01 radian")  // Used for angular deviation of light
+                                             // through a prism.
+("mas"                       "milli arcsec") // Used by astronomers
+("seclongitude"              "circle (seconds/day)") // Astronomers measure longitude
+                                             // (which they call right ascension) in
+                                             // time units by dividing the equator into
+                                             // 24 hours instead of 360 degrees.
+//
+// Some geometric formulas
+//
 
-circlearea(r)   units=[m;m^2] range=[0,) pi r^2 ; sqrt(circlearea/pi)
-spherevolume(r) units=[m;m^3] range=[0,) 4|3 pi r^3 ; \
-                                         cuberoot(spherevolume/4|3 pi)
-spherevol()     spherevolume
-square(x)       range=[0,)          x^2 ; sqrt(square)
+//circlearea(r)   units=[m;m^2] range=[0,) pi r^2 ; sqrt(circlearea/pi)
+//spherevolume(r) units=[m;m^3] range=[0,) 4|3 pi r^3 ; \
+//                                         cuberoot(spherevolume/4|3 pi)
+//spherevol()     spherevolume
+//square(x)       range=[0,)          x^2 ; sqrt(square)
 
-#
-# Solid angle measure
-#
+//
+// Solid angle measure
+//
 
-sphere                  4 pi sr
-squaredegree            1|180^2 pi^2 sr
-squareminute            1|60^2 squaredegree
-squaresecond            1|60^2 squareminute
-squarearcmin            squareminute
-squarearcsec            squaresecond
-sphericalrightangle     0.5 pi sr
-octant                  0.5 pi sr
+("sphere"/"spheres"                             "4 pi sr")
+("squaredegree"/"squaredegrees"                 "(1/180)^2 pi^2 sr")
+("squareminute"/"squareminutes"                 "(1/60)^2 squaredegree")
+("squaresecond"/"squareseconds"                 "(1/60)^2 squareminute")
+("squarearcmin"/"squarearcmins"                 "squareminute")
+("squarearcsec"/"squarearcsecs"                 "squaresecond")
+("sphericalrightangle"/"sphericalrightangles"   "0.5 pi sr")
+("octant"/"octants"                             "0.5 pi sr")
 
-#
-# Concentration measures
-#
-*/
+//
+// Concentration measures
+//
+
 ("percent"                 "0.01")
 ("%"                       "percent")
-/*
-mill                    0.001     # Originally established by Congress in 1791
-                                  # as a unit of money equal to 0.001 dollars,
-                                  # it has come to refer to 0.001 in general.
-                                  # Used by some towns to set their property
-                                  # tax rate, and written with a symbol similar
-                                  # to the % symbol but with two 0's in the
-                                  # denominator.  [18]
-proof                   1|200     # Alcohol content measured by volume at
-                                  # 60 degrees Fahrenheit.  This is a USA
-                                  # measure.  In Europe proof=percent.
-ppm                     1e-6
-partspermillion         ppm
-ppb                     1e-9
-partsperbillion         ppb       # USA billion
-ppt                     1e-12
-partspertrillion        ppt       # USA trillion
-karat                   1|24      # measure of gold purity
-caratgold               karat
-gammil                  mg/l
-basispoint              0.01 %    # Used in finance
-fine                    1|1000    # Measure of gold purity
 
-# The pH scale is used to measure the concentration of hydronium (H3O+) ions in
-# a solution.  A neutral solution has a pH of 7 as a result of dissociated
-# water molecules.
+("mill"                    "0.001")     // Originally established by Congress in 1791
+                                        // as a unit of money equal to 0.001 dollars,
+                                        // it has come to refer to 0.001 in general.
+                                        // Used by some towns to set their property
+                                        // tax rate, and written with a symbol similar
+                                        // to the % symbol but with two 0's in the
+                                        // denominator.  [18]
+("proof"                   "1/200")     // Alcohol content measured by volume at
+                                        // 60 degrees Fahrenheit.  This is a USA
+                                        // measure.  In Europe proof=percent.
+("ppm"                     "1e-6")
+("partspermillion"         "ppm")
+("ppb"                     "1e-9")
+("partsperbillion"         "ppb")       // USA billion
+("ppt"                     "1e-12")
+("partspertrillion"        "ppt")       // USA trillion
+("karat"                   "1/24")      // measure of gold purity
+("caratgold"               "karat")
+("gammil"                  "mg/l")
+("basispoint"              "0.01 %")    // Used in finance
+("fine"                    "1/1000")    // Measure of gold purity
 
-pH(x) units=[1;mol/liter] range=(0,) 10^(-x) mol/liter ; (-log(pH liters/mol))
+// The pH scale is used to measure the concentration of hydronium (H3O+) ions in
+// a solution.  A neutral solution has a pH of 7 as a result of dissociated
+// water molecules.
 
-
-#
-# Temperature
-#
-# Two types of units are defined: units for converting temperature differences
-# and functions for converting absolute temperatures.  Conversions for
-# differences start with "deg" and conversions for absolute temperature start
-# with "temp".
-#
-
-TEMPERATURE             kelvin
-TEMPERATURE_DIFFERENCE  kelvin
-
-# In 1741 Anders Celsius introduced a temperature scale with water boiling at
-# 0 degrees and freezing at 100 degrees at standard pressure. After his death
-# the fixed points were reversed and the scale was called the centigrade
-# scale.  Due to the difficulty of accurately measuring the temperature of
-# melting ice at standard pressure, the centigrade scale was replaced in 1954
-# by the Celsius scale which is defined by subtracting 273.15 from the
-# temperature in Kelvins.  This definition differed slightly from the old
-# centigrade definition, but the Kelvin scale depends on the triple point of
-# water rather than a melting point, so it can be measured accurately.
-
-tempC(x) units=[1;K] domain=[-273.15,) range=[0,) \
-                             x K + stdtemp ; (tempC +(-stdtemp))/K
-tempcelsius() tempC
-degcelsius              K
-degC                    K
-
-# Fahrenheit defined his temperature scale by setting 0 to the coldest
-# temperature he could produce in his lab with a salt water solution and by
-# setting 96 degrees to body heat.  In Fahrenheit's words:
-#
-#    Placing the thermometer in a mixture of sal ammoniac or sea
-#    salt, ice, and water a point on the scale will be found which
-#    is denoted as zero. A second point is obtained if the same
-#    mixture is used without salt. Denote this position as 30. A
-#    third point, designated as 96, is obtained if the thermometer
-#    is placed in the mouth so as to acquire the heat of a healthy
-#    man."  (D. G. Fahrenheit, Phil. Trans. (London) 33, 78, 1724)
-
-#tempF(x) units=[1;K] domain=[-459.67,) range=[0,) \
-#                (x+(-32)) degF + stdtemp ; (tempF+(-stdtemp))/degF + 32
-#tempfahrenheit() tempF
-degfahrenheit           5|9 degC
-degF                    5|9 degC
+//pH(x) units=[1;mol/liter] range=(0,) 10^(-x) mol/liter ; (-log(pH liters/mol))
 
 
-degreesrankine          degF              # The Rankine scale has the
-degrankine              degreesrankine    # Fahrenheit degree, but its zero
-degreerankine           degF              # is at absolute zero.
-degR                    degrankine
-tempR                   degrankine
-temprankine             degrankine
+//
+// Temperature
+//
+// Two types of units are defined: units for converting temperature differences
+// and functions for converting absolute temperatures.  Conversions for
+// differences start with "deg" and conversions for absolute temperature start
+// with "temp".
+//
 
-tempreaumur(x)    units=[1;K] domain=[-218.52,) range=[0,) \
-                  x degreaumur+stdtemp ; (tempreaumur+(-stdtemp))/degreaumur
-degreaumur              10|8 degC # The Reaumur scale was used in Europe and
-                                  # particularly in France.  It is defined
-                                  # to be 0 at the freezing point of water
-                                  # and 80 at the boiling point.  Reaumur
-                                  # apparently selected 80 because it is
-                                  # divisible by many numbers.
+//TEMPERATURE             kelvin
+//TEMPERATURE_DIFFERENCE  kelvin
 
-degK                    K         # "Degrees Kelvin" is forbidden usage.
-tempK                   K         # For consistency
+// In 1741 Anders Celsius introduced a temperature scale with water boiling at
+// 0 degrees and freezing at 100 degrees at standard pressure. After his death
+// the fixed points were reversed and the scale was called the centigrade
+// scale.  Due to the difficulty of accurately measuring the temperature of
+// melting ice at standard pressure, the centigrade scale was replaced in 1954
+// by the Celsius scale which is defined by subtracting 273.15 from the
+// temperature in Kelvins.  This definition differed slightly from the old
+// centigrade definition, but the Kelvin scale depends on the triple point of
+// water rather than a melting point, so it can be measured accurately.
 
-# Gas mark is implemented below but in a terribly ugly way.  There is
-# a simple formula, but it requires a conditional which is not
-# presently supported.
-#
-# The formula to convert to degrees Fahrenheit is:
-#
-# 25 log2(gasmark) + k_f   gasmark<=1
-# 25 (gasmark-1) + k_f     gasmark>=1
-#
-# k_f = 275
-#
-gasmark[degR] \
-  .0625    634.67 \
-  .125     659.67 \
-  .25      684.67 \
-  .5       709.67 \
-  1        734.67 \
-  2        759.67 \
-  3        784.67 \
-  4        809.67 \
-  5        834.67 \
-  6        859.67 \
-  7        884.67 \
-  8        909.67 \
-  9        934.67 \
-  10       959.67
+//tempC(x) units=[1;K] domain=[-273.15,) range=[0,) \
+//                             x K + stdtemp ; (tempC +(-stdtemp))/K
+//tempcelsius() tempC
+//degcelsius              K
+//degC                    K
 
-# Units cannot handle wind chill or heat index because they are two variable
-# functions, but they are included here for your edification.  Clearly these
-# equations are the result of a model fitting operation.
-#
-# wind chill index (WCI) a measurement of the combined cooling effect of low
-#      air temperature and wind on the human body. The index was first defined
-#      by the American Antarctic explorer Paul Siple in 1939. As currently used
-#      by U.S. meteorologists, the wind chill index is computed from the
-#      temperature T (in °F) and wind speed V (in mi/hr) using the formula:
-#          WCI = 0.0817(3.71 sqrt(V) + 5.81 - 0.25V)(T - 91.4) + 91.4.
-#      For very low wind speeds, below 4 mi/hr, the WCI is actually higher than
-#      the air temperature, but for higher wind speeds it is lower than the air
-#      temperature.
-#
-# heat index (HI or HX) a measure of the combined effect of heat and
-#      humidity on the human body. U.S. meteorologists compute the index
-#      from the temperature T (in °F) and the relative humidity H (as a
-#      value from 0 to 1).
-#        HI = -42.379 + 2.04901523 T + 1014.333127 H - 22.475541 TH
-#             - .00683783 T^2 - 548.1717 H^2 + 0.122874 T^2 H + 8.5282 T H^2
-#             - 0.0199 T^2 H^2.
+// Fahrenheit defined his temperature scale by setting 0 to the coldest
+// temperature he could produce in his lab with a salt water solution and by
+// setting 96 degrees to body heat.  In Fahrenheit's words:
+//
+//    Placing the thermometer in a mixture of sal ammoniac or sea
+//    salt, ice, and water a point on the scale will be found which
+//    is denoted as zero. A second point is obtained if the same
+//    mixture is used without salt. Denote this position as 30. A
+//    third point, designated as 96, is obtained if the thermometer
+//    is placed in the mouth so as to acquire the heat of a healthy
+//    man."  (D. G. Fahrenheit, Phil. Trans. (London) 33, 78, 1724)
 
-#
-# Physical constants
-#
-*/
+//tempF(x) units=[1;K] domain=[-459.67,) range=[0,) \
+//                (x+(-32)) degF + stdtemp ; (tempF+(-stdtemp))/degF + 32
+//tempfahrenheit() tempF
+//degfahrenheit           5|9 degC
+//degF                    5|9 degC
+
+
+//degreesrankine          degF              # The Rankine scale has the
+//degrankine              degreesrankine    # Fahrenheit degree, but its zero
+//degreerankine           degF              # is at absolute zero.
+//degR                    degrankine
+//tempR                   degrankine
+//temprankine             degrankine
+
+//tempreaumur(x)    units=[1;K] domain=[-218.52,) range=[0,) \
+//                  x degreaumur+stdtemp ; (tempreaumur+(-stdtemp))/degreaumur
+//degreaumur              10|8 degC # The Reaumur scale was used in Europe and
+//                                  # particularly in France.  It is defined
+//                                  # to be 0 at the freezing point of water
+//                                  # and 80 at the boiling point.  Reaumur
+//                                  # apparently selected 80 because it is
+//                                  # divisible by many numbers.
+
+//degK                    K         // "Degrees Kelvin" is forbidden usage.
+//tempK                   K         // For consistency
+
+// Gas mark is implemented below but in a terribly ugly way.  There is
+// a simple formula, but it requires a conditional which is not
+// presently supported.
+//
+// The formula to convert to degrees Fahrenheit is:
+//
+// 25 log2(gasmark) + k_f   gasmark<=1
+// 25 (gasmark-1) + k_f     gasmark>=1
+//
+// k_f = 275
+//
+//gasmark[degR] \
+//  .0625    634.67 \
+//  .125     659.67 \
+//  .25      684.67 \
+//  .5       709.67 \
+//  1        734.67 \
+//  2        759.67 \
+//  3        784.67 \
+//  4        809.67 \
+//  5        834.67 \
+//  6        859.67 \
+//  7        884.67 \
+//  8        909.67 \
+//  9        934.67 \
+//  10       959.67
+
+// Units cannot handle wind chill or heat index because they are two variable
+// functions, but they are included here for your edification.  Clearly these
+// equations are the result of a model fitting operation.
+//
+// wind chill index (WCI) a measurement of the combined cooling effect of low
+//      air temperature and wind on the human body. The index was first defined
+//      by the American Antarctic explorer Paul Siple in 1939. As currently used
+//      by U.S. meteorologists, the wind chill index is computed from the
+//      temperature T (in °F) and wind speed V (in mi/hr) using the formula:
+//          WCI = 0.0817(3.71 sqrt(V) + 5.81 - 0.25V)(T - 91.4) + 91.4.
+//      For very low wind speeds, below 4 mi/hr, the WCI is actually higher than
+//      the air temperature, but for higher wind speeds it is lower than the air
+//      temperature.
+//
+// heat index (HI or HX) a measure of the combined effect of heat and
+//      humidity on the human body. U.S. meteorologists compute the index
+//      from the temperature T (in °F) and the relative humidity H (as a
+//      value from 0 to 1).
+//        HI = -42.379 + 2.04901523 T + 1014.333127 H - 22.475541 TH
+//             - .00683783 T^2 - 548.1717 H^2 + 0.122874 T^2 H + 8.5282 T H^2
+//             - 0.0199 T^2 H^2.
+
+//
+// Physical constants
+//
+
 // Basic constants
 
 //pi                      3.14159265358979323846
 ("light"                   "c")
-("mu0_SI"                 "2 alpha h / (electroncharge^2 c)") // Vacuum magnetic permeability
+("mu0_SI"                  "2 alpha h / (electroncharge^2 c)") // Vacuum magnetic permeability
 ("mu0"                     "mu0_SI")           // Gets overridden in CGS modes
 ("epsilon0"                "1/(mu0 c^2)")      // Vacuum electric permittivity
 ("Z0"                      "mu0 c")            // Free space impedance
 ("energy"                  "c^2")              // Convert mass to energy
 ("hbar"                    "h / (2 pi)")
 ("spin"                    "hbar")
-/*
-G               6.67430e-11 N m^2 / kg^2 # Newtonian gravitational constant
-coulombconst            1/4 pi epsilon0  # Listed as k or k_C sometimes
-k_C                     coulombconst
-*/
+
+("G"               "=6.67430e-11 N m^2 / kg^2") // Newtonian gravitational constant
+("coulombconst"            "=1/4 pi epsilon0")  // Listed as k or k_C sometimes
+("k_C"                     "=coulombconst")
+
 // Physico-chemical constants
 
 ("atomicmassunit"      "1.66053906660e-27 kg") // Unified atomic mass unit, defined as
@@ -1264,86 +1263,85 @@ k_C                     coulombconst
 ("amu"                     "atomicmassunit")   //   The relationship N_A u = 1 g/mol
 ("dalton"                  "u")                //   is approximately, but not exactly
 ("Da"                      "dalton")           //   true (with the 2019 SI).
-/*
-                                         #   Previously the mole was defined to
-                                         #   make this relationship exact.
-amu_chem                1.66026e-27 kg   # 1|16 of the weighted average mass of
-                                         #   the 3 naturally occuring neutral
-                                         #   isotopes of oxygen
-amu_phys                1.65981e-27 kg   # 1|16 of the mass of a neutral
-                                         #   oxygen 16 atom
-gasconstant             k N_A            # Molar gas constant (exact)
-R                       gasconstant
-kboltzmann              boltzmann
-molarvolume         mol R stdtemp / atm  # Volume occupied by one mole of an
-                                         #   ideal gas at STP.
-loschmidt     avogadro mol / molarvolume # Molecules per cubic meter of an
-                                         #   ideal gas at STP.  Loschmidt did
-                                         #   work similar to Avogadro.
-molarvolume_si  N_A siliconlattice^3 / 8 # Volume of a mole of crystalline
-                                         #   silicon. The unit cell contains 8
-                                         #   silicon atoms and has a side
-                                         #   length of siliconlattice.
-stefanboltzmann pi^2 k^4 / 60 hbar^3 c^2 # The power per area radiated by a
-sigma                   stefanboltzmann  #   blackbody at temperature T is
-                                         #   given by sigma T^4. (exact)
-wiendisplacement     (h c/k)/4.9651142317442763  # Wien's Displacement Law gives
-                                         #   the frequency at which the the
-                                         #   Planck spectrum has maximum
-                                         #   intensity.  The relation is lambda
-                                         #   T = b where lambda is wavelength,
-                                         #   T is temperature and b is the Wien
-                                         #   displacement.  This relation is
-                                         #   used to determine the temperature
-                                         #   of stars.  The constant is the
-                                         #   solution to x=5(1-exp(-x)). (exact)
-K_J90 483597.9 GHz/V    # Direct measurement of the volt is difficult.  Until
-K_J   2electroncharge/h #   recently, laboratories kept Weston cadmium cells as
-                        #   a reference, but they could drift.  In 1987 the
-                        #   CGPM officially recommended the use of the
-                        #   Josephson effect as a laboratory representation of
-                        #   the volt.  The Josephson effect occurs when two
-                        #   superconductors are separated by a thin insulating
-                        #   layer.  A "supercurrent" flows across the insulator
-                        #   with a frequency that depends on the potential
-                        #   applied across the superconductors.  This frequency
-                        #   can be very accurately measured.  The Josephson
-                        #   constant K_J relates the measured frequency to the
-                        #   potential.  Two values given, the conventional
-                        #   (exact) value from 1990, which was used until the
-                        #   2019 SI revision, and the current exact value.
-R_K90 25812.807 ohm      # Measurement of the ohm also presents difficulties.
-R_K   h/electroncharge^2 #   The old approach involved maintaining resistances
-                         #   that were subject to drift.  The new standard is
-                         #   based on the Hall effect.  When a current carrying
-                         #   ribbon is placed in a magnetic field, a potential
-                         #   difference develops across the ribbon.  The ratio
-                         #   of the potential difference to the current is
-                         #   called the Hall resistance.  Klaus von Klitzing
-                         #   discovered in 1980 that the Hall resistance varies
-                         #   in discrete jumps when the magnetic field is very
-                         #   large and the temperature very low.  This enables
-                         #   accurate realization of the resistance h/e^2 in the
-                         #   lab.  The 1990 value was an exact conventional
-                         #   value used until the SI revision in 2019. This value
-                         #   did not agree with measurements.  The new value
-                         #   is exact.
+                                               //   Previously the mole was defined to
+                                               //   make this relationship exact.
+("amu_chem"                "1.66026e-27 kg")   // 1|16 of the weighted average mass of
+                                               //   the 3 naturally occuring neutral
+                                               //   isotopes of oxygen
+("amu_phys"                "1.65981e-27 kg")   // 1|16 of the mass of a neutral
+                                               //   oxygen 16 atom
+("gasconstant"             "=k N_A")           // Molar gas constant (exact)
+("R"                       "gasconstant")
+("kboltzmann"              "boltzmann")
+("molarvolume"         "mol R stdtemp / atm")  // Volume occupied by one mole of an
+                                               //   ideal gas at STP.
+("loschmidt"     "avogadro mol / molarvolume") // Molecules per cubic meter of an
+                                               //   ideal gas at STP.  Loschmidt did
+                                               //   work similar to Avogadro.
+("molarvolume_si"  "N_A siliconlattice^3 / 8") // Volume of a mole of crystalline
+                                               //   silicon. The unit cell contains 8
+                                               //   silicon atoms and has a side
+                                               //   length of siliconlattice.
+("stefanboltzmann" "pi^2 k^4/(60 hbar^3 c^2)") // The power per area radiated by a
+("sigma"                   "stefanboltzmann")  //   blackbody at temperature T is
+                                               //   given by sigma T^4. (exact)
+("wiendisplacement"     "(h c/k)/4.9651142317442763")  // Wien's Displacement Law gives
+                                               //   the frequency at which the the
+                                               //   Planck spectrum has maximum
+                                               //   intensity.  The relation is lambda
+                                               //   T = b where lambda is wavelength,
+                                               //   T is temperature and b is the Wien
+                                               //   displacement.  This relation is
+                                               //   used to determine the temperature
+                                               //   of stars.  The constant is the
+                                               //   solution to x=5(1-exp(-x)). (exact)
+("K_J90" "483597.9 GHz/V")    // Direct measurement of the volt is difficult.  Until
+("K_J"   "2electroncharge/h") //   recently, laboratories kept Weston cadmium cells as
+                              //   a reference, but they could drift.  In 1987 the
+                              //   CGPM officially recommended the use of the
+                              //   Josephson effect as a laboratory representation of
+                              //   the volt.  The Josephson effect occurs when two
+                              //   superconductors are separated by a thin insulating
+                              //   layer.  A "supercurrent" flows across the insulator
+                              //   with a frequency that depends on the potential
+                              //   applied across the superconductors.  This frequency
+                              //   can be very accurately measured.  The Josephson
+                              //   constant K_J relates the measured frequency to the
+                              //   potential.  Two values given, the conventional
+                              //   (exact) value from 1990, which was used until the
+                              //   2019 SI revision, and the current exact value.
+("R_K90" "25812.807 ohm")      // Measurement of the ohm also presents difficulties.
+("R_K"   "h/electroncharge^2") //   The old approach involved maintaining resistances
+                              //   that were subject to drift.  The new standard is
+                              //   based on the Hall effect.  When a current carrying
+                              //   ribbon is placed in a magnetic field, a potential
+                              //   difference develops across the ribbon.  The ratio
+                              //   of the potential difference to the current is
+                              //   called the Hall resistance.  Klaus von Klitzing
+                              //   discovered in 1980 that the Hall resistance varies
+                              //   in discrete jumps when the magnetic field is very
+                              //   large and the temperature very low.  This enables
+                              //   accurate realization of the resistance h/e^2 in the
+                              //   lab.  The 1990 value was an exact conventional
+                              //   value used until the SI revision in 2019. This value
+                              //   did not agree with measurements.  The new value
+                              //   is exact.
 
-# The 2019 update to SI gives exact definitions for R_K and K_J.  Previously
-# the electromagnetic units were realized using the 1990 conventional values
-# for these constants, and as a result, the standard definitions were in some
-# sense outside of SI.  The revision corrects this problem.  The definitions
-# below give the 1990 conventional values for the electromagnetic units in
-# terms of 2019 SI.
+// The 2019 update to SI gives exact definitions for R_K and K_J.  Previously
+// the electromagnetic units were realized using the 1990 conventional values
+// for these constants, and as a result, the standard definitions were in some
+// sense outside of SI.  The revision corrects this problem.  The definitions
+// below give the 1990 conventional values for the electromagnetic units in
+// terms of 2019 SI.
 
-ampere90 (K_J90 R_K90 / K_J R_K) A
-coulomb90 (K_J90 R_K90 / K_J R_K) C
-farad90 (R_K90/R_K) F
-henry90 (R_K/R_K90) H
-ohm90 (R_K/R_K90) ohm
-volt90 (K_J90/K_J) V
-watt90 (K_J90^2 R_K90 / K_J^2 R_K) W
-*/
+("ampere90" "(K_J90 R_K90 / K_J / R_K) A")
+("coulomb90" "(K_J90 R_K90 / K_J / R_K) C")
+("farad90" "(R_K90/R_K) F")
+("henry90" "(R_K/R_K90) H")
+("ohm90" "(R_K/R_K90) ohm")
+("volt90" "(K_J90/K_J) V")
+("watt90" "(K_J90^2 R_K90 / K_J^2 / R_K) W")
+
 // Various conventional values
 
 ("gravity"                 "9.80665 m/s^2")    // std acceleration of gravity (exact)
@@ -1363,115 +1361,115 @@ watt90 (K_J90^2 R_K90 / K_J^2 R_K) W
 
 // Weight of mercury and water at different temperatures using the standard
 // force of gravity.
-/*
-Hg10C         13.5708 force gram / cm^3  # These units, when used to form
-Hg20C         13.5462 force gram / cm^3  # pressure measures, are not accurate
-Hg23C         13.5386 force gram / cm^3  # because of considerations of the
-Hg30C         13.5217 force gram / cm^3  # revised practical temperature scale.
-Hg40C         13.4973 force gram / cm^3
-Hg60F         13.5574 force gram / cm^3
-H2O0C         0.99987 force gram / cm^3
-H2O5C         0.99999 force gram / cm^3
-H2O10C        0.99973 force gram / cm^3
-H2O15C        0.99913 force gram / cm^3
-H2O18C        0.99862 force gram / cm^3
-H2O20C        0.99823 force gram / cm^3
-H2O25C        0.99707 force gram / cm^3
-H2O50C        0.98807 force gram / cm^3
-H2O100C       0.95838 force gram / cm^3
 
-# Atomic constants
+("Hg10C"         "13.5708 force gram / cm^3")  // These units, when used to form
+("Hg20C"         "13.5462 force gram / cm^3")  // pressure measures, are not accurate
+("Hg23C"         "13.5386 force gram / cm^3")  // because of considerations of the
+("Hg30C"         "13.5217 force gram / cm^3")  // revised practical temperature scale.
+("Hg40C"         "13.4973 force gram / cm^3")
+("Hg60F"         "13.5574 force gram / cm^3")
+("H2O0C"         "0.99987 force gram / cm^3")
+("H2O5C"         "0.99999 force gram / cm^3")
+("H2O10C"        "0.99973 force gram / cm^3")
+("H2O15C"        "0.99913 force gram / cm^3")
+("H2O18C"        "0.99862 force gram / cm^3")
+("H2O20C"        "0.99823 force gram / cm^3")
+("H2O25C"        "0.99707 force gram / cm^3")
+("H2O50C"        "0.98807 force gram / cm^3")
+("H2O100C"       "0.95838 force gram / cm^3")
 
-Rinfinity             10973731.568160 /m # The wavelengths of a spectral series
-R_H                     10967760 /m      #   can be expressed as
-                                         #     1/lambda = R (1/m^2 - 1/n^2).
-                                         #   where R is a number that various
-                                         #   slightly from element to element.
-                                         #   For hydrogen, R_H is the value,
-                                         #   and for heavy elements, the value
-                                         #   approaches Rinfinity, which can be
-                                         #   computed from
-                                         #        m_e c alpha^2 / 2 h
-                                         #   with a loss of 2 digits
-                                         #   of precision.
-alpha                    7.2973525693e-3 # The fine structure constant was
-                                         #   introduced to explain fine
-                                         #   structure visible in spectral
-                                         #   lines.
-bohrradius              alpha / 4 pi Rinfinity
-prout                   185.5 keV        # nuclear binding energy equal to 1|12
-                                         #   binding energy of the deuteron
-conductancequantum      2 electroncharge^2 / h
+// Atomic constants
 
-# Planck constants
+("Rinfinity"             "10973731.568160 /m") // The wavelengths of a spectral series
+("R_H"                     "10967760 /m")      //   can be expressed as
+                                               //     1/lambda = R (1/m^2 - 1/n^2).
+                                               //   where R is a number that various
+                                               //   slightly from element to element.
+                                               //   For hydrogen, R_H is the value,
+                                               //   and for heavy elements, the value
+                                               //   approaches Rinfinity, which can be
+                                               //   computed from
+                                               //        m_e c alpha^2 / 2 h
+                                               //   with a loss of 2 digits
+                                               //   of precision.
+("alpha"                    "7.2973525693e-3") // The fine structure constant was
+                                               //   introduced to explain fine
+                                               //   structure visible in spectral
+                                               //   lines.
+("bohrradius"              "alpha / (4 pi Rinfinity)")
+("prout"                   "185.5 keV")        // nuclear binding energy equal to 1|12
+                                               //   binding energy of the deuteron
+("conductancequantum"      "2 electroncharge^2 / h")
 
-planckmass              sqrt(hbar c / G)
-m_P                     planckmass
-plancktime              hbar / planckmass c^2
-t_P                     plancktime
-plancklength            plancktime c
-l_P                     plancklength
-plancktemperature       hbar / k plancktime
-T_P                     plancktemperature
+// Planck constants
 
-# Particle radius
+("planckmass"              "sqrt(hbar c / G)")
+("m_P"                     "planckmass")
+("plancktime"              "hbar / planckmass / c^2")
+("t_P"                     "plancktime")
+("plancklength"            "plancktime c")
+("l_P"                     "plancklength")
+("plancktemperature"       "hbar / k / plancktime")
+("T_P"                     "plancktemperature")
 
-electronradius    coulombconst electroncharge^2 / electronmass c^2   # Classical
-deuteronchargeradius    2.12799e-15 m
-protonchargeradius      0.8751e-15 m
-*/
+// Particle radius
+
+("electronradius"    "coulombconst electroncharge^2 / electronmass / c^2")   // Classical
+("deuteronchargeradius"    "2.12799e-15 m")
+("protonchargeradius"      "0.8751e-15 m")
+
 // Masses of elementary particles
 
-("electronmass"            "5.48579909065e-4 u")
-("m_e"                     "electronmass")
-("muonmass"                "0.1134289259 u")
-("m_mu"                    "muonmass")
-("taumass"                 "1.90754 u")
-("m_tau"                   "taumass")
-("protonmass"              "1.007276466621 u")
-("m_p"                     "protonmass")
-("neutronmass"             "1.00866491595 u")
-("m_n"                     "neutronmass")
-("deuteronmass"            "2.013553212745 u")    // Nucleus of deuterium, one
-("m_d"                     "deuteronmass")        //   proton and one neutron
-("alphaparticlemass"       "4.001506179127 u")    // Nucleus of He, two protons
-("m_alpha"                 "alphaparticlemass")   //   and two neutrons
-("tritonmass"              "3.01550071621 u")     // Nucleius of H3, one proton
-("m_t"                     "tritonmass")          //   and two neutrons
-("helionmass"              "3.014932247175 u")    // Nucleus of He3, two protons
-("m_h"                     "helionmass")          //   and one neutron
+("electronmass"            "=5.48579909065e-4 u")
+("m_e"                     "=electronmass")
+("muonmass"                "=0.1134289259 u")
+("m_mu"                    "=muonmass")
+("taumass"                 "=1.90754 u")
+("m_tau"                   "=taumass")
+("protonmass"              "=1.007276466621 u")
+("m_p"                     "=protonmass")
+("neutronmass"             "=1.00866491595 u")
+("m_n"                     "=neutronmass")
+("deuteronmass"            "=2.013553212745 u")    // Nucleus of deuterium, one
+("m_d"                     "=deuteronmass")        //   proton and one neutron
+("alphaparticlemass"       "=4.001506179127 u")    // Nucleus of He, two protons
+("m_alpha"                 "=alphaparticlemass")   //   and two neutrons
+("tritonmass"              "=3.01550071621 u")     // Nucleius of H3, one proton
+("m_t"                     "=tritonmass")          //   and two neutrons
+("helionmass"              "=3.014932247175 u")    // Nucleus of He3, two protons
+("m_h"                     "=helionmass")          //   and one neutron
 
 // particle wavelengths: the compton wavelength of a particle is
 // defined as h / m c where m is the mass of the particle.
-/*
-electronwavelength      h / m_e c
-lambda_C                electronwavelength
-protonwavelength        h / m_p c
-lambda_C,p              protonwavelength
-neutronwavelength       h / m_n c
-lambda_C,n              neutronwavelength
-muonwavelength          h / m_mu c
-lambda_C,mu             muonwavelength
 
-# The g-factor or dimensionless magnetic moment is a quantity that
-# characterizes the magnetic moment of a particle.  The electron g-factor is
-# one of the most precisely measured values in physics, with a relative
-# uncertainty of 1.7e-13.
+("electronwavelength"      "h / m_e c")
+("lambda_C"                "electronwavelength")
+("protonwavelength"        "h / m_p c")
+("lambda_C_p"              "protonwavelength")
+("neutronwavelength"       "h / m_n c")
+("lambda_C_n"              "neutronwavelength")
+("muonwavelength"          "h / m_mu c")
+("lambda_C_mu"             "muonwavelength")
 
-g_d                     0.8574382338       # Deuteron g-factor
-g_e                    -2.00231930436256   # Electron g-factor
-g_h                    -4.255250615        # Helion g-factor
-g_mu                   -2.0023318418       # Muon g-factor
-g_n                    -3.82608545         # Neutron g-factor
-g_p                     5.5856946893       # Proton g-factor
-g_t                     5.957924931        # Triton g-factor
+// The g-factor or dimensionless magnetic moment is a quantity that
+// characterizes the magnetic moment of a particle.  The electron g-factor is
+// one of the most precisely measured values in physics, with a relative
+// uncertainty of 1.7e-13.
 
-# Magnetic moments (derived from the more accurate g-factors)
-#
-# The magnetic moment is g * mu_ref * spin where in most cases
-# the reference is the nuclear magneton, and all of the particles
-# except the deuteron have spin 1/2.
-*/
+("g_d"                    "= 0.8574382338")       // Deuteron g-factor
+("g_e"                    "=-2.00231930436256")   // Electron g-factor
+("g_h"                    "=-4.255250615")        // Helion g-factor
+("g_mu"                   "=-2.0023318418")       // Muon g-factor
+("g_n"                    "=-3.82608545")         // Neutron g-factor
+("g_p"                    "= 5.5856946893")       // Proton g-factor
+("g_t"                    "= 5.957924931")        // Triton g-factor
+
+// Magnetic moments (derived from the more accurate g-factors)
+//
+// The magnetic moment is g * mu_ref * spin where in most cases
+// the reference is the nuclear magneton, and all of the particles
+// except the deuteron have spin 1/2.
+
 ("bohrmagneton"            "electroncharge hbar / (2 electronmass)")  // Reference magnetic moment for
 ("mu_B"                    "bohrmagneton")                            //   the electron
 ("nuclearmagneton"         "electroncharge hbar /  (2 protonmass)")   // Convenient reference magnetic
@@ -1483,228 +1481,227 @@ g_t                     5.957924931        # Triton g-factor
 ("mu_t"                    "g_t mu_N / 2")             // Triton magnetic moment
 ("mu_d"                    "g_d mu_N")            // Deuteron magnetic moment, spin 1
 ("mu_h"                    "g_h mu_N / 2")             // Helion magnetic moment
-/*
-#
-# Units derived from physical constants
-#
 
-kgf                     kg force
-technicalatmosphere     kgf / cm^2
-at                      technicalatmosphere
-hyl                     kgf s^2 / m   # Also gram-force s^2/m according to [15]
-mmHg                    mm Hg
-torr                    atm / 760  # The torr, named after Evangelista
-                                   # Torricelli, and is very close to the mm Hg
-tor                     Pa         # Suggested in 1913 but seldom used [24].
-                                   # Eventually renamed the Pascal.  Don't
-                                   # confuse the tor with the torr.
-inHg                    inch Hg
-inH2O                   inch water
-mmH2O                   mm water
-eV                      electroncharge V      # Energy acquired by a particle with charge e
-electronvolt            eV                    #   when it is accelerated through 1 V
-*/
+//
+// Units derived from physical constants
+//
+
+("kgf"                     "kg force")
+("technicalatmosphere"     "kgf / cm^2")
+("at"                      "technicalatmosphere")
+("hyl"                     "kgf s^2 / m")   // Also gram-force s^2/m according to [15]
+("mmHg"                    "mm Hg")
+("torr"                    "atm / 760")  // The torr, named after Evangelista
+                                         // Torricelli, and is very close to the mm Hg
+("tor"                     "Pa")         // Suggested in 1913 but seldom used [24].
+                                         // Eventually renamed the Pascal.  Don't
+                                         // confuse the tor with the torr.
+("inHg"                    "inch Hg")
+("inH2O"                   "inch water")
+("mmH2O"                   "mm water")
+("eV"                      "electroncharge V")      // Energy acquired by a particle with charge e
+("electronvolt"            "eV")                    //   when it is accelerated through 1 V
 ("lightyear"/"lightyears"  "c julianyear") // The 365.25 day year is specified in
 ("ly"                      "lightyear")    // NIST publication 811
+("lightsecond"             "c s")
+("lightminute"             "c min")
+("parsec"                  "au / tan(arcsec)")    // Unit of length equal to distance
+("pc"                      "parsec")              //   from the sun to a point having
+                                                  //   heliocentric parallax of 1
+                                                  //   arcsec (derived from parallax
+                                                  //   second).  A distant object with
+                                                  //   parallax theta will be about
+                                                  //   (arcsec/theta) parsecs from the
+                                                  //   sun (using the approximation
+                                                  //   that tan(theta) = theta).
+("rydberg"                 "h c Rinfinity")       // Rydberg energy
+("crith"                   "0.089885 gram")       // The crith is the mass of one
+                                                  //   liter of hydrogen at standard
+                                                  //   temperature and pressure.
+("amagatvolume"            "molarvolume")
+("amagat"                  "mol/amagatvolume")     // Used to measure gas densities
+("lorentz"                 "bohrmagneton / h / c") // Used to measure the extent
+                                                   //   that the frequency of light
+                                                   //   is shifted by a magnetic field.
+("cminv"                   "h c / cm")             // Unit of energy used in infrared
+("invcm"                   "cminv")                //   spectroscopy.
+("wavenumber"              "cminv")
+("kcal_mol"                "kcal_th / mol / N_A")  // kcal/mol is used as a unit of
+                                                   //   energy by physical chemists.
+//
+// CGS system based on centimeter, gram and second
+//
+
+("dyne"                    "l@cm gram / s^2") // force
+("dyn"                     "s@dyne")
+("erg"                     "cm dyne")         // energy
+("poise"                   "gram / cm s")     // viscosity, honors Jean Poiseuille
+("P"                       "poise")
+("rhe"                     "/poise")          // reciprocal viscosity
+("stokes"                  "cm^2 / s")        // kinematic viscosity
+("St"                      "stokes")
+("stoke"                   "stokes")
+("lentor"                  "stokes")          // old name
+("Gal"                     "cm / s^2")        // acceleration, used in geophysics
+("galileo"                 "Gal")             // for earth's gravitational field
+                                              // (note that "gal" is for gallon
+                                              // but "Gal" is the standard symbol
+                                              // for the gal which is evidently a
+                                              // shortened form of "galileo".)
+("barye"                   "dyne/cm^2")       // pressure
+("barad"                   "barye")           // old name
+("kayser"                  "1/cm")            // Proposed as a unit for wavenumber
+("balmer"                  "kayser")          // Even less common name than "kayser"
+("kine"                    "cm/s")            // velocity
+("bole"                    "g cm / s")        // momentum
+("pond"                    "gram force")
+("glug"                "gram force s^2 / cm") // Mass which is accelerated at
+                                              //   1 cm/s^2 by 1 gram force
+("darcy"         "centipoise cm^2 / s / atm") // Measures permeability to fluid flow.
+                                              //   One darcy is the permeability of a
+                                              //   medium that allows a flow of cc/s
+                                              //   of a liquid of centipoise viscosity
+                                              //   under a pressure gradient of
+                                              //   atm/cm.  Named for H. Darcy.
+("mobileohm"               "cm / dyn / s")    // mobile ohm, measure of mechanical
+                                              //   mobility
+("mechanicalohm"           "dyn s / cm")      // mechanical resistance
+("acousticalohm"           "dyn s / cm^5")    // ratio of the sound pressure of
+                                              //   1 dyn/cm^2 to a source of strength
+                                              //   1 cm^3/s
+("ray"                     "acousticalohm")
+("rayl"                    "dyn s / cm^3")    // Specific acoustical resistance
+("eotvos"                  "1e-9 Gal/cm")     // Change in gravitational acceleration
+                                              //   over horizontal distance
+//
+// Electromagnetic CGS Units
+//
+// For measuring electromagnetic quantities in SI, we introduce the new base
+// dimension of current, define the ampere to measure current, and derive the
+// other electromagnetic units from the ampere.  With the CGS units one approach
+// is to use the basic equations of electromagnetism to define units that
+// eliminate constants from those equations.  Coulomb's law has the form
+//
+//          F = k_C q1 q2 / r^2
+//
+// where k_C is the Coulomb constant equal to 1|4 pi epsilon0 in SI units.
+// Ampere's force law takes the form
+//
+//          dF/dl = 2 k_A I1 I2 / r
+//
+// where k_A is the ampere constant.  In the CGS system we force either k_C or
+// k_A to 1 which then defines either a unit for charge or a unit for current.
+// The other unit then becomes a derived unit.  When k_C is 1 the ESU system
+// results.  When k_A is 1 the EMU system results.  Note that these parameters
+// are not independent of each other: Maxwell's equations indicate that
+//
+//           k_C / k_A = c^2
+//
+// where c is the speed of light.
+//
+// One more choice is needed to define a complete system.  Using Coulomb's law
+// we define the electric field as the force per unit charge
+//
+//           E = k_C 1 / r^2.
+//
+// But what about the magnetic field?  It is derived from Ampere's law but we
+// have the option of adding a proportionality constant, k_B, that may have
+// dimensions:
+//
+//           B = 2 k_A k_B I / r
+//
+// We can choose k_B = 1, which is done in the SI, ESU and EMU systems.  But if
+// instead we give k_B units of length/time then the magnetic field has
+// the same units as the electric field.  This choice leads to the Gaussian
+// system.
+//
+// The relations above are used to determine the dimensions, but the units are
+// derived from the base units of CGS, not directly from those formulas.  We
+// will use the notation [unit] to refer to the dimension of the unit in
+// brackets.  This same process gives rise to the SI units such as the tesla,
+// which is defined by
+//
+//          B = 2
+//
+// References:
+//
+// Classical Electrodynamics by John David Jackson, 3rd edition.
+// Cardarelli, Francois. 1999.  Scientific Unit Conversion. 2nd ed.  Trans.
+//     M.J.  Shields.  London: Springer-Verlag. ISBN 1-85233-043-0
+//
+//
+// All of these systems result in electromagnetic units that involve the square
+// roots of the centimeter and gram.  This requires a change in the primitive
+// units.
+//
+
+
+// !var UNITS_SYSTEM esu emu gaussian gauss
+// sqrt_cm                 !
+// sqrt_centimeter         sqrt_cm
+// +m                      100 sqrt_cm^2
+// sqrt_g                  !
+// sqrt_gram               sqrt_g
+// +kg                     kilo sqrt_g^2
+// !endvar
+
+// Electrostatic CGS (ESU)
+//
+// This system uses the statcoulomb as the fundamental unit of charge, with
+// derived units that parallel the conventional terminology but use the stat-
+// prefix.  The statcoulomb is designed by setting k_C=1, which means
+//
+//                      dyne = statcoulomb^2 / cm^2.
+//
+// The statcoulomb is also called the franklin or esu.
+//
+// The ESU system was specified by a committee report in 1873 and rarely used.
+
+("statcoulomb"             "10 coulomb cm / s c")   // Charge such that two charges
+("esu"                     "statcoulomb")           // of 1 statC separated by 1 cm
+("statcoul"                "statcoulomb")           // exert a force of 1 dyne
+("statC"                   "statcoulomb")
+("stC"                     "statcoulomb")
+("franklin"                "statcoulomb")
+("Fr"                      "franklin")
+
+// !var UNITS_SYSTEM esu
+// !message CGS-ESU units selected
+// !prompt (ESU)
+// +statcoulomb            sqrt(dyne) cm
+// +A                      0.1 statamp c/(cm/s)
+// +mu0                    1/c^2
+// +coulombconst           1
+// !endvar
+
+("statampere"              "statcoulomb / s")
+("statamp"                 "statampere")
+("statA"                   "statampere")
+("stA"                     "statampere")
+("statvolt"                "dyne cm / statamp sec")
+("statV"                   "statvolt")
+("stV"                     "statvolt")
+("statfarad"               "statamp sec / statvolt")
+("statF"                   "statfarad")
+("stF"                     "statfarad")
+("cmcapacitance"           "statfarad")
+("stathenry"               "statvolt sec / statamp")
+("statH"                   "stathenry")
+("stH"                     "stathenry")
+("statohm"                 "statvolt / statamp")
+("stohm"                   "statohm")
+("statmho"                 "/statohm")
+("stmho"                   "statmho")
+("statweber"               "statvolt sec")
+("statWb"                  "statweber")
+("stWb"                    "statweber")
+("stattesla"               "statWb/cm^2")   // Defined by analogy with SI; rarely
+("statT"                   "stattesla")     //   if ever used
+("stT"                     "stattesla")
+("debye"                   "1e-10 statC angstrom") // unit of electrical dipole moment
+("helmholtz"               "debye/angstrom^2")     // Dipole moment per area
+("jar"                     "1000 statfarad")       // approx capacitance of Leyden jar
 /*
-lightsecond             c s
-lightminute             c min
-parsec                  au / tan(arcsec)    # Unit of length equal to distance
-pc                      parsec              #   from the sun to a point having
-                                            #   heliocentric parallax of 1
-                                            #   arcsec (derived from parallax
-                                            #   second).  A distant object with
-                                            #   parallax theta will be about
-                                            #   (arcsec/theta) parsecs from the
-                                            #   sun (using the approximation
-                                            #   that tan(theta) = theta).
-rydberg                 h c Rinfinity       # Rydberg energy
-crith                   0.089885 gram       # The crith is the mass of one
-                                            #   liter of hydrogen at standard
-                                            #   temperature and pressure.
-amagatvolume            molarvolume
-amagat                  mol/amagatvolume    # Used to measure gas densities
-lorentz                 bohrmagneton / h c  # Used to measure the extent
-                                            #   that the frequency of light
-                                            #   is shifted by a magnetic field.
-cminv                   h c / cm            # Unit of energy used in infrared
-invcm                   cminv               #   spectroscopy.
-wavenumber              cminv
-kcal_mol                kcal_th / mol N_A   # kcal/mol is used as a unit of
-                                            #   energy by physical chemists.
-#
-# CGS system based on centimeter, gram and second
-#
-
-dyne                    cm gram / s^2   # force
-dyn                     dyne
-erg                     cm dyne         # energy
-poise                   gram / cm s     # viscosity, honors Jean Poiseuille
-P                       poise
-rhe                     /poise          # reciprocal viscosity
-stokes                  cm^2 / s        # kinematic viscosity
-St                      stokes
-stoke                   stokes
-lentor                  stokes          # old name
-Gal                     cm / s^2        # acceleration, used in geophysics
-galileo                 Gal             # for earth's gravitational field
-                                        # (note that "gal" is for gallon
-                                        # but "Gal" is the standard symbol
-                                        # for the gal which is evidently a
-                                        # shortened form of "galileo".)
-barye                   dyne/cm^2       # pressure
-barad                   barye           # old name
-kayser                  1/cm            # Proposed as a unit for wavenumber
-balmer                  kayser          # Even less common name than "kayser"
-kine                    cm/s            # velocity
-bole                    g cm / s        # momentum
-pond                    gram force
-glug                gram force s^2 / cm # Mass which is accelerated at
-                                        #   1 cm/s^2 by 1 gram force
-darcy           centipoise cm^2 / s atm # Measures permeability to fluid flow.
-                                        #   One darcy is the permeability of a
-                                        #   medium that allows a flow of cc/s
-                                        #   of a liquid of centipoise viscosity
-                                        #   under a pressure gradient of
-                                        #   atm/cm.  Named for H. Darcy.
-mobileohm               cm / dyn s      # mobile ohm, measure of mechanical
-                                        #   mobility
-mechanicalohm           dyn s / cm      # mechanical resistance
-acousticalohm           dyn s / cm^5    # ratio of the sound pressure of
-                                        #   1 dyn/cm^2 to a source of strength
-                                        #   1 cm^3/s
-ray                     acousticalohm
-rayl                    dyn s / cm^3    # Specific acoustical resistance
-eotvos                  1e-9 Gal/cm     # Change in gravitational acceleration
-                                        #   over horizontal distance
-#
-# Electromagnetic CGS Units
-#
-# For measuring electromagnetic quantities in SI, we introduce the new base
-# dimension of current, define the ampere to measure current, and derive the
-# other electromagnetic units from the ampere.  With the CGS units one approach
-# is to use the basic equations of electromagnetism to define units that
-# eliminate constants from those equations.  Coulomb's law has the form
-#
-#          F = k_C q1 q2 / r^2
-#
-# where k_C is the Coulomb constant equal to 1|4 pi epsilon0 in SI units.
-# Ampere's force law takes the form
-#
-#          dF/dl = 2 k_A I1 I2 / r
-#
-# where k_A is the ampere constant.  In the CGS system we force either k_C or
-# k_A to 1 which then defines either a unit for charge or a unit for current.
-# The other unit then becomes a derived unit.  When k_C is 1 the ESU system
-# results.  When k_A is 1 the EMU system results.  Note that these parameters
-# are not independent of each other: Maxwell's equations indicate that
-#
-#           k_C / k_A = c^2
-#
-# where c is the speed of light.
-#
-# One more choice is needed to define a complete system.  Using Coulomb's law
-# we define the electric field as the force per unit charge
-#
-#           E = k_C 1 / r^2.
-#
-# But what about the magnetic field?  It is derived from Ampere's law but we
-# have the option of adding a proportionality constant, k_B, that may have
-# dimensions:
-#
-#           B = 2 k_A k_B I / r
-#
-# We can choose k_B = 1, which is done in the SI, ESU and EMU systems.  But if
-# instead we give k_B units of length/time then the magnetic field has
-# the same units as the electric field.  This choice leads to the Gaussian
-# system.
-#
-# The relations above are used to determine the dimensions, but the units are
-# derived from the base units of CGS, not directly from those formulas.  We
-# will use the notation [unit] to refer to the dimension of the unit in
-# brackets.  This same process gives rise to the SI units such as the tesla,
-# which is defined by
-#
-#          B = 2
-#
-# References:
-#
-# Classical Electrodynamics by John David Jackson, 3rd edition.
-# Cardarelli, Francois. 1999.  Scientific Unit Conversion. 2nd ed.  Trans.
-#     M.J.  Shields.  London: Springer-Verlag. ISBN 1-85233-043-0
-#
-#
-# All of these systems result in electromagnetic units that involve the square
-# roots of the centimeter and gram.  This requires a change in the primitive
-# units.
-#
-
-# !var UNITS_SYSTEM esu emu gaussian gauss
-# sqrt_cm                 !
-# sqrt_centimeter         sqrt_cm
-# +m                      100 sqrt_cm^2
-# sqrt_g                  !
-# sqrt_gram               sqrt_g
-# +kg                     kilo sqrt_g^2
-# !endvar
-
-# Electrostatic CGS (ESU)
-#
-# This system uses the statcoulomb as the fundamental unit of charge, with
-# derived units that parallel the conventional terminology but use the stat-
-# prefix.  The statcoulomb is designed by setting k_C=1, which means
-#
-#                      dyne = statcoulomb^2 / cm^2.
-#
-# The statcoulomb is also called the franklin or esu.
-#
-# The ESU system was specified by a committee report in 1873 and rarely used.
-
-statcoulomb             10 coulomb cm / s c   # Charge such that two charges
-esu                     statcoulomb           # of 1 statC separated by 1 cm
-statcoul                statcoulomb           # exert a force of 1 dyne
-statC                   statcoulomb
-stC                     statcoulomb
-franklin                statcoulomb
-Fr                      franklin
-
-#!var UNITS_SYSTEM esu
-#!message CGS-ESU units selected
-#!prompt (ESU)
-#+statcoulomb            sqrt(dyne) cm
-#+A                      0.1 statamp c/(cm/s)
-#+mu0                    1/c^2
-#+coulombconst           1
-#!endvar
-
-statampere              statcoulomb / s
-statamp                 statampere
-statA                   statampere
-stA                     statampere
-statvolt                dyne cm / statamp sec
-statV                   statvolt
-stV                     statvolt
-statfarad               statamp sec / statvolt
-statF                   statfarad
-stF                     statfarad
-cmcapacitance           statfarad
-stathenry               statvolt sec / statamp
-statH                   stathenry
-stH                     stathenry
-statohm                 statvolt / statamp
-stohm                   statohm
-statmho                 /statohm
-stmho                   statmho
-statweber               statvolt sec
-statWb                  statweber
-stWb                    statweber
-stattesla               statWb/cm^2   # Defined by analogy with SI; rarely
-statT                   stattesla     #   if ever used
-stT                     stattesla
-debye                   1e-10 statC angstrom # unit of electrical dipole moment
-helmholtz               debye/angstrom^2     # Dipole moment per area
-jar                     1000 statfarad       # approx capacitance of Leyden jar
-
 # Electromagnetic CGS (EMU)
 #
 # The abampere is the fundamental unit of this system, with the derived units
@@ -2811,18 +2808,18 @@ internationalyard       yard
                                      // made the international standard in 1929.
                                      // The US did not accept this value until
                                      // 1954.  The UK switched in 1970.
-/*
-cable                   1|10 nauticalmile
-intcable                cable              # international cable
-cablelength             cable
-UScable                 100 USfathom
-navycablelength         720 USft           # used for depth in water
-marineleague            3 nauticalmile
-geographicalmile        brnauticalmile
-knot                    nauticalmile / hr
-click                   km       # US military slang
-klick                   click
-*/
+
+("cable"                   "1/10 nauticalmile")
+("intcable"                "cable")              // international cable
+("cablelength"             "cable")
+("UScable"                 "100 USfathom")
+("navycablelength"         "720 USft")           // used for depth in water
+("marineleague"            "3 nauticalmile")
+("geographicalmile"        "brnauticalmile")
+("knot"                    "nauticalmile / hr")
+("click"                   "km")       // US military slang
+("klick"                   "click")
+
 // Avoirdupois weight
 
 ("pound"/"pounds"          "0.45359237 kg")   // The one normally used
@@ -3844,263 +3841,263 @@ wood_mod_rosewood_indian    1.668e6 lbf/in^2
 wood_mod_snakewood          3.364e6 lbf/in^2
 wood_mod_teak               1.781e6 lbf/in^2
 wood_mod_zebrawood          2.374e6 lbf/in^2
+*/
+//
+// Area of countries and other regions.  This is the "total area" which
+// includes land and water areas within international boundaries and
+// coastlines.  Data from January, 2019.
+//
+// https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_area
+// https://www.cia.gov/library/publications/the-world-factbook)
 
-#
-# Area of countries and other regions.  This is the "total area" which
-# includes land and water areas within international boundaries and
-# coastlines.  Data from January, 2019.
-#
-# https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_area
-# https://www.cia.gov/library/publications/the-world-factbook)
+("area_russia"              "=17098246 km^2")
+("area_antarctica"          "=14000000 km^2")
+("area_canada"               "=9984670 km^2")
+("area_china"                "=9596961 km^2")
+("area_unitedstates"         "=9525067 km^2")       // includes only the 50 states
+("area_us"                   "=area_unitedstates")  // and District of Columbia
+("area_brazil"               "=8515767 km^2")
+("area_australia"            "=7692024 km^2")
+("area_europeanunion"        "=4475757 km^2")
+("area_eu"                   "=area_europeanunion")
+("area_india"                "=3287263 km^2")
+("area_argentina"            "=2780400 km^2")
+("area_kazakhstan"           "=2724900 km^2")
+("area_algeria"              "=2381741 km^2")
+("area_drcongo"              "=2344858 km^2")
+("area_greenland"            "=2166086 km^2")
+("area_saudiarabia"          "=2149690 km^2")
+("area_mexico"               "=1964375 km^2")
+("area_indonesia"            "=1910931 km^2")
+("area_sudan"                "=1861484 km^2")
+("area_libya"                "=1759540 km^2")
+("area_iran"                 "=1648195 km^2")
+("area_mongolia"             "=1564110 km^2")
+("area_peru"                 "=1285216 km^2")
+("area_chad"                 "=1284000 km^2")
+("area_niger"                "=1267000 km^2")
+("area_angola"               "=1246700 km^2")
+("area_mali"                 "=1240192 km^2")
+("area_southafrica"          "=1221037 km^2")
+("area_colombia"             "=1141748 km^2")
+("area_ethiopia"             "=1104300 km^2")
+("area_bolivia"              "=1098581 km^2")
+("area_mauritania"           "=1030700 km^2")
+("area_egypt"                "=1002450 km^2")
+("area_tanzania"              "=945087 km^2")
+("area_nigeria"               "=923768 km^2")
+("area_venezuela"             "=916445 km^2")
+("area_pakistan"              "=881912 km^2")
+("area_namibia"               "=825615 km^2")
+("area_mozambique"            "=801590 km^2")
+("area_turkey"                "=783562 km^2")
+("area_chile"                 "=756102 km^2")
+("area_zambia"                "=752612 km^2")
+("area_myanmar"               "=676578 km^2")
+("area_afghanistan"           "=652230 km^2")
+("area_southsudan"            "=644329 km^2")
+("area_france"                "=640679 km^2")
+("area_somalia"               "=637657 km^2")
+("area_centralafrica"         "=622984 km^2")
+("area_ukraine"               "=603500 km^2")
+("area_crimea"         "=27000 km^2")   // occupied by Russia; included in
+                                        // (Encyclopedia Britannica)
+("area_madagascar"            "=587041 km^2")
+("area_botswana"              "=581730 km^2")
+("area_kenya"                 "=580367 km^2")
+("area_yemen"                 "=527968 km^2")
+("area_thailand"              "=513120 km^2")
+("area_spain"                 "=505992 km^2")
+("area_turkmenistan"          "=488100 km^2")
+("area_cameroon"              "=475422 km^2")
+("area_papuanewguinea"        "=462840 km^2")
+("area_sweden"                "=450295 km^2")
+("area_uzbekistan"            "=447400 km^2")
+("area_morocco"               "=446550 km^2")
+("area_iraq"                  "=438317 km^2")
+("area_paraguay"              "=406752 km^2")
+("area_zimbabwe"              "=390757 km^2")
+("area_japan"                 "=377973 km^2")
+("area_germany"               "=357114 km^2")
+("area_congorepublic"         "=342000 km^2")
+("area_finland"               "=338424 km^2")
+("area_vietnam"               "=331212 km^2")
+("area_malaysia"              "=330803 km^2")
+("area_norway"                "=323802 km^2")
+("area_ivorycoast"            "=322463 km^2")
+("area_poland"                "=312696 km^2")
+("area_oman"                  "=309500 km^2")
+("area_italy"                 "=301339 km^2")
+("area_philippines"           "=300000 km^2")
+("area_ecuador"               "=276841 km^2")
+("area_burkinafaso"           "=274222 km^2")
+("area_newzealand"            "=270467 km^2")
+("area_gabon"                 "=267668 km^2")
+("area_westernsahara"         "=266000 km^2")
+("area_guinea"                "=245857 km^2")
+("area_uk"                    "=242495 km^2")
+("area_uganda"                "=241550 km^2")
+("area_ghana"                 "=238533 km^2")
+("area_romania"               "=238397 km^2")
+("area_laos"                  "=236800 km^2")
+("area_guyana"                "=214969 km^2")
+("area_belarus"               "=207600 km^2")
+("area_kyrgyzstan"            "=199951 km^2")
+("area_senegal"               "=196722 km^2")
+("area_syria"                 "=185180 km^2")
+("area_golanheights"        "=1150 km^2")  // occupied by Israel; included in
+                                          // Syria (Encyclopedia Britannica)
+("area_cambodia"              "=181035 km^2")
+("area_uruguay"               "=176215 km^2")
+("area_somaliland"            "=176120 km^2")
+("area_suriname"              "=163820 km^2")
+("area_tunisia"               "=163610 km^2")
+("area_bangladesh"            "=147570 km^2")
+("area_nepal"                 "=147181 km^2")
+("area_tajikistan"            "=143100 km^2")
+("area_greece"                "=131990 km^2")
+("area_nicaragua"             "=130373 km^2")
+("area_northkorea"            "=120540 km^2")
+("area_malawi"                "=118484 km^2")
+("area_eritrea"               "=117600 km^2")
+("area_benin"                 "=114763 km^2")
+("area_honduras"              "=112492 km^2")
+("area_liberia"               "=111369 km^2")
+("area_bulgaria"              "=110879 km^2")
+("area_cuba"                  "=109884 km^2")
+("area_guatemala"             "=108889 km^2")
+("area_iceland"               "=103000 km^2")
+("area_southkorea"            "=100210 km^2")
+("area_hungary"                "=93028 km^2")
+("area_portugal"               "=92090 km^2")
+("area_jordan"                 "=89342 km^2")
+("area_serbia"                 "=88361 km^2")
+("area_azerbaijan"             "=86600 km^2")
+("area_austria"                "=83871 km^2")
+("area_uae"                    "=83600 km^2")
+("area_czechrepublic"          "=78865 km^2")
+("area_panama"                 "=75417 km^2")
+("area_sierraleone"            "=71740 km^2")
+("area_ireland"                "=70273 km^2")
+("area_georgia"                "=69700 km^2")
+("area_srilanka"               "=65610 km^2")
+("area_lithuania"              "=65300 km^2")
+("area_latvia"                 "=64559 km^2")
+("area_togo"                   "=56785 km^2")
+("area_croatia"                "=56594 km^2")
+("area_bosnia"                 "=51209 km^2")
+("area_costarica"              "=51100 km^2")
+("area_slovakia"               "=49037 km^2")
+("area_dominicanrepublic"      "=48671 km^2")
+("area_estonia"                "=45227 km^2")
+("area_denmark"                "=43094 km^2")
+("area_netherlands"            "=41850 km^2")
+("area_switzerland"            "=41284 km^2")
+("area_bhutan"                 "=38394 km^2")
+("area_taiwan"                 "=36193 km^2")
+("area_guineabissau"           "=36125 km^2")
+("area_moldova"                "=33846 km^2")
+("area_gelgium"                "=30528 km^2")
+("area_lesotho"                "=30355 km^2")
+("area_armenia"                "=29743 km^2")
+("area_solomonislands"         "=28896 km^2")
+("area_albania"                "=28748 km^2")
+("area_equitorialguinea"       "=28051 km^2")
+("area_burundi"                "=27834 km^2")
+("area_haiti"                  "=27750 km^2")
+("area_rwanda"                 "=26338 km^2")
+("area_northmacedonia"         "=25713 km^2")
+("area_djibouti"               "=23200 km^2")
+("area_belize"                 "=22966 km^2")
+("area_elsalvador"             "=21041 km^2")
+("area_israel"                 "=20770 km^2")
+("area_slovenia"               "=20273 km^2")
+("area_fiji"                   "=18272 km^2")
+("area_kuwait"                 "=17818 km^2")
+("area_eswatini"               "=17364 km^2")
+("area_easttimor"              "=14919 km^2")
+("area_bahamas"                "=13943 km^2")
+("area_montenegro"             "=13812 km^2")
+("area_vanatu"                 "=12189 km^2")
+("area_qatar"                  "=11586 km^2")
+("area_gambia"                 "=11295 km^2")
+("area_jamaica"                "=10991 km^2")
+("area_kosovo"                 "=10887 km^2")
+("area_lebanon"                "=10452 km^2")
+("area_cyprus"                  "=9251 km^2")
+("area_puertorico"              "=9104 km^2")  // United States territory; not included
+                                              //   in United States area
+("area_westbank"                "=5860 km^2")  // (CIA World Factbook)
+("area_hongkong"                "=2755 km^2")
+("area_luxembourg"              "=2586 km^2")
+("area_singapore"                "=716 km^2")
+("area_gazastrip"                "=360 km^2")  // (CIA World Factbook)
+("area_liechtenstein"            "=160 km^2")
+("area_monaco"                     "=2.02 km^2")
+("area_vaticancity"                "=0.44 km^2")
 
-area_russia              17098246 km^2
-area_antarctica          14000000 km^2
-area_canada               9984670 km^2
-area_china                9596961 km^2
-area_unitedstates         9525067 km^2       # includes only the 50 states
-area_us                   area_unitedstates  # and District of Columbia
-area_brazil               8515767 km^2
-area_australia            7692024 km^2
-area_europeanunion        4475757 km^2
-area_eu                   area_europeanunion
-area_india                3287263 km^2
-area_argentina            2780400 km^2
-area_kazakhstan           2724900 km^2
-area_algeria              2381741 km^2
-area_drcongo              2344858 km^2
-area_greenland            2166086 km^2
-area_saudiarabia          2149690 km^2
-area_mexico               1964375 km^2
-area_indonesia            1910931 km^2
-area_sudan                1861484 km^2
-area_libya                1759540 km^2
-area_iran                 1648195 km^2
-area_mongolia             1564110 km^2
-area_peru                 1285216 km^2
-area_chad                 1284000 km^2
-area_niger                1267000 km^2
-area_angola               1246700 km^2
-area_mali                 1240192 km^2
-area_southafrica          1221037 km^2
-area_colombia             1141748 km^2
-area_ethiopia             1104300 km^2
-area_bolivia              1098581 km^2
-area_mauritania           1030700 km^2
-area_egypt                1002450 km^2
-area_tanzania              945087 km^2
-area_nigeria               923768 km^2
-area_venezuela             916445 km^2
-area_pakistan              881912 km^2
-area_namibia               825615 km^2
-area_mozambique            801590 km^2
-area_turkey                783562 km^2
-area_chile                 756102 km^2
-area_zambia                752612 km^2
-area_myanmar               676578 km^2
-area_afghanistan           652230 km^2
-area_southsudan            644329 km^2
-area_france                640679 km^2
-area_somalia               637657 km^2
-area_centralafrica         622984 km^2
-area_ukraine               603500 km^2
-area_crimea         27000 km^2  # occupied by Russia; included in
-                                        # (Encyclopedia Britannica)
-area_madagascar            587041 km^2
-area_botswana              581730 km^2
-area_kenya                 580367 km^2
-area_yemen                 527968 km^2
-area_thailand              513120 km^2
-area_spain                 505992 km^2
-area_turkmenistan          488100 km^2
-area_cameroon              475422 km^2
-area_papuanewguinea        462840 km^2
-area_sweden                450295 km^2
-area_uzbekistan            447400 km^2
-area_morocco               446550 km^2
-area_iraq                  438317 km^2
-area_paraguay              406752 km^2
-area_zimbabwe              390757 km^2
-area_japan                 377973 km^2
-area_germany               357114 km^2
-area_congorepublic         342000 km^2
-area_finland               338424 km^2
-area_vietnam               331212 km^2
-area_malaysia              330803 km^2
-area_norway                323802 km^2
-area_ivorycoast            322463 km^2
-area_poland                312696 km^2
-area_oman                  309500 km^2
-area_italy                 301339 km^2
-area_philippines           300000 km^2
-area_ecuador               276841 km^2
-area_burkinafaso           274222 km^2
-area_newzealand            270467 km^2
-area_gabon                 267668 km^2
-area_westernsahara         266000 km^2
-area_guinea                245857 km^2
-area_uk                    242495 km^2
-area_uganda                241550 km^2
-area_ghana                 238533 km^2
-area_romania               238397 km^2
-area_laos                  236800 km^2
-area_guyana                214969 km^2
-area_belarus               207600 km^2
-area_kyrgyzstan            199951 km^2
-area_senegal               196722 km^2
-area_syria                 185180 km^2
-area_golanheights        1150 km^2  # occupied by Israel; included in
-                                        # Syria (Encyclopedia Britannica)
-area_cambodia              181035 km^2
-area_uruguay               176215 km^2
-area_somaliland            176120 km^2
-area_suriname              163820 km^2
-area_tunisia               163610 km^2
-area_bangladesh            147570 km^2
-area_nepal                 147181 km^2
-area_tajikistan            143100 km^2
-area_greece                131990 km^2
-area_nicaragua             130373 km^2
-area_northkorea            120540 km^2
-area_malawi                118484 km^2
-area_eritrea               117600 km^2
-area_benin                 114763 km^2
-area_honduras              112492 km^2
-area_liberia               111369 km^2
-area_bulgaria              110879 km^2
-area_cuba                  109884 km^2
-area_guatemala             108889 km^2
-area_iceland               103000 km^2
-area_southkorea            100210 km^2
-area_hungary                93028 km^2
-area_portugal               92090 km^2
-area_jordan                 89342 km^2
-area_serbia                 88361 km^2
-area_azerbaijan             86600 km^2
-area_austria                83871 km^2
-area_uae                    83600 km^2
-area_czechrepublic          78865 km^2
-area_panama                 75417 km^2
-area_sierraleone            71740 km^2
-area_ireland                70273 km^2
-area_georgia                69700 km^2
-area_srilanka               65610 km^2
-area_lithuania              65300 km^2
-area_latvia                 64559 km^2
-area_togo                   56785 km^2
-area_croatia                56594 km^2
-area_bosnia                 51209 km^2
-area_costarica              51100 km^2
-area_slovakia               49037 km^2
-area_dominicanrepublic      48671 km^2
-area_estonia                45227 km^2
-area_denmark                43094 km^2
-area_netherlands            41850 km^2
-area_switzerland            41284 km^2
-area_bhutan                 38394 km^2
-area_taiwan                 36193 km^2
-area_guineabissau           36125 km^2
-area_moldova                33846 km^2
-area_gelgium                30528 km^2
-area_lesotho                30355 km^2
-area_armenia                29743 km^2
-area_solomonislands         28896 km^2
-area_albania                28748 km^2
-area_equitorialguinea       28051 km^2
-area_burundi                27834 km^2
-area_haiti                  27750 km^2
-area_rwanda                 26338 km^2
-area_northmacedonia         25713 km^2
-area_djibouti               23200 km^2
-area_belize                 22966 km^2
-area_elsalvador             21041 km^2
-area_israel                 20770 km^2
-area_slovenia               20273 km^2
-area_fiji                   18272 km^2
-area_kuwait                 17818 km^2
-area_eswatini               17364 km^2
-area_easttimor              14919 km^2
-area_bahamas                13943 km^2
-area_montenegro             13812 km^2
-area_vanatu                 12189 km^2
-area_qatar                  11586 km^2
-area_gambia                 11295 km^2
-area_jamaica                10991 km^2
-area_kosovo                 10887 km^2
-area_lebanon                10452 km^2
-area_cyprus                  9251 km^2
-area_puertorico              9104 km^2  # United States territory; not included
-                                        #   in United States area
-area_westbank                5860 km^2  # (CIA World Factbook)
-area_hongkong                2755 km^2
-area_luxembourg              2586 km^2
-area_singapore                716 km^2
-area_gazastrip                360 km^2  # (CIA World Factbook)
-area_liechtenstein            160 km^2
-area_monaco                     2.02 km^2
-area_vaticancity                0.44 km^2
+//
+// Area of the individual United States
+//
+// https://en.wikipedia.org/wiki/List_of_U.S._states_and_territories_by_area
+//
 
-#
-# Area of the individual United States
-#
-# https://en.wikipedia.org/wiki/List_of_U.S._states_and_territories_by_area
-#
+("area_alaska"               "=1723337 km^2")
+("area_texas"                 "=695662 km^2")
+("area_california"            "=423972 km^2")
+("area_montana"               "=380831 km^2")
+("area_newmexico"             "=314917 km^2")
+("area_arizona"               "=295234 km^2")
+("area_nevada"                "=286380 km^2")
+("area_colorado"              "=269601 km^2")
+("area_oregon"                "=254799 km^2")
+("area_wyoming"               "=253335 km^2")
+("area_michigan"              "=250487 km^2")
+("area_minnesota"             "=225163 km^2")
+("area_utah"                  "=219882 km^2")
+("area_idaho"                 "=216443 km^2")
+("area_kansas"                "=213100 km^2")
+("area_nebraska"              "=200330 km^2")
+("area_southdakota"           "=199729 km^2")
+("area_washington"            "=184661 km^2")
+("area_northdakota"           "=183108 km^2")
+("area_oklahoma"              "=181037 km^2")
+("area_missouri"              "=180540 km^2")
+("area_florida"               "=170312 km^2")
+("area_wisconsin"             "=169635 km^2")
+("area_georgia_us"            "=153910 km^2")
+("area_illinois"              "=149995 km^2")
+("area_iowa"                  "=145746 km^2")
+("area_newyork"               "=141297 km^2")
+("area_northcarolina"         "=139391 km^2")
+("area_arkansas"              "=137732 km^2")
+("area_alabama"               "=135767 km^2")
+("area_louisiana"             "=135659 km^2")
+("area_mississippi"           "=125438 km^2")
+("area_pennsylvania"          "=119280 km^2")
+("area_ohio"                  "=116098 km^2")
+("area_virginia"              "=110787 km^2")
+("area_tennessee"             "=109153 km^2")
+("area_kentucky"              "=104656 km^2")
+("area_indiana"                "=94326 km^2")
+("area_maine"                  "=91633 km^2")
+("area_southcarolina"          "=82933 km^2")
+("area_westvirginia"           "=62756 km^2")
+("area_maryland"               "=32131 km^2")
+("area_hawaii"                 "=28313 km^2")
+("area_massachusetts"          "=27336 km^2")
+("area_vermont"                "=24906 km^2")
+("area_newhampshire"           "=24214 km^2")
+("area_newjersey"              "=22591 km^2")
+("area_connecticut"            "=14357 km^2")
+("area_delaware"                "=6446 km^2")
+("area_rhodeisland"             "=4001 km^2")
+("area_districtofcolumbia"       "=177 km^2")
 
-area_alaska               1723337 km^2
-area_texas                 695662 km^2
-area_california            423972 km^2
-area_montana               380831 km^2
-area_newmexico             314917 km^2
-area_arizona               295234 km^2
-area_nevada                286380 km^2
-area_colorado              269601 km^2
-area_oregon                254799 km^2
-area_wyoming               253335 km^2
-area_michigan              250487 km^2
-area_minnesota             225163 km^2
-area_utah                  219882 km^2
-area_idaho                 216443 km^2
-area_kansas                213100 km^2
-area_nebraska              200330 km^2
-area_southdakota           199729 km^2
-area_washington            184661 km^2
-area_northdakota           183108 km^2
-area_oklahoma              181037 km^2
-area_missouri              180540 km^2
-area_florida               170312 km^2
-area_wisconsin             169635 km^2
-area_georgia_us            153910 km^2
-area_illinois              149995 km^2
-area_iowa                  145746 km^2
-area_newyork               141297 km^2
-area_northcarolina         139391 km^2
-area_arkansas              137732 km^2
-area_alabama               135767 km^2
-area_louisiana             135659 km^2
-area_mississippi           125438 km^2
-area_pennsylvania          119280 km^2
-area_ohio                  116098 km^2
-area_virginia              110787 km^2
-area_tennessee             109153 km^2
-area_kentucky              104656 km^2
-area_indiana                94326 km^2
-area_maine                  91633 km^2
-area_southcarolina          82933 km^2
-area_westvirginia           62756 km^2
-area_maryland               32131 km^2
-area_hawaii                 28313 km^2
-area_massachusetts          27336 km^2
-area_vermont                24906 km^2
-area_newhampshire           24214 km^2
-area_newjersey              22591 km^2
-area_connecticut            14357 km^2
-area_delaware                6446 km^2
-area_rhodeisland             4001 km^2
-area_districtofcolumbia       177 km^2
-
-#
-# Units derived from imperial system
-#
-
+//
+// Units derived from imperial system
+//
+/*
 ouncedal                oz ft / s^2     # force which accelerates an ounce
                                         #    at 1 ft/s^2
 poundal                 lb ft / s^2     # same thing for a pound
