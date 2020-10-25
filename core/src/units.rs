@@ -137,7 +137,11 @@ fn query_unit_internal<'a, I: Interrupt>(
     short_prefixes: bool,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    builtin_gnu::query_unit(ident, short_prefixes, int)
+    if let Some((s, p, expr)) = builtin_gnu::query_unit(ident, short_prefixes) {
+        expr_unit(s, p, expr, int)
+    } else {
+        Err(GetIdentError::IdentifierNotFound(ident))?
+    }
 }
 
 #[cfg(not(feature = "gpl"))]

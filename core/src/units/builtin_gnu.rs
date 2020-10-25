@@ -1,34 +1,27 @@
-use super::{expr_unit, UnitDef};
-use crate::err::{IntErr, Interrupt};
-use crate::scope::GetIdentError;
-
 #[allow(clippy::too_many_lines)]
 #[rustfmt::skip::macros(define_units)]
-pub fn query_unit<'a, I: Interrupt>(
+pub fn query_unit<'a>(
     ident: &'a str,
     short_prefixes: bool,
-    int: &I,
-) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
+) -> Option<(&'static str, &'static str, &'static str)> {
     macro_rules! define_units {
         (expr $name:literal $expr:literal) => {
-            expr_unit($name, $name, $expr, int)
+            Some(($name, $name, $expr))
         };
         (expr $s:literal $p:literal $expr:literal) => {
-            expr_unit($s, $p, $expr, int)
+            Some(($s, $p, $expr))
         };
         (
             $(($expr_name_s:literal $(/ $expr_name_p:literal)? $expr_def:literal))+
-            ;
-            $end:expr
         ) => {
             match ident {
-                $($expr_name_s $(| $expr_name_p)? => define_units!(expr $expr_name_s $($expr_name_p)? $expr_def)?,)+
-                _ => $end
+                $($expr_name_s $(| $expr_name_p)? => define_units!(expr $expr_name_s $($expr_name_p)? $expr_def),)+
+                _ => None
             }
         };
     }
     if short_prefixes {
-        let res: UnitDef = define_units!(
+        let res = define_units!(
             ("Ki" "sp@kibi")
             ("Mi" "sp@mebi")
             ("Gi" "sp@gibi")
@@ -57,19 +50,13 @@ pub fn query_unit<'a, I: Interrupt>(
             ("f"  "sp@femto")
             ("a"  "sp@atto")
             ("z"  "sp@zepto")
-            ("y"  "sp@yocto");
-            UnitDef {
-                singular: "",
-                plural: "",
-                value: crate::value::Value::Version,
-                prefix_rule: super::PrefixRule::LongPrefix
-            }
+            ("y"  "sp@yocto")
         );
-        if !res.singular.is_empty() {
-            return Ok(res);
+        if res.is_some() {
+            return res;
         }
     }
-    Ok(define_units!(
+    define_units!(
 /*
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
@@ -8044,7 +8031,5 @@ röntgen                 roentgen
 ("silverprice"        "14.52 US$/troyounce")
 ("goldprice"          "1288.30 US$/troyounce")
 ("platinumprice"      "797.00 US$/troyounce")
-;
-return Err(GetIdentError::IdentifierNotFound(ident))?
-    ))
+    )
 }
