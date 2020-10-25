@@ -45,6 +45,8 @@ pub fn query_unit<'a>(
             ("c"  "sp@centi")
             ("m"  "sp@milli")
             ("u"  "sp@micro")   // it should be a mu but u is easy to type
+            ("\u{b5}"   "sp@micro")   // micro sign U+00B5
+            ("\u{3bc}"  "sp@micro")   // small mu U+03BC
             ("n"  "sp@nano")
             ("p"  "sp@pico")
             ("f"  "sp@femto")
@@ -6343,28 +6345,28 @@ euringsize(n)  units=[1;mm] (n+40) mm ; euringsize/mm + (-40)
 ("Wh"                      "W hour")
 ("hph"                     "hp hour")
 ("plf"                     "lb / foot")    // pounds per linear foot
+
+//
+// Compatibility units with Unix version
+//
+
+("pa"                      "Pa")
+("ev"                      "eV")
+("hg"                      "Hg")
+("oe"                      "Oe")
+("mh"                      "mH")
+("rd"                      "rod")
+("pf"                      "pF")
+("gr"                      "grain")
+("nt"                      "N")
+("hz"                      "Hz")
+("hd"                      "hogshead")
+("dry"                     "drygallon/gallon")
+("nmile"                   "nauticalmile")
+("beV"                     "GeV")
+("bev"                     "beV")
+("coul"                    "C")
 /*
-#
-# Compatibility units with Unix version
-#
-
-pa                      Pa
-ev                      eV
-hg                      Hg
-oe                      Oe
-mh                      mH
-rd                      rod
-pf                      pF
-gr                      grain
-nt                      N
-hz                      Hz
-hd                      hogshead
-dry                     drygallon/gallon
-nmile                   nauticalmile
-beV                     GeV
-bev                     beV
-coul                    C
-
 #
 # Radioactivity units
 #
@@ -6425,142 +6427,143 @@ sievertunit             8.38 rontgen # Unit of gamma ray dose delivered in one
 
 eman                    1e-7 Ci/m^3  # radioactive concentration
 mache                   3.7e-7 Ci/m^3
-
-#
-# Atomic weights.  The atomic weight of an element is the ratio of the mass of
-# a mole of the element to 1|12 of a mole of Carbon 12.  The Standard Atomic
-# Weights apply to the elements as they occur naturally on earth.  Elements
-# which do not occur naturally or which occur with wide isotopic variability do
-# not have Standard Atomic Weights.  For these elements, the atomic weight is
-# based on the longest lived isotope, as marked in the comments.  In some
-# cases, the comment for these entries also gives a number which is an atomic
-# weight for a different isotope that may be of more interest than the longest
-# lived isotope.
-#
-
-actinium                227.0278
-aluminum                26.981539
-americium               243.0614     # Longest lived. 241.06
-antimony                121.760
-argon                   39.948
-arsenic                 74.92159
-astatine                209.9871     # Longest lived
-barium                  137.327
-berkelium               247.0703     # Longest lived. 249.08
-beryllium               9.012182
-bismuth                 208.98037
-boron                   10.811
-bromine                 79.904
-cadmium                 112.411
-calcium                 40.078
-californium             251.0796     # Longest lived.  252.08
-carbon                  12.011
-cerium                  140.115
-cesium                  132.90543
-chlorine                35.4527
-chromium                51.9961
-cobalt                  58.93320
-copper                  63.546
-curium                  247.0703
-deuterium               2.0141017778
-dysprosium              162.50
-einsteinium             252.083      # Longest lived
-erbium                  167.26
-europium                151.965
-fermium                 257.0951     # Longest lived
-fluorine                18.9984032
-francium                223.0197     # Longest lived
-gadolinium              157.25
-gallium                 69.723
-germanium               72.61
-gold                    196.96654
-hafnium                 178.49
-helium                  4.002602
-holmium                 164.93032
-hydrogen                1.00794
-indium                  114.818
-iodine                  126.90447
-iridium                 192.217
-iron                    55.845
-krypton                 83.80
-lanthanum               138.9055
-lawrencium              262.11       # Longest lived
-lead                    207.2
-lithium                 6.941
-lutetium                174.967
-magnesium               24.3050
-manganese               54.93805
-mendelevium             258.10       # Longest lived
-mercury                 200.59
-molybdenum              95.94
-neodymium               144.24
-neon                    20.1797
-neptunium               237.0482
-nickel                  58.6934
-niobium                 92.90638
-nitrogen                14.00674
-nobelium                259.1009     # Longest lived
-osmium                  190.23
-oxygen                  15.9994
-palladium               106.42
-phosphorus              30.973762
-platinum                195.08
-plutonium               244.0642     # Longest lived.  239.05
-polonium                208.9824     # Longest lived.  209.98
-potassium               39.0983
-praseodymium            140.90765
-promethium              144.9127     # Longest lived.  146.92
-protactinium            231.03588
-radium                  226.0254
-radon                   222.0176     # Longest lived
-rhenium                 186.207
-rhodium                 102.90550
-rubidium                85.4678
-ruthenium               101.07
-samarium                150.36
-scandium                44.955910
-selenium                78.96
-silicon                 28.0855
-silver                  107.8682
-sodium                  22.989768
-strontium               87.62
-sulfur                  32.066
-tantalum                180.9479
-technetium              97.9072      # Longest lived.  98.906
-tellurium               127.60
-terbium                 158.92534
-thallium                204.3833
-thorium                 232.0381
-thullium                168.93421
-tin                     118.710
-titanium                47.867
-tungsten                183.84
-uranium                 238.0289
-vanadium                50.9415
-xenon                   131.29
-ytterbium               173.04
-yttrium                 88.90585
-zinc                    65.39
-zirconium               91.224
-
-# Average molecular weight of air
-#
-# The atmospheric composition listed is from NASA Earth Fact Sheet (accessed
-# 28 August 2015)
-# http://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
-# Numbers do not add up to exactly 100% due to roundoff and uncertainty Water
-# is highly variable, typically makes up about 1%
-
-air            78.08% nitrogen 2 \
-              + 20.95% oxygen 2 \
-              + 9340 ppm argon \
-              +  400 ppm (carbon + oxygen 2) \
-              +   18.18 ppm neon \
-              +    5.24 ppm helium \
-              +    1.7  ppm (carbon + 4 hydrogen) \
-              +    1.14 ppm krypton \
-              +    0.55 ppm hydrogen 2\
 */
+//
+// Atomic weights.  The atomic weight of an element is the ratio of the mass of
+// a mole of the element to 1|12 of a mole of Carbon 12.  The Standard Atomic
+// Weights apply to the elements as they occur naturally on earth.  Elements
+// which do not occur naturally or which occur with wide isotopic variability do
+// not have Standard Atomic Weights.  For these elements, the atomic weight is
+// based on the longest lived isotope, as marked in the comments.  In some
+// cases, the comment for these entries also gives a number which is an atomic
+// weight for a different isotope that may be of more interest than the longest
+// lived isotope.
+//
+
+("actinium"                "=227.0278")
+("aluminum"                "=26.981539")
+("americium"               "=243.0614")     // Longest lived. 241.06
+("antimony"                "=121.760")
+("argon"                   "=39.948")
+("arsenic"                 "=74.92159")
+("astatine"                "=209.9871")     // Longest lived
+("barium"                  "=137.327")
+("berkelium"               "=247.0703")     // Longest lived. 249.08
+("beryllium"               "=9.012182")
+("bismuth"                 "=208.98037")
+("boron"                   "=10.811")
+("bromine"                 "=79.904")
+("cadmium"                 "=112.411")
+("calcium"                 "=40.078")
+("californium"             "=251.0796")     // Longest lived.  252.08
+("carbon"                  "=12.011")
+("cerium"                  "=140.115")
+("cesium"                  "=132.90543")
+("chlorine"                "=35.4527")
+("chromium"                "=51.9961")
+("cobalt"                  "=58.93320")
+("copper"                  "=63.546")
+("curium"                  "=247.0703")
+("deuterium"               "=2.0141017778")
+("dysprosium"              "=162.50")
+("einsteinium"             "=252.083")      // Longest lived
+("erbium"                  "=167.26")
+("europium"                "=151.965")
+("fermium"                 "=257.0951")     // Longest lived
+("fluorine"                "=18.9984032")
+("francium"                "=223.0197")     // Longest lived
+("gadolinium"              "=157.25")
+("gallium"                 "=69.723")
+("germanium"               "=72.61")
+("gold"                    "=196.96654")
+("hafnium"                 "=178.49")
+("helium"                  "=4.002602")
+("holmium"                 "=164.93032")
+("hydrogen"                "=1.00794")
+("indium"                  "=114.818")
+("iodine"                  "=126.90447")
+("iridium"                 "=192.217")
+("iron"                    "=55.845")
+("krypton"                 "=83.80")
+("lanthanum"               "=138.9055")
+("lawrencium"              "=262.11")       // Longest lived
+("lead"                    "=207.2")
+("lithium"                 "=6.941")
+("lutetium"                "=174.967")
+("magnesium"               "=24.3050")
+("manganese"               "=54.93805")
+("mendelevium"             "=258.10")       // Longest lived
+("mercury"                 "=200.59")
+("molybdenum"              "=95.94")
+("neodymium"               "=144.24")
+("neon"                    "=20.1797")
+("neptunium"               "=237.0482")
+("nickel"                  "=58.6934")
+("niobium"                 "=92.90638")
+("nitrogen"                "=14.00674")
+("nobelium"                "=259.1009")     // Longest lived
+("osmium"                  "=190.23")
+("oxygen"                  "=15.9994")
+("palladium"               "=106.42")
+("phosphorus"              "=30.973762")
+("platinum"                "=195.08")
+("plutonium"               "=244.0642")     // Longest lived.  239.05
+("polonium"                "=208.9824")     // Longest lived.  209.98
+("potassium"               "=39.0983")
+("praseodymium"            "=140.90765")
+("promethium"              "=144.9127")     // Longest lived.  146.92
+("protactinium"            "=231.03588")
+("radium"                  "=226.0254")
+("radon"                   "=222.0176")     // Longest lived
+("rhenium"                 "=186.207")
+("rhodium"                 "=102.90550")
+("rubidium"                "=85.4678")
+("ruthenium"               "=101.07")
+("samarium"                "=150.36")
+("scandium"                "=44.955910")
+("selenium"                "=78.96")
+("silicon"                 "=28.0855")
+("silver"                  "=107.8682")
+("sodium"                  "=22.989768")
+("strontium"               "=87.62")
+("sulfur"                  "=32.066")
+("tantalum"                "=180.9479")
+("technetium"              "=97.9072")      // Longest lived.  98.906
+("tellurium"               "=127.60")
+("terbium"                 "=158.92534")
+("thallium"                "=204.3833")
+("thorium"                 "=232.0381")
+("thullium"                "=168.93421")
+("tin"                     "=118.710")
+("titanium"                "=47.867")
+("tungsten"                "=183.84")
+("uranium"                 "=238.0289")
+("vanadium"                "=50.9415")
+("xenon"                   "=131.29")
+("ytterbium"               "=173.04")
+("yttrium"                 "=88.90585")
+("zinc"                    "=65.39")
+("zirconium"               "=91.224")
+
+// Average molecular weight of air
+//
+// The atmospheric composition listed is from NASA Earth Fact Sheet (accessed
+// 28 August 2015)
+// http://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
+// Numbers do not add up to exactly 100% due to roundoff and uncertainty Water
+// is highly variable, typically makes up about 1%
+
+("air"           "=0
+                 + 78.08% nitrogen * 2
+                 + 20.95% oxygen * 2
+                 + 9340 ppm argon
+                 +  400 ppm (carbon + oxygen * 2)
+                 +   18.18 ppm neon
+                 +    5.24 ppm helium
+                 +    1.7  ppm (carbon + 4 hydrogen)
+                 +    1.14 ppm krypton
+                 +    0.55 ppm hydrogen * 2")
+
 //
 // population units
 //
@@ -6569,56 +6572,56 @@ air            78.08% nitrogen 2 \
 ("death"/"deaths"          "people")
 ("capita"                  "people")
 ("percapita"               "per capita")
+
+// TGM dozen based unit system listed on the "dozenal" forum
+// http://www.dozenalsociety.org.uk/apps/tgm.htm.  These units are
+// proposed as an allegedly more rational alternative to the SI system.
+
+("Tim"                     "l@12^-4 hour")         // Time
+("Grafut"                  "l@gravity Tim^2")      // Length based on gravity
+("Surf"                    "l@Grafut^2")           // area
+("Volm"                    "l@Grafut^3")           // volume
+("Vlos"                    "l@Grafut/Tim")         // speed
+("Denz"                    "l@Maz/Volm")           // density
+("Mag"                     "l@Maz gravity")        // force
+("Maz"                     "l@Volm kg / oldliter") // mass based on water
+
+("Tm"                      "s@Tim")                // Abbreviations
+("Gf"                      "s@Grafut")
+("Sf"                      "s@Surf")
+("Vm"                      "s@Volm")
+("Vl"                      "s@Vlos")
+("Mz"                      "s@Maz")
+("Dz"                      "s@Denz")
+
+// Dozen based unit prefixes
+
+("Zena"                   "lp@12")
+("Duna"                   "lp@12^2")
+("Trina"                  "lp@12^3")
+("Quedra"                 "lp@12^4")
+("Quena"                  "lp@12^5")
+("Hesa"                   "lp@12^6")
+("Seva"                   "lp@12^7")
+("Aka"                    "lp@12^8")
+("Neena"                  "lp@12^9")
+("Dexa"                   "lp@12^10")
+("Lefa"                   "lp@12^11")
+("Zennila"                "lp@12^12")
+
+("Zeni"                   "lp@12^-1")
+("Duni"                   "lp@12^-2")
+("Trini"                  "lp@12^-3")
+("Quedri"                 "lp@12^-4")
+("Queni"                  "lp@12^-5")
+("Hesi"                   "lp@12^-6")
+("Sevi"                   "lp@12^-7")
+("Aki"                    "lp@12^-8")
+("Neeni"                  "lp@12^-9")
+("Dexi"                   "lp@12^-10")
+("Lefi"                   "lp@12^-11")
+("Zennili"                "lp@12^-12")
 /*
-# TGM dozen based unit system listed on the "dozenal" forum
-# http://www.dozenalsociety.org.uk/apps/tgm.htm.  These units are
-# proposed as an allegedly more rational alternative to the SI system.
-
-Tim                     12^-4 hour         # Time
-Grafut                  gravity Tim^2      # Length based on gravity
-Surf                    Grafut^2           # area
-Volm                    Grafut^3           # volume
-Vlos                    Grafut/Tim         # speed
-Denz                    Maz/Volm           # density
-Mag                     Maz gravity        # force
-Maz                     Volm kg / oldliter # mass based on water
-
-Tm                      Tim                # Abbreviations
-Gf                      Grafut
-Sf                      Surf
-Vm                      Volm
-Vl                      Vlos
-Mz                      Maz
-Dz                      Denz
-
-# Dozen based unit prefixes
-
-Zena-                   12
-Duna-                   12^2
-Trina-                  12^3
-Quedra-                 12^4
-Quena-                  12^5
-Hesa-                   12^6
-Seva-                   12^7
-Aka-                    12^8
-Neena-                  12^9
-Dexa-                   12^10
-Lefa-                   12^11
-Zennila-                12^12
-
-Zeni-                   12^-1
-Duni-                   12^-2
-Trini-                  12^-3
-Quedri-                 12^-4
-Queni-                  12^-5
-Hesi-                   12^-6
-Sevi-                   12^-7
-Aki-                    12^-8
-Neeni-                  12^-9
-Dexi-                   12^-10
-Lefi-                   12^-11
-Zennili-                12^-12
-
 #
 # Traditional Japanese units (shakkanhou)
 #
@@ -7443,8 +7446,6 @@ blanc                   1|24 periot
 */
 ("ℯ"                       "exp(1)") // U+212F, base of natural log
 /*
-µ-                      micro       # micro sign U+00B5
-μ-                      micro       # small mu U+03BC
 ångström                angstrom
 Å                       angstrom    # angstrom symbol U+212B
 Å                       angstrom    # A with ring U+00C5
