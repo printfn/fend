@@ -105,23 +105,11 @@ pub fn query_unit<'a>(
 !plural meg megs
 !plural gig gigs
 
-!plural person people
-
 !plural romanpace romanpaces
 
 !plural greekfinger greekfingers
 !plural aeginastater aeginastaters
 !plural atticstater atticstaters
-
-!plural hundredweight hundredweights
-!plural ton tons
-!plural quarter quarters
-!plural cup cups
-!plural tablespoon tablespoons
-!plural teaspoon teaspoons
-!plural dollar dollars
-!plural cent cents
-!plural penny pennies
 */
 ("NM"      "nauticalmile")
 ("AU"      "au")
@@ -5154,33 +5142,33 @@ megalerg                megaerg    # 'L' added to make it pronounceable [18].
 # Note that US$ is the primitive unit so other currencies are
 # generally given in US$.
 #
-
-unitedstatesdollar      US$
-usdollar                US$
-$                       dollar
-mark                    germanymark
-#bolivar                 venezuelabolivar       # Not all databases are
-#venezuelabolivarfuerte  1e-5 bolivar           #    supplying these
-#bolivarfuerte           1e-5 bolivar           # The currency was revalued
-#oldbolivar              1|1000 bolivarfuerte   # twice
-peseta                  spainpeseta
-rand                    southafricarand
-escudo                  portugalescudo
-guilder                 netherlandsguilder
-hollandguilder          netherlandsguilder
-peso                    mexicopeso
-yen                     japanyen
-lira                    italylira
-rupee                   indiarupee
-drachma                 greecedrachma
-franc                   francefranc
-markka                  finlandmarkka
-britainpound            unitedkingdompound
-greatbritainpound       unitedkingdompound
-unitedkingdompound      ukpound
-poundsterling           britainpound
-yuan                    chinayuan
-
+*/
+("unitedstatesdollar"      "US$")
+("usdollar"                "US$")
+("$"                       "dollar")
+("mark"                    "germanymark")
+//bolivar                 venezuelabolivar       # Not all databases are
+//venezuelabolivarfuerte  1e-5 bolivar           #    supplying these
+//bolivarfuerte           1e-5 bolivar           # The currency was revalued
+//oldbolivar              1|1000 bolivarfuerte   # twice
+("peseta"                  "spainpeseta")
+("rand"                    "southafricarand")
+("escudo"                  "portugalescudo")
+("guilder"                 "netherlandsguilder")
+("hollandguilder"          "netherlandsguilder")
+("peso"                    "mexicopeso")
+("yen"                     "japanyen")
+("lira"                    "italylira")
+("rupee"                   "indiarupee")
+("drachma"                 "greecedrachma")
+("franc"                   "francefranc")
+("markka"                  "finlandmarkka")
+("britainpound"            "unitedkingdompound")
+("greatbritainpound"       "unitedkingdompound")
+("unitedkingdompound"      "ukpound")
+("poundsterling"           "britainpound")
+("yuan"                    "chinayuan")
+/*
 # Unicode Currency Names
 
 #!utf8
@@ -6574,16 +6562,17 @@ air            78.08% nitrogen 2 \
               +    5.24 ppm helium \
               +    1.7  ppm (carbon + 4 hydrogen) \
               +    1.14 ppm krypton \
-              +    0.55 ppm hydrogen 2
-#
-# population units
-#
+              +    0.55 ppm hydrogen 2\
+*/
+//
+// population units
+//
 
-person                  1
-death                   people
-capita                  people
-percapita               per capita
-
+("person"/"people"         "1")
+("death"/"deaths"          "people")
+("capita"                  "people")
+("percapita"               "per capita")
+/*
 # TGM dozen based unit system listed on the "dozenal" forum
 # http://www.dozenalsociety.org.uk/apps/tgm.htm.  These units are
 # proposed as an allegedly more rational alternative to the SI system.
@@ -7377,60 +7366,61 @@ mite                    1|20 grain
 droit                   1|24 mite
 periot                  1|20 droit
 blanc                   1|24 periot
+*/
+//
+// Localization
+//
 
-#
-# Localization
-#
+// !var UNITS_ENGLISH US
+("hundredweight"/"hundredweights" "ushundredweight")
+("ton"/"tons"                     "uston")
+("scruple"/"scruples"             "apscruple")
+("fluidounce"/"fluidounces"       "usfluidounce")
+("gallon"/"gallons"               "usgallon")
+("bushel"/"bushels"               "usbushel")
+// already defined as 1/4
+//("quarter"                 "quarterweight")
+("cup"/"cups"                     "uscup")
+("tablespoon"/"tablespoons"       "ustablespoon")
+("teaspoon"/"teaspoons"           "usteaspoon")
+("dollar"/"dollars"               "US$")
+("cent"/"cents"                   "0.01$")
+("penny"/"pennies"                "cent")
+("minim"                          "minimvolume")
+("pony"                           "ponyvolume")
+("grand"                          "usgrand")
+("firkin"                         "usfirkin")
+("hogshead"                       "ushogshead")
+// !endvar
 
-#!var UNITS_ENGLISH US
-hundredweight           ushundredweight
-ton                     uston
-scruple                 apscruple
-fluidounce              usfluidounce
-gallon                  usgallon
-bushel                  usbushel
-quarter                 quarterweight
-cup                     uscup
-tablespoon              ustablespoon
-teaspoon                usteaspoon
-dollar                  US$
-cent                    $ 0.01
-penny                   cent
-minim                   minimvolume
-pony                    ponyvolume
-grand                   usgrand
-firkin                  usfirkin
-hogshead                ushogshead
-#!endvar
+// !var UNITS_ENGLISH GB
+// hundredweight           brhundredweight
+// ton                     brton
+// scruple                 brscruple
+// fluidounce              brfluidounce
+// gallon                  brgallon
+// bushel                  brbushel
+// quarter                 brquarter
+// chaldron                brchaldron
+// cup                     brcup
+// teacup                  brteacup
+// tablespoon              brtablespoon
+// teaspoon                brteaspoon
+// dollar                  US$
+// cent                    $ 0.01
+// penny                   brpenny
+// minim                   minimnote
+// pony                    brpony
+// grand                   brgrand
+// firkin                  brfirkin
+// hogshead                brhogshead
+// !endvar
 
-#!var UNITS_ENGLISH GB
-#hundredweight           brhundredweight
-#ton                     brton
-#scruple                 brscruple
-#fluidounce              brfluidounce
-#gallon                  brgallon
-#bushel                  brbushel
-#quarter                 brquarter
-#chaldron                brchaldron
-#cup                     brcup
-#teacup                  brteacup
-#tablespoon              brtablespoon
-#teaspoon                brteaspoon
-#dollar                  US$
-#cent                    $ 0.01
-#penny                   brpenny
-#minim                   minimnote
-#pony                    brpony
-#grand                   brgrand
-#firkin                  brfirkin
-#hogshead                brhogshead
-#!endvar
+// !varnot UNITS_ENGLISH GB US
+// !message Unknown value for environment variable UNITS_ENGLISH.  Should be GB or US.
+// !endvar
 
-#!varnot UNITS_ENGLISH GB US
-#!message Unknown value for environment variable UNITS_ENGLISH.  Should be GB or US.
-#!endvar
-
-
+/*
 #!utf8
 ⅛-                      1|8
 ¼-                      1|4

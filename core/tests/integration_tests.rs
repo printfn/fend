@@ -1124,3 +1124,6 @@ test_eval!(
     "vigintillion",
     "1000000000000000000000000000000000000000000000000000000000000000"
 );
+
+test_eval!(one_cent, "cent", "1 cent");
+test_eval!(two_cent, "2 cent", "2 cents");
