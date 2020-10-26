@@ -98,7 +98,7 @@ version = "3.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b57a92e9749e10f25a171adcebfafe72991d45e7ec2dcb853e8f83d9dafaeb08"
 dependencies = [
- "nix",
+ "nix 0.18.0",
  "winapi",
 ]
 
@@ -228,6 +228,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85db2feff6bf70ebc3a4793191517d5f0331100a2f10f9bf93b5e5214f32b7b7"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if 0.1.10",
+ "libc",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -276,16 +288,17 @@ dependencies = [
 
 [[package]]
 name = "rustyline-with-hint-fix"
-version = "6.2.2"
+version = "6.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0043a8de879b613068ece35fa228ce1d41fbf92c22e92ff95f5de62c45480936"
+checksum = "e170bc01b6b1c02966bbafceb7b82f64573f8402826e02bd048a2d349a29bb78"
 dependencies = [
- "cfg-if 0.1.10",
+ "bitflags",
+ "cfg-if 1.0.0",
  "fs2",
  "libc",
  "log",
  "memchr",
- "nix",
+ "nix 0.19.0",
  "scopeguard",
  "unicode-segmentation",
  "unicode-width",
