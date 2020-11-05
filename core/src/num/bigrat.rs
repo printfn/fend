@@ -485,27 +485,34 @@ impl BigRat {
             )?);
         }
 
+        let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
+        let formatted_integer_part = integer_part.format(base, true, int)?;
+
         // not a fraction, will be printed as a decimal
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
             || (style == FormattingStyle::Auto && terminating()?)
             || style == FormattingStyle::Exact
         {
-            None
+            MaxDigitsToPrint::AllDigits
         } else if let FormattingStyle::DecimalPlaces(n) = style {
-            Some(n)
-        } else if let FormattingStyle::SignificantFigures(n) = style {
-            // TODO: this is wrong, we need to implement significant figures correctly
-            Some(n)
+            MaxDigitsToPrint::DecimalPlaces(n)
+        } else if let FormattingStyle::SignificantFigures(sf) = style {
+            let num_digits_of_int_part = formatted_integer_part.num_digits();
+            let dp = if sf > num_digits_of_int_part {
+                sf - num_digits_of_int_part
+            } else {
+                0
+            };
+            MaxDigitsToPrint::DecimalPlaces(dp)
         } else {
-            Some(10)
+            MaxDigitsToPrint::DecimalPlaces(10)
         };
-        let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
         let print_integer_part = |ignore_minus_if_zero: bool| {
             let mut res = String::new();
             if sign == Sign::Negative && (!ignore_minus_if_zero || integer_part != 0.into()) {
                 res.push('-');
             }
-            res.push_str(&integer_part.format(base, true, int)?.to_string());
+            res.push_str(&formatted_integer_part.to_string());
             Ok(res)
         };
         let integer_as_rational = Self {
@@ -541,17 +548,11 @@ impl BigRat {
     }
 
     /// Prints the decimal expansion of num/den, where num < den, in the given base.
-    /// Behaviour:
-    ///   * If `max_digits` is None, print the whole decimal. Recurring digits are indicated
-    ///     with parentheses.
-    ///   * If `max_digits` is given, only up to that many digits are printed, and recurring
-    ///     digits will not printed in parentheses but will instead be repeated up to `max_digits`.
-    ///     Any trailing zeroes are not printed.
     fn format_trailing_digits<I: Interrupt>(
         base: Base,
         numerator: &BigUint,
         denominator: &BigUint,
-        max_digits: Option<usize>,
+        max_digits: MaxDigitsToPrint,
         mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
         print_integer_part: impl Fn(bool) -> Result<String, IntErr<Never, I>>,
         int: &I,
@@ -575,7 +576,7 @@ impl BigRat {
                           base: &BigUint|
          -> Result<(BigUint, BigUint), NextDigitErr<I>> {
             test_int(int)?;
-            if num == 0.into() || max_digits == Some(i) {
+            if num == 0.into() || max_digits == MaxDigitsToPrint::DecimalPlaces(i) {
                 return Err(NextDigitErr::Terminated);
             }
             // digit = base * numerator / denominator
@@ -593,7 +594,7 @@ impl BigRat {
             s.push_str(digit_str.as_str());
             Ok(s)
         };
-        let skip_cycle_detection = max_digits.is_some() || terminating()?;
+        let skip_cycle_detection = max_digits != MaxDigitsToPrint::AllDigits || terminating()?;
         if skip_cycle_detection {
             let mut current_numerator = numerator.clone();
             let mut i = 0;
@@ -865,6 +866,14 @@ impl BigRat {
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(self.add_internal(rhs, int)?)
     }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+enum MaxDigitsToPrint {
+    /// Print all digits, possibly by writing recurring decimals in parentheses
+    AllDigits,
+    /// Print only the given number of decimal places, omitting any trailing zeroes
+    DecimalPlaces(usize),
 }
 
 impl Neg for BigRat {

@@ -1135,3 +1135,18 @@ test_eval!(one_sf, "1 sf", "1 sf");
 test_eval!(ten_sf, "10 sf", "10 sf");
 
 test_eval_simple!(one_over_sin, "1/sin", "\\x.(1/(sin x))");
+
+expect_error!(zero_sf, "0 sf");
+test_eval!(sf_1, "1234567.55645 to 1 sf", "approx. 1234567");
+test_eval!(sf_2, "1234567.55645 to 2 sf", "approx. 1234567");
+test_eval!(sf_3, "1234567.55645 to 3 sf", "approx. 1234567");
+test_eval!(sf_4, "1234567.55645 to 4 sf", "approx. 1234567");
+test_eval!(sf_5, "1234567.55645 to 5 sf", "approx. 1234567");
+test_eval!(sf_6, "1234567.55645 to 6 sf", "approx. 1234567");
+test_eval!(sf_7, "1234567.55645 to 7 sf", "approx. 1234567");
+test_eval!(sf_8, "1234567.55645 to 8 sf", "approx. 1234567.5");
+test_eval!(sf_9, "1234567.55645 to 9 sf", "approx. 1234567.55");
+test_eval!(sf_10, "1234567.55645 to 10 sf", "approx. 1234567.556");
+test_eval!(sf_11, "1234567.55645 to 11 sf", "approx. 1234567.5564");
+test_eval!(sf_12, "1234567.55645 to 12 sf", "1234567.55645");
+test_eval!(sf_13, "1234567.55645 to 13 sf", "1234567.55645");

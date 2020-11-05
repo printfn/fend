@@ -174,6 +174,11 @@ impl Value {
                 }
                 if let Self::Sf = other {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
+                    if num == 0 {
+                        return Err(
+                            "Cannot format a number with zero significant figures.".to_string()
+                        )?;
+                    }
                     return Ok(Self::Format(FormattingStyle::SignificantFigures(num)));
                 }
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {

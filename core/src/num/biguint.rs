@@ -581,6 +581,16 @@ impl fmt::Display for FormattedBigUint {
     }
 }
 
+impl FormattedBigUint {
+    pub fn num_digits(&self) -> usize {
+        match &self.ty {
+            FormattedBigUintType::Zero => 1,
+            FormattedBigUintType::Simple(i) => i.to_string().len(),
+            FormattedBigUintType::Complex(s) => s.len(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::BigUint;
