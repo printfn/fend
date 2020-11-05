@@ -24,7 +24,7 @@ pub struct UnitDef {
     singular: &'static str,
     plural: &'static str,
     prefix_rule: PrefixRule,
-    value: Value,
+    value: Value<'static>,
 }
 
 fn expr_unit<I: Interrupt>(
@@ -78,7 +78,7 @@ fn construct_prefixed_unit<I: Interrupt>(
     a: UnitDef,
     b: UnitDef,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'static>, IntErr<String, I>> {
     let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
     let unit = Number::create_unit_value_from_value(
         &product,
@@ -92,7 +92,7 @@ fn construct_prefixed_unit<I: Interrupt>(
 pub fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
     int: &I,
-) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
+) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
     match query_unit_internal(ident, false, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),

@@ -124,7 +124,7 @@ impl<'a> Expr2<'a> {
     pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
-            Self::Ident(ident) => ident.to_string(),
+            Self::Ident(ident) => (*ident).to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
             Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
@@ -178,7 +178,7 @@ pub fn evaluate<'a, I: Interrupt>(
     expr: Expr2<'a>,
     scope: &mut Scope,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'a>, IntErr<String, I>> {
     macro_rules! eval {
         ($e:expr) => {
             evaluate($e, scope, int)
@@ -189,21 +189,23 @@ pub fn evaluate<'a, I: Interrupt>(
         Expr2::<'a>::Num(n) => Value::Num(n),
         Expr2::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
         Expr2::<'a>::Parens(x) => eval!(*x)?,
-        Expr2::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
-        Expr2::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
+        Expr2::<'a>::UnaryMinus(x) => {
+            eval!(*x)?.handle_num(|x| Ok(-x), |x| Expr2::UnaryMinus(x), scope)?
+        }
+        Expr2::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, |x| Expr2::UnaryPlus(x), scope)?,
         Expr2::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
             |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
-            Expr::UnaryDiv,
+            |x| Expr2::UnaryDiv(x),
             scope,
         )?,
         Expr2::<'a>::Factorial(x) => {
-            eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
+            eval!(*x)?.handle_num(|x| x.factorial(int), |x| Expr2::Factorial(x), scope)?
         }
         Expr2::<'a>::Add(a, b) | Expr2::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.add(b, int),
-            |a| |f| Expr::Add(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
+            |a| |f| Expr2::Add(f, Box::new(Expr2::Num(a))),
+            |a| |f| Expr2::Add(Box::new(Expr2::Num(a)), f),
             scope,
         )?,
         Expr2::<'a>::Sub(a, b) => {
@@ -222,8 +224,8 @@ pub fn evaluate<'a, I: Interrupt>(
         Expr2::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),
-            |a| |f| Expr::Mul(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
+            |a| |f| Expr2::Mul(f, Box::new(Expr2::Num(a))),
+            |a| |f| Expr2::Mul(Box::new(Expr2::Num(a)), f),
             scope,
         )?,
         Expr2::<'a>::Apply(a, b) | Expr2::<'a>::ApplyMul(a, b) => {
@@ -232,8 +234,8 @@ pub fn evaluate<'a, I: Interrupt>(
         Expr2::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
-            |a| |f| Expr::Div(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
+            |a| |f| Expr2::Div(f, Box::new(Expr2::Num(a))),
+            |a| |f| Expr2::Div(Box::new(Expr2::Num(a)), f),
             scope,
         )?,
         Expr2::<'a>::Pow(a, b) => {
@@ -255,8 +257,8 @@ pub fn evaluate<'a, I: Interrupt>(
             lhs.handle_two_nums(
                 eval!(*b)?,
                 |a, b| a.pow(b, int),
-                |a| |f| Expr::Pow(f, Box::new(Expr::Num(a))),
-                |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
+                |a| |f| Expr2::Pow(f, Box::new(Expr2::Num(a))),
+                |a| |f| Expr2::Pow(Box::new(Expr2::Num(a)), f),
                 scope,
             )?
         }
@@ -283,19 +285,15 @@ pub fn evaluate<'a, I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr2::<'a>::Fn(a, b) => Value::Fn(
-            a.to_string().into(),
-            Box::new(Expr::from(*b)),
-            scope.clone(),
-        ),
+        Expr2::<'a>::Fn(a, b) => Value::Fn(a.to_string().into(), b, scope.clone()),
     })
 }
 
-pub fn resolve_identifier<I: Interrupt>(
-    ident: &str,
+pub fn resolve_identifier<'a, I: Interrupt>(
+    ident: &'a str,
     scope: &mut Scope,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'a>, IntErr<String, I>> {
     match scope.get(ident, int) {
         Ok(val) => return Ok(val),
         Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),

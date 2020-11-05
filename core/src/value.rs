@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Value {
+pub enum Value<'a> {
     Num(Number),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
@@ -14,7 +14,7 @@ pub enum Value {
     Sf,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(Cow<'static, str>, Box<Expr>, Scope),
+    Fn(Cow<'static, str>, Box<Expr2<'a>>, Scope),
     Version,
 }
 
@@ -43,20 +43,20 @@ pub enum BuiltInFunction {
 impl BuiltInFunction {
     pub fn wrap_with_expr(
         self,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        lazy_fn: impl FnOnce(Box<Expr2>) -> Expr2,
         scope: &mut Scope,
-    ) -> Value {
+    ) -> Value<'static> {
         Value::Fn(
             "x".into(),
-            Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                Box::new(Expr::Ident(self.as_str().into())),
-                Box::new(Expr::Ident("x".into())),
+            Box::new(lazy_fn(Box::new(Expr2::ApplyFunctionCall(
+                Box::new(Expr2::Ident(self.as_str())),
+                Box::new(Expr2::Ident("x")),
             )))),
             scope.clone(),
         )
     }
 
-    pub fn invert(self) -> Result<Value, String> {
+    pub fn invert(self) -> Result<Value<'static>, String> {
         Ok(match self {
             Self::Sin => Value::BuiltInFunction(Self::Asin),
             Self::Cos => Value::BuiltInFunction(Self::Acos),
@@ -110,7 +110,7 @@ pub enum ApplyMulHandling {
     Both,
 }
 
-impl Value {
+impl<'a> Value<'a> {
     pub fn expect_num<I: Interrupt>(self) -> Result<Number, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat),
@@ -121,7 +121,7 @@ impl Value {
     pub fn handle_num<I: Interrupt>(
         self,
         eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<String, I>>,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        lazy_fn: impl FnOnce(Box<Expr2>) -> Expr2,
         scope: &mut Scope,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
@@ -134,8 +134,8 @@ impl Value {
 
     pub fn handle_two_nums<
         I: Interrupt,
-        F1: FnOnce(Box<Expr>) -> Expr,
-        F2: FnOnce(Box<Expr>) -> Expr,
+        F1: FnOnce(Box<Expr2>) -> Expr2,
+        F2: FnOnce(Box<Expr2>) -> Expr2,
     >(
         self,
         rhs: Self,
@@ -160,7 +160,7 @@ impl Value {
 
     pub fn apply<I: Interrupt>(
         self,
-        other: Expr2,
+        other: Expr2<'a>,
         apply_mul_handling: ApplyMulHandling,
         scope: &mut Scope,
         int: &I,
@@ -191,7 +191,7 @@ impl Value {
                     let n2 = n.clone();
                     other.handle_num(
                         |x| n.mul(x, int).map_err(IntErr::into_string),
-                        |x| Expr::Mul(Box::new(Expr::Num(n2)), x),
+                        |x| Expr2::Mul(Box::new(Expr2::Num(n2)), x),
                         scope,
                     )?
                 }
@@ -232,11 +232,7 @@ impl Value {
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
                 new_scope.insert_variable(param, Expr::from(other), scope.clone());
-                return Ok(crate::ast::evaluate(
-                    Expr2::from(*expr),
-                    &mut new_scope,
-                    int,
-                )?);
+                return Ok(crate::ast::evaluate(*expr, &mut new_scope, int)?);
             }
             _ => {
                 return Err(format!(
@@ -256,7 +252,7 @@ impl Value {
             Self::Sf => FormattedValue::Str("sf"),
             Self::Base(b) => FormattedValue::Base(b.base_as_u8()),
             Self::Fn(name, expr, _scope) => {
-                let expr_str = Expr2::from((&**expr).clone()).format(int)?;
+                let expr_str = (&**expr).format(int)?;
                 let res = if name.contains('.') {
                     format!("{}:{}", name, expr_str)
                 } else {

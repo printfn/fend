@@ -6,11 +6,11 @@ use crate::{
     value::Value,
 };
 
-pub fn evaluate_to_value<I: Interrupt>(
-    input: &str,
+pub fn evaluate_to_value<'a, I: Interrupt>(
+    input: &'a str,
     scope: &mut Scope,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'a>, IntErr<String, I>> {
     let lex = lexer::lex(input, int);
     let mut tokens = vec![];
     let mut missing_open_parens: i32 = 0;
@@ -24,7 +24,8 @@ pub fn evaluate_to_value<I: Interrupt>(
     for _ in 0..missing_open_parens {
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
-    let parsed = parser::parse_tokens(tokens.as_slice()).map_err(|e| e.to_string())?;
+    let slice = Box::leak(Box::new(tokens));
+    let parsed = parser::parse_tokens(slice).map_err(|e| e.to_string())?;
     let result = ast::evaluate(parsed, scope, int)?;
     Ok(result)
 }

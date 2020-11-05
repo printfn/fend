@@ -39,7 +39,7 @@ impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> 
 }
 
 impl ScopeValue {
-    fn eval<I: Interrupt>(&self, int: &I) -> Result<Value, IntErr<String, I>> {
+    fn eval<I: Interrupt>(&self, int: &I) -> Result<Value<'static>, IntErr<String, I>> {
         match self {
             Self::LazyVariable(expr, scope) => {
                 let value = crate::ast::evaluate(expr.clone().into(), &mut scope.clone(), int)?;
@@ -79,7 +79,7 @@ impl Scope {
         &mut self,
         ident: &'a str,
         int: &I,
-    ) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
+    ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
         let potential_value = self.hashmap.get(ident).cloned();
         if let Some(value) = potential_value {
             let value = value

@@ -446,14 +446,14 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerErro
     ))
 }
 
-struct Lexer<'a, I: Interrupt> {
+pub struct Lexer<'a, 'b, I: Interrupt> {
     input: &'a str,
     // normally 0; 1 after backslash; 2 after ident after backslash
     after_backslash_state: u8,
-    int: &'a I,
+    int: &'b I,
 }
 
-impl<'a, I: Interrupt> Lexer<'a, I> {
+impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
     fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<LexerError, I>> {
         while let Some(ch) = self.input.chars().next() {
             if !ch.is_whitespace() {
@@ -527,7 +527,7 @@ impl<'a, I: Interrupt> Lexer<'a, I> {
     }
 }
 
-impl<'a, I: Interrupt> Iterator for Lexer<'a, I> {
+impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
     type Item = Result<Token<'a>, IntErr<LexerError, I>>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -551,10 +551,7 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, I> {
     }
 }
 
-pub fn lex<'a, I: Interrupt>(
-    input: &'a str,
-    int: &'a I,
-) -> impl Iterator<Item = Result<Token<'a>, IntErr<LexerError, I>>> {
+pub fn lex<'a, 'b, I: Interrupt>(input: &'a str, int: &'b I) -> Lexer<'a, 'b, I> {
     Lexer {
         input,
         after_backslash_state: 0,
