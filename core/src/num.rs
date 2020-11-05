@@ -11,7 +11,7 @@ mod unit;
 
 pub use formatting_style::FormattingStyle;
 
-pub type Number = unit::UnitValue;
+pub type Number<'a> = unit::UnitValue<'a>;
 pub type FormattedNumber = unit::FormattedUnitValue;
 pub type Base = base::Base;
 type Exact<T> = exact::Exact<T>;

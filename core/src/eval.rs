@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     ast,
     err::{IntErr, Interrupt},
@@ -6,11 +8,11 @@ use crate::{
     value::Value,
 };
 
-pub fn evaluate_to_value<I: Interrupt>(
-    input: &str,
-    scope: &mut Scope,
+pub fn evaluate_to_value<'a, I: Interrupt>(
+    input: &'a str,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'a>, IntErr<String, I>> {
     let lex = lexer::lex(input, int);
     let mut tokens = vec![];
     let mut missing_open_parens: i32 = 0;
@@ -24,14 +26,14 @@ pub fn evaluate_to_value<I: Interrupt>(
     for _ in 0..missing_open_parens {
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
-    let parsed = parser::parse_tokens(tokens.as_slice()).map_err(|e| e.to_string())?;
+    let parsed = parser::parse_tokens(&tokens).map_err(|e| e.to_string())?;
     let result = ast::evaluate(parsed, scope, int)?;
     Ok(result)
 }
 
-pub fn evaluate_to_string<I: Interrupt>(
-    mut input: &str,
-    scope: &mut Scope,
+pub fn evaluate_to_string<'a, I: Interrupt>(
+    mut input: &'a str,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
     let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {

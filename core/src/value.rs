@@ -2,19 +2,19 @@ use crate::ast::Expr;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::scope::Scope;
-use std::borrow::Cow;
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub enum Value {
-    Num(Number),
+pub enum Value<'a> {
+    Num(Number<'a>),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
     Dp,
     Sf,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(Cow<'static, str>, Box<Expr>, Scope),
+    Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Version,
 }
 
@@ -41,22 +41,22 @@ pub enum BuiltInFunction {
 }
 
 impl BuiltInFunction {
-    pub fn wrap_with_expr(
+    pub fn wrap_with_expr<'a>(
         self,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
-        scope: &mut Scope,
-    ) -> Value {
+        lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
+        scope: Option<Arc<Scope<'a>>>,
+    ) -> Value<'a> {
         Value::Fn(
-            "x".into(),
+            "x",
             Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                Box::new(Expr::Ident(self.as_str().into())),
-                Box::new(Expr::Ident("x".into())),
+                Box::new(Expr::Ident(self.as_str())),
+                Box::new(Expr::Ident("x")),
             )))),
-            scope.clone(),
+            scope,
         )
     }
 
-    pub fn invert(self) -> Result<Value, String> {
+    pub fn invert(self) -> Result<Value<'static>, String> {
         Ok(match self {
             Self::Sin => Value::BuiltInFunction(Self::Asin),
             Self::Cos => Value::BuiltInFunction(Self::Acos),
@@ -110,8 +110,8 @@ pub enum ApplyMulHandling {
     Both,
 }
 
-impl Value {
-    pub fn expect_num<I: Interrupt>(self) -> Result<Number, IntErr<String, I>> {
+impl<'a> Value<'a> {
+    pub fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat),
             _ => Err("Expected a number".to_string())?,
@@ -120,9 +120,9 @@ impl Value {
 
     pub fn handle_num<I: Interrupt>(
         self,
-        eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<String, I>>,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
-        scope: &mut Scope,
+        eval_fn: impl FnOnce(Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
+        lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
+        scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
             Self::Num(n) => Self::Num(eval_fn(n)?),
@@ -134,15 +134,15 @@ impl Value {
 
     pub fn handle_two_nums<
         I: Interrupt,
-        F1: FnOnce(Box<Expr>) -> Expr,
-        F2: FnOnce(Box<Expr>) -> Expr,
+        F1: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
+        F2: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
     >(
         self,
         rhs: Self,
-        eval_fn: impl FnOnce(Number, Number) -> Result<Number, IntErr<String, I>>,
-        lazy_fn_lhs: impl FnOnce(Number) -> F1,
-        lazy_fn_rhs: impl FnOnce(Number) -> F2,
-        scope: &mut Scope,
+        eval_fn: impl FnOnce(Number<'a>, Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
+        lazy_fn_lhs: impl FnOnce(Number<'a>) -> F1,
+        lazy_fn_rhs: impl FnOnce(Number<'a>) -> F2,
+        scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match (self, rhs) {
             (Self::Num(a), Self::Num(b)) => Self::Num(eval_fn(a, b)?),
@@ -160,14 +160,14 @@ impl Value {
 
     pub fn apply<I: Interrupt>(
         self,
-        other: Expr,
+        other: Expr<'a>,
         apply_mul_handling: ApplyMulHandling,
-        scope: &mut Scope,
+        scope: Option<Arc<Scope<'a>>>,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
             Self::Num(n) => {
-                let other = crate::ast::evaluate(other, scope, int)?;
+                let other = crate::ast::evaluate(other, scope.clone(), int)?;
                 if let Self::Dp = other {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
@@ -197,7 +197,7 @@ impl Value {
                 }
             }
             Self::BuiltInFunction(name) => {
-                let other = crate::ast::evaluate(other, scope, int)?;
+                let other = crate::ast::evaluate(other, scope.clone(), int)?;
                 Self::Num(match name {
                     BuiltInFunction::Approximately => other.expect_num()?.make_approximate(),
                     BuiltInFunction::Abs => other.expect_num()?.abs(int)?,
@@ -230,9 +230,8 @@ impl Value {
                 })
             }
             Self::Fn(param, expr, custom_scope) => {
-                let mut new_scope = custom_scope.create_nested_scope();
-                new_scope.insert_variable(param, other, scope.clone());
-                return Ok(crate::ast::evaluate(*expr, &mut new_scope, int)?);
+                let new_scope = Scope::with_variable(param, other, scope.clone(), custom_scope);
+                return Ok(crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), int)?);
             }
             _ => {
                 return Err(format!(
@@ -252,7 +251,7 @@ impl Value {
             Self::Sf => FormattedValue::Str("sf"),
             Self::Base(b) => FormattedValue::Base(b.base_as_u8()),
             Self::Fn(name, expr, _scope) => {
-                let expr_str = expr.format(int)?;
+                let expr_str = (&**expr).format(int)?;
                 let res = if name.contains('.') {
                     format!("{}:{}", name, expr_str)
                 } else {

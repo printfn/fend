@@ -3,14 +3,13 @@ use crate::{
     ast::Expr,
     err::{IntErr, Interrupt},
 };
-use std::borrow::Cow;
-use std::collections::HashMap;
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-enum ScopeValue {
+enum ScopeValue<'a> {
     //Variable(Value),
-    LazyVariable(Expr, Scope),
+    LazyVariable(Expr<'a>, Option<Arc<Scope<'a>>>),
 }
 
 #[derive(Debug)]
@@ -38,11 +37,11 @@ impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> 
     }
 }
 
-impl ScopeValue {
-    fn eval<I: Interrupt>(&self, int: &I) -> Result<Value, IntErr<String, I>> {
+impl<'a> ScopeValue<'a> {
+    fn eval<I: Interrupt>(&self, int: &I) -> Result<Value<'a>, IntErr<String, I>> {
         match self {
             Self::LazyVariable(expr, scope) => {
-                let value = crate::ast::evaluate(expr.clone(), &mut scope.clone(), int)?;
+                let value = crate::ast::evaluate(expr.clone(), scope.clone(), int)?;
                 Ok(value)
             }
         }
@@ -50,47 +49,42 @@ impl ScopeValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct Scope {
-    hashmap: HashMap<Cow<'static, str>, ScopeValue>,
-    prefixes: Vec<(Cow<'static, str>, ScopeValue)>,
-    inner: Option<Box<Scope>>,
+pub struct Scope<'a> {
+    ident: &'a str,
+    value: ScopeValue<'a>,
+    inner: Option<Arc<Scope<'a>>>,
 }
 
-impl Scope {
-    pub fn new() -> Self {
+impl<'a> Scope<'a> {
+    fn with_scope_value(ident: &'a str, value: ScopeValue<'a>, inner: Option<Arc<Self>>) -> Self {
         Self {
-            hashmap: HashMap::new(),
-            prefixes: vec![],
-            inner: None,
+            ident,
+            value,
+            inner,
         }
     }
 
-    fn insert_scope_value(&mut self, ident: Cow<'static, str>, value: ScopeValue) {
-        self.hashmap.insert(ident, value);
+    pub fn with_variable(
+        name: &'a str,
+        expr: Expr<'a>,
+        scope: Option<Arc<Self>>,
+        inner: Option<Arc<Self>>,
+    ) -> Self {
+        Self::with_scope_value(name, ScopeValue::LazyVariable(expr, scope), inner)
     }
 
-    pub fn insert_variable(&mut self, name: Cow<'static, str>, expr: Expr, scope: Self) {
-        self.insert_scope_value(name, ScopeValue::LazyVariable(expr, scope))
-    }
-
-    pub fn create_nested_scope(self) -> Self {
-        let mut res = Self::new();
-        res.inner = Some(Box::from(self));
-        res
-    }
-
-    pub fn get<'a, I: Interrupt>(
-        &mut self,
+    pub fn get<I: Interrupt>(
+        &self,
         ident: &'a str,
         int: &I,
-    ) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
-        let potential_value = self.hashmap.get(ident).cloned();
-        if let Some(value) = potential_value {
-            let value = value
+    ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
+        if self.ident == ident {
+            let value = self
+                .value
                 .eval(int)
                 .map_err(|e| e.map(GetIdentError::EvalError))?;
             Ok(value)
-        } else if let Some(inner) = &mut self.inner {
+        } else if let Some(inner) = &self.inner {
             inner.get(ident, int)
         } else {
             Err(GetIdentError::IdentifierNotFound(ident))?

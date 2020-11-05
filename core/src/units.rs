@@ -1,7 +1,7 @@
 use crate::err::{IntErr, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
-use crate::scope::{GetIdentError, Scope};
+use crate::scope::GetIdentError;
 use crate::value::Value;
 
 #[cfg(feature = "gpl")]
@@ -24,7 +24,7 @@ pub struct UnitDef {
     singular: &'static str,
     plural: &'static str,
     prefix_rule: PrefixRule,
-    value: Value,
+    value: Value<'static>,
 }
 
 fn expr_unit<I: Interrupt>(
@@ -62,9 +62,9 @@ fn expr_unit<I: Interrupt>(
     let (alias, definition) = definition
         .strip_prefix('=')
         .map_or((false, definition), |remaining| (true, remaining));
-    let mut num = evaluate_to_value(definition, &mut Scope::new(), int)?.expect_num()?;
+    let mut num = evaluate_to_value(definition, None, int)?.expect_num()?;
     if !alias && rule != PrefixRule::LongPrefix {
-        num = Number::create_unit_value_from_value(&num, singular.into(), plural.into(), int)?;
+        num = Number::create_unit_value_from_value(&num, "", singular, plural, int)?;
     }
     Ok(UnitDef {
         value: Value::Num(num),
@@ -78,21 +78,18 @@ fn construct_prefixed_unit<I: Interrupt>(
     a: UnitDef,
     b: UnitDef,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'static>, IntErr<String, I>> {
     let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
-    let unit = Number::create_unit_value_from_value(
-        &product,
-        format!("{}{}", a.singular, b.singular).into(),
-        format!("{}{}", a.plural, b.plural).into(),
-        int,
-    )?;
+    assert_eq!(a.singular, a.plural);
+    let unit =
+        Number::create_unit_value_from_value(&product, a.singular, b.singular, b.plural, int)?;
     Ok(Value::Num(unit))
 }
 
 pub fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
     int: &I,
-) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
+) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
     match query_unit_internal(ident, false, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),

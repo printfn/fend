@@ -4,39 +4,39 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use std::borrow::Cow;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
-pub enum Expr {
-    Num(Number),
-    Ident(Cow<'static, str>),
-    Parens(Box<Expr>),
-    UnaryMinus(Box<Expr>),
-    UnaryPlus(Box<Expr>),
-    UnaryDiv(Box<Expr>),
-    Factorial(Box<Expr>),
-    Add(Box<Expr>, Box<Expr>),
-    ImplicitAdd(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
-    Div(Box<Expr>, Box<Expr>),
-    Pow(Box<Expr>, Box<Expr>),
+pub enum Expr<'a> {
+    Num(Number<'a>),
+    Ident(&'a str),
+    Parens(Box<Expr<'a>>),
+    UnaryMinus(Box<Expr<'a>>),
+    UnaryPlus(Box<Expr<'a>>),
+    UnaryDiv(Box<Expr<'a>>),
+    Factorial(Box<Expr<'a>>),
+    Add(Box<Expr<'a>>, Box<Expr<'a>>),
+    ImplicitAdd(Box<Expr<'a>>, Box<Expr<'a>>),
+    Sub(Box<Expr<'a>>, Box<Expr<'a>>),
+    Mul(Box<Expr<'a>>, Box<Expr<'a>>),
+    Div(Box<Expr<'a>>, Box<Expr<'a>>),
+    Pow(Box<Expr<'a>>, Box<Expr<'a>>),
     // Call a function or multiply the expressions
-    Apply(Box<Expr>, Box<Expr>),
+    Apply(Box<Expr<'a>>, Box<Expr<'a>>),
     // Call a function, or throw an error if lhs is not a function
-    ApplyFunctionCall(Box<Expr>, Box<Expr>),
+    ApplyFunctionCall(Box<Expr<'a>>, Box<Expr<'a>>),
     // Multiply the expressions
-    ApplyMul(Box<Expr>, Box<Expr>),
+    ApplyMul(Box<Expr<'a>>, Box<Expr<'a>>),
 
-    As(Box<Expr>, Box<Expr>),
-    Fn(Cow<'static, str>, Box<Expr>),
+    As(Box<Expr<'a>>, Box<Expr<'a>>),
+    Fn(&'a str, Box<Expr<'a>>),
 }
 
-impl Expr {
+impl<'a> Expr<'a> {
     pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
-            Self::Ident(ident) => ident.to_string(),
+            Self::Ident(ident) => (*ident).to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
             Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
@@ -86,68 +86,71 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn evaluate<I: Interrupt>(
-    expr: Expr,
-    scope: &mut Scope,
+pub fn evaluate<'a, I: Interrupt>(
+    expr: Expr<'a>,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value<'a>, IntErr<String, I>> {
     macro_rules! eval {
         ($e:expr) => {
-            evaluate($e, scope, int)
+            evaluate($e, scope.clone(), int)
         };
     }
     test_int(int)?;
     Ok(match expr {
-        Expr::Num(n) => Value::Num(n),
-        Expr::Ident(ident) => resolve_identifier(ident.as_ref(), scope, int)?,
-        Expr::Parens(x) => eval!(*x)?,
-        Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
-        Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
-        Expr::UnaryDiv(x) => eval!(*x)?.handle_num(
+        Expr::<'a>::Num(n) => Value::Num(n),
+        Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
+        Expr::<'a>::Parens(x) => eval!(*x)?,
+        Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
+        Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
+        Expr::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
             |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
             Expr::UnaryDiv,
             scope,
         )?,
-        Expr::Factorial(x) => {
+        Expr::<'a>::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::<'a>::Add(a, b) | Expr::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.add(b, int),
             |a| |f| Expr::Add(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Sub(a, b) => {
+        Expr::<'a>::Sub(a, b) => {
             let a = eval!(*a)?;
             match a {
                 Value::Num(a) => Value::Num(a.sub(eval!(*b)?.expect_num()?, int)?),
-                f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => {
-                    f.apply(Expr::UnaryMinus(b), ApplyMulHandling::OnlyApply, scope, int)?
-                }
+                f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => f.apply(
+                    Expr::<'a>::UnaryMinus(b),
+                    ApplyMulHandling::OnlyApply,
+                    scope,
+                    int,
+                )?,
                 _ => Err("Invalid operands for subtraction".to_string())?,
             }
         }
-        Expr::Mul(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),
             |a| |f| Expr::Mul(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Apply(a, b) | Expr::ApplyMul(a, b) => {
+        Expr::<'a>::Apply(a, b) | Expr::<'a>::ApplyMul(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?
         }
-        Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
             |a| |f| Expr::Div(f, Box::new(Expr::Num(a))),
             |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr::Pow(a, b) => {
+        Expr::<'a>::Pow(a, b) => {
             let lhs = eval!(*a)?;
-            if should_compute_inverse(&*b) {
+            if should_compute_inverse(&*b.clone()) {
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => {
@@ -169,10 +172,10 @@ pub fn evaluate<I: Interrupt>(
                 scope,
             )?
         }
-        Expr::ApplyFunctionCall(a, b) => {
+        Expr::<'a>::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
         }
-        Expr::As(a, b) => match eval!(*b)? {
+        Expr::<'a>::As(a, b) => match eval!(*b)? {
             Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
             Value::Format(fmt) => Value::Num(eval!(*a)?.expect_num()?.with_format(fmt)),
             Value::Dp => {
@@ -192,21 +195,23 @@ pub fn evaluate<I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr::Fn(a, b) => Value::Fn(a, Box::new(*b), scope.clone()),
+        Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
     })
 }
 
-pub fn resolve_identifier<I: Interrupt>(
-    ident: &str,
-    scope: &mut Scope,
+pub fn resolve_identifier<'a, I: Interrupt>(
+    ident: &'a str,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
-    match scope.get(ident, int) {
-        Ok(val) => return Ok(val),
-        Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
-        Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
-        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
-            return Err(IntErr::Error(err.to_string()))
+) -> Result<Value<'a>, IntErr<String, I>> {
+    if let Some(scope) = scope.clone() {
+        match scope.get(ident, int) {
+            Ok(val) => return Ok(val),
+            Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
+            Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
+            Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
+                return Err(IntErr::Error(err.to_string()))
+            }
         }
     }
     Ok(match ident {

@@ -41,9 +41,9 @@ impl fmt::Display for ParseError {
 }
 impl crate::err::Error for ParseError {}
 
-type ParseResult<'a, T> = Result<(T, &'a [Token<'a>]), ParseError>;
+type ParseResult<'a, 'b, T = Expr<'a>> = Result<(T, &'b [Token<'a>]), ParseError>;
 
-fn parse_token<'a>(input: &'a [Token<'a>]) -> ParseResult<Token<'a>> {
+fn parse_token<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b, Token<'a>> {
     if input.is_empty() {
         Err(ParseError::ExpectedAToken)
     } else {
@@ -51,7 +51,7 @@ fn parse_token<'a>(input: &'a [Token<'a>]) -> ParseResult<Token<'a>> {
     }
 }
 
-fn parse_fixed_symbol<'a>(input: &'a [Token], symbol: Symbol) -> ParseResult<'a, ()> {
+fn parse_fixed_symbol<'a, 'b>(input: &'b [Token<'a>], symbol: Symbol) -> ParseResult<'a, 'b, ()> {
     let (token, remaining) = parse_token(input)?;
     if let Token::Symbol(sym) = token {
         if sym == symbol {
@@ -64,21 +64,21 @@ fn parse_fixed_symbol<'a>(input: &'a [Token], symbol: Symbol) -> ParseResult<'a,
     }
 }
 
-fn parse_number<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_number<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
         _ => Err(ParseError::ExpectedANumber),
     }
 }
 
-fn parse_ident<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_ident<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     match parse_token(input)? {
-        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident.to_string().into()), remaining)),
+        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
         _ => Err(ParseError::ExpectedIdentifier),
     }
 }
 
-fn parse_parens<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_parens<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
     let (inner, mut input) = parse_expression(input)?;
     // allow omitting closing parentheses at end of input
@@ -89,7 +89,7 @@ fn parse_parens<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
-fn parse_backslash_lambda<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_backslash_lambda<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Backslash)?;
     let (ident, input) = if let (Expr::Ident(ident), input) = parse_ident(input)? {
         (ident, input)
@@ -102,7 +102,7 @@ fn parse_backslash_lambda<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((Expr::Fn(ident, Box::new(rhs)), input))
 }
 
-fn parse_parens_or_literal<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (token, _) = parse_token(input)?;
 
     match token {
@@ -114,7 +114,7 @@ fn parse_parens_or_literal<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     }
 }
 
-fn parse_factorial<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_factorial<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (mut res, mut input) = parse_parens_or_literal(input)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
         res = Expr::Factorial(Box::new(res));
@@ -123,7 +123,7 @@ fn parse_factorial<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((res, input))
 }
 
-fn parse_power<'a>(input: &'a [Token], allow_unary: bool) -> ParseResult<'a, Expr> {
+fn parse_power<'a, 'b>(input: &'b [Token<'a>], allow_unary: bool) -> ParseResult<'a, 'b> {
     if allow_unary {
         if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
             let (result, remaining) = parse_power(remaining, true)?;
@@ -149,7 +149,7 @@ fn parse_power<'a>(input: &'a [Token], allow_unary: bool) -> ParseResult<'a, Exp
     Ok((result, input))
 }
 
-fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, Expr> {
+fn parse_apply_cont<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResult<'a, 'b> {
     let (rhs, input) = parse_power(input, false)?;
     Ok((
         match (lhs, &rhs) {
@@ -179,7 +179,7 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, Expr>
 }
 
 #[allow(clippy::option_if_let_else)]
-fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, Expr> {
+fn parse_mixed_fraction<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResult<'a, 'b> {
     let (positive, lhs, other_factor) = match lhs {
         Expr::Num(_) => (true, lhs, None),
         Expr::UnaryMinus(x) => {
@@ -227,26 +227,26 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a, E
     Ok((mixed_fraction, input))
 }
 
-fn parse_multiplication_cont<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_multiplication_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
     let (b, input) = parse_power(input, true)?;
     Ok((b, input))
 }
 
-fn parse_division_cont<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_division_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
     let (b, input) = parse_power(input, true)?;
     Ok((b, input))
 }
 
-fn parse_multiplicative<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_multiplicative<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (mut res, mut input) = parse_power(input, true)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
-            res = Expr::Mul(Box::new(res), Box::new(term));
+            res = Expr::Mul(Box::new(res.clone()), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_division_cont(input) {
-            res = Expr::Div(Box::new(res), Box::new(term));
+            res = Expr::Div(Box::new(res.clone()), Box::new(term));
             input = remaining;
         } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res) {
             res = new_res;
@@ -261,7 +261,7 @@ fn parse_multiplicative<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((res, input))
 }
 
-fn parse_implicit_addition<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_implicit_addition<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (res, input) = parse_multiplicative(input)?;
     if let Ok((rhs, remaining)) = parse_implicit_addition(input) {
         match (&res, &rhs) {
@@ -276,25 +276,25 @@ fn parse_implicit_addition<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((res, input))
 }
 
-fn parse_addition_cont<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_addition_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Add)?;
     let (b, input) = parse_implicit_addition(input)?;
     Ok((b, input))
 }
 
-fn parse_subtraction_cont<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_subtraction_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Sub)?;
     let (b, input) = parse_implicit_addition(input)?;
     Ok((b, input))
 }
 
-fn parse_to_cont<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_to_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
     let (b, input) = parse_implicit_addition(input)?;
     Ok((b, input))
 }
 
-fn parse_additive<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_additive<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (mut res, mut input) = parse_implicit_addition(input)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input) {
@@ -313,7 +313,7 @@ fn parse_additive<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((res, input))
 }
 
-fn parse_function<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+fn parse_function<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (lhs, input) = parse_additive(input)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
@@ -326,11 +326,11 @@ fn parse_function<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
     Ok((lhs, input))
 }
 
-pub fn parse_expression<'a>(input: &'a [Token]) -> ParseResult<'a, Expr> {
+pub fn parse_expression<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     parse_function(input)
 }
 
-pub fn parse_tokens(input: &[Token]) -> Result<Expr, ParseError> {
+pub fn parse_tokens<'a, 'b>(input: &'b [Token<'a>]) -> Result<Expr<'a>, ParseError> {
     let (res, remaining) = parse_expression(input)?;
     if !remaining.is_empty() {
         return Err(ParseError::UnexpectedInput);
