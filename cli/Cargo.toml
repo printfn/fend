@@ -20,4 +20,3 @@ ctrlc = "3.1.6"
 [dependencies.fend-core]
 version = "0.1.7"
 path = "../core"
-
