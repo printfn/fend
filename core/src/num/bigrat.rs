@@ -554,18 +554,6 @@ impl BigRat {
         print_integer_part: impl Fn(bool) -> Result<(Sign, String), IntErr<Never, I>>,
         int: &I,
     ) -> Result<(Sign, Exact<String>), IntErr<Never, I>> {
-        enum NextDigitErr<I: Interrupt> {
-            Interrupt(IntErr<Never, I>),
-            Terminated,
-        };
-        impl<I: Interrupt> From<IntErr<Never, I>> for NextDigitErr<I> {
-            fn from(i: IntErr<Never, I>) -> Self {
-                Self::Interrupt(i)
-            }
-        }
-
-        let mut trailing_digits = String::new();
-
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
         let next_digit = |i: usize,
@@ -593,52 +581,7 @@ impl BigRat {
         };
         let skip_cycle_detection = max_digits != MaxDigitsToPrint::AllDigits || terminating()?;
         if skip_cycle_detection {
-            let mut current_numerator = numerator.clone();
-            let mut i = 0;
-            let mut trailing_zeroes = 0;
-            // this becomes Some(_) when we write the decimal point
-            let mut actual_sign = None;
-            loop {
-                match next_digit(i, current_numerator.clone(), &b) {
-                    Ok((next_n, digit)) => {
-                        current_numerator = next_n;
-                        if digit == 0.into() {
-                            trailing_zeroes += 1;
-                        } else {
-                            if actual_sign.is_none() {
-                                // always print leading minus because we have non-zero digits
-                                let (sign, formatted_int) = print_integer_part(false)?;
-                                actual_sign = Some(sign);
-                                trailing_digits.push_str(&formatted_int);
-                                trailing_digits.push('.');
-                            }
-                            for _ in 0..trailing_zeroes {
-                                trailing_digits.push('0');
-                            }
-                            trailing_zeroes = 0;
-                            trailing_digits.push_str(&digit.format(base, false, int)?.to_string());
-                        }
-                    }
-                    Err(NextDigitErr::Terminated) => {
-                        let sign = if let Some(actual_sign) = actual_sign {
-                            actual_sign
-                        } else {
-                            // if we reach this point we haven't printed any non-zero digits,
-                            // so we can skip the leading minus sign if the integer part is also zero
-                            let (sign, formatted_int) = print_integer_part(true)?;
-                            trailing_digits.push_str(&formatted_int);
-                            sign
-                        };
-                        // is the number exact, or did we need to truncate?
-                        let exact = current_numerator == 0.into();
-                        return Ok((sign, Exact::new(trailing_digits, exact)));
-                    }
-                    Err(NextDigitErr::Interrupt(i)) => {
-                        return Err(i);
-                    }
-                }
-                i += 1;
-            }
+            return Self::format_nonrecurring(numerator, base, next_digit, print_integer_part, int);
         }
         match Self::brents_algorithm(
             next_digit,
@@ -651,6 +594,7 @@ impl BigRat {
                 let (ab, _) = output.split_at(location + cycle_length);
                 let (a, b) = ab.split_at(location);
                 let (sign, formatted_int) = print_integer_part(false)?;
+                let mut trailing_digits = String::new();
                 trailing_digits.push_str(&formatted_int);
                 trailing_digits.push('.');
                 trailing_digits.push_str(a);
@@ -663,6 +607,67 @@ impl BigRat {
                 panic!("Decimal number terminated unexpectedly");
             }
             Err(NextDigitErr::Interrupt(i)) => Err(i),
+        }
+    }
+
+    fn format_nonrecurring<I: Interrupt>(
+        numerator: &BigUint,
+        base: Base,
+        mut next_digit: impl FnMut(
+            usize,
+            BigUint,
+            &BigUint,
+        ) -> Result<(BigUint, BigUint), NextDigitErr<I>>,
+        print_integer_part: impl Fn(bool) -> Result<(Sign, String), IntErr<Never, I>>,
+        int: &I,
+    ) -> Result<(Sign, Exact<String>), IntErr<Never, I>> {
+        let mut current_numerator = numerator.clone();
+        let mut i = 0;
+        let mut trailing_zeroes = 0;
+        // this becomes Some(_) when we write the decimal point
+        let mut actual_sign = None;
+        let mut trailing_digits = String::new();
+        let b: BigUint = u64::from(base.base_as_u8()).into();
+        loop {
+            match next_digit(i, current_numerator.clone(), &b) {
+                Ok((next_n, digit)) => {
+                    current_numerator = next_n;
+                    if digit == 0.into() {
+                        trailing_zeroes += 1;
+                    } else {
+                        if actual_sign.is_none() {
+                            // always print leading minus because we have non-zero digits
+                            let (sign, formatted_int) = print_integer_part(false)?;
+                            actual_sign = Some(sign);
+                            trailing_digits.push_str(&formatted_int);
+                            trailing_digits.push('.');
+                        }
+                        for _ in 0..trailing_zeroes {
+                            trailing_digits.push('0');
+                        }
+                        trailing_zeroes = 0;
+                        trailing_digits.push_str(&digit.format(base, false, int)?.to_string());
+                    }
+                }
+                Err(NextDigitErr::Terminated) => {
+                    let sign = if let Some(actual_sign) = actual_sign {
+                        actual_sign
+                    } else {
+                        // if we reach this point we haven't printed any non-zero digits,
+                        // so we can skip the leading minus sign if the integer part is also zero
+                        let (sign, formatted_int) = print_integer_part(true)?;
+                        trailing_digits.push_str(&formatted_int);
+                        sign
+                    };
+                    // is the number exact, or did we need to truncate?
+                    let exact = current_numerator == 0.into();
+                    return Ok((sign, Exact::new(trailing_digits, exact)));
+                }
+                Err(NextDigitErr::Interrupt(i)) => {
+                    return Err(i);
+                }
+            }
+            i += 1;
         }
     }
 
@@ -866,6 +871,16 @@ impl BigRat {
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(self.add_internal(rhs, int)?)
+    }
+}
+enum NextDigitErr<I: Interrupt> {
+    Interrupt(IntErr<Never, I>),
+    Terminated,
+}
+
+impl<I: Interrupt> From<IntErr<Never, I>> for NextDigitErr<I> {
+    fn from(i: IntErr<Never, I>) -> Self {
+        Self::Interrupt(i)
     }
 }
 
