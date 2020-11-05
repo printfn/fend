@@ -15,6 +15,7 @@ mod lexer;
 mod num;
 mod parser;
 mod scope;
+mod units;
 mod value;
 
 pub use interrupt::Interrupt;
@@ -60,7 +61,7 @@ impl Context {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            scope: scope::Scope::new_default(&crate::interrupt::Never::default()).unwrap(),
+            scope: scope::Scope::new(),
         }
     }
 }

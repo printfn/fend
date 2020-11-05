@@ -1,7 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
-use crate::parser::ParseOptions;
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::borrow::Cow;
@@ -177,18 +176,17 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
 pub fn evaluate<'a, I: Interrupt>(
     expr: Expr2<'a>,
     scope: &mut Scope,
-    options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     macro_rules! eval {
         ($e:expr) => {
-            evaluate($e, scope, options, int)
+            evaluate($e, scope, int)
         };
     }
     test_int(int)?;
     Ok(match expr {
         Expr2::<'a>::Num(n) => Value::Num(n),
-        Expr2::<'a>::Ident(ident) => resolve_identifier(ident, scope, options, int)?,
+        Expr2::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
         Expr2::<'a>::Parens(x) => eval!(*x)?,
         Expr2::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr2::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
@@ -215,7 +213,6 @@ pub fn evaluate<'a, I: Interrupt>(
                     Expr2::<'a>::UnaryMinus(b),
                     ApplyMulHandling::OnlyApply,
                     scope,
-                    options,
                     int,
                 )?,
                 _ => Err("Invalid operands for subtraction".to_string())?,
@@ -228,6 +225,9 @@ pub fn evaluate<'a, I: Interrupt>(
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
+        Expr2::<'a>::Apply(a, b) | Expr2::<'a>::ApplyMul(a, b) => {
+            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?
+        }
         Expr2::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
@@ -259,11 +259,8 @@ pub fn evaluate<'a, I: Interrupt>(
                 scope,
             )?
         }
-        Expr2::<'a>::Apply(a, b) | Expr2::<'a>::ApplyMul(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?
-        }
         Expr2::<'a>::ApplyFunctionCall(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, options, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
         }
         Expr2::<'a>::As(a, b) => match eval!(*b)? {
             Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
@@ -287,19 +284,17 @@ pub fn evaluate<'a, I: Interrupt>(
     })
 }
 
-fn eval<I: Interrupt>(
+pub fn eval<I: Interrupt>(
     input: &'static str,
     scope: &mut Scope,
     int: &I,
 ) -> Result<Value, IntErr<Never, I>> {
-    let options = crate::parser::ParseOptions::default();
-    crate::eval::evaluate_to_value(input, options, scope, int).map_err(crate::err::IntErr::unwrap)
+    crate::eval::evaluate_to_value(input, scope, int).map_err(crate::err::IntErr::unwrap)
 }
 
-fn resolve_identifier<I: Interrupt>(
+pub fn resolve_identifier<I: Interrupt>(
     ident: &str,
     scope: &mut Scope,
-    options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
     match scope.get(ident, int) {
@@ -309,23 +304,6 @@ fn resolve_identifier<I: Interrupt>(
         Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
             return Err(IntErr::Error(err.to_string()))
         }
-    }
-    if options.gnu_compatible {
-        return Ok(match ident {
-            "pi" => Value::Num(Number::pi()),
-            "exp" => eval("x: approx. 2.718281828459045235^x", scope, int)?,
-            "sqrt" => eval("x: x^(1/2)", scope, int)?,
-            "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
-            "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
-            "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
-            // sin and cos are only needed for tan
-            "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
-            "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
-            "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
-            "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
-            "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
-            _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
-        });
     }
     Ok(match ident {
         "pi" | "π" => Value::Num(Number::pi()),
@@ -368,6 +346,6 @@ fn resolve_identifier<I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
-        _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
+        _ => return crate::units::query_unit(ident, int),
     })
 }
