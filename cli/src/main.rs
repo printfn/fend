@@ -17,6 +17,7 @@ enum EvalResult {
     Ok,
     Err,
     NoInput,
+    Interrupt,
 }
 fn eval_and_print_res(
     line: &str,
@@ -41,7 +42,11 @@ fn eval_and_print_res(
         }
         Err(msg) => {
             eprintln!("Error: {}", msg);
-            EvalResult::Err
+            if msg == "Interrupted" {
+                EvalResult::Interrupt
+            } else {
+                EvalResult::Err
+            }
         }
     }
 }
@@ -111,6 +116,12 @@ fn repl_loop() -> i32 {
                         EvalResult::Err => {
                             last_command_success = false;
                         }
+                        EvalResult::Interrupt => {
+                            // don't exit on Ctrl+C after an interrupt, but if we do exit return
+                            // an error code
+                            last_command_success = false;
+                            initial_run = false;
+                        }
                     }
                 }
             },
@@ -162,7 +173,7 @@ fn main() {
                 false,
             ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
-                EvalResult::Err => 1,
+                EvalResult::Err | EvalResult::Interrupt => 1,
             },
         )
     } else {
