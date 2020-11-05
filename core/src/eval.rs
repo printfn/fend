@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     ast,
     err::{IntErr, Interrupt},
@@ -8,7 +10,7 @@ use crate::{
 
 pub fn evaluate_to_value<'a, I: Interrupt>(
     input: &'a str,
-    scope: &mut Scope,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     let lex = lexer::lex(input, int);
@@ -29,9 +31,9 @@ pub fn evaluate_to_value<'a, I: Interrupt>(
     Ok(result)
 }
 
-pub fn evaluate_to_string<I: Interrupt>(
-    mut input: &str,
-    scope: &mut Scope,
+pub fn evaluate_to_string<'a, I: Interrupt>(
+    mut input: &'a str,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
     let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {

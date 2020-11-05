@@ -4,10 +4,10 @@ use crate::interrupt::test_int;
 use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
 use crate::num::{Base, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::Neg;
+use std::{borrow::Cow, sync::Arc};
 
 use super::Exact;
 
@@ -296,7 +296,7 @@ impl UnitValue {
 
     fn convert_angle_to_rad<I: Interrupt>(
         self,
-        scope: &mut Scope,
+        scope: Option<Arc<Scope>>,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let radians = ast::resolve_identifier("radians", scope, int)?.expect_num()?;
@@ -313,7 +313,11 @@ impl UnitValue {
         }
     }
 
-    pub fn sin<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn sin<I: Interrupt>(
+        self,
+        scope: Option<Arc<Scope>>,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
             rad.apply_fn_exact(Complex::sin, false, int)?
                 .convert_to(Self::unitless(), int)
@@ -322,7 +326,11 @@ impl UnitValue {
         }
     }
 
-    pub fn cos<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn cos<I: Interrupt>(
+        self,
+        scope: Option<Arc<Scope>>,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
             rad.apply_fn_exact(Complex::cos, false, int)?
                 .convert_to(Self::unitless(), int)
@@ -331,7 +339,11 @@ impl UnitValue {
         }
     }
 
-    pub fn tan<I: Interrupt>(self, scope: &mut Scope, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn tan<I: Interrupt>(
+        self,
+        scope: Option<Arc<Scope>>,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
             rad.apply_fn_exact(Complex::tan, false, int)?
                 .convert_to(Self::unitless(), int)

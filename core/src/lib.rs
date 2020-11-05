@@ -46,9 +46,7 @@ impl FendResult {
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
 #[derive(Clone)]
-pub struct Context {
-    scope: scope::Scope,
-}
+pub struct Context {}
 
 impl Default for Context {
     fn default() -> Self {
@@ -61,9 +59,7 @@ impl Context {
     /// only be done once if possible.
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            scope: scope::Scope::new(),
-        }
+        Self {}
     }
 }
 
@@ -89,7 +85,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
 /// This may be due to parser or runtime errors.
 pub fn evaluate_with_interrupt(
     input: &str,
-    context: &mut Context,
+    _context: &mut Context,
     int: &impl Interrupt,
 ) -> Result<FendResult, String> {
     if input.is_empty() {
@@ -99,7 +95,7 @@ pub fn evaluate_with_interrupt(
             other_info: vec![],
         });
     }
-    let result = match eval::evaluate_to_string(input, &mut context.scope, int) {
+    let result = match eval::evaluate_to_string(input, None, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
         Err(err::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),

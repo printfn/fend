@@ -4,7 +4,7 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 #[derive(Clone, Debug)]
 pub enum Expr {
@@ -176,12 +176,12 @@ fn should_compute_inverse(rhs: &Expr2) -> bool {
 #[allow(clippy::too_many_lines)]
 pub fn evaluate<'a, I: Interrupt>(
     expr: Expr2<'a>,
-    scope: &mut Scope,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     macro_rules! eval {
         ($e:expr) => {
-            evaluate($e, scope, int)
+            evaluate($e, scope.clone(), int)
         };
     }
     test_int(int)?;
@@ -285,21 +285,23 @@ pub fn evaluate<'a, I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr2::<'a>::Fn(a, b) => Value::Fn(a, b, scope.clone()),
+        Expr2::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
     })
 }
 
 pub fn resolve_identifier<'a, I: Interrupt>(
     ident: &'a str,
-    scope: &mut Scope,
+    scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
-    match scope.get(ident, int) {
-        Ok(val) => return Ok(val),
-        Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
-        Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
-        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
-            return Err(IntErr::Error(err.to_string()))
+    if let Some(scope) = scope.clone() {
+        match scope.get(ident, int) {
+            Ok(val) => return Ok(val),
+            Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
+            Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
+            Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
+                return Err(IntErr::Error(err.to_string()))
+            }
         }
     }
     Ok(match ident {

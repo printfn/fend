@@ -1,7 +1,7 @@
 use crate::err::{IntErr, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
-use crate::scope::{GetIdentError, Scope};
+use crate::scope::GetIdentError;
 use crate::value::Value;
 
 #[cfg(feature = "gpl")]
@@ -62,7 +62,7 @@ fn expr_unit<I: Interrupt>(
     let (alias, definition) = definition
         .strip_prefix('=')
         .map_or((false, definition), |remaining| (true, remaining));
-    let mut num = evaluate_to_value(definition, &mut Scope::new(), int)?.expect_num()?;
+    let mut num = evaluate_to_value(definition, None, int)?.expect_num()?;
     if !alias && rule != PrefixRule::LongPrefix {
         num = Number::create_unit_value_from_value(&num, singular.into(), plural.into(), int)?;
     }
