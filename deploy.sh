@@ -35,8 +35,8 @@ manualstep "Bump version number in these places:
 fend-core TOML,
 fend-core docs attr,
 fend-core get_version(),
-fend TOML,
-fend TOML version requirement for fend-core"
+fend cli TOML,
+fend cli TOML version requirement for fend-core"
 echo "Building and running tests..."
 touch core/src/lib.rs
 cargo clippy --workspace --all-targets --all-features
@@ -61,10 +61,10 @@ confirm "cargo publish for fend-core"
 (cd core && cargo publish)
 echo "Sleeping for 30 seconds to let crates.io update"
 sleep 30
-echo "'cargo publish --dry-run'"
-cargo publish --dry-run
+echo "'i(cd cli && cargo publish --dry-run)'"
+(cd cli && cargo publish --dry-run)
 confirm "cargo publish for fend"
-cargo publish
+(cd cli && cargo publish)
 confirm "Tag and push tag to GitHub"
 git tag "v$VERSION"
 git push --tags
@@ -77,3 +77,4 @@ Changes in this version:
 * ..."
 manualstep "Update manual (including changelog): https://github.com/printfn/fend/wiki"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"
+
