@@ -120,7 +120,7 @@ impl<'a> From<Expr> for Expr2<'a> {
     }
 }
 
-impl Expr {
+impl<'a> Expr2<'a> {
     pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
@@ -154,16 +154,16 @@ impl Expr {
 }
 
 /// returns true if rhs is '-1' or '(-1)'
-fn should_compute_inverse(rhs: &Expr) -> bool {
-    if let Expr::UnaryMinus(inner) = &*rhs {
-        if let Expr::Num(n) = &**inner {
+fn should_compute_inverse(rhs: &Expr2) -> bool {
+    if let Expr2::UnaryMinus(inner) = &*rhs {
+        if let Expr2::Num(n) = &**inner {
             if n.is_unitless_one() {
                 return true;
             }
         }
-    } else if let Expr::Parens(inner) = &*rhs {
-        if let Expr::UnaryMinus(inner2) = &**inner {
-            if let Expr::Num(n) = &**inner2 {
+    } else if let Expr2::Parens(inner) = &*rhs {
+        if let Expr2::UnaryMinus(inner2) = &**inner {
+            if let Expr2::Num(n) = &**inner2 {
                 if n.is_unitless_one() {
                     return true;
                 }
@@ -238,7 +238,7 @@ pub fn evaluate<'a, I: Interrupt>(
         )?,
         Expr2::<'a>::Pow(a, b) => {
             let lhs = eval!(*a)?;
-            if should_compute_inverse(&(*b.clone()).into()) {
+            if should_compute_inverse(&*b.clone()) {
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => {

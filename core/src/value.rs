@@ -256,7 +256,7 @@ impl Value {
             Self::Sf => FormattedValue::Str("sf"),
             Self::Base(b) => FormattedValue::Base(b.base_as_u8()),
             Self::Fn(name, expr, _scope) => {
-                let expr_str = expr.format(int)?;
+                let expr_str = Expr2::from((&**expr).clone()).format(int)?;
                 let res = if name.contains('.') {
                     format!("{}:{}", name, expr_str)
                 } else {
