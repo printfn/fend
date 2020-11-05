@@ -168,14 +168,14 @@ fn parse_power<'a>(
 
 fn parse_apply_cont<'a>(
     input: &'a [Token],
-    lhs: Expr<'a>,
+    lhs: &Expr<'a>,
     options: ParseOptions,
 ) -> ParseResult<'a> {
     let (rhs, input) = parse_power(input, false, options)?;
     // This should never be called in GNU-compatible mode
     assert!(!options.gnu_compatible);
     Ok((
-        match (&lhs, &rhs) {
+        match (lhs, &rhs) {
             (Expr::Num(_), Expr::Num(_))
             | (Expr::UnaryMinus(_), Expr::Num(_))
             | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
@@ -204,14 +204,14 @@ fn parse_apply_cont<'a>(
 #[allow(clippy::option_if_let_else)]
 fn parse_mixed_fraction<'a>(
     input: &'a [Token],
-    lhs: Expr<'a>,
+    lhs: &Expr<'a>,
     options: ParseOptions,
 ) -> ParseResult<'a> {
-    let (positive, lhs, other_factor) = match &lhs {
-        Expr::Num(_) => (true, &lhs, None),
+    let (positive, lhs, other_factor) = match lhs {
+        Expr::Num(_) => (true, lhs, None),
         Expr::UnaryMinus(x) => {
             if let Expr::Num(_) = &**x {
-                (false, &lhs, None)
+                (false, lhs, None)
             } else {
                 return Err(ParseError::InvalidMixedFraction);
             }
@@ -266,10 +266,7 @@ fn parse_inner_apply<'a>(input: &'a [Token], options: ParseOptions) -> ParseResu
     Ok((res, input))
 }
 
-fn parse_multiplication_cont<'a>(
-    input: &'a [Token],
-    options: ParseOptions,
-) -> ParseResult<'a> {
+fn parse_multiplication_cont<'a>(input: &'a [Token], options: ParseOptions) -> ParseResult<'a> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
     let (b, input) = parse_inner_apply(input, options)?;
     Ok((b, input))
@@ -293,10 +290,10 @@ fn parse_multiplicative<'a>(input: &'a [Token], options: ParseOptions) -> ParseR
         } else if options.gnu_compatible {
             // apply can't be parsed here if we're GNU compatible
             break;
-        } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, res.clone(), options) {
+        } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res, options) {
             res = new_res;
             input = remaining;
-        } else if let Ok((new_res, remaining)) = parse_apply_cont(input, res.clone(), options) {
+        } else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res, options) {
             res = new_res;
             input = remaining;
         } else {

@@ -30,7 +30,7 @@ const UNITS_DB: &str = include_str!("builtin.units");
 impl UnitValue {
     #[allow(clippy::too_many_lines)]
     pub fn create_initial_units<I: Interrupt>(int: &I) -> Result<Scope, IntErr<String, I>> {
-        let mut scope = Scope::new_empty();
+        let mut scope = Scope::new_empty_with_capacity(3500);
         Self::parse_units(UNITS_DB, &mut scope, int)?;
         Ok(scope)
     }
@@ -392,7 +392,13 @@ impl UnitValue {
         scope: &mut Scope,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        Ok(self.convert_to(scope.get("radians", int)?.expect_num()?, int)?)
+        Ok(self.convert_to(
+            scope
+                .get("radians", int)
+                .map_err(IntErr::into_string)?
+                .expect_num()?,
+            int,
+        )?)
     }
 
     fn unitless() -> Self {
@@ -530,8 +536,13 @@ impl UnitValue {
                     unit_string.push(' ');
                 }
                 let plural = last_component_plural && i == pluralised_idx;
+                let exp_format = if self.format == FormattingStyle::Auto {
+                    FormattingStyle::Exact
+                } else {
+                    self.format
+                };
                 let formatted_exp =
-                    unit_exponent.format(self.base, self.format, plural, invert, int)?;
+                    unit_exponent.format(self.base, exp_format, plural, invert, int)?;
                 unit_string.push_str(formatted_exp.value.to_string().as_str());
                 exact = exact && formatted_exp.exact;
             }

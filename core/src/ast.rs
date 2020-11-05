@@ -2,13 +2,14 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::parser::ParseOptions;
-use crate::scope::Scope;
+use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
+use std::borrow::Cow;
 
 #[derive(Clone, Debug)]
 pub enum Expr {
     Num(Number),
-    Ident(String),
+    Ident(Cow<'static, str>),
     Parens(Box<Expr>),
     UnaryMinus(Box<Expr>),
     UnaryPlus(Box<Expr>),
@@ -28,7 +29,7 @@ pub enum Expr {
     ApplyMul(Box<Expr>, Box<Expr>),
 
     As(Box<Expr>, Box<Expr>),
-    Fn(String, Box<Expr>),
+    Fn(Cow<'static, str>, Box<Expr>),
 }
 
 #[derive(Clone, Debug)]
@@ -59,7 +60,7 @@ pub enum Expr2<'a> {
 
 impl<'a> From<Box<Expr2<'a>>> for Box<Expr> {
     fn from(expr: Box<Expr2<'a>>) -> Self {
-        Box::new(Expr::from(*expr))
+        Self::new(Expr::from(*expr))
     }
 }
 
@@ -67,7 +68,7 @@ impl<'a> From<Expr2<'a>> for Expr {
     fn from(expr: Expr2<'a>) -> Self {
         match expr {
             Expr2::<'a>::Num(n) => Self::Num(n),
-            Expr2::<'a>::Ident(ident) => Self::Ident(ident.to_string()),
+            Expr2::<'a>::Ident(ident) => Self::Ident(ident.to_string().into()),
             Expr2::<'a>::Parens(x) => Self::Parens(x.into()),
             Expr2::<'a>::UnaryMinus(x) => Self::UnaryMinus(x.into()),
             Expr2::<'a>::UnaryPlus(x) => Self::UnaryPlus(x.into()),
@@ -83,14 +84,14 @@ impl<'a> From<Expr2<'a>> for Expr {
             Expr2::<'a>::ApplyFunctionCall(a, b) => Self::ApplyFunctionCall(a.into(), b.into()),
             Expr2::<'a>::ApplyMul(a, b) => Self::ApplyMul(a.into(), b.into()),
             Expr2::<'a>::As(a, b) => Self::As(a.into(), b.into()),
-            Expr2::<'a>::Fn(a, b) => Self::Fn(a.to_string(), b.into()),
+            Expr2::<'a>::Fn(a, b) => Self::Fn(a.to_string().into(), b.into()),
         }
     }
 }
 
 impl<'a> From<Box<Expr>> for Box<Expr2<'a>> {
     fn from(expr: Box<Expr>) -> Self {
-        Box::new(Expr2::<'a>::from(*expr))
+        Self::new(Expr2::<'a>::from(*expr))
     }
 }
 
@@ -98,7 +99,7 @@ impl<'a> From<Expr> for Expr2<'a> {
     fn from(expr: Expr) -> Self {
         match expr {
             Expr::Num(n) => Self::Num(n),
-            Expr::Ident(ident) => Self::Ident(Box::leak(Box::new(ident)).as_str()),
+            Expr::Ident(ident) => Self::Ident(Box::leak(Box::new(ident.to_owned()))),
             Expr::Parens(x) => Self::Parens(x.into()),
             Expr::UnaryMinus(x) => Self::UnaryMinus(x.into()),
             Expr::UnaryPlus(x) => Self::UnaryPlus(x.into()),
@@ -114,7 +115,7 @@ impl<'a> From<Expr> for Expr2<'a> {
             Expr::ApplyFunctionCall(a, b) => Self::ApplyFunctionCall(a.into(), b.into()),
             Expr::ApplyMul(a, b) => Self::ApplyMul(a.into(), b.into()),
             Expr::As(a, b) => Self::As(a.into(), b.into()),
-            Expr::Fn(a, b) => Self::Fn(Box::leak(Box::new(a)).as_str(), b.into()),
+            Expr::Fn(a, b) => Self::Fn(Box::leak(Box::new(a.to_owned())), b.into()),
         }
     }
 }
@@ -172,6 +173,7 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
     false
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn evaluate<'a, I: Interrupt>(
     expr: Expr2<'a>,
     scope: &mut Scope,
@@ -205,13 +207,20 @@ pub fn evaluate<'a, I: Interrupt>(
             |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr2::<'a>::Sub(a, b) => eval!(*a)?.handle_two_nums(
-            eval!(*b)?,
-            |a, b| a.sub(b, int),
-            |a| |f| Expr::Sub(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Sub(Box::new(Expr::Num(a)), f),
-            scope,
-        )?,
+        Expr2::<'a>::Sub(a, b) => {
+            let a = eval!(*a)?;
+            match a {
+                Value::Num(a) => Value::Num(a.sub(eval!(*b)?.expect_num()?, int)?),
+                f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => f.apply(
+                    Expr2::<'a>::UnaryMinus(b),
+                    ApplyMulHandling::OnlyApply,
+                    scope,
+                    options,
+                    int,
+                )?,
+                _ => Err("Invalid operands for subtraction".to_string())?,
+            }
+        }
         Expr2::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),
@@ -219,9 +228,6 @@ pub fn evaluate<'a, I: Interrupt>(
             |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr2::<'a>::ApplyMul(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?
-        }
         Expr2::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
@@ -253,7 +259,9 @@ pub fn evaluate<'a, I: Interrupt>(
                 scope,
             )?
         }
-        Expr2::<'a>::Apply(a, b) => eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?,
+        Expr2::<'a>::Apply(a, b) | Expr2::<'a>::ApplyMul(a, b) => {
+            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, options, int)?
+        }
         Expr2::<'a>::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, options, int)?
         }
@@ -271,7 +279,11 @@ pub fn evaluate<'a, I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr2::<'a>::Fn(a, b) => Value::Fn(a.to_string(), (*b).into(), scope.clone()),
+        Expr2::<'a>::Fn(a, b) => Value::Fn(
+            a.to_string().into(),
+            Box::new(Expr::from(*b)),
+            scope.clone(),
+        ),
     })
 }
 
@@ -290,6 +302,14 @@ fn resolve_identifier<I: Interrupt>(
     options: ParseOptions,
     int: &I,
 ) -> Result<Value, IntErr<String, I>> {
+    match scope.get(ident, int) {
+        Ok(val) => return Ok(val),
+        Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
+        Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
+        Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
+            return Err(IntErr::Error(err.to_string()))
+        }
+    }
     if options.gnu_compatible {
         return Ok(match ident {
             "pi" => Value::Num(Number::pi()),
@@ -304,7 +324,7 @@ fn resolve_identifier<I: Interrupt>(
             "tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
             "asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
             "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
-            _ => scope.get(ident.to_string(), int)?,
+            _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
         });
     }
     Ok(match ident {
@@ -330,14 +350,15 @@ fn resolve_identifier<I: Interrupt>(
         "asinh" => Value::BuiltInFunction(BuiltInFunction::Asinh),
         "acosh" => Value::BuiltInFunction(BuiltInFunction::Acosh),
         "atanh" => Value::BuiltInFunction(BuiltInFunction::Atanh),
+        "cis" => eval("θ => cos θ + i (sin θ)", scope, int)?,
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
         "exp" => eval("x: e^x", scope, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
-        "exact" => Value::Format(FormattingStyle::ExactFloatWithFractionFallback),
-        "fraction" | "frac" => Value::Format(FormattingStyle::ExactFraction),
+        "exact" => Value::Format(FormattingStyle::Exact),
+        "fraction" | "frac" => Value::Format(FormattingStyle::ImproperFraction),
         "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
@@ -347,6 +368,6 @@ fn resolve_identifier<I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
-        _ => scope.get(ident.to_string(), int)?,
+        _ => return Err(GetIdentError::IdentifierNotFound(ident).to_string())?,
     })
 }

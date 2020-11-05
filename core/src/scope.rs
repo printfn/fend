@@ -6,6 +6,7 @@ use crate::{
 };
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 enum ScopeValue {
@@ -16,6 +17,21 @@ enum ScopeValue {
     LazyExpr(String),
     //Variable(Value),
     LazyVariable(Expr, Scope, ParseOptions),
+}
+
+#[derive(Debug)]
+pub enum GetIdentError<'a> {
+    EvalError(String),
+    IdentifierNotFound(&'a str),
+}
+
+impl<'a> fmt::Display for GetIdentError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::EvalError(s) => write!(f, "{}", s),
+            Self::IdentifierNotFound(s) => write!(f, "Unknown identifier '{}'", s),
+        }
+    }
 }
 
 impl ScopeValue {
@@ -54,7 +70,8 @@ impl ScopeValue {
             }
             //Self::Variable(val) => Ok(val.clone()),
             Self::LazyVariable(expr, scope, options) => {
-                let value = crate::ast::evaluate(expr.clone().into(), &mut scope.clone(), *options, int)?;
+                let value =
+                    crate::ast::evaluate(expr.clone().into(), &mut scope.clone(), *options, int)?;
                 Ok(value)
             }
         }
@@ -73,9 +90,9 @@ impl Scope {
         crate::num::Number::create_initial_units(int)
     }
 
-    pub fn new_empty() -> Self {
+    pub fn new_empty_with_capacity(capacity: usize) -> Self {
         Self {
-            hashmap: HashMap::new(),
+            hashmap: HashMap::with_capacity(capacity),
             prefixes: vec![],
             inner: None,
         }
@@ -129,7 +146,7 @@ impl Scope {
     }
 
     pub fn create_nested_scope(self) -> Self {
-        let mut res = Self::new_empty();
+        let mut res = Self::new_empty_with_capacity(10);
         res.inner = Some(Box::from(self));
         res
     }
@@ -180,22 +197,23 @@ impl Scope {
         Err(format!("Unknown identifier '{}'", ident))?
     }
 
-    pub fn get<I: Interrupt>(
+    pub fn get<'a, I: Interrupt>(
         &mut self,
-        ident: impl Into<Cow<'static, str>>,
+        ident: &'a str,
         int: &I,
-    ) -> Result<Value, IntErr<String, I>> {
-        let ident = ident.into();
-        let potential_value = self.hashmap.get(ident.as_ref()).cloned();
+    ) -> Result<Value, IntErr<GetIdentError<'a>, I>> {
+        let potential_value = self.hashmap.get(ident).cloned();
         if let Some(value) = potential_value {
-            let value = value.eval(ident, self, int)?;
+            let value = value
+                .eval(ident.to_string().into(), self, int)
+                .map_err(|e| e.map(GetIdentError::EvalError))?;
             Ok(value)
         } else if let Ok(val) = self.test_prefixes(ident.as_ref(), int) {
             Ok(val)
         } else if let Some(inner) = &mut self.inner {
             inner.get(ident, int)
         } else {
-            Err(format!("Unknown identifier '{}'", ident))?
+            Err(GetIdentError::IdentifierNotFound(ident))?
         }
     }
 }
@@ -206,7 +224,7 @@ mod tests {
     use crate::err::NeverInterrupt;
 
     #[test]
-    fn test_alepint() -> Result<(), IntErr<String, NeverInterrupt>> {
+    fn test_alepint() -> Result<(), IntErr<GetIdentError<'static>, NeverInterrupt>> {
         let int = NeverInterrupt::default();
         let mut scope = Scope::new_default(&int).unwrap();
         scope.get("beergallon", &int)?;
@@ -240,7 +258,7 @@ mod tests {
         for key in hashmap.keys() {
             //let mut scope = scope.clone();
             //eprintln!("Testing {}", key);
-            match scope.get(key.clone(), &int) {
+            match scope.get(key.as_ref(), &int) {
                 Ok(_) => success += 1,
                 Err(msg) => {
                     let error_message = match msg {

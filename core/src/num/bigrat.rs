@@ -349,28 +349,19 @@ impl BigRat {
         num: &BigUint,
         base: Base,
         sign: Sign,
-        imag: bool,
+        term: &'static str,
         use_parens_if_product: bool,
         int: &I,
     ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
-        let ty = if imag && !base.has_prefix() && num == &1.into() {
-            FormattedBigRatType::Integer(None, "i", false)
+        let ty = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
+            FormattedBigRatType::Integer(None, false, term, false)
         } else {
             FormattedBigRatType::Integer(
                 Some(num.format(base, true, int)?),
-                if imag {
-                    if base.base_as_u8() >= 19 {
-                        // at this point 'i' could be a digit,
-                        // so we need a space to disambiguate
-                        " i"
-                    } else {
-                        "i"
-                    }
-                } else {
-                    ""
-                },
+                !term.is_empty() && base.base_as_u8() > 10,
+                term,
                 // print surrounding parentheses if the number is imaginary
-                use_parens_if_product && imag,
+                use_parens_if_product && !term.is_empty(),
             )
         };
         Ok(Exact::new(FormattedBigRat { sign, ty }, true))
@@ -381,7 +372,7 @@ impl BigRat {
         den: &BigUint,
         base: Base,
         sign: Sign,
-        imag: bool,
+        term: &'static str,
         mixed: bool,
         use_parens: bool,
         int: &I,
@@ -402,19 +393,21 @@ impl BigRat {
         Ok(Exact::new(
             FormattedBigRat {
                 sign,
-                ty: if imag && !actually_mixed && !base.has_prefix() && num == 1.into() {
-                    FormattedBigRatType::Fraction(pref, None, "i", formatted_den, "", use_parens)
+                ty: if !term.is_empty() && !actually_mixed && !base.has_prefix() && num == 1.into()
+                {
+                    FormattedBigRatType::Fraction(
+                        pref,
+                        None,
+                        false,
+                        term,
+                        formatted_den,
+                        "",
+                        use_parens,
+                    )
                 } else {
                     let formatted_num = num.format(base, true, int)?;
-                    let i_suffix = if imag {
-                        if base.base_as_u8() >= 19 || actually_mixed {
-                            " i"
-                        } else {
-                            "i"
-                        }
-                    } else {
-                        ""
-                    };
+                    let i_suffix = term;
+                    let space = !term.is_empty() && (base.base_as_u8() >= 19 || actually_mixed);
                     let (isuf1, isuf2) = if actually_mixed {
                         ("", i_suffix)
                     } else {
@@ -423,6 +416,7 @@ impl BigRat {
                     FormattedBigRatType::Fraction(
                         pref,
                         Some(formatted_num),
+                        space,
                         isuf1,
                         formatted_den,
                         isuf2,
@@ -441,7 +435,7 @@ impl BigRat {
         &self,
         base: Base,
         style: FormattingStyle,
-        imag: bool,
+        term: &'static str,
         use_parens_if_fraction: bool,
         int: &I,
     ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
@@ -459,7 +453,7 @@ impl BigRat {
                 &x.num,
                 base,
                 sign,
-                imag,
+                term,
                 use_parens_if_fraction,
                 int,
             )?);
@@ -474,18 +468,17 @@ impl BigRat {
             }
             Some(t) => Ok(t),
         };
-        let fraction = style == FormattingStyle::ExactFraction
+        let fraction = style == FormattingStyle::ImproperFraction
             || style == FormattingStyle::MixedFraction
-            || (style == FormattingStyle::ExactFloatWithFractionFallback && !terminating()?);
+            || (style == FormattingStyle::Exact && !terminating()?);
         if fraction {
-            let mixed = style == FormattingStyle::MixedFraction
-                || style == FormattingStyle::ExactFloatWithFractionFallback;
+            let mixed = style == FormattingStyle::MixedFraction || style == FormattingStyle::Exact;
             return Ok(Self::format_as_fraction(
                 &x.num,
                 &x.den,
                 base,
                 sign,
-                imag,
+                term,
                 mixed,
                 use_parens_if_fraction,
                 int,
@@ -494,7 +487,8 @@ impl BigRat {
 
         // not a fraction, will be printed as a decimal
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
-            || (style == FormattingStyle::ExactFloatWithFractionFallback && terminating()?)
+            || (style == FormattingStyle::Auto && terminating()?)
+            || style == FormattingStyle::Exact
         {
             None
         } else if let FormattingStyle::DecimalPlaces(n) = style {
@@ -526,11 +520,13 @@ impl BigRat {
             print_integer_part,
             int,
         )?;
-        if imag {
-            if base.base_as_u8() >= 19 {
+        if !term.is_empty() {
+            if base.base_as_u8() > 10 {
+                // maybe change this to avoid adding a space depending
+                // on the first char of term?
                 formatted_trailing_digits.value.push(' ');
             }
-            formatted_trailing_digits.value.push('i');
+            formatted_trailing_digits.value.push_str(term);
         }
         Ok(Exact::new(
             FormattedBigRat {
@@ -901,19 +897,23 @@ impl From<BigUint> for BigRat {
 
 #[derive(Debug)]
 enum FormattedBigRatType {
-    // optional int, followed by a string (empty, "i" or " i"), followed by
-    // whether to wrap the number in parentheses
-    Integer(Option<FormattedBigUint>, &'static str, bool),
+    // optional int,
+    // bool whether to add a space before the string
+    // followed by a string (empty, "i" or "pi"),
+    // followed by whether to wrap the number in parentheses
+    Integer(Option<FormattedBigUint>, bool, &'static str, bool),
     // optional int (for mixed fractions)
     // optional int (numerator)
-    // string (empty, "i" or " i")
+    // space
+    // string (empty, "i", "pi", etc.)
     // '/'
     // int (denominator)
-    // string (empty or " i") (used for mixed fractions, e.g. 1 2/3 i)
+    // string (empty, "i", "pi", etc.) (used for mixed fractions, e.g. 1 2/3 i)
     // bool (whether or not to wrap the fraction in parentheses)
     Fraction(
         Option<FormattedBigUint>,
         Option<FormattedBigUint>,
+        bool,
         &'static str,
         FormattedBigUint,
         &'static str,
@@ -937,19 +937,22 @@ impl fmt::Display for FormattedBigRat {
             write!(f, "-")?;
         }
         match &self.ty {
-            FormattedBigRatType::Integer(int, isuf, use_parens) => {
+            FormattedBigRatType::Integer(int, space, isuf, use_parens) => {
                 if *use_parens {
                     write!(f, "(")?;
                 }
                 if let Some(int) = int {
                     write!(f, "{}", int)?;
                 }
+                if *space {
+                    write!(f, " ")?;
+                }
                 write!(f, "{}", isuf)?;
                 if *use_parens {
                     write!(f, ")")?;
                 }
             }
-            FormattedBigRatType::Fraction(integer, num, isuf, den, isuf2, use_parens) => {
+            FormattedBigRatType::Fraction(integer, num, space, isuf, den, isuf2, use_parens) => {
                 if *use_parens {
                     write!(f, "(")?;
                 }
@@ -959,7 +962,14 @@ impl fmt::Display for FormattedBigRat {
                 if let Some(num) = num {
                     write!(f, "{}", num)?;
                 }
-                write!(f, "{}/{}{}", isuf, den, isuf2)?;
+                if *space && !isuf.is_empty() {
+                    write!(f, " ")?;
+                }
+                write!(f, "{}/{}", isuf, den)?;
+                if *space && !isuf2.is_empty() {
+                    write!(f, " ")?;
+                }
+                write!(f, "{}", isuf2)?;
                 if *use_parens {
                     write!(f, ")")?;
                 }

@@ -2,6 +2,7 @@ use crate::ast::{Expr, Expr2};
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::{parser::ParseOptions, scope::Scope};
+use std::borrow::Cow;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -12,7 +13,7 @@ pub enum Value {
     Dp,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(String, Expr, Scope),
+    Fn(Cow<'static, str>, Box<Expr>, Scope),
     Version,
 }
 
@@ -45,11 +46,11 @@ impl BuiltInFunction {
         scope: &mut Scope,
     ) -> Value {
         Value::Fn(
-            "x".to_string(),
-            lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                Box::new(Expr::Ident(self.to_string())),
-                Box::new(Expr::Ident("x".to_string())),
-            ))),
+            "x".into(),
+            Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
+                Box::new(Expr::Ident(self.as_str().into())),
+                Box::new(Expr::Ident("x".into())),
+            )))),
             scope.clone(),
         )
     }
@@ -124,7 +125,7 @@ impl Value {
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
             Self::Num(n) => Self::Num(eval_fn(n)?),
-            Self::Fn(param, expr, scope) => Self::Fn(param, lazy_fn(Box::new(expr)), scope),
+            Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
             Self::BuiltInFunction(f) => f.wrap_with_expr(lazy_fn, scope),
             _ => return Err("Expected a number".to_string())?,
         })
@@ -147,10 +148,10 @@ impl Value {
             (Self::BuiltInFunction(f), Self::Num(a)) => f.wrap_with_expr(lazy_fn_lhs(a), scope),
             (Self::Num(a), Self::BuiltInFunction(f)) => f.wrap_with_expr(lazy_fn_rhs(a), scope),
             (Self::Fn(param, expr, scope), Self::Num(a)) => {
-                Self::Fn(param, lazy_fn_lhs(a)(Box::new(expr)), scope)
+                Self::Fn(param, Box::new(lazy_fn_lhs(a)(expr)), scope)
             }
             (Self::Num(a), Self::Fn(param, expr, scope)) => {
-                Self::Fn(param, lazy_fn_rhs(a)(Box::new(expr)), scope)
+                Self::Fn(param, Box::new(lazy_fn_rhs(a)(expr)), scope)
             }
             _ => return Err("Expected a number".to_string())?,
         })
@@ -221,8 +222,13 @@ impl Value {
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
-                new_scope.insert_variable(param.into(), other.into(), scope.clone(), options);
-                return Ok(crate::ast::evaluate(Expr2::from(expr), &mut new_scope, options, int)?);
+                new_scope.insert_variable(param, Expr::from(other), scope.clone(), options);
+                return Ok(crate::ast::evaluate(
+                    Expr2::from(*expr),
+                    &mut new_scope,
+                    options,
+                    int,
+                )?);
             }
             _ => {
                 return Err(format!(
