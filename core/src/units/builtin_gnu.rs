@@ -358,7 +358,7 @@ pub fn query_unit<'a>(
                               // duration of 9192631770 periods of the radiation corresponding
                               // to the cesium-133 transition.
 
-("c"         "s@=299792458 m/s") // speed of light in vacuum (exact)
+("c"         "=299792458 m/s") // speed of light in vacuum (exact)
 
 ("m"                  "s@!") // The metre, symbol m, is the SI unit of length.  It is
 ("meter"/"meters"     "l@m") // defined by taking the fixed numerical value of the speed

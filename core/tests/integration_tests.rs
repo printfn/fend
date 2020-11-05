@@ -1150,3 +1150,5 @@ test_eval!(sf_10, "1234567.55645 to 10 sf", "approx. 1234567.556");
 test_eval!(sf_11, "1234567.55645 to 11 sf", "approx. 1234567.5564");
 test_eval!(sf_12, "1234567.55645 to 12 sf", "1234567.55645");
 test_eval!(sf_13, "1234567.55645 to 13 sf", "1234567.55645");
+
+expect_error!(no_prefixes_for_speed_of_light, "mc");
