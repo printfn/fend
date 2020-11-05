@@ -285,7 +285,7 @@ pub fn evaluate<'a, I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr2::<'a>::Fn(a, b) => Value::Fn(a.to_string().into(), b, scope.clone()),
+        Expr2::<'a>::Fn(a, b) => Value::Fn(a, b, scope.clone()),
     })
 }
 

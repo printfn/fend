@@ -2,7 +2,6 @@ use crate::ast::{Expr, Expr2};
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::scope::Scope;
-use std::borrow::Cow;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -14,7 +13,7 @@ pub enum Value<'a> {
     Sf,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(Cow<'static, str>, Box<Expr2<'a>>, Scope),
+    Fn(&'a str, Box<Expr2<'a>>, Scope),
     Version,
 }
 
@@ -47,7 +46,7 @@ impl BuiltInFunction {
         scope: &mut Scope,
     ) -> Value<'static> {
         Value::Fn(
-            "x".into(),
+            "x",
             Box::new(lazy_fn(Box::new(Expr2::ApplyFunctionCall(
                 Box::new(Expr2::Ident(self.as_str())),
                 Box::new(Expr2::Ident("x")),
@@ -231,7 +230,7 @@ impl<'a> Value<'a> {
             }
             Self::Fn(param, expr, custom_scope) => {
                 let mut new_scope = custom_scope.create_nested_scope();
-                new_scope.insert_variable(param, Expr::from(other), scope.clone());
+                new_scope.insert_variable(param.to_string().into(), Expr::from(other), scope.clone());
                 return Ok(crate::ast::evaluate(*expr, &mut new_scope, int)?);
             }
             _ => {
