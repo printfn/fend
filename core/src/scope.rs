@@ -52,7 +52,6 @@ impl ScopeValue {
 #[derive(Default, Debug, Clone)]
 pub struct Scope {
     hashmap: HashMap<Cow<'static, str>, ScopeValue>,
-    prefixes: Vec<(Cow<'static, str>, ScopeValue)>,
     inner: Option<Box<Scope>>,
 }
 
