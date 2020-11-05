@@ -5,7 +5,7 @@
 
 version: 2
 updates:
-  # this automatically includes fend-core in "/core" as well
+  # this automatically includes fend-core in "/core" and all other referenced crates as well
   - package-ecosystem: "cargo" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:

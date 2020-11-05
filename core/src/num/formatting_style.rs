@@ -12,6 +12,8 @@ pub enum FormattingStyle {
     ExactFloat,
     /// Print with the given number of decimal places
     DecimalPlaces(usize),
+    /// Print with the given number of significant figures (not including any leading zeroes)
+    SignificantFigures(usize),
     /// If exact and no recurring digits: ExactFloat, if complex/imag: MixedFraction,
     /// otherwise: DecimalPlaces(10)
     Auto,
@@ -34,6 +36,7 @@ impl fmt::Display for FormattingStyle {
             Self::ExactFloat => write!(f, "float"),
             Self::Exact => write!(f, "exact"),
             Self::DecimalPlaces(d) => write!(f, "{} dp", d),
+            Self::SignificantFigures(s) => write!(f, "{} sf", s),
             Self::Auto => write!(f, "auto"),
         }
     }

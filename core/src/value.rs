@@ -11,6 +11,7 @@ pub enum Value {
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
     Dp,
+    Sf,
     Base(Base),
     // user-defined function with a named parameter
     Fn(Cow<'static, str>, Box<Expr>, Scope),
@@ -171,6 +172,15 @@ impl Value {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
                 }
+                if let Self::Sf = other {
+                    let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
+                    if num == 0 {
+                        return Err(
+                            "Cannot format a number with zero significant figures.".to_string()
+                        )?;
+                    }
+                    return Ok(Self::Format(FormattingStyle::SignificantFigures(num)));
+                }
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
                     return Err(format!(
@@ -243,6 +253,7 @@ impl Value {
             Self::BuiltInFunction(name) => FormattedValue::Str(name.as_str()),
             Self::Format(fmt) => FormattedValue::String(fmt.to_string()),
             Self::Dp => FormattedValue::Str("dp"),
+            Self::Sf => FormattedValue::Str("sf"),
             Self::Base(b) => FormattedValue::Base(b.base_as_u8()),
             Self::Fn(name, expr, _scope) => {
                 let expr_str = expr.format(int)?;

@@ -57,21 +57,14 @@ jobs:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
         if-no-files-found: error
-
-  web:
-    runs-on: "ubuntu-latest"
-    timeout-minutes: 10
-    steps:
-    - uses: actions/checkout@v2
-    - name: Update Rust
-      run: rustup update
-    - name: Compile fend-wasm
+    - name: Build fend-wasm
+      if: ${{ matrix.platform == 'ubuntu-latest' }}
       run: |
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
         rm web/pkg/.gitignore
     - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
+      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         personal_token: ${{ secrets.MY_TOKEN }}
