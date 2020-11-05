@@ -4,7 +4,7 @@ use std::{convert::TryInto, fmt};
 
 #[derive(Clone)]
 pub enum Token<'a> {
-    Num(Number),
+    Num(Number<'a>),
     Ident(&'a str),
     Symbol(Symbol),
 }
@@ -287,7 +287,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     base: Base,
     allow_zero: bool,
     int: &I,
-) -> Result<(Number, &'a str), IntErr<String, I>> {
+) -> Result<(Number<'a>, &'a str), IntErr<String, I>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let base_as_u64 = u64::from(base.base_as_u8());
@@ -398,7 +398,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 fn parse_number<'a, I: Interrupt>(
     input: &'a str,
     int: &I,
-) -> Result<(Number, &'a str), IntErr<String, I>> {
+) -> Result<(Number<'a>, &'a str), IntErr<String, I>> {
     let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
     let (res, input) = parse_basic_number(input, base, true, int)?;
     Ok((res, input))

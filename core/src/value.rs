@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Value<'a> {
-    Num(Number),
+    Num(Number<'a>),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
     Dp,
@@ -43,7 +43,7 @@ pub enum BuiltInFunction {
 impl BuiltInFunction {
     pub fn wrap_with_expr<'a>(
         self,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
         scope: Option<Arc<Scope<'a>>>,
     ) -> Value<'a> {
         Value::Fn(
@@ -111,7 +111,7 @@ pub enum ApplyMulHandling {
 }
 
 impl<'a> Value<'a> {
-    pub fn expect_num<I: Interrupt>(self) -> Result<Number, IntErr<String, I>> {
+    pub fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat),
             _ => Err("Expected a number".to_string())?,
@@ -120,8 +120,8 @@ impl<'a> Value<'a> {
 
     pub fn handle_num<I: Interrupt>(
         self,
-        eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<String, I>>,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        eval_fn: impl FnOnce(Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
+        lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
         scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
@@ -134,14 +134,14 @@ impl<'a> Value<'a> {
 
     pub fn handle_two_nums<
         I: Interrupt,
-        F1: FnOnce(Box<Expr>) -> Expr,
-        F2: FnOnce(Box<Expr>) -> Expr,
+        F1: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
+        F2: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
     >(
         self,
         rhs: Self,
-        eval_fn: impl FnOnce(Number, Number) -> Result<Number, IntErr<String, I>>,
-        lazy_fn_lhs: impl FnOnce(Number) -> F1,
-        lazy_fn_rhs: impl FnOnce(Number) -> F2,
+        eval_fn: impl FnOnce(Number<'a>, Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
+        lazy_fn_lhs: impl FnOnce(Number<'a>) -> F1,
+        lazy_fn_rhs: impl FnOnce(Number<'a>) -> F2,
         scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match (self, rhs) {

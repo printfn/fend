@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub enum Expr<'a> {
-    Num(Number),
+    Num(Number<'a>),
     Ident(&'a str),
     Parens(Box<Expr<'a>>),
     UnaryMinus(Box<Expr<'a>>),
@@ -101,17 +101,15 @@ pub fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Num(n) => Value::Num(n),
         Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
         Expr::<'a>::Parens(x) => eval!(*x)?,
-        Expr::<'a>::UnaryMinus(x) => {
-            eval!(*x)?.handle_num(|x| Ok(-x), |x| Expr::UnaryMinus(x), scope)?
-        }
-        Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, |x| Expr::UnaryPlus(x), scope)?,
+        Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
+        Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
         Expr::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
             |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
-            |x| Expr::UnaryDiv(x),
+            Expr::UnaryDiv,
             scope,
         )?,
         Expr::<'a>::Factorial(x) => {
-            eval!(*x)?.handle_num(|x| x.factorial(int), |x| Expr::Factorial(x), scope)?
+            eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
         Expr::<'a>::Add(a, b) | Expr::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,

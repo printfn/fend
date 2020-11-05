@@ -64,7 +64,7 @@ fn expr_unit<I: Interrupt>(
         .map_or((false, definition), |remaining| (true, remaining));
     let mut num = evaluate_to_value(definition, None, int)?.expect_num()?;
     if !alias && rule != PrefixRule::LongPrefix {
-        num = Number::create_unit_value_from_value(&num, singular.into(), plural.into(), int)?;
+        num = Number::create_unit_value_from_value(&num, "", singular, plural, int)?;
     }
     Ok(UnitDef {
         value: Value::Num(num),
@@ -80,12 +80,9 @@ fn construct_prefixed_unit<I: Interrupt>(
     int: &I,
 ) -> Result<Value<'static>, IntErr<String, I>> {
     let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
-    let unit = Number::create_unit_value_from_value(
-        &product,
-        format!("{}{}", a.singular, b.singular).into(),
-        format!("{}{}", a.plural, b.plural).into(),
-        int,
-    )?;
+    assert_eq!(a.singular, a.plural);
+    let unit =
+        Number::create_unit_value_from_value(&product, a.singular, b.singular, b.plural, int)?;
     Ok(Value::Num(unit))
 }
 
