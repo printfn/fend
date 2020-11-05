@@ -24,8 +24,7 @@ pub fn evaluate_to_value<'a, I: Interrupt>(
     for _ in 0..missing_open_parens {
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
-    let slice = Box::leak(Box::new(tokens));
-    let parsed = parser::parse_tokens(slice).map_err(|e| e.to_string())?;
+    let parsed = parser::parse_tokens(&tokens).map_err(|e| e.to_string())?;
     let result = ast::evaluate(parsed, scope, int)?;
     Ok(result)
 }
