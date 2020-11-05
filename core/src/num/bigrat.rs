@@ -521,7 +521,7 @@ impl BigRat {
             den: 1.into(),
         };
         let remaining_fraction = x.clone().add(-integer_as_rational, int)?;
-        let mut formatted_trailing_digits = Self::format_trailing_digits(
+        let formatted_trailing_digits = Self::format_trailing_digits(
             base,
             &remaining_fraction.num,
             &remaining_fraction.den,
@@ -530,18 +530,14 @@ impl BigRat {
             print_integer_part,
             int,
         )?;
-        if !term.is_empty() {
-            if base.base_as_u8() > 10 {
-                // maybe change this to avoid adding a space depending
-                // on the first char of term?
-                formatted_trailing_digits.value.push(' ');
-            }
-            formatted_trailing_digits.value.push_str(term);
-        }
         Ok(Exact::new(
             FormattedBigRat {
                 sign: Sign::Positive,
-                ty: FormattedBigRatType::Decimal(formatted_trailing_digits.value),
+                ty: FormattedBigRatType::Decimal(
+                    formatted_trailing_digits.value,
+                    base.base_as_u8() > 10,
+                    term,
+                ),
             },
             formatted_trailing_digits.exact,
         ))
@@ -932,7 +928,9 @@ enum FormattedBigRatType {
         bool,
     ),
     // string representation of decimal number (may or may not contain recurring digits)
-    Decimal(String),
+    // space
+    // string (empty, "i", "pi", etc.)
+    Decimal(String, bool, &'static str),
 }
 
 #[must_use]
@@ -986,7 +984,13 @@ impl fmt::Display for FormattedBigRat {
                     write!(f, ")")?;
                 }
             }
-            FormattedBigRatType::Decimal(s) => write!(f, "{}", s)?,
+            FormattedBigRatType::Decimal(s, space, term) => {
+                write!(f, "{}", s)?;
+                if *space {
+                    write!(f, " ")?;
+                }
+                write!(f, "{}", term)?;
+            }
         }
         Ok(())
     }
