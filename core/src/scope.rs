@@ -1,6 +1,6 @@
 use crate::value::Value;
 use crate::{
-    ast::Expr2,
+    ast::Expr,
     err::{IntErr, Interrupt},
 };
 use std::fmt;
@@ -9,7 +9,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 enum ScopeValue<'a> {
     //Variable(Value),
-    LazyVariable(Expr2<'a>, Option<Arc<Scope<'a>>>),
+    LazyVariable(Expr<'a>, Option<Arc<Scope<'a>>>),
 }
 
 #[derive(Debug)]
@@ -66,7 +66,7 @@ impl<'a> Scope<'a> {
 
     pub fn with_variable(
         name: &'a str,
-        expr: Expr2<'a>,
+        expr: Expr<'a>,
         scope: Option<Arc<Self>>,
         inner: Option<Arc<Self>>,
     ) -> Self {

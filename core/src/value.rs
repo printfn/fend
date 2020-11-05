@@ -1,4 +1,4 @@
-use crate::ast::Expr2;
+use crate::ast::Expr;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::scope::Scope;
@@ -14,7 +14,7 @@ pub enum Value<'a> {
     Sf,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(&'a str, Box<Expr2<'a>>, Option<Arc<Scope<'a>>>),
+    Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Version,
 }
 
@@ -43,14 +43,14 @@ pub enum BuiltInFunction {
 impl BuiltInFunction {
     pub fn wrap_with_expr<'a>(
         self,
-        lazy_fn: impl FnOnce(Box<Expr2>) -> Expr2,
+        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
         scope: Option<Arc<Scope<'a>>>,
     ) -> Value<'a> {
         Value::Fn(
             "x",
-            Box::new(lazy_fn(Box::new(Expr2::ApplyFunctionCall(
-                Box::new(Expr2::Ident(self.as_str())),
-                Box::new(Expr2::Ident("x")),
+            Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
+                Box::new(Expr::Ident(self.as_str())),
+                Box::new(Expr::Ident("x")),
             )))),
             scope,
         )
@@ -121,7 +121,7 @@ impl<'a> Value<'a> {
     pub fn handle_num<I: Interrupt>(
         self,
         eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<String, I>>,
-        lazy_fn: impl FnOnce(Box<Expr2>) -> Expr2,
+        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
         scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
@@ -134,8 +134,8 @@ impl<'a> Value<'a> {
 
     pub fn handle_two_nums<
         I: Interrupt,
-        F1: FnOnce(Box<Expr2>) -> Expr2,
-        F2: FnOnce(Box<Expr2>) -> Expr2,
+        F1: FnOnce(Box<Expr>) -> Expr,
+        F2: FnOnce(Box<Expr>) -> Expr,
     >(
         self,
         rhs: Self,
@@ -160,7 +160,7 @@ impl<'a> Value<'a> {
 
     pub fn apply<I: Interrupt>(
         self,
-        other: Expr2<'a>,
+        other: Expr<'a>,
         apply_mul_handling: ApplyMulHandling,
         scope: Option<Arc<Scope<'a>>>,
         int: &I,
@@ -191,7 +191,7 @@ impl<'a> Value<'a> {
                     let n2 = n.clone();
                     other.handle_num(
                         |x| n.mul(x, int).map_err(IntErr::into_string),
-                        |x| Expr2::Mul(Box::new(Expr2::Num(n2)), x),
+                        |x| Expr::Mul(Box::new(Expr::Num(n2)), x),
                         scope,
                     )?
                 }

@@ -4,123 +4,35 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use std::{borrow::Cow, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
-pub enum Expr {
-    Num(Number),
-    Ident(Cow<'static, str>),
-    Parens(Box<Expr>),
-    UnaryMinus(Box<Expr>),
-    UnaryPlus(Box<Expr>),
-    UnaryDiv(Box<Expr>),
-    Factorial(Box<Expr>),
-    Add(Box<Expr>, Box<Expr>),
-    ImplicitAdd(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
-    Div(Box<Expr>, Box<Expr>),
-    Pow(Box<Expr>, Box<Expr>),
-    // Call a function or multiply the expressions
-    Apply(Box<Expr>, Box<Expr>),
-    // Call a function, or throw an error if lhs is not a function
-    ApplyFunctionCall(Box<Expr>, Box<Expr>),
-    // Multiply the expressions
-    ApplyMul(Box<Expr>, Box<Expr>),
-
-    As(Box<Expr>, Box<Expr>),
-    Fn(Cow<'static, str>, Box<Expr>),
-}
-
-#[derive(Clone, Debug)]
-pub enum Expr2<'a> {
+pub enum Expr<'a> {
     Num(Number),
     Ident(&'a str),
-    Parens(Box<Expr2<'a>>),
-    UnaryMinus(Box<Expr2<'a>>),
-    UnaryPlus(Box<Expr2<'a>>),
-    UnaryDiv(Box<Expr2<'a>>),
-    Factorial(Box<Expr2<'a>>),
-    Add(Box<Expr2<'a>>, Box<Expr2<'a>>),
-    ImplicitAdd(Box<Expr2<'a>>, Box<Expr2<'a>>),
-    Sub(Box<Expr2<'a>>, Box<Expr2<'a>>),
-    Mul(Box<Expr2<'a>>, Box<Expr2<'a>>),
-    Div(Box<Expr2<'a>>, Box<Expr2<'a>>),
-    Pow(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Parens(Box<Expr<'a>>),
+    UnaryMinus(Box<Expr<'a>>),
+    UnaryPlus(Box<Expr<'a>>),
+    UnaryDiv(Box<Expr<'a>>),
+    Factorial(Box<Expr<'a>>),
+    Add(Box<Expr<'a>>, Box<Expr<'a>>),
+    ImplicitAdd(Box<Expr<'a>>, Box<Expr<'a>>),
+    Sub(Box<Expr<'a>>, Box<Expr<'a>>),
+    Mul(Box<Expr<'a>>, Box<Expr<'a>>),
+    Div(Box<Expr<'a>>, Box<Expr<'a>>),
+    Pow(Box<Expr<'a>>, Box<Expr<'a>>),
     // Call a function or multiply the expressions
-    Apply(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    Apply(Box<Expr<'a>>, Box<Expr<'a>>),
     // Call a function, or throw an error if lhs is not a function
-    ApplyFunctionCall(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    ApplyFunctionCall(Box<Expr<'a>>, Box<Expr<'a>>),
     // Multiply the expressions
-    ApplyMul(Box<Expr2<'a>>, Box<Expr2<'a>>),
+    ApplyMul(Box<Expr<'a>>, Box<Expr<'a>>),
 
-    As(Box<Expr2<'a>>, Box<Expr2<'a>>),
-    Fn(&'a str, Box<Expr2<'a>>),
+    As(Box<Expr<'a>>, Box<Expr<'a>>),
+    Fn(&'a str, Box<Expr<'a>>),
 }
 
-impl<'a> From<Box<Expr2<'a>>> for Box<Expr> {
-    fn from(expr: Box<Expr2<'a>>) -> Self {
-        Self::new(Expr::from(*expr))
-    }
-}
-
-impl<'a> From<Expr2<'a>> for Expr {
-    fn from(expr: Expr2<'a>) -> Self {
-        match expr {
-            Expr2::<'a>::Num(n) => Self::Num(n),
-            Expr2::<'a>::Ident(ident) => Self::Ident(ident.to_string().into()),
-            Expr2::<'a>::Parens(x) => Self::Parens(x.into()),
-            Expr2::<'a>::UnaryMinus(x) => Self::UnaryMinus(x.into()),
-            Expr2::<'a>::UnaryPlus(x) => Self::UnaryPlus(x.into()),
-            Expr2::<'a>::UnaryDiv(x) => Self::UnaryDiv(x.into()),
-            Expr2::<'a>::Factorial(x) => Self::Factorial(x.into()),
-            Expr2::<'a>::Add(a, b) => Self::Add(a.into(), b.into()),
-            Expr2::<'a>::ImplicitAdd(a, b) => Self::ImplicitAdd(a.into(), b.into()),
-            Expr2::<'a>::Sub(a, b) => Self::Sub(a.into(), b.into()),
-            Expr2::<'a>::Mul(a, b) => Self::Mul(a.into(), b.into()),
-            Expr2::<'a>::Div(a, b) => Self::Div(a.into(), b.into()),
-            Expr2::<'a>::Pow(a, b) => Self::Pow(a.into(), b.into()),
-            Expr2::<'a>::Apply(a, b) => Self::Apply(a.into(), b.into()),
-            Expr2::<'a>::ApplyFunctionCall(a, b) => Self::ApplyFunctionCall(a.into(), b.into()),
-            Expr2::<'a>::ApplyMul(a, b) => Self::ApplyMul(a.into(), b.into()),
-            Expr2::<'a>::As(a, b) => Self::As(a.into(), b.into()),
-            Expr2::<'a>::Fn(a, b) => Self::Fn(a.to_string().into(), b.into()),
-        }
-    }
-}
-
-impl<'a> From<Box<Expr>> for Box<Expr2<'a>> {
-    fn from(expr: Box<Expr>) -> Self {
-        Self::new(Expr2::<'a>::from(*expr))
-    }
-}
-
-impl<'a> From<Expr> for Expr2<'a> {
-    fn from(expr: Expr) -> Self {
-        match expr {
-            Expr::Num(n) => Self::Num(n),
-            Expr::Ident(ident) => Self::Ident(Box::leak(Box::new(ident.to_owned()))),
-            Expr::Parens(x) => Self::Parens(x.into()),
-            Expr::UnaryMinus(x) => Self::UnaryMinus(x.into()),
-            Expr::UnaryPlus(x) => Self::UnaryPlus(x.into()),
-            Expr::UnaryDiv(x) => Self::UnaryDiv(x.into()),
-            Expr::Factorial(x) => Self::Factorial(x.into()),
-            Expr::Add(a, b) => Self::Add(a.into(), b.into()),
-            Expr::ImplicitAdd(a, b) => Self::ImplicitAdd(a.into(), b.into()),
-            Expr::Sub(a, b) => Self::Sub(a.into(), b.into()),
-            Expr::Mul(a, b) => Self::Mul(a.into(), b.into()),
-            Expr::Div(a, b) => Self::Div(a.into(), b.into()),
-            Expr::Pow(a, b) => Self::Pow(a.into(), b.into()),
-            Expr::Apply(a, b) => Self::Apply(a.into(), b.into()),
-            Expr::ApplyFunctionCall(a, b) => Self::ApplyFunctionCall(a.into(), b.into()),
-            Expr::ApplyMul(a, b) => Self::ApplyMul(a.into(), b.into()),
-            Expr::As(a, b) => Self::As(a.into(), b.into()),
-            Expr::Fn(a, b) => Self::Fn(Box::leak(Box::new(a.to_owned())), b.into()),
-        }
-    }
-}
-
-impl<'a> Expr2<'a> {
+impl<'a> Expr<'a> {
     pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
@@ -154,16 +66,16 @@ impl<'a> Expr2<'a> {
 }
 
 /// returns true if rhs is '-1' or '(-1)'
-fn should_compute_inverse(rhs: &Expr2) -> bool {
-    if let Expr2::UnaryMinus(inner) = &*rhs {
-        if let Expr2::Num(n) = &**inner {
+fn should_compute_inverse(rhs: &Expr) -> bool {
+    if let Expr::UnaryMinus(inner) = &*rhs {
+        if let Expr::Num(n) = &**inner {
             if n.is_unitless_one() {
                 return true;
             }
         }
-    } else if let Expr2::Parens(inner) = &*rhs {
-        if let Expr2::UnaryMinus(inner2) = &**inner {
-            if let Expr2::Num(n) = &**inner2 {
+    } else if let Expr::Parens(inner) = &*rhs {
+        if let Expr::UnaryMinus(inner2) = &**inner {
+            if let Expr::Num(n) = &**inner2 {
                 if n.is_unitless_one() {
                     return true;
                 }
@@ -175,7 +87,7 @@ fn should_compute_inverse(rhs: &Expr2) -> bool {
 
 #[allow(clippy::too_many_lines)]
 pub fn evaluate<'a, I: Interrupt>(
-    expr: Expr2<'a>,
+    expr: Expr<'a>,
     scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
@@ -186,34 +98,34 @@ pub fn evaluate<'a, I: Interrupt>(
     }
     test_int(int)?;
     Ok(match expr {
-        Expr2::<'a>::Num(n) => Value::Num(n),
-        Expr2::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
-        Expr2::<'a>::Parens(x) => eval!(*x)?,
-        Expr2::<'a>::UnaryMinus(x) => {
-            eval!(*x)?.handle_num(|x| Ok(-x), |x| Expr2::UnaryMinus(x), scope)?
+        Expr::<'a>::Num(n) => Value::Num(n),
+        Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
+        Expr::<'a>::Parens(x) => eval!(*x)?,
+        Expr::<'a>::UnaryMinus(x) => {
+            eval!(*x)?.handle_num(|x| Ok(-x), |x| Expr::UnaryMinus(x), scope)?
         }
-        Expr2::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, |x| Expr2::UnaryPlus(x), scope)?,
-        Expr2::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
+        Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, |x| Expr::UnaryPlus(x), scope)?,
+        Expr::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
             |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
-            |x| Expr2::UnaryDiv(x),
+            |x| Expr::UnaryDiv(x),
             scope,
         )?,
-        Expr2::<'a>::Factorial(x) => {
-            eval!(*x)?.handle_num(|x| x.factorial(int), |x| Expr2::Factorial(x), scope)?
+        Expr::<'a>::Factorial(x) => {
+            eval!(*x)?.handle_num(|x| x.factorial(int), |x| Expr::Factorial(x), scope)?
         }
-        Expr2::<'a>::Add(a, b) | Expr2::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::<'a>::Add(a, b) | Expr::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.add(b, int),
-            |a| |f| Expr2::Add(f, Box::new(Expr2::Num(a))),
-            |a| |f| Expr2::Add(Box::new(Expr2::Num(a)), f),
+            |a| |f| Expr::Add(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr2::<'a>::Sub(a, b) => {
+        Expr::<'a>::Sub(a, b) => {
             let a = eval!(*a)?;
             match a {
                 Value::Num(a) => Value::Num(a.sub(eval!(*b)?.expect_num()?, int)?),
                 f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => f.apply(
-                    Expr2::<'a>::UnaryMinus(b),
+                    Expr::<'a>::UnaryMinus(b),
                     ApplyMulHandling::OnlyApply,
                     scope,
                     int,
@@ -221,24 +133,24 @@ pub fn evaluate<'a, I: Interrupt>(
                 _ => Err("Invalid operands for subtraction".to_string())?,
             }
         }
-        Expr2::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),
-            |a| |f| Expr2::Mul(f, Box::new(Expr2::Num(a))),
-            |a| |f| Expr2::Mul(Box::new(Expr2::Num(a)), f),
+            |a| |f| Expr::Mul(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr2::<'a>::Apply(a, b) | Expr2::<'a>::ApplyMul(a, b) => {
+        Expr::<'a>::Apply(a, b) | Expr::<'a>::ApplyMul(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?
         }
-        Expr2::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
-            |a| |f| Expr2::Div(f, Box::new(Expr2::Num(a))),
-            |a| |f| Expr2::Div(Box::new(Expr2::Num(a)), f),
+            |a| |f| Expr::Div(f, Box::new(Expr::Num(a))),
+            |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
             scope,
         )?,
-        Expr2::<'a>::Pow(a, b) => {
+        Expr::<'a>::Pow(a, b) => {
             let lhs = eval!(*a)?;
             if should_compute_inverse(&*b.clone()) {
                 let result = match &lhs {
@@ -257,15 +169,15 @@ pub fn evaluate<'a, I: Interrupt>(
             lhs.handle_two_nums(
                 eval!(*b)?,
                 |a, b| a.pow(b, int),
-                |a| |f| Expr2::Pow(f, Box::new(Expr2::Num(a))),
-                |a| |f| Expr2::Pow(Box::new(Expr2::Num(a)), f),
+                |a| |f| Expr::Pow(f, Box::new(Expr::Num(a))),
+                |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
                 scope,
             )?
         }
-        Expr2::<'a>::ApplyFunctionCall(a, b) => {
+        Expr::<'a>::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
         }
-        Expr2::<'a>::As(a, b) => match eval!(*b)? {
+        Expr::<'a>::As(a, b) => match eval!(*b)? {
             Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
             Value::Format(fmt) => Value::Num(eval!(*a)?.expect_num()?.with_format(fmt)),
             Value::Dp => {
@@ -285,7 +197,7 @@ pub fn evaluate<'a, I: Interrupt>(
                 return Err("Unable to convert value to a function".to_string())?;
             }
         },
-        Expr2::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
+        Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
     })
 }
 

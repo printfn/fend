@@ -1,4 +1,4 @@
-use crate::ast::Expr2 as Expr;
+use crate::ast::Expr;
 use crate::lexer::{Symbol, Token};
 use std::fmt;
 
