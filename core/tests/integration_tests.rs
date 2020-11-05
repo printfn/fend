@@ -1133,3 +1133,5 @@ expect_error!(to_sf, "1 to sf");
 test_eval!(sf, "sf", "sf");
 test_eval!(one_sf, "1 sf", "1 sf");
 test_eval!(ten_sf, "10 sf", "10 sf");
+
+test_eval_simple!(one_over_sin, "1/sin", "\\x.(1/(sin x))");
