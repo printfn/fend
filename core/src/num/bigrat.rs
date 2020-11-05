@@ -493,6 +493,9 @@ impl BigRat {
             None
         } else if let FormattingStyle::DecimalPlaces(n) = style {
             Some(n)
+        } else if let FormattingStyle::SignificantFigures(n) = style {
+            // TODO: this is wrong, we need to implement significant figures correctly
+            Some(n)
         } else {
             Some(10)
         };

@@ -181,6 +181,12 @@ pub fn evaluate<I: Interrupt>(
                         .to_string(),
                 )?;
             }
+            Value::Sf => {
+                return Err(
+                    "You need to specify what number of significant figures to use, e.g. '10 sf'"
+                        .to_string(),
+                )?;
+            }
             Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
             Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
                 return Err("Unable to convert value to a function".to_string())?;
@@ -235,6 +241,7 @@ pub fn resolve_identifier<I: Interrupt>(
         "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
+        "sf" => Value::Sf,
         "base" => Value::BuiltInFunction(BuiltInFunction::Base),
         "dec" | "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),

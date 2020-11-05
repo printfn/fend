@@ -1127,3 +1127,9 @@ test_eval!(
 
 test_eval!(one_cent, "cent", "1 cent");
 test_eval!(two_cent, "2 cent", "2 cents");
+expect_error!(to_dp, "1 to dp");
+expect_error!(to_sf, "1 to sf");
+
+test_eval!(sf, "sf", "sf");
+test_eval!(one_sf, "1 sf", "1 sf");
+test_eval!(ten_sf, "10 sf", "10 sf");
