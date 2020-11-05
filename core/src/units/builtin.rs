@@ -1,10 +1,9 @@
-use super::expr_unit;
+use super::{expr_unit, UnitDef};
 use crate::err::{IntErr, Interrupt};
 use crate::scope::GetIdentError;
-use crate::value::Value;
 
 #[allow(clippy::too_many_lines)]
-pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<Value, IntErr<String, I>> {
+pub fn query_unit<I: Interrupt>(ident: &str, int: &I) -> Result<UnitDef, IntErr<String, I>> {
     macro_rules! define_units {
         (expr $name:literal $expr:literal) => {
             expr_unit($name, $name, $expr, int)
