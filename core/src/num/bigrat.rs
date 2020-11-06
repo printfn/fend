@@ -351,20 +351,25 @@ impl BigRat {
         sign: Sign,
         term: &'static str,
         use_parens_if_product: bool,
+        sf_limit: Option<usize>,
         int: &I,
     ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
-        let ty = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
-            FormattedBigRatType::Integer(None, false, term, false)
+        let (ty, exact) = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
+            (FormattedBigRatType::Integer(None, false, term, false), true)
         } else {
-            FormattedBigRatType::Integer(
-                Some(num.format(base, true, int)?),
-                !term.is_empty() && base.base_as_u8() > 10,
-                term,
-                // print surrounding parentheses if the number is imaginary
-                use_parens_if_product && !term.is_empty(),
+            let formatted_int = num.format(base, true, sf_limit, int)?;
+            (
+                FormattedBigRatType::Integer(
+                    Some(formatted_int.value),
+                    !term.is_empty() && base.base_as_u8() > 10,
+                    term,
+                    // print surrounding parentheses if the number is imaginary
+                    use_parens_if_product && !term.is_empty(),
+                ),
+                formatted_int.exact,
             )
         };
-        Ok(Exact::new(FormattedBigRat { sign, ty }, true))
+        Ok(Exact::new(FormattedBigRat { sign, ty }, exact))
     }
 
     fn format_as_fraction<I: Interrupt>(
@@ -376,54 +381,59 @@ impl BigRat {
         use_parens: bool,
         int: &I,
     ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
-        let formatted_den = self.den.format(base, true, int)?;
-        let (pref, num) = if mixed {
+        let formatted_den = self.den.format(base, true, None, int)?;
+        let (pref, num, prefix_exact) = if mixed {
             let (prefix, num) = self.num.divmod(&self.den, int).map_err(IntErr::unwrap)?;
             if prefix == 0.into() {
-                (None, num)
+                (None, num, true)
             } else {
-                (Some(prefix.format(base, true, int)?), num)
+                let formatted_prefix = prefix.format(base, true, None, int)?;
+                (Some(formatted_prefix.value), num, formatted_prefix.exact)
             }
         } else {
-            (None, self.num.clone())
+            (None, self.num.clone(), true)
         };
         // mixed fractions without a prefix aren't really mixed
         let actually_mixed = pref.is_some();
-        Ok(Exact::new(
-            FormattedBigRat {
-                sign,
-                ty: if !term.is_empty() && !actually_mixed && !base.has_prefix() && num == 1.into()
-                {
+        let (ty, num_exact) =
+            if !term.is_empty() && !actually_mixed && !base.has_prefix() && num == 1.into() {
+                (
                     FormattedBigRatType::Fraction(
                         pref,
                         None,
                         false,
                         term,
-                        formatted_den,
+                        formatted_den.value,
                         "",
                         use_parens,
-                    )
+                    ),
+                    true,
+                )
+            } else {
+                let formatted_num = num.format(base, true, None, int)?;
+                let i_suffix = term;
+                let space = !term.is_empty() && (base.base_as_u8() >= 19 || actually_mixed);
+                let (isuf1, isuf2) = if actually_mixed {
+                    ("", i_suffix)
                 } else {
-                    let formatted_num = num.format(base, true, int)?;
-                    let i_suffix = term;
-                    let space = !term.is_empty() && (base.base_as_u8() >= 19 || actually_mixed);
-                    let (isuf1, isuf2) = if actually_mixed {
-                        ("", i_suffix)
-                    } else {
-                        (i_suffix, "")
-                    };
+                    (i_suffix, "")
+                };
+                (
                     FormattedBigRatType::Fraction(
                         pref,
-                        Some(formatted_num),
+                        Some(formatted_num.value),
                         space,
                         isuf1,
-                        formatted_den,
+                        formatted_den.value,
                         isuf2,
                         use_parens,
-                    )
-                },
-            },
-            true,
+                    ),
+                    formatted_num.exact,
+                )
+            };
+        Ok(Exact::new(
+            FormattedBigRat { sign, ty },
+            formatted_den.exact && prefix_exact && num_exact,
         ))
     }
 
@@ -448,12 +458,18 @@ impl BigRat {
 
         // try as integer if possible
         if x.den == 1.into() {
+            let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
+                Some(sf)
+            } else {
+                None
+            };
             return Ok(Self::format_as_integer(
                 &x.num,
                 base,
                 sign,
                 term,
                 use_parens_if_fraction,
+                sf_limit,
                 int,
             )?);
         }
@@ -499,7 +515,12 @@ impl BigRat {
             .num
             .div(&self.den, int)
             .map_err(IntErr::unwrap)?;
-        let formatted_integer_part = integer_part.format(base, true, int)?;
+        let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
+            Some(sf)
+        } else {
+            None
+        };
+        let formatted_integer_part = integer_part.format(base, true, sf_limit, int)?;
 
         // not a fraction, will be printed as a decimal
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
@@ -510,7 +531,7 @@ impl BigRat {
         } else if let FormattingStyle::DecimalPlaces(n) = style {
             MaxDigitsToPrint::DecimalPlaces(n)
         } else if let FormattingStyle::SignificantFigures(sf) = style {
-            let num_digits_of_int_part = formatted_integer_part.num_digits();
+            let num_digits_of_int_part = formatted_integer_part.value.num_digits();
             let dp = if sf > num_digits_of_int_part {
                 // we want more significant figures than what was printed
                 // in the int component
@@ -542,7 +563,7 @@ impl BigRat {
                 } else {
                     Sign::Positive
                 };
-            Ok((sign, formatted_integer_part.to_string()))
+            Ok((sign, formatted_integer_part.value.to_string()))
         };
         let integer_as_rational = Self {
             sign: Sign::Positive,
@@ -568,7 +589,7 @@ impl BigRat {
                     term,
                 ),
             },
-            formatted_trailing_digits.exact,
+            formatted_integer_part.exact && formatted_trailing_digits.exact,
         ))
     }
 
@@ -606,7 +627,7 @@ impl BigRat {
             Ok((next_num, digit))
         };
         let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never, I>> {
-            let digit_str = digit.format(base, false, int)?.to_string();
+            let digit_str = digit.format(base, false, None, int)?.value.to_string();
             s.push_str(digit_str.as_str());
             Ok(s)
         };
@@ -690,7 +711,8 @@ impl BigRat {
                             trailing_digits.push('0');
                         }
                         trailing_zeroes = 0;
-                        trailing_digits.push_str(&digit.format(base, false, int)?.to_string());
+                        trailing_digits
+                            .push_str(&digit.format(base, false, None, int)?.value.to_string());
                         i += 1;
                     }
                 }

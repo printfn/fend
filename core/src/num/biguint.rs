@@ -364,68 +364,89 @@ impl BigUint {
         &self,
         base: Base,
         write_base_prefix: bool,
+        sf_limit: Option<usize>,
         int: &I,
-    ) -> Result<FormattedBigUint, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedBigUint>, IntErr<Never, I>> {
         let base_prefix = if write_base_prefix { Some(base) } else { None };
 
         if self.is_zero() {
-            return Ok(FormattedBigUint {
-                base: base_prefix,
-                ty: FormattedBigUintType::Zero,
-            });
+            return Ok(Exact::new(
+                FormattedBigUint {
+                    base: base_prefix,
+                    ty: FormattedBigUintType::Zero,
+                },
+                true,
+            ));
         }
 
         let mut num = self.clone();
-        Ok(if num.value_len() == 1 && base.base_as_u8() == 10 {
-            FormattedBigUint {
-                base: base_prefix,
-                ty: FormattedBigUintType::Simple(num.get(0)),
-            }
-        } else {
-            let base_as_u128: u128 = base.base_as_u8().into();
-            let mut divisor = base_as_u128;
-            let mut rounds = 1;
-            let mut num_zeroes = 0;
-            while divisor
-                < u128::MAX
-                    .checked_div(base_as_u128)
-                    .expect("Base appears to be 0")
-            {
-                divisor *= base_as_u128;
-                rounds += 1;
-            }
-            let mut output = String::with_capacity(rounds);
-            while !num.is_zero() {
-                test_int(int)?;
-                let divmod_res = num
-                    .divmod(
-                        &Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]),
-                        int,
-                    )
-                    .map_err(|e| e.expect("Division by zero is not allowed"))?;
-                let mut digit_group_value =
-                    u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
-                for _ in 0..rounds {
-                    let digit_value = digit_group_value % base_as_u128;
-                    digit_group_value /= base_as_u128;
-                    let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
-                    if ch == '0' {
-                        num_zeroes += 1;
-                    } else {
-                        for _ in 0..num_zeroes {
-                            output.push('0');
-                        }
-                        num_zeroes = 0;
-                        output.push(ch);
-                    }
+        Ok(
+            if num.value_len() == 1 && base.base_as_u8() == 10 && sf_limit.is_none() {
+                Exact::new(
+                    FormattedBigUint {
+                        base: base_prefix,
+                        ty: FormattedBigUintType::Simple(num.get(0)),
+                    },
+                    true,
+                )
+            } else {
+                let base_as_u128: u128 = base.base_as_u8().into();
+                let mut divisor = base_as_u128;
+                let mut rounds = 1;
+                // note that the string is reversed: this is the number of trailing zeroes while
+                // printing, but actually the number of leading zeroes in the final number
+                let mut num_trailing_zeroes = 0;
+                let mut num_leading_zeroes = 0;
+                let mut finished_counting_leading_zeroes = false;
+                while divisor
+                    < u128::MAX
+                        .checked_div(base_as_u128)
+                        .expect("Base appears to be 0")
+                {
+                    divisor *= base_as_u128;
+                    rounds += 1;
                 }
-                num = divmod_res.0;
-            }
-            FormattedBigUint {
-                base: base_prefix,
-                ty: FormattedBigUintType::Complex(output),
-            }
-        })
+                let mut output = String::with_capacity(rounds);
+                while !num.is_zero() {
+                    test_int(int)?;
+                    let divmod_res = num
+                        .divmod(
+                            &Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]),
+                            int,
+                        )
+                        .map_err(|e| e.expect("Division by zero is not allowed"))?;
+                    let mut digit_group_value =
+                        u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
+                    for _ in 0..rounds {
+                        let digit_value = digit_group_value % base_as_u128;
+                        digit_group_value /= base_as_u128;
+                        let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
+                        if ch == '0' {
+                            num_trailing_zeroes += 1;
+                        } else {
+                            for _ in 0..num_trailing_zeroes {
+                                output.push('0');
+                                if !finished_counting_leading_zeroes {
+                                    num_leading_zeroes += 1;
+                                }
+                            }
+                            finished_counting_leading_zeroes = true;
+                            num_trailing_zeroes = 0;
+                            output.push(ch);
+                        }
+                    }
+                    num = divmod_res.0;
+                }
+                let exact = sf_limit.map_or(true, |sf| sf >= output.len() - num_leading_zeroes);
+                Exact::new(
+                    FormattedBigUint {
+                        base: base_prefix,
+                        ty: FormattedBigUintType::Complex(output, sf_limit),
+                    },
+                    exact,
+                )
+            },
+        )
     }
 
     // Note: 0! = 1, 1! = 1
@@ -553,7 +574,7 @@ impl fmt::Debug for BigUint {
 enum FormattedBigUintType {
     Zero,
     Simple(u64),
-    Complex(String),
+    Complex(String, Option<usize>),
 }
 
 #[must_use]
@@ -571,9 +592,13 @@ impl fmt::Display for FormattedBigUint {
         match &self.ty {
             FormattedBigUintType::Zero => write!(f, "0")?,
             FormattedBigUintType::Simple(i) => write!(f, "{}", i)?,
-            FormattedBigUintType::Complex(s) => {
-                for ch in s.chars().rev() {
-                    write!(f, "{}", ch)?;
+            FormattedBigUintType::Complex(s, sf_limit) => {
+                for (i, ch) in s.chars().rev().enumerate() {
+                    if sf_limit.is_some() && i >= sf_limit.unwrap() {
+                        write!(f, "0")?;
+                    } else {
+                        write!(f, "{}", ch)?;
+                    }
                 }
             }
         }
@@ -586,7 +611,7 @@ impl FormattedBigUint {
         match &self.ty {
             FormattedBigUintType::Zero => 1,
             FormattedBigUintType::Simple(i) => i.to_string().len(),
-            FormattedBigUintType::Complex(s) => s.len(),
+            FormattedBigUintType::Complex(s, _) => s.len(),
         }
     }
 }

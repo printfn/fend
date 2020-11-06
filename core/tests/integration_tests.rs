@@ -1137,12 +1137,12 @@ test_eval!(ten_sf, "10 sf", "10 sf");
 test_eval_simple!(one_over_sin, "1/sin", "\\x.(1/(sin x))");
 
 expect_error!(zero_sf, "0 sf");
-test_eval!(sf_1, "1234567.55645 to 1 sf", "approx. 1234567");
-test_eval!(sf_2, "1234567.55645 to 2 sf", "approx. 1234567");
-test_eval!(sf_3, "1234567.55645 to 3 sf", "approx. 1234567");
-test_eval!(sf_4, "1234567.55645 to 4 sf", "approx. 1234567");
-test_eval!(sf_5, "1234567.55645 to 5 sf", "approx. 1234567");
-test_eval!(sf_6, "1234567.55645 to 6 sf", "approx. 1234567");
+test_eval!(sf_1, "1234567.55645 to 1 sf", "approx. 1000000");
+test_eval!(sf_2, "1234567.55645 to 2 sf", "approx. 1200000");
+test_eval!(sf_3, "1234567.55645 to 3 sf", "approx. 1230000");
+test_eval!(sf_4, "1234567.55645 to 4 sf", "approx. 1234000");
+test_eval!(sf_5, "1234567.55645 to 5 sf", "approx. 1234500");
+test_eval!(sf_6, "1234567.55645 to 6 sf", "approx. 1234560");
 test_eval!(sf_7, "1234567.55645 to 7 sf", "approx. 1234567");
 test_eval!(sf_8, "1234567.55645 to 8 sf", "approx. 1234567.5");
 test_eval!(sf_9, "1234567.55645 to 9 sf", "approx. 1234567.55");
@@ -1181,3 +1181,33 @@ test_eval_simple!(
 expect_error!(no_prefixes_for_speed_of_light, "mc");
 
 test_eval!(quarter, "quarter", "0.25");
+
+test_eval_simple!(million_pi_1_sf, "1e6 pi to 1 sf", "approx. 3000000");
+test_eval_simple!(million_pi_2_sf, "1e6 pi to 2 sf", "approx. 3100000");
+test_eval_simple!(million_pi_3_sf, "1e6 pi to 3 sf", "approx. 3140000");
+test_eval_simple!(million_pi_4_sf, "1e6 pi to 4 sf", "approx. 3141000");
+test_eval_simple!(million_pi_5_sf, "1e6 pi to 5 sf", "approx. 3141500");
+test_eval_simple!(million_pi_6_sf, "1e6 pi to 6 sf", "approx. 3141590");
+test_eval_simple!(million_pi_7_sf, "1e6 pi to 7 sf", "approx. 3141592");
+test_eval_simple!(million_pi_8_sf, "1e6 pi to 8 sf", "approx. 3141592.6");
+test_eval_simple!(million_pi_9_sf, "1e6 pi to 9 sf", "approx. 3141592.65");
+test_eval_simple!(million_pi_10_sf, "1e6 pi to 10 sf", "approx. 3141592.653");
+
+test_eval_simple!(large_integer_to_1_sf, "1234567 to 1 sf", "approx. 1000000");
+test_eval_simple!(large_integer_to_2_sf, "1234567 to 2 sf", "approx. 1200000");
+test_eval_simple!(large_integer_to_3_sf, "1234567 to 3 sf", "approx. 1230000");
+test_eval_simple!(large_integer_to_4_sf, "1234567 to 4 sf", "approx. 1234000");
+test_eval_simple!(large_integer_to_5_sf, "1234567 to 5 sf", "approx. 1234500");
+test_eval_simple!(large_integer_to_6_sf, "1234567 to 6 sf", "approx. 1234560");
+test_eval_simple!(large_integer_to_7_sf, "1234567 to 7 sf", "1234567");
+test_eval_simple!(large_integer_to_8_sf, "1234567 to 8 sf", "1234567");
+test_eval_simple!(large_integer_to_9_sf, "1234567 to 9 sf", "1234567");
+test_eval_simple!(large_integer_to_10_sf, "1234567 to 10 sf", "1234567");
+
+test_eval_simple!(trailing_zeroes_sf_1, "1234560 to 5sf", "approx. 1234500");
+test_eval_simple!(trailing_zeroes_sf_2, "1234560 to 6sf", "1234560");
+test_eval_simple!(trailing_zeroes_sf_3, "1234560 to 7sf", "1234560");
+test_eval_simple!(trailing_zeroes_sf_4, "1234560.1 to 6sf", "approx. 1234560");
+test_eval_simple!(trailing_zeroes_sf_5, "12345601 to 6sf", "approx. 12345600");
+test_eval_simple!(trailing_zeroes_sf_6, "12345601 to 7sf", "approx. 12345600");
+test_eval_simple!(trailing_zeroes_sf_7, "12345601 to 8sf", "12345601");
