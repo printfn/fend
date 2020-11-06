@@ -259,6 +259,11 @@ test_eval!(cbrt_1_over_125, "cbrt (125/8)", "2.5");
 
 test_eval!(sqrt_kg_squared_1, "sqrt(kg^2)", "1 kg");
 test_eval!(sqrt_kg_squared_2, "(sqrt kg)^2", "1 kg");
+test_eval!(
+    lightyear_to_parsecs,
+    "1 lightyear to parsecs",
+    "approx. 0.3066013937 parsecs"
+);
 
 test_eval!(order_of_operations_1, "2+2*3", "8");
 test_eval!(order_of_operations_2, "2*2+3", "7");

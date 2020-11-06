@@ -1504,7 +1504,7 @@ H_FLUX                  H_FIELD AREA
 ("ly"                      "lightyear")    // NIST publication 811
 ("lightsecond"             "c s")
 ("lightminute"             "c min")
-("parsec"                  "au / tan(arcsec)")    // Unit of length equal to distance
+("parsec"/"parsecs"        "au / tan(arcsec)")    // Unit of length equal to distance
 ("pc"                      "parsec")              //   from the sun to a point having
                                                   //   heliocentric parallax of 1
                                                   //   arcsec (derived from parallax
