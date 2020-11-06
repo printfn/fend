@@ -6,22 +6,22 @@ pub fn query_unit<'a>(
 ) -> Option<(&'static str, &'static str, &'static str)> {
     macro_rules! define_units {
         (expr $name:literal $expr:literal) => {
-            Some(($name, $name, $expr))
+            return Some(($name, $name, $expr))
         };
         (expr $s:literal $p:literal $expr:literal) => {
-            Some(($s, $p, $expr))
+            return Some(($s, $p, $expr))
         };
         (
             $(($expr_name_s:literal $(/ $expr_name_p:literal)? $expr_def:literal))+
         ) => {
             match ident {
                 $($expr_name_s $(| $expr_name_p)? => define_units!(expr $expr_name_s $($expr_name_p)? $expr_def),)+
-                _ => None
+                _ => vec![$($expr_name_s $(, $expr_name_p)?, )+],
             }
         };
     }
     if short_prefixes {
-        let res = define_units!(
+        define_units!(
             ("Ki" "sp@kibi")
             ("Mi" "sp@mebi")
             ("Gi" "sp@gibi")
@@ -54,11 +54,8 @@ pub fn query_unit<'a>(
             ("z"  "sp@zepto")
             ("y"  "sp@yocto")
         );
-        if res.is_some() {
-            return res;
-        }
     }
-    define_units!(
+    let all_units = define_units!(
 /*
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
 
@@ -122,6 +119,7 @@ pub fn query_unit<'a>(
 // arc minute and arc second definitions are ignored
 ("m2"      "m^2")
 ("ft3"     "ft^3")
+("microK"  "micro kelvin")
 /*
 # air molecular weight is too complicated to parse for now,
 # so ignore air_1976, polyndx_1976 and polyndx
@@ -604,7 +602,7 @@ pub fn query_unit<'a>(
 ("zepto"                  "lp@1e-21")    // Latin septem, "seven"
 ("yocto"                  "lp@1e-24")    // Greek or Latin octo, "eight"
 
-("quarter"                "lp@1|4")
+("quarter"                "lp@1/4")
 ("semi"                   "lp@0.5")
 ("demi"                   "lp@0.5")
 ("hemi"                   "lp@0.5")
@@ -1023,21 +1021,20 @@ H_FLUX                  H_FIELD AREA
 ("decimalminute"/"decimalminutes"   "l@1/100 decimalhour")
 ("decimalsecond"/"decimalseconds"   "l@1/100 decimalminute")
 ("beat"/"beats"                     "l@decimalminute")       // Swatch Internet Time
-(".beat"                            "beat")
 
 //
 // angular measure
 //
 
 ("circle"                  "l@2 pi radian")
-("degree"                  "l@1/360 circle")
+("degree"/"degrees"        "l@1/360 circle")
 ("deg"                     "s@degree")
 ("arcdeg"                  "degree")
 ("arcmin"                  "1/60 degree")
-("arcminute"               "l@arcmin")
+("arcminute"/"arcminutes"  "l@arcmin")
 //'                       arcmin
 ("arcsec"                  "1/60 arcmin")
-("arcsecond"               "l@arcsec")
+("arcsecond"/"arcseconds"  "l@arcsec")
 //"                       arcsec
 //''                      "
 ("rightangle"              "l@90 degrees")
@@ -1501,8 +1498,8 @@ H_FLUX                  H_FIELD AREA
 ("inHg"                    "inch Hg")
 ("inH2O"                   "inch water")
 ("mmH2O"                   "mm water")
-("eV"                      "electroncharge V")      // Energy acquired by a particle with charge e
-("electronvolt"            "eV")                    //   when it is accelerated through 1 V
+("eV"                      "s@electroncharge V")    // Energy acquired by a particle with charge e
+("electronvolt"            "l@eV")                  //   when it is accelerated through 1 V
 ("lightyear"/"lightyears"  "c julianyear") // The 365.25 day year is specified in
 ("ly"                      "lightyear")    // NIST publication 811
 ("lightsecond"             "c s")
@@ -1528,7 +1525,7 @@ H_FLUX                  H_FIELD AREA
 ("cminv"                   "h c / cm")             // Unit of energy used in infrared
 ("invcm"                   "cminv")                //   spectroscopy.
 ("wavenumber"              "cminv")
-("kcal_mol"                "kcal_th / mol / N_A")  // kcal/mol is used as a unit of
+("kcal_mol"                "1000 cal_th / mol / N_A")  // kcal/mol is used as a unit of
                                                    //   energy by physical chemists.
 //
 // CGS system based on centimeter, gram and second
@@ -1537,8 +1534,8 @@ H_FLUX                  H_FIELD AREA
 ("dyne"                    "l@cm gram / s^2") // force
 ("dyn"                     "s@dyne")
 ("erg"                     "cm dyne")         // energy
-("poise"                   "gram / cm s")     // viscosity, honors Jean Poiseuille
-("P"                       "poise")
+("poise"                   "l@gram / cm s")   // viscosity, honors Jean Poiseuille
+("P"                       "s@poise")
 ("rhe"                     "/poise")          // reciprocal viscosity
 ("stokes"                  "cm^2 / s")        // kinematic viscosity
 ("St"                      "stokes")
@@ -1556,7 +1553,7 @@ H_FLUX                  H_FIELD AREA
 ("balmer"                  "kayser")          // Even less common name than "kayser"
 ("kine"                    "cm/s")            // velocity
 ("bole"                    "g cm / s")        // momentum
-("pond"                    "gram force")
+("pond"                    "l@gram force")
 ("glug"                "gram force s^2 / cm") // Mass which is accelerated at
                                               //   1 cm/s^2 by 1 gram force
 ("darcy"         "centipoise cm^2 / s / atm") // Measures permeability to fluid flow.
@@ -1703,83 +1700,83 @@ H_FLUX                  H_FIELD AREA
 ("debye"                   "1e-10 statC angstrom") // unit of electrical dipole moment
 ("helmholtz"               "debye/angstrom^2")     // Dipole moment per area
 ("jar"                     "1000 statfarad")       // approx capacitance of Leyden jar
+
+// Electromagnetic CGS (EMU)
+//
+// The abampere is the fundamental unit of this system, with the derived units
+// using the ab- prefix.  The dimensions of the abampere are defined by assuming
+// that k_A=1, which
+//
+//            [dyne / cm]  = [2 abampere^2 / cm]
+//
+// where the brackets indicate taking the dimension of the unit in base units
+// and discarding any constant factors.  This results in the definition from
+// base CGS units of:
+//
+//            abampere = sqrt(dyne).
+//
+// The abampere is also called the biot.  The magnetic field unit (the gauss)
+// follows from the assumption that k_B=1, which means
+//
+//            B = 2 I / r,
+//
+// and hence the dimensions of the gauss are given by
+//
+//            [gauss] = [2 abampere / cm]
+//
+// or rewriting in terms of the base units
+//
+//            gauss = abampere / cm.
+//
+// The definition given below is different because it is in a form that
+// gives a valid reduction for SI and ESU and still gives the correct
+// result in EMU.  (It can be derived from Faraday's law.)
+//
+// The EMU system was developed by Gauss and Weber and formalized as a system in
+// a committee report by the British Association for the Advancement of Science
+// in 1873.
+
+("abampere"                "10 A")            // Current which produces a force of
+("abamp"                   "abampere")        //   2 dyne/cm between two infinitely
+("aA"                      "abampere")        //   long wires that are 1 cm apart
+("abA"                     "abampere")
+("biot"                    "abampere")
+("Bi"                      "biot")
+
+// #!var UNITS_SYSTEM emu
+// #!message CGS-EMU units selected
+// #!prompt (EMU)
+// #+abampere               sqrt(dyne)
+// #+A                      0.1 abamp
+// #+mu0                    1
+// #+coulombconst           c^2
+// #!endvar
+
+("abcoulomb"               "abamp sec")
+("abcoul"                  "abcoulomb")
+("abC"                     "abcoulomb")
+("abfarad"                 "abampere sec / abvolt")
+("abF"                     "abfarad")
+("abhenry"                 "abvolt sec / abamp")
+("abH"                     "abhenry")
+("abvolt"                  "dyne cm / abamp / sec")
+("abV"                     "abvolt")
+("abohm"                   "abvolt / abamp")
+("abmho"                   "/abohm")
+("gauss"                   "abvolt sec / cm^2") // The magnetic field 2 cm from a wire
+("Gs"                      "gauss")             // carrying a current of 1 abampere
+("maxwell"                 "gauss cm^2")        // Also called the "line"
+("Mx"                      "maxwell")
+("oersted"                 "gauss / mu0")   // From the relation H = B / mu
+("Oe"                      "oersted")
+("gilbert"                 "gauss cm / mu0")
+("Gb"                      "gilbert")
+("Gi"                      "gilbert")
+("unitpole"                "4 pi maxwell")    // unit magnetic pole
+("emu"                     "erg/gauss")  // "electro-magnetic unit", a measure of
+                                         // magnetic moment, often used as emu/cm^3
+                                         // to specify magnetic moment density.
 /*
-# Electromagnetic CGS (EMU)
-#
-# The abampere is the fundamental unit of this system, with the derived units
-# using the ab- prefix.  The dimensions of the abampere are defined by assuming
-# that k_A=1, which
-#
-#            [dyne / cm]  = [2 abampere^2 / cm]
-#
-# where the brackets indicate taking the dimension of the unit in base units
-# and discarding any constant factors.  This results in the definition from
-# base CGS units of:
-#
-#            abampere = sqrt(dyne).
-#
-# The abampere is also called the biot.  The magnetic field unit (the gauss)
-# follows from the assumption that k_B=1, which means
-#
-#            B = 2 I / r,
-#
-# and hence the dimensions of the gauss are given by
-#
-#            [gauss] = [2 abampere / cm]
-#
-# or rewriting in terms of the base units
-#
-#            gauss = abampere / cm.
-#
-# The definition given below is different because it is in a form that
-# gives a valid reduction for SI and ESU and still gives the correct
-# result in EMU.  (It can be derived from Faraday's law.)
-#
-# The EMU system was developed by Gauss and Weber and formalized as a system in
-# a committee report by the British Association for the Advancement of Science
-# in 1873.
-
-abampere                10 A            # Current which produces a force of
-abamp                   abampere        #   2 dyne/cm between two infinitely
-aA                      abampere        #   long wires that are 1 cm apart
-abA                     abampere
-biot                    abampere
-Bi                      biot
-
-#!var UNITS_SYSTEM emu
-#!message CGS-EMU units selected
-#!prompt (EMU)
-#+abampere               sqrt(dyne)
-#+A                      0.1 abamp
-#+mu0                    1
-#+coulombconst           c^2
-#!endvar
-
-abcoulomb               abamp sec
-abcoul                  abcoulomb
-abC                     abcoulomb
-abfarad                 abampere sec / abvolt
-abF                     abfarad
-abhenry                 abvolt sec / abamp
-abH                     abhenry
-abvolt                  dyne cm  / abamp sec
-abV                     abvolt
-abohm                   abvolt / abamp
-abmho                   /abohm
-gauss                   abvolt sec / cm^2 # The magnetic field 2 cm from a wire
-Gs                      gauss             # carrying a current of 1 abampere
-maxwell                 gauss cm^2        # Also called the "line"
-Mx                      maxwell
-oersted                 gauss / mu0   # From the relation H = B / mu
-Oe                      oersted
-gilbert                 gauss cm / mu0
-Gb                      gilbert
-Gi                      gilbert
-unitpole                4 pi maxwell    # unit magnetic pole
-emu                     erg/gauss  # "electro-magnetic unit", a measure of
-                                   # magnetic moment, often used as emu/cm^3
-                                   # to specify magnetic moment density.
-
 # Electromagnetic CGS (Gaussian)
 #
 # The Gaussian system uses the statcoulomb and statamp from the ESU system
@@ -1918,12 +1915,12 @@ blondel                 apostilb      # Named after a French scientist.
 # Lambert's law.  (Lambert's law specifies that luminous intensity of
 # a perfectly diffuse luminous surface is proportional to the cosine
 # of the angle at which you view the luminous surface.)
-
-equivalentlux           cd / pi m^2   # luminance of a 1 lux surface
-equivalentphot          cd / pi cm^2  # luminance of a 1 phot surface
-lambert                 cd / pi cm^2
-footlambert             cd / pi ft^2
-
+*/
+("equivalentlux"           "cd / pi / m^2")   // luminance of a 1 lux surface
+("equivalentphot"          "cd / pi / cm^2")  // luminance of a 1 phot surface
+("lambert"                 "cd / pi / cm^2")
+("footlambert"             "cd / pi / ft^2")
+/*
 # The bril is used to express "brilliance" of a source of light on a
 # logarithmic scale to correspond to subjective perception.  An increase of 1
 # bril means doubling the luminance.  A luminance of 1 lambert is defined to
@@ -2368,31 +2365,31 @@ sunradius               6.96e8 m
 # to this original value.  This is accomplished by using a standard value for
 # the Gaussian gravitational constant.  This constant is called k.
 # Many values below are from http://ssd.jpl.nasa.gov/?constants
+*/
+("gauss_k"                 "0.01720209895")   // This beast has dimensions of
+                                              // au^(3|2) / day and is exact.
+("gaussianyear"      "(2 pi / gauss_k) days") // Year that corresponds to the Gaussian
+                                              // gravitational constant. This is a
+                                              // fictional year, and doesn't
+                                              // correspond to any celestial event.
+("astronomicalunit"         "149597870700 m") // IAU definition from 2012, exact
+("au"                     "astronomicalunit") // ephemeris for the above described
+                                              // astronomical unit.  (See the NASA
+                                              // site listed above.)
+("GMsun"        "1.32712440018e20 m^3 / s^2") // heliocentric gravitational constant
+("solarmass"                       "GMsun/G") // with uncertainty 8e9 is known more
+("sunmass"                       "solarmass") // accurately than G.
 
-gauss_k                 0.01720209895   # This beast has dimensions of
-                                        # au^(3|2) / day and is exact.
-gaussianyear      (2 pi / gauss_k) days # Year that corresponds to the Gaussian
-                                        # gravitational constant. This is a
-                                        # fictional year, and doesn't
-                                        # correspond to any celestial event.
-astronomicalunit         149597870700 m # IAU definition from 2012, exact
-au                     astronomicalunit # ephemeris for the above described
-                                        # astronomical unit.  (See the NASA
-                                        # site listed above.)
-GMsun        1.32712440018e20 m^3 / s^2 # heliocentric gravitational constant
-solarmass                       GMsun/G # with uncertainty 8e9 is known more
-sunmass                       solarmass # accurately than G.
 
-
-sundist                 1.0000010178 au # mean earth-sun distance
-moondist                3.844e8 m       # mean earth-moon distance
-sundist_near            1.471e11 m      # earth-sun distance at perihelion
-sundist_far             1.521e11 m      # earth-sun distance at aphelion
-moondist_min        3.564e8 m   # approximate least distance at
-                                        #    perigee 1901-2300
-moondist_max        4.067e8 m   # approximate greatest distance at
-                                        #    apogee 1901-2300
-
+("sundist"                 "1.0000010178 au") // mean earth-sun distance
+("moondist"                "3.844e8 m")       // mean earth-moon distance
+("sundist_near"            "1.471e11 m")      // earth-sun distance at perihelion
+("sundist_far"             "1.521e11 m")      // earth-sun distance at aphelion
+("moondist_min"        "3.564e8 m")   // approximate least distance at
+                                              //    perigee 1901-2300
+("moondist_max"        "4.067e8 m")   // approximate greatest distance at
+                                              //    apogee 1901-2300
+/*
 
 # The following are masses for planetary systems, not just the planet itself.
 # The comments give the uncertainty in the denominators.  As noted above,
@@ -2800,7 +2797,7 @@ internationalyard       yard
 */
 // nautical measure
 
-("fathom"                  "6 ft")   // Originally defined as the distance from
+("fathom"/"fathoms"        "6 ft")   // Originally defined as the distance from
                                      //   fingertip to fingertip with arms fully
                                      //   extended.
 ("nauticalmile"            "1852 m") // Supposed to be one minute of latitude at
@@ -2814,8 +2811,8 @@ internationalyard       yard
 ("cable"                   "1/10 nauticalmile")
 ("intcable"                "cable")              // international cable
 ("cablelength"             "cable")
-("UScable"                 "100 USfathom")
-("navycablelength"         "720 USft")           // used for depth in water
+//("UScable"                 "100 USfathom")
+//("navycablelength"         "720 USft")           // used for depth in water
 ("marineleague"            "3 nauticalmile")
 ("geographicalmile"        "brnauticalmile")
 ("knot"                    "nauticalmile / hr")
@@ -2843,80 +2840,81 @@ internationalyard       yard
 ("quarterweight"           "1/4 uston")
 ("shortquarterweight"      "1/4 shortton")
 ("shortquarter"            "shortquarterweight")
+
+// Troy Weight.  In 1828 the troy pound was made the first United States
+// standard weight.  It was to be used to regulate coinage.
+
+("troypound"               "5760 grain")
+("troyounce"               "1/12 troypound")
+("ozt"                     "troyounce")
+("pennyweight"             "1/20 troyounce")  // Abbreviated "d" in reference to a
+("dwt"                     "pennyweight")     //   Frankish coin called the "denier"
+                                        //   minted in the late 700's.  There
+                                        //   were 240 deniers to the pound.
+("assayton"                "mg ton / troyounce")  // mg / assayton = troyounce / ton
+("usassayton"              "mg uston / troyounce")
+("brassayton"              "mg brton / troyounce")
+("fineounce"               "troyounce")       // A troy ounce of 99.5% pure gold
+
+// Some other jewelers units
+
+("metriccarat"             "0.2 gram")        // Defined in 1907
+("metricgrain"             "50 mg")
+("carat"                   "metriccarat")
+("ct"                      "carat")
+("jewelerspoint"           "1/100 carat")
+("silversmithpoint"        "1/4000 inch")
+("momme"                   "3.75 grams")      // Traditional Japanese unit based
+                                              // on the chinese mace.  It is used for
+                                              // pearls in modern times and also for
+                                              // silk density.  The definition here
+                                              // was adopted in 1891.
+// Apothecaries' weight
+
+("appound"                 "troypound")
+("apounce"                 "troyounce")
+("apdram"                  "1/8 apounce")
+("apscruple"               "1/3 apdram")
+
+// Liquid measure
+
+("usgallon"                "231 in^3")        // US liquid measure is derived from
+("gal"                     "gallon")          // the British wine gallon of 1707.
+("quart"                   "1/4 gallon")      // See the "winegallon" entry below
+("pint"                    "1/2 quart")       // more historical information.
+("gill"                    "1/4 pint")
+("usquart"                 "1/4 usgallon")
+("uspint"                  "1/2 usquart")
+("usgill"                  "1/4 uspint")
+("usfluidounce"            "1/16 uspint")
+("fluiddram"               "1/8 usfloz")
+("minimvolume"             "1/60 fluiddram")
+("qt"                      "quart")
+("pt"                      "pint")
+("floz"                    "fluidounce")
+("usfloz"                  "usfluidounce")
+("fldr"                    "fluiddram")
+("liquidbarrel"            "31.5 usgallon")
+("usbeerbarrel"            "2 beerkegs")
+("beerkeg"/"beerkegs"      "15.5 usgallon")   // Various among brewers
+("ponykeg"/"ponykegs"      "1/2 beerkeg")
+("winekeg"/"winekegs"      "12 usgallon")
+("petroleumbarrel"         "42 usgallon")     // Originated in Pennsylvania oil
+("barrel"                  "petroleumbarrel") // fields, from the winetierce
+("bbl"                     "barrel")
+("ushogshead"              "2 liquidbarrel")
+("usfirkin"                "9 usgallon")
+
+// Dry measures: The Winchester Bushel was defined by William III in 1702 and
+// legally adopted in the US in 1836.
+
+("usbushel"                "2150.42 in^3")  // Volume of 8 inch cylinder with 18.5
+("bu"                      "bushel")        // inch diameter (rounded)
+("peck"                    "1/4 bushel")
+("uspeck"                  "1/4 usbushel")
+("brpeck"                  "1/4 brbushel")
+("pk"                      "peck")
 /*
-# Troy Weight.  In 1828 the troy pound was made the first United States
-# standard weight.  It was to be used to regulate coinage.
-
-troypound               5760 grain
-troyounce               1|12 troypound
-ozt                     troyounce
-pennyweight             1|20 troyounce  # Abbreviated "d" in reference to a
-dwt                     pennyweight     #   Frankish coin called the "denier"
-                                        #   minted in the late 700's.  There
-                                        #   were 240 deniers to the pound.
-assayton                mg ton / troyounce  # mg / assayton = troyounce / ton
-usassayton              mg uston / troyounce
-brassayton              mg brton / troyounce
-fineounce               troyounce       # A troy ounce of 99.5% pure gold
-
-# Some other jewelers units
-
-metriccarat             0.2 gram        # Defined in 1907
-metricgrain             50 mg
-carat                   metriccarat
-ct                      carat
-jewelerspoint           1|100 carat
-silversmithpoint        1|4000 inch
-momme                   3.75 grams      # Traditional Japanese unit based
-                                        # on the chinese mace.  It is used for
-                                        # pearls in modern times and also for
-                                        # silk density.  The definition here
-                                        # was adopted in 1891.
-# Apothecaries' weight
-
-appound                 troypound
-apounce                 troyounce
-apdram                  1|8 apounce
-apscruple               1|3 apdram
-
-# Liquid measure
-
-usgallon                231 in^3        # US liquid measure is derived from
-gal                     gallon          # the British wine gallon of 1707.
-quart                   1|4 gallon      # See the "winegallon" entry below
-pint                    1|2 quart       # more historical information.
-gill                    1|4 pint
-usquart                 1|4 usgallon
-uspint                  1|2 usquart
-usgill                  1|4 uspint
-usfluidounce            1|16 uspint
-fluiddram               1|8 usfloz
-minimvolume             1|60 fluiddram
-qt                      quart
-pt                      pint
-floz                    fluidounce
-usfloz                  usfluidounce
-fldr                    fluiddram
-liquidbarrel            31.5 usgallon
-usbeerbarrel            2 beerkegs
-beerkeg                 15.5 usgallon   # Various among brewers
-ponykeg                 1|2 beerkeg
-winekeg                 12 usgallon
-petroleumbarrel         42 usgallon     # Originated in Pennsylvania oil
-barrel                  petroleumbarrel # fields, from the winetierce
-bbl                     barrel
-ushogshead              2 liquidbarrel
-usfirkin                9 usgallon
-
-# Dry measures: The Winchester Bushel was defined by William III in 1702 and
-# legally adopted in the US in 1836.
-
-usbushel                2150.42 in^3  # Volume of 8 inch cylinder with 18.5
-bu                      bushel        # inch diameter (rounded)
-peck                    1|4 bushel
-uspeck                  1|4 usbushel
-brpeck                  1|4 brbushel
-pk                      peck
 drygallon               1|2 uspeck
 dryquart                1|4 drygallon
 drypint                 1|2 dryquart
@@ -2960,20 +2958,20 @@ ricebushel              45 lb
 canada_oatbushel        34 lb
 
 # Wine and Spirits measure
-
-ponyvolume              1 usfloz
-jigger                  1.5 usfloz   # Can vary between 1 and 2 usfloz
-shot                    jigger     # Sometimes 1 usfloz
-eushot                  25 ml      # EU standard spirits measure
-fifth                   1|5 usgallon
-winebottle              750 ml     # US industry standard, 1979
-winesplit               1|4 winebottle
-magnum                  1.5 liter  # Standardized in 1979, but given
-                                   # as 2 qt in some references
-metrictenth             375 ml
-metricfifth             750 ml
-metricquart             1 liter
-
+*/
+("ponyvolume"              "1 usfloz")
+("jigger"                  "1.5 usfloz")   // Can vary between 1 and 2 usfloz
+("shot"                    "jigger")     // Sometimes 1 usfloz
+("eushot"                  "25 ml")      // EU standard spirits measure
+("fifth"                   "1/5 usgallon")
+("winebottle"              "750 ml")     // US industry standard, 1979
+("winesplit"               "1/4 winebottle")
+("magnum"                  "1.5 liter")  // Standardized in 1979, but given
+                                         // as 2 qt in some references
+("metrictenth"             "375 ml")
+("metricfifth"             "750 ml")
+("metricquart"             "1 liter")
+/*
 # Old British bottle size
 
 reputedquart            1|6 brgallon
@@ -3084,19 +3082,19 @@ europeshoesize          2|3 cm
 #
 # USA slang units
 #
-
-buck                    US$
-fin                     5 US$
-sawbuck                 10 US$
-usgrand                 1000 US$
-greenback               US$
-key                     kg           # usually of marijuana, 60's
-lid                     1 oz         # Another 60's weed unit
-footballfield           usfootballfield
-usfootballfield         100 yards
-canadafootballfield     110 yards    # And 65 yards wide
-marathon                26 miles + 385 yards
-
+*/
+("buck"                    "US$")
+("fin"                     "5 US$")
+("sawbuck"                 "10 US$")
+("usgrand"                 "1000 US$")
+("greenback"               "US$")
+("key"                     "kg")           // usually of marijuana, 60's
+("lid"                     "1 oz")         // Another 60's weed unit
+("footballfield"           "usfootballfield")
+("usfootballfield"         "100 yards")
+("canadafootballfield"     "110 yards")    // And 65 yards wide
+("marathon"                "=26 miles + 385 yards")
+/*
 #
 # British
 #
@@ -3134,61 +3132,62 @@ UKlength_C            meter / 1.09362311 yard # In 1866 Clarke found the meter
                                               #   to be 1.09362311 yards.  This
                                               #   conversion was legalized
                                               #   around 1878.
-brnauticalmile          6080 ft               # Used until 1970 when the UK
-brknot                  brnauticalmile / hr   #   switched to the international
-brcable                 1|10 brnauticalmile   #   nautical mile.
-admiraltymile           brnauticalmile
-admiraltyknot           brknot
-admiraltycable          brcable
-seamile                 6000 ft
-shackle                 15 fathoms            # Adopted 1949 by British navy
+*/
+("brnauticalmile"          "6080 ft")               // Used until 1970 when the UK
+("brknot"                  "brnauticalmile / hr")   //   switched to the international
+("brcable"                 "1/10 brnauticalmile")   //   nautical mile.
+("admiraltymile"           "brnauticalmile")
+("admiraltyknot"           "brknot")
+("admiraltycable"          "brcable")
+("seamile"                 "6000 ft")
+("shackle"                 "15 fathoms")            // Adopted 1949 by British navy
 
-# British Imperial weight is mostly the same as US weight.  A few extra
-# units are added here.
+// British Imperial weight is mostly the same as US weight.  A few extra
+// units are added here.
 
-clove                   7 lb
-stone                   14 lb
-tod                     28 lb
-brquarterweight         1|4 brhundredweight
-brhundredweight         8 stone
-longhundredweight       brhundredweight
-longton                 20 brhundredweight
-brton                   longton
+("clove"                   "7 lb")
+("stone"                   "14 lb")
+("tod"                     "28 lb")
+("brquarterweight"         "1/4 brhundredweight")
+("brhundredweight"         "8 stone")
+("longhundredweight"       "brhundredweight")
+("longton"                 "20 brhundredweight")
+("brton"                   "longton")
 
-# British Imperial volume measures
+// British Imperial volume measures
 
-brminim                 1|60 brdram
-brscruple               1|3 brdram
-fluidscruple            brscruple
-brdram                  1|8 brfloz
-brfluidounce            1|20 brpint
-brfloz                  brfluidounce
-brgill                  1|4 brpint
-brpint                  1|2 brquart
-brquart                 1|4 brgallon
-brgallon                4.54609 l      # The British Imperial gallon was
-                                       # defined in 1824 to be the volume of
-                                       # water which weighed 10 pounds at 62
-                                       # deg F with a pressure of 30 inHg.
-                                       # It was also defined as 277.274 in^3,
-                                       # Which is slightly in error.  In
-                                       # 1963 it was defined to be the volume
-                                       # occupied by 10 pounds of distilled
-                                       # water of density 0.998859 g/ml weighed
-                                       # in air of density 0.001217 g/ml
-                                       # against weights of density 8.136 g/ml.
-                                       # This gives a value of approximately
-                                       # 4.5459645 liters, but the old liter
-                                       # was in force at this time.  In 1976
-                                       # the definition was changed to exactly
-                                       # 4.54609 liters using the new
-                                       # definition of the liter (1 dm^3).
-brbarrel                36 brgallon    # Used for beer
-brbushel                8 brgallon
-brheapedbushel          1.278 brbushel
-brquarter               8 brbushel
-brchaldron              36 brbushel
-
+("brminim"                 "1/60 brdram")
+("brscruple"               "1/3 brdram")
+("fluidscruple"            "brscruple")
+("brdram"                  "1/8 brfloz")
+("brfluidounce"            "1/20 brpint")
+("brfloz"                  "brfluidounce")
+("brgill"                  "1/4 brpint")
+("brpint"                  "1/2 brquart")
+("brquart"                 "1/4 brgallon")
+("brgallon"                "4.54609 l")      // The British Imperial gallon was
+                                             // defined in 1824 to be the volume of
+                                             // water which weighed 10 pounds at 62
+                                             // deg F with a pressure of 30 inHg.
+                                             // It was also defined as 277.274 in^3,
+                                             // Which is slightly in error.  In
+                                             // 1963 it was defined to be the volume
+                                             // occupied by 10 pounds of distilled
+                                             // water of density 0.998859 g/ml weighed
+                                             // in air of density 0.001217 g/ml
+                                             // against weights of density 8.136 g/ml.
+                                             // This gives a value of approximately
+                                             // 4.5459645 liters, but the old liter
+                                             // was in force at this time.  In 1976
+                                             // the definition was changed to exactly
+                                             // 4.54609 liters using the new
+                                             // definition of the liter (1 dm^3).
+("brbarrel"                "36 brgallon")    // Used for beer
+("brbushel"                "8 brgallon")
+("brheapedbushel"          "1.278 brbushel")
+("brquarter"               "8 brbushel")
+("brchaldron"              "36 brbushel")
+/*
 # Obscure British volume measures.  These units are generally traditional
 # measures whose definitions have fluctuated over the years.  Often they
 # depended on the quantity being measured.  They are given here in terms of
@@ -3338,38 +3337,38 @@ smoot              5 ft + 7 in # Created as part of an MIT fraternity prank.
 #
 # Cooking measures
 #
+*/
+// Common abbreviations
 
-# Common abbreviations
+("tbl"                     "tablespoon")
+("tbsp"                    "tablespoon")
+("tblsp"                   "tablespoon")
+("Tb"                      "tablespoon")
+("tsp"                     "teaspoon")
+//("saltspoon"               "1/4 teaspoon")
 
-tbl                     tablespoon
-tbsp                    tablespoon
-tblsp                   tablespoon
-Tb                      tablespoon
-tsp                     teaspoon
-saltspoon               1|4 tsp
+// US measures
 
-# US measures
+("uscup"                   "8 usfloz")
+("ustablespoon"            "1/16 uscup")
+("usteaspoon"              "1/3 ustablespoon")
+("ustbl"                   "ustablespoon")
+("ustbsp"                  "ustablespoon")
+("ustblsp"                 "ustablespoon")
+("ustsp"                   "usteaspoon")
+("metriccup"               "250 ml")
+("stickbutter"             "1/4 lb")            // Butter in the USA is sold in one
+                                                // pound packages that contain four
+                                                // individually wrapped pieces.  The
+                                                // pieces are marked into tablespoons,
+                                                // making it possible to measure out
+                                                // butter by volume by slicing the
+                                                // butter.
 
-uscup                   8 usfloz
-ustablespoon            1|16 uscup
-usteaspoon              1|3 ustablespoon
-ustbl                   ustablespoon
-ustbsp                  ustablespoon
-ustblsp                 ustablespoon
-ustsp                   usteaspoon
-metriccup               250 ml
-stickbutter             1|4 lb            # Butter in the USA is sold in one
-                                          # pound packages that contain four
-                                          # individually wrapped pieces.  The
-                                          # pieces are marked into tablespoons,
-                                          # making it possible to measure out
-                                          # butter by volume by slicing the
-                                          # butter.
-
-legalcup                240 ml            # The cup used on nutrition labeling
-legaltablespoon         1|16 legalcup
-legaltbsp               legaltablespoon
-
+("legalcup"                "240 ml")                  // The cup used on nutrition labeling
+("legaltablespoon"         "1/16 legalcup")
+("legaltbsp"               "legaltablespoon")
+/*
 # Scoop size.  Ice cream scoops in the US are marked with numbers
 # indicating the number of scoops required to fill a US quart.
 
@@ -4108,37 +4107,37 @@ pdl                     poundal
 osi                     ounce force / inch^2   # used in aviation
 */
 ("psi"                     "pound force / inch^2")
-/*
-psia                    psi             # absolute pressure
-                                        #   Note that gauge pressure can be given
-                                        #   using the gaugepressure() and
-                                        #   psig() nonlinear unit definitions
-tsi                     ton force / inch^2
-reyn                    psi sec
-slug                    lbf s^2 / ft
-slugf                   slug force
-slinch                  lbf s^2 / inch  # Mass unit derived from inch second
-slinchf                 slinch force    #   pound-force system.  Used in space
-                                        #   applications where in/sec^2 was a
-                                        #   natural acceleration measure.
-geepound                slug
-lbf                     lb force
-tonf                    ton force
-lbm                     lb
-kip                     1000 lbf     # from kilopound
-ksi                     kip / in^2
-mil                     0.001 inch
-thou                    0.001 inch
-tenth                   0.0001 inch  # one tenth of one thousandth of an inch
-millionth               1e-6 inch    # one millionth of an inch
-circularinch            1|4 pi in^2  # area of a one-inch diameter circle
-circleinch              circularinch #    A circle with diameter d inches has
-                                     #    an area of d^2 circularinches
-cylinderinch         circleinch inch # Cylinder h inch tall, d inches diameter
-                                     #    has volume d^2 h cylinder inches
-circularmil             1|4 pi mil^2 # area of one-mil diameter circle
-cmil                    circularmil
+("psia"                    "psi")             // absolute pressure
+                                              //   Note that gauge pressure can be given
+                                              //   using the gaugepressure() and
+                                              //   psig() nonlinear unit definitions
+("tsi"                     "ton force / inch^2")
+("reyn"                    "psi sec")
+("slug"                    "lbf s^2 / ft")
+("slugf"                   "slug force")
+("slinch"                  "lbf s^2 / inch")  // Mass unit derived from inch second
+("slinchf"                 "slinch force")    //   pound-force system.  Used in space
+                                              //   applications where in/sec^2 was a
+                                              //   natural acceleration measure.
+("geepound"                "slug")
+("lbf"                     "lb force")
+("tonf"                    "ton force")
+("lbm"                     "lb")
+("kip"                     "1000 lbf")     // from kilopound
+("ksi"                     "kip / in^2")
+("mil"                     "0.001 inch")
+("thou"                    "0.001 inch")
+("tenth"                   "0.0001 inch")  // one tenth of one thousandth of an inch
+("millionth"               "1e-6 inch")    // one millionth of an inch
+("circularinch"            "1/4 pi in^2")  // area of a one-inch diameter circle
+("circleinch"              "circularinch") //    A circle with diameter d inches has
+                                           //    an area of d^2 circularinches
+("cylinderinch"         "circleinch inch") // Cylinder h inch tall, d inches diameter
+                                           //    has volume d^2 h cylinder inches
 
+("circularmil"             "1/4 pi mil^2") // area of one-mil diameter circle
+("cmil"                    "circularmil")
+/*
 cental                  100 pound
 centner                 cental
 caliber                 0.01 inch    # for measuring bullets
@@ -4192,59 +4191,60 @@ ENERGY                  joule
 WORK                    joule
 
 # Calorie: approximate energy to raise a gram of water one degree celsius
+*/
+("calorie"/"calories"      "l@cal_th")       // Default is the thermochemical calorie
+("cal"                     "calorie")
+("calorie_th"              "4.184 J")      // Thermochemical calorie, defined in 1930
+("thermcalorie"            "calorie_th")   //   by Frederick Rossini as 4.1833 J to
+("cal_th"                  "calorie_th")   //   avoid difficulties associated with the
+                                           //   uncertainty in the heat capacity of
+                                           //   water.  In 1948 the value of the joule
+                                           //   was changed, so the thermochemical
+                                           //   calorie was redefined to 4.184 J.
+                                           //   This kept the energy measured by this
+                                           //   unit the same.
+("calorie_IT"              "4.1868 J")     // International (Steam) Table calorie,
+("cal_IT"                  "calorie_IT")   //   defined in 1929 as watt-hour/860 or
+                                           //   equivalently 180|43 joules.  At this
+                                           //   time the international joule had a
+                                           //   different value than the modern joule,
+                                           //   and the values were different in the
+                                           //   USA and in Europe.  In 1956 at the
+                                           //   Fifth International Conference on
+                                           //   Properties of Steam the exact
+                                           //   definition given here was adopted.
+("calorie_15"              "4.18580 J")    // Energy to go from 14.5 to 15.5 degC
+("cal_15"                  "calorie_15")
+("calorie_fifteen"         "cal_15")
+("calorie_20"              "4.18190 J")    // Energy to go from 19.5 to 20.5 degC
+("cal_20"                  "calorie_20")
+("calorie_twenty"          "calorie_20")
+("calorie_4"               "4.204 J")      // Energy to go from 3.5 to 4.5 degC
+("cal_4"                   "calorie_4")
+("calorie_four"            "calorie_4")
+("cal_mean"                "4.19002 J")    // 1|100 energy to go from 0 to 100 degC
+("Calorie"                 "kilocalorie")  // the food Calorie
+("thermie"              "1e6 cal_15")      // Heat required to raise the
+                                           // temperature of a tonne of
+                                           // water from 14.5 to 15.5 degC.
 
-calorie                 cal_th       # Default is the thermochemical calorie
-cal                     calorie
-calorie_th              4.184 J      # Thermochemical calorie, defined in 1930
-thermcalorie            calorie_th   #   by Frederick Rossini as 4.1833 J to
-cal_th                  calorie_th   #   avoid difficulties associated with the
-                                     #   uncertainty in the heat capacity of
-                                     #   water.  In 1948 the value of the joule
-                                     #   was changed, so the thermochemical
-                                     #   calorie was redefined to 4.184 J.
-                                     #   This kept the energy measured by this
-                                     #   unit the same.
-calorie_IT              4.1868 J     # International (Steam) Table calorie,
-cal_IT                  calorie_IT   #   defined in 1929 as watt-hour/860 or
-                                     #   equivalently 180|43 joules.  At this
-                                     #   time the international joule had a
-                                     #   different value than the modern joule,
-                                     #   and the values were different in the
-                                     #   USA and in Europe.  In 1956 at the
-                                     #   Fifth International Conference on
-                                     #   Properties of Steam the exact
-                                     #   definition given here was adopted.
-calorie_15              4.18580 J    # Energy to go from 14.5 to 15.5 degC
-cal_15                  calorie_15
-calorie_fifteen         cal_15
-calorie_20              4.18190 J    # Energy to go from 19.5 to 20.5 degC
-cal_20                  calorie_20
-calorie_twenty          calorie_20
-calorie_4               4.204 J      # Energy to go from 3.5 to 4.5 degC
-cal_4                   calorie_4
-calorie_four            calorie_4
-cal_mean                4.19002 J    # 1|100 energy to go from 0 to 100 degC
-Calorie                 kilocalorie  # the food Calorie
-thermie              1e6 cal_15      # Heat required to raise the
-                                     # temperature of a tonne of
-                                     # water from 14.5 to 15.5 degC.
+// btu definitions: energy to raise a pound of water 1 degF
 
-# btu definitions: energy to raise a pound of water 1 degF
-
-btu                     btu_IT       # International Table BTU is the default
-britishthermalunit      btu
-btu_IT                  cal_IT lb degF / gram K
-btu_th                  cal_th lb degF / gram K
-btu_mean                cal_mean lb degF / gram K
-btu_15                  cal_15 lb degF / gram K
-btu_ISO                 1055.06 J    # Exact, rounded ISO definition based
-                                     #    on the IT calorie
-quad                    quadrillion btu
-
-ECtherm                 1e5 btu_ISO    # Exact definition
-UStherm                 1.054804e8 J   # Exact definition,
-therm                   UStherm
-
+("btu"                     "btu_IT")       // International Table BTU is the default
+("britishthermalunit"      "btu")
+("btu_IT"                  "1055.05585 J") // exact value from Wikipedia
+//("btu_IT"                  "cal_IT lb degF / gram K")
+//("btu_th"                  "cal_th lb degF / gram K")
+//("btu_mean"                "cal_mean lb degF / gram K")
+//("btu_15"                  "cal_15 lb degF / gram K")
+//("btu_ISO"                 "1055.06 J")    // Exact, rounded ISO definition based
+//                                     //    on the IT calorie
+//("quad"                    "quadrillion btu")
+//
+//("ECtherm"                 "1e5 btu_ISO")    // Exact definition
+//("UStherm"                 "1.054804e8 J")   // Exact definition,
+//("therm"                   "UStherm")
+/*
 # Water latent heat from [23]
 
 water_fusion_heat       6.01 kJ/mol / (18.015 g/mol) # At 0 deg C
@@ -4414,18 +4414,18 @@ kWh                     kilowatt hour
 
 # The horsepower is supposedly the power of one horse pulling.   Obviously
 # different people had different horses.
-
-horsepower              550 foot pound force / sec    # Invented by James Watt
-mechanicalhorsepower    horsepower
-hp                      horsepower
-metrichorsepower        75 kilogram force meter / sec # PS=Pferdestaerke in
-electrichorsepower      746 W                         # Germany
-boilerhorsepower        9809.50 W
-waterhorsepower         746.043 W
-brhorsepower            745.70 W
-donkeypower             250 W
-chevalvapeur            metrichorsepower
-
+*/
+("horsepower"              "550 foot pound force / sec")    // Invented by James Watt
+("mechanicalhorsepower"    "horsepower")
+("hp"                      "horsepower")
+("metrichorsepower"        "75 kilogram force meter / sec") // PS=Pferdestaerke in
+("electrichorsepower"      "746 W")                         // Germany
+("boilerhorsepower"        "9809.50 W")
+("waterhorsepower"         "746.043 W")
+("brhorsepower"            "745.70 W")
+("donkeypower"             "250 W")
+("chevalvapeur"            "metrichorsepower")
+/*
 #
 # Heat Transfer
 #
@@ -6361,7 +6361,7 @@ euringsize(n)  units=[1;mm] (n+40) mm ; euringsize/mm + (-40)
 ("nt"                      "N")
 ("hz"                      "Hz")
 ("hd"                      "hogshead")
-("dry"                     "drygallon/gallon")
+//("dry"                     "drygallon/gallon")
 ("nmile"                   "nauticalmile")
 ("beV"                     "GeV")
 ("bev"                     "beV")
@@ -8019,5 +8019,29 @@ röntgen                 roentgen
 ("silverprice"        "14.52 US$/troyounce")
 ("goldprice"          "1288.30 US$/troyounce")
 ("platinumprice"      "797.00 US$/troyounce")
-    )
+
+("scaramucci"/"scaramuccis"   "11 days")
+("mooch"/"mooches"            "scaramucci")
+    );
+    // this is safe because square brackets are never allowed in identifiers
+    if ident == "[[test]]" {
+        let int = &crate::interrupt::Never::default();
+        let mut errors = false;
+        for unit in all_units {
+            //eprintln!("Testing unit '{}'", unit);
+            if let Err(crate::err::IntErr::Error(msg)) =
+                crate::eval::evaluate_to_value(unit, None, int)
+            {
+                eprintln!("Failed to evaluate unit '{}': {}", unit, msg);
+                errors = true;
+            }
+        }
+        assert!(!errors);
+    }
+    None
+}
+
+#[test]
+fn test_all_units() {
+    query_unit("[[test]]", false);
 }

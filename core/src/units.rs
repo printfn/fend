@@ -102,15 +102,19 @@ pub fn query_unit<'a, I: Interrupt>(
     let mut split_idx = ident.chars().next().unwrap().len_utf8();
     while split_idx < ident.len() {
         let (prefix, remaining_ident) = ident.split_at(split_idx);
-        match (
-            query_unit_internal(prefix, true, int),
-            query_unit_internal(remaining_ident, false, int),
-        ) {
-            (Err(e @ IntErr::Interrupt(_)), _)
-            | (_, Err(e @ IntErr::Interrupt(_)))
-            | (Err(e @ IntErr::Error(GetIdentError::EvalError(_))), _)
-            | (_, Err(e @ IntErr::Error(GetIdentError::EvalError(_)))) => return Err(e),
-            (Ok(a), Ok(b)) => {
+        split_idx += remaining_ident.chars().next().unwrap().len_utf8();
+        let a = match query_unit_internal(prefix, true, int) {
+            Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
+                return Err(e);
+            }
+            Ok(a) => a,
+            Err(_) => continue,
+        };
+        match query_unit_internal(remaining_ident, false, int) {
+            Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
+                return Err(e)
+            }
+            Ok(b) => {
                 if (a.prefix_rule == PrefixRule::LongPrefix
                     && b.prefix_rule == PrefixRule::LongPrefixAllowed)
                     || (a.prefix_rule == PrefixRule::ShortPrefix
@@ -121,9 +125,8 @@ pub fn query_unit<'a, I: Interrupt>(
                 }
                 return Err(GetIdentError::IdentifierNotFound(ident))?;
             }
-            _ => (),
+            Err(_) => (),
         };
-        split_idx += remaining_ident.chars().next().unwrap().len_utf8();
     }
     Err(GetIdentError::IdentifierNotFound(ident))?
 }

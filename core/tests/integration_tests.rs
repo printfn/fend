@@ -1152,3 +1152,5 @@ test_eval!(sf_12, "1234567.55645 to 12 sf", "1234567.55645");
 test_eval!(sf_13, "1234567.55645 to 13 sf", "1234567.55645");
 
 expect_error!(no_prefixes_for_speed_of_light, "mc");
+
+test_eval!(quarter, "quarter", "0.25");

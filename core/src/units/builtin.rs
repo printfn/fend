@@ -6,22 +6,22 @@ pub fn query_unit<'a>(
 ) -> Option<(&'static str, &'static str, &'static str)> {
     macro_rules! define_units {
         (expr $name:literal $expr:literal) => {
-            Some(($name, $name, $expr))
+            return Some(($name, $name, $expr))
         };
         (expr $s:literal $p:literal $expr:literal) => {
-            Some(($s, $p, $expr))
+            return Some(($s, $p, $expr))
         };
         (
             $(($expr_name_s:literal $(/ $expr_name_p:literal)? $expr_def:literal))+
         ) => {
             match ident {
                 $($expr_name_s $(| $expr_name_p)? => define_units!(expr $expr_name_s $($expr_name_p)? $expr_def),)+
-                _ => None
+                _ => ()
             }
         };
     }
     if short_prefixes {
-        let res = define_units!(
+        define_units!(
             ("Ki" "sp@kibi")
             ("Mi" "sp@mebi")
             ("Gi" "sp@gibi")
@@ -54,9 +54,6 @@ pub fn query_unit<'a>(
             ("z"  "sp@zepto")
             ("y"  "sp@yocto")
         );
-        if res.is_some() {
-            return res;
-        }
     }
     define_units!(
 ("s"                              "!")
@@ -190,5 +187,6 @@ pub fn query_unit<'a>(
 ("circle"/"circles"               "2 pi radians")
 ("degree"/"degrees"               "1|360 circle")
 ("°"                              "degree")
-    )
+    );
+    None
 }
