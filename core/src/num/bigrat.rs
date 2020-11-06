@@ -498,6 +498,7 @@ impl BigRat {
             )?);
         }
 
+        // not a fraction, will be printed as a decimal
         Ok(x.format_as_decimal(style, base, sign, term, terminating, int)?)
     }
 
@@ -522,7 +523,6 @@ impl BigRat {
         };
         let formatted_integer_part = integer_part.format(base, true, sf_limit, int)?;
 
-        // not a fraction, will be printed as a decimal
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
             || (style == FormattingStyle::Auto && terminating()?)
             || style == FormattingStyle::Exact
