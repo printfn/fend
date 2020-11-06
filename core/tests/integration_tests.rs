@@ -1150,6 +1150,33 @@ test_eval!(sf_10, "1234567.55645 to 10 sf", "approx. 1234567.556");
 test_eval!(sf_11, "1234567.55645 to 11 sf", "approx. 1234567.5564");
 test_eval!(sf_12, "1234567.55645 to 12 sf", "1234567.55645");
 test_eval!(sf_13, "1234567.55645 to 13 sf", "1234567.55645");
+test_eval_simple!(sf_small_1, "pi / 1000000 to 1 sf", "approx. 0.000003");
+test_eval_simple!(sf_small_2, "pi / 1000000 to 2 sf", "approx. 0.0000031");
+test_eval_simple!(sf_small_3, "pi / 1000000 to 3 sf", "approx. 0.00000314");
+test_eval_simple!(sf_small_4, "pi / 1000000 to 4 sf", "approx. 0.000003141");
+test_eval_simple!(sf_small_5, "pi / 1000000 to 5 sf", "approx. 0.0000031415");
+test_eval_simple!(sf_small_6, "pi / 1000000 to 6 sf", "approx. 0.00000314159");
+test_eval_simple!(sf_small_7, "pi / 1000000 to 7 sf", "approx. 0.000003141592");
+test_eval_simple!(
+    sf_small_8,
+    "pi / 1000000 to 8 sf",
+    "approx. 0.0000031415926"
+);
+test_eval_simple!(
+    sf_small_9,
+    "pi / 1000000 to 9 sf",
+    "approx. 0.00000314159265"
+);
+test_eval_simple!(
+    sf_small_10,
+    "pi / 1000000 to 10 sf",
+    "approx. 0.000003141592653"
+);
+test_eval_simple!(
+    sf_small_11,
+    "pi / 1000000 to 11 sf",
+    "approx. 0.0000031415926535"
+);
 
 expect_error!(no_prefixes_for_speed_of_light, "mc");
 

@@ -485,7 +485,23 @@ impl BigRat {
             )?);
         }
 
-        let integer_part = x.num.clone().div(&x.den, int).map_err(IntErr::unwrap)?;
+        Ok(x.format_as_decimal(style, base, sign, term, terminating, int)?)
+    }
+
+    fn format_as_decimal<I: Interrupt>(
+        &self,
+        style: FormattingStyle,
+        base: Base,
+        sign: Sign,
+        term: &'static str,
+        mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
+        int: &I,
+    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
+        let integer_part = self
+            .clone()
+            .num
+            .div(&self.den, int)
+            .map_err(IntErr::unwrap)?;
         let formatted_integer_part = integer_part.format(base, true, int)?;
 
         // not a fraction, will be printed as a decimal
@@ -499,11 +515,26 @@ impl BigRat {
         } else if let FormattingStyle::SignificantFigures(sf) = style {
             let num_digits_of_int_part = formatted_integer_part.num_digits();
             let dp = if sf > num_digits_of_int_part {
+                // we want more significant figures than what was printed
+                // in the int component
                 sf - num_digits_of_int_part
             } else {
+                // no more digits, we already exhausted the number of significant
+                // figures
                 0
             };
-            MaxDigitsToPrint::DecimalPlaces(dp)
+            if integer_part == 0.into() {
+                // if the integer part is 0, we don't want leading zeroes
+                // after the decimal point to affect the number of non-zero
+                // digits printed
+
+                // we add 1 to the number of decimal places in this case because
+                // the integer component of '0' shouldn't count against the
+                // number of significant figures
+                MaxDigitsToPrint::DpButIgnoreLeadingZeroes(dp + 1)
+            } else {
+                MaxDigitsToPrint::DecimalPlaces(dp)
+            }
         } else {
             MaxDigitsToPrint::DecimalPlaces(10)
         };
@@ -521,7 +552,7 @@ impl BigRat {
             num: integer_part.clone(),
             den: 1.into(),
         };
-        let remaining_fraction = x.clone().add(-integer_as_rational, int)?;
+        let remaining_fraction = self.clone().add(-integer_as_rational, int)?;
         let (sign, formatted_trailing_digits) = Self::format_trailing_digits(
             base,
             &remaining_fraction.num,
@@ -561,7 +592,10 @@ impl BigRat {
                           base: &BigUint|
          -> Result<(BigUint, BigUint), NextDigitErr<I>> {
             test_int(int)?;
-            if num == 0.into() || max_digits == MaxDigitsToPrint::DecimalPlaces(i) {
+            if num == 0.into()
+                || max_digits == MaxDigitsToPrint::DecimalPlaces(i)
+                || max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
+            {
                 return Err(NextDigitErr::Terminated);
             }
             // digit = base * numerator / denominator
@@ -581,7 +615,16 @@ impl BigRat {
         };
         let skip_cycle_detection = max_digits != MaxDigitsToPrint::AllDigits || terminating()?;
         if skip_cycle_detection {
-            return Self::format_nonrecurring(numerator, base, next_digit, print_integer_part, int);
+            let ignore_number_of_leading_zeroes =
+                matches!(max_digits, MaxDigitsToPrint::DpButIgnoreLeadingZeroes(_));
+            return Self::format_nonrecurring(
+                numerator,
+                base,
+                ignore_number_of_leading_zeroes,
+                next_digit,
+                print_integer_part,
+                int,
+            );
         }
         match Self::brents_algorithm(
             next_digit,
@@ -613,6 +656,7 @@ impl BigRat {
     fn format_nonrecurring<I: Interrupt>(
         numerator: &BigUint,
         base: Base,
+        ignore_number_of_leading_zeroes: bool,
         mut next_digit: impl FnMut(
             usize,
             BigUint,
@@ -634,6 +678,9 @@ impl BigRat {
                     current_numerator = next_n;
                     if digit == 0.into() {
                         trailing_zeroes += 1;
+                        if !(i == 0 && ignore_number_of_leading_zeroes) {
+                            i += 1;
+                        }
                     } else {
                         if actual_sign.is_none() {
                             // always print leading minus because we have non-zero digits
@@ -647,6 +694,7 @@ impl BigRat {
                         }
                         trailing_zeroes = 0;
                         trailing_digits.push_str(&digit.format(base, false, int)?.to_string());
+                        i += 1;
                     }
                 }
                 Err(NextDigitErr::Terminated) => {
@@ -667,7 +715,6 @@ impl BigRat {
                     return Err(i);
                 }
             }
-            i += 1;
         }
     }
 
@@ -890,6 +937,8 @@ enum MaxDigitsToPrint {
     AllDigits,
     /// Print only the given number of decimal places, omitting any trailing zeroes
     DecimalPlaces(usize),
+    /// Print only the given number of dps, but ignore leading zeroes after the decimal point
+    DpButIgnoreLeadingZeroes(usize),
 }
 
 impl Neg for BigRat {
