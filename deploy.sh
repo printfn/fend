@@ -13,11 +13,11 @@ fail() {
     exit 1
 }
 
-echo $VERSION | grep "^\d\+\.\d\+\.\d\+$" >/dev/null || fail "Invalid version"
+echo "$VERSION" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
 
 confirm() {
     echo "$1"
-    read -p "Press enter to confirm, or Ctrl-C to cancel"
+    read -r -p "Press enter to confirm, or Ctrl-C to cancel"
     echo
 }
 
@@ -45,7 +45,7 @@ cargo run -- version
 cargo test --all
 echo "'cargo run -- version'"
 cargo run -q -- version
-cargo run -q -- version | grep $VERSION || fail "cargo run -- version returned the wrong version"
+cargo run -q -- version | grep "$VERSION" || fail "cargo run -- version returned the wrong version"
 echo "Committing..."
 git add -A
 git --no-pager diff --cached
