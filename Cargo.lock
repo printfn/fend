@@ -124,7 +124,7 @@ dependencies = [
 
 [[package]]
 name = "fend"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "ctrlc",
  "directories",
@@ -134,7 +134,7 @@ dependencies = [
 
 [[package]]
 name = "fend-core"
-version = "0.1.7"
+version = "0.1.8"
 
 [[package]]
 name = "fend-wasm"

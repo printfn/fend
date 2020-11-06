@@ -34,7 +34,7 @@ manualstep "Update README"
 manualstep "Bump version number in these places:
 fend-core TOML,
 fend-core docs attr,
-fend-core get_version(),
+fend-core get_version_as_str(),
 fend cli TOML,
 fend cli TOML version requirement for fend-core"
 echo "Building and running tests..."
