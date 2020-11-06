@@ -368,8 +368,7 @@ impl BigRat {
     }
 
     fn format_as_fraction<I: Interrupt>(
-        num: &BigUint,
-        den: &BigUint,
+        &self,
         base: Base,
         sign: Sign,
         term: &'static str,
@@ -377,16 +376,16 @@ impl BigRat {
         use_parens: bool,
         int: &I,
     ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
-        let formatted_den = den.format(base, true, int)?;
+        let formatted_den = self.den.format(base, true, int)?;
         let (pref, num) = if mixed {
-            let (prefix, num) = num.divmod(den, int).map_err(IntErr::unwrap)?;
+            let (prefix, num) = self.num.divmod(&self.den, int).map_err(IntErr::unwrap)?;
             if prefix == 0.into() {
                 (None, num)
             } else {
                 (Some(prefix.format(base, true, int)?), num)
             }
         } else {
-            (None, num.clone())
+            (None, self.num.clone())
         };
         // mixed fractions without a prefix aren't really mixed
         let actually_mixed = pref.is_some();
@@ -473,9 +472,7 @@ impl BigRat {
             || (style == FormattingStyle::Exact && !terminating()?);
         if fraction {
             let mixed = style == FormattingStyle::MixedFraction || style == FormattingStyle::Exact;
-            return Ok(Self::format_as_fraction(
-                &x.num,
-                &x.den,
+            return Ok(x.format_as_fraction(
                 base,
                 sign,
                 term,
