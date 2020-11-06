@@ -13,7 +13,7 @@ fail() {
     exit 1
 }
 
-echo $VERSION | grep "^\d\+\.\d\+\.\d\+$" >/dev/null || fail "Invalid version"
+echo $VERSION | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
 
 confirm() {
     echo "$1"
