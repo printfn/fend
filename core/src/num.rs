@@ -32,7 +32,34 @@ impl<T: fmt::Display> fmt::Display for ValueTooLarge<T> {
         Ok(())
     }
 }
+
 impl<T: fmt::Display> crate::err::Error for ValueTooLarge<T> {}
+
+pub enum ConvertToUsizeError {
+    TooLarge(ValueTooLarge<usize>),
+    NegativeNumber,
+    Fraction,
+    InvalidRealNumber,
+    ComplexNumber,
+    NumberWithUnit,
+    InexactNumber,
+}
+
+impl fmt::Display for ConvertToUsizeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            Self::TooLarge(value_too_large_error) => write!(f, "{}", value_too_large_error),
+            Self::NegativeNumber => write!(f, "Negative numbers are not allowed"),
+            Self::Fraction => write!(f, "Cannot convert fraction to integer"),
+            Self::InvalidRealNumber => write!(f, "Number cannot be converted to an integer"),
+            Self::ComplexNumber => write!(f, "Cannot convert complex number to integer"),
+            Self::NumberWithUnit => write!(f, "Cannot convert number with unit to integer"),
+            Self::InexactNumber => write!(f, "Cannot convert inexact number to integer"),
+        }
+    }
+}
+
+impl crate::err::Error for ConvertToUsizeError {}
 
 #[derive(Debug)]
 pub enum IntegerPowerError {

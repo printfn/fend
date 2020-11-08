@@ -1,7 +1,7 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::real::{FormattedReal, Real};
 use crate::num::Exact;
-use crate::num::{Base, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -26,9 +26,12 @@ pub enum UseParentheses {
 }
 
 impl Complex {
-    pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
+    pub fn try_as_usize<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         if self.imag != 0.into() {
-            return Err("Cannot convert complex number to integer".to_string())?;
+            return Err(ConvertToUsizeError::ComplexNumber)?;
         }
         Ok(self.real.try_as_usize(int)?)
     }

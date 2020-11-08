@@ -2,7 +2,7 @@ use crate::ast;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
-use crate::num::{Base, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
 use crate::scope::Scope;
 use std::collections::HashMap;
 use std::fmt;
@@ -22,12 +22,15 @@ pub struct UnitValue<'a> {
 }
 
 impl<'a> UnitValue<'a> {
-    pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
+    pub fn try_as_usize<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         if !self.is_unitless() {
-            return Err("Cannot convert number with unit to integer".to_string())?;
+            return Err(ConvertToUsizeError::NumberWithUnit)?;
         }
         if !self.exact {
-            return Err("Cannot convert inexact number to integer".to_string())?;
+            return Err(ConvertToUsizeError::InexactNumber)?;
         }
         Ok(self.value.try_as_usize(int)?)
     }

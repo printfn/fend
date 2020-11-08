@@ -169,11 +169,17 @@ impl<'a> Value<'a> {
             Self::Num(n) => {
                 let other = crate::ast::evaluate(other, scope.clone(), int)?;
                 if let Self::Dp = other {
-                    let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
+                    let num = Self::Num(n)
+                        .expect_num()?
+                        .try_as_usize(int)
+                        .map_err(IntErr::into_string)?;
                     return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
                 }
                 if let Self::Sf = other {
-                    let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
+                    let num = Self::Num(n)
+                        .expect_num()?
+                        .try_as_usize(int)
+                        .map_err(IntErr::into_string)?;
                     if num == 0 {
                         return Err(
                             "Cannot format a number with zero significant figures.".to_string()
@@ -220,7 +226,8 @@ impl<'a> Value<'a> {
                         use std::convert::TryInto;
                         let n: u8 = other
                             .expect_num()?
-                            .try_as_usize(int)?
+                            .try_as_usize(int)
+                            .map_err(IntErr::into_string)?
                             .try_into()
                             .map_err(|_| "Unable to convert number to a valid base".to_string())?;
                         return Ok(Self::Base(

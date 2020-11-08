@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::Exact;
-use crate::num::{Base, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -83,15 +83,21 @@ impl PartialEq for BigRat {
 impl Eq for BigRat {}
 
 impl BigRat {
-    pub fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, IntErr<String, I>> {
+    pub fn try_as_usize<I: Interrupt>(
+        mut self,
+        int: &I,
+    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err("Negative numbers are not allowed".to_string())?;
+            return Err(ConvertToUsizeError::NegativeNumber)?;
         }
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err("Cannot convert fraction to integer".to_string())?;
+            return Err(ConvertToUsizeError::Fraction)?;
         }
-        Ok(self.num.try_as_usize().map_err(|e| e.to_string())?)
+        Ok(self
+            .num
+            .try_as_usize()
+            .map_err(ConvertToUsizeError::TooLarge)?)
     }
 
     #[allow(clippy::float_arithmetic)]

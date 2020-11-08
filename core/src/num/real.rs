@@ -1,7 +1,7 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
-use crate::num::{Base, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -69,14 +69,17 @@ impl Real {
         }
     }
 
-    pub fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<String, I>> {
+    pub fn try_as_usize<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         match self.pattern {
             Pattern::Simple(s) => s.try_as_usize(int),
             Pattern::Pi(n) => {
                 if n == 0.into() {
                     Ok(0)
                 } else {
-                    Err("Number cannot be converted to an integer".to_string())?
+                    Err(ConvertToUsizeError::InvalidRealNumber)?
                 }
             }
         }
