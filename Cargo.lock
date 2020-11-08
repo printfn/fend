@@ -138,7 +138,7 @@ version = "0.1.9"
 
 [[package]]
 name = "fend-wasm"
-version = "0.1.0"
+version = "0.1.9"
 dependencies = [
  "fend-core",
  "instant",

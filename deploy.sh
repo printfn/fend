@@ -36,7 +36,8 @@ fend-core TOML,
 fend-core docs attr,
 fend-core get_version_as_str(),
 fend cli TOML,
-fend cli TOML version requirement for fend-core"
+fend cli TOML version requirement for fend-core
+fend wasm TOML"
 echo "Building and running tests..."
 touch core/src/lib.rs
 cargo clippy --workspace --all-targets --all-features
@@ -68,6 +69,13 @@ confirm "cargo publish for fend"
 confirm "Tag and push tag to GitHub"
 git tag "v$VERSION"
 git push --tags
+confirm "Build NPM package"
+(cd wasm && wasm-pack build)
+confirm 'Opening vim to add "fend_wasm_bg.js" to package.json'
+vim wasm/pkg/package.json
+(cd wasm/pkg && npm publish --dry-run)
+confirm "Publish npm package"
+(cd wasm/pkg && npm publish)
 manualstep "Create GitHub release (including changelog):
   * Download artifacts
   * Title: Version $VERSION
