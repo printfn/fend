@@ -1217,4 +1217,8 @@ test_eval_simple!(trailing_zeroes_sf_5, "12345601 to 6sf", "approx. 12345600");
 test_eval_simple!(trailing_zeroes_sf_6, "12345601 to 7sf", "approx. 12345600");
 test_eval_simple!(trailing_zeroes_sf_7, "12345601 to 8sf", "12345601");
 
-test_eval!(kwh_conversion, "100 kWh/yr to watt", "approx. 11.4079552707 watts");
+test_eval!(
+    kwh_conversion,
+    "100 kWh/yr to watt",
+    "approx. 11.4079552707 watts"
+);
