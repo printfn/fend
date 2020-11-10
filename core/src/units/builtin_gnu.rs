@@ -6344,7 +6344,7 @@ euringsize(n)  units=[1;mm] (n+40) mm ; euringsize/mm + (-40)
 ("Mcf"                     "1000 ft^3")    // not million cubic feet [18]
 ("kp"                      "kilopond")
 ("kpm"                     "kp meter")
-("Wh"                      "W hour")
+("Wh"                      "s@W hour")
 ("hph"                     "hp hour")
 ("plf"                     "lb / foot")    // pounds per linear foot
 
