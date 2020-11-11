@@ -30,7 +30,7 @@ fend is now available on the web at [https://fend.printfn.nz](https://fend.print
     <img src="https://repology.org/badge/vertical-allrepos/fend.svg" alt="Packaging status">
 </a>
 
-Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest). fend is also available in the [AUR](https://aur.archlinux.org/packages/fend/).
+Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
 
 You can then run `fend` to start a REPL session:
 
@@ -42,6 +42,11 @@ $ fend
 30.48 cm
 >
 ```
+
+### Packages
+
+* [AUR](https://aur.archlinux.org/packages/fend/)
+* [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 
 ## [Manual](https://github.com/printfn/fend/wiki)
 
