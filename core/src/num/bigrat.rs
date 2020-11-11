@@ -97,7 +97,7 @@ impl BigRat {
         Ok(self
             .num
             .try_as_usize()
-            .map_err(ConvertToUsizeError::TooLarge)?)
+            .map_err(ConvertToUsizeError::OutOfRange)?)
     }
 
     #[allow(clippy::float_arithmetic)]

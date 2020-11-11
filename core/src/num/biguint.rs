@@ -1,6 +1,6 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::{Base, DivideByZero, Exact, IntegerPowerError, ValueTooLarge};
+use crate::num::{Base, DivideByZero, Exact, IntegerPowerError, ValueOutOfRange};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
@@ -52,14 +52,12 @@ impl BigUint {
         }
     }
 
-    pub fn try_as_usize(&self) -> Result<usize, ValueTooLarge<usize>> {
+    pub fn try_as_usize(&self) -> Result<usize, ValueOutOfRange<usize>> {
         use std::convert::TryFrom;
         // todo: include `self` in the error message
         // This requires rewriting the BigUint format code to use a separate
         // struct that implements Display
-        let error = ValueTooLarge {
-            max_allowed: usize::MAX,
-        };
+        let error = ValueOutOfRange::MustBeLessThanOrEqualTo(usize::MAX);
 
         Ok(match self {
             Small(n) => {

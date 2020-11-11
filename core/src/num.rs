@@ -18,25 +18,24 @@ type Exact<T> = exact::Exact<T>;
 pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
 pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
-pub struct ValueTooLarge<T: fmt::Display> {
-    max_allowed: T,
+pub enum ValueOutOfRange<T: fmt::Display> {
+    MustBeLessThanOrEqualTo(T),
 }
 
-impl<T: fmt::Display> fmt::Display for ValueTooLarge<T> {
+impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(
-            f,
-            "Value must be less than or equal to {}",
-            self.max_allowed
-        )?;
-        Ok(())
+        match self {
+            Self::MustBeLessThanOrEqualTo(x) => {
+                write!(f, "Value must be less than or equal to {}", x)
+            }
+        }
     }
 }
 
-impl<T: fmt::Display> crate::err::Error for ValueTooLarge<T> {}
+impl<T: fmt::Display> crate::err::Error for ValueOutOfRange<T> {}
 
 pub enum ConvertToUsizeError {
-    TooLarge(ValueTooLarge<usize>),
+    OutOfRange(ValueOutOfRange<usize>),
     NegativeNumber,
     Fraction,
     InvalidRealNumber,
@@ -48,7 +47,7 @@ pub enum ConvertToUsizeError {
 impl fmt::Display for ConvertToUsizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            Self::TooLarge(value_too_large_error) => write!(f, "{}", value_too_large_error),
+            Self::OutOfRange(value_out_of_range_error) => write!(f, "{}", value_out_of_range_error),
             Self::NegativeNumber => write!(f, "Negative numbers are not allowed"),
             Self::Fraction => write!(f, "Cannot convert fraction to integer"),
             Self::InvalidRealNumber => write!(f, "Number cannot be converted to an integer"),
