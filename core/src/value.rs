@@ -158,6 +158,7 @@ impl<'a> Value<'a> {
         })
     }
 
+    #[allow(clippy::map_err_ignore)]
     pub fn apply<I: Interrupt>(
         self,
         other: Expr<'a>,

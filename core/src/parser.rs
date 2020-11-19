@@ -13,7 +13,7 @@ pub enum ParseError {
     InvalidApplyOperands,
     UnexpectedInput,
     ExpectedIdentifierAsArgument,
-    ExpectedDotInLambda,
+    ExpectedDotInLambda(Box<ParseError>),
     InvalidMixedFraction,
 }
 impl fmt::Display for ParseError {
@@ -34,7 +34,9 @@ impl fmt::Display for ParseError {
             // TODO improve this message or remove this error type
             Self::InvalidApplyOperands => write!(f, "Error"),
             Self::UnexpectedInput => write!(f, "Unexpected input found"),
-            Self::ExpectedDotInLambda => write!(f, "Missing '.' in lambda (expected e.g. \\x.x)"),
+            Self::ExpectedDotInLambda(_) => {
+                write!(f, "Missing '.' in lambda (expected e.g. \\x.x)")
+            }
             Self::InvalidMixedFraction => write!(f, "Invalid mixed fraction"),
         }
     }
@@ -96,8 +98,8 @@ fn parse_backslash_lambda<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b>
     } else {
         return Err(ParseError::ExpectedIdentifier);
     };
-    let (_, input) =
-        parse_fixed_symbol(input, Symbol::Dot).map_err(|_| ParseError::ExpectedDotInLambda)?;
+    let (_, input) = parse_fixed_symbol(input, Symbol::Dot)
+        .map_err(|e| ParseError::ExpectedDotInLambda(Box::new(e)))?;
     let (rhs, input) = parse_function(input)?;
     Ok((Expr::Fn(ident, Box::new(rhs)), input))
 }
