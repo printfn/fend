@@ -139,7 +139,6 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 
-    // note that this works for any real number, unlike asin and acos
     pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from(self.approximate(int)?.atan(int)?))
     }
@@ -160,25 +159,24 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.asinh(int)?))
     }
 
-    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.acosh(int)?))
     }
 
-    // value must be between -1 and 1.
-    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.atanh(int)?))
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.ln(int)?))
     }
 
-    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.log2(int)?))
     }
 
-    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.log10(int)?))
     }
 

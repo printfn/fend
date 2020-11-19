@@ -274,23 +274,39 @@ impl Complex {
     }
 
     pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.acosh(int)?))
+        Ok(Self::from(
+            self.expect_real()?
+                .acosh(int)
+                .map_err(IntErr::into_string)?,
+        ))
     }
 
     pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.atanh(int)?))
+        Ok(Self::from(
+            self.expect_real()?
+                .atanh(int)
+                .map_err(IntErr::into_string)?,
+        ))
     }
 
     pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.ln(int)?))
+        Ok(Self::from(
+            self.expect_real()?.ln(int).map_err(IntErr::into_string)?,
+        ))
     }
 
     pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.log2(int)?))
+        Ok(Self::from(
+            self.expect_real()?.log2(int).map_err(IntErr::into_string)?,
+        ))
     }
 
     pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.log10(int)?))
+        Ok(Self::from(
+            self.expect_real()?
+                .log10(int)
+                .map_err(IntErr::into_string)?,
+        ))
     }
 }
 

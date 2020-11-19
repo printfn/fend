@@ -187,40 +187,40 @@ impl BigRat {
     }
 
     // value must not be less than 1
-    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self < 1.into() {
-            return Err("Value must not be less than 1".to_string())?;
+            return Err(ValueOutOfRange::MustNotBeLessThan(1))?;
         }
         Ok(Self::from_f64(f64::acosh(self.into_f64(int)?), int)?)
     }
 
     // value must be between -1 and 1.
-    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
-            return Err("Value must be between -1 and 1".to_string())?;
+            return Err(ValueOutOfRange::MustBeBetween(-1, 1))?;
         }
         Ok(Self::from_f64(f64::atanh(self.into_f64(int)?), int)?)
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self <= 0.into() {
-            return Err("Value must be greater than 0".to_string())?;
+            return Err(ValueOutOfRange::MustBeGreaterThan(0))?;
         }
         Ok(Self::from_f64(f64::ln(self.into_f64(int)?), int)?)
     }
 
-    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self <= 0.into() {
-            return Err("Value must be greater than 0".to_string())?;
+            return Err(ValueOutOfRange::MustBeGreaterThan(0))?;
         }
         Ok(Self::from_f64(f64::log2(self.into_f64(int)?), int)?)
     }
 
-    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self <= 0.into() {
-            return Err("Value must be greater than 0".to_string())?;
+            return Err(ValueOutOfRange::MustBeGreaterThan(0))?;
         }
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
     }

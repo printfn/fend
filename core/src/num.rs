@@ -18,9 +18,12 @@ type Exact<T> = exact::Exact<T>;
 pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
 pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
+#[allow(clippy::pub_enum_variant_names)]
 pub enum ValueOutOfRange<T: fmt::Display> {
     MustBeLessThanOrEqualTo(T),
     MustBeBetween(T, T),
+    MustNotBeLessThan(T),
+    MustBeGreaterThan(T),
 }
 
 impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
@@ -31,6 +34,12 @@ impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
             }
             Self::MustBeBetween(a, b) => {
                 write!(f, "Value must be between {} and {}", a, b)
+            }
+            Self::MustNotBeLessThan(x) => {
+                write!(f, "Value must not be less than {}", x)
+            }
+            Self::MustBeGreaterThan(x) => {
+                write!(f, "Value must be greater than {}", x)
             }
         }
     }
