@@ -1,8 +1,9 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
-use crate::num::Exact;
-use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
+use crate::num::{
+    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, ValueOutOfRange,
+};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -148,18 +149,18 @@ impl BigRat {
     }
 
     // asin, acos and atan only work for values between -1 and 1
-    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err("Value must be between -1 and 1".to_string())?;
+            return Err(ValueOutOfRange::MustBeBetween(-1, 1))?;
         }
         Ok(Self::from_f64(f64::asin(self.into_f64(int)?), int)?)
     }
 
-    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err("Value must be between -1 and 1".to_string())?;
+            return Err(ValueOutOfRange::MustBeBetween(-1, 1))?;
         }
         Ok(Self::from_f64(f64::acos(self.into_f64(int)?), int)?)
     }

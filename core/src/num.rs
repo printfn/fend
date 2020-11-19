@@ -20,6 +20,7 @@ pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
 pub enum ValueOutOfRange<T: fmt::Display> {
     MustBeLessThanOrEqualTo(T),
+    MustBeBetween(T, T),
 }
 
 impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
@@ -27,6 +28,9 @@ impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
         match self {
             Self::MustBeLessThanOrEqualTo(x) => {
                 write!(f, "Value must be less than or equal to {}", x)
+            }
+            Self::MustBeBetween(a, b) => {
+                write!(f, "Value must be between {} and {}", a, b)
             }
         }
     }

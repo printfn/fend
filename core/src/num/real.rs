@@ -1,7 +1,7 @@
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
-use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle, ValueOutOfRange};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -131,11 +131,11 @@ impl Real {
         })
     }
 
-    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.asin(int)?))
     }
 
-    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 

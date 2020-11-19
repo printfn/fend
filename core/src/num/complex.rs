@@ -242,11 +242,15 @@ impl Complex {
     }
 
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.asin(int)?))
+        Ok(Self::from(
+            self.expect_real()?.asin(int).map_err(IntErr::into_string)?,
+        ))
     }
 
     pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        Ok(Self::from(self.expect_real()?.acos(int)?))
+        Ok(Self::from(
+            self.expect_real()?.acos(int).map_err(IntErr::into_string)?,
+        ))
     }
 
     pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
