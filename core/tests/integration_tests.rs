@@ -111,19 +111,10 @@ expect_error!(
     DIVISION_BY_ZERO_ERROR
 );
 
-const LEADING_ZEROES_ERROR: &str = "Integer literals cannot have leading zeroes";
-expect_error!(two_zeroes, "00", LEADING_ZEROES_ERROR);
-expect_error!(six_zeroes, "000000", LEADING_ZEROES_ERROR);
-expect_error!(
-    multiple_zeroes_with_decimal_point,
-    "000000.01",
-    LEADING_ZEROES_ERROR
-);
-expect_error!(
-    leading_zeroes_and_decimal_point,
-    "0000001.01",
-    LEADING_ZEROES_ERROR
-);
+test_eval!(two_zeroes, "00", "0");
+test_eval!(six_zeroes, "000000", "0");
+test_eval!(multiple_zeroes_with_decimal_point, "000000.01", "0.01");
+test_eval!(leading_zeroes_and_decimal_point, "0000001.01", "1.01");
 
 test_eval!(binary_leading_zeroes, "0b01", "0b1");
 test_eval!(hex_leading_zeroes, "0x0000_00ff", "0xff");
@@ -322,7 +313,7 @@ test_eval!(zero_point_two_five, "0.25", "0.25");
 expect_error!(one_point, "1.");
 test_eval!(point_one, ".1", "0.1");
 test_eval!(point_one_e_minus_one, ".1e-1", "0.01");
-expect_error!(leading_zeroes_with_dp, "001.01000");
+test_eval!(leading_zeroes_with_dp, "001.01000", "1.01");
 test_eval!(
     very_long_decimal,
     "0.251974862348971623412341534273261435",

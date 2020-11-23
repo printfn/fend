@@ -141,10 +141,6 @@ impl Base {
             _ => return None,
         })
     }
-
-    pub const fn allow_leading_zeroes(self) -> bool {
-        !matches!(self.0, BaseEnum::Plain(10))
-    }
 }
 
 impl Default for Base {

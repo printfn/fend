@@ -36,7 +36,6 @@ pub enum LexerError {
     ExpectedDigitSeparator(char),
     DigitSeparatorsNotAllowed,
     DigitSeparatorsOnlyBetweenDigits,
-    NoLeadingZeroes,
     BaseOutOfRange(BaseOutOfRangeError),
     InvalidBasePrefix(InvalidBasePrefixError),
     InvalidCharAtBeginningOfIdent(char),
@@ -58,7 +57,6 @@ impl fmt::Display for LexerError {
             Self::DigitSeparatorsOnlyBetweenDigits => {
                 write!(f, "Digit separators can only occur between digits")
             }
-            Self::NoLeadingZeroes => write!(f, "Integer literals cannot have leading zeroes"),
             Self::BaseOutOfRange(e) => write!(f, "{}", e),
             Self::InvalidBasePrefix(e) => write!(f, "{}", e),
             Self::InvalidCharAtBeginningOfIdent(ch) => {
@@ -154,13 +152,11 @@ fn parse_digit_separator(input: &str) -> Result<((), &str), LexerError> {
 fn parse_integer<'a, E: From<LexerError>>(
     input: &'a str,
     allow_digit_separator: bool,
-    allow_leading_zeroes: bool,
     base: Base,
     process_digit: &mut impl FnMut(u8) -> Result<(), E>,
 ) -> Result<((), &'a str), E> {
     let (digit, mut input) = parse_ascii_digit(input, base)?;
     process_digit(digit)?;
-    let leading_zero = digit == 0;
     let mut parsed_digit_separator;
     loop {
         if let Ok((_, remaining)) = parse_digit_separator(input) {
@@ -180,9 +176,6 @@ fn parse_integer<'a, E: From<LexerError>>(
                 break;
             }
             Ok((digit, next_input)) => {
-                if leading_zero && !allow_leading_zeroes {
-                    return Err(LexerError::NoLeadingZeroes)?;
-                }
                 process_digit(digit)?;
                 input = next_input;
             }
@@ -203,24 +196,21 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
         Ok((Base::from_zero_based_prefix_char(ch)?, input))
     } else {
         let mut custom_base: u8 = 0;
-        let (_, input) = parse_integer(
-            input,
-            false,
-            false,
-            Base::default(),
-            &mut |digit| -> Result<(), LexerError> {
-                let base_too_large = BaseOutOfRangeError::BaseTooLarge;
-                let error = LexerError::BaseOutOfRange(base_too_large);
-                if custom_base > 3 {
-                    return Err(error);
-                }
-                custom_base = 10 * custom_base + digit;
-                if custom_base > 36 {
-                    return Err(error);
-                }
-                Ok(())
-            },
-        )?;
+        let (_, input) = parse_integer(input, false, Base::default(), &mut |digit| -> Result<
+            (),
+            LexerError,
+        > {
+            let base_too_large = BaseOutOfRangeError::BaseTooLarge;
+            let error = LexerError::BaseOutOfRange(base_too_large);
+            if custom_base > 3 {
+                return Err(error);
+            }
+            custom_base = 10 * custom_base + digit;
+            if custom_base > 36 {
+                return Err(error);
+            }
+            Ok(())
+        })?;
         if custom_base < 2 {
             let base_too_small = BaseOutOfRangeError::BaseTooSmall;
             return Err(LexerError::BaseOutOfRange(base_too_small));
@@ -255,7 +245,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     let mut recurring_number_num = Number::from(0);
     let mut recurring_number_den = Number::from(1);
     let base_as_u64 = u64::from(base.base_as_u8());
-    let (_, input) = parse_integer(input, true, true, base, &mut |digit| -> Result<
+    let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<
         (),
         IntErr<String, I>,
     > {
@@ -293,19 +283,16 @@ fn parse_basic_number<'a, I: Interrupt>(
     let base_as_u64 = u64::from(base.base_as_u8());
 
     if parse_fixed_char(input, '.').is_err() {
-        let (_, remaining) = parse_integer(
-            input,
-            true,
-            base.allow_leading_zeroes(),
-            base,
-            &mut |digit| -> Result<(), IntErr<String, I>> {
-                res = res
-                    .clone()
-                    .mul(base_as_u64.into(), int)?
-                    .add(u64::from(digit).into(), int)?;
-                Ok(())
-            },
-        )?;
+        let (_, remaining) = parse_integer(input, true, base, &mut |digit| -> Result<
+            (),
+            IntErr<String, I>,
+        > {
+            res = res
+                .clone()
+                .mul(base_as_u64.into(), int)?
+                .add(u64::from(digit).into(), int)?;
+            Ok(())
+        })?;
         input = remaining;
     }
 
@@ -315,19 +302,18 @@ fn parse_basic_number<'a, I: Interrupt>(
         let mut numerator = Number::zero_with_base(base);
         let mut denominator = Number::zero_with_base(base).add(1.into(), int)?;
         if parse_fixed_char(remaining, '(').is_err() {
-            let (_, remaining) =
-                parse_integer(remaining, true, true, base, &mut |digit| -> Result<
-                    (),
-                    IntErr<String, I>,
-                > {
-                    numerator = numerator
-                        .clone()
-                        .mul(base_as_u64.into(), int)?
-                        .add(u64::from(digit).into(), int)?;
-                    denominator = denominator.clone().mul(base_as_u64.into(), int)?;
-                    num_nonrec_digits += 1;
-                    Ok(())
-                })?;
+            let (_, remaining) = parse_integer(remaining, true, base, &mut |digit| -> Result<
+                (),
+                IntErr<String, I>,
+            > {
+                numerator = numerator
+                    .clone()
+                    .mul(base_as_u64.into(), int)?
+                    .add(u64::from(digit).into(), int)?;
+                denominator = denominator.clone().mul(base_as_u64.into(), int)?;
+                num_nonrec_digits += 1;
+                Ok(())
+            })?;
             input = remaining;
         } else {
             input = remaining;
@@ -373,15 +359,14 @@ fn parse_basic_number<'a, I: Interrupt>(
                 }
                 let mut exp = Number::zero_with_base(base);
                 let base_num = Number::from(u64::from(base.base_as_u8()));
-                let (_, remaining) =
-                    parse_integer(input, true, true, base, &mut |digit| -> Result<
-                        (),
-                        IntErr<String, I>,
-                    > {
-                        exp = (exp.clone().mul(base_num.clone(), int)?)
-                            .add(u64::from(digit).into(), int)?;
-                        Ok(())
-                    })?;
+                let (_, remaining) = parse_integer(input, true, base, &mut |digit| -> Result<
+                    (),
+                    IntErr<String, I>,
+                > {
+                    exp = (exp.clone().mul(base_num.clone(), int)?)
+                        .add(u64::from(digit).into(), int)?;
+                    Ok(())
+                })?;
                 if negative_exponent {
                     exp = -exp;
                 }
