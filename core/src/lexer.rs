@@ -428,7 +428,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerErro
     let (ident, input) = input.split_at(byte_idx);
     Ok((
         match ident {
-            "to" | "as" => Token::Symbol(Symbol::ArrowConversion),
+            "to" | "as" | "in" => Token::Symbol(Symbol::ArrowConversion),
             "per" => Token::Symbol(Symbol::Div),
             _ => Token::Ident(ident),
         },
