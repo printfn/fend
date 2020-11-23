@@ -18,15 +18,15 @@ jobs:
         include:
           - platform: ubuntu-latest
             artifact-path: target/release/fend
-            artifact-platform-name: linux
+            artifact-platform-name: linux-x64
             env-command: ">> $GITHUB_ENV"
           - platform: macos-latest
             artifact-path: target/release/fend
-            artifact-platform-name: macos
+            artifact-platform-name: macos-x64
             env-command: ">> $GITHUB_ENV"
           - platform: windows-latest
             artifact-path: target/release/fend.exe
-            artifact-platform-name: windows
+            artifact-platform-name: windows-x64
             env-command: "| Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
 
     runs-on: ${{ matrix.platform }}
