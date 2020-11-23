@@ -123,6 +123,11 @@ test_eval!(leading_zeroes_after_decimal_point, "1.001", "1.001");
 test_eval!(leading_zeroes_in_exponent, "1e01", "10");
 test_eval!(leading_zeroes_in_negative_exponent, "1e-01", "0.1");
 
+test_eval!(upper_case_exponent, "1E3", "1000");
+test_eval!(upper_case_big_exponent, "1E10", "10000000000");
+test_eval!(upper_case_neg_exponent, "1E-3", "0.001");
+test_eval!(upper_case_binary_exponent, "0b10E100 to decimal", "32");
+
 expect_error!(no_recurring_digits, "0.()");
 
 test_eval_simple!(to_float_1, "0.(3) to float", "0.(3)");

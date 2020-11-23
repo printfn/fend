@@ -332,7 +332,16 @@ fn parse_basic_number<'a, I: Interrupt>(
 
     // parse optional exponent, but only for base 10 and below
     if base.base_as_u8() <= 10 {
-        if let Ok((_, remaining)) = parse_fixed_char(input, 'e') {
+        let (parsed_exponent, remaining) = if let Ok((_, remaining)) = parse_fixed_char(input, 'e')
+        {
+            (true, remaining)
+        } else if let Ok((_, remaining)) = parse_fixed_char(input, 'E') {
+            (true, remaining)
+        } else {
+            (false, "")
+        };
+
+        if parsed_exponent {
             // peek ahead to the next char to determine if we should continue parsing an exponent
             let abort = if let Ok((ch, _)) = parse_char(remaining) {
                 // abort if there is a non-digit non-plus or minus char after 'e',
@@ -355,7 +364,7 @@ fn parse_basic_number<'a, I: Interrupt>(
                 }
                 let mut exp = Number::zero_with_base(base);
                 let base_num = Number::from(u64::from(base.base_as_u8()));
-                let (_, remaining) = parse_integer(input, true, base, &mut |digit| -> Result<
+                let (_, remaining2) = parse_integer(input, true, base, &mut |digit| -> Result<
                     (),
                     IntErr<String, I>,
                 > {
@@ -368,7 +377,7 @@ fn parse_basic_number<'a, I: Interrupt>(
                 }
                 let base_as_number: Number = base_as_u64.into();
                 res = res.mul(base_as_number.pow(exp, int)?, int)?;
-                input = remaining;
+                input = remaining2;
             }
         }
     }
