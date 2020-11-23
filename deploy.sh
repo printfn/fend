@@ -85,4 +85,3 @@ Changes in this version:
 * ..."
 manualstep "Update manual (including changelog): https://github.com/printfn/fend/wiki"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"
-

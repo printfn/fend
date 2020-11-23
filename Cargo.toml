@@ -4,4 +4,3 @@ members = ["cli", "core", "wasm"]
 [profile.release]
 lto = true
 opt-level = "z" # small code size
-
