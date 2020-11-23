@@ -17,9 +17,6 @@ pub enum Symbol {
     Sub,
     Mul,
     Div,
-    // In GNU mode only: | is division with higher precedence. Otherwise
-    // it is an error
-    InnerDiv,
     Pow,
     ArrowConversion,
     Factorial,
@@ -96,7 +93,6 @@ impl fmt::Display for Symbol {
             Self::Sub => "-",
             Self::Mul => "*",
             Self::Div => "/",
-            Self::InnerDiv => "|",
             Self::Pow => "^",
             Self::ArrowConversion => "->",
             Self::Factorial => "!",
@@ -489,7 +485,6 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                             }
                         }
                         '/' => Symbol::Div,
-                        '|' => Symbol::InnerDiv,
                         '^' => Symbol::Pow,
                         ':' => Symbol::Fn,
                         '=' => {
