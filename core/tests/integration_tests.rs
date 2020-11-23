@@ -558,6 +558,7 @@ test_eval!(
     "0.0000000000000000004806529902 C"
 );
 test_eval!(e_to_1, "ℯ to 1", "approx. 2.7182818284");
+test_eval!(e_in_binary, "e in binary", "approx. 10.1011011111");
 
 test_eval_simple!(base_conversion_1, "16 to base 2", "10000");
 test_eval_simple!(base_conversion_2, "0x10ffff to decimal", "1114111");
