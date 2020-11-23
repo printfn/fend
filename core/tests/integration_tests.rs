@@ -768,6 +768,7 @@ test_eval!(
 test_eval!(liter_to_cubic_meters, "1L -> m^3", "0.001 m^3");
 test_eval!(five_feet_to_meters, "5 ft to m", "1.524 m");
 test_eval!(log10_4, "log10 4", "approx. 0.6020599913");
+test_eval!(log_4_as_log10, "log 4", "approx. 0.6020599913");
 
 test_eval!(factorial_of_0, "0!", "1");
 test_eval!(factorial_of_1, "1!", "1");
@@ -807,6 +808,7 @@ test_eval!(builtin_function_name_atanh, "atanh", "atanh");
 test_eval!(builtin_function_name_ln, "ln", "ln");
 test_eval!(builtin_function_name_log2, "log2", "log2");
 test_eval!(builtin_function_name_log10, "log10", "log10");
+test_eval!(builtin_function_name_log_is_log10, "log", "log10");
 test_eval!(builtin_function_name_base, "base", "base");
 
 // values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
@@ -903,6 +905,10 @@ test_eval!(log10_100, "log10 100", "approx. 2");
 test_eval!(log10_1000, "log10 1000", "approx. 3");
 test_eval!(log10_10000, "log10 10000", "approx. 4");
 test_eval!(log10_100000, "log10 100000", "approx. 5");
+test_eval!(log_100, "log 100", "approx. 2");
+test_eval!(log_1000, "log 1000", "approx. 3");
+test_eval!(log_10000, "log 10000", "approx. 4");
+test_eval!(log_100000, "log 100000", "approx. 5");
 test_eval!(log2_65536, "log2 65536", "approx. 16");
 expect_error!(log10_minus_1, "log10 (-1)");
 expect_error!(log2_minus_1, "log2 (-1)");

@@ -237,7 +237,7 @@ pub fn resolve_identifier<'a, I: Interrupt>(
         "cis" => evaluate_to_value("θ => cos θ + i (sin θ)", scope, int)?,
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
-        "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
+        "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
         "exp" => evaluate_to_value("x: e^x", scope, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
