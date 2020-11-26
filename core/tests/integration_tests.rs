@@ -1225,3 +1225,9 @@ test_eval!(
     "100 kWh/yr to watt",
     "approx. 11.4079552707 watts"
 );
+
+test_eval_simple!(
+    debug_pi_n,
+    "!debug pi N",
+    "pi N (= 1 kg m s^-2) (base 10, auto)"
+);

@@ -15,7 +15,13 @@ impl fmt::Debug for Real {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self.pattern {
             Pattern::Simple(x) => write!(f, "{:?}", x),
-            Pattern::Pi(x) => write!(f, "pi * {:?}", x),
+            Pattern::Pi(x) => {
+                if x.is_definitely_one() {
+                    write!(f, "pi")
+                } else {
+                    write!(f, "{:?} * pi", x)
+                }
+            }
         }
     }
 }
