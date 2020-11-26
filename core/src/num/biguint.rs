@@ -562,9 +562,21 @@ impl From<u64> for BigUint {
 impl fmt::Debug for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Small(n) => write!(f, "{}", n),
-            Large(value) => write!(f, "{:?}", value),
+            Small(n) => write!(f, "{}", n)?,
+            Large(value) => {
+                write!(f, "[")?;
+                let mut first = true;
+                for v in value.iter().rev() {
+                    if !first {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", v)?;
+                    first = false;
+                }
+                write!(f, "]")?;
+            }
         }
+        Ok(())
     }
 }
 
