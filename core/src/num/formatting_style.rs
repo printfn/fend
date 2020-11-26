@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 #[must_use]
 pub enum FormattingStyle {
     /// Print value as an improper fraction
@@ -34,6 +34,20 @@ impl fmt::Display for FormattingStyle {
             Self::ImproperFraction => write!(f, "fraction"),
             Self::MixedFraction => write!(f, "mixed_fraction"),
             Self::ExactFloat => write!(f, "float"),
+            Self::Exact => write!(f, "exact"),
+            Self::DecimalPlaces(d) => write!(f, "{} dp", d),
+            Self::SignificantFigures(s) => write!(f, "{} sf", s),
+            Self::Auto => write!(f, "auto"),
+        }
+    }
+}
+
+impl fmt::Debug for FormattingStyle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            Self::ImproperFraction => write!(f, "improper fraction"),
+            Self::MixedFraction => write!(f, "mixed fraction"),
+            Self::ExactFloat => write!(f, "exact float"),
             Self::Exact => write!(f, "exact"),
             Self::DecimalPlaces(d) => write!(f, "{} dp", d),
             Self::SignificantFigures(s) => write!(f, "{} sf", s),

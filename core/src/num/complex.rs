@@ -14,7 +14,11 @@ pub struct Complex {
 
 impl fmt::Debug for Complex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?} + {:?}i", self.real, self.imag)
+        write!(f, "{:?}", self.real)?;
+        if !self.imag.is_definitely_zero() {
+            write!(f, " + {:?}i", self.imag)?;
+        }
+        Ok(())
     }
 }
 
@@ -307,6 +311,10 @@ impl Complex {
                 .log10(int)
                 .map_err(IntErr::into_string)?,
         ))
+    }
+
+    pub fn is_definitely_one(&self) -> bool {
+        self.real.is_definitely_one() && self.imag.is_definitely_zero()
     }
 }
 

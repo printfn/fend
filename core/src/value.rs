@@ -5,7 +5,7 @@ use crate::scope::Scope;
 use std::fmt;
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Value<'a> {
     Num(Number<'a>),
     BuiltInFunction(BuiltInFunction),
@@ -269,6 +269,23 @@ impl<'a> Value<'a> {
             }
             Self::Version => FormattedValue::Str(crate::get_version_as_str()),
         })
+    }
+}
+
+impl<'a> fmt::Debug for Value<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Num(n) => write!(f, "{:?}", n),
+            Self::BuiltInFunction(name) => write!(f, "built-in function: {}", name.as_str()),
+            Self::Format(fmt) => write!(f, "format: {:?}", fmt),
+            Self::Dp => write!(f, "dp"),
+            Self::Sf => write!(f, "sf"),
+            Self::Base(b) => write!(f, "base: {:?}", b),
+            Self::Fn(name, expr, scope) => {
+                write!(f, "fn: {} => {:?} (scope: {:?})", name, expr, scope)
+            }
+            Self::Version => write!(f, "version"),
+        }
     }
 }
 

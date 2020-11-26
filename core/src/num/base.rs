@@ -1,9 +1,9 @@
 use std::fmt;
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Base(BaseEnum);
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum BaseEnum {
     /// Binary with 0b prefix
     Binary,
@@ -146,5 +146,18 @@ impl Base {
 impl Default for Base {
     fn default() -> Self {
         Self(BaseEnum::Plain(10))
+    }
+}
+
+impl fmt::Debug for Base {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            BaseEnum::Binary => write!(f, "binary"),
+            BaseEnum::Octal => write!(f, "octal"),
+            BaseEnum::Decimal => write!(f, "decimal"),
+            BaseEnum::Hex => write!(f, "hex"),
+            BaseEnum::Custom(b) => write!(f, "base {} (with prefix)", b),
+            BaseEnum::Plain(b) => write!(f, "base {}", b),
+        }
     }
 }

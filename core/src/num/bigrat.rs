@@ -51,7 +51,11 @@ impl fmt::Debug for BigRat {
         if self.sign == Sign::Negative {
             write!(f, "-")?;
         }
-        write!(f, "{:?}/{:?}", self.num, self.den)
+        write!(f, "{:?}", self.num)?;
+        if !self.den.is_definitely_one() {
+            write!(f, "/{:?}", self.den)?;
+        }
+        Ok(())
     }
 }
 
@@ -944,6 +948,14 @@ impl BigRat {
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(self.add_internal(rhs, int)?)
+    }
+
+    pub fn is_definitely_zero(&self) -> bool {
+        self.num.is_definitely_zero()
+    }
+
+    pub fn is_definitely_one(&self) -> bool {
+        self.num.is_definitely_one() && self.den.is_definitely_one()
     }
 }
 enum NextDigitErr<I: Interrupt> {

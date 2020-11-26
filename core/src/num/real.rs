@@ -286,6 +286,19 @@ impl Real {
             pattern: Pattern::Pi(1.into()),
         }
     }
+
+    pub fn is_definitely_zero(&self) -> bool {
+        match &self.pattern {
+            Pattern::Simple(a) | Pattern::Pi(a) => a.is_definitely_zero(),
+        }
+    }
+
+    pub fn is_definitely_one(&self) -> bool {
+        match &self.pattern {
+            Pattern::Simple(a) => a.is_definitely_one(),
+            Pattern::Pi(_) => false,
+        }
+    }
 }
 
 #[allow(clippy::use_self)]

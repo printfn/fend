@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use super::Exact;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct UnitValue<'a> {
     value: Complex,
@@ -506,6 +506,20 @@ impl From<u64> for UnitValue<'_> {
     }
 }
 
+impl<'a> fmt::Debug for UnitValue<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.exact {
+            write!(f, "approx. ")?;
+        }
+        write!(
+            f,
+            "{:?} {:?} ({:?}, {:?})",
+            self.value, self.unit, self.base, self.format
+        )?;
+        Ok(())
+    }
+}
+
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub struct FormattedUnitValue {
@@ -524,7 +538,7 @@ impl fmt::Display for FormattedUnitValue {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct Unit<'a> {
     components: Vec<UnitExponent<'a>>,
 }
@@ -598,7 +612,24 @@ impl<'a> Unit<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
+impl<'a> fmt::Debug for Unit<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.components.is_empty() {
+            write!(f, "(unitless)")?;
+        }
+        let mut first = true;
+        for component in &self.components {
+            if !first {
+                write!(f, " * ")?;
+            }
+            write!(f, "{:?}", component)?;
+            first = false;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
 struct UnitExponent<'a> {
     unit: NamedUnit<'a>,
     exponent: Complex,
@@ -648,6 +679,16 @@ impl<'a> UnitExponent<'a> {
     }
 }
 
+impl<'a> fmt::Debug for UnitExponent<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.unit)?;
+        if !self.exponent.is_definitely_one() {
+            write!(f, "^{:?}", self.exponent)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 struct FormattedExponent<'a> {
     prefix: &'a str,
@@ -666,7 +707,7 @@ impl<'a> fmt::Display for FormattedExponent<'a> {
 }
 
 /// A named unit, like kilogram, megabyte or percent.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct NamedUnit<'a> {
     prefix: &'a str,
     singular_name: &'a str,
@@ -706,10 +747,43 @@ impl<'a> NamedUnit<'a> {
     }
 }
 
+impl<'a> fmt::Debug for NamedUnit<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.prefix.is_empty() {
+            write!(f, "{}", self.singular_name)?;
+        } else {
+            write!(f, "{} {}", self.prefix, self.singular_name)?;
+        }
+        write!(f, " (")?;
+        if self.plural_name != self.singular_name {
+            if self.prefix.is_empty() {
+                write!(f, "{}, ", self.plural_name)?;
+            } else {
+                write!(f, "{} {}, ", self.prefix, self.plural_name)?;
+            }
+        }
+        write!(f, "= {:?}", self.scale)?;
+        for (base_unit, exponent) in &self.base_units {
+            write!(f, " {:?}", base_unit)?;
+            if !exponent.is_definitely_one() {
+                write!(f, "^{:?}", exponent)?;
+            }
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
 /// Represents a base unit, identified solely by its name. The name is not exposed to the user.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 struct BaseUnit<'a> {
     name: &'a str,
+}
+
+impl<'a> fmt::Debug for BaseUnit<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
 }
 
 impl<'a> BaseUnit<'a> {

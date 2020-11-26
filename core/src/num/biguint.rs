@@ -516,6 +516,20 @@ impl BigUint {
         assert_eq!(carry, 0);
         Large(res)
     }
+
+    pub fn is_definitely_zero(&self) -> bool {
+        match self {
+            Small(x) => *x == 0,
+            Large(_) => false,
+        }
+    }
+
+    pub fn is_definitely_one(&self) -> bool {
+        match self {
+            Small(x) => *x == 1,
+            Large(_) => false,
+        }
+    }
 }
 
 impl Ord for BigUint {
