@@ -763,7 +763,9 @@ impl<'a> fmt::Debug for NamedUnit<'a> {
             }
         }
         write!(f, "= {:?}", self.scale)?;
-        for (base_unit, exponent) in &self.base_units {
+        let mut it = self.base_units.iter().collect::<Vec<_>>();
+        it.sort_by_key(|(k, _v)| k.name);
+        for (base_unit, exponent) in &it {
             write!(f, " {:?}", base_unit)?;
             if !exponent.is_definitely_one() {
                 write!(f, "^{:?}", exponent)?;
