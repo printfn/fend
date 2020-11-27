@@ -5,6 +5,7 @@ authors = ["printfn <printfn@users.noreply.github.com>"]
 edition = "2018"
 license = "MIT"
 repository = "https://github.com/printfn/fend"
+description = "Arbitrary-precision unit-aware calculator"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
