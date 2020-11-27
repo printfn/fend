@@ -34,6 +34,14 @@ pub fn initialise() {
     utils::set_panic_hook();
 }
 
+// These two functions should be merged at some point, but that would be a breaking
+// API change.
+
+#[wasm_bindgen(js_name = evaluateFendWithTimeout)]
+pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
+    evaluate_fend_with_timeout(input, timeout)
+}
+
 #[wasm_bindgen]
 pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
     let mut ctx = fend_core::Context::new();

@@ -3,6 +3,8 @@ name = "fend-wasm"
 version = "0.1.10"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 edition = "2018"
+license = "MIT"
+repository = "https://github.com/printfn/fend"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
