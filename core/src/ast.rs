@@ -253,6 +253,8 @@ pub fn resolve_identifier<'a, I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "oct" | "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::Version,
+        "square" => evaluate_to_value("x: x^2", scope, int)?,
+        "cubic" => evaluate_to_value("x: x^3", scope, int)?,
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
 }

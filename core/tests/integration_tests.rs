@@ -1231,3 +1231,9 @@ test_eval_simple!(
     "!debug pi N",
     "pi N (= 1 kg m s^-2) (base 10, auto)"
 );
+
+test_eval!(
+    square_m_to_sqft,
+    "3 square feet to square meters",
+    "0.27870912 meters^2"
+);
