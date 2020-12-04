@@ -1,16 +1,12 @@
 use fend_core::{evaluate, Context};
 
-macro_rules! test_eval_simple {
-    ($e:ident, $input:literal, $expected:literal) => {
-        #[test]
-        fn $e() {
-            let mut context = Context::new();
-            assert_eq!(
-                evaluate($input, &mut context).unwrap().get_main_result(),
-                $expected
-            );
-        }
-    };
+#[track_caller]
+fn test_eval_simple(input: &str, expected: &str) {
+    let mut context = Context::new();
+    assert_eq!(
+        evaluate(input, &mut context).unwrap().get_main_result(),
+        expected
+    );
 }
 
 macro_rules! test_eval {
@@ -130,24 +126,75 @@ test_eval!(upper_case_binary_exponent, "0b10E100 to decimal", "32");
 
 expect_error!(no_recurring_digits, "0.()");
 
-test_eval_simple!(to_float_1, "0.(3) to float", "0.(3)");
-test_eval_simple!(to_float_2, "0.(33) to float", "0.(3)");
-test_eval_simple!(to_float_3, "0.(34) to float", "0.(34)");
-test_eval_simple!(to_float_4, "0.(12345) to float", "0.(12345)");
-test_eval_simple!(to_float_5, "0.(0) to float", "0");
-test_eval_simple!(to_float_6, "0.123(00) to float", "0.123");
-test_eval_simple!(to_float_7, "0.0(34) to float", "0.0(34)");
-test_eval_simple!(to_float_8, "0.00(34) to float", "0.00(34)");
-test_eval_simple!(to_float_9, "0.0000(34) to float", "0.0000(34)");
-test_eval_simple!(to_float_10, "0.123434(34) to float", "0.12(34)");
-test_eval_simple!(to_float_11, "0.123434(34)i to float", "0.12(34)i");
-test_eval_simple!(
-    to_float_12,
-    "0.(3) + 0.123434(34)i to float",
-    "0.(3) + 0.12(34)i"
-);
-test_eval_simple!(to_float_13, "6#0.(1) to float", "6#0.(1)");
-test_eval_simple!(to_float_14, "6#0.(1) to float to base 10", "0.2");
+#[test]
+fn to_float_1() {
+    test_eval_simple("0.(3) to float", "0.(3)");
+}
+
+#[test]
+fn to_float_2() {
+    test_eval_simple("0.(33) to float", "0.(3)");
+}
+
+#[test]
+fn to_float_3() {
+    test_eval_simple("0.(34) to float", "0.(34)");
+}
+
+#[test]
+fn to_float_4() {
+    test_eval_simple("0.(12345) to float", "0.(12345)");
+}
+
+#[test]
+fn to_float_5() {
+    test_eval_simple("0.(0) to float", "0");
+}
+
+#[test]
+fn to_float_6() {
+    test_eval_simple("0.123(00) to float", "0.123");
+}
+
+#[test]
+fn to_float_7() {
+    test_eval_simple("0.0(34) to float", "0.0(34)");
+}
+
+#[test]
+fn to_float_8() {
+    test_eval_simple("0.00(34) to float", "0.00(34)");
+}
+
+#[test]
+fn to_float_9() {
+    test_eval_simple("0.0000(34) to float", "0.0000(34)");
+}
+
+#[test]
+fn to_float_10() {
+    test_eval_simple("0.123434(34) to float", "0.12(34)");
+}
+
+#[test]
+fn to_float_11() {
+    test_eval_simple("0.123434(34)i to float", "0.12(34)i");
+}
+
+#[test]
+fn to_float_12() {
+    test_eval_simple("0.(3) + 0.123434(34)i to float", "0.(3) + 0.12(34)i");
+}
+
+#[test]
+fn to_float_13() {
+    test_eval_simple("6#0.(1) to float", "6#0.(1)");
+}
+
+#[test]
+fn to_float_14() {
+    test_eval_simple("6#0.(1) to float to base 10", "0.2");
+}
 
 test_eval!(two_times_two, "2*2", "4");
 test_eval!(two_times_two_whitespace, "\n2\n*\n2\n", "4");
@@ -560,12 +607,35 @@ test_eval!(
 test_eval!(e_to_1, "ℯ to 1", "approx. 2.7182818284");
 test_eval!(e_in_binary, "e in binary", "approx. 10.1011011111");
 
-test_eval_simple!(base_conversion_1, "16 to base 2", "10000");
-test_eval_simple!(base_conversion_2, "0x10ffff to decimal", "1114111");
-test_eval_simple!(base_conversion_3, "0o400 to decimal", "256");
-test_eval_simple!(base_conversion_4, "100 to base 6", "244");
-test_eval_simple!(base_conversion_5, "65536 to hex", "10000");
-test_eval_simple!(base_conversion_6, "65536 to octal", "200000");
+#[test]
+fn base_conversion_1() {
+    test_eval_simple("16 to base 2", "10000");
+}
+
+#[test]
+fn base_conversion_2() {
+    test_eval_simple("0x10ffff to decimal", "1114111");
+}
+
+#[test]
+fn base_conversion_3() {
+    test_eval_simple("0o400 to decimal", "256");
+}
+
+#[test]
+fn base_conversion_4() {
+    test_eval_simple("100 to base 6", "244");
+}
+
+#[test]
+fn base_conversion_5() {
+    test_eval_simple("65536 to hex", "10000");
+}
+
+#[test]
+fn base_conversion_6() {
+    test_eval_simple("65536 to octal", "200000");
+}
 
 test_eval!(exponents_1, "1e10", "10000000000");
 test_eval!(exponents_2, "1.5e10", "15000000000");
@@ -690,11 +760,10 @@ expect_error!(implicit_sum_incompatible_unit, "1 inch 5 kg");
 expect_error!(too_many_args, "abs 1 2");
 test_eval!(abs_4_with_coefficient, "5 (abs 4)", "20");
 
-test_eval_simple!(
-    mixed_fraction_to_improper_fraction,
-    "1 2/3 to fraction",
-    "5/3"
-);
+#[test]
+fn mixed_fraction_to_improper_fraction() {
+    test_eval_simple("1 2/3 to fraction", "5/3");
+}
 
 test_eval!(mixed_fractions_1, "5/3", "approx. 1.6666666666");
 test_eval!(mixed_fractions_2, "4 + 1 2/3", "approx. 5.6666666666");
@@ -785,13 +854,40 @@ expect_error!(factorial_of_minus_two, "(-2)!");
 expect_error!(factorial_of_three_i, "3i!");
 expect_error!(factorial_of_three_kg, "(3 kg)!");
 
-test_eval_simple!(recurring_digits_1, "9/11 -> float", "0.(81)");
-test_eval_simple!(recurring_digits_2, "6#1 / 11 -> float", "6#0.(0313452421)");
-test_eval_simple!(recurring_digits_3, "6#0 + 6#1 / 7 -> float", "6#0.(05)");
-test_eval_simple!(recurring_digits_4, "0.25 -> fraction", "1/4");
-test_eval_simple!(recurring_digits_5, "0.21 -> 1 dp", "approx. 0.2");
-test_eval_simple!(recurring_digits_6, "0.21 -> 1 dp -> auto", "0.21");
-test_eval_simple!(recurring_digits_7, "502938/700 -> float", "718.48(285714)");
+#[test]
+fn recurring_digits_1() {
+    test_eval_simple("9/11 -> float", "0.(81)");
+}
+
+#[test]
+fn recurring_digits_2() {
+    test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
+}
+
+#[test]
+fn recurring_digits_3() {
+    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)");
+}
+
+#[test]
+fn recurring_digits_4() {
+    test_eval_simple("0.25 -> fraction", "1/4");
+}
+
+#[test]
+fn recurring_digits_5() {
+    test_eval_simple("0.21 -> 1 dp", "approx. 0.2");
+}
+
+#[test]
+fn recurring_digits_6() {
+    test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
+}
+
+#[test]
+fn recurring_digits_7() {
+    test_eval_simple("502938/700 -> float", "718.48(285714)");
+}
 
 test_eval!(builtin_function_name_abs, "abs", "abs");
 test_eval!(builtin_function_name_sin, "sin", "sin");
@@ -1142,7 +1238,10 @@ test_eval!(sf, "sf", "sf");
 test_eval!(one_sf, "1 sf", "1 sf");
 test_eval!(ten_sf, "10 sf", "10 sf");
 
-test_eval_simple!(one_over_sin, "1/sin", "\\x.(1/(sin x))");
+#[test]
+fn one_over_sin() {
+    test_eval_simple("1/sin", "\\x.(1/(sin x))");
+}
 
 expect_error!(zero_sf, "0 sf");
 test_eval!(sf_1, "1234567.55645 to 1 sf", "approx. 1000000");
@@ -1158,67 +1257,200 @@ test_eval!(sf_10, "1234567.55645 to 10 sf", "approx. 1234567.556");
 test_eval!(sf_11, "1234567.55645 to 11 sf", "approx. 1234567.5564");
 test_eval!(sf_12, "1234567.55645 to 12 sf", "1234567.55645");
 test_eval!(sf_13, "1234567.55645 to 13 sf", "1234567.55645");
-test_eval_simple!(sf_small_1, "pi / 1000000 to 1 sf", "approx. 0.000003");
-test_eval_simple!(sf_small_2, "pi / 1000000 to 2 sf", "approx. 0.0000031");
-test_eval_simple!(sf_small_3, "pi / 1000000 to 3 sf", "approx. 0.00000314");
-test_eval_simple!(sf_small_4, "pi / 1000000 to 4 sf", "approx. 0.000003141");
-test_eval_simple!(sf_small_5, "pi / 1000000 to 5 sf", "approx. 0.0000031415");
-test_eval_simple!(sf_small_6, "pi / 1000000 to 6 sf", "approx. 0.00000314159");
-test_eval_simple!(sf_small_7, "pi / 1000000 to 7 sf", "approx. 0.000003141592");
-test_eval_simple!(
-    sf_small_8,
-    "pi / 1000000 to 8 sf",
-    "approx. 0.0000031415926"
-);
-test_eval_simple!(
-    sf_small_9,
-    "pi / 1000000 to 9 sf",
-    "approx. 0.00000314159265"
-);
-test_eval_simple!(
-    sf_small_10,
-    "pi / 1000000 to 10 sf",
-    "approx. 0.000003141592653"
-);
-test_eval_simple!(
-    sf_small_11,
-    "pi / 1000000 to 11 sf",
-    "approx. 0.0000031415926535"
-);
+
+#[test]
+fn sf_small_1() {
+    test_eval_simple("pi / 1000000 to 1 sf", "approx. 0.000003");
+}
+
+#[test]
+fn sf_small_2() {
+    test_eval_simple("pi / 1000000 to 2 sf", "approx. 0.0000031");
+}
+
+#[test]
+fn sf_small_3() {
+    test_eval_simple("pi / 1000000 to 3 sf", "approx. 0.00000314");
+}
+
+#[test]
+fn sf_small_4() {
+    test_eval_simple("pi / 1000000 to 4 sf", "approx. 0.000003141");
+}
+
+#[test]
+fn sf_small_5() {
+    test_eval_simple("pi / 1000000 to 5 sf", "approx. 0.0000031415");
+}
+
+#[test]
+fn sf_small_6() {
+    test_eval_simple("pi / 1000000 to 6 sf", "approx. 0.00000314159");
+}
+
+#[test]
+fn sf_small_7() {
+    test_eval_simple("pi / 1000000 to 7 sf", "approx. 0.000003141592");
+}
+
+#[test]
+fn sf_small_8() {
+    test_eval_simple("pi / 1000000 to 8 sf", "approx. 0.0000031415926");
+}
+
+#[test]
+fn sf_small_9() {
+    test_eval_simple("pi / 1000000 to 9 sf", "approx. 0.00000314159265");
+}
+
+#[test]
+fn sf_small_10() {
+    test_eval_simple("pi / 1000000 to 10 sf", "approx. 0.000003141592653");
+}
+
+#[test]
+fn sf_small_11() {
+    test_eval_simple("pi / 1000000 to 11 sf", "approx. 0.0000031415926535");
+}
 
 expect_error!(no_prefixes_for_speed_of_light, "mc");
 
 test_eval!(quarter, "quarter", "0.25");
 
-test_eval_simple!(million_pi_1_sf, "1e6 pi to 1 sf", "approx. 3000000");
-test_eval_simple!(million_pi_2_sf, "1e6 pi to 2 sf", "approx. 3100000");
-test_eval_simple!(million_pi_3_sf, "1e6 pi to 3 sf", "approx. 3140000");
-test_eval_simple!(million_pi_4_sf, "1e6 pi to 4 sf", "approx. 3141000");
-test_eval_simple!(million_pi_5_sf, "1e6 pi to 5 sf", "approx. 3141500");
-test_eval_simple!(million_pi_6_sf, "1e6 pi to 6 sf", "approx. 3141590");
-test_eval_simple!(million_pi_7_sf, "1e6 pi to 7 sf", "approx. 3141592");
-test_eval_simple!(million_pi_8_sf, "1e6 pi to 8 sf", "approx. 3141592.6");
-test_eval_simple!(million_pi_9_sf, "1e6 pi to 9 sf", "approx. 3141592.65");
-test_eval_simple!(million_pi_10_sf, "1e6 pi to 10 sf", "approx. 3141592.653");
+#[test]
+fn million_pi_1_sf() {
+    test_eval_simple("1e6 pi to 1 sf", "approx. 3000000");
+}
 
-test_eval_simple!(large_integer_to_1_sf, "1234567 to 1 sf", "approx. 1000000");
-test_eval_simple!(large_integer_to_2_sf, "1234567 to 2 sf", "approx. 1200000");
-test_eval_simple!(large_integer_to_3_sf, "1234567 to 3 sf", "approx. 1230000");
-test_eval_simple!(large_integer_to_4_sf, "1234567 to 4 sf", "approx. 1234000");
-test_eval_simple!(large_integer_to_5_sf, "1234567 to 5 sf", "approx. 1234500");
-test_eval_simple!(large_integer_to_6_sf, "1234567 to 6 sf", "approx. 1234560");
-test_eval_simple!(large_integer_to_7_sf, "1234567 to 7 sf", "1234567");
-test_eval_simple!(large_integer_to_8_sf, "1234567 to 8 sf", "1234567");
-test_eval_simple!(large_integer_to_9_sf, "1234567 to 9 sf", "1234567");
-test_eval_simple!(large_integer_to_10_sf, "1234567 to 10 sf", "1234567");
+#[test]
+fn million_pi_2_sf() {
+    test_eval_simple("1e6 pi to 2 sf", "approx. 3100000");
+}
 
-test_eval_simple!(trailing_zeroes_sf_1, "1234560 to 5sf", "approx. 1234500");
-test_eval_simple!(trailing_zeroes_sf_2, "1234560 to 6sf", "1234560");
-test_eval_simple!(trailing_zeroes_sf_3, "1234560 to 7sf", "1234560");
-test_eval_simple!(trailing_zeroes_sf_4, "1234560.1 to 6sf", "approx. 1234560");
-test_eval_simple!(trailing_zeroes_sf_5, "12345601 to 6sf", "approx. 12345600");
-test_eval_simple!(trailing_zeroes_sf_6, "12345601 to 7sf", "approx. 12345600");
-test_eval_simple!(trailing_zeroes_sf_7, "12345601 to 8sf", "12345601");
+#[test]
+fn million_pi_3_sf() {
+    test_eval_simple("1e6 pi to 3 sf", "approx. 3140000");
+}
+
+#[test]
+fn million_pi_4_sf() {
+    test_eval_simple("1e6 pi to 4 sf", "approx. 3141000");
+}
+
+#[test]
+fn million_pi_5_sf() {
+    test_eval_simple("1e6 pi to 5 sf", "approx. 3141500");
+}
+
+#[test]
+fn million_pi_6_sf() {
+    test_eval_simple("1e6 pi to 6 sf", "approx. 3141590");
+}
+
+#[test]
+fn million_pi_7_sf() {
+    test_eval_simple("1e6 pi to 7 sf", "approx. 3141592");
+}
+
+#[test]
+fn million_pi_8_sf() {
+    test_eval_simple("1e6 pi to 8 sf", "approx. 3141592.6");
+}
+
+#[test]
+fn million_pi_9_sf() {
+    test_eval_simple("1e6 pi to 9 sf", "approx. 3141592.65");
+}
+
+#[test]
+fn million_pi_10_sf() {
+    test_eval_simple("1e6 pi to 10 sf", "approx. 3141592.653");
+}
+
+#[test]
+fn large_integer_to_1_sf() {
+    test_eval_simple("1234567 to 1 sf", "approx. 1000000");
+}
+
+#[test]
+fn large_integer_to_2_sf() {
+    test_eval_simple("1234567 to 2 sf", "approx. 1200000");
+}
+
+#[test]
+fn large_integer_to_3_sf() {
+    test_eval_simple("1234567 to 3 sf", "approx. 1230000");
+}
+
+#[test]
+fn large_integer_to_4_sf() {
+    test_eval_simple("1234567 to 4 sf", "approx. 1234000");
+}
+
+#[test]
+fn large_integer_to_5_sf() {
+    test_eval_simple("1234567 to 5 sf", "approx. 1234500");
+}
+
+#[test]
+fn large_integer_to_6_sf() {
+    test_eval_simple("1234567 to 6 sf", "approx. 1234560");
+}
+
+#[test]
+fn large_integer_to_7_sf() {
+    test_eval_simple("1234567 to 7 sf", "1234567");
+}
+
+#[test]
+fn large_integer_to_8_sf() {
+    test_eval_simple("1234567 to 8 sf", "1234567");
+}
+
+#[test]
+fn large_integer_to_9_sf() {
+    test_eval_simple("1234567 to 9 sf", "1234567");
+}
+
+#[test]
+fn large_integer_to_10_sf() {
+    test_eval_simple("1234567 to 10 sf", "1234567");
+}
+
+#[test]
+fn trailing_zeroes_sf_1() {
+    test_eval_simple("1234560 to 5sf", "approx. 1234500");
+}
+
+#[test]
+fn trailing_zeroes_sf_2() {
+    test_eval_simple("1234560 to 6sf", "1234560");
+}
+
+#[test]
+fn trailing_zeroes_sf_3() {
+    test_eval_simple("1234560 to 7sf", "1234560");
+}
+
+#[test]
+fn trailing_zeroes_sf_4() {
+    test_eval_simple("1234560.1 to 6sf", "approx. 1234560");
+}
+
+#[test]
+fn trailing_zeroes_sf_5() {
+    test_eval_simple("12345601 to 6sf", "approx. 12345600");
+}
+
+#[test]
+fn trailing_zeroes_sf_6() {
+    test_eval_simple("12345601 to 7sf", "approx. 12345600");
+}
+
+#[test]
+fn trailing_zeroes_sf_7() {
+    test_eval_simple("12345601 to 8sf", "12345601");
+}
 
 test_eval!(
     kwh_conversion,
@@ -1226,11 +1458,10 @@ test_eval!(
     "approx. 11.4079552707 watts"
 );
 
-test_eval_simple!(
-    debug_pi_n,
-    "!debug pi N",
-    "pi N (= 1 kg m s^-2) (base 10, auto)"
-);
+#[test]
+fn debug_pi_n() {
+    test_eval_simple("!debug pi N", "pi N (= 1 kg m s^-2) (base 10, auto)");
+}
 
 test_eval!(
     square_m_to_sqft,
