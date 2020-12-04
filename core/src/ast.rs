@@ -42,7 +42,7 @@ impl<'a> Expr<'a> {
             Self::Array(x) => {
                 let mut formatted_elements = vec![];
                 for elem in x {
-                    formatted_elements.push(format!("{}", elem.format(int)?));
+                    formatted_elements.push(elem.format(int)?.to_string());
                 }
                 format!("[{}]", formatted_elements.join(", "))
             }

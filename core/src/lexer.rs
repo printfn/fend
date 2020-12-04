@@ -25,6 +25,7 @@ pub enum Symbol {
     Dot,
     OpenArray,
     CloseArray,
+    Comma,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -103,6 +104,7 @@ impl fmt::Display for Symbol {
             Self::Dot => ".",
             Self::OpenArray => "[",
             Self::CloseArray => "]",
+            Self::Comma => ",",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -160,18 +162,18 @@ fn parse_integer<'a, E: From<LexerError>>(
     let mut parsed_digit_separator;
     loop {
         if let Ok((_, remaining)) = parse_digit_separator(input) {
+            parsed_digit_separator = Some(input);
             input = remaining;
-            parsed_digit_separator = true;
             if !allow_digit_separator {
                 return Err(LexerError::DigitSeparatorsNotAllowed)?;
             }
         } else {
-            parsed_digit_separator = false;
+            parsed_digit_separator = None;
         }
         match parse_ascii_digit(input, base) {
             Err(_) => {
-                if parsed_digit_separator {
-                    return Err(LexerError::DigitSeparatorsOnlyBetweenDigits)?;
+                if let Some(orig_input) = parsed_digit_separator {
+                    input = orig_input;
                 }
                 break;
             }
@@ -479,6 +481,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         ')' => Symbol::CloseParens,
                         '[' => Symbol::OpenArray,
                         ']' => Symbol::CloseArray,
+                        ',' => Symbol::Comma,
                         '+' => Symbol::Add,
                         '!' => Symbol::Factorial,
                         '-' => {

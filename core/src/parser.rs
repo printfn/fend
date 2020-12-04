@@ -93,13 +93,15 @@ fn parse_parens<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
 
 fn parse_array<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenArray)?;
-    let (inner, mut input) = parse_expression(input)?;
-    // allow omitting closing parentheses at end of input
-    if !input.is_empty() {
-        let (_, remaining) = parse_fixed_symbol(input, Symbol::CloseArray)?;
+    let (first, mut input) = parse_expression(input)?;
+    let mut v = vec![first];
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Comma) {
+        let (next, remaining) = parse_expression(remaining)?;
+        v.push(next);
         input = remaining;
     }
-    Ok((Expr::Array(vec![inner]), input))
+    let (_, input) = parse_fixed_symbol(input, Symbol::CloseArray)?;
+    Ok((Expr::Array(v), input))
 }
 
 fn parse_backslash_lambda<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
