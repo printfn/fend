@@ -11,6 +11,7 @@ pub enum Expr<'a> {
     Num(Number<'a>),
     Ident(&'a str),
     Parens(Box<Expr<'a>>),
+    Array(Vec<Expr<'a>>),
     UnaryMinus(Box<Expr<'a>>),
     UnaryPlus(Box<Expr<'a>>),
     UnaryDiv(Box<Expr<'a>>),
@@ -38,6 +39,13 @@ impl<'a> Expr<'a> {
             Self::Num(n) => n.format(int)?.to_string(),
             Self::Ident(ident) => (*ident).to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
+            Self::Array(x) => {
+                let mut formatted_elements = vec![];
+                for elem in x {
+                    formatted_elements.push(format!("{}", elem.format(int)?));
+                }
+                format!("[{}]", formatted_elements.join(", "))
+            }
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
             Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
             Self::UnaryDiv(x) => format!("(/{})", x.format(int)?),
@@ -101,6 +109,13 @@ pub fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Num(n) => Value::Num(n),
         Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
         Expr::<'a>::Parens(x) => eval!(*x)?,
+        Expr::<'a>::Array(v) => {
+            let mut res = vec![];
+            for e in v {
+                res.push(eval!(e)?);
+            }
+            Value::Array(res)
+        }
         Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
         Expr::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
@@ -191,8 +206,14 @@ pub fn evaluate<'a, I: Interrupt>(
                 )?;
             }
             Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
-            Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
+            Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
                 return Err("Unable to convert value to a function".to_string())?;
+            }
+            Value::Version => {
+                return Err("Unable to convert value to a version".to_string())?;
+            }
+            Value::Array(_) => {
+                return Err("Unable to convert value to an array".to_string())?;
             }
         },
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),

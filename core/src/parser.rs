@@ -91,6 +91,17 @@ fn parse_parens<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     Ok((Expr::Parens(Box::new(inner)), input))
 }
 
+fn parse_array<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::OpenArray)?;
+    let (inner, mut input) = parse_expression(input)?;
+    // allow omitting closing parentheses at end of input
+    if !input.is_empty() {
+        let (_, remaining) = parse_fixed_symbol(input, Symbol::CloseArray)?;
+        input = remaining;
+    }
+    Ok((Expr::Array(vec![inner]), input))
+}
+
 fn parse_backslash_lambda<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (_, input) = parse_fixed_symbol(input, Symbol::Backslash)?;
     let (ident, input) = if let (Expr::Ident(ident), input) = parse_ident(input)? {
@@ -111,6 +122,7 @@ fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
+        Token::Symbol(Symbol::OpenArray) => parse_array(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
         Token::Symbol(..) => Err(ParseError::ExpectedNumIdentOrParen),
     }

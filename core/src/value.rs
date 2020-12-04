@@ -16,6 +16,7 @@ pub enum Value<'a> {
     // user-defined function with a named parameter
     Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Version,
+    Array(Vec<Value<'a>>),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -268,6 +269,13 @@ impl<'a> Value<'a> {
                 FormattedValue::String(res)
             }
             Self::Version => FormattedValue::Str(crate::get_version_as_str()),
+            Self::Array(v) => {
+                let mut res = vec![];
+                for e in v {
+                    res.push(e.format(int)?);
+                }
+                FormattedValue::Array(res)
+            }
         })
     }
 }
@@ -285,6 +293,7 @@ impl<'a> fmt::Debug for Value<'a> {
                 write!(f, "fn: {} => {:?} (scope: {:?})", name, expr, scope)
             }
             Self::Version => write!(f, "version"),
+            Self::Array(v) => write!(f, "{:?}", v),
         }
     }
 }
@@ -296,6 +305,7 @@ pub enum FormattedValue {
     String(String),
     Base(u8),
     Number(Box<FormattedNumber>),
+    Array(Vec<FormattedValue>),
 }
 
 impl fmt::Display for FormattedValue {
@@ -305,6 +315,16 @@ impl fmt::Display for FormattedValue {
             Self::String(s) => write!(f, "{}", s),
             Self::Number(n) => write!(f, "{}", n),
             Self::Base(n) => write!(f, "base {}", n),
+            Self::Array(v) => {
+                write!(f, "[")?;
+                for (i, e) in v.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", e)?;
+                }
+                write!(f, "]")
+            }
         }
     }
 }
