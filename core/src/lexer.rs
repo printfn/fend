@@ -23,6 +23,8 @@ pub enum Symbol {
     Fn,
     Backslash,
     Dot,
+    OpenArray,
+    CloseArray,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -99,6 +101,8 @@ impl fmt::Display for Symbol {
             Self::Fn => ":",
             Self::Backslash => "\"",
             Self::Dot => ".",
+            Self::OpenArray => "[",
+            Self::CloseArray => "]",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -473,6 +477,8 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     Token::Symbol(match ch {
                         '(' => Symbol::OpenParens,
                         ')' => Symbol::CloseParens,
+                        '[' => Symbol::OpenArray,
+                        ']' => Symbol::CloseArray,
                         '+' => Symbol::Add,
                         '!' => Symbol::Factorial,
                         '-' => {
