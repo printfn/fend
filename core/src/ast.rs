@@ -116,7 +116,29 @@ pub fn evaluate<'a, I: Interrupt>(
             }
             Value::Array(res)
         }
-        Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
+        Expr::<'a>::UnaryMinus(x) => {
+            fn negate_value<'a>(
+                value: Value<'a>,
+                scope: Option<Arc<Scope<'a>>>,
+            ) -> Result<Value<'a>, String> {
+                Ok(match value {
+                    Value::<'a>::Num(n) => Value::<'a>::Num(-n),
+                    Value::<'a>::Fn(param, expr, scope) => {
+                        Value::<'a>::Fn(param, Box::new(Expr::UnaryMinus(expr)), scope)
+                    }
+                    Value::<'a>::BuiltInFunction(f) => f.wrap_with_expr(Expr::UnaryMinus, scope),
+                    Value::<'a>::Array(v) => {
+                        let mut res = vec![];
+                        for e in v {
+                            res.push(negate_value(e, scope.clone())?);
+                        }
+                        Value::<'a>::Array(res)
+                    }
+                    _ => return Err("Expected a number".to_string()),
+                })
+            };
+            negate_value(eval!(*x)?, scope)?
+        }
         Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
         Expr::<'a>::UnaryDiv(x) => eval!(*x)?.handle_num(
             |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
