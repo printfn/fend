@@ -15,7 +15,7 @@ categories = ["command-line-utilities", "mathematics", "science"]
 [dependencies]
 rustyline = { version =  "7.0.0", default-features = false, package = "rustyline-with-hint-fix" }
 directories = "3.0.1"
-ctrlc = "3.1.6"
+ctrlc = "3.1.7"
 
 [dependencies.fend-core]
 version = "0.1.11"
