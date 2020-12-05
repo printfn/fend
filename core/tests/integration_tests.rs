@@ -4385,3 +4385,138 @@ fn square_m_to_sqft() {
 fn test_hex_unit_conversion() {
     test_eval_simple("1 yard lb to hex to kg m to 3sf", "approx. 0.6a2 kg m");
 }
+
+#[test]
+fn empty_array() {
+    expect_error("[]", None);
+}
+
+#[test]
+fn empty_nested_array() {
+    expect_error("[[]]", None);
+}
+
+#[test]
+fn one_in_array() {
+    test_eval("[1]", "[1]");
+}
+
+#[test]
+fn one_point_five_in_array() {
+    test_eval("[1.5]", "[1.5]");
+}
+
+#[test]
+fn simple_array() {
+    test_eval("[1, 2, 3]", "[1, 2, 3]");
+}
+
+#[test]
+fn simple_nested_array() {
+    test_eval("[[1, 2], [3, 4]]", "[[1, 2], [3, 4]]");
+}
+
+#[test]
+fn simple_array_extra_whitespace() {
+    test_eval("[1 , 2 , 3]", "[1, 2, 3]");
+}
+
+#[test]
+fn simple_array_whitespace_before_comma() {
+    test_eval("[1 ,2 ,3]", "[1, 2, 3]");
+}
+
+#[test]
+fn simple_nested_array_one_element() {
+    test_eval("[[1]]", "[[1]]");
+}
+
+#[test]
+fn nested_arrays_different_lengths() {
+    test_eval("[[1], [1, 2]]", "[[1], [1, 2]]");
+}
+
+#[test]
+fn negate_one_in_array() {
+    test_eval("-[1]", "[-1]");
+}
+
+#[test]
+fn negate_one_point_five_in_array() {
+    test_eval("-[1.5]", "[-1.5]");
+}
+
+#[test]
+fn negate_simple_array() {
+    test_eval("-[1, 2, 3]", "[-1, -2, -3]");
+}
+
+#[test]
+fn negate_simple_nested_array() {
+    test_eval("-[[1, 2], [3, 4]]", "[[-1, -2], [-3, -4]]");
+}
+
+#[test]
+fn negate_simple_array_extra_whitespace() {
+    test_eval("-[1 , 2 , 3]", "[-1, -2, -3]");
+}
+
+#[test]
+fn negate_simple_array_whitespace_before_comma() {
+    test_eval("-[1 ,2 ,3]", "[-1, -2, -3]");
+}
+
+#[test]
+fn negate_simple_nested_array_one_element() {
+    test_eval("-[[1]]", "[[-1]]");
+}
+
+#[test]
+fn negate_nested_arrays_different_lengths() {
+    test_eval("-[[1], [1, 2]]", "[[-1], [-1, -2]]");
+}
+
+#[test]
+fn negate_negative_one_in_array() {
+    test_eval("-[-1]", "[1]");
+}
+
+#[test]
+fn negate_negative_one_point_five_in_array() {
+    test_eval("-[-1.5]", "[1.5]");
+}
+
+#[test]
+fn negate_simple_array_with_negatives() {
+    test_eval("-[1, -2, -3]", "[-1, 2, 3]");
+}
+
+#[test]
+fn negate_simple_nested_array_with_negatives() {
+    test_eval("-[[-1, -2], [3, -4]]", "[[1, 2], [-3, 4]]");
+}
+
+#[test]
+fn negate_simple_array_extra_whitespace_with_negatives() {
+    test_eval("-[1 , - 2 , -3]", "[-1, 2, 3]");
+}
+
+#[test]
+fn negate_simple_array_whitespace_before_comma_with_negatives() {
+    test_eval("-[-1 ,2 ,-3]", "[1, -2, 3]");
+}
+
+#[test]
+fn negate_simple_nested_array_one_negative_element() {
+    test_eval("-[[-1]]", "[[1]]");
+}
+
+#[test]
+fn negate_nested_arrays_different_lengths_with_negatives_1() {
+    test_eval("-[[1], [-1, 2]]", "[[-1], [1, -2]]");
+}
+
+#[test]
+fn negate_nested_arrays_different_lengths_with_negatives_2() {
+    test_eval("-[[-1], [1, -2]]", "[[1], [-1, 2]]");
+}
