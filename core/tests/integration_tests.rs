@@ -4385,3 +4385,9 @@ fn square_m_to_sqft() {
 fn test_hex_unit_conversion() {
     test_eval_simple("1 yard lb to hex to kg m to 3sf", "approx. 0.6a2 kg m");
 }
+
+#[ignore]
+#[test]
+fn convert_to_billion() {
+    test_eval("1000000000 to billion", "1 billion");
+}
