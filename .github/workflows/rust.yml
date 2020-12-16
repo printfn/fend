@@ -72,3 +72,25 @@ jobs:
         external_repository: printfn/fend-website
         force_orphan: true
         cname: fend.printfn.nz
+    - name: Code coverage
+      if: ${{ matrix.platform == 'ubuntu-latest' }}
+      run: |
+        wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
+        tar xzf master.tar.gz
+        cd kcov-master
+        mkdir build
+        cd build
+        cmake ..
+        make
+        make install DESTDIR=../../kcov-build
+        cd ../..
+        rm -rf kcov-master
+        echo "Installed kcov"
+        for file in target/debug/deps/fend_core-* target/debug/deps/integration_tests-*;
+          do [ -x "${file}" ] || continue;
+          echo "$file";
+          mkdir -p "target/cov/$(basename $file)";
+          ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file";
+        done
+        bash <(curl -vs --retry 10 --connect-timeout 30 https://codecov.io/bash)
+        echo "Uploaded code coverage"
