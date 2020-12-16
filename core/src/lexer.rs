@@ -7,6 +7,7 @@ pub enum Token<'a> {
     Num(Number<'a>),
     Ident(&'a str),
     Symbol(Symbol),
+    Whitespace,
 }
 
 #[derive(PartialEq, Eq, Copy, Clone)]
@@ -454,7 +455,9 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
         }
         Ok(Some(match self.input.chars().next() {
             Some(ch) => {
-                if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
+                if ch.is_whitespace() {
+                    Token::Whitespace
+                } else if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
                     let (num, remaining) = parse_number(self.input, self.int)
                         .map_err(|e| e.map(LexerError::NumberParseError))?;
                     self.input = remaining;

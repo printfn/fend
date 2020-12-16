@@ -15,6 +15,7 @@ pub enum ParseError {
     ExpectedIdentifierAsArgument,
     ExpectedDotInLambda(Box<ParseError>),
     InvalidMixedFraction,
+    UnexpectedWhitespace,
 }
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -38,6 +39,7 @@ impl fmt::Display for ParseError {
                 write!(f, "Missing '.' in lambda (expected e.g. \\x.x)")
             }
             Self::InvalidMixedFraction => write!(f, "Invalid mixed fraction"),
+            Self::UnexpectedWhitespace => write!(f, "Unexpected whitespace"),
         }
     }
 }
@@ -48,6 +50,8 @@ type ParseResult<'a, 'b, T = Expr<'a>> = Result<(T, &'b [Token<'a>]), ParseError
 fn parse_token<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b, Token<'a>> {
     if input.is_empty() {
         Err(ParseError::ExpectedAToken)
+    } else if let Token::Whitespace = input[0] {
+        parse_token(&input[1..])
     } else {
         Ok((input[0].clone(), &input[1..]))
     }
@@ -113,6 +117,7 @@ fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
         Token::Symbol(..) => Err(ParseError::ExpectedNumIdentOrParen),
+        Token::Whitespace => Err(ParseError::UnexpectedWhitespace),
     }
 }
 
