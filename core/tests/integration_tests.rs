@@ -4520,3 +4520,9 @@ fn negate_nested_arrays_different_lengths_with_negatives_1() {
 fn negate_nested_arrays_different_lengths_with_negatives_2() {
     test_eval("-[[-1], [1, -2]]", "[[1], [-1, 2]]");
 }
+
+#[ignore]
+#[test]
+fn convert_to_billion() {
+    test_eval("1000000000 to billion", "1 billion");
+}

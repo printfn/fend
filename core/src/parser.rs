@@ -15,6 +15,7 @@ pub enum ParseError {
     ExpectedIdentifierAsArgument,
     ExpectedDotInLambda(Box<ParseError>),
     InvalidMixedFraction,
+    UnexpectedWhitespace,
 }
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -38,6 +39,7 @@ impl fmt::Display for ParseError {
                 write!(f, "Missing '.' in lambda (expected e.g. \\x.x)")
             }
             Self::InvalidMixedFraction => write!(f, "Invalid mixed fraction"),
+            Self::UnexpectedWhitespace => write!(f, "Unexpected whitespace"),
         }
     }
 }
@@ -45,16 +47,25 @@ impl crate::err::Error for ParseError {}
 
 type ParseResult<'a, 'b, T = Expr<'a>> = Result<(T, &'b [Token<'a>]), ParseError>;
 
-fn parse_token<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b, Token<'a>> {
+fn parse_token<'a, 'b>(
+    input: &'b [Token<'a>],
+    skip_whitespace: bool,
+) -> ParseResult<'a, 'b, Token<'a>> {
     if input.is_empty() {
         Err(ParseError::ExpectedAToken)
+    } else if let Token::Whitespace = input[0] {
+        if skip_whitespace {
+            parse_token(&input[1..], skip_whitespace)
+        } else {
+            Ok((input[0].clone(), &input[1..]))
+        }
     } else {
         Ok((input[0].clone(), &input[1..]))
     }
 }
 
 fn parse_fixed_symbol<'a, 'b>(input: &'b [Token<'a>], symbol: Symbol) -> ParseResult<'a, 'b, ()> {
-    let (token, remaining) = parse_token(input)?;
+    let (token, remaining) = parse_token(input, true)?;
     if let Token::Symbol(sym) = token {
         if sym == symbol {
             Ok(((), remaining))
@@ -67,14 +78,14 @@ fn parse_fixed_symbol<'a, 'b>(input: &'b [Token<'a>], symbol: Symbol) -> ParseRe
 }
 
 fn parse_number<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
-    match parse_token(input)? {
+    match parse_token(input, true)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
         _ => Err(ParseError::ExpectedANumber),
     }
 }
 
 fn parse_ident<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
-    match parse_token(input)? {
+    match parse_token(input, true)? {
         (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
         _ => Err(ParseError::ExpectedIdentifier),
     }
@@ -118,7 +129,7 @@ fn parse_backslash_lambda<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b>
 }
 
 fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
-    let (token, _) = parse_token(input)?;
+    let (token, _) = parse_token(input, true)?;
 
     match token {
         Token::Num(_) => parse_number(input),
@@ -127,6 +138,7 @@ fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b
         Token::Symbol(Symbol::OpenArray) => parse_array(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
         Token::Symbol(..) => Err(ParseError::ExpectedNumIdentOrParen),
+        Token::Whitespace => Err(ParseError::UnexpectedWhitespace),
     }
 }
 
