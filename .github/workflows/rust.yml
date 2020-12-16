@@ -76,6 +76,7 @@ jobs:
     - name: Code coverage
       if: ${{ matrix.platform == 'ubuntu-latest' }}
       run: |
+        sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc binutils-dev libiberty-dev
         wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
         tar xzf master.tar.gz
