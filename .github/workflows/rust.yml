@@ -53,12 +53,13 @@ jobs:
       run: cargo test -q --workspace -- --nocapture
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
+      if: ${{ github.ref == 'refs/heads/main' }}
       with:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
         if-no-files-found: error
     - name: Build fend-wasm
-      if: ${{ matrix.platform == 'ubuntu-latest' }}
+      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
       run: |
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
