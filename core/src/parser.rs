@@ -47,18 +47,22 @@ impl crate::err::Error for ParseError {}
 
 type ParseResult<'a, 'b, T = Expr<'a>> = Result<(T, &'b [Token<'a>]), ParseError>;
 
-fn parse_token<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b, Token<'a>> {
+fn parse_token<'a, 'b>(input: &'b [Token<'a>], skip_whitespace: bool) -> ParseResult<'a, 'b, Token<'a>> {
     if input.is_empty() {
         Err(ParseError::ExpectedAToken)
     } else if let Token::Whitespace = input[0] {
-        parse_token(&input[1..])
+        if skip_whitespace {
+            parse_token(&input[1..], skip_whitespace)
+        } else {
+            Ok((input[0].clone(), &input[1..]))
+        }
     } else {
         Ok((input[0].clone(), &input[1..]))
     }
 }
 
 fn parse_fixed_symbol<'a, 'b>(input: &'b [Token<'a>], symbol: Symbol) -> ParseResult<'a, 'b, ()> {
-    let (token, remaining) = parse_token(input)?;
+    let (token, remaining) = parse_token(input, true)?;
     if let Token::Symbol(sym) = token {
         if sym == symbol {
             Ok(((), remaining))
@@ -71,14 +75,14 @@ fn parse_fixed_symbol<'a, 'b>(input: &'b [Token<'a>], symbol: Symbol) -> ParseRe
 }
 
 fn parse_number<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
-    match parse_token(input)? {
+    match parse_token(input, true)? {
         (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
         _ => Err(ParseError::ExpectedANumber),
     }
 }
 
 fn parse_ident<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
-    match parse_token(input)? {
+    match parse_token(input, true)? {
         (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
         _ => Err(ParseError::ExpectedIdentifier),
     }
@@ -109,7 +113,7 @@ fn parse_backslash_lambda<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b>
 }
 
 fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
-    let (token, _) = parse_token(input)?;
+    let (token, _) = parse_token(input, true)?;
 
     match token {
         Token::Num(_) => parse_number(input),
