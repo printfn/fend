@@ -47,7 +47,10 @@ impl crate::err::Error for ParseError {}
 
 type ParseResult<'a, 'b, T = Expr<'a>> = Result<(T, &'b [Token<'a>]), ParseError>;
 
-fn parse_token<'a, 'b>(input: &'b [Token<'a>], skip_whitespace: bool) -> ParseResult<'a, 'b, Token<'a>> {
+fn parse_token<'a, 'b>(
+    input: &'b [Token<'a>],
+    skip_whitespace: bool,
+) -> ParseResult<'a, 'b, Token<'a>> {
     if input.is_empty() {
         Err(ParseError::ExpectedAToken)
     } else if let Token::Whitespace = input[0] {
