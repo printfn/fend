@@ -5130,8 +5130,9 @@ charriere               frenchcathetersize
 #
 # fixup units for times when prefix handling doesn't do the job
 #
-
-hectare                 hectoare
+*/
+("hectare"                 "hectoare")
+/*
 megohm                  megaohm
 kilohm                  kiloohm
 microhm                 microohm
@@ -7449,7 +7450,7 @@ blanc                   1|24 periot
 ("ℯ"                       "exp(1)") // U+212F, base of natural log
 /*
 ångström                angstrom
-Å                       angstrom    # angstrom symbol U+212B
+Å                       angstrom    # angstrom symbol U+212B
 Å                       angstrom    # A with ring U+00C5
 röntgen                 roentgen
 °C                      degC
@@ -7461,9 +7462,9 @@ röntgen                 roentgen
 /*
 ℃                       degC
 ℉                       degF
-K                       K          # Kelvin symbol, U+212A
+K                       K          # Kelvin symbol, U+212A
 ℓ                       liter      # unofficial abbreviation used in some places
-Ω                       ohm       # Ohm symbol U+2126
+Ω                       ohm       # Ohm symbol U+2126
 Ω                       ohm       # Greek capital omega U+03A9
 ℧                       mho
 ʒ                        dram     # U+0292
@@ -7593,8 +7594,8 @@ röntgen                 roentgen
 ㎽                      mW
 ㎾                      kW
 ㎿                      MW
-㏀                      kΩ
-㏁                      MΩ
+㏀                      kΩ
+㏁                      MΩ
 ㏃                      Bq
 ㏄                      cc
 ㏅                      cd
