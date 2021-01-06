@@ -5131,7 +5131,7 @@ charriere               frenchcathetersize
 # fixup units for times when prefix handling doesn't do the job
 #
 */
-("hectare"                 "hectoare")
+("hectare"/"hectares"                 "hectoare")
 /*
 megohm                  megaohm
 kilohm                  kiloohm
