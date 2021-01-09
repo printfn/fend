@@ -2,7 +2,7 @@
 #[rustfmt::skip::macros(define_units)]
 pub fn query_unit<'a>(
     ident: &'a str,
-    short_prefixes: bool,
+    _short_prefixes: bool,
 ) -> Option<(&'static str, &'static str, &'static str)> {
     macro_rules! define_units {
         (expr $name:literal $expr:literal) => {
@@ -21,42 +21,6 @@ pub fn query_unit<'a>(
             }
         };
     }
-    if short_prefixes {
-        define_units!(
-            ("Ki" "sp@kibi")
-            ("Mi" "sp@mebi")
-            ("Gi" "sp@gibi")
-            ("Ti" "sp@tebi")
-            ("Pi" "sp@pebi")
-            ("Ei" "sp@exbi")
-            ("Zi" "sp@zebi")
-            ("Yi" "sp@yobi")
-
-            ("Y"  "sp@yotta")
-            ("Z"  "sp@zetta")
-            ("E"  "sp@exa")
-            ("P"  "sp@peta")
-            ("T"  "sp@tera")
-            ("G"  "sp@giga")
-            ("M"  "sp@mega")
-            ("k"  "sp@kilo")
-            ("h"  "sp@hecto")
-            ("da" "sp@deka")
-            ("d"  "sp@deci")
-            ("c"  "sp@centi")
-            ("m"  "sp@milli")
-            ("u"  "sp@micro")   // it should be a mu but u is easy to type
-            ("\u{b5}"   "sp@micro")   // micro sign U+00B5
-            ("\u{3bc}"  "sp@micro")   // small mu U+03BC
-            ("n"  "sp@nano")
-            ("p"  "sp@pico")
-            ("f"  "sp@femto")
-            ("a"  "sp@atto")
-            ("z"  "sp@zepto")
-            ("y"  "sp@yocto")
-        );
-    }
-    /*let all_units = */
     define_units!(
 /*
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
@@ -123,7 +87,6 @@ pub fn query_unit<'a>(
 ("ft3"     "ft^3")
 ("microK"  "micro kelvin")
 
-("unitless" "=1")
 /*
 # air molecular weight is too complicated to parse for now,
 # so ignore air_1976, polyndx_1976 and polyndx
