@@ -2746,28 +2746,28 @@ int-                    int              #   international measures
 ("furlong"                 "40 rod")     // From "furrow long"
 ("statutemile"             "mile")
 ("league"                  "3 mile")     // Intended to be an an hour's walk
+
+// surveyor's measure
+
+("surveyorschain"          "66 surveyft")
+("surveychain"             "surveyorschain")
+("surveyorspole"           "1/4 surveyorschain")
+("surveyorslink"           "1/100 surveyorschain")
+("chain"/"chains"          "66 ft")
+("link"/"links"            "1/100 chain")
+("ch"                      "chain")
+("USacre"                  "10 surveychain^2")
+("intacre"                 "10 chain^2")       // Acre based on international ft
+("intacrefoot"             "acre foot")
+("USacrefoot"              "USacre surveyfoot")
+("acrefoot"                "intacrefoot")
+("acre"/"acres"            "intacre")
+("section"/"sections"      "mile^2")
+("township"/"townships"    "36 section")
+("homestead"/"homesteads"  "160 acre") // Area of land granted by the 1862 Homestead
+                                       // Act of the United States Congress
+("gunterschain"            "surveyorschain")
 /*
-# surveyor's measure
-
-surveyorschain          66 surveyft
-surveychain             surveyorschain
-surveyorspole           1|4 surveyorschain
-surveyorslink           1|100 surveyorschain
-chain                   66 ft
-link                    1|100 chain
-ch                      chain
-USacre                  10 surveychain^2
-intacre                 10 chain^2       # Acre based on international ft
-intacrefoot             acre foot
-USacrefoot              USacre surveyfoot
-acrefoot                intacrefoot
-acre                    intacre
-section                 mile^2
-township                36 section
-homestead               160 acre # Area of land granted by the 1862 Homestead
-                                 # Act of the United States Congress
-gunterschain            surveyorschain
-
 engineerschain          100 ft
 engineerslink           1|100 engineerschain
 ramsdenschain           engineerschain

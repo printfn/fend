@@ -4391,3 +4391,23 @@ fn test_hex_unit_conversion() {
 fn convert_to_billion() {
     test_eval("1000000000 to billion", "1 billion");
 }
+
+#[test]
+fn acres_to_sqmi() {
+    test_eval("640 acre to mi^2", "1 mi^2");
+}
+
+#[test]
+fn one_square_mile_to_acres() {
+    test_eval("1 mile^2 to acre", "640 acres");
+}
+
+#[test]
+fn one_hectare_to_km_sq() {
+    test_eval("1 hectare to km^2", "0.01 km^2");
+}
+
+#[test]
+fn two_km_sq_to_hectares() {
+    test_eval("2 km^2 to hectare", "200 hectares");
+}
