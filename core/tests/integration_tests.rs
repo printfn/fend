@@ -4411,3 +4411,13 @@ fn one_hectare_to_km_sq() {
 fn two_km_sq_to_hectares() {
     test_eval("2 km^2 to hectare", "200 hectares");
 }
+
+#[test]
+fn kg_to_unitless() {
+    expect_error("kg to unitless", Some("Units are incompatible"));
+}
+
+#[test]
+fn percent_to_unitless() {
+    test_eval("1% to unitless", "0.01");
+}

@@ -122,6 +122,8 @@ pub fn query_unit<'a>(
 ("m2"      "m^2")
 ("ft3"     "ft^3")
 ("microK"  "micro kelvin")
+
+("unitless" "=1")
 /*
 # air molecular weight is too complicated to parse for now,
 # so ignore air_1976, polyndx_1976 and polyndx
