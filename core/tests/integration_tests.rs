@@ -4421,3 +4421,8 @@ fn kg_to_unitless() {
 fn percent_to_unitless() {
     test_eval("1% to unitless", "0.01");
 }
+
+#[test]
+fn convert_to_numerical_product() {
+    expect_error("550Mbit/s to GB/s * 12000s", None);
+}
