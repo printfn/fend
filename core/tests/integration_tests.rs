@@ -4372,7 +4372,10 @@ fn kwh_conversion() {
 
 #[test]
 fn debug_pi_n() {
-    test_eval_simple("!debug pi N", "pi N (= 1 kg m s^-2) (base 10, auto)");
+    test_eval_simple(
+        "!debug pi N",
+        "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto)",
+    );
 }
 
 #[test]

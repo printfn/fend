@@ -313,201 +313,19 @@ pub fn query_unit<'a>(
 # given below.
 #
 */
-("s"                   "s@!") // The second, symbol s, is the SI unit of time.  It is defined
-("second"/"seconds"    "l@s") // by taking the fixed numerical value of the unperturbed
-                              // ground-state hyperfine transition frequency of the
-                              // cesium-133 atom to be 9 192 1631 770 when expressed in the
-                              // unit Hz, which is equal to 1/s.
-                              //
-                              // This definition is a restatement of the previous one, the
-                              // duration of 9192631770 periods of the radiation corresponding
-                              // to the cesium-133 transition.
 
 ("c"         "=299792458 m/s") // speed of light in vacuum (exact)
 
-("m"                  "s@!") // The metre, symbol m, is the SI unit of length.  It is
-("meter"/"meters"     "l@m") // defined by taking the fixed numerical value of the speed
-("metre"/"metres"     "l@m") // of light in vacuum, c, to be 299 792 458 when expressed in
-                             // units of m/s.
-                             //
-                             // This definition is a rewording of the previous one and is
-                             // equivalent to defining the meter as the distance light
-                             // travels in 1|299792458 seconds.  The meter was originally
-                             // intended to be 1e-7 of the length along a meridian from the
-                             // equator to a pole.
-
 ("h"                     "s@=6.62607015e-34 J s") // Planck constant (exact)
-
-("kg"                    "!")  // The kilogram, symbol kg, is the SI unit of mass.  It is
-("kilogram"/"kilograms"  "kg") // defined by taking the fixed numerical value of the Planck
-                               // constant, h, to be 6.626 070 15 * 10^-34 when expressed in
-                               // the unit J s which is equal to kg m^2 / s.
-                               //
-                               // One advantage of fixing h to define the kilogram is that this
-                               // affects constants used to define the ampere.  If the kg were
-                               // defined by directly fixing the mass of something, then h
-                               // would be subject to error.
-                               //
-                               // The previous definition of the kilogram was the mass of the
-                               // international prototype kilogram.  The kilogram was the last
-                               // unit whose definition relied on reference to an artifact.
-                               //
-                               // It is not obvious what this new definition means, or
-                               // intuitively how fixing Planck's constant defines the
-                               // kilogram.  To define the kilogram we need to give the mass
-                               // of some reference in kilograms.  Previously the prototype in
-                               // France served as this reference, and it weighed exactly 1
-                               // kg.  But the reference can have any weight as long as you
-                               // know the weight of the reference.  The new definition uses
-                               // the "mass" of a photon, or more accurately, the mass
-                               // equivalent of the energy of a photon.  The energy of a
-                               // photon depends on its frequency.  If you pick a frequency,
-                               // f, then the energy of the photon is hf, and hence the mass
-                               // equivalent is hf/c^2.  If we reduce this expression using
-                               // the constant defined values for h and c the result is a
-                               // value in kilograms for the mass-equivalent of a photon of
-                               // frequency f, which can therefore define the size of the
-                               // kilogram.
-                               //
-                               // For more on the relationship between mass an Planck's
-                               // constant:
-                               //
-                               // https://www.nist.gov/si-redefinition/kilogram-mass-and-plancks-constant
-                               // This definition may still seem rather abstract: you can't
-                               // place a "kilogram of radiation" on one side of a balance.
-                               // Metrologists realize the kilogram using a Kibble Balance, a
-                               // device which relates mechanical energy to electrical energy
-                               // and can measure mass with extreme accuracy if h is known.
-                               //
-                               // For more on the Kibble Balance see
-                               //
-                               // https://www.nist.gov/si-redefinition/kilogram-kibble-balance
-                               // https://en.wikipedia.org/wiki/Kibble_balance
 
 ("boltzmann" "=1.380649e-23 J/K")   // Boltzmann constant (exact)
 ("k"         "=boltzmann")
 
-("K"         "s@!") // The kelvin, symbol K, is the SI unit of thermodynamic
-("kelvin"    "l@K") // temperature.  It is defined by taking the fixed numerical
-                    // value of the Boltzmann constant, k, to be 1.380 649 * 10^-23
-                    // when expressed in the unit J/K, which is equal to
-                    // kg m^2/s^2 K.
-                    //
-                    // The boltzmann constant establishes the relationship between
-                    // energy and temperature.  The average thermal energy carried
-                    // by each degree of freedom is kT/2.  A monatomic ideal gas
-                    // has three degrees of freedom corresponding to the three
-                    // spatial directions, which means its thermal energy is
-                    // (3/2) k T.
-                    //
-                    // The previous definition of the kelvin was based on the
-                    // triple point of water.  The change in the definition of the
-                    // kelvin will not have much effect on measurement practice.
-                    // Practical temperature calibration makes use of two scales,
-                    // the International Temperature Scale of 1990 (ITS-90), which
-                    // covers the range of 0.65 K to 1357.77K and the Provisional
-                    // Low Temperature Scale of 2000 (PLTS-2000), which covers the
-                    // range of 0.9 mK to 1 K.
-                    // https://www.bipm.org/en/committees/cc/cct/publications-cc.html
-                    //
-                    // The ITS-90 contains 17 reference points including things
-                    // like the triple point of hydrogen (13.8033 K) or the
-                    // freezing point of gold (1337.33 K), and of course the triple
-                    // point of water.  The PLTS-2000 specifies four reference
-                    // points, all based on properties of helium-3.
-                    //
-                    // The redefinition of the kelvin will not affect the values of
-                    // these reference points, which have been determined by
-                    // primary thermometry, using thermometers that rely only on
-                    // relationships that allow temperature to be calculated
-                    // directly without using any unknown quantities. Examples
-                    // include acoustic thermometers, which measure the speed of
-                    // sound in a gas, or electronic thermometers, which measure
-                    // tiny voltage fluctuations in resistors. Both variables
-                    // depend directly on temperature.
-
 ("electroncharge"   "=1.602176634e-19 C") // electron charge (exact)
-
-("A"                   "s@!")      // The ampere, symbol A, is the SI unit of electric current.
-("ampere"/"amperes"    "l@A")      // It is defined by taking the fixed numerical value of the
-("amp"/"amps"          "l@ampere") // elementary charge, e, to be 1.602 176 634 * 10^-19 when
-                                   // expressed in the unit C, which is equal to A*s.
-                                   //
-                                   // The previous definition was the current which produces a
-                                   // force of 2e-7 N/m between two infinitely long wires a meter
-                                   // apart.  This definition was difficult to realize accurately.
-                                   //
-                                   // The ampere is actually realized by establishing the volt and
-                                   // the ohm, since A = V / ohm.  These measurements can be done
-                                   // using the Josephson effect and the quantum Hall effect,
-                                   // which accurately measure voltage and resistance, respectively,
-                                   // with reference to two fixed constants, the Josephson
-                                   // constant, K_J=2e/h and the von Klitzing constant, R_K=h/e^2.
-                                   // Under the previous SI system, these constants had official
-                                   // fixed values, defined in 1990.  This created a situation
-                                   // where the standard values for the volt and ohm were in some
-                                   // sense outside of SI because they depended primarily on
-                                   // constants different from the ones used to define SI. After
-                                   // the revision, since e and h have exact definitions, the
-                                   // Josephson and von Klitzing constants will also have exact
-                                   // definitions that derive from SI instead of the conventional
-                                   // 1990 values.
-                                   //
-                                   // In fact we know that there is a small offset between the
-                                   // conventional values of the electrical units based on the
-                                   // conventional 1990 values and the SI values.  The new
-                                   // definition, which brings the practical electrical units back
-                                   // into SI, will lead to a one time change of +0.1ppm for
-                                   // voltage values and +0.02ppm for resistance values.
-                                   //
-                                   // The previous definition resulted in fixed exact values for
-                                   // the vacuum permeability (mu0), the impedance of free space
-                                   // (Z0), the vacuum permittivity (epsilon0), and the Coulomb
-                                   // constant. With the new definition, these four values are
-                                   // subject to experimental error.
 
 ("avogadro"  "=6.02214076e23 / mol") // Size of a mole (exact)
 ("N_A"       "=avogadro")
 
-("mol"           "s@!")   // The mole, symbol mol, is the SI unit of amount of
-("mole"/"moles"  "l@mol") // substance.  One mole contains exactly 6.022 140 76 * 10^23
-                          // elementary entities.  This number is the fixed numerical
-                          // value of the Avogadro constant, N_A, when expressed in the
-                          // unit 1/mol and is called the Avogadro number.  The amount of
-                          // substance, symbol n, of a system is a measure of the number
-                          // of specified elementary entities.  An elementary entity may
-                          // be an atom, a molecule, an ion, an electron, any other
-                          // particle or specified group of particles.
-                          //
-                          // The atomic mass unit (u) is defined as 1/12 the mass of
-                          // carbon-12.  Previously the mole was defined so that a mole
-                          // of carbon-12 weighed exactly 12g, or N_A u = 1 g/mol
-                          // exactly. This relationship is now an experimental,
-                          // approximate relationship.
-                          //
-                          // To determine the size of the mole, researchers used spheres
-                          // of very pure silicon-28 that weighed a kilogram.  They
-                          // measured the molar mass of Si-28 using mass spectrometry and
-                          // used X-ray diffraction interferometry to determine the
-                          // spacing of the silicon atoms in the sphere.  Using the
-                          // sphere's volume it was then possible to determine the number
-                          // of silicon atoms in the sphere, and hence determine the
-                          // Avogadro constant.  The results of this experiment were used to
-                          // define N_A, which is henceforth a fixed, unchanging quantity.
-
-("cd"                   "s@!")  // The candela, symbol cd, is the SI unit of luminous intensity
-("candela"/"candelas"   "l@cd") // in a given direction.  It is defined by taking the fixed
-                                // numerical value of the luminous efficacy of monochromatic
-                                // radiation of the frequency 540e12 Hz to be 683 when
-                                // expressed in the unit lumen/watt, which is equal to
-                                // cd sr/W, or cd sr s^3/kg m^2
-                                //
-                                // This definition is a rewording of the previous definition.
-                                // Luminous intensity differs from radiant intensity (W/sr) in
-                                // that it is adjusted for human perceptual dependence on
-                                // wavelength.  The frequency of 540e12 Hz (yellow;
-                                // wavelength approximately 555 nm in vacuum) is where human
-                                // perception is most efficient.
 //
 // The radian and steradian are defined as dimensionless primitive units.
 // The radian is equal to m/m and the steradian to m^2/m^2 so these units are
@@ -539,53 +357,6 @@ pub fn query_unit<'a>(
 // Currency: the primitive unit of currency is defined in currency.units.
 // It is usually the US$ or the euro, but it is user selectable.
 //
-/*
-###########################################################################
-#                                                                         #
-# Prefixes (longer names must come first)                                 #
-#                                                                         #
-###########################################################################
-*/
-("yotta"                  "lp@1e24")     // Greek or Latin octo, "eight"
-("zetta"                  "lp@1e21")     // Latin septem, "seven"
-("exa"                    "lp@1e18")     // Greek hex, "six"
-("peta"                   "lp@1e15")     // Greek pente, "five"
-("tera"                   "lp@1e12")     // Greek teras, "monster"
-("giga"                   "lp@1e9")      // Greek gigas, "giant"
-("mega"                   "lp@1e6")      // Greek megas, "large"
-("myria"                  "lp@1e4")      // Not an official SI prefix
-("kilo"                   "lp@1e3")      // Greek chilioi, "thousand"
-("hecto"                  "lp@1e2")      // Greek hekaton, "hundred"
-("deca"                   "lp@1e1")      // Greek deka, "ten"
-("deka"                   "lp@deca")
-("deci"                   "lp@1e-1")     // Latin decimus, "tenth"
-("centi"                  "lp@1e-2")     // Latin centum, "hundred"
-("milli"                  "lp@1e-3")     // Latin mille, "thousand"
-("micro"                  "lp@1e-6")     // Latin micro or Greek mikros, "small"
-("nano"                   "lp@1e-9")     // Latin nanus or Greek nanos, "dwarf"
-("pico"                   "lp@1e-12")    // Spanish pico, "a bit"
-("femto"                  "lp@1e-15")    // Danish-Norwegian femten, "fifteen"
-("atto"                   "lp@1e-18")    // Danish-Norwegian atten, "eighteen"
-("zepto"                  "lp@1e-21")    // Latin septem, "seven"
-("yocto"                  "lp@1e-24")    // Greek or Latin octo, "eight"
-
-("quarter"                "lp@1/4")
-("semi"                   "lp@0.5")
-("demi"                   "lp@0.5")
-("hemi"                   "lp@0.5")
-("half"                   "lp@0.5")
-("double"                 "lp@2")
-("triple"                 "lp@3")
-("treble"                 "lp@3")
-
-("kibi"                   "lp@2^10")     // In response to the convention of illegally
-("mebi"                   "lp@2^20")     // and confusingly using metric prefixes for
-("gibi"                   "lp@2^30")     // powers of two, the International
-("tebi"                   "lp@2^40")     // Electrotechnical Commission aproved these
-("pebi"                   "lp@2^50")     // binary prefixes for use in 1998.  If you
-("exbi"                   "lp@2^60")     // want to refer to "megabytes" using the
-("zebi"                   "lp@2^70")     // binary definition, use these prefixes.
-("yobi"                   "lp@2^80")
 
 //
 // Names of some numbers
@@ -851,9 +622,6 @@ H_FLUX                  H_FIELD AREA
 // units derived easily from SI units
 //
 
-("gram"/"grams"            "l@1/1000 kg")
-("gm"                      "s@gram")
-("g"                       "s@gram")
 ("tonne"/"tonnes"          "l@1000 kg")
 ("t"                       "s@tonne")
 ("metricton"/"metrictons"  "l@tonne")
