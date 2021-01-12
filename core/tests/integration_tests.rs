@@ -4372,7 +4372,10 @@ fn kwh_conversion() {
 
 #[test]
 fn debug_pi_n() {
-    test_eval_simple("!debug pi N", "pi N (= 1 kg m s^-2) (base 10, auto)");
+    test_eval_simple(
+        "!debug pi N",
+        "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto)",
+    );
 }
 
 #[test]
@@ -4525,4 +4528,39 @@ fn negate_nested_arrays_different_lengths_with_negatives_2() {
 #[test]
 fn convert_to_billion() {
     test_eval("1000000000 to billion", "1 billion");
+}
+
+#[test]
+fn acres_to_sqmi() {
+    test_eval("640 acre to mi^2", "1 mi^2");
+}
+
+#[test]
+fn one_square_mile_to_acres() {
+    test_eval("1 mile^2 to acre", "640 acres");
+}
+
+#[test]
+fn one_hectare_to_km_sq() {
+    test_eval("1 hectare to km^2", "0.01 km^2");
+}
+
+#[test]
+fn two_km_sq_to_hectares() {
+    test_eval("2 km^2 to hectare", "200 hectares");
+}
+
+#[test]
+fn kg_to_unitless() {
+    expect_error("kg to unitless", Some("Units are incompatible"));
+}
+
+#[test]
+fn percent_to_unitless() {
+    test_eval("1% to unitless", "0.01");
+}
+
+#[test]
+fn convert_to_numerical_product() {
+    expect_error("550Mbit/s to GB/s * 12000s", None);
 }

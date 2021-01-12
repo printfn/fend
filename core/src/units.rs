@@ -7,7 +7,6 @@ use crate::value::Value;
 #[cfg(feature = "gpl")]
 mod builtin_gnu;
 
-#[cfg(not(feature = "gpl"))]
 mod builtin;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -132,7 +131,7 @@ pub fn query_unit<'a, I: Interrupt>(
 }
 
 #[cfg(feature = "gpl")]
-fn query_unit_internal<'a, I: Interrupt>(
+fn query_unit_internal_gnu<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
     int: &I,
@@ -145,6 +144,14 @@ fn query_unit_internal<'a, I: Interrupt>(
 }
 
 #[cfg(not(feature = "gpl"))]
+fn query_unit_internal_gnu<'a, I: Interrupt>(
+    ident: &'a str,
+    short_prefixes: bool,
+    int: &I,
+) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
+    Err(GetIdentError::IdentifierNotFound(ident))?
+}
+
 fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
@@ -153,6 +160,6 @@ fn query_unit_internal<'a, I: Interrupt>(
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes) {
         expr_unit(s, p, expr, int)
     } else {
-        Err(GetIdentError::IdentifierNotFound(ident))?
+        query_unit_internal_gnu(ident, short_prefixes, int)
     }
 }

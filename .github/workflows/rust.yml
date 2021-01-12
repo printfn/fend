@@ -50,7 +50,7 @@ jobs:
     - name: Get version
       run: echo "FEND_VERSION=$(./${{ matrix.artifact-path }} --version)" ${{ matrix.env-command }}
     - name: Run tests
-      run: cargo test -q --workspace -- --nocapture
+      run: cargo test --workspace -- --nocapture --quiet
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/main' }}
