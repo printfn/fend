@@ -10,20 +10,20 @@ use std::ops::Neg;
 
 mod sign {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum Sign {
+    pub(crate) enum Sign {
         Positive,
         Negative,
     }
 
     impl Sign {
-        pub const fn flip(self) -> Self {
+        pub(crate) const fn flip(self) -> Self {
             match self {
                 Self::Positive => Self::Negative,
                 Self::Negative => Self::Positive,
             }
         }
 
-        pub const fn sign_of_product(a: Self, b: Self) -> Self {
+        pub(crate) const fn sign_of_product(a: Self, b: Self) -> Self {
             match (a, b) {
                 (Self::Positive, Self::Positive) | (Self::Negative, Self::Negative) => {
                     Self::Positive

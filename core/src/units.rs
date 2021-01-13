@@ -10,7 +10,7 @@ mod builtin_gnu;
 mod builtin;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum PrefixRule {
+pub(crate) enum PrefixRule {
     NoPrefixesAllowed,
     LongPrefixAllowed,
     LongPrefix,
@@ -19,7 +19,7 @@ pub enum PrefixRule {
 }
 
 #[derive(Debug)]
-pub struct UnitDef {
+pub(crate) struct UnitDef {
     singular: &'static str,
     plural: &'static str,
     prefix_rule: PrefixRule,
@@ -85,7 +85,7 @@ fn construct_prefixed_unit<I: Interrupt>(
     Ok(Value::Num(unit))
 }
 
-pub fn query_unit<'a, I: Interrupt>(
+pub(crate) fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
     int: &I,
 ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {

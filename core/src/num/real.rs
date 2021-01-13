@@ -27,7 +27,7 @@ impl fmt::Debug for Real {
 }
 
 #[derive(Clone, Debug)]
-pub enum Pattern {
+pub(crate) enum Pattern {
     /// a simple fraction
     Simple(BigRat),
     // n * pi

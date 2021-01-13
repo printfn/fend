@@ -49,7 +49,7 @@ impl<'a> ScopeValue<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Scope<'a> {
+pub(crate) struct Scope<'a> {
     ident: &'a str,
     value: ScopeValue<'a>,
     inner: Option<Arc<Scope<'a>>>,
@@ -64,7 +64,7 @@ impl<'a> Scope<'a> {
         }
     }
 
-    pub fn with_variable(
+    pub(crate) fn with_variable(
         name: &'a str,
         expr: Expr<'a>,
         scope: Option<Arc<Self>>,
@@ -73,7 +73,7 @@ impl<'a> Scope<'a> {
         Self::with_scope_value(name, ScopeValue::LazyVariable(expr, scope), inner)
     }
 
-    pub fn get<I: Interrupt>(
+    pub(crate) fn get<I: Interrupt>(
         &self,
         ident: &'a str,
         int: &I,

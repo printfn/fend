@@ -9,14 +9,14 @@ mod formatting_style;
 mod real;
 mod unit;
 
-pub use formatting_style::FormattingStyle;
+pub(crate) use formatting_style::FormattingStyle;
 
-pub type Number<'a> = unit::UnitValue<'a>;
-pub type FormattedNumber = unit::FormattedUnitValue;
-pub type Base = base::Base;
+pub(crate) type Number<'a> = unit::UnitValue<'a>;
+pub(crate) type FormattedNumber = unit::FormattedUnitValue;
+pub(crate) type Base = base::Base;
 type Exact<T> = exact::Exact<T>;
-pub type BaseOutOfRangeError = base::BaseOutOfRangeError;
-pub type InvalidBasePrefixError = base::InvalidBasePrefixError;
+pub(crate) type BaseOutOfRangeError = base::BaseOutOfRangeError;
+pub(crate) type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
 #[allow(clippy::pub_enum_variant_names)]
 pub enum ValueOutOfRange<T: fmt::Display> {

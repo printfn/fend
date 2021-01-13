@@ -5,6 +5,7 @@
 #![deny(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 #![deny(clippy::use_self)]
+#![deny(unreachable_pub)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.11")]
 
 mod ast;

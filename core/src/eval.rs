@@ -8,7 +8,7 @@ use crate::{
     value::Value,
 };
 
-pub fn evaluate_to_value<'a, I: Interrupt>(
+pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     input: &'a str,
     scope: Option<Arc<Scope<'a>>>,
     int: &I,
@@ -31,7 +31,7 @@ pub fn evaluate_to_value<'a, I: Interrupt>(
     Ok(result)
 }
 
-pub fn evaluate_to_string<'a, I: Interrupt>(
+pub(crate) fn evaluate_to_string<'a, I: Interrupt>(
     mut input: &'a str,
     scope: Option<Arc<Scope<'a>>>,
     int: &I,

@@ -7,7 +7,7 @@ use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
-pub enum Expr<'a> {
+pub(crate) enum Expr<'a> {
     Num(Number<'a>),
     Ident(&'a str),
     Parens(Box<Expr<'a>>),
@@ -33,7 +33,7 @@ pub enum Expr<'a> {
 }
 
 impl<'a> Expr<'a> {
-    pub fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
+    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
             Self::Ident(ident) => (*ident).to_string(),
@@ -86,7 +86,7 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn evaluate<'a, I: Interrupt>(
+pub(crate) fn evaluate<'a, I: Interrupt>(
     expr: Expr<'a>,
     scope: Option<Arc<Scope<'a>>>,
     int: &I,
@@ -199,7 +199,7 @@ pub fn evaluate<'a, I: Interrupt>(
     })
 }
 
-pub fn resolve_identifier<'a, I: Interrupt>(
+pub(crate) fn resolve_identifier<'a, I: Interrupt>(
     ident: &'a str,
     scope: Option<Arc<Scope<'a>>>,
     int: &I,

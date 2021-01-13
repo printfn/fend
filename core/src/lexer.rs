@@ -3,7 +3,7 @@ use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{convert::TryInto, fmt};
 
 #[derive(Clone)]
-pub enum Token<'a> {
+pub(crate) enum Token<'a> {
     Num(Number<'a>),
     Ident(&'a str),
     Symbol(Symbol),
@@ -11,7 +11,7 @@ pub enum Token<'a> {
 }
 
 #[derive(PartialEq, Eq, Copy, Clone)]
-pub enum Symbol {
+pub(crate) enum Symbol {
     OpenParens,
     CloseParens,
     Add,
@@ -395,7 +395,7 @@ fn parse_number<'a, I: Interrupt>(
     Ok((res, input))
 }
 
-pub fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
+pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     let allowed_chars = ",&_⅛¼⅜½⅝¾⅞⅙⅓⅔⅚⅕⅖⅗⅘°$℃℉℧℈℥℔¢£¥€₩₪₤₨฿₡₣₦₧₫₭₮₯₱﷼﹩￠￡￥￦㍱㍲㍳㍴㍶㎀㎁㎂㎃㎄㎅㎆㎇㎈㎉㎊㎋㎌㎍㎎㎏㎐㎑㎒㎓㎔㎕㎖㎗㎘㎙㎚㎛㎜㎝㎞㎟㎠㎡㎢㎣㎤㎥㎦㎧㎨㎩㎪㎫㎬㎭㎮㎯㎰㎱㎲㎳㎴㎵㎶㎷㎸㎹㎺㎻㎼㎽㎾㎿㏀㏁㏃㏄㏅㏆㏈㏉㏊㏌㏏㏐㏓㏔㏕㏖㏗㏙㏛㏜㏝";
     // these chars are only valid by themselves
     let only_valid_by_themselves = "%‰‱′″\"'’”π";
@@ -437,7 +437,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerErro
     ))
 }
 
-pub struct Lexer<'a, 'b, I: Interrupt> {
+pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
     input: &'a str,
     // normally 0; 1 after backslash; 2 after ident after backslash
     after_backslash_state: u8,
@@ -543,7 +543,7 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
     }
 }
 
-pub fn lex<'a, 'b, I: Interrupt>(input: &'a str, int: &'b I) -> Lexer<'a, 'b, I> {
+pub(crate) fn lex<'a, 'b, I: Interrupt>(input: &'a str, int: &'b I) -> Lexer<'a, 'b, I> {
     Lexer {
         input,
         after_backslash_state: 0,

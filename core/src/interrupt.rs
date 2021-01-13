@@ -15,7 +15,9 @@ impl<T: Interrupt> crate::err::Interrupt for T {
     }
 }
 
-pub fn test_int<I: crate::err::Interrupt>(int: &I) -> Result<(), IntErr<crate::err::Never, I>> {
+pub(crate) fn test_int<I: crate::err::Interrupt>(
+    int: &I,
+) -> Result<(), IntErr<crate::err::Never, I>> {
     if let Err(i) = int.test() {
         Err(IntErr::Interrupt(i))
     } else {
@@ -24,7 +26,7 @@ pub fn test_int<I: crate::err::Interrupt>(int: &I) -> Result<(), IntErr<crate::e
 }
 
 #[derive(Default)]
-pub struct Never {}
+pub(crate) struct Never {}
 impl Interrupt for Never {
     fn should_interrupt(&self) -> bool {
         false

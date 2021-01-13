@@ -2,7 +2,7 @@ use std::fmt;
 
 pub trait Error: fmt::Display {}
 
-pub type Never = std::convert::Infallible;
+pub(crate) type Never = std::convert::Infallible;
 
 #[allow(clippy::module_name_repetitions)]
 pub enum IntErr<E, I: Interrupt> {
@@ -79,7 +79,7 @@ pub trait Interrupt {
 }
 
 #[derive(Default)]
-pub struct NeverInterrupt {}
+pub(crate) struct NeverInterrupt {}
 impl Interrupt for NeverInterrupt {
     type Int = std::convert::Infallible;
     fn test(&self) -> Result<(), Self::Int> {
@@ -87,7 +87,7 @@ impl Interrupt for NeverInterrupt {
     }
 }
 
-pub struct PossibleInterrupt {}
+pub(crate) struct PossibleInterrupt {}
 impl Interrupt for PossibleInterrupt {
     type Int = ();
     fn test(&self) -> Result<(), Self::Int> {

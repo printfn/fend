@@ -6,7 +6,7 @@ use std::fmt;
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub enum Value<'a> {
+pub(crate) enum Value<'a> {
     Num(Number<'a>),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
@@ -19,7 +19,7 @@ pub enum Value<'a> {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum BuiltInFunction {
+pub(crate) enum BuiltInFunction {
     Approximately,
     Abs,
     Sin,
@@ -41,7 +41,7 @@ pub enum BuiltInFunction {
 }
 
 impl BuiltInFunction {
-    pub fn wrap_with_expr<'a>(
+    pub(crate) fn wrap_with_expr<'a>(
         self,
         lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
         scope: Option<Arc<Scope<'a>>>,
@@ -56,7 +56,7 @@ impl BuiltInFunction {
         )
     }
 
-    pub fn invert(self) -> Result<Value<'static>, String> {
+    pub(crate) fn invert(self) -> Result<Value<'static>, String> {
         Ok(match self {
             Self::Sin => Value::BuiltInFunction(Self::Asin),
             Self::Cos => Value::BuiltInFunction(Self::Acos),
@@ -105,20 +105,20 @@ impl fmt::Display for BuiltInFunction {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub enum ApplyMulHandling {
+pub(crate) enum ApplyMulHandling {
     OnlyApply,
     Both,
 }
 
 impl<'a> Value<'a> {
-    pub fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
+    pub(crate) fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat),
             _ => Err("Expected a number".to_string())?,
         }
     }
 
-    pub fn handle_num<I: Interrupt>(
+    pub(crate) fn handle_num<I: Interrupt>(
         self,
         eval_fn: impl FnOnce(Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
         lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
@@ -132,7 +132,7 @@ impl<'a> Value<'a> {
         })
     }
 
-    pub fn handle_two_nums<
+    pub(crate) fn handle_two_nums<
         I: Interrupt,
         F1: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
         F2: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
@@ -159,7 +159,7 @@ impl<'a> Value<'a> {
     }
 
     #[allow(clippy::map_err_ignore)]
-    pub fn apply<I: Interrupt>(
+    pub(crate) fn apply<I: Interrupt>(
         self,
         other: Expr<'a>,
         apply_mul_handling: ApplyMulHandling,
@@ -250,7 +250,7 @@ impl<'a> Value<'a> {
         })
     }
 
-    pub fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, IntErr<Never, I>> {
+    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => FormattedValue::Number(Box::new(n.format(int)?)),
             Self::BuiltInFunction(name) => FormattedValue::Str(name.as_str()),
@@ -291,7 +291,7 @@ impl<'a> fmt::Debug for Value<'a> {
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
-pub enum FormattedValue {
+pub(crate) enum FormattedValue {
     Str(&'static str),
     String(String),
     Base(u8),

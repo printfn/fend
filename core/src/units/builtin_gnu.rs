@@ -1,6 +1,6 @@
 #[allow(clippy::too_many_lines)]
 #[rustfmt::skip::macros(define_units)]
-pub fn query_unit<'a>(
+pub(crate) fn query_unit<'a>(
     ident: &'a str,
     _short_prefixes: bool,
 ) -> Option<(&'static str, &'static str, &'static str)> {

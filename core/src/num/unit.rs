@@ -13,7 +13,7 @@ use super::Exact;
 
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
-pub struct UnitValue<'a> {
+pub(crate) struct UnitValue<'a> {
     value: Complex,
     unit: Unit<'a>,
     exact: bool,
@@ -22,7 +22,7 @@ pub struct UnitValue<'a> {
 }
 
 impl<'a> UnitValue<'a> {
-    pub fn try_as_usize<I: Interrupt>(
+    pub(crate) fn try_as_usize<I: Interrupt>(
         self,
         int: &I,
     ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
@@ -35,7 +35,7 @@ impl<'a> UnitValue<'a> {
         Ok(self.value.try_as_usize(int)?)
     }
 
-    pub fn create_unit_value_from_value<I: Interrupt>(
+    pub(crate) fn create_unit_value_from_value<I: Interrupt>(
         value: &Self,
         prefix: &'a str,
         singular_name: &'a str,
@@ -51,7 +51,7 @@ impl<'a> UnitValue<'a> {
         Ok(result)
     }
 
-    pub fn new_base_unit(singular_name: &'static str, plural_name: &'static str) -> Self {
+    pub(crate) fn new_base_unit(singular_name: &'static str, plural_name: &'static str) -> Self {
         let base_unit = BaseUnit::new(singular_name);
         let mut hashmap = HashMap::new();
         hashmap.insert(base_unit, 1.into());
@@ -59,7 +59,7 @@ impl<'a> UnitValue<'a> {
         Self::new(1, vec![UnitExponent::new(unit, 1)])
     }
 
-    pub fn with_format(self, format: FormattingStyle) -> Self {
+    pub(crate) fn with_format(self, format: FormattingStyle) -> Self {
         Self {
             value: self.value,
             unit: self.unit,
@@ -69,7 +69,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn with_base(self, base: Base) -> Self {
+    pub(crate) fn with_base(self, base: Base) -> Self {
         Self {
             value: self.value,
             unit: self.unit,
@@ -79,7 +79,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !self.is_unitless() {
             return Err("Factorial is only supported for unitless numbers".to_string())?;
         }
@@ -104,7 +104,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
         let value = Exact::new(self.value, self.exact).add(scaled, int)?;
@@ -117,7 +117,11 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub fn convert_to<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn convert_to<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
         if rhs.value != 1.into() {
             return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
         }
@@ -132,7 +136,7 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
         let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
@@ -145,7 +149,11 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub(crate) fn div<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<DivideByZero, I>> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
             components.push(UnitExponent::new(
@@ -169,11 +177,11 @@ impl<'a> UnitValue<'a> {
         self.unit.components.is_empty()
     }
 
-    pub fn is_unitless_one(&self) -> bool {
+    pub(crate) fn is_unitless_one(&self) -> bool {
         self.is_unitless() && self.exact && self.value == Complex::from(1)
     }
 
-    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !rhs.is_unitless() {
             return Err("Only unitless exponents are currently supported".to_string())?;
         }
@@ -201,7 +209,7 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub fn i() -> Self {
+    pub(crate) fn i() -> Self {
         Self {
             value: Complex::i(),
             unit: Unit { components: vec![] },
@@ -211,7 +219,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn pi() -> Self {
+    pub(crate) fn pi() -> Self {
         Self {
             value: Complex::pi(),
             unit: Unit { components: vec![] },
@@ -221,7 +229,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         let value = self.value.abs(int)?;
         Ok(Self {
             value: value.value,
@@ -232,7 +240,7 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub fn make_approximate(self) -> Self {
+    pub(crate) fn make_approximate(self) -> Self {
         Self {
             value: self.value,
             unit: self.unit,
@@ -242,7 +250,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn zero_with_base(base: Base) -> Self {
+    pub(crate) fn zero_with_base(base: Base) -> Self {
         Self {
             value: Complex::from(0),
             unit: Unit::unitless(),
@@ -252,7 +260,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn is_zero(&self) -> bool {
+    pub(crate) fn is_zero(&self) -> bool {
         self.value == 0.into()
     }
 
@@ -312,7 +320,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn sin<I: Interrupt>(
+    pub(crate) fn sin<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
         int: &I,
@@ -325,7 +333,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn cos<I: Interrupt>(
+    pub(crate) fn cos<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
         int: &I,
@@ -338,7 +346,7 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn tan<I: Interrupt>(
+    pub(crate) fn tan<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
         int: &I,
@@ -351,55 +359,58 @@ impl<'a> UnitValue<'a> {
         }
     }
 
-    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::asin, false, int)
     }
 
-    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::acos, false, int)
     }
 
-    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::atan, false, int)
     }
 
-    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::sinh, false, int)
     }
 
-    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::cosh, false, int)
     }
 
-    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::tanh, false, int)
     }
 
-    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::asinh, false, int)
     }
 
-    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::acosh, false, int)
     }
 
-    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::atanh, false, int)
     }
 
-    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::ln, true, int)
     }
 
-    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::log2, true, int)
     }
 
-    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedUnitValue, IntErr<Never, I>> {
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        int: &I,
+    ) -> Result<FormattedUnitValue, IntErr<Never, I>> {
         let use_parentheses = if self.unit.components.is_empty() {
             UseParentheses::No
         } else {
@@ -467,7 +478,7 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         let components = [self.unit.components, rhs.unit.components].concat();
         let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
@@ -522,7 +533,7 @@ impl<'a> fmt::Debug for UnitValue<'a> {
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
-pub struct FormattedUnitValue {
+pub(crate) struct FormattedUnitValue {
     exact: bool,
     number: FormattedComplex,
     unit_str: String,

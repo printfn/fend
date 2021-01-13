@@ -2,7 +2,7 @@ use crate::ast::Expr;
 use crate::lexer::{Symbol, Token};
 use std::fmt;
 
-pub enum ParseError {
+pub(crate) enum ParseError {
     ExpectedAToken,
     ExpectedToken(Symbol, Symbol),
     FoundInvalidTokenWhileExpecting(Symbol),
@@ -340,11 +340,11 @@ fn parse_function<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     Ok((lhs, input))
 }
 
-pub fn parse_expression<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
+pub(crate) fn parse_expression<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     parse_function(input)
 }
 
-pub fn parse_tokens<'a, 'b>(input: &'b [Token<'a>]) -> Result<Expr<'a>, ParseError> {
+pub(crate) fn parse_tokens<'a, 'b>(input: &'b [Token<'a>]) -> Result<Expr<'a>, ParseError> {
     let (res, remaining) = parse_expression(input)?;
     if !remaining.is_empty() {
         return Err(ParseError::UnexpectedInput);
