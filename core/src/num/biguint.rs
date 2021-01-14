@@ -499,8 +499,8 @@ impl BigUint {
             Large(x) => x,
             Small(v) => vec![v],
         };
-        while res.len() < other.value_len() {
-            res.push(0);
+        if res.len() < other.value_len() {
+            res.resize(other.value_len(), 0);
         }
         for (i, a) in res.iter_mut().enumerate() {
             let b = other.get(i);
