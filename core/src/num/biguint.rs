@@ -228,8 +228,7 @@ impl BigUint {
                 if *n & 0xc000_0000_0000_0000 == 0 {
                     *n <<= 1;
                 } else {
-                    self.make_large();
-                    self.lshift(int)?;
+                    *self = Large(vec![*n << 1, *n >> 63]);
                 }
             }
             Large(value) => {
