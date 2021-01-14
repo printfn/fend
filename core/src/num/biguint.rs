@@ -498,17 +498,22 @@ impl BigUint {
             return self;
         }
         let mut carry = 0; // 0 or 1
-        let mut res = vec![];
-        for i in 0..max(self.value_len(), other.value_len()) {
-            let a = self.get(i);
+        let mut res = match self {
+            Large(x) => x,
+            Small(v) => vec![v],
+        };
+        while res.len() < other.value_len() {
+            res.push(0);
+        }
+        for (i, a) in res.iter_mut().enumerate() {
             let b = other.get(i);
-            if !(b == std::u64::MAX && carry == 1) && a >= b + carry {
-                res.push(a - b - carry);
+            if !(b == std::u64::MAX && carry == 1) && *a >= b + carry {
+                *a = *a - b - carry;
                 carry = 0;
             } else {
                 let next_digit =
-                    u128::from(a) + ((1_u128) << 64) - u128::from(b) - u128::from(carry);
-                res.push(truncate(next_digit));
+                    u128::from(*a) + ((1_u128) << 64) - u128::from(b) - u128::from(carry);
+                *a = truncate(next_digit);
                 carry = 1;
             }
         }
