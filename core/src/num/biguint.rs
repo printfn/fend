@@ -23,8 +23,8 @@ impl BigUint {
         match self {
             Small(n) => *n == 0,
             Large(value) => {
-                for v in value.iter().copied() {
-                    if v != 0 {
+                for v in value.iter() {
+                    if *v != 0 {
                         return false;
                     }
                 }
@@ -489,13 +489,12 @@ impl BigUint {
         if let (Small(a), Small(b)) = (&self, &other) {
             return Self::from(a - b);
         }
-        if &self < other {
-            unreachable!("Number would be less than 0");
-        }
-        if &self == other {
-            return Self::from(0);
-        }
-        if other == &0.into() {
+        match self.cmp(other) {
+            Ordering::Equal => return Self::from(0),
+            Ordering::Less => unreachable!("Number would be less than 0"),
+            Ordering::Greater => (),
+        };
+        if other.is_zero() {
             return self;
         }
         let mut carry = 0; // 0 or 1
