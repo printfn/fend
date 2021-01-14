@@ -403,14 +403,12 @@ impl BigUint {
                     divisor *= base_as_u128;
                     rounds += 1;
                 }
+                let divisor = Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]);
                 let mut output = String::with_capacity(rounds);
                 while !num.is_zero() {
                     test_int(int)?;
                     let divmod_res = num
-                        .divmod(
-                            &Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]),
-                            int,
-                        )
+                        .divmod(&divisor, int)
                         .map_err(|e| e.expect("Division by zero is not allowed"))?;
                     let mut digit_group_value =
                         u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
