@@ -2191,12 +2191,12 @@ fn units_27() {
 
 #[test]
 fn units_28() {
-    test_eval("1 second second", "1 second second");
+    test_eval("1 second second", "1 second^2");
 }
 
 #[test]
 fn units_29() {
-    test_eval("2 second seconds", "2 second seconds");
+    test_eval("2 second seconds", "2 seconds^2");
 }
 
 #[test]
@@ -4428,4 +4428,9 @@ fn percent_to_unitless() {
 #[test]
 fn convert_to_numerical_product() {
     expect_error("550Mbit/s to GB/s * 12000s", None);
+}
+
+#[test]
+fn unit_simplification() {
+    test_eval("0.18mL * 40 mg/mL", "7.2 mg");
 }

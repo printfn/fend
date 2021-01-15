@@ -163,10 +163,15 @@ impl<'a> UnitValue<'a> {
         }
         let value =
             Exact::new(self.value, self.exact).div(Exact::new(rhs.value, rhs.exact), int)?;
+        let unit = Exact {
+            value: Unit { components },
+            exact: value.exact && self.exact && rhs.exact,
+        }
+        .simplify(int)?;
         Ok(Self {
             value: value.value,
-            unit: Unit { components },
-            exact: value.exact && self.exact && rhs.exact,
+            unit: unit.value,
+            exact: unit.exact,
             base: self.base,
             format: self.format,
         })
@@ -482,10 +487,15 @@ impl<'a> UnitValue<'a> {
         let components = [self.unit.components, rhs.unit.components].concat();
         let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
+        let unit = Exact {
+            value: Unit { components },
+            exact: self.exact && rhs.exact && value.exact,
+        }
+        .simplify(int)?;
         Ok(Self {
             value: value.value,
-            unit: Unit { components },
-            exact: self.exact && rhs.exact && value.exact,
+            unit: unit.value,
+            exact: unit.exact,
             base: self.base,
             format: self.format,
         })
@@ -623,6 +633,48 @@ impl<'a> Unit<'a> {
     }
 }
 
+#[allow(clippy::use_self)]
+impl<'a> Exact<Unit<'a>> {
+    fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+        let mut res_components: Vec<UnitExponent> = vec![];
+        let mut res_exact = self.exact;
+
+        // combine identical units by summing their exponents
+        'outer: for comp in self.value.components {
+            for res_comp in &mut res_components {
+                if comp.unit == res_comp.unit {
+                    let lhs = Exact {
+                        value: res_comp.exponent.clone(),
+                        exact: res_exact,
+                    };
+                    let rhs = Exact {
+                        value: comp.exponent,
+                        exact: res_exact,
+                    };
+                    let sum = lhs.add(rhs, int)?;
+                    res_comp.exponent = sum.value;
+                    res_exact = res_exact && sum.exact;
+                    continue 'outer;
+                }
+            }
+            res_components.push(comp.clone())
+        }
+
+        // remove units with exponent == 0
+        res_components = res_components
+            .into_iter()
+            .filter(|unit_exponent| unit_exponent.exponent != 0.into())
+            .collect();
+
+        Ok(Self {
+            value: Unit {
+                components: res_components,
+            },
+            exact: res_exact,
+        })
+    }
+}
+
 impl<'a> fmt::Debug for Unit<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.components.is_empty() {
@@ -718,7 +770,7 @@ impl<'a> fmt::Display for FormattedExponent<'a> {
 }
 
 /// A named unit, like kilogram, megabyte or percent.
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 struct NamedUnit<'a> {
     prefix: &'a str,
     singular_name: &'a str,
