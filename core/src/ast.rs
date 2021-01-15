@@ -30,6 +30,8 @@ pub(crate) enum Expr<'a> {
 
     As(Box<Expr<'a>>, Box<Expr<'a>>),
     Fn(&'a str, Box<Expr<'a>>),
+
+    Of(Vec<&'a str>),
 }
 
 impl<'a> Expr<'a> {
@@ -61,6 +63,7 @@ impl<'a> Expr<'a> {
                     format!("\\{}.{}", a, b.format(int)?)
                 }
             }
+            Self::Of(parts) => parts.join(" of "),
         })
     }
 }
@@ -199,6 +202,16 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             }
         },
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
+        Expr::<'a>::Of(parts) => {
+            let mut value = resolve_identifier(parts[0], scope, int)?;
+            for part in &parts[1..] {
+                value = match value.get_object_member(part) {
+                    Ok(value) => value,
+                    Err(msg) => return Err(msg.to_string())?,
+                };
+            }
+            value
+        }
     })
 }
 

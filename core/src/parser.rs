@@ -86,7 +86,23 @@ fn parse_number<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
 
 fn parse_ident<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     match parse_token(input, true)? {
-        (Token::Ident(ident), remaining) => Ok((Expr::Ident(ident), remaining)),
+        (Token::Ident(ident), remaining) => {
+            if let Ok(((), remaining2)) = parse_fixed_symbol(remaining, Symbol::Of) {
+                let inner = parse_ident(remaining2)?;
+                match inner {
+                    (Expr::Of(mut other), remaining3) => {
+                        other.push(ident);
+                        Ok((Expr::Of(other), remaining3))
+                    }
+                    (Expr::Ident(ident2), remaining3) => {
+                        Ok((Expr::Of(vec![ident2, ident]), remaining3))
+                    }
+                    _ => Err(ParseError::ExpectedIdentifier),
+                }
+            } else {
+                Ok((Expr::Ident(ident), remaining))
+            }
+        }
         _ => Err(ParseError::ExpectedIdentifier),
     }
 }

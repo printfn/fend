@@ -294,6 +294,20 @@ impl<'a> Value<'a> {
             }
         })
     }
+
+    pub(crate) fn get_object_member(self, key: &str) -> Result<Self, &'static str> {
+        match self {
+            Value::Object(kv) => {
+                for (k, v) in kv {
+                    if k == key {
+                        return Ok(*v);
+                    }
+                }
+                Err("Could not find key in object")
+            }
+            _ => Err("Expected an object"),
+        }
+    }
 }
 
 impl<'a> fmt::Debug for Value<'a> {

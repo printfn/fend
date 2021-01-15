@@ -4469,3 +4469,21 @@ fn unit_simplification_kg_6() {
 fn unit_simplification_kg_7() {
     test_eval("kg^2 g^-2", "1000000");
 }
+
+#[test]
+fn eccentricity_of_earth() {
+    test_eval("eccentricity of earth", "0.0167086");
+}
+
+#[test]
+fn mass_of_earth() {
+    test_eval("mass of earth", "5972370000000000000000000 kg");
+}
+
+#[test]
+fn maths_with_earth_properties() {
+    test_eval(
+        "escape_velocity of earth / gravity of earth",
+        "approx. 1140.6545558371 s",
+    );
+}

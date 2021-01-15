@@ -2,7 +2,7 @@ use crate::err::{IntErr, Interrupt};
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{convert::TryInto, fmt};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) enum Token<'a> {
     Num(Number<'a>),
     Ident(&'a str),
@@ -10,7 +10,7 @@ pub(crate) enum Token<'a> {
     Whitespace,
 }
 
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub(crate) enum Symbol {
     OpenParens,
     CloseParens,
