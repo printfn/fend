@@ -194,6 +194,9 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
                 return Err("Unable to convert value to a function".to_string())?;
             }
+            Value::Object(_) => {
+                return Err("Cannot convert value to object".to_string())?;
+            }
         },
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
     })
@@ -255,6 +258,10 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "version" => Value::Version,
         "square" => evaluate_to_value("x: x^2", scope, int)?,
         "cubic" => evaluate_to_value("x: x^3", scope, int)?,
+        "earth" => Value::Object(vec![(
+            "mass",
+            Box::new(evaluate_to_value("5.97237e24 kg", scope, int)?),
+        )]),
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
 }

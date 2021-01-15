@@ -838,14 +838,14 @@ impl<'a> fmt::Debug for NamedUnit<'a> {
         if self.prefix.is_empty() {
             write!(f, "{}", self.singular_name)?;
         } else {
-            write!(f, "{} {}", self.prefix, self.singular_name)?;
+            write!(f, "{}-{}", self.prefix, self.singular_name)?;
         }
         write!(f, " (")?;
         if self.plural_name != self.singular_name {
             if self.prefix.is_empty() {
                 write!(f, "{}, ", self.plural_name)?;
             } else {
-                write!(f, "{} {}, ", self.prefix, self.plural_name)?;
+                write!(f, "{}-{}, ", self.prefix, self.plural_name)?;
             }
         }
         write!(f, "= {:?}", self.scale)?;

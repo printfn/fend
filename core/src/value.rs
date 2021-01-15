@@ -16,6 +16,7 @@ pub(crate) enum Value<'a> {
     // user-defined function with a named parameter
     Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Version,
+    Object(Vec<(&'a str, Box<Value<'a>>)>),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -268,6 +269,17 @@ impl<'a> Value<'a> {
                 FormattedValue::String(res)
             }
             Self::Version => FormattedValue::Str(crate::get_version_as_str()),
+            Self::Object(kv) => {
+                let mut s = "{".to_string();
+                for (k, v) in kv {
+                    s.push_str(k);
+                    s.push(':');
+                    s.push_str(&v.format(int)?.to_string());
+                    s.push(',');
+                }
+                s.push('}');
+                FormattedValue::String(s)
+            }
         })
     }
 }
@@ -285,6 +297,17 @@ impl<'a> fmt::Debug for Value<'a> {
                 write!(f, "fn: {} => {:?} (scope: {:?})", name, expr, scope)
             }
             Self::Version => write!(f, "version"),
+            Self::Object(kv) => {
+                let mut s = "{".to_string();
+                for (k, v) in kv {
+                    s.push_str(k);
+                    s.push(':');
+                    s.push_str(&format!("{:?}", *v));
+                    s.push(',');
+                }
+                s.push('}');
+                write!(f, "{}", s)
+            }
         }
     }
 }
