@@ -24,6 +24,7 @@ pub(crate) enum Symbol {
     Fn,
     Backslash,
     Dot,
+    Of,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -100,6 +101,7 @@ impl fmt::Display for Symbol {
             Self::Fn => ":",
             Self::Backslash => "\"",
             Self::Dot => ".",
+            Self::Of => "of",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -431,6 +433,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerErro
         match ident {
             "to" | "as" | "in" => Token::Symbol(Symbol::ArrowConversion),
             "per" => Token::Symbol(Symbol::Div),
+            "of" => Token::Symbol(Symbol::Of),
             _ => Token::Ident(ident),
         },
         input,
