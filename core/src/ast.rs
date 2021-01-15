@@ -262,8 +262,12 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "square" => evaluate_to_value("x: x^2", scope, int)?,
         "cubic" => evaluate_to_value("x: x^3", scope, int)?,
         "earth" => Value::Object(vec![
+            ("axial_tilt", eval_box("23.4392811°")?),
+            ("eccentricity", eval_box("0.0167086")?),
+            ("escape_velocity", eval_box("11.186 km/s")?),
             ("gravity", eval_box("9.80665 m/s^2")?),
             ("mass", eval_box("5.97237e24 kg")?),
+            ("volume", eval_box("1.08321e12 km^3")?),
         ]),
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
