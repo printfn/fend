@@ -207,6 +207,9 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
     scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
+    let eval_box = |input| -> Result<Box<Value<'_>>, IntErr<String, I>> {
+        Ok(Box::new(evaluate_to_value(input, scope.clone(), int)?))
+    };
     if let Some(scope) = scope.clone() {
         match scope.get(ident, int) {
             Ok(val) => return Ok(val),
@@ -258,10 +261,10 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "version" => Value::Version,
         "square" => evaluate_to_value("x: x^2", scope, int)?,
         "cubic" => evaluate_to_value("x: x^3", scope, int)?,
-        "earth" => Value::Object(vec![(
-            "mass",
-            Box::new(evaluate_to_value("5.97237e24 kg", scope, int)?),
-        )]),
+        "earth" => Value::Object(vec![
+            ("gravity", eval_box("9.80665 m/s^2")?),
+            ("mass", eval_box("5.97237e24 kg")?),
+        ]),
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
 }

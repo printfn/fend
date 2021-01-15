@@ -193,7 +193,7 @@ impl<'a> Value<'a> {
                     let self_ = Self::Num(n);
                     return Err(format!(
                         "{} is not a function",
-                        self_.format(int)?.to_string()
+                        self_.format(0, int)?.to_string()
                     ))?;
                 } else {
                     let n2 = n.clone();
@@ -245,13 +245,17 @@ impl<'a> Value<'a> {
             _ => {
                 return Err(format!(
                     "'{}' is not a function or a number",
-                    self.format(int)?.to_string()
+                    self.format(0, int)?.to_string()
                 ))?;
             }
         })
     }
 
-    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, IntErr<Never, I>> {
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        indent: usize,
+        int: &I,
+    ) -> Result<FormattedValue, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => FormattedValue::Number(Box::new(n.format(int)?)),
             Self::BuiltInFunction(name) => FormattedValue::Str(name.as_str()),
@@ -271,12 +275,20 @@ impl<'a> Value<'a> {
             Self::Version => FormattedValue::Str(crate::get_version_as_str()),
             Self::Object(kv) => {
                 let mut s = "{".to_string();
-                for (k, v) in kv {
+                for (i, (k, v)) in kv.iter().enumerate() {
+                    if i != 0 {
+                        s.push(',');
+                    }
+                    s.push('\n');
+                    for _ in 0..(indent + 4) {
+                        s.push(' ');
+                    }
                     s.push_str(k);
                     s.push(':');
-                    s.push_str(&v.format(int)?.to_string());
-                    s.push(',');
+                    s.push(' ');
+                    s.push_str(&v.format(indent + 4, int)?.to_string());
                 }
+                s.push('\n');
                 s.push('}');
                 FormattedValue::String(s)
             }

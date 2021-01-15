@@ -44,6 +44,6 @@ pub(crate) fn evaluate_to_string<'a, I: Interrupt>(
     Ok(if debug {
         format!("{:?}", value)
     } else {
-        value.format(int)?.to_string()
+        value.format(0, int)?.to_string()
     })
 }
