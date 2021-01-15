@@ -2211,12 +2211,12 @@ fn units_31() {
 
 #[test]
 fn units_32() {
-    test_eval("2 lb^-1 kg^-1", "2 lb^-1 kg^-1");
+    test_eval("2 lb^-1 kg^-1", "0.90718474 lb^-2");
 }
 
 #[test]
 fn units_33() {
-    test_eval("1 lb^-1 kg^-1", "1 lb^-1 kg^-1");
+    test_eval("1 lb^-1 kg^-1", "0.45359237 lb^-2");
 }
 
 #[test]
@@ -2226,19 +2226,19 @@ fn units_34() {
 
 #[test]
 fn units_35() {
-    test_eval("1 light year / second", "1 light year / second");
+    test_eval("1 lightyear / second", "1 lightyear / second");
 }
 
 #[test]
 fn units_36() {
-    test_eval("2 light years / second", "2 light years / second");
+    test_eval("2 lightyears / second", "2 lightyears / second");
 }
 
 #[test]
 fn units_37() {
     test_eval(
-        "2 light years second^-1 lb^-1",
-        "2 light years second^-1 lb^-1",
+        "2 lightyears second^-1 lb^-1",
+        "2 lightyears second^-1 lb^-1",
     );
 }
 
@@ -4433,4 +4433,39 @@ fn convert_to_numerical_product() {
 #[test]
 fn unit_simplification() {
     test_eval("0.18mL * 40 mg/mL", "7.2 mg");
+}
+
+#[test]
+fn unit_simplification_kg_1() {
+    test_eval("kg g", "0.001 kg^2");
+}
+
+#[test]
+fn unit_simplification_kg_2() {
+    test_eval("kg g^0", "1 kg");
+}
+
+#[test]
+fn unit_simplification_kg_3() {
+    test_eval("kg g^-1", "1000");
+}
+
+#[test]
+fn unit_simplification_kg_4() {
+    test_eval("kg^2 g", "0.001 kg^3");
+}
+
+#[test]
+fn unit_simplification_kg_5() {
+    test_eval("kg^2 g^0", "1 kg^2");
+}
+
+#[test]
+fn unit_simplification_kg_6() {
+    test_eval("kg^2 g^-1", "1000 kg");
+}
+
+#[test]
+fn unit_simplification_kg_7() {
+    test_eval("kg^2 g^-2", "1000000");
 }

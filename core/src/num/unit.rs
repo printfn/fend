@@ -2,7 +2,7 @@ use crate::ast;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
-use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
 use crate::scope::Scope;
 use std::collections::HashMap;
 use std::fmt;
@@ -149,11 +149,7 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub(crate) fn div<I: Interrupt>(
-        self,
-        rhs: Self,
-        int: &I,
-    ) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
             components.push(UnitExponent::new(
@@ -161,20 +157,17 @@ impl<'a> UnitValue<'a> {
                 -rhs_component.exponent,
             ));
         }
-        let value =
-            Exact::new(self.value, self.exact).div(Exact::new(rhs.value, rhs.exact), int)?;
-        let unit = Exact {
-            value: Unit { components },
-            exact: value.exact && self.exact && rhs.exact,
-        }
-        .simplify(int)?;
+        let value = Exact::new(self.value, self.exact)
+            .div(Exact::new(rhs.value, rhs.exact), int)
+            .map_err(IntErr::into_string)?;
         Ok(Self {
             value: value.value,
-            unit: unit.value,
-            exact: unit.exact,
+            unit: Unit { components },
+            exact: value.exact && self.exact && rhs.exact,
             base: self.base,
             format: self.format,
-        })
+        }
+        .simplify(int)?)
     }
 
     fn is_unitless(&self) -> bool {
@@ -483,19 +476,88 @@ impl<'a> UnitValue<'a> {
         })
     }
 
-    pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         let components = [self.unit.components, rhs.unit.components].concat();
         let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
-        let unit = Exact {
-            value: Unit { components },
-            exact: self.exact && rhs.exact && value.exact,
-        }
-        .simplify(int)?;
         Ok(Self {
             value: value.value,
-            unit: unit.value,
-            exact: unit.exact,
+            unit: Unit { components },
+            exact: self.exact && rhs.exact && value.exact,
+            base: self.base,
+            format: self.format,
+        }
+        .simplify(int)?)
+    }
+
+    fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+        let mut res_components: Vec<UnitExponent> = vec![];
+        let mut res_exact = self.exact;
+        let mut res_value = self.value;
+
+        // combine identical or compatible units by summing their exponents
+        // and potentially adjusting the value
+        'outer: for comp in self.unit.components {
+            for res_comp in &mut res_components {
+                let conversion = Unit::try_convert(
+                    &Unit {
+                        components: vec![UnitExponent {
+                            unit: comp.unit.clone(),
+                            exponent: 1.into(),
+                        }],
+                    },
+                    &Unit {
+                        components: vec![UnitExponent {
+                            unit: res_comp.unit.clone(),
+                            exponent: 1.into(),
+                        }],
+                    },
+                    int,
+                );
+                match conversion {
+                    Ok(scale) => {
+                        let lhs = Exact {
+                            value: res_comp.exponent.clone(),
+                            exact: res_exact,
+                        };
+                        let rhs = Exact {
+                            value: comp.exponent.clone(),
+                            exact: res_exact,
+                        };
+                        let sum = lhs.add(rhs, int)?;
+                        res_comp.exponent = sum.value;
+                        res_exact = res_exact && sum.exact && scale.exact;
+
+                        let scale = scale.value.pow(comp.exponent, int)?;
+                        let adjusted_value = Exact {
+                            value: res_value,
+                            exact: res_exact,
+                        }
+                        .mul(&scale, int)?;
+                        res_value = adjusted_value.value;
+                        res_exact = res_exact && adjusted_value.exact;
+
+                        continue 'outer;
+                    }
+                    Err(IntErr::Interrupt(i)) => return Err(IntErr::Interrupt(i)),
+                    Err(IntErr::Error(_)) => (),
+                };
+            }
+            res_components.push(comp.clone())
+        }
+
+        // remove units with exponent == 0
+        res_components = res_components
+            .into_iter()
+            .filter(|unit_exponent| unit_exponent.exponent != 0.into())
+            .collect();
+
+        Ok(Self {
+            value: res_value,
+            unit: Unit {
+                components: res_components,
+            },
+            exact: res_exact,
             base: self.base,
             format: self.format,
         })
@@ -630,48 +692,6 @@ impl<'a> Unit<'a> {
 
     const fn unitless() -> Self {
         Self { components: vec![] }
-    }
-}
-
-#[allow(clippy::use_self)]
-impl<'a> Exact<Unit<'a>> {
-    fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        let mut res_components: Vec<UnitExponent> = vec![];
-        let mut res_exact = self.exact;
-
-        // combine identical units by summing their exponents
-        'outer: for comp in self.value.components {
-            for res_comp in &mut res_components {
-                if comp.unit == res_comp.unit {
-                    let lhs = Exact {
-                        value: res_comp.exponent.clone(),
-                        exact: res_exact,
-                    };
-                    let rhs = Exact {
-                        value: comp.exponent,
-                        exact: res_exact,
-                    };
-                    let sum = lhs.add(rhs, int)?;
-                    res_comp.exponent = sum.value;
-                    res_exact = res_exact && sum.exact;
-                    continue 'outer;
-                }
-            }
-            res_components.push(comp.clone())
-        }
-
-        // remove units with exponent == 0
-        res_components = res_components
-            .into_iter()
-            .filter(|unit_exponent| unit_exponent.exponent != 0.into())
-            .collect();
-
-        Ok(Self {
-            value: Unit {
-                components: res_components,
-            },
-            exact: res_exact,
-        })
     }
 }
 
