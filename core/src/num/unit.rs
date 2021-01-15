@@ -499,6 +499,9 @@ impl<'a> UnitValue<'a> {
         // and potentially adjusting the value
         'outer: for comp in self.unit.components {
             for res_comp in &mut res_components {
+                if comp.unit.base_units.is_empty() && comp.unit != res_comp.unit {
+                    continue;
+                }
                 let conversion = Unit::try_convert(
                     &Unit {
                         components: vec![UnitExponent {
