@@ -72,10 +72,18 @@ pub(crate) fn query_unit<'a>(
 ("gram"/"grams"                   "l@1/1000 kilogram")
 ("g"                              "s@gram")
 ("K"                              "s@kelvin")
+("°K"                             "kelvin")
 ("amp"/"amps"                     "l@ampere")
 ("A"                              "s@ampere")
 ("mol"                            "s@mole")
 ("cd"                             "s@candela")
+
+("celcius"                        "l@!")
+("°C"                             "celcius")
+("fahrenheit"                     "l@!")
+("°F"                             "fahrenheit")
+("rankine"                        "l@5/9 K")
+("°R"                             "rankine")
 
 ("yotta"                          "lp@1e24")
 ("zetta"                          "lp@1e21")
