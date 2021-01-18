@@ -4487,3 +4487,8 @@ fn maths_with_earth_properties() {
         "approx. 1140.6545558371 s",
     );
 }
+
+#[test]
+fn kelvin_to_rankine() {
+    test_eval("273K to °R", "491.4°R");
+}
