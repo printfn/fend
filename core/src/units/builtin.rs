@@ -21,39 +21,40 @@ pub(crate) fn query_unit<'a>(
         };
     }
     if short_prefixes {
-        define_units!(
-            ("Ki" "sp@kibi")
-            ("Mi" "sp@mebi")
-            ("Gi" "sp@gibi")
-            ("Ti" "sp@tebi")
-            ("Pi" "sp@pebi")
-            ("Ei" "sp@exbi")
-            ("Zi" "sp@zebi")
-            ("Yi" "sp@yobi")
+        match ident {
+            "Ki" => return Some(("Ki", "Ki", "sp@kibi")),
+            "Mi" => return Some(("Mi", "Mi", "sp@mebi")),
+            "Gi" => return Some(("Gi", "Gi", "sp@gibi")),
+            "Ti" => return Some(("Ti", "Ti", "sp@tebi")),
+            "Pi" => return Some(("Pi", "Pi", "sp@pebi")),
+            "Ei" => return Some(("Ei", "Ei", "sp@exbi")),
+            "Zi" => return Some(("Zi", "Zi", "sp@zebi")),
+            "Yi" => return Some(("Yi", "Yi", "sp@yobi")),
 
-            ("Y"  "sp@yotta")
-            ("Z"  "sp@zetta")
-            ("E"  "sp@exa")
-            ("P"  "sp@peta")
-            ("T"  "sp@tera")
-            ("G"  "sp@giga")
-            ("M"  "sp@mega")
-            ("k"  "sp@kilo")
-            ("h"  "sp@hecto")
-            ("da" "sp@deka")
-            ("d"  "sp@deci")
-            ("c"  "sp@centi")
-            ("m"  "sp@milli")
-            ("u"  "sp@micro") // alternative to µ
-            ("\u{b5}"   "sp@micro") // U+00B5 (micro sign)
-            ("\u{3bc}"  "sp@micro") // U+03BC (lowercase µ)
-            ("n"  "sp@nano")
-            ("p"  "sp@pico")
-            ("f"  "sp@femto")
-            ("a"  "sp@atto")
-            ("z"  "sp@zepto")
-            ("y"  "sp@yocto")
-        );
+            "Y" => return Some(("Y", "Y", "sp@yotta")),
+            "Z" => return Some(("Z", "Z", "sp@zetta")),
+            "E" => return Some(("E", "E", "sp@exa")),
+            "P" => return Some(("P", "P", "sp@peta")),
+            "T" => return Some(("T", "T", "sp@tera")),
+            "G" => return Some(("G", "G", "sp@giga")),
+            "M" => return Some(("M", "M", "sp@mega")),
+            "k" => return Some(("k", "k", "sp@kilo")),
+            "h" => return Some(("h", "h", "sp@hecto")),
+            "da" => return Some(("da", "da", "sp@deka")),
+            "d" => return Some(("d", "d", "sp@deci")),
+            "c" => return Some(("c", "c", "sp@centi")),
+            "m" => return Some(("m", "m", "sp@milli")),
+            "u" => return Some(("u", "u", "sp@micro")), // alternative to µ
+            "\u{b5}" => return Some(("\u{b5}", "\u{b5}", "sp@micro")), // U+00B5 (micro sign)
+            "\u{3bc}" => return Some(("\u{3bc}", "\u{3bc}", "sp@micro")), // U+03BC (lowercase µ)
+            "n" => return Some(("n", "n", "sp@nano")),
+            "p" => return Some(("p", "p", "sp@pico")),
+            "f" => return Some(("f", "f", "sp@femto")),
+            "a" => return Some(("a", "a", "sp@atto")),
+            "z" => return Some(("z", "z", "sp@zepto")),
+            "y" => return Some(("y", "y", "sp@yocto")),
+            _ => (),
+        }
     }
     define_units!(
 ("unitless"                       "=1")
