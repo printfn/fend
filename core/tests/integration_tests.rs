@@ -4490,7 +4490,7 @@ fn maths_with_earth_properties() {
 
 #[test]
 fn kelvin_to_rankine() {
-    test_eval("273K to °R", "491.4°R");
+    test_eval("273K to °R", "491.4 °R");
 }
 
 #[test]
@@ -4510,37 +4510,37 @@ fn kelvin_plus_fahrenheit() {
 
 #[test]
 fn celsius_plus_kelvin() {
-    test_eval("1°C+1K", "2°C");
+    test_eval("1°C+1K", "2 °C");
 }
 
 #[test]
 fn fahrenheit_plus_kelvin() {
-    test_eval("1°F+1K", "2.8°F");
+    test_eval("1°F+1K", "2.8 °F");
 }
 
 #[test]
 fn celsius_plus_fahrenheit() {
-    test_eval("1°C+1°F", "approx. 1.5555555555°C");
+    test_eval("1°C+1°F", "approx. 1.5555555555 °C");
 }
 
 #[test]
 fn celsius_plus_rankine() {
-    test_eval("1°C+1°R", "approx. 1.5555555555°C");
+    test_eval("1°C+1°R", "approx. 1.5555555555 °C");
 }
 
 #[test]
 fn fahrenheit_plus_celsius() {
-    test_eval("1°F+1°C", "2.8°F");
+    test_eval("1°F+1°C", "2.8 °F");
 }
 
 #[test]
 fn fahrenheit_plus_kilokelvin() {
-    test_eval("1°F+10kK", "18001°F");
+    test_eval("1°F+10kK", "18001 °F");
 }
 
 #[test]
 fn celsius_plus_millikelvin() {
-    test_eval("-273.15°C+1mK", "-273.149°C");
+    test_eval("-273.15°C+1mK", "-273.149 °C");
 }
 
 #[test]
@@ -4560,7 +4560,7 @@ fn degrees_kelvin_as_alias() {
 
 #[test]
 fn fahrenheit_squared_plus_kelvin_squared() {
-    test_eval("(1°F)^2 + 1 K^2", "4.24°F^2");
+    test_eval("(1°F)^2 + 1 K^2", "4.24 °F^2");
 }
 
 #[test]
@@ -4570,27 +4570,27 @@ fn fahrenheit_squared_to_kelvin_squared() {
 
 #[test]
 fn hundred_celsius_to_fahrenheit() {
-    test_eval("100°C to °F", "212°F");
+    test_eval("100°C to °F", "212 °F");
 }
 
 #[test]
 fn zero_celsius_to_fahrenheit() {
-    test_eval("0°C to °F", "32°F");
+    test_eval("0°C to °F", "32 °F");
 }
 
 #[test]
 fn zero_kelvin_to_fahrenheit() {
-    test_eval("0K to °F", "-459.67°F");
+    test_eval("0K to °F", "-459.67 °F");
 }
 
 #[test]
 fn zero_millicelsius_to_fahrenheit() {
-    test_eval("0 millicelsius to °F", "32°F");
+    test_eval("0 millicelsius to °F", "32 °F");
 }
 
 #[test]
 fn zero_kilocelsius_to_fahrenheit() {
-    test_eval("0 kilocelsius to °F", "32°F");
+    test_eval("0 kilocelsius to °F", "32 °F");
 }
 
 #[test]
@@ -4600,17 +4600,17 @@ fn zero_kilocelsius_to_millifahrenheit() {
 
 #[test]
 fn five_percent_celsius_to_fahrenheit() {
-    test_eval("5% °C to °F", "32.09°F");
+    test_eval("5% °C to °F", "32.09 °F");
 }
 
 #[test]
 fn five_celsius_to_fahrenheit() {
-    test_eval("5°C to °F", "41°F");
+    test_eval("5°C to °F", "41 °F");
 }
 
 #[test]
 fn fifteen_celsius_to_rankine() {
-    test_eval("15°C to °R", "518.67°R");
+    test_eval("15°C to °R", "518.67 °R");
 }
 
 #[test]

@@ -902,12 +902,12 @@ impl<'a> NamedUnit<'a> {
     /// units like kg or m, but not for % or °
     fn print_with_space(&self) -> bool {
         // Alphabetic names like kg or m should have a space,
-        // while non-alphabetic names like %, ° or ' shouldn't.
+        // while non-alphabetic names like % or ' shouldn't.
         // Empty names shouldn't really exist, but they might as well have a space.
         self.singular_name
             .chars()
             .next()
-            .map_or(true, char::is_alphabetic)
+            .map_or(true, |ch| char::is_alphabetic(ch) || ch == '°')
     }
 }
 
