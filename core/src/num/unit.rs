@@ -42,12 +42,12 @@ impl<'a> UnitValue<'a> {
         plural_name: &'a str,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        let (hashmap, scale, exact) = value.unit.to_hashmap_and_scale(int)?;
-        let scale = Exact::new(scale, true).mul(&Exact::new(value.value.clone(), true), int)?;
+        let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
+        let scale = scale.mul(&Exact::new(value.value.clone(), true), int)?;
         let resulting_unit =
             NamedUnit::new(prefix, singular_name, plural_name, hashmap, scale.value);
         let mut result = Self::new(1, vec![UnitExponent::new(resulting_unit, 1)]);
-        result.exact = result.exact && value.exact && exact && scale.exact;
+        result.exact = result.exact && value.exact && scale.exact;
         Ok(result)
     }
 
@@ -629,7 +629,7 @@ struct Unit<'a> {
     components: Vec<UnitExponent<'a>>,
 }
 
-type HashmapScale<'a> = (HashMap<BaseUnit<'a>, Complex>, Complex, bool);
+type HashmapScale<'a> = (HashMap<BaseUnit<'a>, Complex>, Exact<Complex>);
 
 impl<'a> Unit<'a> {
     fn to_hashmap_and_scale<I: Interrupt>(
@@ -673,7 +673,7 @@ impl<'a> Unit<'a> {
             scale = new_scale;
             exact = exact && pow_result.exact;
         }
-        Ok((hashmap, scale.value, exact))
+        Ok((hashmap, Exact::new(scale.value, exact)))
     }
 
     /// Returns the combined scale factor if successful
@@ -682,12 +682,10 @@ impl<'a> Unit<'a> {
         into: &Self,
         int: &I,
     ) -> Result<Exact<Complex>, IntErr<String, I>> {
-        let (hash_a, scale_a, exact_a) = from.to_hashmap_and_scale(int)?;
-        let (hash_b, scale_b, exact_b) = into.to_hashmap_and_scale(int)?;
+        let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
+        let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
         if hash_a == hash_b {
-            Ok(Exact::new(scale_a, exact_a)
-                .div(Exact::new(scale_b, exact_b), int)
-                .map_err(IntErr::into_string)?)
+            Ok(scale_a.div(scale_b, int).map_err(IntErr::into_string)?)
         } else {
             Err("Units are incompatible".to_string())?
         }
