@@ -2464,12 +2464,12 @@ int-                    int              #   international measures
 */
 ("inch"/"inches"           "2.54 cm")
 ("in"                      "inch")
-("foot"/"feet"             "12 inch")
+("foot"/"feet"             "l@12 inch")
 //feet                    foot
 ("ft"                      "foot")
-("yard"/"yards"            "3 ft")
+("yard"/"yards"            "l@3 ft")
 ("yd"                      "yard")
-("mile"/"miles"            "5280 ft")    // The mile was enlarged from 5000 ft
+("mile"/"miles"            "l@5280 ft")  // The mile was enlarged from 5000 ft
                                          // to this number in order to make
                                          // it an even number of furlongs.
                                          // (The Roman mile is 5000 romanfeet.)
