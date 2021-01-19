@@ -105,8 +105,10 @@ impl<'a> UnitValue<'a> {
     }
 
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let (scale_factor, _offset) = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
-        let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
+        let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
+        let scaled = Exact::new(rhs.value, rhs.exact)
+            .mul(&scale_factor.scale_1, int)?
+            .mul(&scale_factor.scale_2, int)?;
         let value = Exact::new(self.value, self.exact).add(scaled, int)?;
         Ok(Self {
             value: value.value,
@@ -125,10 +127,11 @@ impl<'a> UnitValue<'a> {
         if rhs.value != 1.into() {
             return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
         }
-        let (scale_factor, offset) = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
+        let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
         let new_value = Exact::new(self.value, self.exact)
-            .add(offset, int)?
-            .mul(&scale_factor, int)?;
+            .mul(&scale_factor.scale_1, int)?
+            .add(scale_factor.offset, int)?
+            .mul(&scale_factor.scale_2, int)?;
         Ok(Self {
             value: new_value.value,
             unit: rhs.unit,
@@ -139,8 +142,10 @@ impl<'a> UnitValue<'a> {
     }
 
     pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let (scale_factor, _offset) = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
-        let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
+        let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
+        let scaled = Exact::new(rhs.value, rhs.exact)
+            .mul(&scale_factor.scale_1, int)?
+            .mul(&scale_factor.scale_2, int)?;
         let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
         Ok(Self {
             value: value.value,
@@ -520,11 +525,12 @@ impl<'a> UnitValue<'a> {
                     int,
                 );
                 match conversion {
-                    Ok((scale, offset)) => {
-                        if offset.value != 0.into() {
+                    Ok(scale_factor) => {
+                        if scale_factor.offset.value != 0.into() {
                             // don't merge units that have offsets
                             break;
                         }
+                        let scale = scale_factor.scale_1.mul(&scale_factor.scale_2, int)?;
 
                         let lhs = Exact {
                             value: res_comp.exponent.clone(),
@@ -643,6 +649,12 @@ type HashmapScaleOffset<'a> = (
     Exact<Complex>,
 );
 
+struct ScaleFactor {
+    scale_1: Exact<Complex>,
+    offset: Exact<Complex>,
+    scale_2: Exact<Complex>,
+}
+
 impl<'a> Unit<'a> {
     fn to_hashmap_and_scale<I: Interrupt>(
         &self,
@@ -741,21 +753,19 @@ impl<'a> Unit<'a> {
         from: &Self,
         into: &Self,
         int: &I,
-    ) -> Result<(Exact<Complex>, Exact<Complex>), IntErr<String, I>> {
+    ) -> Result<ScaleFactor, IntErr<String, I>> {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
         let (hash_a, adj_a, offset_a) = Self::reduce_hashmap(&hash_a, int)?;
         let (hash_b, adj_b, offset_b) = Self::reduce_hashmap(&hash_b, int)?;
         if hash_a == hash_b {
-            Ok((
-                scale_a
-                    .mul(&adj_a, int)?
-                    .div(adj_b, int)
-                    .map_err(IntErr::into_string)?
-                    .div(scale_b, int)
+            Ok(ScaleFactor {
+                scale_1: scale_a.mul(&adj_a, int)?,
+                offset: offset_a.add(-offset_b, int)?,
+                scale_2: Exact::new(Complex::from(1), true)
+                    .div(scale_b.mul(&adj_b, int)?, int)
                     .map_err(IntErr::into_string)?,
-                offset_a.add(-offset_b, int)?,
-            ))
+            })
         } else {
             Err("Units are incompatible".to_string())?
         }

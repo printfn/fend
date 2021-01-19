@@ -4582,3 +4582,38 @@ fn zero_celsius_to_fahrenheit() {
 fn zero_kelvin_to_fahrenheit() {
     test_eval("0K to °F", "-459.67°F");
 }
+
+#[test]
+fn zero_millicelsius_to_fahrenheit() {
+    test_eval("0 millicelsius to °F", "32°F");
+}
+
+#[test]
+fn zero_kilocelsius_to_fahrenheit() {
+    test_eval("0 kilocelsius to °F", "32°F");
+}
+
+#[test]
+fn zero_kilocelsius_to_millifahrenheit() {
+    test_eval("0 kilocelsius to millifahrenheit", "32000 millifahrenheit");
+}
+
+#[test]
+fn five_percent_celsius_to_fahrenheit() {
+    test_eval("5% °C to °F", "32.09°F");
+}
+
+#[test]
+fn five_celsius_to_fahrenheit() {
+    test_eval("5°C to °F", "41°F");
+}
+
+#[test]
+fn fifteen_celsius_to_rankine() {
+    test_eval("15°C to °R", "518.67°R");
+}
+
+#[test]
+fn fifteen_celsius_to_kelvin() {
+    test_eval("15°C to K", "288.15 K");
+}
