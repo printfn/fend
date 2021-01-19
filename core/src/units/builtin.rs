@@ -72,7 +72,7 @@ pub(crate) fn query_unit<'a>(
 ("gram"/"grams"                   "l@1/1000 kilogram")
 ("g"                              "s@gram")
 ("K"                              "s@kelvin")
-("°K"                             "kelvin")
+("°K"                             "=K")
 ("amp"/"amps"                     "l@ampere")
 ("A"                              "s@ampere")
 ("mol"                            "s@mole")

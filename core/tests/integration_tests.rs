@@ -4553,3 +4553,8 @@ fn joule_per_kelvin_to_joule_per_fahrenheit() {
 fn ice_melting_point_to_kelvin() {
     test_eval("0°C to K", "273.15 K");
 }
+
+#[test]
+fn degrees_kelvin_as_alias() {
+    test_eval("6°K", "6 K");
+}
