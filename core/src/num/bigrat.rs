@@ -596,7 +596,7 @@ impl BigRat {
                 sign,
                 ty: FormattedBigRatType::Decimal(
                     formatted_trailing_digits.value,
-                    base.base_as_u8() > 10,
+                    !term.is_empty() && base.base_as_u8() > 10,
                     term,
                 ),
             },

@@ -4383,7 +4383,6 @@ fn square_m_to_sqft() {
     test_eval("3 square feet to square meters", "0.27870912 meters^2");
 }
 
-#[ignore]
 #[test]
 fn test_hex_unit_conversion() {
     test_eval_simple("1 yard lb to hex to kg m to 3sf", "approx. 0.6a2 kg m");
