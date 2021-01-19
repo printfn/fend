@@ -4492,3 +4492,58 @@ fn maths_with_earth_properties() {
 fn kelvin_to_rankine() {
     test_eval("273K to °R", "491.4°R");
 }
+
+#[test]
+fn joule_per_kelvin_to_joule_per_celsius() {
+    test_eval("1J/K to J/°C", "1 J / °C");
+}
+
+#[test]
+fn kelvin_plus_celsius() {
+    test_eval("1K+1°C", "2 K");
+}
+
+#[test]
+fn kelvin_plus_fahrenheit() {
+    test_eval("1K+1°F", "approx. 1.5555555555 K");
+}
+
+#[test]
+fn celsius_plus_kelvin() {
+    test_eval("1°C+1K", "2°C");
+}
+
+#[test]
+fn fahrenheit_plus_kelvin() {
+    test_eval("1°F+1K", "2.8°F");
+}
+
+#[test]
+fn celsius_plus_fahrenheit() {
+    test_eval("1°C+1°F", "approx. 1.5555555555°C");
+}
+
+#[test]
+fn celsius_plus_rankine() {
+    test_eval("1°C+1°R", "approx. 1.5555555555°C");
+}
+
+#[test]
+fn fahrenheit_plus_celsius() {
+    test_eval("1°F+1°C", "2.8°F");
+}
+
+#[test]
+fn fahrenheit_plus_kilokelvin() {
+    test_eval("1°F+10kK", "18001°F");
+}
+
+#[test]
+fn celsius_plus_millikelvin() {
+    test_eval("-273.15°C+1mK", "-273.149°C");
+}
+
+#[test]
+fn joule_per_kelvin_to_joule_per_fahrenheit() {
+    test_eval("1J/K to J/°F", "approx. 0.5555555555 J / °F");
+}
