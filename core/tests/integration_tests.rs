@@ -4558,3 +4558,13 @@ fn ice_melting_point_to_kelvin() {
 fn degrees_kelvin_as_alias() {
     test_eval("6°K", "6 K");
 }
+
+#[test]
+fn fahrenheit_squared_plus_kelvin_squared() {
+    test_eval("(1°F)^2 + 1 K^2", "4.24°F^2");
+}
+
+#[test]
+fn fahrenheit_squared_to_kelvin_squared() {
+    test_eval("(1°F)^2 to 1 K^2", "approx. 0.3086419753 K^2");
+}

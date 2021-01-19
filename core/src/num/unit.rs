@@ -642,8 +642,11 @@ impl<'a> Unit<'a> {
         for named_unit_exp in &self.components {
             test_int(int)?;
             let overall_exp = &Exact::new(named_unit_exp.exponent.clone(), true);
-            for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
+            for (mut base_unit, base_exp) in &named_unit_exp.unit.base_units {
                 test_int(int)?;
+                if base_unit.name == "celsius" {
+                    base_unit = &BaseUnit { name: "kelvin" };
+                }
                 let base_exp = Exact::new(base_exp.clone(), true);
                 if let Some(exp) = hashmap.get_mut(base_unit) {
                     let product = overall_exp.clone().mul(&base_exp, int)?;
@@ -669,8 +672,7 @@ impl<'a> Unit<'a> {
                 .scale
                 .clone()
                 .pow(overall_exp.value.clone(), int)?;
-            let new_scale = scale.mul(&pow_result, int)?;
-            scale = new_scale;
+            scale = scale.mul(&pow_result, int)?;
             exact = exact && pow_result.exact;
         }
         Ok((hashmap, Exact::new(scale.value, exact)))
