@@ -199,7 +199,7 @@ impl Real {
         int: &I,
     ) -> Result<Exact<FormattedReal>, IntErr<Never, I>> {
         let mut pi = false;
-        if style == FormattingStyle::Exact && self != &0.into() {
+        if style == FormattingStyle::Exact && !self.is_zero() {
             if let Pattern::Pi(_) = self.pattern {
                 pi = true;
             }
