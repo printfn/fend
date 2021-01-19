@@ -86,7 +86,7 @@ impl Complex {
     }
 
     pub fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
-        Ok(if self.imag == 0.into() {
+        Ok(if self.imag.is_zero() {
             if self.real < 0.into() {
                 Exact::new(
                     Self {
@@ -98,7 +98,7 @@ impl Complex {
             } else {
                 Exact::new(self, true)
             }
-        } else if self.real == 0.into() {
+        } else if self.real.is_zero() {
             if self.imag < 0.into() {
                 Exact::new(
                     Self {
@@ -145,7 +145,7 @@ impl Complex {
             style
         };
 
-        if self.imag == 0.into() {
+        if self.imag.is_zero() {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
             let x = self.real.format(base, style, false, use_parens, int)?;
             return Ok(Exact::new(
@@ -159,7 +159,7 @@ impl Complex {
             ));
         }
 
-        Ok(if self.real == 0.into() {
+        Ok(if self.real.is_zero() {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
             let x = self.imag.format(base, style, true, use_parens, int)?;
             Exact::new(
@@ -213,7 +213,7 @@ impl Complex {
     }
 
     fn expect_real<I: Interrupt>(self) -> Result<Real, IntErr<String, I>> {
-        if self.imag == 0.into() {
+        if self.imag.is_zero() {
             Ok(self.real)
         } else {
             Err("Expected a real number".to_string())?
@@ -361,7 +361,7 @@ impl Exact<Complex> {
         let (u, v) = self.apply(|x| (x.real, x.imag)).pair();
         let (x, y) = rhs.apply(|x| (x.real, x.imag)).pair();
         // if both numbers are real, use this simplified algorithm
-        if v.exact && v.value == 0.into() && y.exact && y.value == 0.into() {
+        if v.exact && v.value.is_zero() && y.exact && y.value.is_zero() {
             return Ok(u.div(&x, int)?.apply(|real| Complex {
                 real,
                 imag: 0.into(),

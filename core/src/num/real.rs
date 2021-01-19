@@ -295,7 +295,7 @@ impl Real {
 
     pub(crate) fn is_zero(&self) -> bool {
         match &self.pattern {
-            Pattern::Simple(a) | Pattern::Pi(a) => a == &0.into(),
+            Pattern::Simple(a) | Pattern::Pi(a) => a.is_definitely_zero() || a == &0.into(),
         }
     }
 
