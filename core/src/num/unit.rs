@@ -108,7 +108,8 @@ impl<'a> UnitValue<'a> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
             .mul(&scale_factor.scale_1, int)?
-            .mul(&scale_factor.scale_2, int)?;
+            .div(scale_factor.scale_2, int)
+            .map_err(IntErr::into_string)?;
         let value = Exact::new(self.value, self.exact).add(scaled, int)?;
         Ok(Self {
             value: value.value,
@@ -131,7 +132,8 @@ impl<'a> UnitValue<'a> {
         let new_value = Exact::new(self.value, self.exact)
             .mul(&scale_factor.scale_1, int)?
             .add(scale_factor.offset, int)?
-            .mul(&scale_factor.scale_2, int)?;
+            .div(scale_factor.scale_2, int)
+            .map_err(IntErr::into_string)?;
         Ok(Self {
             value: new_value.value,
             unit: rhs.unit,
@@ -145,7 +147,8 @@ impl<'a> UnitValue<'a> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
             .mul(&scale_factor.scale_1, int)?
-            .mul(&scale_factor.scale_2, int)?;
+            .div(scale_factor.scale_2, int)
+            .map_err(IntErr::into_string)?;
         let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
         Ok(Self {
             value: value.value,
@@ -530,7 +533,10 @@ impl<'a> UnitValue<'a> {
                             // don't merge units that have offsets
                             break;
                         }
-                        let scale = scale_factor.scale_1.mul(&scale_factor.scale_2, int)?;
+                        let scale = scale_factor
+                            .scale_1
+                            .div(scale_factor.scale_2, int)
+                            .map_err(IntErr::into_string)?;
 
                         let lhs = Exact {
                             value: res_comp.exponent.clone(),
@@ -762,9 +768,7 @@ impl<'a> Unit<'a> {
             Ok(ScaleFactor {
                 scale_1: scale_a.mul(&adj_a, int)?,
                 offset: offset_a.add(-offset_b, int)?,
-                scale_2: Exact::new(Complex::from(1), true)
-                    .div(scale_b.mul(&adj_b, int)?, int)
-                    .map_err(IntErr::into_string)?,
+                scale_2: scale_b.mul(&adj_b, int)?,
             })
         } else {
             Err("Units are incompatible".to_string())?

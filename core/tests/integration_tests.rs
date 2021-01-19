@@ -4629,7 +4629,7 @@ fn fahrenheit_as_f() {
 
 #[test]
 fn radians_to_degrees() {
-    test_eval("pi radians to °", "approx. 180°");
+    test_eval("pi radians to °", "180°");
 }
 
 #[test]
