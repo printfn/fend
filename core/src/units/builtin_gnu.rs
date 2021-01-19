@@ -321,7 +321,7 @@ pub(crate) fn query_unit<'a>(
 ("boltzmann" "=1.380649e-23 J/K")   // Boltzmann constant (exact)
 ("k"         "=boltzmann")
 
-("electroncharge"   "=1.602176634e-19 C") // electron charge (exact)
+("electroncharge"   "=1.602176634e-19 coulomb") // electron charge (exact)
 
 ("avogadro"  "=6.02214076e23 / mol") // Size of a mole (exact)
 ("N_A"       "=avogadro")
@@ -550,7 +550,7 @@ pub(crate) fn query_unit<'a>(
 ("J"                       "s@joule")
 ("watt"/"watts"            "l@J/s")          // power
 ("W"                       "s@watt")
-("coulomb"/"coulombs"      "l@A s")          // charge
+("coulomb"                 "l@A s")          // charge
 ("C"                       "s@coulomb")
 ("volt"/"volts"            "l@W/A")          // potential difference
 ("V"                       "s@volt")

@@ -1772,7 +1772,7 @@ fn different_base_38() {
 
 #[test]
 fn three_electroncharge() {
-    test_eval("3electroncharge", "0.0000000000000000004806529902 C");
+    test_eval("3electroncharge", "0.0000000000000000004806529902 coulomb");
 }
 
 #[test]
@@ -2267,8 +2267,8 @@ fn units_41() {
 #[test]
 fn electroncharge_and_bohrmagneton() {
     test_eval(
-        "(bohrmagneton to C J s/kg) * 1e35",
-        "approx. 927401007831.8305442879 C J s / kg",
+        "(bohrmagneton to coulomb J s/kg) * 1e35",
+        "approx. 927401007831.8305442879 coulomb J s / kg",
     );
 }
 
@@ -4615,4 +4615,14 @@ fn fifteen_celsius_to_rankine() {
 #[test]
 fn fifteen_celsius_to_kelvin() {
     test_eval("15°C to K", "288.15 K");
+}
+
+#[test]
+fn celsius_as_c() {
+    test_eval("4C", "4 °C");
+}
+
+#[test]
+fn fahrenheit_as_f() {
+    test_eval("4C to F", "39.2 °F");
 }
