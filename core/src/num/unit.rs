@@ -904,10 +904,17 @@ impl<'a> NamedUnit<'a> {
         // Alphabetic names like kg or m should have a space,
         // while non-alphabetic names like % or ' shouldn't.
         // Empty names shouldn't really exist, but they might as well have a space.
+
+        if self.singular_name == "°" {
+            return false;
+        }
+
         self.singular_name
             .chars()
             .next()
-            .map_or(true, |ch| char::is_alphabetic(ch) || ch == '°')
+            .map_or(true, |first_char| {
+                char::is_alphabetic(first_char) || first_char == '°'
+            })
     }
 }
 
