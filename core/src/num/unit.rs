@@ -105,7 +105,7 @@ impl<'a> UnitValue<'a> {
     }
 
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
+        let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
         let value = Exact::new(self.value, self.exact).add(scaled, int)?;
         Ok(Self {
@@ -125,7 +125,7 @@ impl<'a> UnitValue<'a> {
         if rhs.value != 1.into() {
             return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
         }
-        let scale_factor = Unit::try_convert(&self.unit, &rhs.unit, int)?;
+        let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
         let new_value = Exact::new(self.value, self.exact).mul(&scale_factor, int)?;
         Ok(Self {
             value: new_value.value,
@@ -137,7 +137,7 @@ impl<'a> UnitValue<'a> {
     }
 
     pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let scale_factor = Unit::try_convert(&rhs.unit, &self.unit, int)?;
+        let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
         let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
         Ok(Self {
@@ -502,7 +502,7 @@ impl<'a> UnitValue<'a> {
                 if comp.unit.base_units.is_empty() && comp.unit != res_comp.unit {
                     continue;
                 }
-                let conversion = Unit::try_convert(
+                let conversion = Unit::compute_scale_factor(
                     &Unit {
                         components: vec![UnitExponent {
                             unit: comp.unit.clone(),
@@ -677,7 +677,7 @@ impl<'a> Unit<'a> {
     }
 
     /// Returns the combined scale factor if successful
-    fn try_convert<I: Interrupt>(
+    fn compute_scale_factor<I: Interrupt>(
         from: &Self,
         into: &Self,
         int: &I,
