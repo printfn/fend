@@ -293,6 +293,12 @@ impl Real {
         }
     }
 
+    pub(crate) fn is_zero(&self) -> bool {
+        match &self.pattern {
+            Pattern::Simple(a) | Pattern::Pi(a) => a == &0.into(),
+        }
+    }
+
     pub fn is_definitely_zero(&self) -> bool {
         match &self.pattern {
             Pattern::Simple(a) | Pattern::Pi(a) => a.is_definitely_zero(),
@@ -310,9 +316,9 @@ impl Real {
 #[allow(clippy::use_self)]
 impl Exact<Real> {
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        if self.exact && self.value == 0.into() {
+        if self.exact && self.value.is_zero() {
             return Ok(rhs);
-        } else if rhs.exact && rhs.value == 0.into() {
+        } else if rhs.exact && rhs.value.is_zero() {
             return Ok(self);
         }
         let args_exact = self.exact && rhs.exact;
@@ -337,9 +343,9 @@ impl Exact<Real> {
     }
 
     pub fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> Result<Self, IntErr<Never, I>> {
-        if self.exact && self.value == 0.into() {
+        if self.exact && self.value.is_zero() {
             return Ok(self);
-        } else if rhs.exact && rhs.value == &0.into() {
+        } else if rhs.exact && rhs.value.is_zero() {
             return Ok(Self::new(rhs.value.clone(), rhs.exact));
         }
         let args_exact = self.exact && rhs.exact;
@@ -371,10 +377,10 @@ impl Exact<Real> {
     }
 
     pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
-        if rhs.value == 0.into() {
+        if rhs.value.is_zero() {
             return Err(DivideByZero {})?;
         }
-        if self.exact && self.value == 0.into() {
+        if self.exact && self.value.is_zero() {
             return Ok(self);
         }
         Ok(match self.value.pattern {
