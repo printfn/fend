@@ -6,7 +6,7 @@
 #![allow(clippy::non_ascii_literal)]
 #![deny(clippy::use_self)]
 #![deny(unreachable_pub)]
-#![doc(html_root_url = "https://docs.rs/fend-core/0.1.11")]
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.13")]
 
 mod ast;
 mod err;
@@ -108,7 +108,7 @@ pub fn evaluate_with_interrupt(
 }
 
 fn get_version_as_str() -> &'static str {
-    "0.1.11"
+    "0.1.13"
 }
 
 /// Returns the current version of `fend-core`.

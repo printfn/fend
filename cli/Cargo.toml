@@ -1,7 +1,7 @@
 [package]
 name = "fend"
 # Don't forget to update print_version()
-version = "0.1.11"
+version = "0.1.13"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Arbitrary-precision unit-aware calculator"
 homepage = "https://github.com/printfn/fend"
@@ -18,5 +18,5 @@ directories = "3.0.1"
 ctrlc = "3.1.7"
 
 [dependencies.fend-core]
-version = "0.1.11"
+version = "0.1.13"
 path = "../core"
