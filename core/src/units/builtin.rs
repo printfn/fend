@@ -78,7 +78,7 @@ pub(crate) fn query_unit<'a>(
 ("mol"                            "s@mole")
 ("cd"                             "s@candela")
 
-("celsius"                        "l@!")
+("celsius"                        "l@kelvin")
 ("°C"                             "celsius")
 ("rankine"                        "l@5/9 K")
 ("°R"                             "rankine")
