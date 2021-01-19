@@ -105,7 +105,7 @@ impl<'a> UnitValue<'a> {
     }
 
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
+        let (scale_factor, _offset) = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
         let value = Exact::new(self.value, self.exact).add(scaled, int)?;
         Ok(Self {
@@ -125,8 +125,10 @@ impl<'a> UnitValue<'a> {
         if rhs.value != 1.into() {
             return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
         }
-        let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
-        let new_value = Exact::new(self.value, self.exact).mul(&scale_factor, int)?;
+        let (scale_factor, offset) = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
+        let new_value = Exact::new(self.value, self.exact)
+            .mul(&scale_factor, int)?
+            .add(offset, int)?;
         Ok(Self {
             value: new_value.value,
             unit: rhs.unit,
@@ -137,7 +139,7 @@ impl<'a> UnitValue<'a> {
     }
 
     pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
+        let (scale_factor, _offset) = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact).mul(&scale_factor, int)?;
         let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
         Ok(Self {
@@ -518,7 +520,12 @@ impl<'a> UnitValue<'a> {
                     int,
                 );
                 match conversion {
-                    Ok(scale) => {
+                    Ok((scale, offset)) => {
+                        if offset.value != 0.into() {
+                            // don't merge units that have offsets
+                            break;
+                        }
+
                         let lhs = Exact {
                             value: res_comp.exponent.clone(),
                             exact: res_exact,
@@ -630,6 +637,11 @@ struct Unit<'a> {
 }
 
 type HashmapScale<'a> = (HashMap<BaseUnit<'a>, Complex>, Exact<Complex>);
+type HashmapScaleOffset<'a> = (
+    HashMap<BaseUnit<'a>, Complex>,
+    Exact<Complex>,
+    Exact<Complex>,
+);
 
 impl<'a> Unit<'a> {
     fn to_hashmap_and_scale<I: Interrupt>(
@@ -642,11 +654,8 @@ impl<'a> Unit<'a> {
         for named_unit_exp in &self.components {
             test_int(int)?;
             let overall_exp = &Exact::new(named_unit_exp.exponent.clone(), true);
-            for (mut base_unit, base_exp) in &named_unit_exp.unit.base_units {
+            for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
                 test_int(int)?;
-                if base_unit.name == "celsius" {
-                    base_unit = &BaseUnit { name: "kelvin" };
-                }
                 let base_exp = Exact::new(base_exp.clone(), true);
                 if let Some(exp) = hashmap.get_mut(base_unit) {
                     let product = overall_exp.clone().mul(&base_exp, int)?;
@@ -678,16 +687,75 @@ impl<'a> Unit<'a> {
         Ok((hashmap, Exact::new(scale.value, exact)))
     }
 
+    fn reduce_hashmap<I: Interrupt>(
+        hashmap: &HashMap<BaseUnit<'a>, Complex>,
+        int: &I,
+    ) -> Result<HashmapScaleOffset<'a>, IntErr<String, I>> {
+        if hashmap.len() == 1 && hashmap.get(&BaseUnit::new("celsius")) == Some(&1.into()) {
+            let mut result_hashmap = HashMap::new();
+            result_hashmap.insert(BaseUnit::new("kelvin"), 1.into());
+            return Ok((
+                result_hashmap,
+                Exact::new(1.into(), true),
+                Exact::new(Complex::from(27315), true)
+                    .div(Exact::new(Complex::from(100), true), int)
+                    .map_err(IntErr::into_string)?,
+            ));
+        }
+        if hashmap.len() == 1 && hashmap.get(&BaseUnit::new("fahrenheit")) == Some(&1.into()) {
+            let mut result_hashmap = HashMap::new();
+            result_hashmap.insert(BaseUnit::new("kelvin"), 1.into());
+            return Ok((
+                result_hashmap,
+                Exact::new(Complex::from(5), true)
+                    .div(Exact::new(Complex::from(9), true), int)
+                    .map_err(IntErr::into_string)?,
+                Exact::new(Complex::from(24115), true)
+                    .div(Exact::new(Complex::from(100), true), int)
+                    .map_err(IntErr::into_string)?,
+            ));
+        }
+        let mut scale_adjustment = Exact::new(Complex::from(1), true);
+        let mut result_hashmap = HashMap::new();
+        for (mut base_unit, exponent) in hashmap {
+            if base_unit.name == "celsius" {
+                base_unit = &BaseUnit { name: "kelvin" };
+            } else if base_unit.name == "fahrenheit" {
+                base_unit = &BaseUnit { name: "kelvin" };
+                scale_adjustment = scale_adjustment.mul(
+                    &Exact::new(Complex::from(5), true)
+                        .div(Exact::new(Complex::from(9), true), int)
+                        .map_err(IntErr::into_string)?
+                        .value
+                        .pow(exponent.clone(), int)?,
+                    int,
+                )?;
+            }
+            result_hashmap.insert(base_unit.clone(), exponent.clone());
+        }
+        Ok((result_hashmap, scale_adjustment, Exact::new(0.into(), true)))
+    }
+
     /// Returns the combined scale factor if successful
     fn compute_scale_factor<I: Interrupt>(
         from: &Self,
         into: &Self,
         int: &I,
-    ) -> Result<Exact<Complex>, IntErr<String, I>> {
+    ) -> Result<(Exact<Complex>, Exact<Complex>), IntErr<String, I>> {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
+        let (hash_a, adj_a, offset_a) = Self::reduce_hashmap(&hash_a, int)?;
+        let (hash_b, adj_b, offset_b) = Self::reduce_hashmap(&hash_b, int)?;
         if hash_a == hash_b {
-            Ok(scale_a.div(scale_b, int).map_err(IntErr::into_string)?)
+            Ok((
+                scale_a
+                    .mul(&adj_a, int)?
+                    .div(adj_b, int)
+                    .map_err(IntErr::into_string)?
+                    .div(scale_b, int)
+                    .map_err(IntErr::into_string)?,
+                offset_a.add(-offset_b, int)?,
+            ))
         } else {
             Err("Units are incompatible".to_string())?
         }

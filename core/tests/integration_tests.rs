@@ -4548,7 +4548,6 @@ fn joule_per_kelvin_to_joule_per_fahrenheit() {
     test_eval("1J/K to J/°F", "approx. 0.5555555555 J / °F");
 }
 
-#[ignore]
 #[test]
 fn ice_melting_point_to_kelvin() {
     test_eval("0°C to K", "273.15 K");
@@ -4567,4 +4566,9 @@ fn fahrenheit_squared_plus_kelvin_squared() {
 #[test]
 fn fahrenheit_squared_to_kelvin_squared() {
     test_eval("(1°F)^2 to 1 K^2", "approx. 0.3086419753 K^2");
+}
+
+#[test]
+fn hundred_celsius_to_fahrenheit() {
+    test_eval("100°C to °F", "212°F");
 }

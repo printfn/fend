@@ -82,7 +82,7 @@ pub(crate) fn query_unit<'a>(
 ("°C"                             "celsius")
 ("rankine"                        "l@5/9 K")
 ("°R"                             "rankine")
-("fahrenheit"                     "l@rankine")
+("fahrenheit"                     "l@!")
 ("°F"                             "fahrenheit")
 
 ("yotta"                          "lp@1e24")
