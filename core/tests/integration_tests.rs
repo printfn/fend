@@ -4572,3 +4572,13 @@ fn fahrenheit_squared_to_kelvin_squared() {
 fn hundred_celsius_to_fahrenheit() {
     test_eval("100°C to °F", "212°F");
 }
+
+#[test]
+fn zero_celsius_to_fahrenheit() {
+    test_eval("0°C to °F", "32°F");
+}
+
+#[test]
+fn zero_kelvin_to_fahrenheit() {
+    test_eval("0K to °F", "-459.67°F");
+}

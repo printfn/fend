@@ -127,8 +127,8 @@ impl<'a> UnitValue<'a> {
         }
         let (scale_factor, offset) = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
         let new_value = Exact::new(self.value, self.exact)
-            .mul(&scale_factor, int)?
-            .add(offset, int)?;
+            .add(offset, int)?
+            .mul(&scale_factor, int)?;
         Ok(Self {
             value: new_value.value,
             unit: rhs.unit,
@@ -710,8 +710,8 @@ impl<'a> Unit<'a> {
                 Exact::new(Complex::from(5), true)
                     .div(Exact::new(Complex::from(9), true), int)
                     .map_err(IntErr::into_string)?,
-                Exact::new(Complex::from(24115), true)
-                    .div(Exact::new(Complex::from(100), true), int)
+                Exact::new(Complex::from(45967), true)
+                    .div(Exact::new(Complex::from(180), true), int)
                     .map_err(IntErr::into_string)?,
             ));
         }
