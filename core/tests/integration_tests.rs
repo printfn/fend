@@ -4641,3 +4641,38 @@ fn radians_to_degrees() {
 fn minus_40_fahrenheit_to_celsius() {
     test_eval("-40 F to C", "-40 °C");
 }
+
+#[test]
+fn differentiate() {
+    test_eval("differentiate", "differentiate");
+}
+
+#[test]
+fn differentiate_zero() {
+    test_eval("differentiate 0", "0");
+}
+
+#[test]
+fn differentiate_one() {
+    test_eval("differentiate 1", "0");
+}
+
+#[test]
+fn differentiate_pi() {
+    test_eval("differentiate pi", "0");
+}
+
+#[test]
+fn differentiate_one_thousand() {
+    test_eval("differentiate 1000", "0");
+}
+
+#[test]
+fn differentiate_i() {
+    test_eval("differentiate i", "0");
+}
+
+#[test]
+fn differentiate_sin() {
+    test_eval("differentiate sin", "cos");
+}

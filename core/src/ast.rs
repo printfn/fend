@@ -282,6 +282,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
             ("mass", eval_box("5.97237e24 kg")?),
             ("volume", eval_box("1.08321e12 km^3")?),
         ]),
+        "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
 }

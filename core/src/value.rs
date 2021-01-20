@@ -39,6 +39,7 @@ pub(crate) enum BuiltInFunction {
     Log2,
     Log10,
     Base,
+    Differentiate,
 }
 
 impl BuiltInFunction {
@@ -95,6 +96,15 @@ impl BuiltInFunction {
             Self::Log2 => "log2",
             Self::Log10 => "log10",
             Self::Base => "base",
+            Self::Differentiate => "differentiate",
+        }
+    }
+
+    fn differentiate(self) -> Option<Value<'static>> {
+        if self == Self::Sin {
+            Some(Value::BuiltInFunction(Self::Cos))
+        } else {
+            None
         }
     }
 }
@@ -236,6 +246,7 @@ impl<'a> Value<'a> {
                             Base::from_plain_base(n).map_err(|e| e.to_string())?,
                         ));
                     }
+                    BuiltInFunction::Differentiate => return Ok(other.differentiate("x", int)?),
                 })
             }
             Self::Fn(param, expr, custom_scope) => {
@@ -297,7 +308,7 @@ impl<'a> Value<'a> {
 
     pub(crate) fn get_object_member(self, key: &str) -> Result<Self, &'static str> {
         match self {
-            Value::Object(kv) => {
+            Self::Object(kv) => {
                 for (k, v) in kv {
                     if k == key {
                         return Ok(*v);
@@ -306,6 +317,20 @@ impl<'a> Value<'a> {
                 Err("Could not find key in object")
             }
             _ => Err("Expected an object"),
+        }
+    }
+
+    pub(crate) fn differentiate<I: Interrupt>(
+        self,
+        _to: &str,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
+        match self {
+            Self::Num(_) => Ok(Value::Num(Number::from(0))),
+            Self::BuiltInFunction(f) => Ok(f
+                .differentiate()
+                .ok_or(format!("Cannot differentiate built-in function {}", f))?),
+            _ => Err(format!("Cannot differentiate {}", self.format(0, int)?))?,
         }
     }
 }
