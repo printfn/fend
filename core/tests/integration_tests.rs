@@ -4676,3 +4676,8 @@ fn differentiate_i() {
 fn differentiate_sin() {
     test_eval("differentiate sin", "cos");
 }
+
+#[test]
+fn gigabits_to_gigabytes() {
+    test_eval("25Gib/s to GB/s", "3.3554432 GB / s");
+}

@@ -347,7 +347,7 @@ pub(crate) fn query_unit<'a>(
 // A primitive non-SI unit
 //
 
-("bit"/"bits"       "l@!") // Basic unit of information (entropy).  The entropy in bits
+//("bit"/"bits"       "l@!") // Basic unit of information (entropy).  The entropy in bits
                            //   of a random variable over a finite alphabet is defined
                            //   to be the sum of -p(i)*log2(p(i)) over the alphabet where
                            //   p(i) is the probability that the random variable takes
@@ -630,7 +630,7 @@ H_FLUX                  H_FIELD AREA
 ("pieze"                   "l@sthene / m^2")
 ("quintal"                 "l@100 kg")
 ("bar"                     "l@1e5 Pa") // About 1 atm
-("b"                       "s@bar")
+//("b"                       "s@bar") // used for bits instead
 ("vac"                     "l@millibar")
 ("micron"/"microns"        "l@micrometer") // One millionth of a meter
 ("bicron"/"bicrons"        "l@picometer") // One billionth of a meter
@@ -4643,14 +4643,14 @@ dit                     hartley              # from Decimal digIT
 # Computer
 #
 */
-("bps"                     "bit/sec")        // Sometimes the term "baud" is
+//("bps"                     "bit/sec")        // Sometimes the term "baud" is
                                              //   incorrectly used to refer to
                                              //   bits per second.  Baud refers
                                              //   to symbols per second.  Modern
                                              //   modems transmit several bits
                                              //   per symbol.
-("byte"/"bytes"            "l@8 bit")        // Not all machines had 8 bit
-("B"                       "s@byte")         //   bytes, but these days most of
+//("byte"/"bytes"            "l@8 bit")        // Not all machines had 8 bit
+//("B"                       "s@byte")         //   bytes, but these days most of
                                              //   them do.  But beware: for
                                              //   transmission over modems, a
                                              //   few extra bits are used so

@@ -88,6 +88,13 @@ pub(crate) fn query_unit<'a>(
 ("°F"                             "fahrenheit")
 ("F"                              "=°F")
 
+("bit"/"bits"                     "l@!")
+("bps"                            "s@bits/second")
+("byte"/"bytes"                   "l@8 bits")
+("b"                              "s@bit")
+("B"                              "s@byte")
+("octet"/"octets"                 "l@8 bits")
+
 ("yotta"                          "lp@1e24")
 ("zetta"                          "lp@1e21")
 ("exa"                            "lp@1e18")
