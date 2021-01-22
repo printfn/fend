@@ -1,4 +1,4 @@
-[fend](printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
+[fend](https://printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
 
 This is the cross-platform CLI for fend.
 

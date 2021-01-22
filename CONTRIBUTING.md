@@ -11,7 +11,7 @@ performs all the actual calculations, and exposes a small Rust API. It also cont
 many unit and integration tests. `cli` depends on `core` and provides an interactive
 command-line UI for fend. `wasm` contains Web Assembly bindings to fend, and provides
 a JavaScript API. `web` contains code for the website
-[printfn.github.io/fend-website](printfn.github.io/fend-website), which always
+[printfn.github.io/fend-website](https://printfn.github.io/fend-website), which always
 updates based on the `main` branch of this repository.
 
 Make sure to run `cargo fmt` and `cargo clippy` before committing. To run unit and
