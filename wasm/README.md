@@ -1,6 +1,6 @@
-# [fend](https://fend.printfn.nz)
+# [fend](printfn.github.io/fend-website)
 
-[fend](https://fend.printfn.nz) is an arbitrary-precision unit-aware calculator.
+[fend](printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
 
 Unique features:
 

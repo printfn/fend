@@ -72,7 +72,6 @@ jobs:
         publish_dir: ./web
         external_repository: printfn/fend-website
         force_orphan: true
-        cname: fend.printfn.nz
     - name: Code coverage
       if: ${{ matrix.platform == 'ubuntu-latest' }}
       run: |
