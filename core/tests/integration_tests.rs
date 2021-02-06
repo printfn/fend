@@ -4681,3 +4681,8 @@ fn differentiate_sin() {
 fn gigabits_to_gigabytes() {
     test_eval("25Gib/s to GB/s", "3.3554432 GB / s");
 }
+
+#[test]
+fn one_plus_one() {
+    test_eval("1 + 1", "2");
+}
