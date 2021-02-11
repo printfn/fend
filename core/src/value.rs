@@ -78,7 +78,7 @@ impl BuiltInFunction {
         })
     }
 
-    fn as_str(self) -> &'static str {
+    const fn as_str(self) -> &'static str {
         match self {
             Self::Approximately => "approximately",
             Self::Abs => "abs",

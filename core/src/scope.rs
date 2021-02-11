@@ -56,7 +56,11 @@ pub(crate) struct Scope<'a> {
 }
 
 impl<'a> Scope<'a> {
-    fn with_scope_value(ident: &'a str, value: ScopeValue<'a>, inner: Option<Arc<Self>>) -> Self {
+    const fn with_scope_value(
+        ident: &'a str,
+        value: ScopeValue<'a>,
+        inner: Option<Arc<Self>>,
+    ) -> Self {
         Self {
             ident,
             value,

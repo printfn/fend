@@ -104,7 +104,7 @@ pub fn evaluate_with_interrupt(
     })
 }
 
-fn get_version_as_str() -> &'static str {
+const fn get_version_as_str() -> &'static str {
     "0.1.13"
 }
 

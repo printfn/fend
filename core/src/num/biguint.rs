@@ -518,14 +518,14 @@ impl BigUint {
         Large(res)
     }
 
-    pub fn is_definitely_zero(&self) -> bool {
+    pub(crate) const fn is_definitely_zero(&self) -> bool {
         match self {
             Small(x) => *x == 0,
             Large(_) => false,
         }
     }
 
-    pub fn is_definitely_one(&self) -> bool {
+    pub(crate) const fn is_definitely_one(&self) -> bool {
         match self {
             Small(x) => *x == 1,
             Large(_) => false,

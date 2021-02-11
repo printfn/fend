@@ -966,7 +966,7 @@ impl<'a> fmt::Debug for BaseUnit<'a> {
 }
 
 impl<'a> BaseUnit<'a> {
-    fn new(name: &'a str) -> Self {
+    const fn new(name: &'a str) -> Self {
         Self { name }
     }
 }
