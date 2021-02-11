@@ -2,6 +2,7 @@ use crate::ast::Expr;
 use crate::err::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::scope::Scope;
+use std::borrow::Cow;
 use std::fmt;
 use std::sync::Arc;
 
@@ -17,6 +18,7 @@ pub(crate) enum Value<'a> {
     Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Version,
     Object(Vec<(&'a str, Box<Value<'a>>)>),
+    String(Cow<'a, str>),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -303,6 +305,7 @@ impl<'a> Value<'a> {
                 s.push('}');
                 FormattedValue::String(s)
             }
+            Self::String(s) => FormattedValue::Str(s.as_ref()),
         })
     }
 
@@ -359,20 +362,21 @@ impl<'a> fmt::Debug for Value<'a> {
                 s.push('}');
                 write!(f, "{}", s)
             }
+            Self::String(s) => write!(f, r##"#"{}"#"##, s.as_ref()),
         }
     }
 }
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
-pub(crate) enum FormattedValue {
-    Str(&'static str),
+pub(crate) enum FormattedValue<'a> {
+    Str(&'a str),
     String(String),
     Base(u8),
     Number(Box<FormattedNumber>),
 }
 
-impl fmt::Display for FormattedValue {
+impl<'a> fmt::Display for FormattedValue<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Str(s) => write!(f, "{}", s),

@@ -4686,3 +4686,13 @@ fn gigabits_to_gigabytes() {
 fn one_plus_one() {
     test_eval("1 + 1", "2");
 }
+
+#[test]
+fn unterminated_empty_string() {
+    expect_error("#\"", Some("Unterminated string literal"));
+}
+
+#[test]
+fn unterminated_string() {
+    expect_error("#\"hello", Some("Unterminated string literal"));
+}

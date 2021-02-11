@@ -4,11 +4,13 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub(crate) enum Expr<'a> {
     Num(Number<'a>),
+    String(Cow<'a, str>),
     Ident(&'a str),
     Parens(Box<Expr<'a>>),
     UnaryMinus(Box<Expr<'a>>),
@@ -38,6 +40,7 @@ impl<'a> Expr<'a> {
     pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
+            Self::String(s) => format!(r##"#"{}"#"##, s.as_ref()),
             Self::Ident(ident) => (*ident).to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
@@ -102,6 +105,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
     test_int(int)?;
     Ok(match expr {
         Expr::<'a>::Num(n) => Value::Num(n),
+        Expr::<'a>::String(s) => Value::String(s),
         Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
         Expr::<'a>::Parens(x) => eval!(*x)?,
         Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
@@ -199,6 +203,9 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             }
             Value::Object(_) => {
                 return Err("Cannot convert value to object".to_string())?;
+            }
+            Value::String(_) => {
+                return Err("Cannot convert value to string".to_string())?;
             }
         },
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),

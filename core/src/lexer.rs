@@ -8,6 +8,7 @@ pub(crate) enum Token<'a> {
     Ident(&'a str),
     Symbol(Symbol),
     Whitespace,
+    StringLiteral(&'a str),
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -39,6 +40,8 @@ pub enum LexerError {
     InvalidBasePrefix(InvalidBasePrefixError),
     InvalidCharAtBeginningOfIdent(char),
     UnexpectedChar(char),
+    BackslashInStringLiteral,
+    UnterminatedStringLiteral,
     // todo remove this
     NumberParseError(String),
 }
@@ -63,6 +66,10 @@ impl fmt::Display for LexerError {
             }
             Self::UnexpectedChar(ch) => write!(f, "Unexpected character '{}'", ch),
             Self::NumberParseError(s) => write!(f, "{}", s),
+            Self::BackslashInStringLiteral => {
+                write!(f, "Backslash not currently allowed in string literal")
+            }
+            Self::UnterminatedStringLiteral => write!(f, "Unterminated string literal"),
         }
     }
 }
@@ -465,6 +472,19 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         .map_err(|e| e.map(LexerError::NumberParseError))?;
                     self.input = remaining;
                     Token::Num(num)
+                } else if self.input.starts_with("#\"") {
+                    let (_, remaining) = self.input.split_at(2);
+                    let literal_length = remaining
+                        .match_indices("\"#")
+                        .next()
+                        .ok_or(LexerError::UnterminatedStringLiteral)?
+                        .0;
+                    let (literal, remaining) = remaining.split_at(literal_length);
+                    if literal.contains('\\') {
+                        return Err(LexerError::BackslashInStringLiteral)?;
+                    }
+                    self.input = remaining;
+                    Token::StringLiteral(literal)
                 } else if is_valid_in_ident(ch, None) {
                     // dots aren't allowed in idents after a backslash
                     let (ident, remaining) =
