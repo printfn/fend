@@ -84,7 +84,7 @@ impl Base {
         Ok(Self(BaseEnum::Custom(base)))
     }
 
-    pub fn write_prefix(self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    pub fn write_prefix(self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.0 {
             BaseEnum::Binary => write!(f, "0b")?,
             BaseEnum::Octal => write!(f, "0o")?,

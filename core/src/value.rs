@@ -127,7 +127,7 @@ impl<'a> Value<'a> {
     pub(crate) fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat),
-            _ => Err("Expected a number".to_string())?,
+            _ => Err("Expected a number".to_string().into()),
         }
     }
 
@@ -141,7 +141,7 @@ impl<'a> Value<'a> {
             Self::Num(n) => Self::Num(eval_fn(n)?),
             Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
             Self::BuiltInFunction(f) => f.wrap_with_expr(lazy_fn, scope),
-            _ => return Err("Expected a number".to_string())?,
+            _ => return Err("Expected a number".to_string().into()),
         })
     }
 
@@ -167,7 +167,7 @@ impl<'a> Value<'a> {
             (Self::Num(a), Self::Fn(param, expr, scope)) => {
                 Self::Fn(param, Box::new(lazy_fn_rhs(a)(expr)), scope)
             }
-            _ => return Err("Expected a number".to_string())?,
+            _ => return Err("Expected a number".to_string().into()),
         })
     }
 
@@ -195,18 +195,17 @@ impl<'a> Value<'a> {
                         .try_as_usize(int)
                         .map_err(IntErr::into_string)?;
                     if num == 0 {
-                        return Err(
-                            "Cannot format a number with zero significant figures.".to_string()
-                        )?;
+                        return Err("Cannot format a number with zero significant figures."
+                            .to_string()
+                            .into());
                     }
                     return Ok(Self::Format(FormattingStyle::SignificantFigures(num)));
                 }
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
-                    return Err(format!(
-                        "{} is not a function",
-                        self_.format(0, int)?.to_string()
-                    ))?;
+                    return Err(
+                        format!("{} is not a function", self_.format(0, int)?.to_string()).into(),
+                    );
                 }
                 let n2 = n.clone();
                 other.handle_num(
@@ -258,7 +257,8 @@ impl<'a> Value<'a> {
                 return Err(format!(
                     "'{}' is not a function or a number",
                     self.format(0, int)?.to_string()
-                ))?;
+                )
+                .into());
             }
         })
     }
@@ -332,7 +332,7 @@ impl<'a> Value<'a> {
             Self::BuiltInFunction(f) => Ok(f
                 .differentiate()
                 .ok_or(format!("Cannot differentiate built-in function {}", f))?),
-            _ => Err(format!("Cannot differentiate {}", self.format(0, int)?))?,
+            _ => Err(format!("Cannot differentiate {}", self.format(0, int)?).into()),
         }
     }
 }

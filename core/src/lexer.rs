@@ -169,7 +169,7 @@ fn parse_integer<'a, E: From<LexerError>>(
             input = remaining;
             parsed_digit_separator = true;
             if !allow_digit_separator {
-                return Err(LexerError::DigitSeparatorsNotAllowed)?;
+                return Err(LexerError::DigitSeparatorsNotAllowed.into());
             }
         } else {
             parsed_digit_separator = false;
@@ -177,7 +177,7 @@ fn parse_integer<'a, E: From<LexerError>>(
         match parse_ascii_digit(input, base) {
             Err(_) => {
                 if parsed_digit_separator {
-                    return Err(LexerError::DigitSeparatorsOnlyBetweenDigits)?;
+                    return Err(LexerError::DigitSeparatorsOnlyBetweenDigits.into());
                 }
                 break;
             }
@@ -337,7 +337,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     }
 
     if !allow_zero && res.is_zero() {
-        return Err("Invalid number: 0".to_string())?;
+        return Err("Invalid number: 0".to_string().into());
     }
 
     // parse optional exponent, but only for base 10 and below
@@ -422,7 +422,7 @@ pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
 fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerError> {
     let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
-        return Err(LexerError::InvalidCharAtBeginningOfIdent(first_char))?;
+        return Err(LexerError::InvalidCharAtBeginningOfIdent(first_char));
     }
     let mut byte_idx = first_char.len_utf8();
     let (_, mut remaining) = input.split_at(byte_idx);
@@ -481,7 +481,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         .0;
                     let (literal, remaining) = remaining.split_at(literal_length);
                     if literal.contains('\\') {
-                        return Err(LexerError::BackslashInStringLiteral)?;
+                        return Err(LexerError::BackslashInStringLiteral.into());
                     }
                     let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
@@ -529,12 +529,12 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                                 self.input = remaining;
                                 Symbol::Fn
                             } else {
-                                return Err(LexerError::UnexpectedChar(ch))?;
+                                return Err(LexerError::UnexpectedChar(ch).into());
                             }
                         }
                         '\\' => Symbol::Backslash,
                         '.' => Symbol::Dot,
-                        _ => return Err(LexerError::UnexpectedChar(ch))?,
+                        _ => return Err(LexerError::UnexpectedChar(ch).into()),
                     })
                 }
             }

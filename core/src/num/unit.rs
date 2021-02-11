@@ -27,10 +27,10 @@ impl<'a> UnitValue<'a> {
         int: &I,
     ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         if !self.is_unitless() {
-            return Err(ConvertToUsizeError::NumberWithUnit)?;
+            return Err(ConvertToUsizeError::NumberWithUnit.into());
         }
         if !self.exact {
-            return Err(ConvertToUsizeError::InexactNumber)?;
+            return Err(ConvertToUsizeError::InexactNumber.into());
         }
         Ok(self.value.try_as_usize(int)?)
     }
@@ -81,7 +81,9 @@ impl<'a> UnitValue<'a> {
 
     pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !self.is_unitless() {
-            return Err("Factorial is only supported for unitless numbers".to_string())?;
+            return Err("Factorial is only supported for unitless numbers"
+                .to_string()
+                .into());
         }
         Ok(Self {
             value: self.value.factorial(int)?,
@@ -126,7 +128,9 @@ impl<'a> UnitValue<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if rhs.value != 1.into() {
-            return Err("Right-hand side of unit conversion has a numerical value".to_string())?;
+            return Err("Right-hand side of unit conversion has a numerical value"
+                .to_string()
+                .into());
         }
         let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
         let new_value = Exact::new(self.value, self.exact)
@@ -191,7 +195,9 @@ impl<'a> UnitValue<'a> {
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !rhs.is_unitless() {
-            return Err("Only unitless exponents are currently supported".to_string())?;
+            return Err("Only unitless exponents are currently supported"
+                .to_string()
+                .into());
         }
         let mut new_components = vec![];
         let mut exact_res = true;
@@ -279,7 +285,7 @@ impl<'a> UnitValue<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if require_unitless && !self.is_unitless() {
-            return Err("Expected a unitless number".to_string())?;
+            return Err("Expected a unitless number".to_string().into());
         }
         let exact = f(self.value, int)?;
         Ok(Self {
@@ -298,7 +304,7 @@ impl<'a> UnitValue<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if require_unitless && !self.is_unitless() {
-            return Err("Expected a unitless number".to_string())?;
+            return Err("Expected a unitless number".to_string().into());
         }
         Ok(Self {
             value: f(self.value, int)?,
@@ -771,7 +777,7 @@ impl<'a> Unit<'a> {
                 scale_2: scale_b.mul(&adj_b, int)?,
             })
         } else {
-            Err("Units are incompatible".to_string())?
+            Err("Units are incompatible".to_string().into())
         }
     }
 

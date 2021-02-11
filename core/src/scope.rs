@@ -84,10 +84,11 @@ impl<'a> Scope<'a> {
                 .eval(int)
                 .map_err(|e| e.map(GetIdentError::EvalError))?;
             Ok(value)
-        } else if let Some(inner) = &self.inner {
-            inner.get(ident, int)
         } else {
-            Err(GetIdentError::IdentifierNotFound(ident))?
+            self.inner.as_ref().map_or_else(
+                || Err(GetIdentError::IdentifierNotFound(ident).into()),
+                |inner| inner.get(ident, int),
+            )
         }
     }
 }

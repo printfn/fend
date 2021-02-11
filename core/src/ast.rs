@@ -135,7 +135,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
                     scope,
                     int,
                 )?,
-                _ => Err("Invalid operands for subtraction".to_string())?,
+                _ => return Err("Invalid operands for subtraction".to_string().into()),
             }
         }
         Expr::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
@@ -161,9 +161,9 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => {
-                        return Err(
-                            "Inverses of lambda functions are not currently supported".to_string()
-                        )?
+                        return Err("Inverses of lambda functions are not currently supported"
+                            .to_string()
+                            .into())
                     }
                     _ => None,
                 };
@@ -188,24 +188,26 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             Value::Dp => {
                 return Err(
                     "You need to specify what number of decimal places to use, e.g. '10 dp'"
-                        .to_string(),
-                )?;
+                        .to_string()
+                        .into(),
+                );
             }
             Value::Sf => {
                 return Err(
                     "You need to specify what number of significant figures to use, e.g. '10 sf'"
-                        .to_string(),
-                )?;
+                        .to_string()
+                        .into(),
+                );
             }
             Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
             Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
-                return Err("Unable to convert value to a function".to_string())?;
+                return Err("Unable to convert value to a function".to_string().into());
             }
             Value::Object(_) => {
-                return Err("Cannot convert value to object".to_string())?;
+                return Err("Cannot convert value to object".to_string().into());
             }
             Value::String(_) => {
-                return Err("Cannot convert value to string".to_string())?;
+                return Err("Cannot convert value to string".to_string().into());
             }
         },
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
@@ -214,7 +216,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             for part in &parts[1..] {
                 value = match value.get_object_member(part) {
                     Ok(value) => value,
-                    Err(msg) => return Err(msg.to_string())?,
+                    Err(msg) => return Err(msg.to_string().into()),
                 };
             }
             value

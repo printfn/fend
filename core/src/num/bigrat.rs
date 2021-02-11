@@ -93,11 +93,11 @@ impl BigRat {
         int: &I,
     ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err(ConvertToUsizeError::NegativeNumber)?;
+            return Err(ConvertToUsizeError::NegativeNumber.into());
         }
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err(ConvertToUsizeError::Fraction)?;
+            return Err(ConvertToUsizeError::Fraction.into());
         }
         Ok(self
             .num
@@ -156,7 +156,7 @@ impl BigRat {
     pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err(ValueOutOfRange::MustBeBetween(-1, 1))?;
+            return Err(ValueOutOfRange::MustBeBetween(-1, 1).into());
         }
         Ok(Self::from_f64(f64::asin(self.into_f64(int)?), int)?)
     }
@@ -164,7 +164,7 @@ impl BigRat {
     pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err(ValueOutOfRange::MustBeBetween(-1, 1))?;
+            return Err(ValueOutOfRange::MustBeBetween(-1, 1).into());
         }
         Ok(Self::from_f64(f64::acos(self.into_f64(int)?), int)?)
     }
@@ -193,7 +193,7 @@ impl BigRat {
     // value must not be less than 1
     pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self < 1.into() {
-            return Err(ValueOutOfRange::MustNotBeLessThan(1))?;
+            return Err(ValueOutOfRange::MustNotBeLessThan(1).into());
         }
         Ok(Self::from_f64(f64::acosh(self.into_f64(int)?), int)?)
     }
@@ -202,7 +202,7 @@ impl BigRat {
     pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
-            return Err(ValueOutOfRange::MustBeBetween(-1, 1))?;
+            return Err(ValueOutOfRange::MustBeBetween(-1, 1).into());
         }
         Ok(Self::from_f64(f64::atanh(self.into_f64(int)?), int)?)
     }
@@ -210,21 +210,21 @@ impl BigRat {
     // For all logs: value must be greater than 0
     pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange::MustBeGreaterThan(0))?;
+            return Err(ValueOutOfRange::MustBeGreaterThan(0).into());
         }
         Ok(Self::from_f64(f64::ln(self.into_f64(int)?), int)?)
     }
 
     pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange::MustBeGreaterThan(0))?;
+            return Err(ValueOutOfRange::MustBeGreaterThan(0).into());
         }
         Ok(Self::from_f64(f64::log2(self.into_f64(int)?), int)?)
     }
 
     pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange::MustBeGreaterThan(0))?;
+            return Err(ValueOutOfRange::MustBeGreaterThan(0).into());
         }
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
     }
@@ -232,10 +232,14 @@ impl BigRat {
     pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err("Factorial is only supported for integers".to_string())?;
+            return Err("Factorial is only supported for integers"
+                .to_string()
+                .into());
         }
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err("Factorial is only supported for positive integers".to_string())?;
+            return Err("Factorial is only supported for positive integers"
+                .to_string()
+                .into());
         }
         Ok(Self {
             sign: Sign::Positive,
@@ -322,7 +326,7 @@ impl BigRat {
 
     pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         if rhs.num == 0.into() {
-            return Err(DivideByZero {})?;
+            return Err(DivideByZero {}.into());
         }
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
@@ -813,7 +817,9 @@ impl BigRat {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
-            return Err("Roots of negative numbers are not supported".to_string())?;
+            return Err("Roots of negative numbers are not supported"
+                .to_string()
+                .into());
         }
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
@@ -881,11 +887,13 @@ impl BigRat {
     // n must be an integer
     pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.num != 0.into() && self.sign == Sign::Negative {
-            return Err("Can't compute roots of negative numbers".to_string())?;
+            return Err("Can't compute roots of negative numbers".to_string().into());
         }
         let n = n.clone().simplify(int)?;
         if n.den != 1.into() || n.sign == Sign::Negative {
-            return Err("Can't compute non-integer or negative roots".to_string())?;
+            return Err("Can't compute non-integer or negative roots"
+                .to_string()
+                .into());
         }
         let n = &n.num;
         if self.num == 0.into() {

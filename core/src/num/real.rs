@@ -85,7 +85,7 @@ impl Real {
                 if n == 0.into() {
                     Ok(0)
                 } else {
-                    Err(ConvertToUsizeError::InvalidRealNumber)?
+                    Err(ConvertToUsizeError::InvalidRealNumber.into())
                 }
             }
         }
@@ -378,7 +378,7 @@ impl Exact<Real> {
 
     pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
         if rhs.value.is_zero() {
-            return Err(DivideByZero {})?;
+            return Err(DivideByZero {}.into());
         }
         if self.exact && self.value.is_zero() {
             return Ok(self);

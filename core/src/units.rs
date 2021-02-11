@@ -122,12 +122,12 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
                     // now construct a new unit!
                     return Ok(construct_prefixed_unit(a, b, int)?);
                 }
-                return Err(GetIdentError::IdentifierNotFound(ident))?;
+                return Err(GetIdentError::IdentifierNotFound(ident).into());
             }
             Err(_) => (),
         };
     }
-    Err(GetIdentError::IdentifierNotFound(ident))?
+    Err(GetIdentError::IdentifierNotFound(ident).into())
 }
 
 #[cfg(feature = "gpl")]
@@ -139,7 +139,7 @@ fn query_unit_internal_gnu<'a, I: Interrupt>(
     if let Some((s, p, expr)) = builtin_gnu::query_unit(ident, short_prefixes) {
         expr_unit(s, p, expr, int)
     } else {
-        Err(GetIdentError::IdentifierNotFound(ident))?
+        Err(GetIdentError::IdentifierNotFound(ident).into())
     }
 }
 
@@ -149,7 +149,7 @@ fn query_unit_internal_gnu<'a, I: Interrupt>(
     short_prefixes: bool,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    Err(GetIdentError::IdentifierNotFound(ident))?
+    Err(GetIdentError::IdentifierNotFound(ident).into())
 }
 
 fn query_unit_internal<'a, I: Interrupt>(

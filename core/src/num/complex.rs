@@ -35,7 +35,7 @@ impl Complex {
         int: &I,
     ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
         if self.imag != 0.into() {
-            return Err(ConvertToUsizeError::ComplexNumber)?;
+            return Err(ConvertToUsizeError::ComplexNumber.into());
         }
         Ok(self.real.try_as_usize(int)?)
     }
@@ -49,7 +49,9 @@ impl Complex {
 
     pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self.imag != 0.into() {
-            return Err("Factorial is not supported for complex numbers".to_string())?;
+            return Err("Factorial is not supported for complex numbers"
+                .to_string()
+                .into());
         }
         Ok(Self {
             real: self.real.factorial(int)?,
@@ -59,7 +61,11 @@ impl Complex {
 
     pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
-            return Err("Exponentiation is currently unsupported for complex numbers".to_string())?;
+            return Err(
+                "Exponentiation is currently unsupported for complex numbers"
+                    .to_string()
+                    .into(),
+            );
         }
         let real = self.real.pow(rhs.real, int)?;
         Ok(Exact::new(
@@ -200,7 +206,9 @@ impl Complex {
 
     pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.imag != 0.into() || n.imag != 0.into() {
-            return Err("Roots are currently unsupported for complex numbers".to_string())?;
+            return Err("Roots are currently unsupported for complex numbers"
+                .to_string()
+                .into());
         }
         let real_root = self.real.root_n(&n.real, int)?;
         Ok(Exact::new(
@@ -216,7 +224,7 @@ impl Complex {
         if self.imag.is_zero() {
             Ok(self.real)
         } else {
-            Err("Expected a real number".to_string())?
+            Err("Expected a real number".to_string().into())
         }
     }
 

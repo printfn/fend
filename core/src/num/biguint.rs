@@ -167,13 +167,13 @@ impl BigUint {
         int: &I,
     ) -> Result<Self, IntErr<IntegerPowerError, I>> {
         if a.is_zero() && b.is_zero() {
-            return Err(IntegerPowerError::ZeroToThePowerOfZero)?;
+            return Err(IntegerPowerError::ZeroToThePowerOfZero.into());
         }
         if b.is_zero() {
             return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
-            return Err(IntegerPowerError::ExponentTooLarge)?;
+            return Err(IntegerPowerError::ExponentTooLarge.into());
         }
         Ok(a.pow_internal(b.get(0), int)?)
     }
@@ -275,10 +275,10 @@ impl BigUint {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok((Small(div_res), Small(mod_res)));
             }
-            return Err(DivideByZero {})?;
+            return Err(DivideByZero {}.into());
         }
         if other.is_zero() {
-            return Err(DivideByZero {})?;
+            return Err(DivideByZero {}.into());
         }
         if other == &Self::from(1) {
             return Ok((self.clone(), Self::from(0)));
