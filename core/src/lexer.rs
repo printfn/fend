@@ -483,6 +483,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     if literal.contains('\\') {
                         return Err(LexerError::BackslashInStringLiteral)?;
                     }
+                    let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
                     Token::StringLiteral(literal)
                 } else if is_valid_in_ident(ch, None) {

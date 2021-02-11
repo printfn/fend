@@ -4696,3 +4696,26 @@ fn unterminated_empty_string() {
 fn unterminated_string() {
     expect_error("#\"hello", Some("Unterminated string literal"));
 }
+
+#[test]
+fn empty_string() {
+    test_eval("#\"\"#", "");
+}
+
+#[test]
+fn hello_world_string() {
+    test_eval_simple("#\"Hello, world!\"#", "Hello, world!");
+}
+
+#[test]
+fn backslash_in_string_literal() {
+    expect_error(
+        "#\"\\\"#",
+        Some("Backslash not currently allowed in string literal"),
+    );
+}
+
+#[test]
+fn double_quote_in_string() {
+    test_eval_simple("#\"A quote: \"\"#", "A quote: \"");
+}
