@@ -117,9 +117,8 @@ fn repl_loop() -> i32 {
             Err(ReadlineError::Interrupted) => {
                 if initial_run {
                     break;
-                } else {
-                    println!("Use Ctrl-D (i.e. EOF) to exit");
                 }
+                println!("Use Ctrl-D (i.e. EOF) to exit");
             }
             Err(ReadlineError::Eof) => break,
             Err(err) => {

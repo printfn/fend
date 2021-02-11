@@ -1,7 +1,6 @@
 #![forbid(unsafe_code)]
-#![forbid(clippy::all)]
+#![deny(clippy::all)]
 #![allow(clippy::try_err)] // allow `Err(..)?`
-#![allow(clippy::too_many_arguments)] // format_trailing_digits in BigRat
 #![deny(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 #![deny(clippy::use_self)]

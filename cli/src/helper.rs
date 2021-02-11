@@ -60,9 +60,8 @@ impl Hinter for FendHelper {
                     let res = result.get_main_result();
                     if res.is_empty() || res.len() > 50 || res.trim() == line.trim() {
                         return None;
-                    } else {
-                        FendHint(format!("\n{}", res))
                     }
+                    FendHint(format!("\n{}", res))
                 }
                 Err(_msg) => return None,
             },

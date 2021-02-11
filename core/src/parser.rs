@@ -350,9 +350,8 @@ fn parse_function<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining)?;
             return Ok((Expr::Fn(s, Box::new(rhs)), remaining));
-        } else {
-            return Err(ParseError::ExpectedIdentifierAsArgument);
         }
+        return Err(ParseError::ExpectedIdentifierAsArgument);
     }
     Ok((lhs, input))
 }

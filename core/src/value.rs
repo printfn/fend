@@ -207,14 +207,13 @@ impl<'a> Value<'a> {
                         "{} is not a function",
                         self_.format(0, int)?.to_string()
                     ))?;
-                } else {
-                    let n2 = n.clone();
-                    other.handle_num(
-                        |x| n.mul(x, int).map_err(IntErr::into_string),
-                        |x| Expr::Mul(Box::new(Expr::Num(n2)), x),
-                        scope,
-                    )?
                 }
+                let n2 = n.clone();
+                other.handle_num(
+                    |x| n.mul(x, int).map_err(IntErr::into_string),
+                    |x| Expr::Mul(Box::new(Expr::Num(n2)), x),
+                    scope,
+                )?
             }
             Self::BuiltInFunction(name) => {
                 let other = crate::ast::evaluate(other, scope.clone(), int)?;
