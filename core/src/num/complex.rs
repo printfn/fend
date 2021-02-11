@@ -1,5 +1,5 @@
 use crate::error::{IntErr, Interrupt, Never};
-use crate::num::real::{FormattedReal, Real};
+use crate::num::real::{self, Real};
 use crate::num::Exact;
 use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
 use std::cmp::Ordering;
@@ -142,7 +142,7 @@ impl Complex {
         base: Base,
         use_parentheses: UseParentheses,
         int: &I,
-    ) -> Result<Exact<FormattedComplex>, IntErr<Never, I>> {
+    ) -> Result<Exact<Formatted>, IntErr<Never, I>> {
         let style = if !exact && style == FormattingStyle::Auto {
             FormattingStyle::DecimalPlaces(10)
         } else if self.imag != 0.into() && style == FormattingStyle::Auto {
@@ -155,7 +155,7 @@ impl Complex {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
             let x = self.real.format(base, style, false, use_parens, int)?;
             return Ok(Exact::new(
-                FormattedComplex {
+                Formatted {
                     first_component: x.value,
                     separator: "",
                     second_component: None,
@@ -169,7 +169,7 @@ impl Complex {
             let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
             let x = self.imag.format(base, style, true, use_parens, int)?;
             Exact::new(
-                FormattedComplex {
+                Formatted {
                     first_component: x.value,
                     separator: "",
                     second_component: None,
@@ -192,7 +192,7 @@ impl Complex {
             exact = exact && imag_part.exact;
             let separator = if positive { " + " } else { " - " };
             Exact::new(
-                FormattedComplex {
+                Formatted {
                     first_component: real_part.value,
                     separator,
                     second_component: Some(imag_part.value),
@@ -455,16 +455,15 @@ impl From<Real> for Complex {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
-pub struct FormattedComplex {
-    first_component: FormattedReal,
+pub struct Formatted {
+    first_component: real::Formatted,
     separator: &'static str,
-    second_component: Option<FormattedReal>,
+    second_component: Option<real::Formatted>,
     use_parentheses: bool,
 }
 
-impl fmt::Display for FormattedComplex {
+impl fmt::Display for Formatted {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.use_parentheses {
             write!(f, "(")?;

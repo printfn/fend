@@ -1,10 +1,3 @@
-use rustyline::{
-    completion::{Candidate, Completer},
-    highlight::Highlighter,
-    hint::Hinter,
-    validate::Validator,
-    Helper,
-};
 use std::time::{Duration, Instant};
 
 pub struct HintInterrupt {
@@ -27,9 +20,9 @@ impl Default for HintInterrupt {
     }
 }
 
-pub struct FendHint(String);
+pub struct Hint(String);
 
-impl rustyline::hint::Hint for FendHint {
+impl rustyline::hint::Hint for Hint {
     fn display(&self) -> &str {
         self.0.as_str()
     }
@@ -39,20 +32,20 @@ impl rustyline::hint::Hint for FendHint {
     }
 }
 
-pub struct FendHelper {
+pub struct Helper {
     ctx: fend_core::Context,
 }
 
-impl FendHelper {
+impl Helper {
     pub fn new(ctx: fend_core::Context) -> Self {
         Self { ctx }
     }
 }
 
-impl Hinter for FendHelper {
-    type Hint = FendHint;
+impl rustyline::hint::Hinter for Helper {
+    type Hint = Hint;
 
-    fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context) -> Option<FendHint> {
+    fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context) -> Option<Hint> {
         let int = HintInterrupt::default();
         Some(
             match fend_core::evaluate_with_interrupt(line, &mut self.ctx.clone(), &int) {
@@ -61,7 +54,7 @@ impl Hinter for FendHelper {
                     if res.is_empty() || res.len() > 50 || res.trim() == line.trim() {
                         return None;
                     }
-                    FendHint(format!("\n{}", res))
+                    Hint(format!("\n{}", res))
                 }
                 Err(_msg) => return None,
             },
@@ -69,12 +62,12 @@ impl Hinter for FendHelper {
     }
 }
 
-impl Highlighter for FendHelper {}
+impl rustyline::highlight::Highlighter for Helper {}
 
-impl Validator for FendHelper {}
+impl rustyline::validate::Validator for Helper {}
 
 pub struct FendCandidate {}
-impl Candidate for FendCandidate {
+impl rustyline::completion::Candidate for FendCandidate {
     fn display(&self) -> &str {
         ""
     }
@@ -83,8 +76,8 @@ impl Candidate for FendCandidate {
     }
 }
 
-impl Completer for FendHelper {
+impl rustyline::completion::Completer for Helper {
     type Candidate = FendCandidate;
 }
 
-impl Helper for FendHelper {}
+impl rustyline::Helper for Helper {}

@@ -3,19 +3,18 @@ use std::env::var_os;
 use std::fs;
 use std::path::PathBuf;
 
-#[allow(clippy::option_if_let_else)]
 fn get_config_dir() -> Option<PathBuf> {
     // first try $FEND_CONFIG_DIR
-    if let Some(config_dir) = var_os("FEND_CONFIG_DIR") {
-        Some(PathBuf::from(config_dir))
-    } else if let Some(proj_dirs) = ProjectDirs::from("", "", "fend") {
-        // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
-        // macOS: $HOME/Library/Application Support/fend
-        // Windows: {FOLDERID_RoamingAppData}\fend\config
-        Some(PathBuf::from(proj_dirs.config_dir()))
-    } else {
-        None
-    }
+    var_os("FEND_CONFIG_DIR").map_or_else(
+        || {
+            // if not, then use these paths:
+            // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
+            // macOS: $HOME/Library/Application Support/fend
+            // Windows: {FOLDERID_RoamingAppData}\fend\config
+            ProjectDirs::from("", "", "fend").map(|proj_dirs| PathBuf::from(proj_dirs.config_dir()))
+        },
+        |config_dir| Some(PathBuf::from(config_dir)),
+    )
 }
 
 pub fn get_history_file_path() -> Option<PathBuf> {

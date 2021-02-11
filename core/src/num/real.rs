@@ -197,7 +197,7 @@ impl Real {
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<Exact<FormattedReal>, IntErr<Never, I>> {
+    ) -> Result<Exact<Formatted>, IntErr<Never, I>> {
         let mut pi = false;
         if style == FormattingStyle::Exact && !self.is_zero() {
             if let Pattern::Pi(_) = self.pattern {
@@ -232,7 +232,7 @@ impl Real {
         let formatted = rat.format(base, style, term, use_parens_if_fraction, int)?;
         let exact = formatted.exact && override_exact;
         Ok(Exact::new(
-            FormattedReal {
+            Formatted {
                 num: formatted.value,
             },
             exact,
@@ -434,12 +434,11 @@ impl From<BigRat> for Real {
 }
 
 #[derive(Debug)]
-#[allow(clippy::module_name_repetitions)]
-pub struct FormattedReal {
+pub struct Formatted {
     num: FormattedBigRat,
 }
 
-impl fmt::Display for FormattedReal {
+impl fmt::Display for Formatted {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.num)
     }

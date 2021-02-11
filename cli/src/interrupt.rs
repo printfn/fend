@@ -1,25 +1,25 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-pub struct CtrlCInterrupt {
+pub struct CtrlC {
     running: Arc<AtomicBool>,
 }
 
-impl fend_core::Interrupt for CtrlCInterrupt {
+impl fend_core::Interrupt for CtrlC {
     fn should_interrupt(&self) -> bool {
         let running = self.running.load(Ordering::Relaxed);
         !running
     }
 }
 
-impl CtrlCInterrupt {
+impl CtrlC {
     pub fn reset(&self) {
         self.running.store(true, Ordering::SeqCst);
     }
 }
 
-pub fn register_handler() -> CtrlCInterrupt {
-    let interrupt = CtrlCInterrupt {
+pub fn register_handler() -> CtrlC {
+    let interrupt = CtrlC {
         running: Arc::new(AtomicBool::new(true)),
     };
 
@@ -38,13 +38,13 @@ pub fn register_handler() -> CtrlCInterrupt {
     interrupt
 }
 
-pub struct NeverInterrupt {}
-impl fend_core::Interrupt for NeverInterrupt {
+pub struct Never {}
+impl fend_core::Interrupt for Never {
     fn should_interrupt(&self) -> bool {
         false
     }
 }
-impl Default for NeverInterrupt {
+impl Default for Never {
     fn default() -> Self {
         Self {}
     }

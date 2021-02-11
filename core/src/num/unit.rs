@@ -1,7 +1,7 @@
 use crate::ast;
 use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
+use crate::num::complex::{self, Complex, UseParentheses};
 use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
 use crate::scope::Scope;
 use std::collections::HashMap;
@@ -12,8 +12,7 @@ use std::sync::Arc;
 use super::Exact;
 
 #[derive(Clone)]
-#[allow(clippy::module_name_repetitions)]
-pub(crate) struct UnitValue<'a> {
+pub(crate) struct Value<'a> {
     value: Complex,
     unit: Unit<'a>,
     exact: bool,
@@ -21,7 +20,7 @@ pub(crate) struct UnitValue<'a> {
     format: FormattingStyle,
 }
 
-impl<'a> UnitValue<'a> {
+impl<'a> Value<'a> {
     pub(crate) fn try_as_usize<I: Interrupt>(
         self,
         int: &I,
@@ -421,10 +420,7 @@ impl<'a> UnitValue<'a> {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub(crate) fn format<I: Interrupt>(
-        &self,
-        int: &I,
-    ) -> Result<FormattedUnitValue, IntErr<Never, I>> {
+    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, IntErr<Never, I>> {
         let use_parentheses = if self.unit.components.is_empty() {
             UseParentheses::No
         } else {
@@ -485,7 +481,7 @@ impl<'a> UnitValue<'a> {
                 exact = exact && formatted_exp.exact;
             }
         }
-        Ok(FormattedUnitValue {
+        Ok(FormattedValue {
             number: formatted_value.value,
             exact,
             unit_str: unit_string,
@@ -592,7 +588,7 @@ impl<'a> UnitValue<'a> {
     }
 }
 
-impl Neg for UnitValue<'_> {
+impl Neg for Value<'_> {
     type Output = Self;
     fn neg(self) -> Self {
         Self {
@@ -605,7 +601,7 @@ impl Neg for UnitValue<'_> {
     }
 }
 
-impl From<u64> for UnitValue<'_> {
+impl From<u64> for Value<'_> {
     fn from(i: u64) -> Self {
         Self {
             value: i.into(),
@@ -617,7 +613,7 @@ impl From<u64> for UnitValue<'_> {
     }
 }
 
-impl<'a> fmt::Debug for UnitValue<'a> {
+impl<'a> fmt::Debug for Value<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.exact {
             write!(f, "approx. ")?;
@@ -631,15 +627,14 @@ impl<'a> fmt::Debug for UnitValue<'a> {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
-pub(crate) struct FormattedUnitValue {
+pub(crate) struct FormattedValue {
     exact: bool,
-    number: FormattedComplex,
+    number: complex::Formatted,
     unit_str: String,
 }
 
-impl fmt::Display for FormattedUnitValue {
+impl fmt::Display for FormattedValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.exact {
             write!(f, "approx. ")?;
@@ -867,7 +862,7 @@ impl<'a> fmt::Debug for UnitExponent<'a> {
 struct FormattedExponent<'a> {
     prefix: &'a str,
     name: &'a str,
-    number: Option<FormattedComplex>,
+    number: Option<complex::Formatted>,
 }
 
 impl<'a> fmt::Display for FormattedExponent<'a> {
@@ -981,7 +976,7 @@ mod tests {
     use super::*;
     use crate::interrupt::Never;
 
-    fn to_string(n: &UnitValue) -> String {
+    fn to_string(n: &Value) -> String {
         let int = &crate::interrupt::Never::default();
         // TODO: this unwrap call should be unnecessary
         n.format(int).unwrap().to_string()
@@ -993,8 +988,8 @@ mod tests {
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
         let kg = NamedUnit::new("k", "g", "g", hashmap, 1);
-        let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
-        let two_kg = UnitValue::new(2, vec![UnitExponent::new(kg, 1)]);
+        let one_kg = Value::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
+        let two_kg = Value::new(2, vec![UnitExponent::new(kg, 1)]);
         let sum = one_kg.add(two_kg, &Never::default()).unwrap();
         assert_eq!(to_string(&sum), "3 kg");
     }
@@ -1016,8 +1011,8 @@ mod tests {
                 .unwrap()
                 .value,
         );
-        let one_kg = UnitValue::new(1, vec![UnitExponent::new(kg, 1)]);
-        let twelve_g = UnitValue::new(12, vec![UnitExponent::new(g, 1)]);
+        let one_kg = Value::new(1, vec![UnitExponent::new(kg, 1)]);
+        let twelve_g = Value::new(12, vec![UnitExponent::new(g, 1)]);
         assert_eq!(
             to_string(&one_kg.clone().add(twelve_g.clone(), int).unwrap()),
             "1.012 kg"

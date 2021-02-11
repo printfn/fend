@@ -1,7 +1,6 @@
 #![forbid(unsafe_code)]
 #![forbid(clippy::all)]
-#![deny(clippy::pedantic)]
-#![allow(clippy::module_name_repetitions)]
+#![forbid(clippy::pedantic)]
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -61,7 +60,7 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn save_history(rl: &mut Editor<helper::FendHelper>, path: &Option<PathBuf>) {
+fn save_history(rl: &mut Editor<helper::Helper>, path: &Option<PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
@@ -71,7 +70,7 @@ fn save_history(rl: &mut Editor<helper::FendHelper>, path: &Option<PathBuf>) {
 
 fn repl_loop() -> i32 {
     // `()` can be used when no completer is required
-    let mut rl = Editor::<helper::FendHelper>::with_config(
+    let mut rl = Editor::<helper::Helper>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
@@ -79,7 +78,7 @@ fn repl_loop() -> i32 {
             .build(),
     );
     let mut context = Context::new();
-    rl.set_helper(Some(helper::FendHelper::new(context.clone())));
+    rl.set_helper(Some(helper::Helper::new(context.clone())));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
@@ -157,7 +156,7 @@ fn main() {
             match eval_and_print_res(
                 expr.as_str(),
                 &mut Context::new(),
-                &interrupt::NeverInterrupt::default(),
+                &interrupt::Never::default(),
                 false,
             ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
