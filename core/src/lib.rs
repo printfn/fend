@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![deny(clippy::all)]
+#![forbid(clippy::all)]
 #![deny(clippy::pedantic)]
 #![allow(clippy::non_ascii_literal)]
 #![deny(clippy::use_self)]
