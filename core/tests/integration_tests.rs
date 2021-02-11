@@ -4719,3 +4719,8 @@ fn backslash_in_string_literal() {
 fn double_quote_in_string() {
     test_eval_simple("#\"A quote: \"\"#", "A quote: \"");
 }
+
+#[test]
+fn string_debug_representation() {
+    test_eval_simple("!debug #\"hi\"#", "#\"hi\"#");
+}
