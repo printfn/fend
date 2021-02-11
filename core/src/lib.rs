@@ -37,7 +37,7 @@ impl FendResult {
     /// stable than the main result, and should only be shown for when used
     /// interactively.
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
-        self.other_info.iter().map(std::string::String::as_str)
+        self.other_info.iter().map(String::as_str)
     }
 }
 
