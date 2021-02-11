@@ -243,8 +243,8 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         }
     }
     Ok(match ident {
-        "pi" | "π" => Value::Num(Number::pi()),
-        "tau" | "τ" => Value::Num(Number::pi().mul(2.into(), int)?),
+        "pi" | "\u{3c0}" => Value::Num(Number::pi()),
+        "tau" | "\u{3c4}" => Value::Num(Number::pi().mul(2.into(), int)?),
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, int)?,
         "i" => Value::Num(Number::i()),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, int)?,
@@ -262,7 +262,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "asinh" => Value::BuiltInFunction(BuiltInFunction::Asinh),
         "acosh" => Value::BuiltInFunction(BuiltInFunction::Acosh),
         "atanh" => Value::BuiltInFunction(BuiltInFunction::Atanh),
-        "cis" => evaluate_to_value("θ => cos θ + i (sin θ)", scope, int)?,
+        "cis" => evaluate_to_value("theta => cos theta + i * sin theta", scope, int)?,
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
@@ -284,7 +284,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "square" => evaluate_to_value("x: x^2", scope, int)?,
         "cubic" => evaluate_to_value("x: x^3", scope, int)?,
         "earth" => Value::Object(vec![
-            ("axial_tilt", eval_box("23.4392811°")?),
+            ("axial_tilt", eval_box("23.4392811 degrees")?),
             ("eccentricity", eval_box("0.0167086")?),
             ("escape_velocity", eval_box("11.186 km/s")?),
             ("gravity", eval_box("9.80665 m/s^2")?),

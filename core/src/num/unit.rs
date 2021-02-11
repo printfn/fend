@@ -915,7 +915,8 @@ impl<'a> NamedUnit<'a> {
         // while non-alphabetic names like % or ' shouldn't.
         // Empty names shouldn't really exist, but they might as well have a space.
 
-        if self.singular_name == "°" {
+        // degree symbol
+        if self.singular_name == "\u{b0}" {
             return false;
         }
 
@@ -923,7 +924,7 @@ impl<'a> NamedUnit<'a> {
             .chars()
             .next()
             .map_or(true, |first_char| {
-                char::is_alphabetic(first_char) || first_char == '°'
+                char::is_alphabetic(first_char) || first_char == '\u{b0}'
             })
     }
 }

@@ -78,8 +78,8 @@ pub(crate) fn query_unit<'a>(
 */
 ("NM"      "nauticalmile")
 ("AU"      "au")
-("’"       "foot") // unicode single quote
-("”"       "inch") // unicode double quote
+("\u{2019}"       "foot") // unicode single quote
+("\u{201d}"       "inch") // unicode double quote
 ("'"       "foot")
 ("\""       "inch")
 // arc minute and arc second definitions are ignored
@@ -7180,7 +7180,7 @@ blanc                   1|24 periot
 #⅑-               1|9   # fails under MacOS
 #⅒-               1|10  # fails under MacOS
 */
-("ℯ"                       "exp(1)") // U+212F, base of natural log
+//("ℯ"                       "exp(1)") // U+212F, base of natural log
 /*
 ångström                angstrom
 Å                       angstrom    # angstrom symbol U+212B
@@ -7191,7 +7191,7 @@ röntgen                 roentgen
 °K                      K           # °K is incorrect notation
 °R                      degR
 */
-("°"                       "degree")
+("\u{b0}"                  "degree")
 /*
 ℃                       degC
 ℉                       degF

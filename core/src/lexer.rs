@@ -405,14 +405,24 @@ fn parse_number<'a, I: Interrupt>(
 }
 
 pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
-    let allowed_chars = ",&_⅛¼⅜½⅝¾⅞⅙⅓⅔⅚⅕⅖⅗⅘°$℃℉℧℈℥℔¢£¥€₩₪₤₨฿₡₣₦₧₫₭₮₯₱﷼﹩￠￡￥￦㍱㍲㍳㍴㍶㎀㎁㎂㎃㎄㎅㎆㎇㎈㎉㎊㎋㎌㎍㎎㎏㎐㎑㎒㎓㎔㎕㎖㎗㎘㎙㎚㎛㎜㎝㎞㎟㎠㎡㎢㎣㎤㎥㎦㎧㎨㎩㎪㎫㎬㎭㎮㎯㎰㎱㎲㎳㎴㎵㎶㎷㎸㎹㎺㎻㎼㎽㎾㎿㏀㏁㏃㏄㏅㏆㏈㏉㏊㏌㏏㏐㏓㏔㏕㏖㏗㏙㏛㏜㏝";
+    let allowed_chars = [
+        ',', '&', '_', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞', '⅙', '⅓', '⅔', '⅚', '⅕', '⅖', '⅗', '⅘',
+        '°', '$', '℃', '℉', '℧', '℈', '℥', '℔', '¢', '£', '¥', '€', '₩', '₪', '₤', '₨', '฿', '₡',
+        '₣', '₦', '₧', '₫', '₭', '₮', '₯', '₱', '﷼', '﹩', '￠', '￡', '￥', '￦', '㍱', '㍲',
+        '㍳', '㍴', '㍶', '㎀', '㎁', '㎂', '㎃', '㎄', '㎅', '㎆', '㎇', '㎈', '㎉', '㎊', '㎋',
+        '㎌', '㎍', '㎎', '㎏', '㎐', '㎑', '㎒', '㎓', '㎔', '㎕', '㎖', '㎗', '㎘', '㎙', '㎚',
+        '㎛', '㎜', '㎝', '㎞', '㎟', '㎠', '㎡', '㎢', '㎣', '㎤', '㎥', '㎦', '㎧', '㎨', '㎩',
+        '㎪', '㎫', '㎬', '㎭', '㎮', '㎯', '㎰', '㎱', '㎲', '㎳', '㎴', '㎵', '㎶', '㎷', '㎸',
+        '㎹', '㎺', '㎻', '㎼', '㎽', '㎾', '㎿', '㏀', '㏁', '㏃', '㏄', '㏅', '㏆', '㏈', '㏉',
+        '㏊', '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
+    ];
     // these chars are only valid by themselves
-    let only_valid_by_themselves = "%‰‱′″\"'’”π";
-    if only_valid_by_themselves.contains(ch)
-        || only_valid_by_themselves.contains(prev.unwrap_or('a'))
+    let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '"', '\'', '’', '”', 'π'];
+    if only_valid_by_themselves.contains(&ch)
+        || only_valid_by_themselves.contains(&prev.unwrap_or('a'))
     {
         prev.is_none()
-    } else if ch.is_alphabetic() || allowed_chars.contains(ch) {
+    } else if ch.is_alphabetic() || allowed_chars.contains(&ch) {
         true
     } else {
         prev.is_some() && ".0123456789".contains(ch)

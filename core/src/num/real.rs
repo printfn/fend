@@ -207,9 +207,9 @@ impl Real {
 
         let term = match (imag, pi) {
             (false, false) => "",
-            (false, true) => "π",
+            (false, true) => "\u{3c0}", // pi symbol
             (true, false) => "i",
-            (true, true) => "πi",
+            (true, true) => "\u{3c0}i",
         };
 
         let mut override_exact = true;

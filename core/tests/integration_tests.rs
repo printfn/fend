@@ -1777,7 +1777,7 @@ fn three_electroncharge() {
 
 #[test]
 fn e_to_1() {
-    test_eval("ℯ to 1", "approx. 2.7182818284");
+    test_eval("e to 1", "approx. 2.7182818284");
 }
 
 #[test]
@@ -4723,4 +4723,9 @@ fn double_quote_in_string() {
 #[test]
 fn string_debug_representation() {
     test_eval_simple("!debug #\"hi\"#", "#\"hi\"#");
+}
+
+#[test]
+fn cis_4() {
+    test_eval("cis 4", "approx. -0.6536436208 - 0.7568024953i");
 }
