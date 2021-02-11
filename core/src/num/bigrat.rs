@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{
@@ -1115,7 +1115,7 @@ impl fmt::Display for FormattedBigRat {
 mod tests {
     use super::sign::Sign;
     use super::BigRat;
-    use crate::err::{IntErr, Never};
+    use crate::error::{IntErr, Never};
     use crate::num::biguint::BigUint;
 
     #[test]

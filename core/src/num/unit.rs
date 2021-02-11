@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{Complex, FormattedComplex, UseParentheses};
 use crate::num::{Base, ConvertToUsizeError, FormattingStyle};

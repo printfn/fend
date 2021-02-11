@@ -4,7 +4,6 @@ pub trait Error: fmt::Display {}
 
 pub(crate) type Never = std::convert::Infallible;
 
-#[allow(clippy::module_name_repetitions)]
 pub enum IntErr<E, I: Interrupt> {
     Interrupt(I::Int),
     Error(E),

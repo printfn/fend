@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt};
+use crate::error::{IntErr, Interrupt};
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{convert::TryInto, fmt};
 
@@ -28,8 +28,7 @@ pub(crate) enum Symbol {
     Of,
 }
 
-#[allow(clippy::module_name_repetitions)]
-pub enum LexerError {
+pub(crate) enum Error {
     ExpectedACharacter,
     ExpectedADigit(char),
     ExpectedChar(char, char),
@@ -43,10 +42,10 @@ pub enum LexerError {
     BackslashInStringLiteral,
     UnterminatedStringLiteral,
     // todo remove this
-    NumberParseError(String),
+    NumberParse(String),
 }
 
-impl fmt::Display for LexerError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::ExpectedACharacter => write!(f, "Expected a character"),
@@ -65,7 +64,7 @@ impl fmt::Display for LexerError {
                 write!(f, "'{}' is not valid at the beginning of an identifier", ch)
             }
             Self::UnexpectedChar(ch) => write!(f, "Unexpected character '{}'", ch),
-            Self::NumberParseError(s) => write!(f, "{}", s),
+            Self::NumberParse(s) => write!(f, "{}", s),
             Self::BackslashInStringLiteral => {
                 write!(f, "Backslash not currently allowed in string literal")
             }
@@ -73,22 +72,22 @@ impl fmt::Display for LexerError {
         }
     }
 }
-impl crate::err::Error for LexerError {}
+impl crate::error::Error for Error {}
 
-impl From<BaseOutOfRangeError> for LexerError {
+impl From<BaseOutOfRangeError> for Error {
     fn from(e: BaseOutOfRangeError) -> Self {
         Self::BaseOutOfRange(e)
     }
 }
 
-impl From<InvalidBasePrefixError> for LexerError {
+impl From<InvalidBasePrefixError> for Error {
     fn from(e: InvalidBasePrefixError) -> Self {
         Self::InvalidBasePrefix(e)
     }
 }
 
-impl<I: Interrupt> From<LexerError> for IntErr<String, I> {
-    fn from(e: LexerError) -> Self {
+impl<I: Interrupt> From<Error> for IntErr<String, I> {
+    fn from(e: Error) -> Self {
         e.to_string().into()
     }
 }
@@ -115,47 +114,45 @@ impl fmt::Display for Symbol {
     }
 }
 
-fn parse_char(input: &str) -> Result<(char, &str), LexerError> {
+fn parse_char(input: &str) -> Result<(char, &str), Error> {
     input
         .chars()
         .next()
-        .map_or(Err(LexerError::ExpectedACharacter), |ch| {
+        .map_or(Err(Error::ExpectedACharacter), |ch| {
             let (_, b) = input.split_at(ch.len_utf8());
             Ok((ch, b))
         })
 }
 
-fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), LexerError> {
+fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), Error> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
     possible_digit
         .and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok())
-        .map_or(Err(LexerError::ExpectedADigit(ch)), |digit| {
-            Ok((digit, input))
-        })
+        .map_or(Err(Error::ExpectedADigit(ch)), |digit| Ok((digit, input)))
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), LexerError> {
+fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), Error> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == ch {
         Ok(((), input))
     } else {
-        Err(LexerError::ExpectedChar(ch, parsed_ch))
+        Err(Error::ExpectedChar(ch, parsed_ch))
     }
 }
 
-fn parse_digit_separator(input: &str) -> Result<((), &str), LexerError> {
+fn parse_digit_separator(input: &str) -> Result<((), &str), Error> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == '_' || parsed_ch == ',' {
         Ok(((), input))
     } else {
-        Err(LexerError::ExpectedDigitSeparator(parsed_ch))
+        Err(Error::ExpectedDigitSeparator(parsed_ch))
     }
 }
 
 // Parses a plain integer with no whitespace and no base prefix.
 // Leading minus sign is not allowed.
-fn parse_integer<'a, E: From<LexerError>>(
+fn parse_integer<'a, E: From<Error>>(
     input: &'a str,
     allow_digit_separator: bool,
     base: Base,
@@ -169,7 +166,7 @@ fn parse_integer<'a, E: From<LexerError>>(
             input = remaining;
             parsed_digit_separator = true;
             if !allow_digit_separator {
-                return Err(LexerError::DigitSeparatorsNotAllowed.into());
+                return Err(Error::DigitSeparatorsNotAllowed.into());
             }
         } else {
             parsed_digit_separator = false;
@@ -177,7 +174,7 @@ fn parse_integer<'a, E: From<LexerError>>(
         match parse_ascii_digit(input, base) {
             Err(_) => {
                 if parsed_digit_separator {
-                    return Err(LexerError::DigitSeparatorsOnlyBetweenDigits.into());
+                    return Err(Error::DigitSeparatorsOnlyBetweenDigits.into());
                 }
                 break;
             }
@@ -190,7 +187,7 @@ fn parse_integer<'a, E: From<LexerError>>(
     Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
+fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
     // 0x -> 16
     // 0d -> 10
     // 0o -> 8
@@ -204,10 +201,10 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
         let mut custom_base: u8 = 0;
         let (_, input) = parse_integer(input, false, Base::default(), &mut |digit| -> Result<
             (),
-            LexerError,
+            Error,
         > {
             let base_too_large = BaseOutOfRangeError::BaseTooLarge;
-            let error = LexerError::BaseOutOfRange(base_too_large);
+            let error = Error::BaseOutOfRange(base_too_large);
             if custom_base > 3 {
                 return Err(error);
             }
@@ -219,7 +216,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), LexerError> {
         })?;
         if custom_base < 2 {
             let base_too_small = BaseOutOfRangeError::BaseTooSmall;
-            return Err(LexerError::BaseOutOfRange(base_too_small));
+            return Err(Error::BaseOutOfRange(base_too_small));
         }
         let (_, input) = parse_fixed_char(input, '#')?;
         Ok((Base::from_custom_base(custom_base)?, input))
@@ -429,10 +426,10 @@ pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     }
 }
 
-fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), LexerError> {
+fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
     let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
-        return Err(LexerError::InvalidCharAtBeginningOfIdent(first_char));
+        return Err(Error::InvalidCharAtBeginningOfIdent(first_char));
     }
     let mut byte_idx = first_char.len_utf8();
     let (_, mut remaining) = input.split_at(byte_idx);
@@ -465,7 +462,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
 }
 
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
-    fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<LexerError, I>> {
+    fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<Error, I>> {
         while let Some(ch) = self.input.chars().next() {
             if !ch.is_whitespace() {
                 break;
@@ -479,7 +476,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     Token::Whitespace
                 } else if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
                     let (num, remaining) = parse_number(self.input, self.int)
-                        .map_err(|e| e.map(LexerError::NumberParseError))?;
+                        .map_err(|e| e.map(Error::NumberParse))?;
                     self.input = remaining;
                     Token::Num(num)
                 } else if self.input.starts_with("#\"") {
@@ -487,11 +484,11 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     let literal_length = remaining
                         .match_indices("\"#")
                         .next()
-                        .ok_or(LexerError::UnterminatedStringLiteral)?
+                        .ok_or(Error::UnterminatedStringLiteral)?
                         .0;
                     let (literal, remaining) = remaining.split_at(literal_length);
                     if literal.contains('\\') {
-                        return Err(LexerError::BackslashInStringLiteral.into());
+                        return Err(Error::BackslashInStringLiteral.into());
                     }
                     let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
@@ -539,12 +536,12 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                                 self.input = remaining;
                                 Symbol::Fn
                             } else {
-                                return Err(LexerError::UnexpectedChar(ch).into());
+                                return Err(Error::UnexpectedChar(ch).into());
                             }
                         }
                         '\\' => Symbol::Backslash,
                         '.' => Symbol::Dot,
-                        _ => return Err(LexerError::UnexpectedChar(ch).into()),
+                        _ => return Err(Error::UnexpectedChar(ch).into()),
                     })
                 }
             }
@@ -554,7 +551,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
 }
 
 impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
-    type Item = Result<Token<'a>, IntErr<LexerError, I>>;
+    type Item = Result<Token<'a>, IntErr<Error, I>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let res = match self.next_token() {

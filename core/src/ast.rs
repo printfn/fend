@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::eval::evaluate_to_value;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
@@ -91,7 +91,6 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
     false
 }
 
-#[allow(clippy::too_many_lines)]
 pub(crate) fn evaluate<'a, I: Interrupt>(
     expr: Expr<'a>,
     scope: Option<Arc<Scope<'a>>>,
@@ -182,34 +181,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
         }
-        Expr::<'a>::As(a, b) => match eval!(*b)? {
-            Value::Num(b) => Value::Num(eval!(*a)?.expect_num()?.convert_to(b, int)?),
-            Value::Format(fmt) => Value::Num(eval!(*a)?.expect_num()?.with_format(fmt)),
-            Value::Dp => {
-                return Err(
-                    "You need to specify what number of decimal places to use, e.g. '10 dp'"
-                        .to_string()
-                        .into(),
-                );
-            }
-            Value::Sf => {
-                return Err(
-                    "You need to specify what number of significant figures to use, e.g. '10 sf'"
-                        .to_string()
-                        .into(),
-                );
-            }
-            Value::Base(base) => Value::Num(eval!(*a)?.expect_num()?.with_base(base)),
-            Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
-                return Err("Unable to convert value to a function".to_string().into());
-            }
-            Value::Object(_) => {
-                return Err("Cannot convert value to object".to_string().into());
-            }
-            Value::String(_) => {
-                return Err("Cannot convert value to string".to_string().into());
-            }
-        },
+        Expr::<'a>::As(a, b) => evaluate_as(*a, *b, scope, int)?,
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
         Expr::<'a>::Of(parts) => {
             let mut value = resolve_identifier(parts[0], scope, int)?;
@@ -220,6 +192,42 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
                 };
             }
             value
+        }
+    })
+}
+
+fn evaluate_as<'a, I: Interrupt>(
+    a: Expr<'a>,
+    b: Expr<'a>,
+    scope: Option<Arc<Scope<'a>>>,
+    int: &I,
+) -> Result<Value<'a>, IntErr<String, I>> {
+    Ok(match evaluate(b, scope.clone(), int)? {
+        Value::Num(b) => Value::Num(evaluate(a, scope, int)?.expect_num()?.convert_to(b, int)?),
+        Value::Format(fmt) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_format(fmt)),
+        Value::Dp => {
+            return Err(
+                "You need to specify what number of decimal places to use, e.g. '10 dp'"
+                    .to_string()
+                    .into(),
+            );
+        }
+        Value::Sf => {
+            return Err(
+                "You need to specify what number of significant figures to use, e.g. '10 sf'"
+                    .to_string()
+                    .into(),
+            );
+        }
+        Value::Base(base) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_base(base)),
+        Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
+            return Err("Unable to convert value to a function".to_string().into());
+        }
+        Value::Object(_) => {
+            return Err("Cannot convert value to object".to_string().into());
+        }
+        Value::String(_) => {
+            return Err("Cannot convert value to string".to_string().into());
         }
     })
 }

@@ -30,13 +30,12 @@ impl fmt::Display for InvalidBasePrefixError {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
-pub enum BaseOutOfRangeError {
+pub(crate) enum OutOfRangeError {
     BaseTooSmall,
     BaseTooLarge,
 }
 
-impl fmt::Display for BaseOutOfRangeError {
+impl fmt::Display for OutOfRangeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::BaseTooSmall => write!(f, "Base must be at least 2"),
@@ -66,20 +65,20 @@ impl Base {
         })
     }
 
-    pub const fn from_plain_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
+    pub(crate) const fn from_plain_base(base: u8) -> Result<Self, OutOfRangeError> {
         if base < 2 {
-            return Err(BaseOutOfRangeError::BaseTooSmall);
+            return Err(OutOfRangeError::BaseTooSmall);
         } else if base > 36 {
-            return Err(BaseOutOfRangeError::BaseTooLarge);
+            return Err(OutOfRangeError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Plain(base)))
     }
 
-    pub const fn from_custom_base(base: u8) -> Result<Self, BaseOutOfRangeError> {
+    pub(crate) const fn from_custom_base(base: u8) -> Result<Self, OutOfRangeError> {
         if base < 2 {
-            return Err(BaseOutOfRangeError::BaseTooSmall);
+            return Err(OutOfRangeError::BaseTooSmall);
         } else if base > 36 {
-            return Err(BaseOutOfRangeError::BaseTooLarge);
+            return Err(OutOfRangeError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Custom(base)))
     }

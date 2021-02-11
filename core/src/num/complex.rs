@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::num::real::{FormattedReal, Real};
 use crate::num::Exact;
 use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};

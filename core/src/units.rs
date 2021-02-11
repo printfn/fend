@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt};
+use crate::error::{IntErr, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
 use crate::scope::GetIdentError;

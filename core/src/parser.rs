@@ -43,7 +43,7 @@ impl fmt::Display for ParseError {
         }
     }
 }
-impl crate::err::Error for ParseError {}
+impl crate::error::Error for ParseError {}
 
 type ParseResult<'a, 'b, T = Expr<'a>> = Result<(T, &'b [Token<'a>]), ParseError>;
 
@@ -209,7 +209,6 @@ fn parse_apply_cont<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResu
     ))
 }
 
-#[allow(clippy::option_if_let_else)]
 fn parse_mixed_fraction<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResult<'a, 'b> {
     let (positive, lhs, other_factor) = match lhs {
         Expr::Num(_) => (true, lhs, None),
@@ -250,11 +249,9 @@ fn parse_mixed_fraction<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> Parse
     } else {
         Expr::Sub(Box::new(lhs.clone()), rhs)
     };
-    let mixed_fraction = if let Some(other_factor) = other_factor {
+    let mixed_fraction = other_factor.map_or(mixed_fraction.clone(), |other_factor| {
         Expr::Mul(Box::new(other_factor.clone()), Box::new(mixed_fraction))
-    } else {
-        mixed_fraction
-    };
+    });
     Ok((mixed_fraction, input))
 }
 

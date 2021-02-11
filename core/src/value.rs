@@ -1,5 +1,5 @@
 use crate::ast::Expr;
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
 use crate::scope::Scope;
 use std::borrow::Cow;
@@ -267,14 +267,14 @@ impl<'a> Value<'a> {
         &self,
         indent: usize,
         int: &I,
-    ) -> Result<FormattedValue, IntErr<Never, I>> {
+    ) -> Result<Formatted, IntErr<Never, I>> {
         Ok(match self {
-            Self::Num(n) => FormattedValue::Number(Box::new(n.format(int)?)),
-            Self::BuiltInFunction(name) => FormattedValue::Str(name.as_str()),
-            Self::Format(fmt) => FormattedValue::String(fmt.to_string()),
-            Self::Dp => FormattedValue::Str("dp"),
-            Self::Sf => FormattedValue::Str("sf"),
-            Self::Base(b) => FormattedValue::Base(b.base_as_u8()),
+            Self::Num(n) => Formatted::Number(Box::new(n.format(int)?)),
+            Self::BuiltInFunction(name) => Formatted::Str(name.as_str()),
+            Self::Format(fmt) => Formatted::String(fmt.to_string()),
+            Self::Dp => Formatted::Str("dp"),
+            Self::Sf => Formatted::Str("sf"),
+            Self::Base(b) => Formatted::Base(b.base_as_u8()),
             Self::Fn(name, expr, _scope) => {
                 let expr_str = (&**expr).format(int)?;
                 let res = if name.contains('.') {
@@ -282,9 +282,9 @@ impl<'a> Value<'a> {
                 } else {
                     format!("\\{}.{}", name, expr_str)
                 };
-                FormattedValue::String(res)
+                Formatted::String(res)
             }
-            Self::Version => FormattedValue::Str(crate::get_version_as_str()),
+            Self::Version => Formatted::Str(crate::get_version_as_str()),
             Self::Object(kv) => {
                 let mut s = "{".to_string();
                 for (i, (k, v)) in kv.iter().enumerate() {
@@ -302,9 +302,9 @@ impl<'a> Value<'a> {
                 }
                 s.push('\n');
                 s.push('}');
-                FormattedValue::String(s)
+                Formatted::String(s)
             }
-            Self::String(s) => FormattedValue::Str(s.as_ref()),
+            Self::String(s) => Formatted::Str(s.as_ref()),
         })
     }
 
@@ -367,15 +367,15 @@ impl<'a> fmt::Debug for Value<'a> {
 }
 
 #[derive(Debug)]
-#[allow(clippy::module_name_repetitions)]
-pub(crate) enum FormattedValue<'a> {
+/// Describes a formatted value
+pub(crate) enum Formatted<'a> {
     Str(&'a str),
     String(String),
     Base(u8),
     Number(Box<FormattedNumber>),
 }
 
-impl<'a> fmt::Display for FormattedValue<'a> {
+impl<'a> fmt::Display for Formatted<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Str(s) => write!(f, "{}", s),

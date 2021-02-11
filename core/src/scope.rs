@@ -1,7 +1,7 @@
 use crate::value::Value;
 use crate::{
     ast::Expr,
-    err::{IntErr, Interrupt},
+    error::{IntErr, Interrupt},
 };
 use std::fmt;
 use std::sync::Arc;

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     ast,
-    err::{IntErr, Interrupt},
+    error::{IntErr, Interrupt},
     lexer, parser,
     scope::Scope,
     value::Value,

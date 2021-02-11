@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle, ValueOutOfRange};

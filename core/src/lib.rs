@@ -6,7 +6,7 @@
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.13")]
 
 mod ast;
-mod err;
+mod error;
 mod eval;
 mod interrupt;
 mod lexer;
@@ -95,8 +95,8 @@ pub fn evaluate_with_interrupt(
     let result = match eval::evaluate_to_string(input, None, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
-        Err(err::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
-        Err(err::IntErr::Error(e)) => return Err(e),
+        Err(error::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
+        Err(error::IntErr::Error(e)) => return Err(e),
     };
     Ok(FendResult {
         main_result: result,

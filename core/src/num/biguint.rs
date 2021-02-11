@@ -1,4 +1,4 @@
-use crate::err::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::{Base, DivideByZero, Exact, IntegerPowerError, ValueOutOfRange};
 use std::cmp::{max, Ordering};
@@ -644,7 +644,7 @@ impl FormattedBigUint {
 #[cfg(test)]
 mod tests {
     use super::BigUint;
-    use crate::err::{IntErr, Never};
+    use crate::error::{IntErr, Never};
     type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
 
     #[test]

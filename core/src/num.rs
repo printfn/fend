@@ -15,7 +15,7 @@ pub(crate) type Number<'a> = unit::UnitValue<'a>;
 pub(crate) type FormattedNumber = unit::FormattedUnitValue;
 pub(crate) type Base = base::Base;
 type Exact<T> = exact::Exact<T>;
-pub(crate) type BaseOutOfRangeError = base::BaseOutOfRangeError;
+pub(crate) type BaseOutOfRangeError = base::OutOfRangeError;
 pub(crate) type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
 #[allow(clippy::pub_enum_variant_names)]
@@ -45,7 +45,7 @@ impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
     }
 }
 
-impl<T: fmt::Display> crate::err::Error for ValueOutOfRange<T> {}
+impl<T: fmt::Display> crate::error::Error for ValueOutOfRange<T> {}
 
 pub enum ConvertToUsizeError {
     OutOfRange(ValueOutOfRange<usize>),
@@ -71,7 +71,7 @@ impl fmt::Display for ConvertToUsizeError {
     }
 }
 
-impl crate::err::Error for ConvertToUsizeError {}
+impl crate::error::Error for ConvertToUsizeError {}
 
 #[derive(Debug)]
 pub enum IntegerPowerError {
@@ -87,7 +87,7 @@ impl fmt::Display for IntegerPowerError {
         }
     }
 }
-impl crate::err::Error for IntegerPowerError {}
+impl crate::error::Error for IntegerPowerError {}
 
 #[derive(Debug)]
 pub struct DivideByZero {}
@@ -96,4 +96,4 @@ impl fmt::Display for DivideByZero {
         write!(f, "Division by zero")
     }
 }
-impl crate::err::Error for DivideByZero {}
+impl crate::error::Error for DivideByZero {}
