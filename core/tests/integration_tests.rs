@@ -1862,7 +1862,7 @@ fn exponents_9() {
 
 #[test]
 fn exponents_10() {
-    test_eval("0d1e10", "0d10000000000");
+    test_eval("10#1e10", "10#10000000000");
 }
 
 #[test]

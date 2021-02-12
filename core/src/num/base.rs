@@ -9,8 +9,6 @@ enum BaseEnum {
     Binary,
     /// Octal with 0o prefix
     Octal,
-    /// Decimal with 0d prefix
-    Decimal,
     /// Hex with 0x prefix
     Hex,
     /// Custom base between 2 and 36 (inclusive), written as base#number
@@ -49,7 +47,6 @@ impl Base {
         match self.0 {
             BaseEnum::Binary => 2,
             BaseEnum::Octal => 8,
-            BaseEnum::Decimal => 10,
             BaseEnum::Hex => 16,
             BaseEnum::Custom(b) | BaseEnum::Plain(b) => b,
         }
@@ -58,7 +55,6 @@ impl Base {
     pub const fn from_zero_based_prefix_char(ch: char) -> Result<Self, InvalidBasePrefixError> {
         Ok(match ch {
             'x' => Self(BaseEnum::Hex),
-            'd' => Self(BaseEnum::Decimal),
             'o' => Self(BaseEnum::Octal),
             'b' => Self(BaseEnum::Binary),
             _ => return Err(InvalidBasePrefixError {}),
@@ -87,7 +83,6 @@ impl Base {
         match self.0 {
             BaseEnum::Binary => write!(f, "0b")?,
             BaseEnum::Octal => write!(f, "0o")?,
-            BaseEnum::Decimal => write!(f, "0d")?,
             BaseEnum::Hex => write!(f, "0x")?,
             BaseEnum::Custom(b) => write!(f, "{}#", b)?,
             BaseEnum::Plain(_) => (),
@@ -153,7 +148,6 @@ impl fmt::Debug for Base {
         match self.0 {
             BaseEnum::Binary => write!(f, "binary"),
             BaseEnum::Octal => write!(f, "octal"),
-            BaseEnum::Decimal => write!(f, "decimal"),
             BaseEnum::Hex => write!(f, "hex"),
             BaseEnum::Custom(b) => write!(f, "base {} (with prefix)", b),
             BaseEnum::Plain(b) => write!(f, "base {}", b),
