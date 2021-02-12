@@ -2,7 +2,9 @@
 #![forbid(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::use_self)]
-#![deny(unreachable_pub)]
+#![forbid(clippy::needless_borrow)]
+#![forbid(clippy::cognitive_complexity)]
+#![forbid(unreachable_pub)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.13")]
 
 mod ast;

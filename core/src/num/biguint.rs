@@ -461,7 +461,7 @@ impl BigUint {
                 return Ok(Self::from(res));
             }
         }
-        self.mul_internal(&other, int)?;
+        self.mul_internal(other, int)?;
         Ok(self)
     }
 

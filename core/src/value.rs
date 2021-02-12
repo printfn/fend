@@ -214,41 +214,7 @@ impl<'a> Value<'a> {
                     scope,
                 )?
             }
-            Self::BuiltInFunction(name) => {
-                let other = crate::ast::evaluate(other, scope.clone(), int)?;
-                Self::Num(match name {
-                    BuiltInFunction::Approximately => other.expect_num()?.make_approximate(),
-                    BuiltInFunction::Abs => other.expect_num()?.abs(int)?,
-                    BuiltInFunction::Sin => other.expect_num()?.sin(scope, int)?,
-                    BuiltInFunction::Cos => other.expect_num()?.cos(scope, int)?,
-                    BuiltInFunction::Tan => other.expect_num()?.tan(scope, int)?,
-                    BuiltInFunction::Asin => other.expect_num()?.asin(int)?,
-                    BuiltInFunction::Acos => other.expect_num()?.acos(int)?,
-                    BuiltInFunction::Atan => other.expect_num()?.atan(int)?,
-                    BuiltInFunction::Sinh => other.expect_num()?.sinh(int)?,
-                    BuiltInFunction::Cosh => other.expect_num()?.cosh(int)?,
-                    BuiltInFunction::Tanh => other.expect_num()?.tanh(int)?,
-                    BuiltInFunction::Asinh => other.expect_num()?.asinh(int)?,
-                    BuiltInFunction::Acosh => other.expect_num()?.acosh(int)?,
-                    BuiltInFunction::Atanh => other.expect_num()?.atanh(int)?,
-                    BuiltInFunction::Ln => other.expect_num()?.ln(int)?,
-                    BuiltInFunction::Log2 => other.expect_num()?.log2(int)?,
-                    BuiltInFunction::Log10 => other.expect_num()?.log10(int)?,
-                    BuiltInFunction::Base => {
-                        use std::convert::TryInto;
-                        let n: u8 = other
-                            .expect_num()?
-                            .try_as_usize(int)
-                            .map_err(IntErr::into_string)?
-                            .try_into()
-                            .map_err(|_| "Unable to convert number to a valid base".to_string())?;
-                        return Ok(Self::Base(
-                            Base::from_plain_base(n).map_err(|e| e.to_string())?,
-                        ));
-                    }
-                    BuiltInFunction::Differentiate => return Ok(other.differentiate("x", int)?),
-                })
-            }
+            Self::BuiltInFunction(func) => Self::apply_built_in_function(func, other, scope, int)?,
             Self::Fn(param, expr, custom_scope) => {
                 let new_scope = Scope::with_variable(param, other, scope.clone(), custom_scope);
                 return Ok(crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), int)?);
@@ -261,6 +227,47 @@ impl<'a> Value<'a> {
                 .into());
             }
         })
+    }
+
+    fn apply_built_in_function<I: Interrupt>(
+        func: BuiltInFunction,
+        arg: Expr<'a>,
+        scope: Option<Arc<Scope<'a>>>,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
+        let arg = crate::ast::evaluate(arg, scope.clone(), int)?;
+        Ok(Self::Num(match func {
+            BuiltInFunction::Approximately => arg.expect_num()?.make_approximate(),
+            BuiltInFunction::Abs => arg.expect_num()?.abs(int)?,
+            BuiltInFunction::Sin => arg.expect_num()?.sin(scope, int)?,
+            BuiltInFunction::Cos => arg.expect_num()?.cos(scope, int)?,
+            BuiltInFunction::Tan => arg.expect_num()?.tan(scope, int)?,
+            BuiltInFunction::Asin => arg.expect_num()?.asin(int)?,
+            BuiltInFunction::Acos => arg.expect_num()?.acos(int)?,
+            BuiltInFunction::Atan => arg.expect_num()?.atan(int)?,
+            BuiltInFunction::Sinh => arg.expect_num()?.sinh(int)?,
+            BuiltInFunction::Cosh => arg.expect_num()?.cosh(int)?,
+            BuiltInFunction::Tanh => arg.expect_num()?.tanh(int)?,
+            BuiltInFunction::Asinh => arg.expect_num()?.asinh(int)?,
+            BuiltInFunction::Acosh => arg.expect_num()?.acosh(int)?,
+            BuiltInFunction::Atanh => arg.expect_num()?.atanh(int)?,
+            BuiltInFunction::Ln => arg.expect_num()?.ln(int)?,
+            BuiltInFunction::Log2 => arg.expect_num()?.log2(int)?,
+            BuiltInFunction::Log10 => arg.expect_num()?.log10(int)?,
+            BuiltInFunction::Base => {
+                use std::convert::TryInto;
+                let n: u8 = arg
+                    .expect_num()?
+                    .try_as_usize(int)
+                    .map_err(IntErr::into_string)?
+                    .try_into()
+                    .map_err(|_| "Unable to convert number to a valid base".to_string())?;
+                return Ok(Self::Base(
+                    Base::from_plain_base(n).map_err(|e| e.to_string())?,
+                ));
+            }
+            BuiltInFunction::Differentiate => return Ok(arg.differentiate("x", int)?),
+        }))
     }
 
     pub(crate) fn format<I: Interrupt>(

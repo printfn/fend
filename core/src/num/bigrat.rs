@@ -634,11 +634,8 @@ impl BigRat {
             // digit = base * numerator / denominator
             // next_numerator = base * numerator - digit * denominator
             let bnum = num.mul(base, int)?;
-            let digit = bnum
-                .clone()
-                .div(&denominator, int)
-                .map_err(IntErr::unwrap)?;
-            let next_num = bnum.sub(&digit.clone().mul(&denominator, int)?);
+            let digit = bnum.clone().div(denominator, int).map_err(IntErr::unwrap)?;
+            let next_num = bnum.sub(&digit.clone().mul(denominator, int)?);
             Ok((next_num, digit))
         };
         let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never, I>> {
