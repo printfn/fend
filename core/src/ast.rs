@@ -117,13 +117,9 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::<'a>::Add(a, b) | Expr::<'a>::ImplicitAdd(a, b) => eval!(*a)?.handle_two_nums(
-            eval!(*b)?,
-            |a, b| a.add(b, int),
-            |a| |f| Expr::Add(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Add(Box::new(Expr::Num(a)), f),
-            scope,
-        )?,
+        Expr::<'a>::Add(a, b) | Expr::<'a>::ImplicitAdd(a, b) => {
+            evaluate_add(eval!(*a)?, eval!(*b)?, scope, int)?
+        }
         Expr::<'a>::Sub(a, b) => {
             let a = eval!(*a)?;
             match a {
@@ -193,6 +189,37 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             }
             value
         }
+    })
+}
+
+fn evaluate_add<'a, I: Interrupt>(
+    a: Value<'a>,
+    b: Value<'a>,
+    scope: Option<Arc<Scope<'a>>>,
+    int: &I,
+) -> Result<Value<'a>, IntErr<String, I>> {
+    Ok(match (a, b) {
+        (Value::Num(a), Value::Num(b)) => Value::Num(a.add(b, int)?),
+        (Value::String(a), Value::String(b)) => {
+            Value::String(format!("{}{}", a.as_ref(), b.as_ref()).into())
+        }
+        (Value::BuiltInFunction(f), Value::Num(a)) => {
+            f.wrap_with_expr(|f| Expr::Add(f, Box::new(Expr::Num(a))), scope)
+        }
+        (Value::Num(a), Value::BuiltInFunction(f)) => {
+            f.wrap_with_expr(|f| Expr::Add(Box::new(Expr::Num(a)), f), scope)
+        }
+        (Value::Fn(param, expr, scope), Value::Num(a)) => Value::Fn(
+            param,
+            Box::new(Expr::Add(expr, Box::new(Expr::Num(a)))),
+            scope,
+        ),
+        (Value::Num(a), Value::Fn(param, expr, scope)) => Value::Fn(
+            param,
+            Box::new(Expr::Add(Box::new(Expr::Num(a)), expr)),
+            scope,
+        ),
+        _ => return Err("Expected a number".to_string().into()),
     })
 }
 

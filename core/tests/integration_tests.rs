@@ -4782,3 +4782,13 @@ fn backslash_in_string_literal() {
 fn add_string_to_number() {
     expect_error("\"hi\" + 2", Some("Expected a number"));
 }
+
+#[test]
+fn simple_string_concatenation() {
+    test_eval_simple(r#""hi" + "a""#, "hia");
+}
+
+#[test]
+fn triple_string_concatenation() {
+    test_eval_simple(r#""hi" + "a" + "3""#, "hia3");
+}
