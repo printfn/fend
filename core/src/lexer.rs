@@ -414,7 +414,7 @@ pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
         '㏊', '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
     ];
     // these chars are only valid by themselves
-    let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '"', '\'', '’', '”', 'π'];
+    let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
     if only_valid_by_themselves.contains(&ch)
         || only_valid_by_themselves.contains(&prev.unwrap_or('a'))
     {
@@ -422,7 +422,7 @@ pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     } else if ch.is_alphabetic() || allowed_chars.contains(&ch) {
         true
     } else {
-        prev.is_some() && ".0123456789".contains(ch)
+        prev.is_some() && ".0123456789'\"".contains(ch)
     }
 }
 
@@ -458,6 +458,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
     input: &'a str,
     // normally 0; 1 after backslash; 2 after ident after backslash
     after_backslash_state: u8,
+    after_number: bool,
     int: &'b I,
 }
 
@@ -479,6 +480,14 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         .map_err(|e| e.map(Error::NumberParse))?;
                     self.input = remaining;
                     Token::Num(num)
+                } else if self.after_number && ['\'', '"'].contains(&ch) {
+                    let (_, remaining) = self.input.split_at(1);
+                    self.input = remaining;
+                    if ch == '\'' {
+                        Token::Ident("'")
+                    } else {
+                        Token::Ident("\"")
+                    }
                 } else if self.input.starts_with("#\"") {
                     let (_, remaining) = self.input.split_at(2);
                     let literal_length = remaining
@@ -559,6 +568,11 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
             Ok(None) => None,
             Ok(Some(t)) => Some(Ok(t)),
         };
+        if let Some(Ok(Token::Num(_))) = res {
+            self.after_number = true;
+        } else {
+            self.after_number = false;
+        }
         if let Some(Ok(Token::Symbol(Symbol::Backslash))) = res {
             self.after_backslash_state = 1;
         } else if self.after_backslash_state == 1 {
@@ -578,6 +592,7 @@ pub(crate) fn lex<'a, 'b, I: Interrupt>(input: &'a str, int: &'b I) -> Lexer<'a,
     Lexer {
         input,
         after_backslash_state: 0,
+        after_number: false,
         int,
     }
 }

@@ -4729,3 +4729,18 @@ fn string_debug_representation() {
 fn cis_4() {
     test_eval("cis 4", "approx. -0.6536436208 - 0.7568024953i");
 }
+
+#[test]
+fn a_prime() {
+    expect_error("a'", Some("Unknown identifier 'a''"));
+}
+
+#[test]
+fn a_double_prime() {
+    expect_error("a\"", Some("Unknown identifier 'a\"'"));
+}
+
+#[test]
+fn one_inch_with_space() {
+    test_eval("1 \"", "1\"");
+}
