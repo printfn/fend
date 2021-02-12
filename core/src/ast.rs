@@ -252,7 +252,7 @@ fn evaluate_as<'a, I: Interrupt>(
             );
         }
         Value::Base(base) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_base(base)),
-        Value::BuiltInFunction(_) | Value::Fn(_, _, _) | Value::Version => {
+        Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
             return Err("Unable to convert value to a function".to_string().into());
         }
         Value::Object(_) => {
@@ -320,7 +320,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "oct" | "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
-        "version" => Value::Version,
+        "version" => Value::String(crate::get_version_as_str().into()),
         "square" => evaluate_to_value("x: x^2", scope, int)?,
         "cubic" => evaluate_to_value("x: x^3", scope, int)?,
         "earth" => Value::Object(vec![
