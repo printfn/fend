@@ -40,7 +40,7 @@ impl<'a> Expr<'a> {
     pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<Never, I>> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
-            Self::String(s) => format!(r##"#"{}"#"##, s.as_ref()),
+            Self::String(s) => format!(r#""{}""#, s.as_ref()),
             Self::Ident(ident) => (*ident).to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),

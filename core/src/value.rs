@@ -368,7 +368,7 @@ impl<'a> fmt::Debug for Value<'a> {
                 s.push('}');
                 write!(f, "{}", s)
             }
-            Self::String(s) => write!(f, r##"#"{}"#"##, s.as_ref()),
+            Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
         }
     }
 }

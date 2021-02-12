@@ -4721,8 +4721,13 @@ fn double_quote_in_raw_string() {
 }
 
 #[test]
+fn raw_string_debug_representation() {
+    test_eval_simple("!debug #\"hi\"#", "\"hi\"");
+}
+
+#[test]
 fn string_debug_representation() {
-    test_eval_simple("!debug #\"hi\"#", "#\"hi\"#");
+    test_eval_simple("!debug \"hi\"", "\"hi\"");
 }
 
 #[test]
