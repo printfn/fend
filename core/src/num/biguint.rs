@@ -619,7 +619,7 @@ impl fmt::Display for FormattedBigUint {
             FormattedBigUintType::Simple(i) => write!(f, "{}", i)?,
             FormattedBigUintType::Complex(s, sf_limit) => {
                 for (i, ch) in s.chars().rev().enumerate() {
-                    if sf_limit.is_some() && i >= sf_limit.unwrap() {
+                    if sf_limit.is_some() && &Some(i) >= sf_limit {
                         write!(f, "0")?;
                     } else {
                         write!(f, "{}", ch)?;
@@ -632,10 +632,16 @@ impl fmt::Display for FormattedBigUint {
 }
 
 impl FormattedBigUint {
-    pub fn num_digits(&self) -> usize {
+    pub(crate) fn num_digits(&self) -> usize {
         match &self.ty {
             FormattedBigUintType::Zero => 1,
-            FormattedBigUintType::Simple(i) => i.to_string().len(),
+            FormattedBigUintType::Simple(i) => {
+                if *i <= 9 {
+                    1
+                } else {
+                    i.to_string().len()
+                }
+            }
             FormattedBigUintType::Complex(s, _) => s.len(),
         }
     }
