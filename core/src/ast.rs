@@ -229,6 +229,11 @@ fn evaluate_as<'a, I: Interrupt>(
     scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
+    if let Expr::Ident("string") = b {
+        return Ok(Value::String(
+            evaluate(a, scope, int)?.format(0, int)?.to_string().into(),
+        ));
+    }
     Ok(match evaluate(b, scope.clone(), int)? {
         Value::Num(b) => Value::Num(evaluate(a, scope, int)?.expect_num()?.convert_to(b, int)?),
         Value::Format(fmt) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_format(fmt)),

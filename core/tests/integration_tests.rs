@@ -4792,3 +4792,8 @@ fn simple_string_concatenation() {
 fn triple_string_concatenation() {
     test_eval_simple(r#""hi" + "a" + "3""#, "hia3");
 }
+
+#[test]
+fn number_to_string() {
+    test_eval_simple("\"pi = \" + (pi to string)", "pi = approx. 3.1415926535");
+}
