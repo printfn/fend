@@ -4769,10 +4769,7 @@ fn hello_world_string() {
 
 #[test]
 fn backslash_in_string_literal() {
-    expect_error(
-        "\"\\\"",
-        Some("Backslash not currently allowed in string literal"),
-    );
+    test_eval_simple(r#""\\""#, "\\");
 }
 
 #[test]
@@ -4793,4 +4790,65 @@ fn triple_string_concatenation() {
 #[test]
 fn number_to_string() {
     test_eval_simple("\"pi = \" + (pi to string)", "pi = approx. 3.1415926535");
+}
+
+#[test]
+fn escape_sequence_backslashes() {
+    test_eval_simple(r#""\\\\ \\""#, "\\\\ \\");
+}
+
+#[test]
+fn escape_sequence_linebreak() {
+    test_eval_simple(r#""\n""#, "\n");
+}
+
+#[test]
+fn escape_sequence_tab() {
+    test_eval_simple(r#""\t""#, "\t");
+}
+
+#[test]
+fn escape_sequence_quote() {
+    test_eval_simple(r#""\"""#, "\"");
+}
+
+#[test]
+fn escape_sequence_vertical_tab() {
+    test_eval_simple(r#""\v""#, "\u{0b}");
+}
+
+#[test]
+fn escape_sequence_escape() {
+    test_eval_simple(r#""\e""#, "\u{1b}");
+}
+
+#[test]
+fn escape_sequence_backspace() {
+    test_eval_simple(r#""\b""#, "\u{8}");
+}
+
+#[test]
+fn escape_sequence_tilde() {
+    test_eval_simple(r#""\x7e""#, "~");
+}
+
+#[test]
+fn escape_sequence_first_char_out_of_range() {
+    expect_error(
+        r#""\x9e""#,
+        Some("Expected an escape sequence between \\x00 and \\x7f"),
+    );
+}
+
+#[test]
+fn escape_sequence_second_char_out_of_range() {
+    expect_error(
+        r#""\x7g""#,
+        Some("Expected an escape sequence between \\x00 and \\x7f"),
+    );
+}
+
+#[test]
+fn multiple_escape_sequences() {
+    test_eval_simple(r#""\\\n\e\v\b\t\x00\x7F""#, "\\\n\u{1b}\u{0b}\u{8}\t\0\x7f");
 }

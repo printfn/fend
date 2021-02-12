@@ -8,7 +8,7 @@ pub(crate) enum Token<'a> {
     Ident(&'a str),
     Symbol(Symbol),
     Whitespace,
-    StringLiteral(&'a str),
+    StringLiteral(std::borrow::Cow<'a, str>),
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -41,6 +41,8 @@ pub(crate) enum Error {
     UnexpectedChar(char),
     BackslashInStringLiteral,
     UnterminatedStringLiteral,
+    UnknownBackslashEscapeSequence(char),
+    BackslashXOutOfRange,
     // todo remove this
     NumberParse(String),
 }
@@ -69,6 +71,12 @@ impl fmt::Display for Error {
                 write!(f, "Backslash not currently allowed in string literal")
             }
             Self::UnterminatedStringLiteral => write!(f, "Unterminated string literal"),
+            Self::UnknownBackslashEscapeSequence(ch) => {
+                write!(f, "Unknown escape sequence: \\{}", ch)
+            }
+            Self::BackslashXOutOfRange => {
+                write!(f, "Expected an escape sequence between \\x00 and \\x7f")
+            }
         }
     }
 }
@@ -496,6 +504,54 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
     }))
 }
 
+fn parse_string_literal(input: &str) -> Result<(Token, &str), Error> {
+    let (_, input) = input.split_at(1);
+    let mut chars_iter = input.char_indices();
+    let mut literal_length = None;
+    let mut literal_string = String::new();
+    while let Some((idx, ch)) = chars_iter.next() {
+        if ch == '"' {
+            literal_length = Some(idx);
+            break;
+        }
+        if ch == '\\' {
+            let (_, next) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+            let escaped_char = match next {
+                '\\' => '\\',
+                '"' => '"',
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                'e' => '\u{1b}',
+                'v' => '\u{0b}',
+                'b' => '\u{8}',
+                'x' => {
+                    let (_, hex1) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+                    let (_, hex2) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+                    let hex1: u8 = hex1
+                        .to_digit(8)
+                        .ok_or(Error::BackslashXOutOfRange)?
+                        .try_into()
+                        .unwrap();
+                    let hex2: u8 = hex2
+                        .to_digit(16)
+                        .ok_or(Error::BackslashXOutOfRange)?
+                        .try_into()
+                        .unwrap();
+                    (hex1 * 16 + hex2) as u8 as char
+                }
+                _ => return Err(Error::UnknownBackslashEscapeSequence(next)),
+            };
+            literal_string.push(escaped_char);
+        } else {
+            literal_string.push(ch);
+        }
+    }
+    let literal_length = literal_length.ok_or(Error::UnterminatedStringLiteral)?;
+    let (_, remaining) = input.split_at(literal_length + 1);
+    Ok((Token::StringLiteral(literal_string.into()), remaining))
+}
+
 pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
     input: &'a str,
     // normally 0; 1 after backslash; 2 after ident after backslash
@@ -531,20 +587,10 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         Token::Ident("\"")
                     }
                 } else if ch == '"' {
-                    // normal string literal
-                    let (_, remaining) = self.input.split_at(1);
-                    let literal_length = remaining
-                        .match_indices('"')
-                        .next()
-                        .ok_or(Error::UnterminatedStringLiteral)?
-                        .0;
-                    let (literal, remaining) = remaining.split_at(literal_length);
-                    if literal.contains('\\') {
-                        return Err(Error::BackslashInStringLiteral.into());
-                    }
-                    let (_terminator, remaining) = remaining.split_at(1);
+                    // normal string literal, with possible escape sequences
+                    let (token, remaining) = parse_string_literal(self.input)?;
                     self.input = remaining;
-                    Token::StringLiteral(literal)
+                    token
                 } else if self.input.starts_with("#\"") {
                     // raw string literal
                     let (_, remaining) = self.input.split_at(2);
@@ -556,7 +602,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     let (literal, remaining) = remaining.split_at(literal_length);
                     let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
-                    Token::StringLiteral(literal)
+                    Token::StringLiteral(literal.into())
                 } else if is_valid_in_ident(ch, None) {
                     // dots aren't allowed in idents after a backslash
                     let (ident, remaining) =
