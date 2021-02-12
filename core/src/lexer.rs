@@ -554,9 +554,6 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         .ok_or(Error::UnterminatedStringLiteral)?
                         .0;
                     let (literal, remaining) = remaining.split_at(literal_length);
-                    if literal.contains('\\') {
-                        return Err(Error::BackslashInStringLiteral.into());
-                    }
                     let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
                     Token::StringLiteral(literal)

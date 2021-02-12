@@ -4709,10 +4709,7 @@ fn hello_world_raw_string() {
 
 #[test]
 fn backslash_in_raw_string_literal() {
-    expect_error(
-        "#\"\\\"#",
-        Some("Backslash not currently allowed in string literal"),
-    );
+    test_eval_simple("#\"\\\"#", "\\");
 }
 
 #[test]
