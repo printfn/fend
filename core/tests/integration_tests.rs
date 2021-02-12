@@ -4688,27 +4688,27 @@ fn one_plus_one() {
 }
 
 #[test]
-fn unterminated_empty_string() {
+fn unterminated_raw_empty_string() {
     expect_error("#\"", Some("Unterminated string literal"));
 }
 
 #[test]
-fn unterminated_string() {
+fn unterminated_raw_string() {
     expect_error("#\"hello", Some("Unterminated string literal"));
 }
 
 #[test]
-fn empty_string() {
+fn empty_raw_string() {
     test_eval("#\"\"#", "");
 }
 
 #[test]
-fn hello_world_string() {
+fn hello_world_raw_string() {
     test_eval_simple("#\"Hello, world!\"#", "Hello, world!");
 }
 
 #[test]
-fn backslash_in_string_literal() {
+fn backslash_in_raw_string_literal() {
     expect_error(
         "#\"\\\"#",
         Some("Backslash not currently allowed in string literal"),
@@ -4716,7 +4716,7 @@ fn backslash_in_string_literal() {
 }
 
 #[test]
-fn double_quote_in_string() {
+fn double_quote_in_raw_string() {
     test_eval_simple("#\"A quote: \"\"#", "A quote: \"");
 }
 
@@ -4743,4 +4743,37 @@ fn a_double_prime() {
 #[test]
 fn one_inch_with_space() {
     test_eval("1 \"", "1\"");
+}
+
+#[test]
+fn empty_string() {
+    test_eval_simple("\"\"", "");
+}
+
+#[test]
+fn unterminated_empty_string() {
+    expect_error("\"", Some("Unterminated string literal"));
+}
+
+#[test]
+fn unterminated_string() {
+    expect_error("\"hello", Some("Unterminated string literal"));
+}
+
+#[test]
+fn hello_world_string() {
+    test_eval_simple("\"Hello, world!\"", "Hello, world!");
+}
+
+#[test]
+fn backslash_in_string_literal() {
+    expect_error(
+        "\"\\\"",
+        Some("Backslash not currently allowed in string literal"),
+    );
+}
+
+#[test]
+fn add_string_to_number() {
+    expect_error("\"hi\" + 2", Some("Expected a number"));
 }

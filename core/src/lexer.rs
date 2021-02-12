@@ -454,6 +454,48 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
     ))
 }
 
+fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
+    Ok(Token::Symbol(match ch {
+        '(' => Symbol::OpenParens,
+        ')' => Symbol::CloseParens,
+        '+' => Symbol::Add,
+        '!' => Symbol::Factorial,
+        '-' => {
+            if input.starts_with('>') {
+                let (_, remaining) = input.split_at('>'.len_utf8());
+                *input = remaining;
+                Symbol::ArrowConversion
+            } else {
+                Symbol::Sub
+            }
+        }
+        '*' => {
+            if input.starts_with('*') {
+                let (_, remaining) = input.split_at('*'.len_utf8());
+                *input = remaining;
+                Symbol::Pow
+            } else {
+                Symbol::Mul
+            }
+        }
+        '/' => Symbol::Div,
+        '^' => Symbol::Pow,
+        ':' => Symbol::Fn,
+        '=' => {
+            if input.starts_with('>') {
+                let (_, remaining) = input.split_at('>'.len_utf8());
+                *input = remaining;
+                Symbol::Fn
+            } else {
+                return Err(Error::UnexpectedChar(ch));
+            }
+        }
+        '\\' => Symbol::Backslash,
+        '.' => Symbol::Dot,
+        _ => return Err(Error::UnexpectedChar(ch)),
+    }))
+}
+
 pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
     input: &'a str,
     // normally 0; 1 after backslash; 2 after ident after backslash
@@ -488,7 +530,23 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     } else {
                         Token::Ident("\"")
                     }
+                } else if ch == '"' {
+                    // normal string literal
+                    let (_, remaining) = self.input.split_at(1);
+                    let literal_length = remaining
+                        .match_indices('"')
+                        .next()
+                        .ok_or(Error::UnterminatedStringLiteral)?
+                        .0;
+                    let (literal, remaining) = remaining.split_at(literal_length);
+                    if literal.contains('\\') {
+                        return Err(Error::BackslashInStringLiteral.into());
+                    }
+                    let (_terminator, remaining) = remaining.split_at(1);
+                    self.input = remaining;
+                    Token::StringLiteral(literal)
                 } else if self.input.starts_with("#\"") {
+                    // raw string literal
                     let (_, remaining) = self.input.split_at(2);
                     let literal_length = remaining
                         .match_indices("\"#")
@@ -509,49 +567,9 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     self.input = remaining;
                     ident
                 } else {
-                    {
-                        let (_, remaining) = self.input.split_at(ch.len_utf8());
-                        self.input = remaining;
-                    }
-                    Token::Symbol(match ch {
-                        '(' => Symbol::OpenParens,
-                        ')' => Symbol::CloseParens,
-                        '+' => Symbol::Add,
-                        '!' => Symbol::Factorial,
-                        '-' => {
-                            if self.input.starts_with('>') {
-                                let (_, remaining) = self.input.split_at('>'.len_utf8());
-                                self.input = remaining;
-                                Symbol::ArrowConversion
-                            } else {
-                                Symbol::Sub
-                            }
-                        }
-                        '*' => {
-                            if self.input.starts_with('*') {
-                                let (_, remaining) = self.input.split_at('*'.len_utf8());
-                                self.input = remaining;
-                                Symbol::Pow
-                            } else {
-                                Symbol::Mul
-                            }
-                        }
-                        '/' => Symbol::Div,
-                        '^' => Symbol::Pow,
-                        ':' => Symbol::Fn,
-                        '=' => {
-                            if self.input.starts_with('>') {
-                                let (_, remaining) = self.input.split_at('>'.len_utf8());
-                                self.input = remaining;
-                                Symbol::Fn
-                            } else {
-                                return Err(Error::UnexpectedChar(ch).into());
-                            }
-                        }
-                        '\\' => Symbol::Backslash,
-                        '.' => Symbol::Dot,
-                        _ => return Err(Error::UnexpectedChar(ch).into()),
-                    })
+                    let (_, remaining) = self.input.split_at(ch.len_utf8());
+                    self.input = remaining;
+                    parse_symbol(ch, &mut self.input)?
                 }
             }
             None => return Ok(None),
