@@ -4872,3 +4872,18 @@ fn escaped_single_quote_in_string() {
 fn skip_whitespace_in_string() {
     test_eval_simple("\" hi \\z  \n\t  \r\n  \' \\z\\za\\z :\"", " hi ' a:");
 }
+
+#[test]
+fn single_quote_string() {
+    test_eval_simple("'hi'", "hi");
+}
+
+#[test]
+fn single_quote_string_unterminated() {
+    expect_error(r#"'hi\"\'"#, Some("Unterminated string literal"));
+}
+
+#[test]
+fn single_quote_string_with_escapes() {
+    test_eval_simple(r#"'hi\"\''"#, "hi\"'");
+}

@@ -504,7 +504,7 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
     }))
 }
 
-fn parse_string_literal(input: &str) -> Result<(Token, &str), Error> {
+fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), Error> {
     let (_, input) = input.split_at(1);
     let mut chars_iter = input.char_indices();
     let mut literal_length = None;
@@ -517,7 +517,7 @@ fn parse_string_literal(input: &str) -> Result<(Token, &str), Error> {
             }
             skip_whitespace = false;
         }
-        if ch == '"' {
+        if ch == terminator {
             literal_length = Some(idx);
             break;
         }
@@ -595,19 +595,21 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         .map_err(|e| e.map(Error::NumberParse))?;
                     self.input = remaining;
                     Token::Num(num)
-                } else if self.after_number && ['\'', '"'].contains(&ch) {
-                    let (_, remaining) = self.input.split_at(1);
-                    self.input = remaining;
-                    if ch == '\'' {
-                        Token::Ident("'")
+                } else if ch == '\'' || ch == '"' {
+                    if self.after_number {
+                        let (_, remaining) = self.input.split_at(1);
+                        self.input = remaining;
+                        if ch == '\'' {
+                            Token::Ident("'")
+                        } else {
+                            Token::Ident("\"")
+                        }
                     } else {
-                        Token::Ident("\"")
+                        // normal string literal, with possible escape sequences
+                        let (token, remaining) = parse_string_literal(self.input, ch)?;
+                        self.input = remaining;
+                        token
                     }
-                } else if ch == '"' {
-                    // normal string literal, with possible escape sequences
-                    let (token, remaining) = parse_string_literal(self.input)?;
-                    self.input = remaining;
-                    token
                 } else if self.input.starts_with("#\"") {
                     // raw string literal
                     let (_, remaining) = self.input.split_at(2);
