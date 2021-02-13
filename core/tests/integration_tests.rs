@@ -4852,3 +4852,23 @@ fn escape_sequence_second_char_out_of_range() {
 fn multiple_escape_sequences() {
     test_eval_simple(r#""\\\n\e\v\b\t\x00\x7F""#, "\\\n\u{1b}\u{0b}\u{8}\t\0\x7f");
 }
+
+#[test]
+fn bell_in_string() {
+    test_eval_simple("\"\\a\"", "\u{7}");
+}
+
+#[test]
+fn form_feed_in_string() {
+    test_eval_simple("\"\\f\"", "\u{c}");
+}
+
+#[test]
+fn escaped_single_quote_in_string() {
+    test_eval_simple("\" \\' \"", " ' ");
+}
+
+#[test]
+fn skip_whitespace_in_string() {
+    test_eval_simple("\" hi \\z  \n\t  \r\n  \' \\z\\za\\z :\"", " hi ' a:");
+}

@@ -509,7 +509,14 @@ fn parse_string_literal(input: &str) -> Result<(Token, &str), Error> {
     let mut chars_iter = input.char_indices();
     let mut literal_length = None;
     let mut literal_string = String::new();
+    let mut skip_whitespace = false;
     while let Some((idx, ch)) = chars_iter.next() {
+        if skip_whitespace {
+            if ch.is_ascii_whitespace() {
+                continue;
+            }
+            skip_whitespace = false;
+        }
         if ch == '"' {
             literal_length = Some(idx);
             break;
@@ -517,15 +524,19 @@ fn parse_string_literal(input: &str) -> Result<(Token, &str), Error> {
         if ch == '\\' {
             let (_, next) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
             let escaped_char = match next {
-                '\\' => '\\',
-                '"' => '"',
-                'n' => '\n',
-                'r' => '\r',
-                't' => '\t',
-                'e' => '\u{1b}',
-                'v' => '\u{0b}',
-                'b' => '\u{8}',
+                '\\' => Some('\\'),
+                '"' => Some('"'),
+                '\'' => Some('\''),
+                'a' => Some('\u{7}'),  // bell
+                'b' => Some('\u{8}'),  // backspace
+                'e' => Some('\u{1b}'), // escape
+                'f' => Some('\u{c}'),  // form feed
+                'n' => Some('\n'),     // line feed
+                'r' => Some('\r'),     // carriage return
+                't' => Some('\t'),     // tab
+                'v' => Some('\u{0b}'), // vertical tab
                 'x' => {
+                    // two-character hex code
                     let (_, hex1) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
                     let (_, hex2) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
                     let hex1: u8 = hex1
@@ -538,11 +549,17 @@ fn parse_string_literal(input: &str) -> Result<(Token, &str), Error> {
                         .ok_or(Error::BackslashXOutOfRange)?
                         .try_into()
                         .unwrap();
-                    (hex1 * 16 + hex2) as u8 as char
+                    Some((hex1 * 16 + hex2) as u8 as char)
+                }
+                'z' => {
+                    skip_whitespace = true;
+                    None
                 }
                 _ => return Err(Error::UnknownBackslashEscapeSequence(next)),
             };
-            literal_string.push(escaped_char);
+            if let Some(escaped_char) = escaped_char {
+                literal_string.push(escaped_char);
+            }
         } else {
             literal_string.push(ch);
         }
