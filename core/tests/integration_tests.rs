@@ -5017,3 +5017,67 @@ fn control_char_escape_gt() {
 fn control_char_escape_backtick() {
     expect_error("'\\^`'", None);
 }
+
+#[test]
+fn unicode_escape_7e() {
+    test_eval_simple("'\\u{7e}'", "~");
+}
+
+#[test]
+fn unicode_escape_696969() {
+    expect_error(
+        "'\\u{696969}'",
+        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+    );
+}
+
+#[test]
+fn unicode_escape_69() {
+    test_eval_simple("'\\u{69}'", "i");
+}
+
+#[test]
+fn unicode_escape_69x() {
+    expect_error(
+        "'\\u{69x}'",
+        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+    );
+}
+
+#[test]
+fn unicode_escape_empty() {
+    expect_error(
+        "'\\u{}'",
+        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+    );
+}
+
+#[test]
+fn unicode_escape_5437() {
+    test_eval_simple("'\\u{5437}'", "\u{5437}");
+}
+
+#[test]
+fn unicode_escape_5() {
+    test_eval_simple("'\\u{5}'", "\u{5}");
+}
+
+#[test]
+fn unicode_escape_0() {
+    test_eval_simple("'\\u{0}'", "\0");
+}
+
+#[test]
+fn unicode_escape_1() {
+    test_eval_simple("'\\u{1}'", "\u{1}");
+}
+
+#[test]
+fn unicode_escape_10ffff() {
+    test_eval_simple("'\\u{10ffff}'", "\u{10ffff}");
+}
+
+#[test]
+fn unicode_escape_aaa_uppercase() {
+    test_eval_simple("'\\u{AAA}'", "\u{aaa}");
+}

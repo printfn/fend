@@ -44,6 +44,7 @@ pub(crate) enum Error {
     UnknownBackslashEscapeSequence(char),
     BackslashXOutOfRange,
     ExpectedALetterOrCode,
+    InvalidUnicodeEscapeSequence,
     // todo remove this
     NumberParse(String),
 }
@@ -82,6 +83,12 @@ impl fmt::Display for Error {
                 write!(
                     f,
                     "Expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
+                )
+            }
+            Self::InvalidUnicodeEscapeSequence => {
+                write!(
+                    f,
+                    "Invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
                 )
             }
         }
@@ -511,6 +518,37 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
     }))
 }
 
+fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices) -> Result<char, Error> {
+    if chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?.1 != '{' {
+        return Err(Error::InvalidUnicodeEscapeSequence);
+    }
+    let mut result_value = 0;
+    let mut zero_length = true;
+    loop {
+        let (_, ch) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+        if ch.is_ascii_hexdigit() {
+            zero_length = false;
+            result_value *= 16;
+            result_value += ch.to_digit(16).ok_or(Error::InvalidUnicodeEscapeSequence)?;
+            if result_value > 0x10_ffff {
+                return Err(Error::InvalidUnicodeEscapeSequence);
+            }
+        } else if ch == '}' {
+            break;
+        } else {
+            return Err(Error::InvalidUnicodeEscapeSequence);
+        }
+    }
+    if zero_length {
+        return Err(Error::InvalidUnicodeEscapeSequence);
+    }
+    if let Ok(ch) = result_value.try_into() {
+        Ok(ch)
+    } else {
+        Err(Error::InvalidUnicodeEscapeSequence)
+    }
+}
+
 fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), Error> {
     let (_, input) = input.split_at(1);
     let mut chars_iter = input.char_indices();
@@ -558,6 +596,7 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                         .unwrap();
                     Some((hex1 * 16 + hex2) as u8 as char)
                 }
+                'u' => Some(parse_unicode_escape(&mut chars_iter)?),
                 'z' => {
                     skip_whitespace = true;
                     None
