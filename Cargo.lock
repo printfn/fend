@@ -288,9 +288,9 @@ dependencies = [
 
 [[package]]
 name = "rustyline-with-hint-fix"
-version = "7.0.0"
+version = "7.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "819249458967443d21d3301b8d98229a47db009bc30c04536bd9c7d1c7fbd381"
+checksum = "92db18f68bb9b2be9da9ad1cfa0391121299d6eda6864c8222e98ba3b0a0f857"
 dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
