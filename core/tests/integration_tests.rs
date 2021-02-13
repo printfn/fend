@@ -4887,3 +4887,133 @@ fn single_quote_string_unterminated() {
 fn single_quote_string_with_escapes() {
     test_eval_simple(r#"'hi\"\''"#, "hi\"'");
 }
+
+#[test]
+fn control_char_escape_question_mark() {
+    test_eval_simple("'\\^?'", "\x7f");
+}
+
+#[test]
+fn control_char_escape_at_symbol() {
+    test_eval_simple("'\\^@'", "\0");
+}
+
+#[test]
+fn control_char_escape_a() {
+    test_eval_simple("'\\^A'", "\x01");
+}
+
+#[test]
+fn control_char_escape_b() {
+    test_eval_simple("'\\^B'", "\x02");
+}
+
+#[test]
+fn control_char_escape_c() {
+    test_eval_simple("'\\^C'", "\x03");
+}
+
+#[test]
+fn control_char_escape_d() {
+    test_eval_simple("'\\^D'", "\x04");
+}
+
+#[test]
+fn control_char_escape_e() {
+    test_eval_simple("'\\^E'", "\x05");
+}
+
+#[test]
+fn control_char_escape_f() {
+    test_eval_simple("'\\^F'", "\x06");
+}
+
+#[test]
+fn control_char_escape_g() {
+    test_eval_simple("'\\^G'", "\x07");
+}
+
+#[test]
+fn control_char_escape_h() {
+    test_eval_simple("'\\^H'", "\x08");
+}
+
+#[test]
+fn control_char_escape_i() {
+    test_eval_simple("'\\^I'", "\x09");
+}
+
+#[test]
+fn control_char_escape_j() {
+    test_eval_simple("'\\^J'", "\x0a");
+}
+
+#[test]
+fn control_char_escape_k() {
+    test_eval_simple("'\\^K'", "\x0b");
+}
+
+#[test]
+fn control_char_escape_l() {
+    test_eval_simple("'\\^L'", "\x0c");
+}
+
+#[test]
+fn control_char_escape_p() {
+    test_eval_simple("'\\^P'", "\x10");
+}
+
+#[test]
+fn control_char_escape_x() {
+    test_eval_simple("'\\^X'", "\x18");
+}
+
+#[test]
+fn control_char_escape_y() {
+    test_eval_simple("'\\^Y'", "\x19");
+}
+
+#[test]
+fn control_char_escape_z() {
+    test_eval_simple("'\\^Z'", "\x1a");
+}
+
+#[test]
+fn control_char_escape_opening_square_bracket() {
+    test_eval_simple("'\\^['", "\x1b");
+}
+
+#[test]
+fn control_char_escape_backslash() {
+    test_eval_simple("'\\^\\'", "\x1c");
+}
+
+#[test]
+fn control_char_escape_closing_square_bracket() {
+    test_eval_simple("'\\^]'", "\x1d");
+}
+
+#[test]
+fn control_char_escape_caret() {
+    test_eval_simple("'\\^^'", "\x1e");
+}
+
+#[test]
+fn control_char_escape_underscore() {
+    test_eval_simple("'\\^_'", "\x1f");
+}
+
+#[test]
+fn control_char_escape_lowercase() {
+    expect_error("'\\^a'", None);
+}
+
+#[test]
+fn control_char_escape_gt() {
+    expect_error("'\\^>'", None);
+}
+
+#[test]
+fn control_char_escape_backtick() {
+    expect_error("'\\^`'", None);
+}

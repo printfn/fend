@@ -43,6 +43,7 @@ pub(crate) enum Error {
     UnterminatedStringLiteral,
     UnknownBackslashEscapeSequence(char),
     BackslashXOutOfRange,
+    ExpectedALetterOrCode,
     // todo remove this
     NumberParse(String),
 }
@@ -76,6 +77,12 @@ impl fmt::Display for Error {
             }
             Self::BackslashXOutOfRange => {
                 write!(f, "Expected an escape sequence between \\x00 and \\x7f")
+            }
+            Self::ExpectedALetterOrCode => {
+                write!(
+                    f,
+                    "Expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
+                )
             }
         }
     }
@@ -554,6 +561,19 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                 'z' => {
                     skip_whitespace = true;
                     None
+                }
+                '^' => {
+                    // control character escapes
+                    let (_, letter) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+                    let code = letter as u8;
+                    if !(63..=95).contains(&code) {
+                        return Err(Error::ExpectedALetterOrCode);
+                    }
+                    Some(if code == b'?' {
+                        '\x7f'
+                    } else {
+                        (code - 64) as char
+                    })
                 }
                 _ => return Err(Error::UnknownBackslashEscapeSequence(next)),
             };
