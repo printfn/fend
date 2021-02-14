@@ -51,7 +51,11 @@ impl rustyline::hint::Hinter for Helper {
             match fend_core::evaluate_with_interrupt(line, &mut self.ctx.clone(), &int) {
                 Ok(result) => {
                     let res = result.get_main_result();
-                    if res.is_empty() || res.len() > 50 || res.trim() == line.trim() {
+                    if res.is_empty()
+                        || res.len() > 50
+                        || res.trim() == line.trim()
+                        || res.contains(|c| c < ' ')
+                    {
                         return None;
                     }
                     Hint(format!("\n{}", res))
