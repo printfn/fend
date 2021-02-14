@@ -14,6 +14,10 @@ Unique features:
 
 See the [manual](https://github.com/printfn/fend/wiki) for more information.
 
+## [Web Interface](https://printfn.github.io/fend-website)
+
+fend is now available on the web at [printfn.github.io/fend-website](https://printfn.github.io/fend-website).
+
 ## Installation
 
 <a href="https://repology.org/project/fend/versions">
@@ -32,6 +36,11 @@ $ fend
 30.48 cm
 >
 ```
+
+### Packages
+
+* [AUR](https://aur.archlinux.org/packages/fend/)
+* [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 
 ## [Manual](https://github.com/printfn/fend/wiki)
 
@@ -60,8 +69,8 @@ approx. 0.7071067811 + 0.7071067811i
 ```
 
 ```
-> 1 1/2' to cm
-45.72 cm
+> 100 °C to °F
+210 °F
 ```
 
 ```
