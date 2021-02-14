@@ -229,11 +229,32 @@ fn evaluate_as<'a, I: Interrupt>(
     scope: Option<Arc<Scope<'a>>>,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
-    if let Expr::Ident("string") = b {
-        return Ok(Value::String(
-            evaluate(a, scope, int)?.format(0, int)?.to_string().into(),
-        ));
-    }
+    match &b {
+        Expr::Ident("string") => {
+            return Ok(Value::String(
+                evaluate(a, scope, int)?.format(0, int)?.to_string().into(),
+            ));
+        }
+        Expr::Ident("codepoint") => {
+            let a = evaluate(a, scope.clone(), int)?;
+            if let Value::String(s) = a {
+                let ch = s
+                    .as_ref()
+                    .chars()
+                    .next()
+                    .ok_or_else(|| "String cannot be empty".to_string())?;
+                if s.len() > ch.len_utf8() {
+                    return Err("String cannot be longer than one codepoint"
+                        .to_string()
+                        .into());
+                }
+                let value = Value::Num(Number::from(u64::from(ch as u32)).with_base(Base::HEX));
+                return Ok(value);
+            }
+            return Err("Expected a string".to_string().into());
+        }
+        _ => (),
+    };
     Ok(match evaluate(b, scope.clone(), int)? {
         Value::Num(b) => Value::Num(evaluate(a, scope, int)?.expect_num()?.convert_to(b, int)?),
         Value::Format(fmt) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_format(fmt)),

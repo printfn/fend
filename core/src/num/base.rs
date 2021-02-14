@@ -43,6 +43,8 @@ impl fmt::Display for OutOfRangeError {
 }
 
 impl Base {
+    pub const HEX: Self = Self(BaseEnum::Hex);
+
     pub const fn base_as_u8(self) -> u8 {
         match self.0 {
             BaseEnum::Binary => 2,
