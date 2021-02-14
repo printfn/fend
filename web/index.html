@@ -80,6 +80,9 @@ async function update() {
     let input = document.getElementById("input").value;
     history.replaceState(undefined, undefined, `#${encodeURIComponent(input)}`)
     let result = await evaluateFend(input);
+    result = result.replaceAll('&', '&amp;');
+    result = result.replaceAll('<', '&lt;');
+    result = result.replaceAll('>', '&gt;');
     let output = '';
     if (result == 'Error: Interrupted') {
         output = '<i class="error">Calculation timed out</i>';
