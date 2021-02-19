@@ -37,7 +37,8 @@ fend-core docs attr,
 fend-core get_version_as_str(),
 fend cli TOML,
 fend cli TOML version requirement for fend-core
-fend wasm TOML"
+fend wasm TOML
+fend web initialisation"
 echo "Building and running tests..."
 touch core/src/lib.rs
 cargo clippy --workspace --all-targets --all-features
