@@ -48,7 +48,7 @@ impl FendResult {
 #[derive(Clone)]
 pub struct Context {
     elapsed_unix_time_ms: Option<u64>,
-    timezone_offset_secs: Option<u64>,
+    timezone_offset_secs: Option<i64>,
 }
 
 impl Default for Context {
@@ -76,7 +76,7 @@ impl Context {
     }
 
     /// Override the current time zone offset to UTC, in seconds.
-    pub fn override_timezone_offset(&mut self, tz_offset_secs: u64) {
+    pub fn override_timezone_offset(&mut self, tz_offset_secs: i64) {
         self.timezone_offset_secs = Some(tz_offset_secs);
     }
 }

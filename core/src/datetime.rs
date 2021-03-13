@@ -26,7 +26,7 @@ pub(crate) enum Month {
 }
 
 impl Month {
-    fn number_of_days(self, year: Year) -> u64 {
+    fn number_of_days(self, year: Year) -> u8 {
         match self {
             Self::February => {
                 if year.is_leap_year() {
@@ -92,7 +92,7 @@ impl Year {
         }
     }
 
-    fn number_of_days(self) -> u64 {
+    fn number_of_days(self) -> u16 {
         if self.is_leap_year() {
             366
         } else {
@@ -137,29 +137,33 @@ impl fmt::Display for TodayError {
 }
 
 impl Date {
-    #[allow(clippy::cast_possible_truncation)]
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
     pub(crate) fn today(context: &mut crate::Context) -> Result<Self, TodayError> {
         let mut ms_since_epoch = if let Some(ms) = context.elapsed_unix_time_ms {
-            ms
+            ms as i64
         } else {
             let current_time = std::time::SystemTime::now();
             let epoch = std::time::SystemTime::UNIX_EPOCH;
             let time_since_epoch = current_time.duration_since(epoch).map_err(|_| TodayError)?;
-            time_since_epoch.as_millis() as u64
+            time_since_epoch.as_millis() as i64
         };
         if let Some(offset_secs) = context.timezone_offset_secs {
-            ms_since_epoch += offset_secs * 1000;
+            ms_since_epoch -= offset_secs * 1000;
         }
         let mut days = ms_since_epoch / 86_400_000; // no leap seconds
         let mut year = Year(1970);
-        while days >= year.number_of_days() {
+        while days >= year.number_of_days().into() {
             year.0 += 1;
-            days -= year.number_of_days();
+            days -= i64::from(year.number_of_days());
         }
         let mut month = Month::January;
-        while days >= month.number_of_days(year) {
+        while days >= month.number_of_days(year).into() {
             month = month.next();
-            days -= month.number_of_days(year);
+            days -= i64::from(month.number_of_days(year));
         }
         Ok(Self {
             year,
