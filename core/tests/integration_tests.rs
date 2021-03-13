@@ -5081,3 +5081,9 @@ fn unicode_escape_10ffff() {
 fn unicode_escape_aaa_uppercase() {
     test_eval_simple("'\\u{AAA}'", "\u{aaa}");
 }
+
+#[test]
+fn today() {
+    let mut context = Context::new();
+    let _ = evaluate("today", &mut context).unwrap();
+}
