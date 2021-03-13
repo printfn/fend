@@ -94,18 +94,19 @@ fn should_compute_inverse(rhs: &Expr) -> bool {
 pub(crate) fn evaluate<'a, I: Interrupt>(
     expr: Expr<'a>,
     scope: Option<Arc<Scope<'a>>>,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     macro_rules! eval {
         ($e:expr) => {
-            evaluate($e, scope.clone(), int)
+            evaluate($e, scope.clone(), context, int)
         };
     }
     test_int(int)?;
     Ok(match expr {
         Expr::<'a>::Num(n) => Value::Num(n),
         Expr::<'a>::String(s) => Value::String(s),
-        Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, int)?,
+        Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, context, int)?,
         Expr::<'a>::Parens(x) => eval!(*x)?,
         Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr::<'a>::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
@@ -128,6 +129,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
                     Expr::<'a>::UnaryMinus(b),
                     ApplyMulHandling::OnlyApply,
                     scope,
+                    context,
                     int,
                 )?,
                 _ => return Err("Invalid operands for subtraction".to_string().into()),
@@ -141,7 +143,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             scope,
         )?,
         Expr::<'a>::Apply(a, b) | Expr::<'a>::ApplyMul(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, context, int)?
         }
         Expr::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
@@ -175,12 +177,12 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             )?
         }
         Expr::<'a>::ApplyFunctionCall(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, context, int)?
         }
-        Expr::<'a>::As(a, b) => evaluate_as(*a, *b, scope, int)?,
+        Expr::<'a>::As(a, b) => evaluate_as(*a, *b, scope, context, int)?,
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
         Expr::<'a>::Of(parts) => {
-            let mut value = resolve_identifier(parts[0], scope, int)?;
+            let mut value = resolve_identifier(parts[0], scope, context, int)?;
             for part in &parts[1..] {
                 value = match value.get_object_member(part) {
                     Ok(value) => value,
@@ -227,16 +229,20 @@ fn evaluate_as<'a, I: Interrupt>(
     a: Expr<'a>,
     b: Expr<'a>,
     scope: Option<Arc<Scope<'a>>>,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     match &b {
         Expr::Ident("string") => {
             return Ok(Value::String(
-                evaluate(a, scope, int)?.format(0, int)?.to_string().into(),
+                evaluate(a, scope, context, int)?
+                    .format(0, int)?
+                    .to_string()
+                    .into(),
             ));
         }
         Expr::Ident("codepoint") => {
-            let a = evaluate(a, scope.clone(), int)?;
+            let a = evaluate(a, scope.clone(), context, int)?;
             if let Value::String(s) = a {
                 let ch = s
                     .as_ref()
@@ -255,9 +261,17 @@ fn evaluate_as<'a, I: Interrupt>(
         }
         _ => (),
     };
-    Ok(match evaluate(b, scope.clone(), int)? {
-        Value::Num(b) => Value::Num(evaluate(a, scope, int)?.expect_num()?.convert_to(b, int)?),
-        Value::Format(fmt) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_format(fmt)),
+    Ok(match evaluate(b, scope.clone(), context, int)? {
+        Value::Num(b) => Value::Num(
+            evaluate(a, scope, context, int)?
+                .expect_num()?
+                .convert_to(b, int)?,
+        ),
+        Value::Format(fmt) => Value::Num(
+            evaluate(a, scope, context, int)?
+                .expect_num()?
+                .with_format(fmt),
+        ),
         Value::Dp => {
             return Err(
                 "You need to specify what number of decimal places to use, e.g. '10 dp'"
@@ -272,7 +286,11 @@ fn evaluate_as<'a, I: Interrupt>(
                     .into(),
             );
         }
-        Value::Base(base) => Value::Num(evaluate(a, scope, int)?.expect_num()?.with_base(base)),
+        Value::Base(base) => Value::Num(
+            evaluate(a, scope, context, int)?
+                .expect_num()?
+                .with_base(base),
+        ),
         Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
             return Err("Unable to convert value to a function".to_string().into());
         }
@@ -291,13 +309,16 @@ fn evaluate_as<'a, I: Interrupt>(
 pub(crate) fn resolve_identifier<'a, I: Interrupt>(
     ident: &'a str,
     scope: Option<Arc<Scope<'a>>>,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
-    let eval_box = |input| -> Result<Box<Value<'_>>, IntErr<String, I>> {
-        Ok(Box::new(evaluate_to_value(input, scope.clone(), int)?))
-    };
+    macro_rules! eval_box {
+        ($input:expr) => {
+            Box::new(evaluate_to_value($input, scope.clone(), context, int)?)
+        };
+    }
     if let Some(scope) = scope.clone() {
-        match scope.get(ident, int) {
+        match scope.get(ident, context, int) {
             Ok(val) => return Ok(val),
             Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
             Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
@@ -309,10 +330,10 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
     Ok(match ident {
         "pi" | "\u{3c0}" => Value::Num(Number::pi()),
         "tau" | "\u{3c4}" => Value::Num(Number::pi().mul(2.into(), int)?),
-        "e" => evaluate_to_value("approx. 2.718281828459045235", scope, int)?,
+        "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
         "i" => Value::Num(Number::i()),
-        "sqrt" => evaluate_to_value("x: x^(1/2)", scope, int)?,
-        "cbrt" => evaluate_to_value("x: x^(1/3)", scope, int)?,
+        "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
+        "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
         "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
         "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
         "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
@@ -326,11 +347,11 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "asinh" => Value::BuiltInFunction(BuiltInFunction::Asinh),
         "acosh" => Value::BuiltInFunction(BuiltInFunction::Acosh),
         "atanh" => Value::BuiltInFunction(BuiltInFunction::Atanh),
-        "cis" => evaluate_to_value("theta => cos theta + i * sin theta", scope, int)?,
+        "cis" => evaluate_to_value("theta => cos theta + i * sin theta", scope, context, int)?,
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
-        "exp" => evaluate_to_value("x: e^x", scope, int)?,
+        "exp" => evaluate_to_value("x: e^x", scope, context, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::Exact),
@@ -345,18 +366,18 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
         "oct" | "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::String(crate::get_version_as_str().into()),
-        "square" => evaluate_to_value("x: x^2", scope, int)?,
-        "cubic" => evaluate_to_value("x: x^3", scope, int)?,
+        "square" => evaluate_to_value("x: x^2", scope, context, int)?,
+        "cubic" => evaluate_to_value("x: x^3", scope, context, int)?,
         "earth" => Value::Object(vec![
-            ("axial_tilt", eval_box("23.4392811 degrees")?),
-            ("eccentricity", eval_box("0.0167086")?),
-            ("escape_velocity", eval_box("11.186 km/s")?),
-            ("gravity", eval_box("9.80665 m/s^2")?),
-            ("mass", eval_box("5.97237e24 kg")?),
-            ("volume", eval_box("1.08321e12 km^3")?),
+            ("axial_tilt", eval_box!("23.4392811 degrees")),
+            ("eccentricity", eval_box!("0.0167086")),
+            ("escape_velocity", eval_box!("11.186 km/s")),
+            ("gravity", eval_box!("9.80665 m/s^2")),
+            ("mass", eval_box!("5.97237e24 kg")),
+            ("volume", eval_box!("1.08321e12 km^3")),
         ]),
         "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
-        "today" => Value::Date(crate::datetime::Date::today().map_err(|e| e.to_string())?),
-        _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
+        "today" => Value::Date(crate::datetime::Date::today(context).map_err(|e| e.to_string())?),
+        _ => return crate::units::query_unit(ident, context, int).map_err(IntErr::into_string),
     })
 }

@@ -317,9 +317,10 @@ impl<'a> Value<'a> {
     fn convert_angle_to_rad<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        let radians = ast::resolve_identifier("radians", scope, int)?.expect_num()?;
+        let radians = ast::resolve_identifier("radians", scope, context, int)?.expect_num()?;
         self.convert_to(radians, int)
     }
 
@@ -336,9 +337,10 @@ impl<'a> Value<'a> {
     pub(crate) fn sin<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
+        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
             rad.apply_fn_exact(Complex::sin, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {
@@ -349,9 +351,10 @@ impl<'a> Value<'a> {
     pub(crate) fn cos<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
+        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
             rad.apply_fn_exact(Complex::cos, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {
@@ -362,9 +365,10 @@ impl<'a> Value<'a> {
     pub(crate) fn tan<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, int) {
+        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
             rad.apply_fn_exact(Complex::tan, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {

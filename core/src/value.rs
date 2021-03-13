@@ -177,11 +177,12 @@ impl<'a> Value<'a> {
         other: Expr<'a>,
         apply_mul_handling: ApplyMulHandling,
         scope: Option<Arc<Scope<'a>>>,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
             Self::Num(n) => {
-                let other = crate::ast::evaluate(other, scope.clone(), int)?;
+                let other = crate::ast::evaluate(other, scope.clone(), context, int)?;
                 if let Self::Dp = other {
                     let num = Self::Num(n)
                         .expect_num()?
@@ -214,10 +215,12 @@ impl<'a> Value<'a> {
                     scope,
                 )?
             }
-            Self::BuiltInFunction(func) => Self::apply_built_in_function(func, other, scope, int)?,
+            Self::BuiltInFunction(func) => {
+                Self::apply_built_in_function(func, other, scope, context, int)?
+            }
             Self::Fn(param, expr, custom_scope) => {
                 let new_scope = Scope::with_variable(param, other, scope.clone(), custom_scope);
-                return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), int);
+                return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), context, int);
             }
             _ => {
                 return Err(format!(
@@ -233,15 +236,16 @@ impl<'a> Value<'a> {
         func: BuiltInFunction,
         arg: Expr<'a>,
         scope: Option<Arc<Scope<'a>>>,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        let arg = crate::ast::evaluate(arg, scope.clone(), int)?;
+        let arg = crate::ast::evaluate(arg, scope.clone(), context, int)?;
         Ok(Self::Num(match func {
             BuiltInFunction::Approximately => arg.expect_num()?.make_approximate(),
             BuiltInFunction::Abs => arg.expect_num()?.abs(int)?,
-            BuiltInFunction::Sin => arg.expect_num()?.sin(scope, int)?,
-            BuiltInFunction::Cos => arg.expect_num()?.cos(scope, int)?,
-            BuiltInFunction::Tan => arg.expect_num()?.tan(scope, int)?,
+            BuiltInFunction::Sin => arg.expect_num()?.sin(scope, context, int)?,
+            BuiltInFunction::Cos => arg.expect_num()?.cos(scope, context, int)?,
+            BuiltInFunction::Tan => arg.expect_num()?.tan(scope, context, int)?,
             BuiltInFunction::Asin => arg.expect_num()?.asin(int)?,
             BuiltInFunction::Acos => arg.expect_num()?.acos(int)?,
             BuiltInFunction::Atan => arg.expect_num()?.atan(int)?,

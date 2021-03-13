@@ -38,10 +38,14 @@ impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> 
 }
 
 impl<'a> ScopeValue<'a> {
-    fn eval<I: Interrupt>(&self, int: &I) -> Result<Value<'a>, IntErr<String, I>> {
+    fn eval<I: Interrupt>(
+        &self,
+        context: &mut crate::Context,
+        int: &I,
+    ) -> Result<Value<'a>, IntErr<String, I>> {
         match self {
             Self::LazyVariable(expr, scope) => {
-                let value = crate::ast::evaluate(expr.clone(), scope.clone(), int)?;
+                let value = crate::ast::evaluate(expr.clone(), scope.clone(), context, int)?;
                 Ok(value)
             }
         }
@@ -80,18 +84,19 @@ impl<'a> Scope<'a> {
     pub(crate) fn get<I: Interrupt>(
         &self,
         ident: &'a str,
+        context: &mut crate::Context,
         int: &I,
     ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
         if self.ident == ident {
             let value = self
                 .value
-                .eval(int)
+                .eval(context, int)
                 .map_err(|e| e.map(GetIdentError::EvalError))?;
             Ok(value)
         } else {
             self.inner.as_ref().map_or_else(
                 || Err(GetIdentError::IdentifierNotFound(ident).into()),
-                |inner| inner.get(ident, int),
+                |inner| inner.get(ident, context, int),
             )
         }
     }

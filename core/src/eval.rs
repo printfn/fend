@@ -11,6 +11,7 @@ use crate::{
 pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     input: &'a str,
     scope: Option<Arc<Scope<'a>>>,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     let lex = lexer::lex(input, int);
@@ -27,20 +28,21 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
     let parsed = parser::parse_tokens(&tokens).map_err(|e| e.to_string())?;
-    let result = ast::evaluate(parsed, scope, int)?;
+    let result = ast::evaluate(parsed, scope, context, int)?;
     Ok(result)
 }
 
 pub(crate) fn evaluate_to_string<'a, I: Interrupt>(
     mut input: &'a str,
     scope: Option<Arc<Scope<'a>>>,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<String, IntErr<String, I>> {
     let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {
         input = remaining;
         true
     });
-    let value = evaluate_to_value(input, scope, int)?;
+    let value = evaluate_to_value(input, scope, context, int)?;
     Ok(if debug {
         format!("{:?}", value)
     } else {

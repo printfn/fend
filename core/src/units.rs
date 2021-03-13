@@ -30,6 +30,7 @@ fn expr_unit<I: Interrupt>(
     singular: &'static str,
     plural: &'static str,
     definition: &'static str,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'static>, I>> {
     let mut definition = definition.trim();
@@ -61,7 +62,7 @@ fn expr_unit<I: Interrupt>(
     let (alias, definition) = definition
         .strip_prefix('=')
         .map_or((false, definition), |remaining| (true, remaining));
-    let mut num = evaluate_to_value(definition, None, int)?.expect_num()?;
+    let mut num = evaluate_to_value(definition, None, context, int)?.expect_num()?;
     if !alias && rule != PrefixRule::LongPrefix {
         num = Number::create_unit_value_from_value(&num, "", singular, plural, int)?;
     }
@@ -87,9 +88,10 @@ fn construct_prefixed_unit<I: Interrupt>(
 
 pub(crate) fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
-    match query_unit_internal(ident, false, int) {
+    match query_unit_internal(ident, false, context, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),
         Ok(unit) => {
@@ -102,14 +104,14 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     while split_idx < ident.len() {
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         split_idx += remaining_ident.chars().next().unwrap().len_utf8();
-        let a = match query_unit_internal(prefix, true, int) {
+        let a = match query_unit_internal(prefix, true, context, int) {
             Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
                 return Err(e);
             }
             Ok(a) => a,
             Err(_) => continue,
         };
-        match query_unit_internal(remaining_ident, false, int) {
+        match query_unit_internal(remaining_ident, false, context, int) {
             Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
                 return Err(e)
             }
@@ -134,10 +136,11 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
 fn query_unit_internal_gnu<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
     if let Some((s, p, expr)) = builtin_gnu::query_unit(ident, short_prefixes) {
-        expr_unit(s, p, expr, int)
+        expr_unit(s, p, expr, context, int)
     } else {
         Err(GetIdentError::IdentifierNotFound(ident).into())
     }
@@ -147,6 +150,7 @@ fn query_unit_internal_gnu<'a, I: Interrupt>(
 fn query_unit_internal_gnu<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
     Err(GetIdentError::IdentifierNotFound(ident).into())
@@ -155,11 +159,12 @@ fn query_unit_internal_gnu<'a, I: Interrupt>(
 fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
+    context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes) {
-        expr_unit(s, p, expr, int)
+        expr_unit(s, p, expr, context, int)
     } else {
-        query_unit_internal_gnu(ident, short_prefixes, int)
+        query_unit_internal_gnu(ident, short_prefixes, context, int)
     }
 }

@@ -143,6 +143,7 @@ version = "0.1.14"
 dependencies = [
  "fend-core",
  "instant",
+ "js-sys",
  "wasm-bindgen",
  "wasm-bindgen-test",
 ]

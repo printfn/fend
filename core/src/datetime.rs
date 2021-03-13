@@ -138,12 +138,19 @@ impl fmt::Display for TodayError {
 
 impl Date {
     #[allow(clippy::cast_possible_truncation)]
-    pub(crate) fn today() -> Result<Self, TodayError> {
-        let current_time = std::time::SystemTime::now();
-        let epoch = std::time::SystemTime::UNIX_EPOCH;
-        let time_since_epoch = current_time.duration_since(epoch).map_err(|_| TodayError)?;
-        let seconds_since_epoch = time_since_epoch.as_secs();
-        let mut days = seconds_since_epoch / 86400; // no leap seconds
+    pub(crate) fn today(context: &mut crate::Context) -> Result<Self, TodayError> {
+        let mut ms_since_epoch = if let Some(ms) = context.elapsed_unix_time_ms {
+            ms
+        } else {
+            let current_time = std::time::SystemTime::now();
+            let epoch = std::time::SystemTime::UNIX_EPOCH;
+            let time_since_epoch = current_time.duration_since(epoch).map_err(|_| TodayError)?;
+            time_since_epoch.as_millis() as u64
+        };
+        if let Some(offset_secs) = context.timezone_offset_secs {
+            ms_since_epoch += offset_secs * 1000;
+        }
+        let mut days = ms_since_epoch / 86_400_000; // no leap seconds
         let mut year = Year(1970);
         while days >= year.number_of_days() {
             year.0 += 1;

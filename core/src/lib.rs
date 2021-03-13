@@ -46,7 +46,10 @@ impl FendResult {
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
 #[derive(Clone)]
-pub struct Context {}
+pub struct Context {
+    elapsed_unix_time_ms: Option<u64>,
+    timezone_offset_secs: Option<u64>,
+}
 
 impl Default for Context {
     fn default() -> Self {
@@ -59,7 +62,22 @@ impl Context {
     /// only be done once if possible.
     #[must_use]
     pub fn new() -> Self {
-        Self {}
+        Self {
+            elapsed_unix_time_ms: None,
+            timezone_offset_secs: None,
+        }
+    }
+
+    /// Override the current time. This must be the number of elapsed milliseconds
+    /// since January 1, 1970 at midnight UTC, ignoring leap seconds in the same way
+    /// as unix time.
+    pub fn override_current_unix_time_ms(&mut self, ms_since_1970: u64) {
+        self.elapsed_unix_time_ms = Some(ms_since_1970);
+    }
+
+    /// Override the current time zone offset to UTC, in seconds.
+    pub fn override_timezone_offset(&mut self, tz_offset_secs: u64) {
+        self.timezone_offset_secs = Some(tz_offset_secs);
     }
 }
 
@@ -85,7 +103,7 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
 /// This may be due to parser or runtime errors.
 pub fn evaluate_with_interrupt(
     input: &str,
-    _context: &mut Context,
+    context: &mut Context,
     int: &impl Interrupt,
 ) -> Result<FendResult, String> {
     if input.is_empty() {
@@ -95,7 +113,7 @@ pub fn evaluate_with_interrupt(
             other_info: vec![],
         });
     }
-    let result = match eval::evaluate_to_string(input, None, int) {
+    let result = match eval::evaluate_to_string(input, None, context, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
         Err(error::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
