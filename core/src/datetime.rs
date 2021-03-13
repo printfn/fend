@@ -121,6 +121,38 @@ impl fmt::Display for Year {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DayOfWeek {
+    Sunday,
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+}
+
+impl fmt::Debug for DayOfWeek {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            Self::Sunday => "Sunday",
+            Self::Monday => "Monday",
+            Self::Tuesday => "Tuesday",
+            Self::Wednesday => "Wednesday",
+            Self::Thursday => "Thursday",
+            Self::Friday => "Friday",
+            Self::Saturday => "Saturday",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl fmt::Display for DayOfWeek {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
     year: Year,
@@ -171,16 +203,60 @@ impl Date {
             day: Day(days as u8 + 1),
         })
     }
+
+    fn day_of_week(self) -> DayOfWeek {
+        let d1 = (1
+            + 5 * ((self.year.0 - 1) % 4)
+            + 4 * ((self.year.0 - 1) % 100)
+            + 6 * ((self.year.0 - 1) % 400))
+            % 7;
+        let ms = match self.month {
+            Month::January => (0, 0),
+            Month::February => (3, 3),
+            Month::March | Month::November => (3, 4),
+            Month::April | Month::July => (6, 0),
+            Month::May => (1, 2),
+            Month::June => (4, 5),
+            Month::August => (2, 3),
+            Month::September | Month::December => (5, 6),
+            Month::October => (0, 1),
+        };
+        let m = if self.year.is_leap_year() { ms.1 } else { ms.0 };
+        match (d1 + m + i32::from(self.day.0 - 1)) % 7 {
+            0 => DayOfWeek::Sunday,
+            1 => DayOfWeek::Monday,
+            2 => DayOfWeek::Tuesday,
+            3 => DayOfWeek::Wednesday,
+            4 => DayOfWeek::Thursday,
+            5 => DayOfWeek::Friday,
+            6 => DayOfWeek::Saturday,
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl fmt::Debug for Date {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}", self.day, self.month, self.year)
+        write!(
+            f,
+            "{}, {} {} {}",
+            self.day_of_week(),
+            self.day,
+            self.month,
+            self.year
+        )
     }
 }
 
 impl fmt::Display for Date {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}", self.day, self.month, self.year)
+        write!(
+            f,
+            "{}, {} {} {}",
+            self.day_of_week(),
+            self.day,
+            self.month,
+            self.year
+        )
     }
 }
