@@ -216,7 +216,7 @@ impl<'a> Value<'a> {
             Self::BuiltInFunction(func) => Self::apply_built_in_function(func, other, scope, int)?,
             Self::Fn(param, expr, custom_scope) => {
                 let new_scope = Scope::with_variable(param, other, scope.clone(), custom_scope);
-                return Ok(crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), int)?);
+                return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), int);
             }
             _ => {
                 return Err(format!(
@@ -265,7 +265,7 @@ impl<'a> Value<'a> {
                     Base::from_plain_base(n).map_err(|e| e.to_string())?,
                 ));
             }
-            BuiltInFunction::Differentiate => return Ok(arg.differentiate("x", int)?),
+            BuiltInFunction::Differentiate => return arg.differentiate("x", int),
         }))
     }
 

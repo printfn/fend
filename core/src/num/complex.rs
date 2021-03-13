@@ -37,7 +37,7 @@ impl Complex {
         if self.imag != 0.into() {
             return Err(ConvertToUsizeError::ComplexNumber.into());
         }
-        Ok(self.real.try_as_usize(int)?)
+        self.real.try_as_usize(int)
     }
 
     pub fn conjugate(self) -> Self {

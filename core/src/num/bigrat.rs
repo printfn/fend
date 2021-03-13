@@ -171,23 +171,23 @@ impl BigRat {
 
     // note that this works for any real number, unlike asin and acos
     pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::atan(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::atan(self.into_f64(int)?), int)
     }
 
     pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::sinh(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::sinh(self.into_f64(int)?), int)
     }
 
     pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::cosh(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::cosh(self.into_f64(int)?), int)
     }
 
     pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::tanh(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::tanh(self.into_f64(int)?), int)
     }
 
     pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from_f64(f64::asinh(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::asinh(self.into_f64(int)?), int)
     }
 
     // value must not be less than 1
@@ -478,7 +478,7 @@ impl BigRat {
             } else {
                 None
             };
-            return Ok(Self::format_as_integer(
+            return Self::format_as_integer(
                 &x.num,
                 base,
                 sign,
@@ -486,7 +486,7 @@ impl BigRat {
                 use_parens_if_fraction,
                 sf_limit,
                 int,
-            )?);
+            );
         }
 
         let mut terminating_res = None;
@@ -503,18 +503,11 @@ impl BigRat {
             || (style == FormattingStyle::Exact && !terminating()?);
         if fraction {
             let mixed = style == FormattingStyle::MixedFraction || style == FormattingStyle::Exact;
-            return Ok(x.format_as_fraction(
-                base,
-                sign,
-                term,
-                mixed,
-                use_parens_if_fraction,
-                int,
-            )?);
+            return x.format_as_fraction(base, sign, term, mixed, use_parens_if_fraction, int);
         }
 
         // not a fraction, will be printed as a decimal
-        Ok(x.format_as_decimal(style, base, sign, term, terminating, int)?)
+        x.format_as_decimal(style, base, sign, term, terminating, int)
     }
 
     fn format_as_decimal<I: Interrupt>(
@@ -874,10 +867,10 @@ impl BigRat {
                 high_bound = guess;
             }
         }
-        Ok(low_bound
+        low_bound
             .add(high_bound, int)?
             .div(&2.into(), int)
-            .map_err(IntErr::into_string)?)
+            .map_err(IntErr::into_string)
     }
 
     // the boolean indicates whether or not the result is exact
@@ -952,7 +945,7 @@ impl BigRat {
     }
 
     pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(self.add_internal(rhs, int)?)
+        self.add_internal(rhs, int)
     }
 
     pub fn is_definitely_zero(&self) -> bool {

@@ -39,7 +39,6 @@ pub(crate) enum Error {
     InvalidBasePrefix(InvalidBasePrefixError),
     InvalidCharAtBeginningOfIdent(char),
     UnexpectedChar(char),
-    BackslashInStringLiteral,
     UnterminatedStringLiteral,
     UnknownBackslashEscapeSequence(char),
     BackslashXOutOfRange,
@@ -69,9 +68,6 @@ impl fmt::Display for Error {
             }
             Self::UnexpectedChar(ch) => write!(f, "Unexpected character '{}'", ch),
             Self::NumberParse(s) => write!(f, "{}", s),
-            Self::BackslashInStringLiteral => {
-                write!(f, "Backslash not currently allowed in string literal")
-            }
             Self::UnterminatedStringLiteral => write!(f, "Unterminated string literal"),
             Self::UnknownBackslashEscapeSequence(ch) => {
                 write!(f, "Unknown escape sequence: \\{}", ch)

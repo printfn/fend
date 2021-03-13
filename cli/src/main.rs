@@ -141,7 +141,7 @@ fn main() {
         eprintln!("Too many arguments");
         std::process::exit(1);
     }
-    let _ = args.next();
+    std::mem::drop(args.next());
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
             print_help(false);

@@ -31,7 +31,7 @@ impl<'a> Value<'a> {
         if !self.exact {
             return Err(ConvertToUsizeError::InexactNumber.into());
         }
-        Ok(self.value.try_as_usize(int)?)
+        self.value.try_as_usize(int)
     }
 
     pub(crate) fn create_unit_value_from_value<I: Interrupt>(
@@ -173,14 +173,14 @@ impl<'a> Value<'a> {
         let value = Exact::new(self.value, self.exact)
             .div(Exact::new(rhs.value, rhs.exact), int)
             .map_err(IntErr::into_string)?;
-        Ok(Self {
+        Self {
             value: value.value,
             unit: Unit { components },
             exact: value.exact && self.exact && rhs.exact,
             base: self.base,
             format: self.format,
         }
-        .simplify(int)?)
+        .simplify(int)
     }
 
     fn is_unitless(&self) -> bool {
@@ -320,7 +320,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let radians = ast::resolve_identifier("radians", scope, int)?.expect_num()?;
-        Ok(self.convert_to(radians, int)?)
+        self.convert_to(radians, int)
     }
 
     fn unitless() -> Self {
@@ -492,14 +492,14 @@ impl<'a> Value<'a> {
         let components = [self.unit.components, rhs.unit.components].concat();
         let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
-        Ok(Self {
+        Self {
             value: value.value,
             unit: Unit { components },
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
             format: self.format,
         }
-        .simplify(int)?)
+        .simplify(int)
     }
 
     fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {

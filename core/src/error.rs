@@ -14,7 +14,7 @@ impl<E, I: Interrupt> IntErr<E, I> {
     pub fn expect(self, msg: &'static str) -> IntErr<Never, I> {
         match self {
             Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
-            Self::Error(_) => panic!(msg),
+            Self::Error(_) => panic!("{}", msg),
         }
     }
 

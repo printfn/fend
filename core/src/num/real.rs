@@ -120,13 +120,13 @@ impl Real {
                     } else if integer % 12 == 9 {
                         return Ok(Exact::new(-Self::from(1), true));
                     } else if integer % 12 == 1 || integer % 12 == 5 {
-                        return Ok(Exact::new(Self::from(1), true)
+                        return Exact::new(Self::from(1), true)
                             .div(&Exact::new(2.into(), true), int)
-                            .map_err(IntErr::unwrap)?);
+                            .map_err(IntErr::unwrap);
                     } else if integer % 12 == 7 || integer % 12 == 11 {
-                        return Ok(Exact::new(-Self::from(1), true)
+                        return Exact::new(-Self::from(1), true)
                             .div(&Exact::new(2.into(), true), int)
-                            .map_err(IntErr::unwrap)?);
+                            .map_err(IntErr::unwrap);
                     }
                 }
                 let s = Self {
