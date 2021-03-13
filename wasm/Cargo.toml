@@ -39,6 +39,4 @@ fend-core = { path = "../core" }
 wasm-bindgen-test = "0.3.21"
 
 [package.metadata.wasm-pack.profile.release]
-# enabling mutable globals is currently necessary,
-# see https://github.com/rustwasm/wasm-pack/issues/886
-wasm-opt = ["-Oz", "--enable-mutable-globals"]
+wasm-opt = ["-Oz"]
