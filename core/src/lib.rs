@@ -8,6 +8,7 @@
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.14")]
 
 mod ast;
+mod datetime;
 mod error;
 mod eval;
 mod interrupt;

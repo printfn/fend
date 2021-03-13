@@ -282,6 +282,9 @@ fn evaluate_as<'a, I: Interrupt>(
         Value::String(_) => {
             return Err("Cannot convert value to string".to_string().into());
         }
+        Value::Date(_) => {
+            return Err("Cannot convert value to date".to_string().into());
+        }
     })
 }
 
@@ -353,6 +356,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
             ("volume", eval_box("1.08321e12 km^3")?),
         ]),
         "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
+        "today" => Value::Date(crate::datetime::Date::today().map_err(|e| e.to_string())?),
         _ => return crate::units::query_unit(ident, int).map_err(IntErr::into_string),
     })
 }

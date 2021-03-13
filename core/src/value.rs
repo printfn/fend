@@ -18,6 +18,7 @@ pub(crate) enum Value<'a> {
     Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
     String(Cow<'a, str>),
+    Date(crate::datetime::Date),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -310,6 +311,7 @@ impl<'a> Value<'a> {
                 Formatted::String(s)
             }
             Self::String(s) => Formatted::Str(s.as_ref()),
+            Self::Date(d) => Formatted::Date(*d),
         })
     }
 
@@ -366,6 +368,7 @@ impl<'a> fmt::Debug for Value<'a> {
                 write!(f, "{}", s)
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
+            Self::Date(d) => write!(f, "{:?}", d),
         }
     }
 }
@@ -377,6 +380,7 @@ pub(crate) enum Formatted<'a> {
     String(String),
     Base(u8),
     Number(Box<FormattedNumber>),
+    Date(crate::datetime::Date),
 }
 
 impl<'a> fmt::Display for Formatted<'a> {
@@ -386,6 +390,7 @@ impl<'a> fmt::Display for Formatted<'a> {
             Self::String(s) => write!(f, "{}", s),
             Self::Number(n) => write!(f, "{}", n),
             Self::Base(n) => write!(f, "base {}", n),
+            Self::Date(d) => write!(f, "{}", d),
         }
     }
 }
