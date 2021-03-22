@@ -5087,3 +5087,8 @@ fn today() {
     let mut context = Context::new();
     let _ = evaluate("today", &mut context).unwrap();
 }
+
+#[test]
+fn acre_foot_to_m_3() {
+    test_eval("acre foot to m^3", "1233.48183754752 m^3");
+}
