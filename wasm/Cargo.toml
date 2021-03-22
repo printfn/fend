@@ -37,7 +37,7 @@ instant = { version = "0.1.9", features = [ "wasm-bindgen" ] }
 fend-core = { path = "../core" }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.21"
+wasm-bindgen-test = "0.3.22"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]
