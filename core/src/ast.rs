@@ -378,6 +378,16 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         ]),
         "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
         "today" => Value::Date(crate::datetime::Date::today(context).map_err(|e| e.to_string())?),
+        "tomorrow" => Value::Date(
+            crate::datetime::Date::today(context)
+                .map_err(|e| e.to_string())?
+                .next(),
+        ),
+        "yesterday" => Value::Date(
+            crate::datetime::Date::today(context)
+                .map_err(|e| e.to_string())?
+                .prev(),
+        ),
         _ => return crate::units::query_unit(ident, context, int).map_err(IntErr::into_string),
     })
 }

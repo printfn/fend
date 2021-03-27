@@ -56,6 +56,23 @@ impl Month {
             Self::December => Self::January,
         }
     }
+
+    fn prev(self) -> Self {
+        match self {
+            Self::January => Self::December,
+            Self::February => Self::January,
+            Self::March => Self::February,
+            Self::April => Self::March,
+            Self::May => Self::April,
+            Self::June => Self::May,
+            Self::July => Self::June,
+            Self::August => Self::July,
+            Self::September => Self::August,
+            Self::October => Self::September,
+            Self::November => Self::October,
+            Self::December => Self::November,
+        }
+    }
 }
 
 impl fmt::Display for Month {
@@ -231,6 +248,51 @@ impl Date {
             5 => DayOfWeek::Friday,
             6 => DayOfWeek::Saturday,
             _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn next(self) -> Self {
+        if self.day.0 < Month::number_of_days(self.month, self.year) {
+            Self {
+                day: Day(self.day.0 + 1),
+                month: self.month,
+                year: self.year,
+            }
+        } else if self.month == Month::December {
+            Self {
+                day: Day(1),
+                month: Month::January,
+                year: Year(self.year.0 + 1),
+            }
+        } else {
+            Self {
+                day: Day(1),
+                month: self.month.next(),
+                year: self.year,
+            }
+        }
+    }
+
+    pub(crate) fn prev(self) -> Self {
+        if self.day.0 > 1 {
+            Self {
+                day: Day(self.day.0 - 1),
+                month: self.month,
+                year: self.year,
+            }
+        } else if self.month == Month::January {
+            Self {
+                day: Day(31),
+                month: Month::December,
+                year: Year(self.year.0 - 1),
+            }
+        } else {
+            let month = self.month.prev();
+            Self {
+                day: Day(Month::number_of_days(month, self.year)),
+                month,
+                year: self.year,
+            }
         }
     }
 }
