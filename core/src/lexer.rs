@@ -628,7 +628,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
     input: &'a str,
     // normally 0; 1 after backslash; 2 after ident after backslash
     after_backslash_state: u8,
-    after_number: bool,
+    after_number_or_to: bool,
     int: &'b I,
 }
 
@@ -651,7 +651,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     self.input = remaining;
                     Token::Num(num)
                 } else if ch == '\'' || ch == '"' {
-                    if self.after_number {
+                    if self.after_number_or_to {
                         let (_, remaining) = self.input.split_at(1);
                         self.input = remaining;
                         if ch == '\'' {
@@ -704,9 +704,11 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
             Ok(Some(t)) => Some(Ok(t)),
         };
         if let Some(Ok(Token::Num(_))) = res {
-            self.after_number = true;
+            self.after_number_or_to = true;
+        } else if let Some(Ok(Token::Symbol(Symbol::ArrowConversion))) = res {
+            self.after_number_or_to = true;
         } else {
-            self.after_number = false;
+            self.after_number_or_to = false;
         }
         if let Some(Ok(Token::Symbol(Symbol::Backslash))) = res {
             self.after_backslash_state = 1;
@@ -727,7 +729,7 @@ pub(crate) fn lex<'a, 'b, I: Interrupt>(input: &'a str, int: &'b I) -> Lexer<'a,
     Lexer {
         input,
         after_backslash_state: 0,
-        after_number: false,
+        after_number_or_to: false,
         int,
     }
 }

@@ -5092,3 +5092,13 @@ fn today() {
 fn acre_foot_to_m_3() {
     test_eval("acre foot to m^3", "1233.48183754752 m^3");
 }
+
+#[test]
+fn cm_to_double_quote() {
+    test_eval("2.54cm to \"", "1\"");
+}
+
+#[test]
+fn cm_to_single_quote() {
+    test_eval("30.48cm to \'", "1'");
+}
