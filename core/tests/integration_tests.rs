@@ -5102,3 +5102,25 @@ fn cm_to_double_quote() {
 fn cm_to_single_quote() {
     test_eval("30.48cm to \'", "1'");
 }
+
+#[test]
+fn single_line_comment() {
+    test_eval("30.48cm to \' # converting cm to feet", "1'");
+}
+
+#[test]
+#[ignore]
+fn single_line_comment_and_linebreak() {
+    test_eval("30.48cm to \' # converting cm to feet\n", "1'");
+}
+
+#[test]
+fn single_line_comment_and_linebreak_2() {
+    test_eval("30.48cm to # converting cm\n feet # to feet", "1 foot");
+}
+
+#[test]
+#[ignore]
+fn single_line_comment_and_linebreak_3() {
+    test_eval("30.48cm to \' # converting cm\n ' # to feet", "1'");
+}

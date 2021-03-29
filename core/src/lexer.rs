@@ -635,6 +635,16 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
     fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<Error, I>> {
         while let Some(ch) = self.input.chars().next() {
+            if self.input.starts_with("# ") {
+                let (_, remaining) = self.input.split_at(2);
+                self.input = remaining;
+                if let Some(idx) = self.input.find('\n') {
+                    let (_, remaining2) = self.input.split_at(idx);
+                    self.input = remaining2;
+                } else {
+                    return Ok(None);
+                }
+            }
             if !ch.is_whitespace() {
                 break;
             }
