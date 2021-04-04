@@ -4,6 +4,7 @@ use crate::interrupt::test_int;
 use crate::num::complex::{self, Complex, UseParentheses};
 use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
 use crate::scope::Scope;
+use crate::{Span, SpanKind};
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::Neg;
@@ -636,6 +637,23 @@ pub(crate) struct FormattedValue {
     exact: bool,
     number: complex::Formatted,
     unit_str: String,
+}
+
+impl FormattedValue {
+    pub(crate) fn spans(self, spans: &mut Vec<Span>) {
+        spans.push(Span {
+            string: "approx. ".to_string(),
+            kind: SpanKind::Ident,
+        });
+        spans.push(Span {
+            string: self.number.to_string(),
+            kind: SpanKind::Number,
+        });
+        spans.push(Span {
+            string: self.unit_str,
+            kind: SpanKind::Ident,
+        });
+    }
 }
 
 impl fmt::Display for FormattedValue {

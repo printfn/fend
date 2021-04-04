@@ -299,10 +299,7 @@ impl<'a> Value<'a> {
     ) -> Result<(), IntErr<Never, I>> {
         match self {
             Self::Num(n) => {
-                spans.push(Span {
-                    string: n.format(int)?.to_string(),
-                    kind: SpanKind::Number,
-                });
+                n.format(int)?.spans(spans);
             }
             Self::BuiltInFunction(name) => {
                 spans.push(Span {
@@ -367,7 +364,7 @@ impl<'a> Value<'a> {
             }
             Self::String(s) => {
                 spans.push(Span {
-                    string: s.to_string(),
+                    string: format!("\"{}\"", s),
                     kind: SpanKind::String,
                 });
             }

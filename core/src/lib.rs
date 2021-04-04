@@ -37,6 +37,7 @@ pub enum SpanKind {
     String,
     Date,
     Whitespace,
+    Ident,
     Other,
 }
 

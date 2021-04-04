@@ -23,8 +23,8 @@ fn print_spans(spans: Vec<fend_core::SpanRef>) -> String {
     let default_style = ansi_term::Style::default();
     for span in spans {
         let s = match span.kind() {
-            SpanKind::Number => ansi_term::Colour::Blue.bold().paint(span.string()),
             SpanKind::String => ansi_term::Colour::Yellow.bold().paint(span.string()),
+            SpanKind::Ident => ansi_term::Colour::White.paint(span.string()),
             SpanKind::Keyword | SpanKind::BuiltInFunction => {
                 ansi_term::Colour::Red.bold().paint(span.string())
             }
