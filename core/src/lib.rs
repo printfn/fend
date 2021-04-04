@@ -50,8 +50,7 @@ impl FendResult {
         self.main_result.as_str()
     }
 
-    #[must_use]
-    pub fn get_main_result_spans<'a>(&'a self) -> impl Iterator<Item = Span<'a>> {
+    pub fn get_main_result_spans(&self) -> impl Iterator<Item = Span<'_>> {
         std::iter::once(Span {
             string: self.main_result.as_str(),
             kind: SpanKind::Other,
