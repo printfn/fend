@@ -5,7 +5,7 @@
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-use fend_core::Context;
+use fend_core::{Context, SpanKind};
 use std::path::PathBuf;
 
 mod config;
@@ -17,18 +17,41 @@ enum EvalResult {
     Err,
     NoInput,
 }
+
+fn print_spans(spans: Vec<fend_core::SpanRef>) -> String {
+    let mut strings = vec![];
+    let default_style = ansi_term::Style::default();
+    for span in spans {
+        let s = match span.kind() {
+            SpanKind::Number => ansi_term::Colour::Blue.bold().paint(span.string()),
+            SpanKind::String => ansi_term::Colour::Yellow.bold().paint(span.string()),
+            SpanKind::Keyword | SpanKind::BuiltInFunction => {
+                ansi_term::Colour::Red.bold().paint(span.string())
+            }
+            _ => default_style.paint(span.string()),
+        };
+        strings.push(s);
+    }
+    ansi_term::ANSIStrings(strings.as_slice()).to_string()
+}
+
 fn eval_and_print_res(
     line: &str,
     context: &mut Context,
     int: &impl fend_core::Interrupt,
+    color: bool,
 ) -> EvalResult {
     match fend_core::evaluate_with_interrupt(line, context, int) {
         Ok(res) => {
-            let main_result = res.get_main_result();
-            if main_result.is_empty() {
+            let result: Vec<_> = res.get_main_result_spans().collect();
+            if result.is_empty() {
                 return EvalResult::NoInput;
             }
-            println!("{}", main_result);
+            if color {
+                println!("{}", print_spans(result));
+            } else {
+                println!("{}", res.get_main_result());
+            }
             EvalResult::Ok
         }
         Err(msg) => {
@@ -92,7 +115,7 @@ fn repl_loop() -> i32 {
                 }
                 line => {
                     interrupt.reset();
-                    match eval_and_print_res(line, &mut context, &interrupt) {
+                    match eval_and_print_res(line, &mut context, &interrupt, true) {
                         EvalResult::Ok => {
                             last_command_success = true;
                             initial_run = false;
@@ -150,6 +173,7 @@ fn main() {
                 expr.as_str(),
                 &mut Context::new(),
                 &interrupt::Never::default(),
+                false,
             ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
                 EvalResult::Err => 1,

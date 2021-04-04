@@ -61,6 +61,18 @@ pub struct SpanRef<'a> {
     kind: SpanKind,
 }
 
+impl<'a> SpanRef<'a> {
+    #[must_use]
+    pub fn kind(self) -> SpanKind {
+        self.kind
+    }
+
+    #[must_use]
+    pub fn string(self) -> &'a str {
+        self.string
+    }
+}
+
 impl FendResult {
     /// This retrieves the main result of the computation.
     #[must_use]
