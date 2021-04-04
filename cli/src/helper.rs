@@ -34,11 +34,12 @@ impl rustyline::hint::Hint for Hint {
 
 pub struct Helper {
     ctx: fend_core::Context,
+    enable_color: bool,
 }
 
 impl Helper {
-    pub fn new(ctx: fend_core::Context) -> Self {
-        Self { ctx }
+    pub fn new(ctx: fend_core::Context, enable_color: bool) -> Self {
+        Self { ctx, enable_color }
     }
 }
 
@@ -58,10 +59,14 @@ impl rustyline::hint::Hinter for Helper {
                     {
                         return None;
                     }
-                    Hint(format!(
-                        "\n{}",
-                        crate::print_spans(result.get_main_result_spans().collect())
-                    ))
+                    if self.enable_color {
+                        Hint(format!(
+                            "\n{}",
+                            crate::print_spans(result.get_main_result_spans().collect())
+                        ))
+                    } else {
+                        Hint(format!("\n{}", result.get_main_result()))
+                    }
                 }
                 Err(_msg) => return None,
             },

@@ -94,7 +94,7 @@ fn repl_loop(enable_color: bool) -> i32 {
             .build(),
     );
     let mut context = Context::new();
-    rl.set_helper(Some(helper::Helper::new(context.clone())));
+    rl.set_helper(Some(helper::Helper::new(context.clone(), enable_color)));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
