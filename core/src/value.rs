@@ -205,9 +205,11 @@ impl<'a> Value<'a> {
                 }
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
-                    return Err(
-                        format!("{} is not a function", self_.format_to_plain_string(0, int)?).into(),
-                    );
+                    return Err(format!(
+                        "{} is not a function",
+                        self_.format_to_plain_string(0, int)?
+                    )
+                    .into());
                 }
                 let n2 = n.clone();
                 other.handle_num(
@@ -374,7 +376,7 @@ impl<'a> Value<'a> {
                     string: d.to_string(),
                     kind: SpanKind::Date,
                 });
-            },
+            }
         }
         Ok(())
     }
@@ -403,7 +405,11 @@ impl<'a> Value<'a> {
             Self::BuiltInFunction(f) => Ok(f
                 .differentiate()
                 .ok_or(format!("Cannot differentiate built-in function {}", f))?),
-            _ => Err(format!("Cannot differentiate {}", self.format_to_plain_string(0, int)?).into()),
+            _ => Err(format!(
+                "Cannot differentiate {}",
+                self.format_to_plain_string(0, int)?
+            )
+            .into()),
         }
     }
 }
