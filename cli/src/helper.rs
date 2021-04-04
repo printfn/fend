@@ -65,7 +65,7 @@ impl rustyline::hint::Hinter for Helper {
                             crate::print_spans(result.get_main_result_spans().collect())
                         ))
                     } else {
-                        Hint(format!("\n{}", result.get_main_result()))
+                        Hint(format!("\n{}", res))
                     }
                 }
                 Err(_msg) => return None,
