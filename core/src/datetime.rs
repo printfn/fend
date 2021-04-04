@@ -216,7 +216,7 @@ impl Date {
         Ok(Self {
             year,
             month,
-            day: Day(days as u8 + 1),
+            day: Day(days as u8),
         })
     }
 
