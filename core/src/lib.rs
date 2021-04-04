@@ -28,11 +28,34 @@ pub struct FendResult {
     other_info: Vec<String>,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum SpanKind {
+    Number,
+    NumberPrefix,
+    Unit,
+    Other,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Span<'a> {
+    string: &'a str,
+    kind: SpanKind,
+}
+
 impl FendResult {
     /// This retrieves the main result of the computation.
     #[must_use]
     pub fn get_main_result(&self) -> &str {
         self.main_result.as_str()
+    }
+
+    #[must_use]
+    pub fn get_main_result_spans<'a>(&'a self) -> impl Iterator<Item = Span<'a>> {
+        std::iter::once(Span {
+            string: self.main_result.as_str(),
+            kind: SpanKind::Other,
+        })
     }
 
     /// This retrieves a list of other results of the computation. It is less
