@@ -364,7 +364,7 @@ impl<'a> Value<'a> {
             }
             Self::String(s) => {
                 spans.push(Span {
-                    string: format!("\"{}\"", s),
+                    string: s.to_string(),
                     kind: SpanKind::String,
                 });
             }

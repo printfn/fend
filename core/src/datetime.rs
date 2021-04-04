@@ -195,13 +195,12 @@ impl Date {
         let mut ms_since_epoch = if let Some(ms) = context.elapsed_unix_time_ms {
             ms as i64
         } else {
-            let current_time = std::time::SystemTime::now();
-            let epoch = std::time::SystemTime::UNIX_EPOCH;
-            let time_since_epoch = current_time.duration_since(epoch).map_err(|_| TodayError)?;
-            time_since_epoch.as_millis() as i64
+            return Err(TodayError);
         };
         if let Some(offset_secs) = context.timezone_offset_secs {
             ms_since_epoch -= offset_secs * 1000;
+        } else {
+            return Err(TodayError);
         }
         let mut days = ms_since_epoch / 86_400_000; // no leap seconds
         let mut year = Year(1970);

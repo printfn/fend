@@ -46,8 +46,8 @@ pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
 pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
     let mut ctx = fend_core::Context::new();
     let date = js_sys::Date::new_0();
-    ctx.override_current_unix_time_ms(date.get_time() as u64);
-    ctx.override_timezone_offset(date.get_timezone_offset() as i64 * 60);
+    ctx.set_current_unix_time_ms(date.get_time() as u64);
+    ctx.set_timezone_offset(date.get_timezone_offset() as i64 * 60);
     let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
     match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
         Ok(res) => res.get_main_result().to_string(),

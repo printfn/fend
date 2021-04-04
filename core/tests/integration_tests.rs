@@ -5083,9 +5083,15 @@ fn unicode_escape_aaa_uppercase() {
 }
 
 #[test]
+#[ignore]
 fn today() {
     let mut context = Context::new();
-    let _ = evaluate("today", &mut context).unwrap();
+    context.set_current_unix_time_ms(1617517099000);
+    context.set_timezone_offset(0);
+    assert_eq!(
+        evaluate("today", &mut context).unwrap().get_main_result(),
+        "Monday, 4 April 2021"
+    );
 }
 
 #[test]
