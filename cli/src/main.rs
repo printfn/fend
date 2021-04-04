@@ -21,7 +21,6 @@ fn eval_and_print_res(
     line: &str,
     context: &mut Context,
     int: &impl fend_core::Interrupt,
-    show_other_info: bool,
 ) -> EvalResult {
     match fend_core::evaluate_with_interrupt(line, context, int) {
         Ok(res) => {
@@ -30,12 +29,6 @@ fn eval_and_print_res(
                 return EvalResult::NoInput;
             }
             println!("{}", main_result);
-            if show_other_info {
-                let extra_info = res.get_other_info();
-                for info in extra_info {
-                    println!("-> {}", info);
-                }
-            }
             EvalResult::Ok
         }
         Err(msg) => {
@@ -99,7 +92,7 @@ fn repl_loop() -> i32 {
                 }
                 line => {
                     interrupt.reset();
-                    match eval_and_print_res(line, &mut context, &interrupt, true) {
+                    match eval_and_print_res(line, &mut context, &interrupt) {
                         EvalResult::Ok => {
                             last_command_success = true;
                             initial_run = false;
@@ -157,7 +150,6 @@ fn main() {
                 expr.as_str(),
                 &mut Context::new(),
                 &interrupt::Never::default(),
-                false,
             ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
                 EvalResult::Err => 1,

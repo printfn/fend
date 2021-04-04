@@ -24,8 +24,8 @@ pub use interrupt::Interrupt;
 /// This contains the result of a computation.
 #[derive(PartialEq, Eq, Debug)]
 pub struct FendResult {
-    main_result: String,
-    other_info: Vec<String>,
+    plain_result: String,
+    span_result: Vec<Span>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -37,8 +37,14 @@ pub enum SpanKind {
     Other,
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Span<'a> {
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Span {
+    string: String,
+    kind: SpanKind,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SpanRef<'a> {
     string: &'a str,
     kind: SpanKind,
 }
@@ -47,21 +53,23 @@ impl FendResult {
     /// This retrieves the main result of the computation.
     #[must_use]
     pub fn get_main_result(&self) -> &str {
-        self.main_result.as_str()
+        self.plain_result.as_str()
     }
 
-    pub fn get_main_result_spans(&self) -> impl Iterator<Item = Span<'_>> {
-        std::iter::once(Span {
-            string: self.main_result.as_str(),
-            kind: SpanKind::Other,
+    pub fn get_main_result_spans(&self) -> impl Iterator<Item = SpanRef<'_>> {
+        self.span_result.iter().map(|span| SpanRef {
+            string: &span.string,
+            kind: span.kind,
         })
     }
 
     /// This retrieves a list of other results of the computation. It is less
     /// stable than the main result, and should only be shown for when used
     /// interactively.
+    #[deprecated]
+    #[allow(clippy::unused_self)]
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
-        self.other_info.iter().map(String::as_str)
+        std::iter::empty()
     }
 }
 
@@ -131,8 +139,8 @@ pub fn evaluate_with_interrupt(
     if input.is_empty() {
         // no or blank input: return no output
         return Ok(FendResult {
-            main_result: "".to_string(),
-            other_info: vec![],
+            plain_result: String::new(),
+            span_result: vec![],
         });
     }
     let result = match eval::evaluate_to_string(input, None, context, int) {
@@ -142,8 +150,11 @@ pub fn evaluate_with_interrupt(
         Err(error::IntErr::Error(e)) => return Err(e),
     };
     Ok(FendResult {
-        main_result: result,
-        other_info: vec![],
+        plain_result: result.clone(),
+        span_result: vec![Span {
+            string: result,
+            kind: SpanKind::Other,
+        }],
     })
 }
 
