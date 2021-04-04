@@ -6,6 +6,7 @@ use crate::{
     lexer, parser,
     scope::Scope,
     value::Value,
+    Span,
 };
 
 pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
@@ -37,15 +38,15 @@ pub(crate) fn evaluate_to_string<'a, I: Interrupt>(
     scope: Option<Arc<Scope<'a>>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<String, IntErr<String, I>> {
+) -> Result<Vec<Span>, IntErr<String, I>> {
     let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {
         input = remaining;
         true
     });
     let value = evaluate_to_value(input, scope, context, int)?;
     Ok(if debug {
-        format!("{:?}", value)
+        vec![Span::from_string(format!("{:?}", value))]
     } else {
-        value.format(0, int)?.to_string()
+        vec![Span::from_string(value.format(0, int)?.to_string())]
     })
 }

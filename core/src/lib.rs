@@ -43,6 +43,15 @@ struct Span {
     kind: SpanKind,
 }
 
+impl Span {
+    fn from_string(s: String) -> Self {
+        Self {
+            string: s,
+            kind: SpanKind::Other,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SpanRef<'a> {
     string: &'a str,
@@ -63,9 +72,9 @@ impl FendResult {
         })
     }
 
-    /// This retrieves a list of other results of the computation. It is less
-    /// stable than the main result, and should only be shown for when used
-    /// interactively.
+    /// This used to retrieve a list of other results of the computation,
+    /// but now returns an empty iterator. This method is deprecated and
+    /// may be removed in a future release.
     #[deprecated]
     #[allow(clippy::unused_self)]
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
@@ -149,12 +158,13 @@ pub fn evaluate_with_interrupt(
         Err(error::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
         Err(error::IntErr::Error(e)) => return Err(e),
     };
+    let mut plain_result = String::new();
+    for s in &result {
+        plain_result.push_str(&s.string);
+    }
     Ok(FendResult {
-        plain_result: result.clone(),
-        span_result: vec![Span {
-            string: result,
-            kind: SpanKind::Other,
-        }],
+        plain_result,
+        span_result: result,
     })
 }
 
