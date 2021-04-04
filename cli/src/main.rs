@@ -84,7 +84,7 @@ fn save_history(rl: &mut Editor<helper::Helper>, path: &Option<PathBuf>) {
     }
 }
 
-fn repl_loop() -> i32 {
+fn repl_loop(enable_color: bool) -> i32 {
     // `()` can be used when no completer is required
     let mut rl = Editor::<helper::Helper>::with_config(
         rustyline::config::Builder::new()
@@ -115,7 +115,7 @@ fn repl_loop() -> i32 {
                 }
                 line => {
                     interrupt.reset();
-                    match eval_and_print_res(line, &mut context, &interrupt, true) {
+                    match eval_and_print_res(line, &mut context, &interrupt, enable_color) {
                         EvalResult::Ok => {
                             last_command_success = true;
                             initial_run = false;
@@ -180,7 +180,8 @@ fn main() {
             },
         )
     } else {
-        let exit_code = repl_loop();
+        let enable_color = std::env::var_os("NO_COLOR").is_none();
+        let exit_code = repl_loop(enable_color);
         std::process::exit(exit_code);
     }
 }
