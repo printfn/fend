@@ -33,7 +33,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     Ok(result)
 }
 
-pub(crate) fn evaluate_to_string<'a, I: Interrupt>(
+pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
     mut input: &'a str,
     scope: Option<Arc<Scope<'a>>>,
     context: &mut crate::Context,

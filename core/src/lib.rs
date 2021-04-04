@@ -152,7 +152,7 @@ pub fn evaluate_with_interrupt(
             span_result: vec![],
         });
     }
-    let result = match eval::evaluate_to_string(input, None, context, int) {
+    let result = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
         Err(error::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
