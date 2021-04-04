@@ -641,10 +641,12 @@ pub(crate) struct FormattedValue {
 
 impl FormattedValue {
     pub(crate) fn spans(self, spans: &mut Vec<Span>) {
-        spans.push(Span {
-            string: "approx. ".to_string(),
-            kind: SpanKind::Ident,
-        });
+        if !self.exact {
+            spans.push(Span {
+                string: "approx. ".to_string(),
+                kind: SpanKind::Ident,
+            });
+        }
         spans.push(Span {
             string: self.number.to_string(),
             kind: SpanKind::Number,
