@@ -236,8 +236,7 @@ fn evaluate_as<'a, I: Interrupt>(
         Expr::Ident("string") => {
             return Ok(Value::String(
                 evaluate(a, scope, context, int)?
-                    .format(0, int)?
-                    .to_string()
+                    .format_to_plain_string(0, int)?
                     .into(),
             ));
         }

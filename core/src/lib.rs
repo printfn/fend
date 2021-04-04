@@ -32,8 +32,11 @@ pub struct FendResult {
 #[non_exhaustive]
 pub enum SpanKind {
     Number,
-    NumberPrefix,
-    Unit,
+    BuiltInFunction,
+    Keyword,
+    String,
+    Date,
+    Whitespace,
     Other,
 }
 

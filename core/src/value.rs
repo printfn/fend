@@ -1,7 +1,8 @@
 use crate::ast::Expr;
 use crate::error::{IntErr, Interrupt, Never};
-use crate::num::{Base, FormattedNumber, FormattingStyle, Number};
+use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
+use crate::{Span, SpanKind};
 use std::borrow::Cow;
 use std::fmt;
 use std::sync::Arc;
@@ -205,7 +206,7 @@ impl<'a> Value<'a> {
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
                     return Err(
-                        format!("{} is not a function", self_.format(0, int)?.to_string()).into(),
+                        format!("{} is not a function", self_.format_to_plain_string(0, int)?).into(),
                     );
                 }
                 let n2 = n.clone();
@@ -225,7 +226,7 @@ impl<'a> Value<'a> {
             _ => {
                 return Err(format!(
                     "'{}' is not a function or a number",
-                    self.format(0, int)?.to_string()
+                    self.format_to_plain_string(0, int)?
                 )
                 .into());
             }
@@ -274,18 +275,67 @@ impl<'a> Value<'a> {
         }))
     }
 
-    pub(crate) fn format<I: Interrupt>(
+    pub(crate) fn format_to_plain_string<I: Interrupt>(
         &self,
         indent: usize,
         int: &I,
-    ) -> Result<Formatted, IntErr<Never, I>> {
-        Ok(match self {
-            Self::Num(n) => Formatted::Number(Box::new(n.format(int)?)),
-            Self::BuiltInFunction(name) => Formatted::Str(name.as_str()),
-            Self::Format(fmt) => Formatted::String(fmt.to_string()),
-            Self::Dp => Formatted::Str("dp"),
-            Self::Sf => Formatted::Str("sf"),
-            Self::Base(b) => Formatted::Base(b.base_as_u8()),
+    ) -> Result<String, IntErr<Never, I>> {
+        let mut spans = vec![];
+        self.format(indent, &mut spans, int)?;
+        let mut res = String::new();
+        for span in spans {
+            res.push_str(&span.string);
+        }
+        Ok(res)
+    }
+
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        indent: usize,
+        spans: &mut Vec<Span>,
+        int: &I,
+    ) -> Result<(), IntErr<Never, I>> {
+        match self {
+            Self::Num(n) => {
+                spans.push(Span {
+                    string: n.format(int)?.to_string(),
+                    kind: SpanKind::Number,
+                });
+            }
+            Self::BuiltInFunction(name) => {
+                spans.push(Span {
+                    string: name.to_string(),
+                    kind: SpanKind::BuiltInFunction,
+                });
+            }
+            Self::Format(fmt) => {
+                spans.push(Span {
+                    string: fmt.to_string(),
+                    kind: SpanKind::Keyword,
+                });
+            }
+            Self::Dp => {
+                spans.push(Span {
+                    string: "dp".to_string(),
+                    kind: SpanKind::Keyword,
+                });
+            }
+            Self::Sf => {
+                spans.push(Span {
+                    string: "sf".to_string(),
+                    kind: SpanKind::Keyword,
+                });
+            }
+            Self::Base(b) => {
+                spans.push(Span {
+                    string: "base ".to_string(),
+                    kind: SpanKind::Keyword,
+                });
+                spans.push(Span {
+                    string: b.base_as_u8().to_string(),
+                    kind: SpanKind::Number,
+                });
+            }
             Self::Fn(name, expr, _scope) => {
                 let expr_str = (&**expr).format(int)?;
                 let res = if name.contains('.') {
@@ -293,30 +343,40 @@ impl<'a> Value<'a> {
                 } else {
                     format!("\\{}.{}", name, expr_str)
                 };
-                Formatted::String(res)
+                spans.push(Span {
+                    string: res,
+                    kind: SpanKind::Other,
+                });
             }
             Self::Object(kv) => {
-                let mut s = "{".to_string();
+                spans.push(Span::from_string("{".to_string()));
                 for (i, (k, v)) in kv.iter().enumerate() {
                     if i != 0 {
-                        s.push(',');
+                        spans.push(Span::from_string(",".to_string()));
                     }
-                    s.push('\n');
+                    spans.push(Span::from_string("\n".to_string()));
                     for _ in 0..(indent + 4) {
-                        s.push(' ');
+                        spans.push(Span::from_string(" ".to_string()));
                     }
-                    s.push_str(k);
-                    s.push(':');
-                    s.push(' ');
-                    s.push_str(&v.format(indent + 4, int)?.to_string());
+                    spans.push(Span::from_string(format!("{}: ", k)));
+                    v.format(indent + 4, spans, int)?;
                 }
-                s.push('\n');
-                s.push('}');
-                Formatted::String(s)
+                spans.push(Span::from_string("\n}".to_string()));
             }
-            Self::String(s) => Formatted::Str(s.as_ref()),
-            Self::Date(d) => Formatted::Date(*d),
-        })
+            Self::String(s) => {
+                spans.push(Span {
+                    string: s.to_string(),
+                    kind: SpanKind::String,
+                });
+            }
+            Self::Date(d) => {
+                spans.push(Span {
+                    string: d.to_string(),
+                    kind: SpanKind::Date,
+                });
+            },
+        }
+        Ok(())
     }
 
     pub(crate) fn get_object_member(self, key: &str) -> Result<Self, &'static str> {
@@ -343,7 +403,7 @@ impl<'a> Value<'a> {
             Self::BuiltInFunction(f) => Ok(f
                 .differentiate()
                 .ok_or(format!("Cannot differentiate built-in function {}", f))?),
-            _ => Err(format!("Cannot differentiate {}", self.format(0, int)?).into()),
+            _ => Err(format!("Cannot differentiate {}", self.format_to_plain_string(0, int)?).into()),
         }
     }
 }
@@ -373,28 +433,6 @@ impl<'a> fmt::Debug for Value<'a> {
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
             Self::Date(d) => write!(f, "{:?}", d),
-        }
-    }
-}
-
-#[derive(Debug)]
-/// Describes a formatted value
-pub(crate) enum Formatted<'a> {
-    Str(&'a str),
-    String(String),
-    Base(u8),
-    Number(Box<FormattedNumber>),
-    Date(crate::datetime::Date),
-}
-
-impl<'a> fmt::Display for Formatted<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Str(s) => write!(f, "{}", s),
-            Self::String(s) => write!(f, "{}", s),
-            Self::Number(n) => write!(f, "{}", n),
-            Self::Base(n) => write!(f, "base {}", n),
-            Self::Date(d) => write!(f, "{}", d),
         }
     }
 }
