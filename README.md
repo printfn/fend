@@ -26,10 +26,6 @@ fend is now available on the web at [printfn.github.io/fend-website](https://pri
 
 ## Installation
 
-<a href="https://repology.org/project/fend/versions">
-    <img src="https://repology.org/badge/vertical-allrepos/fend.svg" alt="Packaging status">
-</a>
-
 Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
 
 You can then run `fend` to start a REPL session:
