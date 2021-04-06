@@ -39,7 +39,7 @@ fn eval_and_print_res(
     line: &str,
     context: &mut Context,
     int: &impl fend_core::Interrupt,
-    color: bool,
+    config: &config::ConfigOptions,
 ) -> EvalResult {
     match fend_core::evaluate_with_interrupt(line, context, int) {
         Ok(res) => {
@@ -47,7 +47,7 @@ fn eval_and_print_res(
             if result.is_empty() {
                 return EvalResult::NoInput;
             }
-            if color {
+            if config.color {
                 println!("{}", print_spans(result));
             } else {
                 println!("{}", res.get_main_result());
@@ -84,7 +84,7 @@ fn save_history(rl: &mut Editor<helper::Helper>, path: &Option<PathBuf>) {
     }
 }
 
-fn repl_loop(enable_color: bool) -> i32 {
+fn repl_loop(config: &config::ConfigOptions) -> i32 {
     // `()` can be used when no completer is required
     let mut rl = Editor::<helper::Helper>::with_config(
         rustyline::config::Builder::new()
@@ -94,7 +94,7 @@ fn repl_loop(enable_color: bool) -> i32 {
             .build(),
     );
     let mut context = Context::new();
-    rl.set_helper(Some(helper::Helper::new(context.clone(), enable_color)));
+    rl.set_helper(Some(helper::Helper::new(context.clone(), config.color)));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
@@ -105,7 +105,7 @@ fn repl_loop(enable_color: bool) -> i32 {
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();
     loop {
-        let readline = rl.readline("> ");
+        let readline = rl.readline(&config.prompt);
         match readline {
             Ok(line) => match line.as_str() {
                 "exit" | "exit()" | ".exit" | ":exit" | "quit" | "quit()" | ":quit" | ":q"
@@ -115,7 +115,7 @@ fn repl_loop(enable_color: bool) -> i32 {
                 }
                 line => {
                     interrupt.reset();
-                    match eval_and_print_res(line, &mut context, &interrupt, enable_color) {
+                    match eval_and_print_res(line, &mut context, &interrupt, config) {
                         EvalResult::Ok => {
                             last_command_success = true;
                             initial_run = false;
@@ -168,20 +168,21 @@ fn main() {
             println!("{}", fend_core::get_version());
             return;
         }
+        let config = config::read_config(false);
         std::process::exit(
             match eval_and_print_res(
                 expr.as_str(),
                 &mut Context::new(),
                 &interrupt::Never::default(),
-                false,
+                &config,
             ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
                 EvalResult::Err => 1,
             },
         )
     } else {
-        let enable_color = std::env::var_os("NO_COLOR").is_none();
-        let exit_code = repl_loop(enable_color);
+        let config = config::read_config(true);
+        let exit_code = repl_loop(&config);
         std::process::exit(exit_code);
     }
 }

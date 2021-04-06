@@ -17,6 +17,8 @@ rustyline = { version =  "7.1.0", default-features = false, package = "rustyline
 directories = "3.0.1"
 ctrlc = "3.1.8"
 ansi_term = "0.12.1"
+toml = "0.5.8"
+serde = { version = "1.0.125", features = ["derive"] }
 
 [dependencies.fend-core]
 version = "0.1.14"
