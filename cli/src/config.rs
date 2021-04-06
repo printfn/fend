@@ -4,12 +4,12 @@ use std::env::var_os;
 use std::{fs, io, path};
 
 #[derive(Deserialize, Serialize)]
-pub struct ConfigOptions {
+pub struct Config {
     pub prompt: String,
     pub color: bool,
 }
 
-impl Default for ConfigOptions {
+impl Default for Config {
     fn default() -> Self {
         Self {
             prompt: "> ".to_string(),
@@ -50,40 +50,35 @@ impl From<toml::de::Error> for ReadConfigErr {
     }
 }
 
-fn read_config_file() -> Result<ConfigOptions, ReadConfigErr> {
+fn read_config_file() -> Config {
     let mut path = match get_config_dir() {
         Some(path) => path,
-        None => return Ok(ConfigOptions::default()),
+        None => return Config::default(),
     };
     path.push("config.toml");
     let mut file = match fs::File::open(&path) {
         Ok(file) => file,
-        Err(_) => return Ok(ConfigOptions::default()),
+        Err(_) => return Config::default(),
     };
     let mut bytes = vec![];
     match <fs::File as io::Read>::read_to_end(&mut file, &mut bytes) {
         Ok(_) => (),
-        Err(_) => return Ok(ConfigOptions::default()),
+        Err(_) => return Config::default(),
     }
-    Ok(match toml::de::from_slice(bytes.as_slice()) {
-        Ok(config) => config,
-        Err(_) => {
-            eprintln!("Invalid config file in {:?}", &path);
-            let default_config = ConfigOptions::default();
-            match toml::ser::to_string_pretty(&default_config) {
-                Ok(s) => eprintln!("Using default config file:\n{}", s),
-                Err(_) => (),
-            }
-            default_config
+    if let Ok(config) = toml::de::from_slice(bytes.as_slice()) {
+        config
+    } else {
+        eprintln!("Invalid config file in {:?}", &path);
+        let default_config = Config::default();
+        if let Ok(s) = toml::ser::to_string_pretty(&default_config) {
+            eprintln!("Using default config file:\n{}", s);
         }
-    })
+        default_config
+    }
 }
 
-pub fn read_config(interactive: bool) -> ConfigOptions {
-    let mut config = match read_config_file() {
-        Ok(config) => config,
-        Err(_) => ConfigOptions::default(),
-    };
+pub fn read(interactive: bool) -> Config {
+    let mut config = read_config_file();
     if !interactive {
         config.color = false;
     }

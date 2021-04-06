@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
-#![forbid(clippy::all)]
-#![forbid(clippy::pedantic)]
+#![deny(clippy::all)]
+#![deny(clippy::pedantic)]
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -39,7 +39,7 @@ fn eval_and_print_res(
     line: &str,
     context: &mut Context,
     int: &impl fend_core::Interrupt,
-    config: &config::ConfigOptions,
+    config: &config::Config,
 ) -> EvalResult {
     match fend_core::evaluate_with_interrupt(line, context, int) {
         Ok(res) => {
@@ -84,7 +84,7 @@ fn save_history(rl: &mut Editor<helper::Helper>, path: &Option<PathBuf>) {
     }
 }
 
-fn repl_loop(config: &config::ConfigOptions) -> i32 {
+fn repl_loop(config: &config::Config) -> i32 {
     // `()` can be used when no completer is required
     let mut rl = Editor::<helper::Helper>::with_config(
         rustyline::config::Builder::new()
@@ -168,7 +168,7 @@ fn main() {
             println!("{}", fend_core::get_version());
             return;
         }
-        let config = config::read_config(false);
+        let config = config::read(false);
         std::process::exit(
             match eval_and_print_res(
                 expr.as_str(),
@@ -181,7 +181,7 @@ fn main() {
             },
         )
     } else {
-        let config = config::read_config(true);
+        let config = config::read(true);
         let exit_code = repl_loop(&config);
         std::process::exit(exit_code);
     }
