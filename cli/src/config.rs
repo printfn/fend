@@ -33,23 +33,6 @@ fn get_config_dir() -> Option<path::PathBuf> {
     )
 }
 
-enum ReadConfigErr {
-    FileReadingError(io::Error),
-    DeserializationError(toml::de::Error),
-}
-
-impl From<io::Error> for ReadConfigErr {
-    fn from(err: io::Error) -> Self {
-        Self::FileReadingError(err)
-    }
-}
-
-impl From<toml::de::Error> for ReadConfigErr {
-    fn from(err: toml::de::Error) -> Self {
-        Self::DeserializationError(err)
-    }
-}
-
 fn read_config_file() -> Config {
     let mut path = match get_config_dir() {
         Some(path) => path,
