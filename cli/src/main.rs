@@ -2,11 +2,8 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
-
 use fend_core::{Context, SpanKind};
-use std::path::PathBuf;
+use std::path;
 
 mod config;
 mod helper;
@@ -76,7 +73,7 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn save_history(rl: &mut Editor<helper::Helper>, path: &Option<PathBuf>) {
+fn save_history(rl: &mut rustyline::Editor<helper::Helper>, path: &Option<path::PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
@@ -86,7 +83,7 @@ fn save_history(rl: &mut Editor<helper::Helper>, path: &Option<PathBuf>) {
 
 fn repl_loop(config: &config::Config) -> i32 {
     // `()` can be used when no completer is required
-    let mut rl = Editor::<helper::Helper>::with_config(
+    let mut rl = rustyline::Editor::<helper::Helper>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
@@ -129,13 +126,13 @@ fn repl_loop(config: &config::Config) -> i32 {
                     }
                 }
             },
-            Err(ReadlineError::Interrupted) => {
+            Err(rustyline::error::ReadlineError::Interrupted) => {
                 if initial_run {
                     break;
                 }
                 println!("Use Ctrl-D (i.e. EOF) to exit");
             }
-            Err(ReadlineError::Eof) => break,
+            Err(rustyline::error::ReadlineError::Eof) => break,
             Err(err) => {
                 println!("Error: {}", err);
                 break;

@@ -1,21 +1,21 @@
-use std::time::{Duration, Instant};
+use std::time;
 
 pub struct HintInterrupt {
-    start: Instant,
-    duration: Duration,
+    start: time::Instant,
+    duration: time::Duration,
 }
 
 impl fend_core::Interrupt for HintInterrupt {
     fn should_interrupt(&self) -> bool {
-        Instant::now().duration_since(self.start) >= self.duration
+        time::Instant::now().duration_since(self.start) >= self.duration
     }
 }
 
 impl Default for HintInterrupt {
     fn default() -> Self {
         Self {
-            start: Instant::now(),
-            duration: Duration::from_millis(20),
+            start: time::Instant::now(),
+            duration: time::Duration::from_millis(20),
         }
     }
 }

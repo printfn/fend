@@ -1,9 +1,6 @@
-use directories::ProjectDirs;
-use serde::{Deserialize, Serialize};
-use std::env::var_os;
-use std::{fs, io, path};
+use std::{env, fs, io, path};
 
-#[derive(Deserialize, Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     pub prompt: String,
     pub color: bool,
@@ -20,13 +17,13 @@ impl Default for Config {
 
 fn get_config_dir() -> Option<path::PathBuf> {
     // first try $FEND_CONFIG_DIR
-    var_os("FEND_CONFIG_DIR").map_or_else(
+    env::var_os("FEND_CONFIG_DIR").map_or_else(
         || {
             // if not, then use these paths:
             // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
             // macOS: $HOME/Library/Application Support/fend
             // Windows: {FOLDERID_RoamingAppData}\fend\config
-            ProjectDirs::from("", "", "fend")
+            directories::ProjectDirs::from("", "", "fend")
                 .map(|proj_dirs| path::PathBuf::from(proj_dirs.config_dir()))
         },
         |config_dir| Some(path::PathBuf::from(config_dir)),
