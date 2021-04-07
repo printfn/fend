@@ -30,12 +30,18 @@ fn get_config_dir() -> Option<path::PathBuf> {
     )
 }
 
+pub fn get_config_file_dir() -> Option<path::PathBuf> {
+    get_config_dir().map(|mut dir| {
+        dir.push("config.toml");
+        dir
+    })
+}
+
 fn read_config_file() -> Config {
-    let mut path = match get_config_dir() {
+    let path = match get_config_file_dir() {
         Some(path) => path,
         None => return Config::default(),
     };
-    path.push("config.toml");
     let mut file = match fs::File::open(&path) {
         Ok(file) => file,
         Err(_) => return Config::default(),

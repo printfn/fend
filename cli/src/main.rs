@@ -64,9 +64,13 @@ fn print_help(explain_quitting: bool) {
             "For more information on how to use fend, ",
             "please take a look at the manual:\n",
             "https://github.com/printfn/fend/wiki\n\n",
-            "Version: {}"
+            "Version: {}{}",
         ),
-        fend_core::get_version()
+        fend_core::get_version(),
+        config::get_config_file_dir().map_or_else(
+            || "Failed to get config file location".to_string(),
+            |d| format!("\nConfig file: {}", d.to_string_lossy())
+        )
     );
     if explain_quitting {
         println!("\nTo quit, type `quit`.")
