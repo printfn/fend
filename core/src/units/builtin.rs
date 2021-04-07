@@ -23,7 +23,7 @@ const fn p(singular: &'static str, plural: &'static str, definition: &'static st
     }
 }
 
-const UNIT_DEFS: [UnitDef; 71] = [
+const UNIT_DEFS: &[UnitDef] = &[
     s("unitless", "=1"),
     // SI base units
     p("second", "seconds", "l@!"),
@@ -102,6 +102,61 @@ const UNIT_DEFS: [UnitDef; 71] = [
     s("exbi", "lp@2^60"),
     s("zebi", "lp@2^70"),
     s("yobi", "lp@2^80"),
+    // number words
+    s("one", "=1"),
+    s("two", "=2"),
+    s("couple", "=2"),
+    s("three", "=3"),
+    s("four", "=4"),
+    s("quadruple", "=4"),
+    s("five", "=5"),
+    s("quintuple", "=5"),
+    s("six", "=6"),
+    s("seven", "=7"),
+    s("eight", "=8"),
+    s("nine", "=9"),
+    s("ten", "=10"),
+    s("eleven", "=11"),
+    s("twelve", "=12"),
+    s("thirteen", "=13"),
+    s("fourteen", "=14"),
+    s("fifteen", "=15"),
+    s("sixteen", "=16"),
+    s("seventeen", "=17"),
+    s("eighteen", "=18"),
+    s("nineteen", "=19"),
+    s("twenty", "=20"),
+    s("thirty", "=30"),
+    s("forty", "=40"),
+    s("fifty", "=50"),
+    s("sixty", "=60"),
+    s("seventy", "=70"),
+    s("eighty", "=80"),
+    s("ninety", "=90"),
+    s("hundred", "=100"),
+    s("thousand", "=1000"),
+    s("million", "=1e6"),
+    s("billion", "=1e9"),
+    s("trillion", "=1e12"),
+    s("quadrillion", "=1e15"),
+    s("quintillion", "=1e18"),
+    s("sextillion", "=1e21"),
+    s("septillion", "=1e24"),
+    s("octillion", "=1e27"),
+    s("nonillion", "=1e30"),
+    s("decillion", "=1e33"),
+    s("undecillion", "=1e36"),
+    s("duodecillion", "=1e39"),
+    s("tredecillion", "=1e42"),
+    s("quattuordecillion", "=1e45"),
+    s("quindecillion", "=1e48"),
+    s("sexdecillion", "=1e51"),
+    s("septendecillion", "=1e54"),
+    s("octodecillion", "=1e57"),
+    s("novemdecillion", "=1e60"),
+    s("vigintillion", "=1e63"),
+    s("googol", "=1e100"),
+    s("centillion", "=1e303"),
 ];
 
 #[allow(clippy::too_many_lines)]
@@ -146,7 +201,7 @@ pub(crate) fn query_unit<'a>(
             _ => (),
         }
     }
-    for def in &UNIT_DEFS {
+    for def in UNIT_DEFS {
         if def.singular == ident || def.plural == ident {
             return Some((def.singular, def.plural, def.definition));
         }

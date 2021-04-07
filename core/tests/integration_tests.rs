@@ -3972,11 +3972,6 @@ fn nonillion() {
 }
 
 #[test]
-fn noventillion() {
-    test_eval("noventillion", "1000000000000000000000000000000");
-}
-
-#[test]
 fn decillion() {
     test_eval("decillion", "1000000000000000000000000000000000");
 }
