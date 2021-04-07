@@ -4,9 +4,7 @@ use crate::num::biguint::BigUint;
 use crate::num::{
     Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, ValueOutOfRange,
 };
-use std::cmp::Ordering;
-use std::fmt;
-use std::ops::Neg;
+use std::{cmp, fmt, ops};
 
 mod sign {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -60,28 +58,28 @@ impl fmt::Debug for BigRat {
 }
 
 impl Ord for BigRat {
-    fn cmp(&self, other: &Self) -> Ordering {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
         let int = &crate::interrupt::Never::default();
         let diff = self.clone().add(-other.clone(), int).unwrap();
         if diff.num == 0.into() {
-            Ordering::Equal
+            cmp::Ordering::Equal
         } else if diff.sign == Sign::Positive {
-            Ordering::Greater
+            cmp::Ordering::Greater
         } else {
-            Ordering::Less
+            cmp::Ordering::Less
         }
     }
 }
 
 impl PartialOrd for BigRat {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl PartialEq for BigRat {
     fn eq(&self, other: &Self) -> bool {
-        self.cmp(other) == Ordering::Equal
+        self.cmp(other) == cmp::Ordering::Equal
     }
 }
 
@@ -977,7 +975,7 @@ enum MaxDigitsToPrint {
     DpButIgnoreLeadingZeroes(usize),
 }
 
-impl Neg for BigRat {
+impl ops::Neg for BigRat {
     type Output = Self;
 
     fn neg(self) -> Self {

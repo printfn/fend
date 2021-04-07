@@ -3,9 +3,7 @@ use crate::error::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::{Span, SpanKind};
-use std::borrow::Cow;
-use std::fmt;
-use std::sync::Arc;
+use std::{borrow, fmt, sync::Arc};
 
 #[derive(Clone)]
 pub(crate) enum Value<'a> {
@@ -18,7 +16,7 @@ pub(crate) enum Value<'a> {
     // user-defined function with a named parameter
     Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
-    String(Cow<'a, str>),
+    String(borrow::Cow<'a, str>),
     Date(crate::datetime::Date),
 }
 

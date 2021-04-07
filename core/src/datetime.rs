@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, fmt};
+use std::{convert, fmt};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Day(u8);
@@ -120,7 +120,7 @@ impl Year {
 
 pub(crate) struct InvalidYearError;
 
-impl TryFrom<i32> for Year {
+impl convert::TryFrom<i32> for Year {
     type Error = InvalidYearError;
 
     fn try_from(year: i32) -> Result<Self, Self::Error> {

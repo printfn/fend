@@ -1,6 +1,6 @@
 use crate::error::{IntErr, Interrupt};
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
-use std::{convert::TryInto, fmt};
+use std::{convert, fmt};
 
 #[derive(Clone, Debug)]
 pub(crate) enum Token<'a> {
@@ -146,7 +146,7 @@ fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), Error> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
     possible_digit
-        .and_then(|d| <u32 as TryInto<u8>>::try_into(d).ok())
+        .and_then(|d| <u32 as convert::TryInto<u8>>::try_into(d).ok())
         .map_or(Err(Error::ExpectedADigit(ch)), |digit| Ok((digit, input)))
 }
 
@@ -538,7 +538,7 @@ fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices) -> Result<char, 
     if zero_length {
         return Err(Error::InvalidUnicodeEscapeSequence);
     }
-    if let Ok(ch) = result_value.try_into() {
+    if let Ok(ch) = <char as convert::TryFrom<u32>>::try_from(result_value) {
         Ok(ch)
     } else {
         Err(Error::InvalidUnicodeEscapeSequence)
@@ -580,16 +580,14 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                     // two-character hex code
                     let (_, hex1) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
                     let (_, hex2) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
-                    let hex1: u8 = hex1
-                        .to_digit(8)
-                        .ok_or(Error::BackslashXOutOfRange)?
-                        .try_into()
-                        .unwrap();
-                    let hex2: u8 = hex2
-                        .to_digit(16)
-                        .ok_or(Error::BackslashXOutOfRange)?
-                        .try_into()
-                        .unwrap();
+                    let hex1: u8 = <u32 as convert::TryInto<u8>>::try_into(
+                        hex1.to_digit(8).ok_or(Error::BackslashXOutOfRange)?,
+                    )
+                    .unwrap();
+                    let hex2: u8 = <u32 as convert::TryInto<u8>>::try_into(
+                        hex2.to_digit(16).ok_or(Error::BackslashXOutOfRange)?,
+                    )
+                    .unwrap();
                     Some((hex1 * 16 + hex2) as u8 as char)
                 }
                 'u' => Some(parse_unicode_escape(&mut chars_iter)?),

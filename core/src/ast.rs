@@ -4,13 +4,13 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
-use std::borrow::Cow;
+use std::borrow;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub(crate) enum Expr<'a> {
     Num(Number<'a>),
-    String(Cow<'a, str>),
+    String(borrow::Cow<'a, str>),
     Ident(&'a str),
     Parens(Box<Expr<'a>>),
     UnaryMinus(Box<Expr<'a>>),
