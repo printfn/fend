@@ -184,6 +184,36 @@ pub fn evaluate_with_interrupt(
     })
 }
 
+#[derive(Debug)]
+pub struct Completion {
+    display: String,
+    insert: String,
+}
+
+impl Completion {
+    pub fn display(&self) -> &str {
+        &self.display
+    }
+
+    pub fn insert(&self) -> &str {
+        &self.insert
+    }
+}
+
+pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
+    if prefix == "m" {
+        vec![Completion {
+            display: "mol".to_string(),
+            insert: "ol".to_string(),
+        }, Completion {
+            display: "meter - SI unit for distance".to_string(),
+            insert: "eter".to_string(),
+        }]
+    } else {
+        vec![]
+    }
+}
+
 const fn get_version_as_str() -> &'static str {
     "0.1.14"
 }
