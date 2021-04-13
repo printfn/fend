@@ -176,6 +176,7 @@ const UNIT_DEFS: &[UnitDef] = &[
     s("octotrigintillion", "=1e117"),
     s("novemtrigintillion", "=1e120"),
     s("centillion", "=1e303"),
+    s("‰", "0.001"),
 ];
 
 #[allow(clippy::too_many_lines)]
