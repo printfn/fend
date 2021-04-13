@@ -5124,3 +5124,8 @@ fn single_line_comment_and_linebreak_2() {
 fn single_line_comment_and_linebreak_3() {
     test_eval("30.48cm to \' # converting cm\n ' # to feet", "1'");
 }
+
+#[test]
+fn percent_plus_per_mille() {
+    test_eval("4% + 3\u{2030}", "4.3%");
+}
