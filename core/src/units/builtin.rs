@@ -176,11 +176,47 @@ const UNIT_DEFS: &[UnitDef] = &[
     s("octotrigintillion", "=1e117"),
     s("novemtrigintillion", "=1e120"),
     s("centillion", "=1e303"),
+    // constants
+    s("c", "=299792458 m/s"),            // speed of light in vacuum (exact)
+    s("h", "s@=6.62607015e-34 J s"),     // Planck constant (exact)
+    s("boltzmann", "=1.380649e-23 J/K"), // Boltzmann constant (exact)
+    s("electroncharge", "=1.602176634e-19 coulomb"), // electron charge (exact)
+    s("avogadro", "=6.02214076e23 / mol"), // Size of a mole (exact)
+    s("N_A", "=avogadro"),
+    // angles
+    p("radian", "radians", "l@1"),
+    p("steradian", "steradians", "l@1"),
+    s("sr", "s@steradian"),
+    // common SI derived units
+    p("newton", "newtons", "l@kg m / s^2"), // force
+    s("N", "s@newton"),
+    p("pascal", "pascals", "l@N/m^2"), // pressure or stress
+    s("Pa", "s@pascal"),
+    p("joule", "joules", "l@N m"), // energy
+    s("J", "s@joule"),
+    p("watt", "watts", "l@J/s"), // power
+    s("W", "s@watt"),
+    s("coulomb", "l@A s"), // charge
+    s("C", "s@coulomb"),
+    p("volt", "volts", "l@W/A"), // potential difference
+    s("V", "s@volt"),
+    p("ohm", "ohms", "l@V/A"), // electrical resistance
+    s("siemens", "l@A/V"),     // electrical conductance
+    s("S", "s@siemens"),
+    s("farad", "l@C/V"), // capacitance
+    s("F", "s@farad"),
+    s("weber", "l@V s"), // magnetic flux
+    s("Wb", "s@weber"),
+    s("henry", "l@V s / A"), // inductance
+    s("H", "s@henry"),
+    s("tesla", "l@Wb/m^2"), // magnetic flux density
+    s("T", "s@tesla"),
+    s("hertz", "l@/s"), // frequency
+    s("Hz", "s@hertz"),
     s("\u{2030}", "0.001"), // per mille
 ];
 
 #[allow(clippy::too_many_lines)]
-#[rustfmt::skip::macros(define_units)]
 pub(crate) fn query_unit<'a>(
     ident: &'a str,
     short_prefixes: bool,
