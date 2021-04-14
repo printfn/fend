@@ -3,6 +3,7 @@ use std::fmt;
 mod day;
 mod day_of_week;
 mod month;
+mod parser;
 mod year;
 
 use day::Day;
@@ -22,14 +23,6 @@ pub(crate) struct TodayError;
 impl fmt::Display for TodayError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Unable to get the current date")
-    }
-}
-
-pub(crate) struct ParseDateError<'a>(&'a str);
-
-impl fmt::Display for ParseDateError<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to convert '{}' to a date", self.0)
     }
 }
 
@@ -143,17 +136,8 @@ impl Date {
         }
     }
 
-    pub(crate) fn parse(s: &str) -> Result<Self, ParseDateError> {
-        let trimmed = s.trim();
-        if trimmed == "2021-04-14" {
-            Ok(Self {
-                year: Year::new(2021),
-                month: Month::April,
-                day: Day::new(14),
-            })
-        } else {
-            Err(ParseDateError(s))
-        }
+    pub(crate) fn parse(s: &str) -> Result<Self, parser::ParseDateError> {
+        parser::parse_date(s)
     }
 }
 
