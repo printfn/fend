@@ -583,11 +583,11 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                     // two-character hex code
                     let (_, hex1) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
                     let (_, hex2) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
-                    let hex1: u8 = <u32 as convert::TryInto<u8>>::try_into(
+                    let hex1: u8 = convert::TryInto::try_into(
                         hex1.to_digit(8).ok_or(Error::BackslashXOutOfRange)?,
                     )
                     .unwrap();
-                    let hex2: u8 = <u32 as convert::TryInto<u8>>::try_into(
+                    let hex2: u8 = convert::TryInto::try_into(
                         hex2.to_digit(16).ok_or(Error::BackslashXOutOfRange)?,
                     )
                     .unwrap();
@@ -623,6 +623,29 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
     let literal_length = literal_length.ok_or(Error::UnterminatedStringLiteral)?;
     let (_, remaining) = input.split_at(literal_length + 1);
     Ok((Token::StringLiteral(literal_string.into()), remaining))
+}
+
+// parses a unit beginning with ' or "
+fn parse_quote_unit(input: &str) -> (Token, &str) {
+    let mut split_idx = 1;
+    if let Some(ch) = input.split_at(1).1.chars().next() {
+        if ch.is_alphabetic() {
+            split_idx += ch.len_utf8();
+            let mut prev = ch;
+            let (_, mut remaining) = input.split_at(split_idx);
+            while let Some(next) = remaining.chars().next() {
+                if !is_valid_in_ident(next, Some(prev)) {
+                    break;
+                }
+                split_idx += next.len_utf8();
+                prev = next;
+                let (_, remaining2) = input.split_at(split_idx);
+                remaining = remaining2;
+            }
+        }
+    }
+    let (a, b) = input.split_at(split_idx);
+    (Token::Ident(a), b)
 }
 
 pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
@@ -663,13 +686,9 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     Token::Num(num)
                 } else if ch == '\'' || ch == '"' {
                     if self.after_number_or_to {
-                        let (_, remaining) = self.input.split_at(1);
+                        let (token, remaining) = parse_quote_unit(self.input);
                         self.input = remaining;
-                        if ch == '\'' {
-                            Token::Ident("'")
-                        } else {
-                            Token::Ident("\"")
-                        }
+                        token
                     } else {
                         // normal string literal, with possible escape sequences
                         let (token, remaining) = parse_string_literal(self.input, ch)?;

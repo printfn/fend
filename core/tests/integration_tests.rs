@@ -5129,3 +5129,19 @@ fn single_line_comment_and_linebreak_3() {
 fn percent_plus_per_mille() {
     test_eval("4% + 3\u{2030}", "4.3%");
 }
+
+#[test]
+fn custom_base_unit() {
+    test_eval("5 'tests'", "5 'tests'");
+}
+
+#[test]
+fn custom_base_unit_in_calculation() {
+    test_eval("5 'pigeons' per meter", "5 'pigeons' / meter");
+}
+
+#[test]
+#[ignore]
+fn custom_base_unit_in_calculation_2() {
+    test_eval("5 'pigeons' per meter / 'pigeons'", "5 meters");
+}

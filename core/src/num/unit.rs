@@ -939,6 +939,13 @@ impl<'a> NamedUnit<'a> {
             return false;
         }
 
+        // if it starts with a quote and is more than one character long, print it with a space
+        if (self.singular_name.starts_with('\'') || self.singular_name.starts_with('\"'))
+            && self.singular_name.len() > 1
+        {
+            return true;
+        }
+
         self.singular_name
             .chars()
             .next()
