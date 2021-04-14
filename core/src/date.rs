@@ -1,174 +1,14 @@
-use std::{convert, fmt};
+use std::fmt;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub(crate) struct Day(u8);
+mod day;
+mod day_of_week;
+mod month;
+mod year;
 
-impl fmt::Display for Day {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub(crate) enum Month {
-    January,
-    February,
-    March,
-    April,
-    May,
-    June,
-    July,
-    August,
-    September,
-    October,
-    November,
-    December,
-}
-
-impl Month {
-    fn number_of_days(self, year: Year) -> u8 {
-        match self {
-            Self::February => {
-                if year.is_leap_year() {
-                    29
-                } else {
-                    28
-                }
-            }
-            Self::April | Self::June | Self::September | Self::November => 30,
-            _ => 31,
-        }
-    }
-
-    fn next(self) -> Self {
-        match self {
-            Self::January => Self::February,
-            Self::February => Self::March,
-            Self::March => Self::April,
-            Self::April => Self::May,
-            Self::May => Self::June,
-            Self::June => Self::July,
-            Self::July => Self::August,
-            Self::August => Self::September,
-            Self::September => Self::October,
-            Self::October => Self::November,
-            Self::November => Self::December,
-            Self::December => Self::January,
-        }
-    }
-
-    fn prev(self) -> Self {
-        match self {
-            Self::January => Self::December,
-            Self::February => Self::January,
-            Self::March => Self::February,
-            Self::April => Self::March,
-            Self::May => Self::April,
-            Self::June => Self::May,
-            Self::July => Self::June,
-            Self::August => Self::July,
-            Self::September => Self::August,
-            Self::October => Self::September,
-            Self::November => Self::October,
-            Self::December => Self::November,
-        }
-    }
-}
-
-impl fmt::Display for Month {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::January => "January",
-            Self::February => "February",
-            Self::March => "March",
-            Self::April => "April",
-            Self::May => "May",
-            Self::June => "June",
-            Self::July => "July",
-            Self::August => "August",
-            Self::September => "September",
-            Self::October => "October",
-            Self::November => "November",
-            Self::December => "December",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub(crate) struct Year(i32);
-
-impl Year {
-    fn is_leap_year(self) -> bool {
-        if self.0 % 400 == 0 {
-            true
-        } else if self.0 % 100 == 0 {
-            false
-        } else {
-            self.0 % 4 == 0
-        }
-    }
-
-    fn number_of_days(self) -> u16 {
-        if self.is_leap_year() {
-            366
-        } else {
-            365
-        }
-    }
-}
-
-pub(crate) struct InvalidYearError;
-
-impl convert::TryFrom<i32> for Year {
-    type Error = InvalidYearError;
-
-    fn try_from(year: i32) -> Result<Self, Self::Error> {
-        if year == 0 {
-            Err(InvalidYearError)
-        } else {
-            Ok(Self(year))
-        }
-    }
-}
-
-impl fmt::Display for Year {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum DayOfWeek {
-    Sunday,
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-}
-
-impl fmt::Debug for DayOfWeek {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::Sunday => "Sunday",
-            Self::Monday => "Monday",
-            Self::Tuesday => "Tuesday",
-            Self::Wednesday => "Wednesday",
-            Self::Thursday => "Thursday",
-            Self::Friday => "Friday",
-            Self::Saturday => "Saturday",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-impl fmt::Display for DayOfWeek {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+use day::Day;
+use day_of_week::DayOfWeek;
+use month::Month;
+use year::Year;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
@@ -211,9 +51,9 @@ impl Date {
             return Err(TodayError);
         }
         let mut days = ms_since_epoch / 86_400_000; // no leap seconds
-        let mut year = Year(1970);
+        let mut year = Year::new(1970);
         while days >= year.number_of_days().into() {
-            year.0 += 1;
+            year = year.next();
             days -= i64::from(year.number_of_days());
         }
         let mut month = Month::January;
@@ -224,15 +64,15 @@ impl Date {
         Ok(Self {
             year,
             month,
-            day: Day(days as u8),
+            day: Day::new(days as u8),
         })
     }
 
     fn day_of_week(self) -> DayOfWeek {
         let d1 = (1
-            + 5 * ((self.year.0 - 1) % 4)
-            + 4 * ((self.year.0 - 1) % 100)
-            + 6 * ((self.year.0 - 1) % 400))
+            + 5 * ((self.year.value() - 1) % 4)
+            + 4 * ((self.year.value() - 1) % 100)
+            + 6 * ((self.year.value() - 1) % 400))
             % 7;
         let ms = match self.month {
             Month::January => (0, 0),
@@ -246,7 +86,7 @@ impl Date {
             Month::October => (0, 1),
         };
         let m = if self.year.is_leap_year() { ms.1 } else { ms.0 };
-        match (d1 + m + i32::from(self.day.0 - 1)) % 7 {
+        match (d1 + m + i32::from(self.day.value() - 1)) % 7 {
             0 => DayOfWeek::Sunday,
             1 => DayOfWeek::Monday,
             2 => DayOfWeek::Tuesday,
@@ -259,21 +99,21 @@ impl Date {
     }
 
     pub(crate) fn next(self) -> Self {
-        if self.day.0 < Month::number_of_days(self.month, self.year) {
+        if self.day.value() < Month::number_of_days(self.month, self.year) {
             Self {
-                day: Day(self.day.0 + 1),
+                day: Day::new(self.day.value() + 1),
                 month: self.month,
                 year: self.year,
             }
         } else if self.month == Month::December {
             Self {
-                day: Day(1),
+                day: Day::new(1),
                 month: Month::January,
-                year: Year(self.year.0 + 1),
+                year: self.year.next(),
             }
         } else {
             Self {
-                day: Day(1),
+                day: Day::new(1),
                 month: self.month.next(),
                 year: self.year,
             }
@@ -281,22 +121,22 @@ impl Date {
     }
 
     pub(crate) fn prev(self) -> Self {
-        if self.day.0 > 1 {
+        if self.day.value() > 1 {
             Self {
-                day: Day(self.day.0 - 1),
+                day: Day::new(self.day.value() - 1),
                 month: self.month,
                 year: self.year,
             }
         } else if self.month == Month::January {
             Self {
-                day: Day(31),
+                day: Day::new(31),
                 month: Month::December,
-                year: Year(self.year.0 - 1),
+                year: self.year.prev(),
             }
         } else {
             let month = self.month.prev();
             Self {
-                day: Day(Month::number_of_days(month, self.year)),
+                day: Day::new(Month::number_of_days(month, self.year)),
                 month,
                 year: self.year,
             }
@@ -307,9 +147,9 @@ impl Date {
         let trimmed = s.trim();
         if trimmed == "2021-04-14" {
             Ok(Self {
-                year: Year(2021),
+                year: Year::new(2021),
                 month: Month::April,
-                day: Day(14),
+                day: Day::new(14),
             })
         } else {
             Err(ParseDateError(s))
