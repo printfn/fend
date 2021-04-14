@@ -1,5 +1,5 @@
 use crate::date::Year;
-use std::fmt;
+use std::{convert, fmt};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) enum Month {
@@ -93,5 +93,29 @@ impl fmt::Debug for Month {
 impl fmt::Display for Month {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+pub(crate) struct InvalidMonthError;
+
+impl convert::TryFrom<i32> for Month {
+    type Error = InvalidMonthError;
+
+    fn try_from(month: i32) -> Result<Self, Self::Error> {
+        Ok(match month {
+            1 => Self::January,
+            2 => Self::February,
+            3 => Self::March,
+            4 => Self::April,
+            5 => Self::May,
+            6 => Self::June,
+            7 => Self::July,
+            8 => Self::August,
+            9 => Self::September,
+            10 => Self::October,
+            11 => Self::November,
+            12 => Self::December,
+            _ => return Err(InvalidMonthError),
+        })
     }
 }
