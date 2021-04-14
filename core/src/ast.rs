@@ -233,6 +233,16 @@ fn evaluate_as<'a, I: Interrupt>(
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     match &b {
+        Expr::Ident("date") => {
+            let a = evaluate(a, scope.clone(), context, int)?;
+            return if let Value::String(s) = a {
+                Ok(Value::Date(
+                    crate::datetime::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
+                ))
+            } else {
+                Err("Expected a string".to_string().into())
+            };
+        }
         Expr::Ident("string") => {
             return Ok(Value::String(
                 evaluate(a, scope, context, int)?
