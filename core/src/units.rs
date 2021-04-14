@@ -91,6 +91,9 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
+    if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
+        return Ok(Value::Num(Number::new_base_unit(ident, ident)));
+    }
     match query_unit_internal(ident, false, context, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),

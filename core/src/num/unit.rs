@@ -51,7 +51,7 @@ impl<'a> Value<'a> {
         Ok(result)
     }
 
-    pub(crate) fn new_base_unit(singular_name: &'static str, plural_name: &'static str) -> Self {
+    pub(crate) fn new_base_unit(singular_name: &'a str, plural_name: &'a str) -> Self {
         let base_unit = BaseUnit::new(singular_name);
         let mut hashmap = HashMap::new();
         hashmap.insert(base_unit, 1.into());

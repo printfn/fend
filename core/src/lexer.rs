@@ -419,7 +419,7 @@ fn parse_number<'a, I: Interrupt>(
     Ok((res, input))
 }
 
-pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
+fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     let allowed_chars = [
         ',', '&', '_', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞', '⅙', '⅓', '⅔', '⅚', '⅕', '⅖', '⅗', '⅘',
         '°', '$', '℃', '℉', '℧', '℈', '℥', '℔', '¢', '£', '¥', '€', '₩', '₪', '₤', '₨', '฿', '₡',
@@ -431,15 +431,18 @@ pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
         '㎹', '㎺', '㎻', '㎼', '㎽', '㎾', '㎿', '㏀', '㏁', '㏃', '㏄', '㏅', '㏆', '㏈', '㏉',
         '㏊', '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
     ];
-    // these chars are only valid by themselves
     let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
-    if only_valid_by_themselves.contains(&ch)
-        || only_valid_by_themselves.contains(&prev.unwrap_or('a'))
-    {
+    if only_valid_by_themselves.contains(&ch) {
+        // these are only valid if there was no previous char
         prev.is_none()
+    } else if only_valid_by_themselves.contains(&prev.unwrap_or('a')) {
+        // if prev was a char that's only valid by itself, then this next
+        // char cannot be part of an identifier
+        false
     } else if ch.is_alphabetic() || allowed_chars.contains(&ch) {
         true
     } else {
+        // these are valid only if there was a previous char in this identifier
         prev.is_some() && ".0123456789'\"".contains(ch)
     }
 }
