@@ -17,7 +17,7 @@ pub(crate) enum Value<'a> {
     Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
     String(borrow::Cow<'a, str>),
-    Date(crate::datetime::Date),
+    Date(crate::date::Date),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

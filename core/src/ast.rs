@@ -237,7 +237,7 @@ fn evaluate_as<'a, I: Interrupt>(
             let a = evaluate(a, scope.clone(), context, int)?;
             return if let Value::String(s) = a {
                 Ok(Value::Date(
-                    crate::datetime::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
+                    crate::date::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
                 ))
             } else {
                 Err("Expected a string".to_string().into())
@@ -386,14 +386,14 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
             ("volume", eval_box!("1.08321e12 km^3")),
         ]),
         "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
-        "today" => Value::Date(crate::datetime::Date::today(context).map_err(|e| e.to_string())?),
+        "today" => Value::Date(crate::date::Date::today(context).map_err(|e| e.to_string())?),
         "tomorrow" => Value::Date(
-            crate::datetime::Date::today(context)
+            crate::date::Date::today(context)
                 .map_err(|e| e.to_string())?
                 .next(),
         ),
         "yesterday" => Value::Date(
-            crate::datetime::Date::today(context)
+            crate::date::Date::today(context)
                 .map_err(|e| e.to_string())?
                 .prev(),
         ),
