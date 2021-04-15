@@ -11,16 +11,11 @@ license = "MIT"
 keywords = ["calculator", "library", "conversion", "math", "tool"]
 edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
-exclude = [
-    "src/num/gnu-units-original/currency.units",
-    "src/num/gnu-units-original/definitions.units"
-]
 
 [features]
-default = ["gpl"]
+default = []
 
-# This enables the GNU Units database in `definitions.units` and
-# `currency.units`. If disabled, `builtin.units` is used instead.
+# This feature has been removed, and enabling it has no effect
 gpl = []
 
 [dependencies]
