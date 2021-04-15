@@ -8,7 +8,7 @@ pub(crate) enum ParseError {
     FoundInvalidTokenWhileExpecting(Symbol),
     ExpectedANumber,
     ExpectedIdentifier,
-    ExpectedNumIdentOrParen,
+    UnexpectedSymbol(Symbol),
     // TODO remove this
     InvalidApplyOperands,
     UnexpectedInput,
@@ -29,8 +29,8 @@ impl fmt::Display for ParseError {
             Self::ExpectedIdentifier | Self::ExpectedIdentifierAsArgument => {
                 write!(f, "Expected an identifier")
             }
-            Self::ExpectedNumIdentOrParen => {
-                write!(f, "Expected a number, an identifier or an open parenthesis")
+            Self::UnexpectedSymbol(s) => {
+                write!(f, "Expected a value, instead found '{}'", s)
             }
             // TODO improve this message or remove this error type
             Self::InvalidApplyOperands => write!(f, "Error"),
@@ -140,7 +140,7 @@ fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b
         Token::StringLiteral(s) => Ok((Expr::String(s), remaining)),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
-        Token::Symbol(..) => Err(ParseError::ExpectedNumIdentOrParen),
+        Token::Symbol(s) => Err(ParseError::UnexpectedSymbol(s)),
         Token::Whitespace => Err(ParseError::UnexpectedWhitespace),
     }
 }
