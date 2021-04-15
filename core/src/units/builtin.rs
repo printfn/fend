@@ -389,6 +389,8 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("ly", "", "lightyear", ""),
     ("light_second", "light_seconds", "c second", ""),
     ("light_minute", "light_minutes", "c minute", ""),
+    ("light_hour", "light_hours", "c hour", ""),
+    ("light_day", "light_days", "c day", ""),
     ("parsec", "parsecs", "au / tan(arcsec)", ""),
     ("pc", "", "parsec", ""),
     (
