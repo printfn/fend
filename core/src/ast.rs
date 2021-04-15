@@ -33,7 +33,7 @@ pub(crate) enum Expr<'a> {
     As(Box<Expr<'a>>, Box<Expr<'a>>),
     Fn(&'a str, Box<Expr<'a>>),
 
-    Of(Vec<&'a str>),
+    Of(&'a str, Box<Expr<'a>>),
 }
 
 impl<'a> Expr<'a> {
@@ -66,7 +66,7 @@ impl<'a> Expr<'a> {
                     format!("\\{}.{}", a, b.format(int)?)
                 }
             }
-            Self::Of(parts) => parts.join(" of "),
+            Self::Of(a, b) => format!("{} of {}", a, b.format(int)?),
         })
     }
 }
@@ -181,16 +181,10 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         }
         Expr::<'a>::As(a, b) => evaluate_as(*a, *b, scope, context, int)?,
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
-        Expr::<'a>::Of(parts) => {
-            let mut value = resolve_identifier(parts[0], scope, context, int)?;
-            for part in &parts[1..] {
-                value = match value.get_object_member(part) {
-                    Ok(value) => value,
-                    Err(msg) => return Err(msg.to_string().into()),
-                };
-            }
-            value
-        }
+        Expr::<'a>::Of(a, b) => match eval!(*b)?.get_object_member(a) {
+            Ok(value) => value,
+            Err(msg) => return Err(msg.to_string().into()),
+        },
     })
 }
 
