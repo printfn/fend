@@ -102,6 +102,7 @@ const BINARY_PREFIXES: &[UnitTuple] = &[
 ];
 
 const NUMBER_WORDS: &[UnitTuple] = &[
+    ("tithe", "", "=1/10", ""),
     ("one", "", "=1", ""),
     ("two", "", "=2", ""),
     ("couple", "", "=2", ""),
@@ -117,7 +118,9 @@ const NUMBER_WORDS: &[UnitTuple] = &[
     ("ten", "", "=10", ""),
     ("eleven", "", "=11", ""),
     ("twelve", "", "=12", ""),
+    ("dozen", "", "=12", ""),
     ("thirteen", "", "=13", ""),
+    ("bakersdozen", "", "=13", ""),
     ("fourteen", "", "=14", ""),
     ("fifteen", "", "=15", ""),
     ("sixteen", "", "=16", ""),
@@ -125,6 +128,7 @@ const NUMBER_WORDS: &[UnitTuple] = &[
     ("eighteen", "", "=18", ""),
     ("nineteen", "", "=19", ""),
     ("twenty", "", "=20", ""),
+    ("score", "", "=20", ""),
     ("thirty", "", "=30", ""),
     ("forty", "", "=40", ""),
     ("fifty", "", "=50", ""),
@@ -133,6 +137,8 @@ const NUMBER_WORDS: &[UnitTuple] = &[
     ("eighty", "", "=80", ""),
     ("ninety", "", "=90", ""),
     ("hundred", "", "=100", ""),
+    ("gross", "", "=144", ""),
+    ("greatgross", "", "=12 gross", ""),
     ("thousand", "", "=1000", ""),
     ("million", "", "=1e6", ""),
     ("billion", "", "=1e9", ""),
@@ -392,6 +398,8 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ),
     ("au", "", "astronomical_unit", ""),
     ("AU", "", "astronomical_unit", ""),
+    ("barn", "", "l@1e-28 m^2", ""),
+    ("shed", "", "l@1e-24 barn", ""),
     ("cc", "", "cm^3", ""),
     ("are", "ares", "l@100 meter^2", ""),
     ("liter", "liters", "l@1000 cc", ""),
@@ -399,6 +407,20 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("L", "", "s@liter", ""),
     ("micron", "microns", "l@micrometer", ""),
     ("bicron", "bicrons", "l@picometer", ""),
+    ("gsm", "", "grams / meter^2", ""),
+    ("hectare", "hectares", "hectoare", ""),
+    ("calorie", "calories", "l@4.184 J", ""),
+    ("cal", "", "s@calorie", ""),
+    (
+        "british_thermal_unit",
+        "british_thermal_units",
+        "1055.05585 J",
+        "",
+    ),
+    ("btu", "", "british_thermal_unit", ""),
+    ("Wh", "", "s@W hour", ""),
+    ("bar", "", "l@1e5 Pa", "about 1 atmosphere"),
+    ("diopter", "", "l@/m", "reciprocal of focal length"),
 ];
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
@@ -476,11 +498,10 @@ const IMPERIAL_ABBREVIATIONS: &[UnitTuple] = &[
     ("ipy", "", "inch/year", ""),
     ("ccf", "", "100 ft^3", ""),
     ("Mcf", "", "1000 ft^3", ""),
-    ("kp", "", "kilopond", ""),
-    ("kpm", "", "kp meter", ""),
-    ("Wh", "", "s@W hour", ""),
     ("hph", "", "hp hour", ""),
     ("plf", "", "lb / foot", "pounds per linear foot"),
+    ("lbf", "", "lb force", ""),
+    ("psi", "", "pound force / inch^2", ""),
 ];
 
 const NAUTICAL_UNITS: &[UnitTuple] = &[

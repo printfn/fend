@@ -3520,11 +3520,6 @@ fn name_two() {
 }
 
 #[test]
-fn name_pair() {
-    test_eval("pair", "2");
-}
-
-#[test]
 fn name_three() {
     test_eval("three", "3");
 }
