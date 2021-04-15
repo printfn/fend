@@ -891,7 +891,7 @@ struct FormattedExponent<'a> {
 
 impl<'a> fmt::Display for FormattedExponent<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.prefix, self.name)?;
+        write!(f, "{}{}", self.prefix, self.name.replace('_', " "))?;
         if let Some(number) = &self.number {
             write!(f, "^{}", number)?;
         }

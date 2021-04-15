@@ -41,7 +41,7 @@ impl<'a> Expr<'a> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
             Self::String(s) => format!(r#""{}""#, s.as_ref()),
-            Self::Ident(ident) => (*ident).to_string(),
+            Self::Ident(ident) => ident.replace('_', " "),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
             Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
@@ -143,6 +143,12 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             scope,
         )?,
         Expr::<'a>::Apply(a, b) | Expr::<'a>::ApplyMul(a, b) => {
+            if let (Expr::Ident(a), Expr::Ident(b)) = (&*a, &*b) {
+                let ident = format!("{}_{}", a, b);
+                if let Ok(val) = crate::units::query_unit_static(&ident, context, int) {
+                    return Ok(val);
+                }
+            }
             eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, context, int)?
         }
         Expr::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
