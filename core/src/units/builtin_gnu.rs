@@ -192,261 +192,10 @@ pub(crate) fn query_unit<'a>(
 ("solarconstant"       "solarirradiance")
 ("TSI"         "s@solarirradiance")     // total solar irradiance
 
-//
-// time
-//
-
-("sec"/"secs"              "s@s")
-("minute"/"minutes"        "l@60 s")
-("min"/"mins"              "s@minute")
-("hour"/"hours"            "l@60 min")
-("hr"/"hrs"                "s@hour")
-("day"/"days"              "l@24 hr")
-("d"                       "s@day")
-("da"                      "s@day")
-("week"/"weeks"            "l@7 day")
-("wk"                      "s@week")
-("sennight"                "l@7 day")
-("fortnight"/"fortnights"  "l@14 day")
-("blink"/"blinks"          "l@1e-5 day")   // Actual human blink takes 1|3 second
-("ce"                      "s@1e-2 day")
-("cron"                    "1e6 years")
-("watch"/"watches"         "l@4 hours")    // time a sentry stands watch or a ship's
-                                           // crew is on duty.
-("bell"/"bells"            "l@1/8 watch")  // Bell would be sounded every 30 minutes.
-
-// French Revolutionary Time or Decimal Time.  It was Proposed during
-// the French Revolution.  A few clocks were made, but it never caught
-// on.  In 1998 Swatch defined a time measurement called ".beat" and
-// sold some watches that displayed time in this unit.
-
-("decimalhour"/"decimalhours"       "l@1/10 day")
-("decimalminute"/"decimalminutes"   "l@1/100 decimalhour")
-("decimalsecond"/"decimalseconds"   "l@1/100 decimalminute")
-("beat"/"beats"                     "l@decimalminute")       // Swatch Internet Time
-
-//
-// angular measure
-//
-
-("circle"                  "l@2 pi radian")
-("degree"/"degrees"        "l@1/360 circle")
-("deg"                     "s@degree")
-("arcdeg"                  "degree")
-("arcmin"                  "1/60 degree")
-("arcminute"/"arcminutes"  "l@arcmin")
-//'                       arcmin
-("arcsec"                  "1/60 arcmin")
-("arcsecond"/"arcseconds"  "l@arcsec")
-//"                       arcsec
-//''                      "
-("rightangle"              "l@90 degrees")
-("quadrant"                "l@1/4 circle")
-("quintant"                "l@1/5 circle")
-("sextant"                 "l@1/6 circle")
-
-("sign"                      "1/12 circle") // Angular extent of one sign of the zodiac
-("turn"/"turns"              "circle")
-("revolution"/"revolutions"  "turn")
-("rev"                       "turn")
-("pulsatance"                "radian / sec")
-("gon"                       "1/100 rightangle")  // measure of grade
-("grade"                     "gon")
-("centesimalminute"          "1/100 grade")
-("centesimalsecond"          "1/100 centesimalminute")
-("milangle"                  "1/6400 circle")     // Official NIST definition.
-                                                  // Another choice is 1e-3 radian.
-("pointangle"                "1/32 circle")  // Used for reporting compass readings
-("centrad"                   "0.01 radian")  // Used for angular deviation of light
-                                             // through a prism.
-("mas"                       "milli arcsec") // Used by astronomers
-("seclongitude"              "circle (seconds/day)") // Astronomers measure longitude
-                                             // (which they call right ascension) in
-                                             // time units by dividing the equator into
-                                             // 24 hours instead of 360 degrees.
-//
-// Some geometric formulas
-//
-
-//circlearea(r)   units=[m;m^2] range=[0,) pi r^2 ; sqrt(circlearea/pi)
-//spherevolume(r) units=[m;m^3] range=[0,) 4|3 pi r^3 ; \
-//                                         cuberoot(spherevolume/4|3 pi)
-//spherevol()     spherevolume
-//square(x)       range=[0,)          x^2 ; sqrt(square)
-
-//
-// Solid angle measure
-//
-
-("sphere"/"spheres"                             "4 pi sr")
-("squaredegree"/"squaredegrees"                 "(1/180)^2 pi^2 sr")
-("squareminute"/"squareminutes"                 "(1/60)^2 squaredegree")
-("squaresecond"/"squareseconds"                 "(1/60)^2 squareminute")
-("squarearcmin"/"squarearcmins"                 "squareminute")
-("squarearcsec"/"squarearcsecs"                 "squaresecond")
-("sphericalrightangle"/"sphericalrightangles"   "0.5 pi sr")
-("octant"/"octants"                             "0.5 pi sr")
-
-//
-// Concentration measures
-//
-
-("percent"                 "0.01")
-("%"                       "percent")
-
-("mill"                    "0.001")     // Originally established by Congress in 1791
-                                        // as a unit of money equal to 0.001 dollars,
-                                        // it has come to refer to 0.001 in general.
-                                        // Used by some towns to set their property
-                                        // tax rate, and written with a symbol similar
-                                        // to the % symbol but with two 0's in the
-                                        // denominator.  [18]
-("proof"                   "1/200")     // Alcohol content measured by volume at
-                                        // 60 degrees Fahrenheit.  This is a USA
-                                        // measure.  In Europe proof=percent.
-("ppm"                     "1e-6")
-("partspermillion"         "ppm")
-("ppb"                     "1e-9")
-("partsperbillion"         "ppb")       // USA billion
-("ppt"                     "1e-12")
-("partspertrillion"        "ppt")       // USA trillion
-("karat"                   "1/24")      // measure of gold purity
-("caratgold"               "karat")
-("gammil"                  "mg/l")
-("basispoint"              "0.01 %")    // Used in finance
-("fine"                    "1/1000")    // Measure of gold purity
-
-// The pH scale is used to measure the concentration of hydronium (H3O+) ions in
-// a solution.  A neutral solution has a pH of 7 as a result of dissociated
-// water molecules.
-
-//pH(x) units=[1;mol/liter] range=(0,) 10^(-x) mol/liter ; (-log(pH liters/mol))
-
-
-//
-// Temperature
-//
-// Two types of units are defined: units for converting temperature differences
-// and functions for converting absolute temperatures.  Conversions for
-// differences start with "deg" and conversions for absolute temperature start
-// with "temp".
-//
-
-//TEMPERATURE             kelvin
-//TEMPERATURE_DIFFERENCE  kelvin
-
-// In 1741 Anders Celsius introduced a temperature scale with water boiling at
-// 0 degrees and freezing at 100 degrees at standard pressure. After his death
-// the fixed points were reversed and the scale was called the centigrade
-// scale.  Due to the difficulty of accurately measuring the temperature of
-// melting ice at standard pressure, the centigrade scale was replaced in 1954
-// by the Celsius scale which is defined by subtracting 273.15 from the
-// temperature in Kelvins.  This definition differed slightly from the old
-// centigrade definition, but the Kelvin scale depends on the triple point of
-// water rather than a melting point, so it can be measured accurately.
-
-//tempC(x) units=[1;K] domain=[-273.15,) range=[0,) \
-//                             x K + stdtemp ; (tempC +(-stdtemp))/K
-//tempcelsius() tempC
-//degcelsius              K
-//degC                    K
-
-// Fahrenheit defined his temperature scale by setting 0 to the coldest
-// temperature he could produce in his lab with a salt water solution and by
-// setting 96 degrees to body heat.  In Fahrenheit's words:
-//
-//    Placing the thermometer in a mixture of sal ammoniac or sea
-//    salt, ice, and water a point on the scale will be found which
-//    is denoted as zero. A second point is obtained if the same
-//    mixture is used without salt. Denote this position as 30. A
-//    third point, designated as 96, is obtained if the thermometer
-//    is placed in the mouth so as to acquire the heat of a healthy
-//    man."  (D. G. Fahrenheit, Phil. Trans. (London) 33, 78, 1724)
-
-//tempF(x) units=[1;K] domain=[-459.67,) range=[0,) \
-//                (x+(-32)) degF + stdtemp ; (tempF+(-stdtemp))/degF + 32
-//tempfahrenheit() tempF
-//degfahrenheit           5|9 degC
-//degF                    5|9 degC
-
-
-//degreesrankine          degF              # The Rankine scale has the
-//degrankine              degreesrankine    # Fahrenheit degree, but its zero
-//degreerankine           degF              # is at absolute zero.
-//degR                    degrankine
-//tempR                   degrankine
-//temprankine             degrankine
-
-//tempreaumur(x)    units=[1;K] domain=[-218.52,) range=[0,) \
-//                  x degreaumur+stdtemp ; (tempreaumur+(-stdtemp))/degreaumur
-//degreaumur              10|8 degC # The Reaumur scale was used in Europe and
-//                                  # particularly in France.  It is defined
-//                                  # to be 0 at the freezing point of water
-//                                  # and 80 at the boiling point.  Reaumur
-//                                  # apparently selected 80 because it is
-//                                  # divisible by many numbers.
-
-//degK                    K         // "Degrees Kelvin" is forbidden usage.
-//tempK                   K         // For consistency
-
-// Gas mark is implemented below but in a terribly ugly way.  There is
-// a simple formula, but it requires a conditional which is not
-// presently supported.
-//
-// The formula to convert to degrees Fahrenheit is:
-//
-// 25 log2(gasmark) + k_f   gasmark<=1
-// 25 (gasmark-1) + k_f     gasmark>=1
-//
-// k_f = 275
-//
-//gasmark[degR] \
-//  .0625    634.67 \
-//  .125     659.67 \
-//  .25      684.67 \
-//  .5       709.67 \
-//  1        734.67 \
-//  2        759.67 \
-//  3        784.67 \
-//  4        809.67 \
-//  5        834.67 \
-//  6        859.67 \
-//  7        884.67 \
-//  8        909.67 \
-//  9        934.67 \
-//  10       959.67
-
-// Units cannot handle wind chill or heat index because they are two variable
-// functions, but they are included here for your edification.  Clearly these
-// equations are the result of a model fitting operation.
-//
-// wind chill index (WCI) a measurement of the combined cooling effect of low
-//      air temperature and wind on the human body. The index was first defined
-//      by the American Antarctic explorer Paul Siple in 1939. As currently used
-//      by U.S. meteorologists, the wind chill index is computed from the
-//      temperature T (in °F) and wind speed V (in mi/hr) using the formula:
-//          WCI = 0.0817(3.71 sqrt(V) + 5.81 - 0.25V)(T - 91.4) + 91.4.
-//      For very low wind speeds, below 4 mi/hr, the WCI is actually higher than
-//      the air temperature, but for higher wind speeds it is lower than the air
-//      temperature.
-//
-// heat index (HI or HX) a measure of the combined effect of heat and
-//      humidity on the human body. U.S. meteorologists compute the index
-//      from the temperature T (in °F) and the relative humidity H (as a
-//      value from 0 to 1).
-//        HI = -42.379 + 2.04901523 T + 1014.333127 H - 22.475541 TH
-//             - .00683783 T^2 - 548.1717 H^2 + 0.122874 T^2 H + 8.5282 T H^2
-//             - 0.0199 T^2 H^2.
-
-//
-// Physical constants
-//
-
-// Basic constants
 
 //pi                      3.14159265358979323846
 ("light"                   "c")
-("mu0_SI"                  "2 alpha h / (electroncharge^2 c)") // Vacuum magnetic permeability
+("mu0_SI"                  "2 alpha h / (electron_charge^2 c)") // Vacuum magnetic permeability
 ("mu0"                     "mu0_SI")           // Gets overridden in CGS modes
 ("epsilon0"                "1/(mu0 c^2)")      // Vacuum electric permittivity
 ("Z0"                      "mu0 c")            // Free space impedance
@@ -454,7 +203,7 @@ pub(crate) fn query_unit<'a>(
 ("hbar"                    "h / (2 pi)")
 ("spin"                    "hbar")
 
-("G"               "=6.67430e-11 N m^2 / kg^2") // Newtonian gravitational constant
+("G"                       "=6.67430e-11 N m^2 / kg^2") // Newtonian gravitational constant
 ("coulombconst"            "=1/4 pi epsilon0")  // Listed as k or k_C sometimes
 ("k_C"                     "=coulombconst")
 
@@ -498,7 +247,7 @@ pub(crate) fn query_unit<'a>(
                                                //   of stars.  The constant is the
                                                //   solution to x=5(1-exp(-x)). (exact)
 ("K_J90" "483597.9 GHz/V")    // Direct measurement of the volt is difficult.  Until
-("K_J"   "2electroncharge/h") //   recently, laboratories kept Weston cadmium cells as
+("K_J"   "2electron_charge/h") //   recently, laboratories kept Weston cadmium cells as
                               //   a reference, but they could drift.  In 1987 the
                               //   CGPM officially recommended the use of the
                               //   Josephson effect as a laboratory representation of
@@ -513,7 +262,7 @@ pub(crate) fn query_unit<'a>(
                               //   (exact) value from 1990, which was used until the
                               //   2019 SI revision, and the current exact value.
 ("R_K90" "25812.807 ohm")      // Measurement of the ohm also presents difficulties.
-("R_K"   "h/electroncharge^2") //   The old approach involved maintaining resistances
+("R_K"   "h/electron_charge^2") //   The old approach involved maintaining resistances
                               //   that were subject to drift.  The new standard is
                               //   based on the Hall effect.  When a current carrying
                               //   ribbon is placed in a magnetic field, a potential
@@ -601,7 +350,7 @@ pub(crate) fn query_unit<'a>(
 ("bohrradius"              "alpha / (4 pi Rinfinity)")
 ("prout"                   "185.5 keV")        // nuclear binding energy equal to 1|12
                                                //   binding energy of the deuteron
-("conductancequantum"      "2 electroncharge^2 / h")
+("conductancequantum"      "2 electron_charge^2 / h")
 
 // Planck constants
 
@@ -616,7 +365,7 @@ pub(crate) fn query_unit<'a>(
 
 // Particle radius
 
-("electronradius"    "coulombconst electroncharge^2 / electronmass / c^2")   // Classical
+("electronradius"    "coulombconst electron_charge^2 / electronmass / c^2")   // Classical
 ("deuteronchargeradius"    "2.12799e-15 m")
 ("protonchargeradius"      "0.8751e-15 m")
 
@@ -672,12 +421,12 @@ pub(crate) fn query_unit<'a>(
 // the reference is the nuclear magneton, and all of the particles
 // except the deuteron have spin 1/2.
 
-("bohrmagneton"            "electroncharge hbar / (2 electronmass)")  // Reference magnetic moment for
+("bohrmagneton"            "electron_charge hbar / (2 electronmass)")  // Reference magnetic moment for
 ("mu_B"                    "bohrmagneton")                            //   the electron
-("nuclearmagneton"         "electroncharge hbar /  (2 protonmass)")   // Convenient reference magnetic
+("nuclearmagneton"         "electron_charge hbar /  (2 protonmass)")   // Convenient reference magnetic
 ("mu_N"                    "nuclearmagneton")                         //   moment for heavy particles
 ("mu_e"                    "g_e mu_B / 2")             // Electron spin magnet moment
-("mu_mu"                   "g_mu electroncharge hbar / (4 muonmass)") // Muon spin magnetic moment
+("mu_mu"                   "g_mu electron_charge hbar / (4 muonmass)") // Muon spin magnetic moment
 ("mu_p"                    "g_p mu_N / 2")             // Proton magnetic moment
 ("mu_n"                    "g_n mu_N / 2")             // Neutron magnetic moment
 ("mu_t"                    "g_t mu_N / 2")             // Triton magnetic moment
@@ -701,21 +450,7 @@ pub(crate) fn query_unit<'a>(
 ("inHg"                    "inch Hg")
 ("inH2O"                   "inch water")
 ("mmH2O"                   "mm water")
-("eV"                      "s@electroncharge V")    // Energy acquired by a particle with charge e
-("electronvolt"            "l@eV")                  //   when it is accelerated through 1 V
-("lightyear"/"lightyears"  "c julianyear") // The 365.25 day year is specified in
-("ly"                      "lightyear")    // NIST publication 811
-("lightsecond"             "c s")
-("lightminute"             "c min")
-("parsec"/"parsecs"        "au / tan(arcsec)")    // Unit of length equal to distance
-("pc"                      "parsec")              //   from the sun to a point having
-                                                  //   heliocentric parallax of 1
-                                                  //   arcsec (derived from parallax
-                                                  //   second).  A distant object with
-                                                  //   parallax theta will be about
-                                                  //   (arcsec/theta) parsecs from the
-                                                  //   sun (using the approximation
-                                                  //   that tan(theta) = theta).
+
 ("rydberg"                 "h c Rinfinity")       // Rydberg energy
 ("crith"                   "0.089885 gram")       // The crith is the mass of one
                                                   //   liter of hydrogen at standard
@@ -1384,38 +1119,6 @@ fnumber(x)      units=[1;1] domain=[0.5,) range=[0.5,) x ; fnumber
 
 // TIME                    second
 
-("anomalisticyear"         "365.2596 days")       // The time between successive
-                                                  //   perihelion passages of the
-                                                  //   earth.
-("siderealyear"            "365.256360417 day")   // The time for the earth to make
-                                                  //   one revolution around the sun
-                                                  //   relative to the stars.
-("tropicalyear"            "365.242198781 day")   // The time needed for the mean sun
-                                                  //   as defined above to increase
-                                                  //   its longitude by 360 degrees.
-                                                  //   Most references defined the
-                                                  //   tropical year as the interval
-                                                  //   between vernal equinoxes, but
-                                                  //   this is misleading.  The length
-                                                  //   of the season changes over time
-                                                  //   because of the eccentricity of
-                                                  //   the earth's orbit.  The time
-                                                  //   between vernal equinoxes is
-                                                  //   approximately 365.24237 days
-                                                  //   around the year 2000.  See
-                                                  //   "Mathematical Astronomy
-                                                  //   Morsels" for more details.
-("eclipseyear"             "346.62 days")         // The line of nodes is the
-                                                  //   intersection of the plane of
-                                                  //   Earth's orbit around the sun
-                                                  //   with the plane of the moon's
-                                                  //   orbit around earth.  Eclipses
-                                                  //   can only occur when the moon
-                                                  //   and sun are close to this
-                                                  //   line.  The line rotates and
-                                                  //   appearances of the sun on the
-                                                  //   line of nodes occur every
-                                                  //   eclipse year.
 ("saros"                   "223 synodicmonth")    // The earth, moon and sun appear in
                                                   //   the same arrangement every
                                                   //   saros, so if an eclipse occurs,
@@ -1461,25 +1164,12 @@ fnumber(x)      units=[1;1] domain=[0.5,) range=[0.5,) x ; fnumber
                                                   //   has to revolve a bit extra to
                                                   //   get into the full moon
                                                   //   configuration.
-("year"/"years"            "tropicalyear")
-("yr"                      "year")
-("month"/"months"          "1/12 year")
-("mo"                      "month")
 ("lustrum"                 "5 years")                   // The Lustrum was a Roman
                                                   //   purification ceremony that took
                                                   //   place every five years.
                                                   //   Classically educated Englishmen
                                                   //   used this term.
-("decade"/"decades"        "10 years")
-("century"/"centuries"     "100 years")
-("millennium"/"millennia"  "1000 years")
-("solaryear"               "year")
 ("lunaryear"               "12 lunarmonth")
-("calendaryear"            "365 day")
-("commonyear"              "365 day")
-("leapyear"                "366 day")
-("julianyear"              "365.25 day")
-("gregorianyear"           "365.2425 day")
 ("islamicyear"             "354 day")    // A year of 12 lunar months. They
 ("islamicleapyear"         "355 day")    // began counting on July 16, AD 622
                                          // when Muhammad emigrated to Medina
@@ -1930,24 +1620,6 @@ geodetic-               US
 int                     3937|1200 ft/m   # Convert US Survey measures to
 int-                    int              #   international measures
 */
-("inch"/"inches"           "2.54 cm")
-("in"                      "inch")
-("foot"/"feet"             "l@12 inch")
-//feet                    foot
-("ft"                      "foot")
-("yard"/"yards"            "l@3 ft")
-("yd"                      "yard")
-("mile"/"miles"            "l@5280 ft")  // The mile was enlarged from 5000 ft
-                                         // to this number in order to make
-                                         // it an even number of furlongs.
-                                         // (The Roman mile is 5000 romanfeet.)
-("line"/"lines"            "1/12 inch")  // Also defined as '.1 in' or as '1e-8 Wb'
-("rod"                     "5.5 yard")
-("perch"                   "rod")
-("furlong"                 "40 rod")     // From "furrow long"
-("statutemile"             "mile")
-("league"                  "3 mile")     // Intended to be an an hour's walk
-
 // surveyor's measure
 
 ("surveyorschain"          "66 surveyft")

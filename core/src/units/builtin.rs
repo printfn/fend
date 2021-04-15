@@ -5,215 +5,411 @@ struct UnitDef {
     definition: &'static str,
 }
 
-/// construct a unit with only a singular name
-const fn s(name: &'static str, definition: &'static str) -> UnitDef {
-    UnitDef {
-        singular: name,
-        plural: name,
-        definition,
-    }
-}
+// singular, plural (or empty), definition, description
+type UnitTuple = (&'static str, &'static str, &'static str, &'static str);
 
-/// construct a unit with only singular and plural names
-const fn p(singular: &'static str, plural: &'static str, definition: &'static str) -> UnitDef {
-    UnitDef {
-        singular,
-        plural,
-        definition,
-    }
-}
+const BASE_UNITS: &[UnitTuple] = &[
+    ("unitless", "", "=1", ""),
+    ("second", "seconds", "l@!", ""),
+    ("meter", "meters", "l@!", ""),
+    ("kilogram", "kilograms", "l@!", ""),
+    ("kelvin", "", "l@!", ""),
+    ("ampere", "amperes", "l@!", ""),
+    ("mole", "moles", "l@!", ""),
+    ("candela", "candelas", "l@!", ""),
+];
 
-const UNIT_DEFS: &[UnitDef] = &[
-    s("unitless", "=1"),
-    // SI base units
-    p("second", "seconds", "l@!"),
-    p("meter", "meters", "l@!"),
-    p("kilogram", "kilograms", "l@!"),
-    s("kelvin", "l@!"),
-    p("ampere", "amperes", "l@!"),
-    p("mole", "moles", "l@!"),
-    p("candela", "candelas", "l@!"),
-    // SI base unit abbreviations
-    s("s", "s@second"),
-    p("metre", "metres", "l@meter"),
-    s("m", "s@meter"),
-    p("gram", "grams", "l@1/1000 kilogram"),
-    s("g", "s@gram"),
-    s("K", "s@kelvin"),
-    s("\u{b0}K", "=K"),
-    p("amp", "amps", "l@ampere"),
-    s("A", "s@ampere"),
-    s("mol", "s@mole"),
-    s("cd", "s@candela"),
-    // temperature scales (these have special support for conversions)
-    s("celsius", "l@!"),
-    s("\u{b0}C", "celsius"), // degree symbol
-    s("C", "=\u{b0}C"),
-    s("rankine", "l@5/9 K"),
-    s("\u{b0}R", "rankine"),
-    s("fahrenheit", "l@!"),
-    s("\u{b0}F", "fahrenheit"),
-    s("F", "=\u{b0}F"),
-    // bits and bytes
-    p("bit", "bits", "l@!"),
-    s("bps", "s@bits/second"),
-    p("byte", "bytes", "l@8 bits"),
-    s("b", "s@bit"),
-    s("B", "s@byte"),
-    p("octet", "octets", "l@8 bits"),
-    // standard prefixes
-    s("yotta", "lp@1e24"),
-    s("zetta", "lp@1e21"),
-    s("exa", "lp@1e18"),
-    s("peta", "lp@1e15"),
-    s("tera", "lp@1e12"),
-    s("giga", "lp@1e9"),
-    s("mega", "lp@1e6"),
-    s("myria", "lp@1e4"),
-    s("kilo", "lp@1e3"),
-    s("hecto", "lp@1e2"),
-    s("deca", "lp@1e1"),
-    s("deka", "lp@deca"),
-    s("deci", "lp@1e-1"),
-    s("centi", "lp@1e-2"),
-    s("milli", "lp@1e-3"),
-    s("micro", "lp@1e-6"),
-    s("nano", "lp@1e-9"),
-    s("pico", "lp@1e-12"),
-    s("femto", "lp@1e-15"),
-    s("atto", "lp@1e-18"),
-    s("zepto", "lp@1e-21"),
-    s("yocto", "lp@1e-24"),
-    // non-standard prefixes
-    s("quarter", "lp@1/4"),
-    s("semi", "lp@0.5"),
-    s("demi", "lp@0.5"),
-    s("hemi", "lp@0.5"),
-    s("half", "lp@0.5"),
-    s("double", "lp@2"),
-    s("triple", "lp@3"),
-    s("treble", "lp@3"),
-    // binary prefixes
-    s("kibi", "lp@2^10"),
-    s("mebi", "lp@2^20"),
-    s("gibi", "lp@2^30"),
-    s("tebi", "lp@2^40"),
-    s("pebi", "lp@2^50"),
-    s("exbi", "lp@2^60"),
-    s("zebi", "lp@2^70"),
-    s("yobi", "lp@2^80"),
-    // number words
-    s("one", "=1"),
-    s("two", "=2"),
-    s("couple", "=2"),
-    s("three", "=3"),
-    s("four", "=4"),
-    s("quadruple", "=4"),
-    s("five", "=5"),
-    s("quintuple", "=5"),
-    s("six", "=6"),
-    s("seven", "=7"),
-    s("eight", "=8"),
-    s("nine", "=9"),
-    s("ten", "=10"),
-    s("eleven", "=11"),
-    s("twelve", "=12"),
-    s("thirteen", "=13"),
-    s("fourteen", "=14"),
-    s("fifteen", "=15"),
-    s("sixteen", "=16"),
-    s("seventeen", "=17"),
-    s("eighteen", "=18"),
-    s("nineteen", "=19"),
-    s("twenty", "=20"),
-    s("thirty", "=30"),
-    s("forty", "=40"),
-    s("fifty", "=50"),
-    s("sixty", "=60"),
-    s("seventy", "=70"),
-    s("eighty", "=80"),
-    s("ninety", "=90"),
-    s("hundred", "=100"),
-    s("thousand", "=1000"),
-    s("million", "=1e6"),
-    s("billion", "=1e9"),
-    s("trillion", "=1e12"),
-    s("quadrillion", "=1e15"),
-    s("quintillion", "=1e18"),
-    s("sextillion", "=1e21"),
-    s("septillion", "=1e24"),
-    s("octillion", "=1e27"),
-    s("nonillion", "=1e30"),
-    s("decillion", "=1e33"),
-    s("undecillion", "=1e36"),
-    s("duodecillion", "=1e39"),
-    s("tredecillion", "=1e42"),
-    s("quattuordecillion", "=1e45"),
-    s("quindecillion", "=1e48"),
-    s("sexdecillion", "=1e51"),
-    s("septendecillion", "=1e54"),
-    s("octodecillion", "=1e57"),
-    s("novemdecillion", "=1e60"),
-    s("vigintillion", "=1e63"),
-    s("unvigintillion", "=1e66"),
-    s("duovigintillion", "=1e69"),
-    s("trevigintillion", "=1e72"),
-    s("quattuorvigintillion", "=1e75"),
-    s("quinvigintillion", "=1e78"),
-    s("sexvigintillion", "=1e81"),
-    s("septenvigintillion", "=1e84"),
-    s("octovigintillion", "=1e87"),
-    s("novemvigintillion", "=1e90"),
-    s("trigintillion", "=1e93"),
-    s("untrigintillion", "=1e96"),
-    s("duotrigintillion", "=1e99"),
-    s("googol", "=1e100"),
-    s("tretrigintillion", "=1e102"),
-    s("quattuortrigintillion", "=1e105"),
-    s("quintrigintillion", "=1e108"),
-    s("sextrigintillion", "=1e111"),
-    s("septentrigintillion", "=1e114"),
-    s("octotrigintillion", "=1e117"),
-    s("novemtrigintillion", "=1e120"),
-    s("centillion", "=1e303"),
-    // constants
-    s("c", "=299792458 m/s"),            // speed of light in vacuum (exact)
-    s("h", "s@=6.62607015e-34 J s"),     // Planck constant (exact)
-    s("boltzmann", "=1.380649e-23 J/K"), // Boltzmann constant (exact)
-    s("electroncharge", "=1.602176634e-19 coulomb"), // electron charge (exact)
-    s("avogadro", "=6.02214076e23 / mol"), // Size of a mole (exact)
-    s("N_A", "=avogadro"),
-    // angles
-    p("radian", "radians", "l@1"),
-    p("steradian", "steradians", "l@1"),
-    s("sr", "s@steradian"),
-    // common SI derived units
-    p("newton", "newtons", "l@kg m / s^2"), // force
-    s("N", "s@newton"),
-    p("pascal", "pascals", "l@N/m^2"), // pressure or stress
-    s("Pa", "s@pascal"),
-    p("joule", "joules", "l@N m"), // energy
-    s("J", "s@joule"),
-    p("watt", "watts", "l@J/s"), // power
-    s("W", "s@watt"),
-    s("coulomb", "l@A s"), // charge
-    s("C", "s@coulomb"),
-    p("volt", "volts", "l@W/A"), // potential difference
-    s("V", "s@volt"),
-    p("ohm", "ohms", "l@V/A"), // electrical resistance
-    s("siemens", "l@A/V"),     // electrical conductance
-    s("S", "s@siemens"),
-    s("farad", "l@C/V"), // capacitance
-    s("F", "s@farad"),
-    s("weber", "l@V s"), // magnetic flux
-    s("Wb", "s@weber"),
-    s("henry", "l@V s / A"), // inductance
-    s("H", "s@henry"),
-    s("tesla", "l@Wb/m^2"), // magnetic flux density
-    s("T", "s@tesla"),
-    s("hertz", "l@/s"), // frequency
-    s("Hz", "s@hertz"),
-    s("\u{2030}", "0.001"), // per mille
+const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
+    ("s", "", "s@second", ""),
+    ("metre", "metres", "l@meter", ""),
+    ("m", "", "s@meter", ""),
+    ("gram", "grams", "l@1/1000 kilogram", ""),
+    ("g", "", "s@gram", ""),
+    ("K", "", "s@kelvin", ""),
+    ("\u{b0}K", "", "=K", ""),
+    ("amp", "amps", "l@ampere", ""),
+    ("A", "", "s@ampere", ""),
+    ("mol", "", "s@mole", ""),
+    ("cd", "", "s@candela", ""),
+];
+
+// some temperature scales have special support for conversions
+const TEMPERATURE_SCALES: &[UnitTuple] = &[
+    ("celsius", "", "l@!", ""),
+    ("\u{b0}C", "", "celsius", ""), // degree symbol
+    ("C", "", "=\u{b0}C", ""),
+    ("rankine", "", "l@5/9 K", ""),
+    ("\u{b0}R", "", "rankine", ""),
+    ("fahrenheit", "", "l@!", ""),
+    ("\u{b0}F", "", "fahrenheit", ""),
+    ("F", "", "=\u{b0}F", ""),
+];
+
+const BITS_AND_BYTES: &[UnitTuple] = &[
+    ("bit", "bits", "l@!", ""),
+    ("bps", "", "s@bits/second", ""),
+    ("byte", "bytes", "l@8 bits", ""),
+    ("b", "", "s@bit", ""),
+    ("B", "", "s@byte", ""),
+    ("octet", "octets", "l@8 bits", ""),
+];
+
+const STANDARD_PREFIXES: &[UnitTuple] = &[
+    ("yotta", "", "lp@1e24", ""),
+    ("zetta", "", "lp@1e21", ""),
+    ("exa", "", "lp@1e18", ""),
+    ("peta", "", "lp@1e15", ""),
+    ("tera", "", "lp@1e12", ""),
+    ("giga", "", "lp@1e9", ""),
+    ("mega", "", "lp@1e6", ""),
+    ("myria", "", "lp@1e4", ""),
+    ("kilo", "", "lp@1e3", ""),
+    ("hecto", "", "lp@1e2", ""),
+    ("deca", "", "lp@1e1", ""),
+    ("deka", "", "lp@deca", ""),
+    ("deci", "", "lp@1e-1", ""),
+    ("centi", "", "lp@1e-2", ""),
+    ("milli", "", "lp@1e-3", ""),
+    ("micro", "", "lp@1e-6", ""),
+    ("nano", "", "lp@1e-9", ""),
+    ("pico", "", "lp@1e-12", ""),
+    ("femto", "", "lp@1e-15", ""),
+    ("atto", "", "lp@1e-18", ""),
+    ("zepto", "", "lp@1e-21", ""),
+    ("yocto", "", "lp@1e-24", ""),
+];
+
+const NON_STANDARD_PREFIXES: &[UnitTuple] = &[
+    ("quarter", "", "lp@1/4", ""),
+    ("semi", "", "lp@0.5", ""),
+    ("demi", "", "lp@0.5", ""),
+    ("hemi", "", "lp@0.5", ""),
+    ("half", "", "lp@0.5", ""),
+    ("double", "", "lp@2", ""),
+    ("triple", "", "lp@3", ""),
+    ("treble", "", "lp@3", ""),
+];
+
+const BINARY_PREFIXES: &[UnitTuple] = &[
+    ("kibi", "", "lp@2^10", ""),
+    ("mebi", "", "lp@2^20", ""),
+    ("gibi", "", "lp@2^30", ""),
+    ("tebi", "", "lp@2^40", ""),
+    ("pebi", "", "lp@2^50", ""),
+    ("exbi", "", "lp@2^60", ""),
+    ("zebi", "", "lp@2^70", ""),
+    ("yobi", "", "lp@2^80", ""),
+];
+
+const NUMBER_WORDS: &[UnitTuple] = &[
+    ("one", "", "=1", ""),
+    ("two", "", "=2", ""),
+    ("couple", "", "=2", ""),
+    ("three", "", "=3", ""),
+    ("four", "", "=4", ""),
+    ("quadruple", "", "=4", ""),
+    ("five", "", "=5", ""),
+    ("quintuple", "", "=5", ""),
+    ("six", "", "=6", ""),
+    ("seven", "", "=7", ""),
+    ("eight", "", "=8", ""),
+    ("nine", "", "=9", ""),
+    ("ten", "", "=10", ""),
+    ("eleven", "", "=11", ""),
+    ("twelve", "", "=12", ""),
+    ("thirteen", "", "=13", ""),
+    ("fourteen", "", "=14", ""),
+    ("fifteen", "", "=15", ""),
+    ("sixteen", "", "=16", ""),
+    ("seventeen", "", "=17", ""),
+    ("eighteen", "", "=18", ""),
+    ("nineteen", "", "=19", ""),
+    ("twenty", "", "=20", ""),
+    ("thirty", "", "=30", ""),
+    ("forty", "", "=40", ""),
+    ("fifty", "", "=50", ""),
+    ("sixty", "", "=60", ""),
+    ("seventy", "", "=70", ""),
+    ("eighty", "", "=80", ""),
+    ("ninety", "", "=90", ""),
+    ("hundred", "", "=100", ""),
+    ("thousand", "", "=1000", ""),
+    ("million", "", "=1e6", ""),
+    ("billion", "", "=1e9", ""),
+    ("trillion", "", "=1e12", ""),
+    ("quadrillion", "", "=1e15", ""),
+    ("quintillion", "", "=1e18", ""),
+    ("sextillion", "", "=1e21", ""),
+    ("septillion", "", "=1e24", ""),
+    ("octillion", "", "=1e27", ""),
+    ("nonillion", "", "=1e30", ""),
+    ("decillion", "", "=1e33", ""),
+    ("undecillion", "", "=1e36", ""),
+    ("duodecillion", "", "=1e39", ""),
+    ("tredecillion", "", "=1e42", ""),
+    ("quattuordecillion", "", "=1e45", ""),
+    ("quindecillion", "", "=1e48", ""),
+    ("sexdecillion", "", "=1e51", ""),
+    ("septendecillion", "", "=1e54", ""),
+    ("octodecillion", "", "=1e57", ""),
+    ("novemdecillion", "", "=1e60", ""),
+    ("vigintillion", "", "=1e63", ""),
+    ("unvigintillion", "", "=1e66", ""),
+    ("duovigintillion", "", "=1e69", ""),
+    ("trevigintillion", "", "=1e72", ""),
+    ("quattuorvigintillion", "", "=1e75", ""),
+    ("quinvigintillion", "", "=1e78", ""),
+    ("sexvigintillion", "", "=1e81", ""),
+    ("septenvigintillion", "", "=1e84", ""),
+    ("octovigintillion", "", "=1e87", ""),
+    ("novemvigintillion", "", "=1e90", ""),
+    ("trigintillion", "", "=1e93", ""),
+    ("untrigintillion", "", "=1e96", ""),
+    ("duotrigintillion", "", "=1e99", ""),
+    ("googol", "", "=1e100", ""),
+    ("tretrigintillion", "", "=1e102", ""),
+    ("quattuortrigintillion", "", "=1e105", ""),
+    ("quintrigintillion", "", "=1e108", ""),
+    ("sextrigintillion", "", "=1e111", ""),
+    ("septentrigintillion", "", "=1e114", ""),
+    ("octotrigintillion", "", "=1e117", ""),
+    ("novemtrigintillion", "", "=1e120", ""),
+    ("centillion", "", "=1e303", ""),
+];
+
+const CONSTANTS: &[UnitTuple] = &[
+    (
+        "c",
+        "",
+        "=299792458 m/s",
+        "speed of light in vacuum (exact)",
+    ),
+    ("h", "", "s@=6.62607015e-34 J s", "Planck constant (exact)"),
+    (
+        "boltzmann",
+        "",
+        "=1.380649e-23 J/K",
+        "Boltzmann constant (exact)",
+    ),
+    (
+        "electron_charge",
+        "",
+        "=1.602176634e-19 coulomb",
+        "electron charge (exact)",
+    ),
+    (
+        "avogadro",
+        "",
+        "=6.02214076e23 / mol",
+        "Size of a mole (exact)",
+    ),
+    ("N_A", "", "=avogadro", ""),
+];
+
+const ANGLES: &[UnitTuple] = &[
+    ("radian", "radians", "l@1", ""),
+    ("circle", "circles", "l@2 pi radian", ""),
+    ("degree", "degrees", "l@1/360 circle", ""),
+    ("deg", "degs", "l@degree", ""),
+    ("arcdeg", "arcdegs", "degree", ""),
+    ("arcmin", "arcmins", "l@1/60 degree", ""),
+    ("arcminute", "arcminutes", "l@arcmin", ""),
+    ("arcsec", "arcsecs", "l@1/60 arcmin", ""),
+    ("arcsecond", "arcseconds", "l@arcsec", ""),
+    ("rightangle", "rightangles", "l@90 degrees", ""),
+    ("quadrant", "quadrants", "l@1/4 circle", ""),
+    ("quintant", "quintants", "l@1/5 circle", ""),
+    ("sextant", "sextants", "l@1/6 circle", ""),
+    (
+        "zodiac_sign",
+        "zodiac_signs",
+        "l@1/12 circle",
+        "Angular extent of one sign of the zodiac",
+    ),
+    ("turn", "turns", "l@circle", ""),
+    ("revolution", "revolutions", "l@circle", ""),
+    ("rev", "revs", "l@circle", ""),
+    ("gradian", "gradians", "l@1/100 rightangle", ""),
+    ("gon", "gons", "l@gradian", ""),
+    ("grad", "", "l@gradian", ""),
+    ("mas", "", "milliarcsec", ""),
+];
+
+const SOLID_ANGLES: &[UnitTuple] = &[
+    ("steradian", "steradians", "l@1", ""),
+    ("sr", "sr", "s@steradian", ""),
+    ("sphere", "spheres", "4 pi steradians", ""),
+    (
+        "squaredegree",
+        "squaredegrees",
+        "(1/180)^2 pi^2 steradians",
+        "",
+    ),
+    ("squareminute", "squareminutes", "(1/60)^2 squaredegree", ""),
+    ("squaresecond", "squareseconds", "(1/60)^2 squareminute", ""),
+    ("squarearcmin", "squarearcmins", "squareminute", ""),
+    ("squarearcsec", "squarearcsecs", "squaresecond", ""),
+    (
+        "sphericalrightangle",
+        "sphericalrightangles",
+        "0.5 pi steradians",
+        "",
+    ),
+    ("octant", "octants", "0.5 pi steradians", ""),
+];
+
+const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
+    ("newton", "newtons", "l@kg m / s^2", "force"),
+    ("N", "", "s@newton", ""),
+    ("pascal", "pascals", "l@N/m^2", "pressure or stress"),
+    ("Pa", "", "s@pascal", ""),
+    ("joule", "joules", "l@N m", "energy"),
+    ("J", "", "s@joule", ""),
+    ("watt", "watts", "l@J/s", "power"),
+    ("W", "", "s@watt", ""),
+    ("coulomb", "", "l@A s", "charge"),
+    ("C", "", "s@coulomb", ""),
+    ("volt", "volts", "l@W/A", "potential difference"),
+    ("V", "", "s@volt", ""),
+    ("ohm", "ohms", "l@V/A", "electrical resistance"),
+    ("siemens", "", "l@A/V", "electrical conductance"),
+    ("S", "", "s@siemens", ""),
+    ("farad", "", "l@C/V", "capacitance"),
+    ("F", "", "s@farad", ""),
+    ("weber", "", "l@V s", "magnetic flux"),
+    ("Wb", "", "s@weber", ""),
+    ("henry", "", "l@V s / A", "inductance"),
+    ("H", "", "s@henry", ""),
+    ("tesla", "", "l@Wb/m^2", "magnetic flux density"),
+    ("T", "", "s@tesla", ""),
+    ("hertz", "", "l@/s", "frequency"),
+    ("Hz", "", "s@hertz", ""),
+];
+
+const TIME_UNITS: &[UnitTuple] = &[
+    ("sec", "secs", "s@second", ""),
+    ("minute", "minutes", "l@60 seconds", ""),
+    ("min", "mins", "s@minute", ""),
+    ("hour", "hours", "l@60 minutes", ""),
+    ("hr", "hrs", "s@hour", ""),
+    ("day", "days", "l@24 hours", ""),
+    ("d", "", "s@day", ""),
+    ("da", "", "s@day", ""),
+    ("week", "weeks", "l@7 days", ""),
+    ("wk", "", "s@week", ""),
+    ("fortnight", "fortnights", "l@14 day", ""),
+    (
+        "sidereal_year",
+        "sidereal_years",
+        "365.256363004 days",
+        concat!(
+            "the time taken for the Earth to complete one revolution of its orbit, ",
+            "as measured against a fixed frame of reference (such as the fixed stars, ",
+            "Latin sidera, singular sidus)"
+        ),
+    ),
+    (
+        "tropical_year",
+        "tropical_years",
+        "365.242198781 days",
+        "the period of time for the mean ecliptic longitude of the Sun to increase by 360 degrees",
+    ),
+    (
+        "anomalistic_year",
+        "anomalistic_years",
+        "365.259636 days",
+        "the time taken for the Earth to complete one revolution with respect to its apsides",
+    ),
+    ("year", "years", "l@tropical_year", ""),
+    ("yr", "", "year", ""),
+    ("month", "months", "l@1/12 year", ""),
+    ("mo", "", "month", ""),
+    ("decade", "decades", "10 years", ""),
+    ("century", "centuries", "100 years", ""),
+    ("millennium", "millennia", "1000 years", ""),
+    ("solar_year", "solar_years", "year", ""),
+    ("calendar_year", "calendar_years", "365 days", ""),
+    ("common_year", "common_years", "365 days", ""),
+    ("leap_year", "leap_years", "366 days", ""),
+    ("julian_year", "julian_years", "365.25 days", ""),
+    ("gregorian_year", "gregorian_years", "365.2425 days", ""),
+    // french revolutionary time
+    ("decimal_hour", "decimal_hours", "l@1/10 day", ""),
+    (
+        "decimal_minute",
+        "decimal_minutes",
+        "l@1/100 decimalhour",
+        "",
+    ),
+    (
+        "decimal_second",
+        "decimal_seconds",
+        "l@1/100 decimalminute",
+        "",
+    ),
+    ("beat", "beats", "l@decimalminute", "Swatch Internet Time"),
+];
+
+const RATIOS: &[UnitTuple] = &[
+    ("\u{2030}", "", "0.001", ""), // per mille
+    ("percent", "", "0.01", ""),
+    ("%", "", "percent", ""),
+    ("mill", "mills", "0.001", ""),
+    ("ppm", "", "1e-6", ""),
+    ("parts_per_million", "", "ppm", ""),
+    ("ppb", "", "1e-9", ""),
+    ("parts_per_billion", "", "ppb", ""),
+    ("ppt", "", "1e-12", ""),
+    ("parts_per_trillion", "", "ppt", ""),
+    ("karat", "", "1/24", "measure of gold purity"),
+    ("basispoint", "", "0.01 %", ""),
+];
+
+const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
+    ("electron_volt", "electron_volts", "l@electron_charge V", ""),
+    ("eV", "", "s@electron_volt", ""),
+    ("light_year", "light_years", "c julian_year", ""),
+    ("lightyear", "lightyears", "light_year", ""), // TODO remove this compatibility unit
+    ("ly", "", "lightyear", ""),
+    ("light_second", "light_seconds", "c second", ""),
+    ("light_minute", "light_minutes", "c minute", ""),
+    ("parsec", "parsecs", "au / tan(arcsec)", ""),
+    ("pc", "", "parsec", ""),
+];
+
+const IMPERIAL_UNITS: &[UnitTuple] = &[
+    ("inch", "inches", "2.54 cm", ""),
+    ("in", "", "inch", ""),
+    ("foot", "feet", "l@12 inch", ""),
+    ("ft", "", "foot", ""),
+    ("yard", "yards", "l@3 ft", ""),
+    ("yd", "", "yard", ""),
+    ("mile", "miles", "l@5280 ft", ""),
+    ("line", "lines", "1/12 inch", ""),
+    ("rod", "", "5.5 yard", ""),
+    ("perch", "", "rod", ""),
+    ("furlong", "", "40 rod", ""),
+    ("statute_mile", "statute_miles", "mile", ""),
+    ("league", "", "3 mile", ""),
+];
+
+const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
+    BASE_UNITS,
+    BASE_UNIT_ABBREVIATIONS,
+    TEMPERATURE_SCALES,
+    BITS_AND_BYTES,
+    STANDARD_PREFIXES,
+    NON_STANDARD_PREFIXES,
+    BINARY_PREFIXES,
+    NUMBER_WORDS,
+    CONSTANTS,
+    ANGLES,
+    SOLID_ANGLES,
+    COMMON_SI_DERIVED_UNITS,
+    TIME_UNITS,
+    RATIOS,
+    COMMON_PHYSICAL_UNITS,
+    IMPERIAL_UNITS,
 ];
 
 #[allow(clippy::too_many_lines)]
@@ -257,9 +453,16 @@ pub(crate) fn query_unit<'a>(
             _ => (),
         }
     }
-    for def in UNIT_DEFS {
-        if def.singular == ident || def.plural == ident {
-            return Some((def.singular, def.plural, def.definition));
+    for group in ALL_UNIT_DEFS {
+        for def in *group {
+            let def = UnitDef {
+                singular: def.0,
+                plural: if def.1.is_empty() { def.0 } else { def.1 },
+                definition: def.2,
+            };
+            if def.singular == ident || def.plural == ident {
+                return Some((def.singular, def.plural, def.definition));
+            }
         }
     }
     None

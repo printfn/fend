@@ -1772,7 +1772,10 @@ fn different_base_38() {
 
 #[test]
 fn three_electroncharge() {
-    test_eval("3electroncharge", "0.0000000000000000004806529902 coulomb");
+    test_eval(
+        "3 electron_charge",
+        "0.0000000000000000004806529902 coulomb",
+    );
 }
 
 #[test]
