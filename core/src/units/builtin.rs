@@ -211,6 +211,7 @@ const ANGLES: &[UnitTuple] = &[
     ("circle", "circles", "l@2 pi radian", ""),
     ("degree", "degrees", "l@1/360 circle", ""),
     ("deg", "degs", "l@degree", ""),
+    ("\u{b0}", "", "degree", ""), // degree symbol
     ("arcdeg", "arcdegs", "degree", ""),
     ("arcmin", "arcmins", "l@1/60 degree", ""),
     ("arcminute", "arcminutes", "l@arcmin", ""),
@@ -375,6 +376,14 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("light_minute", "light_minutes", "c minute", ""),
     ("parsec", "parsecs", "au / tan(arcsec)", ""),
     ("pc", "", "parsec", ""),
+    (
+        "astronomical_unit",
+        "astronomical_units",
+        "149597870700 m",
+        "",
+    ),
+    ("au", "", "astronomical_unit", ""),
+    ("AU", "", "astronomical_unit", ""),
 ];
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
@@ -391,6 +400,76 @@ const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("furlong", "", "40 rod", ""),
     ("statute_mile", "statute_miles", "mile", ""),
     ("league", "", "3 mile", ""),
+    ("chain", "chains", "66 feet", ""),
+    ("link", "links", "1/100 chain", ""),
+    ("ch", "", "chain", ""),
+    ("acre", "acres", "10 chain^2", ""),
+    ("section", "sections", "mile^2", ""),
+    ("township", "townships", "36 sections", ""),
+    ("homestead", "homesteads", "160 acres", ""),
+];
+
+const AVOIRDUPOIS_WEIGHT: &[UnitTuple] = &[
+    ("pound", "pounds", "0.45359237 kg", ""),
+    ("lb", "lbs", "pound", ""),
+    ("grain", "grains", "1/7000 pound", ""),
+    ("ounce", "ounces", "1/16 pound", ""),
+    ("oz", "", "ounce", ""),
+    ("dram", "drams", "1/16 ounce", ""),
+    ("dr", "", "dram", ""),
+    ("hundredweight", "hundredweights", "100 pounds", ""),
+    ("cwt", "", "hundredweight", ""),
+    ("short_ton", "short_tons", "2000 pounds", ""),
+    ("quarterweight", "quarterweights", "1/4 short_ton", ""),
+];
+
+const TROY_WEIGHT: &[UnitTuple] = &[
+    ("troy_pound", "troy_pounds", "5760 grains", ""),
+    ("troy_ounce", "troy_ounces", "1/12 troy_pound", ""),
+    ("ozt", "", "troyounce", ""),
+    ("pennyweight", "pennyweights", "1/20 troy_ounce", ""),
+    ("dwt", "", "pennyweight", ""),
+];
+
+const OTHER_WEIGHTS: &[UnitTuple] = &[
+    ("metric_grain", "metric_grains", "50 mg", ""),
+    ("carat", "carats", "0.2 grams", ""),
+    ("ct", "", "carat", ""),
+    ("jewellers_point", "jewellers_points", "1/100 carat", ""),
+];
+
+const IMPERIAL_ABBREVIATIONS: &[UnitTuple] = &[
+    ("mph", "", "mile/hr", ""),
+    ("mpg", "", "mile/gal", ""),
+    ("kph", "", "km/hr", ""),
+    ("fL", "", "footlambert", ""),
+    ("fpm", "", "ft/min", ""),
+    ("fps", "", "ft/s", ""),
+    ("rpm", "", "rev/min", ""),
+    ("rps", "", "rev/sec", ""),
+    ("mi", "", "mile", ""),
+    ("smi", "", "mile", ""),
+    ("nmi", "", "nauticalmile", ""),
+    ("mbh", "", "1e3 btu/hour", ""),
+    ("mcm", "", "1e3 circularmil", ""),
+    ("ipy", "", "inch/year", ""),
+    ("ccf", "", "100 ft^3", ""),
+    ("Mcf", "", "1000 ft^3", ""),
+    ("kp", "", "kilopond", ""),
+    ("kpm", "", "kp meter", ""),
+    ("Wh", "", "s@W hour", ""),
+    ("hph", "", "hp hour", ""),
+    ("plf", "", "lb / foot", "pounds per linear foot"),
+];
+
+const NAUTICAL_UNITS: &[UnitTuple] = &[
+    ("fathom", "fathoms", "6 ft", ""),
+    ("nautical_mile", "nautical_miles", "1852 m", ""),
+    ("cable", "cables", "1/10 nautical_mile", ""),
+    ("marine_league", "marine_leagues", "3 nautical_mile", ""),
+    ("knot", "knots", "nautical_mile / hr", ""),
+    ("click", "clicks", "km", ""),
+    ("NM", "", "nautical_mile", ""),
 ];
 
 const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
@@ -410,6 +489,11 @@ const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
     RATIOS,
     COMMON_PHYSICAL_UNITS,
     IMPERIAL_UNITS,
+    AVOIRDUPOIS_WEIGHT,
+    TROY_WEIGHT,
+    OTHER_WEIGHTS,
+    IMPERIAL_ABBREVIATIONS,
+    NAUTICAL_UNITS,
 ];
 
 #[allow(clippy::too_many_lines)]
