@@ -24,95 +24,19 @@ pub(crate) fn query_unit<'a>(
     define_units!(
 /*
 # This file is largely based on definitions.units and currency.units from GNU units, version 2.19
-
-!plural minute minutes
-!plural hour hours
-!plural day days
-!plural week weeks
-!plural fortnight fortnights
-!plural beat beats
-
-!plural degree degrees
-
-!plural parsec parsecs
-
-!plural year years
-!plural month months
-
-!plural inch inches
-# we need to manually ignore the line 'feet                    foot'
-!plural foot feet
-!plural yard yards
-!plural mile miles
-
-!plural fathom fathoms
-!plural nauticalmile nauticalmiles
-
-!plural pound pounds
-!plural lb lbs
-!plural grain grains
-!plural ounce ounces
-!plural dram drams
-!plural shortton shorttons
-
-!plural beerkeg beerkegs
-
-!plural uscup uscups
-!plural ustablespoon ustablespoons
-
-!plural ream reams
-!plural bundle bundles
-
-!plural byte bytes
-!plural octet octets
-!plural nybble nybbles
-!plural nibble nibbles
-!plural meg megs
-!plural gig gigs
-
-!plural romanpace romanpaces
-
-!plural greekfinger greekfingers
-!plural aeginastater aeginastaters
-!plural atticstater atticstaters
 */
-("AU"      "au")
-("\u{2019}"       "foot") // unicode single quote
-("\u{201d}"       "inch") // unicode double quote
-("'"       "foot")
-("\""       "inch")
 // arc minute and arc second definitions are ignored
-("m2"      "m^2")
-("ft3"     "ft^3")
-("microK"  "micro kelvin")
 
 //
 // units derived easily from SI units
 //
 
-("tonne"/"tonnes"          "l@1000 kg")
-("t"                       "s@tonne")
-("metricton"/"metrictons"  "l@tonne")
 ("sthene"                  "l@tonne m / s^2")
 ("funal"                   "l@sthene")
 ("pieze"                   "l@sthene / m^2")
 ("quintal"                 "l@100 kg")
 ("bar"                     "l@1e5 Pa") // About 1 atm
 ("vac"                     "l@millibar")
-("micron"/"microns"        "l@micrometer") // One millionth of a meter
-("bicron"/"bicrons"        "l@picometer") // One billionth of a meter
-("cc"                      "cm^3")
-("are"                     "l@100 m^2")
-("a"                       "s@are")
-("liter"/"liters"          "l@1000 cc")       // The liter was defined in 1901 as the
-("oldliter"                "l@1.000028 dm^3") // space occupied by 1 kg of pure water at
-("L"                       "s@liter")         // the temperature of its maximum density
-("l"                       "s@liter")         // under a pressure of 1 atm.  This was
-                                              // supposed to be 1000 cubic cm, but it
-                                              // was discovered that the original
-                                              // measurement was off.  In 1964, the
-                                              // liter was redefined to be exactly 1000
-                                              // cubic centimeters.
 ("mho"                     "l@siemens")    // Inverse of ohm, hence ohm spelled backward
 ("galvat"                  "l@ampere")     // Named after Luigi Galvani
 ("angstrom"                "l@1e-10 m")    // Convenient for describing molecular sizes
@@ -160,7 +84,7 @@ pub(crate) fn query_unit<'a>(
 ("leo"                     "l@10 m/s^2")
 ("poiseuille"              "l@N s / m^2")  // viscosity
 ("mayer"                   "l@J/(g K)")    // specific heat
-("mired"                   "l@/ microK")   // reciprocal color temperature.  The name
+("mired"                   "l@/ microkelvin")   // reciprocal color temperature.  The name
                                            //   abbreviates micro reciprocal degree.
 ("crocodile"               "l@megavolt")   // used informally in UK physics labs
 ("metricounce"             "l@25 g")
@@ -202,7 +126,6 @@ pub(crate) fn query_unit<'a>(
 ("hbar"                    "h / (2 pi)")
 ("spin"                    "hbar")
 
-("G"                       "=6.67430e-11 N m^2 / kg^2") // Newtonian gravitational constant
 ("coulombconst"            "=1/4 pi epsilon0")  // Listed as k or k_C sometimes
 ("k_C"                     "=coulombconst")
 
@@ -294,8 +217,6 @@ pub(crate) fn query_unit<'a>(
 
 // Various conventional values
 
-("gravity"                 "9.80665 m/s^2")    // std acceleration of gravity (exact)
-("force"                   "gravity")          // use to turn masses into forces
 ("atm"                     "101325 Pa")        // Standard atmospheric pressure
 ("atmosphere"              "atm")
 ("Hg"             "13.5951 gram force / cm^3") // Standard weight of mercury (exact)

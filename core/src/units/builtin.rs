@@ -201,9 +201,17 @@ const CONSTANTS: &[UnitTuple] = &[
         "avogadro",
         "",
         "=6.02214076e23 / mol",
-        "Size of a mole (exact)",
+        "size of a mole (exact)",
     ),
     ("N_A", "", "=avogadro", ""),
+    (
+        "G",
+        "",
+        "=6.67430e-11 N m^2 / kg^2",
+        "gravitational constant",
+    ),
+    ("gravity", "", "=9.80665 m/s^2", ""),
+    ("force", "", "gravity", ""), // used to convert some units
 ];
 
 const ANGLES: &[UnitTuple] = &[
@@ -384,11 +392,22 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ),
     ("au", "", "astronomical_unit", ""),
     ("AU", "", "astronomical_unit", ""),
+    ("cc", "", "cm^3", ""),
+    ("are", "ares", "l@100 meter^2", ""),
+    ("liter", "liters", "l@1000 cc", ""),
+    ("l", "", "s@liter", ""),
+    ("L", "", "s@liter", ""),
+    ("micron", "microns", "l@micrometer", ""),
+    ("bicron", "bicrons", "l@picometer", ""),
 ];
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("inch", "inches", "2.54 cm", ""),
     ("in", "", "inch", ""),
+    ("\u{2019}", "", "foot", ""), // unicode single quote
+    ("\u{201d}", "", "inch", ""), // unicode double quote
+    ("'", "", "foot", ""),
+    ("\"", "", "inch", ""),
     ("foot", "feet", "l@12 inch", ""),
     ("ft", "", "foot", ""),
     ("yard", "yards", "l@3 ft", ""),
@@ -436,6 +455,8 @@ const OTHER_WEIGHTS: &[UnitTuple] = &[
     ("carat", "carats", "0.2 grams", ""),
     ("ct", "", "carat", ""),
     ("jewellers_point", "jewellers_points", "1/100 carat", ""),
+    ("tonne", "tonnes", "l@1000 kg", ""),
+    ("t", "", "tonne", ""),
 ];
 
 const IMPERIAL_ABBREVIATIONS: &[UnitTuple] = &[
