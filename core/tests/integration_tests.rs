@@ -2265,16 +2265,6 @@ fn units_41() {
     test_eval("5 foot 1 inch 1 inch", "approx. 5.1666666666 feet");
 }
 
-// this tests if "e" is parsed as the electron charge (instead of Euler's number)
-// in unit definitions
-#[test]
-fn electroncharge_and_bohrmagneton() {
-    test_eval(
-        "(bohrmagneton to coulomb J s/kg) * 1e35",
-        "approx. 927401007831.8305442879 coulomb J s / kg",
-    );
-}
-
 #[test]
 fn plain_adjacent_numbers() {
     expect_error("1 2", None);

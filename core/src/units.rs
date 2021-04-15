@@ -4,9 +4,6 @@ use crate::num::Number;
 use crate::scope::GetIdentError;
 use crate::value::Value;
 
-#[cfg(feature = "gpl")]
-mod builtin_gnu;
-
 mod builtin;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -159,30 +156,6 @@ fn query_unit_case_sensitive<'a, I: Interrupt>(
     Err(GetIdentError::IdentifierNotFound(ident).into())
 }
 
-#[cfg(feature = "gpl")]
-fn query_unit_internal_gnu<'a, I: Interrupt>(
-    ident: &'a str,
-    short_prefixes: bool,
-    context: &mut crate::Context,
-    int: &I,
-) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    if let Some((s, p, expr)) = builtin_gnu::query_unit(ident, short_prefixes) {
-        expr_unit(s, p, expr, context, int)
-    } else {
-        Err(GetIdentError::IdentifierNotFound(ident).into())
-    }
-}
-
-#[cfg(not(feature = "gpl"))]
-fn query_unit_internal_gnu<'a, I: Interrupt>(
-    ident: &'a str,
-    short_prefixes: bool,
-    context: &mut crate::Context,
-    int: &I,
-) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    Err(GetIdentError::IdentifierNotFound(ident).into())
-}
-
 fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
@@ -193,6 +166,6 @@ fn query_unit_internal<'a, I: Interrupt>(
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
         expr_unit(s, p, expr, context, int)
     } else {
-        query_unit_internal_gnu(ident, short_prefixes, context, int)
+        Err(GetIdentError::IdentifierNotFound(ident).into())
     }
 }

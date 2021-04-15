@@ -354,16 +354,18 @@ const TIME_UNITS: &[UnitTuple] = &[
     (
         "decimal_minute",
         "decimal_minutes",
-        "l@1/100 decimalhour",
+        "l@1/100 decimal_hour",
         "",
     ),
     (
         "decimal_second",
         "decimal_seconds",
-        "l@1/100 decimalminute",
+        "l@1/100 decimal_minute",
         "",
     ),
-    ("beat", "beats", "l@decimalminute", "Swatch Internet Time"),
+    ("beat", "beats", "l@decimal_minute", "Swatch Internet Time"),
+    ("scaramucci", "scaramuccis", "11 days", ""),
+    ("mooch", "mooches", "scaramucci", ""),
 ];
 
 const RATIOS: &[UnitTuple] = &[
@@ -385,7 +387,6 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("electron_volt", "electron_volts", "l@electron_charge V", ""),
     ("eV", "", "s@electron_volt", ""),
     ("light_year", "light_years", "c julian_year", ""),
-    ("lightyear", "lightyears", "light_year", ""), // TODO remove this compatibility unit
     ("ly", "", "lightyear", ""),
     ("light_second", "light_seconds", "c second", ""),
     ("light_minute", "light_minutes", "c minute", ""),
@@ -424,11 +425,13 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("Wh", "", "s@W hour", ""),
     ("bar", "", "l@1e5 Pa", "about 1 atmosphere"),
     ("diopter", "", "l@/m", "reciprocal of focal length"),
+    // TODO remove these compatibility units
+    ("lightyear", "lightyears", "light_year", ""),
+    ("light", "", "c", ""),
 ];
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("inch", "inches", "2.54 cm", ""),
-    ("in", "", "inch", ""),
     ("\u{2019}", "", "foot", ""), // unicode single quote
     ("\u{201d}", "", "inch", ""), // unicode double quote
     ("'", "", "foot", ""),
@@ -453,6 +456,19 @@ const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("homestead", "homesteads", "160 acres", ""),
 ];
 
+const LIQUID_UNITS: &[UnitTuple] = &[
+    ("gallon", "gallons", "231 inch^3", ""),
+    ("gal", "", "gallon", ""),
+    ("quart", "quarts", "1/4 gallon", ""),
+    ("pint", "pints", "1/2 quart", ""),
+    ("gill", "", "1/4 pint", ""),
+    ("fluid_ounce", "", "1/16 pint", ""),
+    ("fluid_dram", "", "1/8 floz", ""),
+    ("qt", "", "quart", ""),
+    ("pt", "", "pint", ""),
+    ("floz", "", "fluid_ounce", ""),
+];
+
 const AVOIRDUPOIS_WEIGHT: &[UnitTuple] = &[
     ("pound", "pounds", "0.45359237 kg", ""),
     ("lb", "lbs", "pound", ""),
@@ -470,7 +486,7 @@ const AVOIRDUPOIS_WEIGHT: &[UnitTuple] = &[
 const TROY_WEIGHT: &[UnitTuple] = &[
     ("troy_pound", "troy_pounds", "5760 grains", ""),
     ("troy_ounce", "troy_ounces", "1/12 troy_pound", ""),
-    ("ozt", "", "troyounce", ""),
+    ("ozt", "", "troy_ounce", ""),
     ("pennyweight", "pennyweights", "1/20 troy_ounce", ""),
     ("dwt", "", "pennyweight", ""),
 ];
@@ -488,20 +504,17 @@ const IMPERIAL_ABBREVIATIONS: &[UnitTuple] = &[
     ("mph", "", "mile/hr", ""),
     ("mpg", "", "mile/gal", ""),
     ("kph", "", "km/hr", ""),
-    ("fL", "", "footlambert", ""),
     ("fpm", "", "ft/min", ""),
     ("fps", "", "ft/s", ""),
     ("rpm", "", "rev/min", ""),
     ("rps", "", "rev/sec", ""),
     ("mi", "", "mile", ""),
     ("smi", "", "mile", ""),
-    ("nmi", "", "nauticalmile", ""),
+    ("nmi", "", "nautical_mile", ""),
     ("mbh", "", "1e3 btu/hour", ""),
-    ("mcm", "", "1e3 circularmil", ""),
     ("ipy", "", "inch/year", ""),
     ("ccf", "", "100 ft^3", ""),
     ("Mcf", "", "1000 ft^3", ""),
-    ("hph", "", "hp hour", ""),
     ("plf", "", "lb / foot", "pounds per linear foot"),
     ("lbf", "", "lb force", ""),
     ("psi", "", "pound force / inch^2", ""),
@@ -515,6 +528,57 @@ const NAUTICAL_UNITS: &[UnitTuple] = &[
     ("knot", "knots", "nautical_mile / hr", ""),
     ("click", "clicks", "km", ""),
     ("NM", "", "nautical_mile", ""),
+];
+
+const CURRENCIES: &[UnitTuple] = &[
+    ("dollar", "dollars", "USD", ""),
+    ("cent", "cents", "0.01 USD", ""),
+    ("US$", "US$", "USD", ""),
+    ("$", "$", "USD", ""),
+    ("euro", "euros", "EUR", ""),
+    ("\u{20ac}", "\u{20ac}", "EUR", ""), // Euro symbol
+    ("AU$", "AU$", "AUD", ""),
+    ("HK$", "HK$", "HKD", ""),
+    ("NZ$", "NZ$", "NZD", ""),
+    ("_EUR", "_EUR", "!", ""),
+    ("EUR", "EUR", "_EUR", ""),
+];
+
+const EXCHANGE_RATES: &[UnitTuple] = &[
+    // retrieved from https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml
+    // exchange rates from 2021-04-14
+    ("USD", "USD", "1.1964 _EUR", ""),
+    ("JPY", "JPY", "130.33 _EUR", ""),
+    ("BGN", "BGN", "1.9558 _EUR", ""),
+    ("CZK", "CZK", "25.929 _EUR", ""),
+    ("DKK", "DKK", "7.4372 _EUR", ""),
+    ("GBP", "GBP", "0.86918 _EUR", ""),
+    ("HUF", "HUF", "358.61 _EUR", ""),
+    ("PLN", "PLN", "4.5537 _EUR", ""),
+    ("RON", "RON", "4.9240 _EUR", ""),
+    ("SEK", "SEK", "10.1433 _EUR", ""),
+    ("CHF", "CHF", "1.1033 _EUR", ""),
+    ("ISK", "ISK", "151.70 _EUR", ""),
+    ("NOK", "NOK", "10.0745 _EUR", ""),
+    ("HRK", "HRK", "7.5703 _EUR", ""),
+    ("RUB", "RUB", "90.5504 _EUR", ""),
+    ("TRY", "TRY", "9.6792 _EUR", ""),
+    ("AUD", "AUD", "1.5561 _EUR", ""),
+    ("BRL", "BRL", "6.8189 _EUR", ""),
+    ("CAD", "CAD", "1.5026 _EUR", ""),
+    ("CNY", "CNY", "7.8146 _EUR", ""),
+    ("HKD", "HKD", "9.2915 _EUR", ""),
+    ("IDR", "IDR", "17496.57 _EUR", ""),
+    ("ILS", "ILS", "3.9311 _EUR", ""),
+    ("INR", "INR", "89.8330 _EUR", ""),
+    ("KRW", "KRW", "1333.87 _EUR", ""),
+    ("MXN", "MXN", "24.0508 _EUR", ""),
+    ("MYR", "MYR", "4.9393 _EUR", ""),
+    ("NZD", "NZD", "1.6821 _EUR", ""),
+    ("PHP", "PHP", "58.031 _EUR", ""),
+    ("SGD", "SGD", "1.5998 _EUR", ""),
+    ("THB", "THB", "37.519 _EUR", ""),
+    ("ZAR", "ZAR", "17.2989 _EUR", ""),
 ];
 
 const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
@@ -534,11 +598,14 @@ const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
     RATIOS,
     COMMON_PHYSICAL_UNITS,
     IMPERIAL_UNITS,
+    LIQUID_UNITS,
     AVOIRDUPOIS_WEIGHT,
     TROY_WEIGHT,
     OTHER_WEIGHTS,
     IMPERIAL_ABBREVIATIONS,
     NAUTICAL_UNITS,
+    CURRENCIES,
+    EXCHANGE_RATES,
 ];
 
 const SHORT_PREFIXES: &[(&str, &str)] = &[
@@ -610,4 +677,32 @@ pub(crate) fn query_unit<'a>(
         return candidates[0];
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_str(s: &str, ctx: &mut crate::Context) {
+        if s.is_empty() || s == "'" || s == "\"" {
+            return;
+        }
+        eprintln!("Testing '{}'", s);
+        crate::evaluate(s, ctx).unwrap();
+    }
+
+    fn test_group(group: &[UnitTuple]) {
+        let mut ctx = crate::Context::new();
+        for (s, p, _, _) in group {
+            test_str(s, &mut ctx);
+            test_str(p, &mut ctx);
+        }
+    }
+
+    #[test]
+    fn test_all_units() {
+        for &group in ALL_UNIT_DEFS {
+            test_group(group);
+        }
+    }
 }
