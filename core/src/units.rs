@@ -91,10 +91,26 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
+    match query_unit_case_sensitive(ident, true, context, int) {
+        Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
+        Err(e) => return Err(e),
+        Ok(value) => {
+            return Ok(value);
+        }
+    }
+    query_unit_case_sensitive(ident, false, context, int)
+}
+
+fn query_unit_case_sensitive<'a, I: Interrupt>(
+    ident: &'a str,
+    case_sensitive: bool,
+    context: &mut crate::Context,
+    int: &I,
+) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
     if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
         return Ok(Value::Num(Number::new_base_unit(ident, ident)));
     }
-    match query_unit_internal(ident, false, context, int) {
+    match query_unit_internal(ident, false, case_sensitive, context, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),
         Ok(unit) => {
@@ -107,14 +123,14 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     while split_idx < ident.len() {
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         split_idx += remaining_ident.chars().next().unwrap().len_utf8();
-        let a = match query_unit_internal(prefix, true, context, int) {
+        let a = match query_unit_internal(prefix, true, case_sensitive, context, int) {
             Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
                 return Err(e);
             }
             Ok(a) => a,
             Err(_) => continue,
         };
-        match query_unit_internal(remaining_ident, false, context, int) {
+        match query_unit_internal(remaining_ident, false, case_sensitive, context, int) {
             Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
                 return Err(e)
             }
@@ -162,10 +178,11 @@ fn query_unit_internal_gnu<'a, I: Interrupt>(
 fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
+    case_sensitive: bool,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
-    if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes) {
+    if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
         expr_unit(s, p, expr, context, int)
     } else {
         query_unit_internal_gnu(ident, short_prefixes, context, int)

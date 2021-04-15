@@ -5143,3 +5143,18 @@ fn custom_base_unit_in_calculation() {
 fn custom_base_unit_in_calculation_2() {
     test_eval("5 'pigeons' per meter / 'pigeons'", "5 meters");
 }
+
+#[test]
+fn five_k() {
+    test_eval("5k", "5000");
+}
+
+#[test]
+fn upper_case_meter() {
+    test_eval("4 Metres", "4 metres");
+}
+
+#[test]
+fn mixed_case_meter() {
+    test_eval("4 mEtRes", "4 metres");
+}

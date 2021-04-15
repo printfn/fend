@@ -77,6 +77,7 @@ const STANDARD_PREFIXES: &[UnitTuple] = &[
     ("atto", "", "lp@1e-18", ""),
     ("zepto", "", "lp@1e-21", ""),
     ("yocto", "", "lp@1e-24", ""),
+    ("k", "", "=1000", ""),
 ];
 
 const NON_STANDARD_PREFIXES: &[UnitTuple] = &[
@@ -542,6 +543,7 @@ const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
 pub(crate) fn query_unit<'a>(
     ident: &'a str,
     short_prefixes: bool,
+    case_sensitive: bool,
 ) -> Option<(&'static str, &'static str, &'static str)> {
     if short_prefixes {
         match ident {
@@ -587,6 +589,12 @@ pub(crate) fn query_unit<'a>(
                 definition: def.2,
             };
             if def.singular == ident || def.plural == ident {
+                return Some((def.singular, def.plural, def.definition));
+            }
+            if !case_sensitive
+                && (def.singular.eq_ignore_ascii_case(ident)
+                    || def.plural.eq_ignore_ascii_case(ident))
+            {
                 return Some((def.singular, def.plural, def.definition));
             }
         }
