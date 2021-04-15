@@ -26,6 +26,8 @@ pub(crate) enum Symbol {
     Backslash,
     Dot,
     Of,
+    ShiftLeft,
+    ShiftRight,
 }
 
 pub(crate) enum Error {
@@ -126,6 +128,8 @@ impl fmt::Display for Symbol {
             Self::Backslash => "\"",
             Self::Dot => ".",
             Self::Of => "of",
+            Self::ShiftLeft => "<<",
+            Self::ShiftRight => ">>",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -476,24 +480,29 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
 }
 
 fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
+    let mut test_next = |next: char| {
+        if input.starts_with(next) {
+            let (_, remaining) = input.split_at(next.len_utf8());
+            *input = remaining;
+            true
+        } else {
+            false
+        }
+    };
     Ok(Token::Symbol(match ch {
         '(' => Symbol::OpenParens,
         ')' => Symbol::CloseParens,
         '+' => Symbol::Add,
         '!' => Symbol::Factorial,
         '-' => {
-            if input.starts_with('>') {
-                let (_, remaining) = input.split_at('>'.len_utf8());
-                *input = remaining;
+            if test_next('>') {
                 Symbol::ArrowConversion
             } else {
                 Symbol::Sub
             }
         }
         '*' => {
-            if input.starts_with('*') {
-                let (_, remaining) = input.split_at('*'.len_utf8());
-                *input = remaining;
+            if test_next('*') {
                 Symbol::Pow
             } else {
                 Symbol::Mul
@@ -503,9 +512,7 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
         '^' => Symbol::Pow,
         ':' => Symbol::Fn,
         '=' => {
-            if input.starts_with('>') {
-                let (_, remaining) = input.split_at('>'.len_utf8());
-                *input = remaining;
+            if test_next('>') {
                 Symbol::Fn
             } else {
                 return Err(Error::UnexpectedChar(ch));
@@ -513,6 +520,20 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
         }
         '\\' => Symbol::Backslash,
         '.' => Symbol::Dot,
+        '<' => {
+            if test_next('<') {
+                Symbol::ShiftLeft
+            } else {
+                return Err(Error::UnexpectedChar(ch));
+            }
+        }
+        '>' => {
+            if test_next('>') {
+                Symbol::ShiftRight
+            } else {
+                return Err(Error::UnexpectedChar(ch));
+            }
+        }
         _ => return Err(Error::UnexpectedChar(ch)),
     }))
 }
