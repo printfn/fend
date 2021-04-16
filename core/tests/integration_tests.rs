@@ -5153,6 +5153,6 @@ fn mixed_case_meter() {
 fn asin_minus_1() {
     expect_error(
         "asin -1.1",
-        Some("Error: Value must lie in the interval (-1, 1)"),
+        Some("Value must lie in the interval (-1, 1)"),
     );
 }
