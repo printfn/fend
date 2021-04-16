@@ -343,6 +343,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "i" => Value::Num(Number::i()),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
+        "conjugate" => Value::BuiltInFunction(BuiltInFunction::Conjugate),
         "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
         "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
         "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),

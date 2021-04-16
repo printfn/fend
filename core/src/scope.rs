@@ -13,7 +13,7 @@ enum ScopeValue<'a> {
 }
 
 #[derive(Debug)]
-pub enum GetIdentError<'a> {
+pub(crate) enum GetIdentError<'a> {
     EvalError(String),
     IdentifierNotFound(&'a str),
 }

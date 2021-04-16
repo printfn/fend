@@ -4,9 +4,9 @@ use std::fmt;
 use std::ops::Neg;
 
 #[derive(Copy, Clone)]
-pub struct Exact<T: fmt::Debug> {
-    pub value: T,
-    pub exact: bool,
+pub(crate) struct Exact<T: fmt::Debug> {
+    pub(crate) value: T,
+    pub(crate) exact: bool,
 }
 
 impl<T: fmt::Debug> fmt::Debug for Exact<T> {
@@ -23,25 +23,25 @@ impl<T: fmt::Debug> fmt::Debug for Exact<T> {
 
 #[allow(clippy::use_self)]
 impl<T: fmt::Debug> Exact<T> {
-    pub fn new(value: T, exact: bool) -> Self {
+    pub(crate) fn new(value: T, exact: bool) -> Self {
         Self { value, exact }
     }
 
-    pub fn apply<R: fmt::Debug, F: FnOnce(T) -> R>(self, f: F) -> Exact<R> {
+    pub(crate) fn apply<R: fmt::Debug, F: FnOnce(T) -> R>(self, f: F) -> Exact<R> {
         Exact::<R> {
             value: f(self.value),
             exact: self.exact,
         }
     }
 
-    pub fn combine(self, x: bool) -> Self {
+    pub(crate) fn combine(self, x: bool) -> Self {
         Self {
             value: self.value,
             exact: self.exact && x,
         }
     }
 
-    pub fn re<'a>(&'a self) -> Exact<&'a T> {
+    pub(crate) fn re<'a>(&'a self) -> Exact<&'a T> {
         Exact::<&'a T> {
             value: &self.value,
             exact: self.exact,
@@ -51,7 +51,7 @@ impl<T: fmt::Debug> Exact<T> {
 
 #[allow(clippy::use_self)]
 impl<A: fmt::Debug, B: fmt::Debug> Exact<(A, B)> {
-    pub fn pair(self) -> (Exact<A>, Exact<B>) {
+    pub(crate) fn pair(self) -> (Exact<A>, Exact<B>) {
         (
             Exact {
                 value: self.value.0,

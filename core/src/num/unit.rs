@@ -335,6 +335,13 @@ impl<'a> Value<'a> {
         }
     }
 
+    pub(crate) fn conjugate(self) -> Self {
+        Self {
+            value: self.value.conjugate(),
+            ..self
+        }
+    }
+
     pub(crate) fn sin<I: Interrupt>(
         self,
         scope: Option<Arc<Scope<'a>>>,

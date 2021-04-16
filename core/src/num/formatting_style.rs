@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 #[must_use]
-pub enum FormattingStyle {
+pub(crate) enum FormattingStyle {
     /// Print value as an improper fraction
     ImproperFraction,
     /// Print as a mixed fraction, e.g. 1 1/2

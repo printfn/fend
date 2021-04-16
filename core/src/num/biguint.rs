@@ -1,11 +1,13 @@
 use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
-use crate::num::{Base, DivideByZero, Exact, IntegerPowerError, ValueOutOfRange};
+use crate::num::{
+    Base, DivideByZero, Exact, IntegerPowerError, Range, RangeBound, ValueOutOfRange,
+};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
 #[derive(Clone)]
-pub enum BigUint {
+pub(crate) enum BigUint {
     Small(u64),
     // little-endian, len >= 1
     Large(Vec<u64>),
@@ -52,19 +54,27 @@ impl BigUint {
         }
     }
 
-    pub fn try_as_usize(&self) -> Result<usize, ValueOutOfRange<usize>> {
+    pub(crate) fn try_as_usize(&self) -> Result<usize, ValueOutOfRange<Self, usize>> {
         use std::convert::TryFrom;
         // todo: include `self` in the error message
         // This requires rewriting the BigUint format code to use a separate
         // struct that implements Display
-        let error = ValueOutOfRange::MustBeLessThanOrEqualTo(usize::MAX);
+        let error = || {
+            ValueOutOfRange(
+                self.clone(),
+                Range {
+                    start: RangeBound::Closed(0),
+                    end: RangeBound::Closed(usize::MAX),
+                },
+            )
+        };
 
         Ok(match self {
             Small(n) => {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return Err(error);
+                    return Err(error());
                 }
             }
             Large(v) => {
@@ -73,10 +83,10 @@ impl BigUint {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return Err(error);
+                        return Err(error());
                     }
                 } else {
-                    return Err(error);
+                    return Err(error());
                 }
             }
         })
@@ -87,7 +97,7 @@ impl BigUint {
         clippy::cast_precision_loss,
         clippy::float_arithmetic
     )]
-    pub fn as_f64(&self) -> f64 {
+    pub(crate) fn as_f64(&self) -> f64 {
         match self {
             Small(n) => *n as f64,
             Large(v) => {
@@ -149,7 +159,11 @@ impl BigUint {
         }
     }
 
-    pub fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn gcd<I: Interrupt>(
+        mut a: Self,
+        mut b: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<Never, I>> {
         while b >= 1.into() {
             let r = a
                 .rem(&b, int)
@@ -161,7 +175,7 @@ impl BigUint {
         Ok(a)
     }
 
-    pub fn pow<I: Interrupt>(
+    pub(crate) fn pow<I: Interrupt>(
         a: &Self,
         b: &Self,
         int: &I,
@@ -179,7 +193,7 @@ impl BigUint {
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
-    pub fn root_n<I: Interrupt>(
+    pub(crate) fn root_n<I: Interrupt>(
         self,
         n: &Self,
         int: &I,
@@ -266,7 +280,7 @@ impl BigUint {
         Ok(())
     }
 
-    pub fn divmod<I: Interrupt>(
+    pub(crate) fn divmod<I: Interrupt>(
         &self,
         other: &Self,
         int: &I,
@@ -357,7 +371,7 @@ impl BigUint {
         }
     }
 
-    pub fn format<I: Interrupt>(
+    pub(crate) fn format<I: Interrupt>(
         &self,
         base: Base,
         write_base_prefix: bool,
@@ -445,7 +459,7 @@ impl BigUint {
     }
 
     // Note: 0! = 1, 1! = 1
-    pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
@@ -455,7 +469,11 @@ impl BigUint {
         Ok(res)
     }
 
-    pub fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(
+        mut self,
+        other: &Self,
+        int: &I,
+    ) -> Result<Self, IntErr<Never, I>> {
         if let (Small(a), Small(b)) = (&self, &other) {
             if let Some(res) = a.checked_mul(*b) {
                 return Ok(Self::from(res));
@@ -469,20 +487,24 @@ impl BigUint {
         Ok(self.divmod(other, int)?.1)
     }
 
-    pub fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<DivideByZero, I>> {
+    pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<DivideByZero, I>> {
         Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
     }
 
-    pub fn div<I: Interrupt>(self, other: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub(crate) fn div<I: Interrupt>(
+        self,
+        other: &Self,
+        int: &I,
+    ) -> Result<Self, IntErr<DivideByZero, I>> {
         Ok(self.divmod(other, int)?.0)
     }
 
-    pub fn add(mut self, other: &Self) -> Self {
+    pub(crate) fn add(mut self, other: &Self) -> Self {
         self.add_assign_internal(other, 1, 0);
         self
     }
 
-    pub fn sub(self, other: &Self) -> Self {
+    pub(crate) fn sub(self, other: &Self) -> Self {
         if let (Small(a), Small(b)) = (&self, &other) {
             return Self::from(a - b);
         }
@@ -604,7 +626,7 @@ enum FormattedBigUintType {
 
 #[must_use]
 #[derive(Debug)]
-pub struct FormattedBigUint {
+pub(crate) struct FormattedBigUint {
     base: Option<Base>,
     ty: FormattedBigUintType,
 }

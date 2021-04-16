@@ -2,7 +2,8 @@ use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{
-    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, ValueOutOfRange,
+    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, Range, RangeBound,
+    ValueOutOfRange,
 };
 use std::{cmp, fmt, ops};
 
@@ -38,7 +39,7 @@ use super::biguint::FormattedBigUint;
 use sign::Sign;
 
 #[derive(Clone)]
-pub struct BigRat {
+pub(crate) struct BigRat {
     sign: Sign,
     num: BigUint,
     den: BigUint,
@@ -86,7 +87,7 @@ impl PartialEq for BigRat {
 impl Eq for BigRat {}
 
 impl BigRat {
-    pub fn try_as_usize<I: Interrupt>(
+    pub(crate) fn try_as_usize<I: Interrupt>(
         mut self,
         int: &I,
     ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
@@ -104,7 +105,7 @@ impl BigRat {
     }
 
     #[allow(clippy::float_arithmetic)]
-    pub fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, IntErr<Never, I>> {
+    pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, IntErr<Never, I>> {
         self = self.simplify(int)?;
         let positive_result = self.num.as_f64() / self.den.as_f64();
         if self.sign == Sign::Positive {
@@ -121,7 +122,7 @@ impl BigRat {
         clippy::cast_sign_loss,
         clippy::cast_precision_loss
     )]
-    pub fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
         let negative = f < 0.0;
         if negative {
             f = -f;
@@ -142,7 +143,7 @@ impl BigRat {
     }
 
     // sin works for all real numbers
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
+    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
         Ok(if self == 0.into() {
             Exact::new(Self::from(0), true)
         } else {
@@ -151,83 +152,132 @@ impl BigRat {
     }
 
     // asin, acos and atan only work for values between -1 and 1
-    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn asin<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err(ValueOutOfRange::MustBeBetween(-1, 1).into());
+            return Err(ValueOutOfRange(self, Range::open(-1, 1)).into());
         }
         Ok(Self::from_f64(f64::asin(self.into_f64(int)?), int)?)
     }
 
-    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn acos<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         let one: Self = 1.into();
         if self > one || self < -one {
-            return Err(ValueOutOfRange::MustBeBetween(-1, 1).into());
+            return Err(ValueOutOfRange(self, Range::open(-1, 1)).into());
         }
         Ok(Self::from_f64(f64::acos(self.into_f64(int)?), int)?)
     }
 
     // note that this works for any real number, unlike asin and acos
-    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Self::from_f64(f64::atan(self.into_f64(int)?), int)
     }
 
-    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Self::from_f64(f64::sinh(self.into_f64(int)?), int)
     }
 
-    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Self::from_f64(f64::cosh(self.into_f64(int)?), int)
     }
 
-    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Self::from_f64(f64::tanh(self.into_f64(int)?), int)
     }
 
-    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Self::from_f64(f64::asinh(self.into_f64(int)?), int)
     }
 
     // value must not be less than 1
-    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn acosh<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         if self < 1.into() {
-            return Err(ValueOutOfRange::MustNotBeLessThan(1).into());
+            return Err(ValueOutOfRange(
+                self,
+                Range {
+                    start: RangeBound::Closed(1),
+                    end: RangeBound::None,
+                },
+            )
+            .into());
         }
         Ok(Self::from_f64(f64::acosh(self.into_f64(int)?), int)?)
     }
 
     // value must be between -1 and 1.
-    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn atanh<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
-            return Err(ValueOutOfRange::MustBeBetween(-1, 1).into());
+            return Err(ValueOutOfRange(self, Range::open(-1, 1)).into());
         }
         Ok(Self::from_f64(f64::atanh(self.into_f64(int)?), int)?)
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn ln<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange::MustBeGreaterThan(0).into());
+            return Err(ValueOutOfRange(
+                self,
+                Range {
+                    start: RangeBound::Open(0),
+                    end: RangeBound::None,
+                },
+            )
+            .into());
         }
         Ok(Self::from_f64(f64::ln(self.into_f64(int)?), int)?)
     }
 
-    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn log2<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange::MustBeGreaterThan(0).into());
+            return Err(ValueOutOfRange(
+                self,
+                Range {
+                    start: RangeBound::Open(0),
+                    end: RangeBound::None,
+                },
+            )
+            .into());
         }
         Ok(Self::from_f64(f64::log2(self.into_f64(int)?), int)?)
     }
 
-    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn log10<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<Self, i32>, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange::MustBeGreaterThan(0).into());
+            return Err(ValueOutOfRange(
+                self,
+                Range {
+                    start: RangeBound::Open(0),
+                    end: RangeBound::None,
+                },
+            )
+            .into());
         }
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
     }
 
-    pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
             return Err("Factorial is only supported for integers"
@@ -322,7 +372,11 @@ impl BigRat {
         Ok(self)
     }
 
-    pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub(crate) fn div<I: Interrupt>(
+        self,
+        rhs: &Self,
+        int: &I,
+    ) -> Result<Self, IntErr<DivideByZero, I>> {
         if rhs.num == 0.into() {
             return Err(DivideByZero {}.into());
         }
@@ -453,7 +507,7 @@ impl BigRat {
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
     // The result 'exact' field indicates whether the number was exact or not.
-    pub fn format<I: Interrupt>(
+    pub(crate) fn format<I: Interrupt>(
         &self,
         base: Base,
         style: FormattingStyle,
@@ -797,7 +851,7 @@ impl BigRat {
         Ok((lam, mu, collected_res))
     }
 
-    pub fn pow<I: Interrupt>(
+    pub(crate) fn pow<I: Interrupt>(
         mut self,
         mut rhs: Self,
         int: &I,
@@ -873,7 +927,11 @@ impl BigRat {
 
     // the boolean indicates whether or not the result is exact
     // n must be an integer
-    pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn root_n<I: Interrupt>(
+        self,
+        n: &Self,
+        int: &I,
+    ) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.num != 0.into() && self.sign == Sign::Negative {
             return Err("Can't compute roots of negative numbers".to_string().into());
         }
@@ -934,7 +992,7 @@ impl BigRat {
         ))
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num.mul(&rhs.num, int)?,
@@ -942,15 +1000,15 @@ impl BigRat {
         })
     }
 
-    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         self.add_internal(rhs, int)
     }
 
-    pub fn is_definitely_zero(&self) -> bool {
+    pub(crate) fn is_definitely_zero(&self) -> bool {
         self.num.is_definitely_zero()
     }
 
-    pub fn is_definitely_one(&self) -> bool {
+    pub(crate) fn is_definitely_one(&self) -> bool {
         self.num.is_definitely_one() && self.den.is_definitely_one()
     }
 }
@@ -1038,7 +1096,7 @@ enum FormattedBigRatType {
 
 #[must_use]
 #[derive(Debug)]
-pub struct FormattedBigRat {
+pub(crate) struct FormattedBigRat {
     // whether or not to print a minus sign
     sign: Sign,
     ty: FormattedBigRatType,

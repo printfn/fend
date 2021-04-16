@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct Base(BaseEnum);
+pub(crate) struct Base(BaseEnum);
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum BaseEnum {
@@ -17,7 +17,7 @@ enum BaseEnum {
     Plain(u8),
 }
 
-pub struct InvalidBasePrefixError {}
+pub(crate) struct InvalidBasePrefixError {}
 
 impl fmt::Display for InvalidBasePrefixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -43,9 +43,9 @@ impl fmt::Display for OutOfRangeError {
 }
 
 impl Base {
-    pub const HEX: Self = Self(BaseEnum::Hex);
+    pub(crate) const HEX: Self = Self(BaseEnum::Hex);
 
-    pub const fn base_as_u8(self) -> u8 {
+    pub(crate) const fn base_as_u8(self) -> u8 {
         match self.0 {
             BaseEnum::Binary => 2,
             BaseEnum::Octal => 8,
@@ -54,7 +54,9 @@ impl Base {
         }
     }
 
-    pub const fn from_zero_based_prefix_char(ch: char) -> Result<Self, InvalidBasePrefixError> {
+    pub(crate) const fn from_zero_based_prefix_char(
+        ch: char,
+    ) -> Result<Self, InvalidBasePrefixError> {
         Ok(match ch {
             'x' => Self(BaseEnum::Hex),
             'o' => Self(BaseEnum::Octal),
@@ -81,7 +83,7 @@ impl Base {
         Ok(Self(BaseEnum::Custom(base)))
     }
 
-    pub fn write_prefix(self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    pub(crate) fn write_prefix(self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.0 {
             BaseEnum::Binary => write!(f, "0b")?,
             BaseEnum::Octal => write!(f, "0o")?,
@@ -92,11 +94,11 @@ impl Base {
         Ok(())
     }
 
-    pub const fn has_prefix(self) -> bool {
+    pub(crate) const fn has_prefix(self) -> bool {
         !matches!(self.0, BaseEnum::Plain(_))
     }
 
-    pub const fn digit_as_char(digit: u64) -> Option<char> {
+    pub(crate) const fn digit_as_char(digit: u64) -> Option<char> {
         Some(match digit {
             0 => '0',
             1 => '1',

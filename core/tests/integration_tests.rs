@@ -5148,3 +5148,11 @@ fn upper_case_meter() {
 fn mixed_case_meter() {
     test_eval("4 mEtRes", "4 metres");
 }
+
+#[test]
+fn asin_minus_1() {
+    expect_error(
+        "asin -1.1",
+        Some("Error: Value must lie in the interval (-1, 1)"),
+    );
+}

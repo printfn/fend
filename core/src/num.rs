@@ -17,37 +17,56 @@ type Exact<T> = exact::Exact<T>;
 pub(crate) type BaseOutOfRangeError = base::OutOfRangeError;
 pub(crate) type InvalidBasePrefixError = base::InvalidBasePrefixError;
 
-#[allow(clippy::pub_enum_variant_names)]
-pub enum ValueOutOfRange<T: fmt::Display> {
-    MustBeLessThanOrEqualTo(T),
-    MustBeBetween(T, T),
-    MustNotBeLessThan(T),
-    MustBeGreaterThan(T),
+pub(crate) enum RangeBound<T> {
+    None,
+    Open(T),
+    Closed(T),
 }
 
-impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::MustBeLessThanOrEqualTo(x) => {
-                write!(f, "Value must be less than or equal to {}", x)
-            }
-            Self::MustBeBetween(a, b) => {
-                write!(f, "Value must be between {} and {}", a, b)
-            }
-            Self::MustNotBeLessThan(x) => {
-                write!(f, "Value must not be less than {}", x)
-            }
-            Self::MustBeGreaterThan(x) => {
-                write!(f, "Value must be greater than {}", x)
-            }
+pub(crate) struct Range<T> {
+    start: RangeBound<T>,
+    end: RangeBound<T>,
+}
+
+impl<T> Range<T> {
+    pub(crate) fn open(start: T, end: T) -> Self {
+        Self {
+            start: RangeBound::Open(start),
+            end: RangeBound::Open(end),
         }
     }
 }
 
-impl<T: fmt::Display> crate::error::Error for ValueOutOfRange<T> {}
+impl<T: fmt::Display> fmt::Display for Range<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match &self.start {
+            RangeBound::None => write!(f, "(-\u{221e}, ")?, // infinity symbol
+            RangeBound::Open(v) => write!(f, "({}, ", v)?,
+            RangeBound::Closed(v) => write!(f, "[{}, ", v)?,
+        }
+        match &self.end {
+            RangeBound::None => write!(f, "\u{221e})")?,
+            RangeBound::Open(v) => write!(f, "{})", v)?,
+            RangeBound::Closed(v) => write!(f, "{}]", v)?,
+        }
+        Ok(())
+    }
+}
 
-pub enum ConvertToUsizeError {
-    OutOfRange(ValueOutOfRange<usize>),
+#[allow(clippy::pub_enum_variant_names)]
+pub(crate) struct ValueOutOfRange<T, U: fmt::Display>(T, Range<U>);
+
+impl<T, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        // TODO use self.0 in the error message
+        write!(f, "Value must lie in the interval {}", self.1)
+    }
+}
+
+impl<T, U: fmt::Display> crate::error::Error for ValueOutOfRange<T, U> {}
+
+pub(crate) enum ConvertToUsizeError {
+    OutOfRange(ValueOutOfRange<biguint::BigUint, usize>),
     NegativeNumber,
     Fraction,
     InvalidRealNumber,
@@ -73,7 +92,7 @@ impl fmt::Display for ConvertToUsizeError {
 impl crate::error::Error for ConvertToUsizeError {}
 
 #[derive(Debug)]
-pub enum IntegerPowerError {
+pub(crate) enum IntegerPowerError {
     ExponentTooLarge,
     ZeroToThePowerOfZero,
 }
@@ -89,7 +108,7 @@ impl fmt::Display for IntegerPowerError {
 impl crate::error::Error for IntegerPowerError {}
 
 #[derive(Debug)]
-pub struct DivideByZero {}
+pub(crate) struct DivideByZero {}
 impl fmt::Display for DivideByZero {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "Division by zero")

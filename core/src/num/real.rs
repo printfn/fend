@@ -7,7 +7,7 @@ use std::fmt;
 use std::ops::Neg;
 
 #[derive(Clone)]
-pub struct Real {
+pub(crate) struct Real {
     pattern: Pattern,
 }
 
@@ -75,7 +75,7 @@ impl Real {
         }
     }
 
-    pub fn try_as_usize<I: Interrupt>(
+    pub(crate) fn try_as_usize<I: Interrupt>(
         self,
         int: &I,
     ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
@@ -91,16 +91,8 @@ impl Real {
         }
     }
 
-    pub fn into_f64<I: Interrupt>(self, int: &I) -> Result<f64, IntErr<Never, I>> {
-        self.approximate(int)?.into_f64(int)
-    }
-
-    pub fn from_f64<I: Interrupt>(f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
-        Ok(Self::from(BigRat::from_f64(f, int)?))
-    }
-
     // sin works for all real numbers
-    pub fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
+    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
         Ok(match self.pattern {
             Pattern::Simple(s) => s.sin(int)?.apply(Self::from),
             Pattern::Pi(n) => {
@@ -137,60 +129,81 @@ impl Real {
         })
     }
 
-    pub fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn asin<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.asin(int)?))
     }
 
-    pub fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn acos<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 
-    pub fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from(self.approximate(int)?.atan(int)?))
     }
 
-    pub fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from(self.approximate(int)?.sinh(int)?))
     }
 
-    pub fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from(self.approximate(int)?.cosh(int)?))
     }
 
-    pub fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from(self.approximate(int)?.tanh(int)?))
     }
 
-    pub fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
         Ok(Self::from(self.approximate(int)?.asinh(int)?))
     }
 
-    pub fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn acosh<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.acosh(int)?))
     }
 
-    pub fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn atanh<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.atanh(int)?))
     }
 
     // For all logs: value must be greater than 0
-    pub fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn ln<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.ln(int)?))
     }
 
-    pub fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn log2<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.log2(int)?))
     }
 
-    pub fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<ValueOutOfRange<i32>, I>> {
+    pub(crate) fn log10<I: Interrupt>(
+        self,
+        int: &I,
+    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.log10(int)?))
     }
 
-    pub fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         Ok(Self::from(self.approximate(int)?.factorial(int)?))
     }
 
-    pub fn format<I: Interrupt>(
+    pub(crate) fn format<I: Interrupt>(
         &self,
         base: Base,
         mut style: FormattingStyle,
@@ -239,7 +252,11 @@ impl Real {
         ))
     }
 
-    pub fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn pow<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Exact<Self>, IntErr<String, I>> {
         // x^1 == x
         if let Pattern::Simple(n) = &rhs.pattern {
             if n == &1.into() {
@@ -267,7 +284,11 @@ impl Real {
         }
     }
 
-    pub fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn root_n<I: Interrupt>(
+        self,
+        n: &Self,
+        int: &I,
+    ) -> Result<Exact<Self>, IntErr<String, I>> {
         // TODO: Combining these match blocks is not currently possible because
         // 'binding by-move and by-ref in the same pattern is unstable'
         // https://github.com/rust-lang/rust/pull/76119
@@ -287,7 +308,7 @@ impl Real {
         })
     }
 
-    pub fn pi() -> Self {
+    pub(crate) fn pi() -> Self {
         Self {
             pattern: Pattern::Pi(1.into()),
         }
@@ -299,13 +320,13 @@ impl Real {
         }
     }
 
-    pub fn is_definitely_zero(&self) -> bool {
+    pub(crate) fn is_definitely_zero(&self) -> bool {
         match &self.pattern {
             Pattern::Simple(a) | Pattern::Pi(a) => a.is_definitely_zero(),
         }
     }
 
-    pub fn is_definitely_one(&self) -> bool {
+    pub(crate) fn is_definitely_one(&self) -> bool {
         match &self.pattern {
             Pattern::Simple(a) => a.is_definitely_one(),
             Pattern::Pi(_) => false,
@@ -315,7 +336,7 @@ impl Real {
 
 #[allow(clippy::use_self)]
 impl Exact<Real> {
-    pub fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
         if self.exact && self.value.is_zero() {
             return Ok(rhs);
         } else if rhs.exact && rhs.value.is_zero() {
@@ -342,7 +363,11 @@ impl Exact<Real> {
         )
     }
 
-    pub fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(
+        self,
+        rhs: Exact<&Real>,
+        int: &I,
+    ) -> Result<Self, IntErr<Never, I>> {
         if self.exact && self.value.is_zero() {
             return Ok(self);
         } else if rhs.exact && rhs.value.is_zero() {
@@ -376,7 +401,11 @@ impl Exact<Real> {
         })
     }
 
-    pub fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub(crate) fn div<I: Interrupt>(
+        self,
+        rhs: &Self,
+        int: &I,
+    ) -> Result<Self, IntErr<DivideByZero, I>> {
         if rhs.value.is_zero() {
             return Err(DivideByZero {}.into());
         }
@@ -434,7 +463,7 @@ impl From<BigRat> for Real {
 }
 
 #[derive(Debug)]
-pub struct Formatted {
+pub(crate) struct Formatted {
     num: FormattedBigRat,
 }
 
