@@ -69,7 +69,6 @@ impl<E: std::fmt::Debug, I: Interrupt> std::fmt::Debug for IntErr<E, I> {
     }
 }
 
-impl Error for std::fmt::Error {}
 impl Error for String {}
 
 pub(crate) trait Interrupt {
