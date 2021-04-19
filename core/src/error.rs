@@ -1,8 +1,8 @@
-use std::fmt;
+use std::{convert, fmt};
 
 pub(crate) trait Error: fmt::Display {}
 
-pub(crate) type Never = std::convert::Infallible;
+pub(crate) type Never = convert::Infallible;
 
 pub(crate) enum IntErr<E, I: Interrupt> {
     Interrupt(I::Int),
@@ -59,8 +59,8 @@ impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
     }
 }
 
-impl<E: std::fmt::Debug, I: Interrupt> std::fmt::Debug for IntErr<E, I> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+impl<E: fmt::Debug, I: Interrupt> fmt::Debug for IntErr<E, I> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::Interrupt(i) => write!(f, "{:?}", i)?,
             Self::Error(e) => write!(f, "{:?}", e)?,
@@ -79,7 +79,7 @@ pub(crate) trait Interrupt {
 #[derive(Default)]
 pub(crate) struct NeverInterrupt {}
 impl Interrupt for NeverInterrupt {
-    type Int = std::convert::Infallible;
+    type Int = convert::Infallible;
     fn test(&self) -> Result<(), Self::Int> {
         Ok(())
     }
