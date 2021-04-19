@@ -68,7 +68,7 @@ pub fn read(interactive: bool) -> Config {
     if !interactive {
         config.color = false;
     }
-    if std::env::var_os("NO_COLOR").is_some() {
+    if env::var_os("NO_COLOR").is_some() {
         config.color = false;
     }
     config

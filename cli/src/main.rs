@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 
 use fend_core::{Context, SpanKind};
-use std::path;
+use std::{env, mem, path, process};
 
 mod config;
 mod helper;
@@ -153,12 +153,12 @@ fn repl_loop(config: &config::Config) -> i32 {
 }
 
 fn main() {
-    let mut args = std::env::args();
+    let mut args = env::args();
     if args.len() >= 3 {
         eprintln!("Too many arguments");
-        std::process::exit(1);
+        process::exit(1);
     }
-    std::mem::drop(args.next());
+    mem::drop(args.next());
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
             print_help(false);
@@ -170,7 +170,7 @@ fn main() {
             return;
         }
         let config = config::read(false);
-        std::process::exit(
+        process::exit(
             match eval_and_print_res(
                 expr.as_str(),
                 &mut Context::new(),
@@ -184,6 +184,6 @@ fn main() {
     } else {
         let config = config::read(true);
         let exit_code = repl_loop(&config);
-        std::process::exit(exit_code);
+        process::exit(exit_code);
     }
 }
