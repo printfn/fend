@@ -37,6 +37,13 @@ impl<T> Range<T> {
     }
 }
 
+impl Range<i32> {
+    const ZERO_OR_GREATER: Self = Self {
+        start: RangeBound::Closed(0),
+        end: RangeBound::None,
+    };
+}
+
 impl<T: fmt::Display> fmt::Display for Range<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match &self.start {
@@ -64,6 +71,17 @@ impl<T, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
 }
 
 impl<T, U: fmt::Display> crate::error::Error for ValueOutOfRange<T, U> {}
+
+pub(crate) struct MustBeAnInteger<T>(T);
+
+impl<T> fmt::Display for MustBeAnInteger<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        // TODO use self.0 in the error message
+        write!(f, "Value is not an integer")
+    }
+}
+
+impl<T> crate::error::Error for MustBeAnInteger<T> {}
 
 pub(crate) enum ConvertToUsizeError {
     OutOfRange(ValueOutOfRange<biguint::BigUint, usize>),

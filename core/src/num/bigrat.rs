@@ -2,8 +2,8 @@ use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{
-    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, Range, RangeBound,
-    ValueOutOfRange,
+    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, MustBeAnInteger, Range,
+    RangeBound, ValueOutOfRange,
 };
 use std::{cmp, fmt, ops};
 
@@ -280,12 +280,10 @@ impl BigRat {
     pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err("Factorial is only supported for integers"
-                .to_string()
-                .into());
+            return Err(MustBeAnInteger(self).to_string().into());
         }
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err("Factorial is only supported for positive integers"
+            return Err(ValueOutOfRange(self, Range::ZERO_OR_GREATER)
                 .to_string()
                 .into());
         }
