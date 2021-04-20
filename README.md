@@ -26,13 +26,32 @@ fend is now available on the web at [printfn.github.io/fend-website](https://pri
 
 ## Installation
 
-Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
+The easiest way to install fend locally is via your package manager.
 
-You can then run `fend` to start a REPL session:
+On systems with Rust:
+
+```bash
+rustup update
+cargo install fend
+```
+
+On Arch Linux (using `yay`):
+
+```bash
+yay -Sy aur/fend
+```
+
+Using the nix package manager:
+
+```bash
+nix-env -iA nixpkgs.fend
+```
+
+You can also download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
+
+Once fend is installed, run `fend` to start a REPL session:
 
 ```
-$ cargo install fend
-...
 $ fend
 > 1 ft to cm
 30.48 cm
