@@ -1,4 +1,5 @@
 use crate::error::{IntErr, Interrupt, Never};
+use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{
@@ -35,7 +36,7 @@ mod sign {
     }
 }
 
-use super::biguint::FormattedBigUint;
+use super::biguint::{self, FormattedBigUint};
 use sign::Sign;
 
 #[derive(Clone)]
@@ -422,7 +423,14 @@ impl BigRat {
         let (ty, exact) = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
             (FormattedBigRatType::Integer(None, false, term, false), true)
         } else {
-            let formatted_int = num.format(base, true, sf_limit, int)?;
+            let formatted_int = num.format(
+                &biguint::FormatOptions {
+                    base,
+                    write_base_prefix: true,
+                    sf_limit,
+                },
+                int,
+            )?;
             (
                 FormattedBigRatType::Integer(
                     Some(formatted_int.value),
@@ -446,13 +454,18 @@ impl BigRat {
         use_parens: bool,
         int: &I,
     ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
-        let formatted_den = self.den.format(base, true, None, int)?;
+        let format_options = biguint::FormatOptions {
+            base,
+            write_base_prefix: true,
+            sf_limit: None,
+        };
+        let formatted_den = self.den.format(&format_options, int)?;
         let (pref, num, prefix_exact) = if mixed {
             let (prefix, num) = self.num.divmod(&self.den, int).map_err(IntErr::unwrap)?;
             if prefix == 0.into() {
                 (None, num, true)
             } else {
-                let formatted_prefix = prefix.format(base, true, None, int)?;
+                let formatted_prefix = prefix.format(&format_options, int)?;
                 (Some(formatted_prefix.value), num, formatted_prefix.exact)
             }
         } else {
@@ -475,7 +488,7 @@ impl BigRat {
                     true,
                 )
             } else {
-                let formatted_num = num.format(base, true, None, int)?;
+                let formatted_num = num.format(&format_options, int)?;
                 let i_suffix = term;
                 let space = !term.is_empty() && (base.base_as_u8() >= 19 || actually_mixed);
                 let (isuf1, isuf2) = if actually_mixed {
@@ -579,7 +592,14 @@ impl BigRat {
         } else {
             None
         };
-        let formatted_integer_part = integer_part.format(base, true, sf_limit, int)?;
+        let formatted_integer_part = integer_part.format(
+            &biguint::FormatOptions {
+                base,
+                write_base_prefix: true,
+                sf_limit,
+            },
+            int,
+        )?;
 
         let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
             || (style == FormattingStyle::Auto && terminating()?)
@@ -682,7 +702,17 @@ impl BigRat {
             Ok((next_num, digit))
         };
         let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never, I>> {
-            let digit_str = digit.format(base, false, None, int)?.value.to_string();
+            let digit_str = digit
+                .format(
+                    &biguint::FormatOptions {
+                        base,
+                        write_base_prefix: false,
+                        sf_limit: None,
+                    },
+                    int,
+                )?
+                .value
+                .to_string();
             s.push_str(digit_str.as_str());
             Ok(s)
         };
@@ -766,8 +796,19 @@ impl BigRat {
                             trailing_digits.push('0');
                         }
                         trailing_zeroes = 0;
-                        trailing_digits
-                            .push_str(&digit.format(base, false, None, int)?.value.to_string());
+                        trailing_digits.push_str(
+                            &digit
+                                .format(
+                                    &biguint::FormatOptions {
+                                        base,
+                                        write_base_prefix: false,
+                                        sf_limit: None,
+                                    },
+                                    int,
+                                )?
+                                .value
+                                .to_string(),
+                        );
                         i += 1;
                     }
                 }

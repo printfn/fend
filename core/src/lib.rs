@@ -11,6 +11,7 @@ mod ast;
 mod date;
 mod error;
 mod eval;
+mod format;
 mod interrupt;
 mod lexer;
 mod num;

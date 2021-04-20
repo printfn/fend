@@ -13,7 +13,7 @@ pub(crate) use formatting_style::FormattingStyle;
 
 pub(crate) type Number<'a> = unit::Value<'a>;
 pub(crate) type Base = base::Base;
-type Exact<T> = exact::Exact<T>;
+pub(crate) type Exact<T> = exact::Exact<T>;
 pub(crate) type BaseOutOfRangeError = base::OutOfRangeError;
 pub(crate) type InvalidBasePrefixError = base::InvalidBasePrefixError;
 

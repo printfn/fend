@@ -1,4 +1,5 @@
 use crate::error::{IntErr, Interrupt, Never};
+use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{
     Base, DivideByZero, Exact, IntegerPowerError, Range, RangeBound, ValueOutOfRange,
@@ -371,93 +372,6 @@ impl BigUint {
         }
     }
 
-    pub(crate) fn format<I: Interrupt>(
-        &self,
-        base: Base,
-        write_base_prefix: bool,
-        sf_limit: Option<usize>,
-        int: &I,
-    ) -> Result<Exact<FormattedBigUint>, IntErr<Never, I>> {
-        let base_prefix = if write_base_prefix { Some(base) } else { None };
-
-        if self.is_zero() {
-            return Ok(Exact::new(
-                FormattedBigUint {
-                    base: base_prefix,
-                    ty: FormattedBigUintType::Zero,
-                },
-                true,
-            ));
-        }
-
-        let mut num = self.clone();
-        Ok(
-            if num.value_len() == 1 && base.base_as_u8() == 10 && sf_limit.is_none() {
-                Exact::new(
-                    FormattedBigUint {
-                        base: base_prefix,
-                        ty: FormattedBigUintType::Simple(num.get(0)),
-                    },
-                    true,
-                )
-            } else {
-                let base_as_u128: u128 = base.base_as_u8().into();
-                let mut divisor = base_as_u128;
-                let mut rounds = 1;
-                // note that the string is reversed: this is the number of trailing zeroes while
-                // printing, but actually the number of leading zeroes in the final number
-                let mut num_trailing_zeroes = 0;
-                let mut num_leading_zeroes = 0;
-                let mut finished_counting_leading_zeroes = false;
-                while divisor
-                    < u128::MAX
-                        .checked_div(base_as_u128)
-                        .expect("Base appears to be 0")
-                {
-                    divisor *= base_as_u128;
-                    rounds += 1;
-                }
-                let divisor = Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]);
-                let mut output = String::with_capacity(rounds);
-                while !num.is_zero() {
-                    test_int(int)?;
-                    let divmod_res = num
-                        .divmod(&divisor, int)
-                        .map_err(|e| e.expect("Division by zero is not allowed"))?;
-                    let mut digit_group_value =
-                        u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
-                    for _ in 0..rounds {
-                        let digit_value = digit_group_value % base_as_u128;
-                        digit_group_value /= base_as_u128;
-                        let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
-                        if ch == '0' {
-                            num_trailing_zeroes += 1;
-                        } else {
-                            for _ in 0..num_trailing_zeroes {
-                                output.push('0');
-                                if !finished_counting_leading_zeroes {
-                                    num_leading_zeroes += 1;
-                                }
-                            }
-                            finished_counting_leading_zeroes = true;
-                            num_trailing_zeroes = 0;
-                            output.push(ch);
-                        }
-                    }
-                    num = divmod_res.0;
-                }
-                let exact = sf_limit.map_or(true, |sf| sf >= output.len() - num_leading_zeroes);
-                Exact::new(
-                    FormattedBigUint {
-                        base: base_prefix,
-                        ty: FormattedBigUintType::Complex(output, sf_limit),
-                    },
-                    exact,
-                )
-            },
-        )
-    }
-
     // Note: 0! = 1, 1! = 1
     pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
         let mut res = Self::from(1);
@@ -614,6 +528,119 @@ impl fmt::Debug for BigUint {
             }
         }
         Ok(())
+    }
+}
+
+pub(crate) struct FormatOptions {
+    pub(crate) base: Base,
+    pub(crate) write_base_prefix: bool,
+    pub(crate) sf_limit: Option<usize>,
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self {
+            base: Base::default(),
+            write_base_prefix: false,
+            sf_limit: None,
+        }
+    }
+}
+
+impl Format for BigUint {
+    type Params = FormatOptions;
+    type Out = FormattedBigUint;
+    type Error = Never;
+
+    fn format<I: Interrupt>(
+        &self,
+        params: &Self::Params,
+        int: &I,
+    ) -> Result<Exact<Self::Out>, IntErr<Self::Error, I>> {
+        let base_prefix = if params.write_base_prefix {
+            Some(params.base)
+        } else {
+            None
+        };
+
+        if self.is_zero() {
+            return Ok(Exact::new(
+                FormattedBigUint {
+                    base: base_prefix,
+                    ty: FormattedBigUintType::Zero,
+                },
+                true,
+            ));
+        }
+
+        let mut num = self.clone();
+        Ok(
+            if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
+                Exact::new(
+                    FormattedBigUint {
+                        base: base_prefix,
+                        ty: FormattedBigUintType::Simple(num.get(0)),
+                    },
+                    true,
+                )
+            } else {
+                let base_as_u128: u128 = params.base.base_as_u8().into();
+                let mut divisor = base_as_u128;
+                let mut rounds = 1;
+                // note that the string is reversed: this is the number of trailing zeroes while
+                // printing, but actually the number of leading zeroes in the final number
+                let mut num_trailing_zeroes = 0;
+                let mut num_leading_zeroes = 0;
+                let mut finished_counting_leading_zeroes = false;
+                while divisor
+                    < u128::MAX
+                        .checked_div(base_as_u128)
+                        .expect("Base appears to be 0")
+                {
+                    divisor *= base_as_u128;
+                    rounds += 1;
+                }
+                let divisor = Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]);
+                let mut output = String::with_capacity(rounds);
+                while !num.is_zero() {
+                    test_int(int)?;
+                    let divmod_res = num
+                        .divmod(&divisor, int)
+                        .map_err(|e| e.expect("Division by zero is not allowed"))?;
+                    let mut digit_group_value =
+                        u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
+                    for _ in 0..rounds {
+                        let digit_value = digit_group_value % base_as_u128;
+                        digit_group_value /= base_as_u128;
+                        let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
+                        if ch == '0' {
+                            num_trailing_zeroes += 1;
+                        } else {
+                            for _ in 0..num_trailing_zeroes {
+                                output.push('0');
+                                if !finished_counting_leading_zeroes {
+                                    num_leading_zeroes += 1;
+                                }
+                            }
+                            finished_counting_leading_zeroes = true;
+                            num_trailing_zeroes = 0;
+                            output.push(ch);
+                        }
+                    }
+                    num = divmod_res.0;
+                }
+                let exact = params
+                    .sf_limit
+                    .map_or(true, |sf| sf >= output.len() - num_leading_zeroes);
+                Exact::new(
+                    FormattedBigUint {
+                        base: base_prefix,
+                        ty: FormattedBigUintType::Complex(output, params.sf_limit),
+                    },
+                    exact,
+                )
+            },
+        )
     }
 }
 
