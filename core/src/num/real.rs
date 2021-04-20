@@ -135,14 +135,14 @@ impl Real {
     pub(crate) fn asin<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.asin(int)?))
     }
 
     pub(crate) fn acos<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 
@@ -169,14 +169,14 @@ impl Real {
     pub(crate) fn acosh<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.acosh(int)?))
     }
 
     pub(crate) fn atanh<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.atanh(int)?))
     }
 
@@ -184,21 +184,21 @@ impl Real {
     pub(crate) fn ln<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.ln(int)?))
     }
 
     pub(crate) fn log2<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.log2(int)?))
     }
 
     pub(crate) fn log10<I: Interrupt>(
         self,
         int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<BigRat, i32>, I>> {
+    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
         Ok(Self::from(self.approximate(int)?.log10(int)?))
     }
 

@@ -55,19 +55,19 @@ impl BigUint {
         }
     }
 
-    pub(crate) fn try_as_usize(&self) -> Result<usize, ValueOutOfRange<Self, usize>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(
+        &self,
+        int: &I,
+    ) -> Result<usize, IntErr<ValueOutOfRange<FormattedBigUint, usize>, I>> {
         use std::convert::TryFrom;
-        // todo: include `self` in the error message
-        // This requires rewriting the BigUint format code to use a separate
-        // struct that implements Display
-        let error = || {
-            ValueOutOfRange(
-                self.clone(),
+        let error = || -> Result<_, IntErr<Never, I>> {
+            Ok(ValueOutOfRange(
+                self.fm(int)?,
                 Range {
                     start: RangeBound::Closed(0),
                     end: RangeBound::Closed(usize::MAX),
                 },
-            )
+            ))
         };
 
         Ok(match self {
@@ -75,7 +75,7 @@ impl BigUint {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return Err(error());
+                    return Err(error()?.into());
                 }
             }
             Large(v) => {
@@ -84,10 +84,10 @@ impl BigUint {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return Err(error());
+                        return Err(error()?.into());
                     }
                 } else {
-                    return Err(error());
+                    return Err(error()?.into());
                 }
             }
         })

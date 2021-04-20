@@ -61,30 +61,29 @@ impl<T: fmt::Display> fmt::Display for Range<T> {
 }
 
 #[allow(clippy::pub_enum_variant_names)]
-pub(crate) struct ValueOutOfRange<T, U: fmt::Display>(T, Range<U>);
+pub(crate) struct ValueOutOfRange<T: fmt::Display, U: fmt::Display>(T, Range<U>);
 
-impl<T, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
+impl<T: fmt::Display, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         // TODO use self.0 in the error message
-        write!(f, "Value must lie in the interval {}", self.1)
+        write!(f, "{} must lie in the interval {}", self.0, self.1)
     }
 }
 
-impl<T, U: fmt::Display> crate::error::Error for ValueOutOfRange<T, U> {}
+impl<T: fmt::Display, U: fmt::Display> crate::error::Error for ValueOutOfRange<T, U> {}
 
 pub(crate) struct MustBeAnInteger<T>(T);
 
-impl<T> fmt::Display for MustBeAnInteger<T> {
+impl<T: fmt::Display> fmt::Display for MustBeAnInteger<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        // TODO use self.0 in the error message
-        write!(f, "Value is not an integer")
+        write!(f, "{} is not an integer", self.0)
     }
 }
 
-impl<T> crate::error::Error for MustBeAnInteger<T> {}
+impl<T: fmt::Display> crate::error::Error for MustBeAnInteger<T> {}
 
 pub(crate) enum ConvertToUsizeError {
-    OutOfRange(ValueOutOfRange<biguint::BigUint, usize>),
+    OutOfRange(ValueOutOfRange<biguint::FormattedBigUint, usize>),
     NegativeNumber,
     Fraction,
     InvalidRealNumber,

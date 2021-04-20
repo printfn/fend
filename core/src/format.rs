@@ -12,4 +12,9 @@ pub(crate) trait Format {
         params: &Self::Params,
         int: &I,
     ) -> Result<Exact<Self::Out>, IntErr<Self::Error, I>>;
+
+    /// Simpler alternative to calling format
+    fn fm<I: Interrupt>(&self, int: &I) -> Result<Self::Out, IntErr<Self::Error, I>> {
+        Ok(self.format(&Default::default(), int)?.value)
+    }
 }
