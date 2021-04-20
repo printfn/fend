@@ -65,7 +65,6 @@ pub(crate) struct ValueOutOfRange<T: fmt::Display, U: fmt::Display>(T, Range<U>)
 
 impl<T: fmt::Display, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        // TODO use self.0 in the error message
         write!(f, "{} must lie in the interval {}", self.0, self.1)
     }
 }
