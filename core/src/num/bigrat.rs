@@ -515,64 +515,6 @@ impl BigRat {
         ))
     }
 
-    // Formats as an integer if possible, or a terminating float, otherwise as
-    // either a fraction or a potentially approximated floating-point number.
-    // The result 'exact' field indicates whether the number was exact or not.
-    pub(crate) fn format<I: Interrupt>(
-        &self,
-        base: Base,
-        style: FormattingStyle,
-        term: &'static str,
-        use_parens_if_fraction: bool,
-        int: &I,
-    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
-        let mut x = self.clone().simplify(int)?;
-        let sign = if x.sign == Sign::Positive || x == 0.into() {
-            Sign::Positive
-        } else {
-            Sign::Negative
-        };
-        x.sign = Sign::Positive;
-
-        // try as integer if possible
-        if x.den == 1.into() {
-            let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
-                Some(sf)
-            } else {
-                None
-            };
-            return Self::format_as_integer(
-                &x.num,
-                base,
-                sign,
-                term,
-                use_parens_if_fraction,
-                sf_limit,
-                int,
-            );
-        }
-
-        let mut terminating_res = None;
-        let mut terminating = || match terminating_res {
-            None => {
-                let t = x.terminates_in_base(base, int)?;
-                terminating_res = Some(t);
-                Ok(t)
-            }
-            Some(t) => Ok(t),
-        };
-        let fraction = style == FormattingStyle::ImproperFraction
-            || style == FormattingStyle::MixedFraction
-            || (style == FormattingStyle::Exact && !terminating()?);
-        if fraction {
-            let mixed = style == FormattingStyle::MixedFraction || style == FormattingStyle::Exact;
-            return x.format_as_fraction(base, sign, term, mixed, use_parens_if_fraction, int);
-        }
-
-        // not a fraction, will be printed as a decimal
-        x.format_as_decimal(style, base, sign, term, terminating, int)
-    }
-
     fn format_as_decimal<I: Interrupt>(
         &self,
         style: FormattingStyle,
@@ -1100,6 +1042,90 @@ impl From<BigUint> for BigRat {
             num: n,
             den: BigUint::from(1),
         }
+    }
+}
+
+pub(crate) struct FormatOptions {
+    pub(crate) base: Base,
+    pub(crate) style: FormattingStyle,
+    pub(crate) term: &'static str,
+    pub(crate) use_parens_if_fraction: bool,
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self {
+            base: Base::default(),
+            style: FormattingStyle::default(),
+            term: "",
+            use_parens_if_fraction: false,
+        }
+    }
+}
+
+impl Format for BigRat {
+    type Params = FormatOptions;
+    type Out = FormattedBigRat;
+    type Error = Never;
+
+    // Formats as an integer if possible, or a terminating float, otherwise as
+    // either a fraction or a potentially approximated floating-point number.
+    // The result 'exact' field indicates whether the number was exact or not.
+    fn format<I: Interrupt>(
+        &self,
+        params: &Self::Params,
+        int: &I,
+    ) -> Result<Exact<Self::Out>, IntErr<Self::Error, I>> {
+        let base = params.base;
+        let style = params.style;
+        let term = params.term;
+        let use_parens_if_fraction = params.use_parens_if_fraction;
+
+        let mut x = self.clone().simplify(int)?;
+        let sign = if x.sign == Sign::Positive || x == 0.into() {
+            Sign::Positive
+        } else {
+            Sign::Negative
+        };
+        x.sign = Sign::Positive;
+
+        // try as integer if possible
+        if x.den == 1.into() {
+            let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
+                Some(sf)
+            } else {
+                None
+            };
+            return Self::format_as_integer(
+                &x.num,
+                base,
+                sign,
+                term,
+                use_parens_if_fraction,
+                sf_limit,
+                int,
+            );
+        }
+
+        let mut terminating_res = None;
+        let mut terminating = || match terminating_res {
+            None => {
+                let t = x.terminates_in_base(base, int)?;
+                terminating_res = Some(t);
+                Ok(t)
+            }
+            Some(t) => Ok(t),
+        };
+        let fraction = style == FormattingStyle::ImproperFraction
+            || style == FormattingStyle::MixedFraction
+            || (style == FormattingStyle::Exact && !terminating()?);
+        if fraction {
+            let mixed = style == FormattingStyle::MixedFraction || style == FormattingStyle::Exact;
+            return x.format_as_fraction(base, sign, term, mixed, use_parens_if_fraction, int);
+        }
+
+        // not a fraction, will be printed as a decimal
+        x.format_as_decimal(style, base, sign, term, terminating, int)
     }
 }
 

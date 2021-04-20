@@ -1,10 +1,13 @@
 use crate::error::{IntErr, Interrupt, Never};
+use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle, ValueOutOfRange};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
+
+use super::bigrat;
 
 #[derive(Clone)]
 pub(crate) struct Real {
@@ -242,7 +245,15 @@ impl Real {
             }
         };
 
-        let formatted = rat.format(base, style, term, use_parens_if_fraction, int)?;
+        let formatted = rat.format(
+            &bigrat::FormatOptions {
+                base,
+                style,
+                term,
+                use_parens_if_fraction,
+            },
+            int,
+        )?;
         let exact = formatted.exact && override_exact;
         Ok(Exact::new(
             Formatted {
