@@ -300,6 +300,8 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
     ("T", "", "s@tesla", ""),
     ("hertz", "", "l@/s", "frequency"),
     ("Hz", "", "s@hertz", ""),
+    ("nit", "nits", "l@candela / meter^2", "luminance"),
+    ("nt", "", "nit", ""),
 ];
 
 const TIME_UNITS: &[UnitTuple] = &[
