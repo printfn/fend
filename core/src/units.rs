@@ -89,6 +89,8 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     int: &I,
 ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
     if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
+        let ident = ident.split_at(1).1;
+        let ident = ident.split_at(ident.len() - 1).0;
         return Ok(Value::Num(Number::new_base_unit(ident, ident)));
     }
     query_unit_static(ident, context, int)

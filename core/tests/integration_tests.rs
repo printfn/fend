@@ -5120,12 +5120,12 @@ fn percent_plus_per_mille() {
 
 #[test]
 fn custom_base_unit() {
-    test_eval("5 'tests'", "5 'tests'");
+    test_eval_simple("5 'tests'", "5 tests");
 }
 
 #[test]
 fn custom_base_unit_in_calculation() {
-    test_eval("5 'pigeons' per meter", "5 'pigeons' / meter");
+    test_eval_simple("5 'pigeons' per meter", "5 pigeons / meter");
 }
 
 #[test]
@@ -5152,4 +5152,9 @@ fn mixed_case_meter() {
 #[test]
 fn asin_minus_1() {
     expect_error("asin -1.1", Some("-1.1 must lie in the interval (-1, 1)"));
+}
+
+#[test]
+fn custom_unit_test() {
+    test_eval_simple("15*3*50/1000 'cases'", "2.25 cases");
 }
