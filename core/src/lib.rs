@@ -12,6 +12,7 @@ mod date;
 mod error;
 mod eval;
 mod format;
+mod ident;
 mod interrupt;
 mod lexer;
 mod num;

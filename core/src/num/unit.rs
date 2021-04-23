@@ -1,9 +1,9 @@
-use crate::ast;
 use crate::error::{IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{self, Complex, UseParentheses};
 use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
 use crate::scope::Scope;
+use crate::{ast, ident::Ident};
 use crate::{Span, SpanKind};
 use std::collections::HashMap;
 use std::fmt;
@@ -321,7 +321,8 @@ impl<'a> Value<'a> {
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        let radians = ast::resolve_identifier("radians", scope, context, int)?.expect_num()?;
+        let radians =
+            ast::resolve_identifier(Ident::new("radians"), scope, context, int)?.expect_num()?;
         self.convert_to(radians, int)
     }
 

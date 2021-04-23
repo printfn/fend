@@ -1,7 +1,7 @@
-use crate::ast::Expr;
 use crate::error::{IntErr, Interrupt, Never};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
+use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use std::{borrow, fmt, sync::Arc};
 
@@ -14,7 +14,7 @@ pub(crate) enum Value<'a> {
     Sf,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(&'a str, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
+    Fn(Ident<'a>, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
     String(borrow::Cow<'a, str>),
     Date(crate::date::Date),
@@ -51,10 +51,10 @@ impl BuiltInFunction {
         scope: Option<Arc<Scope<'a>>>,
     ) -> Value<'a> {
         Value::Fn(
-            "x",
+            Ident::new("x"),
             Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                Box::new(Expr::Ident(self.as_str())),
-                Box::new(Expr::Ident("x")),
+                Box::new(Expr::Ident(Ident::new(self.as_str()))),
+                Box::new(Expr::Ident(Ident::new("x"))),
             )))),
             scope,
         )
@@ -222,7 +222,8 @@ impl<'a> Value<'a> {
                 Self::apply_built_in_function(func, other, scope, context, int)?
             }
             Self::Fn(param, expr, custom_scope) => {
-                let new_scope = Scope::with_variable(param, other, scope.clone(), custom_scope);
+                let new_scope =
+                    Scope::with_variable(param.as_str(), other, scope.clone(), custom_scope);
                 return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), context, int);
             }
             _ => {
@@ -338,7 +339,7 @@ impl<'a> Value<'a> {
             }
             Self::Fn(name, expr, _scope) => {
                 let expr_str = (&**expr).format(int)?;
-                let res = if name.contains('.') {
+                let res = if name.as_str().contains('.') {
                     format!("{}:{}", name, expr_str)
                 } else {
                     format!("\\{}.{}", name, expr_str)
@@ -379,11 +380,11 @@ impl<'a> Value<'a> {
         Ok(())
     }
 
-    pub(crate) fn get_object_member(self, key: &str) -> Result<Self, &'static str> {
+    pub(crate) fn get_object_member(self, key: Ident<'_>) -> Result<Self, &'static str> {
         match self {
             Self::Object(kv) => {
                 for (k, v) in kv {
-                    if k == key {
+                    if k == key.as_str() {
                         return Ok(*v);
                     }
                 }

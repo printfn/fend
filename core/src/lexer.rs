@@ -1,11 +1,12 @@
 use crate::error::{IntErr, Interrupt};
+use crate::ident::Ident;
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{borrow, convert, fmt};
 
 #[derive(Clone, Debug)]
 pub(crate) enum Token<'a> {
     Num(Number<'a>),
-    Ident(&'a str),
+    Ident(Ident<'a>),
     Symbol(Symbol),
     Whitespace,
     StringLiteral(borrow::Cow<'a, str>),
@@ -473,7 +474,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
             "to" | "as" | "in" => Token::Symbol(Symbol::ArrowConversion),
             "per" => Token::Symbol(Symbol::Div),
             "of" => Token::Symbol(Symbol::Of),
-            _ => Token::Ident(ident),
+            _ => Token::Ident(Ident::new(ident)),
         },
         input,
     ))
@@ -666,7 +667,7 @@ fn parse_quote_unit(input: &str) -> (Token, &str) {
         }
     }
     let (a, b) = input.split_at(split_idx);
-    (Token::Ident(a), b)
+    (Token::Ident(Ident::new(a)), b)
 }
 
 pub(crate) struct Lexer<'a, 'b, I: Interrupt> {

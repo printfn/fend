@@ -1,5 +1,6 @@
 use crate::error::{IntErr, Interrupt, Never};
 use crate::eval::evaluate_to_value;
+use crate::ident::Ident;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::{GetIdentError, Scope};
@@ -11,7 +12,7 @@ use std::sync::Arc;
 pub(crate) enum Expr<'a> {
     Num(Number<'a>),
     String(borrow::Cow<'a, str>),
-    Ident(&'a str),
+    Ident(Ident<'a>),
     Parens(Box<Expr<'a>>),
     UnaryMinus(Box<Expr<'a>>),
     UnaryPlus(Box<Expr<'a>>),
@@ -31,9 +32,9 @@ pub(crate) enum Expr<'a> {
     ApplyMul(Box<Expr<'a>>, Box<Expr<'a>>),
 
     As(Box<Expr<'a>>, Box<Expr<'a>>),
-    Fn(&'a str, Box<Expr<'a>>),
+    Fn(Ident<'a>, Box<Expr<'a>>),
 
-    Of(&'a str, Box<Expr<'a>>),
+    Of(Ident<'a>, Box<Expr<'a>>),
 }
 
 impl<'a> Expr<'a> {
@@ -41,7 +42,7 @@ impl<'a> Expr<'a> {
         Ok(match self {
             Self::Num(n) => n.format(int)?.to_string(),
             Self::String(s) => format!(r#""{}""#, s.as_ref()),
-            Self::Ident(ident) => ident.replace('_', " "),
+            Self::Ident(ident) => ident.to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
             Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
@@ -60,7 +61,7 @@ impl<'a> Expr<'a> {
             }
             Self::As(a, b) => format!("({} as {})", a.format(int)?, b.format(int)?),
             Self::Fn(a, b) => {
-                if a.contains('.') {
+                if a.as_str().contains('.') {
                     format!("({}:{})", a, b.format(int)?)
                 } else {
                     format!("\\{}.{}", a, b.format(int)?)
@@ -232,44 +233,46 @@ fn evaluate_as<'a, I: Interrupt>(
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
-    match &b {
-        Expr::Ident("date") => {
-            let a = evaluate(a, scope.clone(), context, int)?;
-            return if let Value::String(s) = a {
-                Ok(Value::Date(
-                    crate::date::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
-                ))
-            } else {
-                Err("Expected a string".to_string().into())
-            };
-        }
-        Expr::Ident("string") => {
-            return Ok(Value::String(
-                evaluate(a, scope, context, int)?
-                    .format_to_plain_string(0, int)?
-                    .into(),
-            ));
-        }
-        Expr::Ident("codepoint") => {
-            let a = evaluate(a, scope.clone(), context, int)?;
-            if let Value::String(s) = a {
-                let ch = s
-                    .as_ref()
-                    .chars()
-                    .next()
-                    .ok_or_else(|| "String cannot be empty".to_string())?;
-                if s.len() > ch.len_utf8() {
-                    return Err("String cannot be longer than one codepoint"
-                        .to_string()
-                        .into());
-                }
-                let value = Value::Num(Number::from(u64::from(ch as u32)).with_base(Base::HEX));
-                return Ok(value);
+    if let Expr::Ident(ident) = &b {
+        match ident.as_str() {
+            "date" => {
+                let a = evaluate(a, scope.clone(), context, int)?;
+                return if let Value::String(s) = a {
+                    Ok(Value::Date(
+                        crate::date::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
+                    ))
+                } else {
+                    Err("Expected a string".to_string().into())
+                };
             }
-            return Err("Expected a string".to_string().into());
+            "string" => {
+                return Ok(Value::String(
+                    evaluate(a, scope, context, int)?
+                        .format_to_plain_string(0, int)?
+                        .into(),
+                ));
+            }
+            "codepoint" => {
+                let a = evaluate(a, scope.clone(), context, int)?;
+                if let Value::String(s) = a {
+                    let ch = s
+                        .as_ref()
+                        .chars()
+                        .next()
+                        .ok_or_else(|| "String cannot be empty".to_string())?;
+                    if s.len() > ch.len_utf8() {
+                        return Err("String cannot be longer than one codepoint"
+                            .to_string()
+                            .into());
+                    }
+                    let value = Value::Num(Number::from(u64::from(ch as u32)).with_base(Base::HEX));
+                    return Ok(value);
+                }
+                return Err("Expected a string".to_string().into());
+            }
+            _ => (),
         }
-        _ => (),
-    };
+    }
     Ok(match evaluate(b, scope.clone(), context, int)? {
         Value::Num(b) => Value::Num(
             evaluate(a, scope, context, int)?
@@ -316,7 +319,7 @@ fn evaluate_as<'a, I: Interrupt>(
 }
 
 pub(crate) fn resolve_identifier<'a, I: Interrupt>(
-    ident: &'a str,
+    ident: Ident<'a>,
     scope: Option<Arc<Scope<'a>>>,
     context: &mut crate::Context,
     int: &I,
@@ -327,7 +330,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         };
     }
     if let Some(scope) = scope.clone() {
-        match scope.get(ident, context, int) {
+        match scope.get(ident.as_str(), context, int) {
             Ok(val) => return Ok(val),
             Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
             Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
@@ -336,7 +339,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
             }
         }
     }
-    Ok(match ident {
+    Ok(match ident.as_str() {
         "pi" | "\u{3c0}" => Value::Num(Number::pi()),
         "tau" | "\u{3c4}" => Value::Num(Number::pi().mul(2.into(), int)?),
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
@@ -398,6 +401,9 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
                 .map_err(|e| e.to_string())?
                 .prev(),
         ),
-        _ => return crate::units::query_unit(ident, context, int).map_err(IntErr::into_string),
+        _ => {
+            return crate::units::query_unit(ident.as_str(), context, int)
+                .map_err(IntErr::into_string)
+        }
     })
 }
