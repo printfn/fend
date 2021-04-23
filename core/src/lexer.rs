@@ -1,6 +1,6 @@
 use crate::error::{IntErr, Interrupt};
 use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
-use std::{convert, fmt};
+use std::{borrow, convert, fmt};
 
 #[derive(Clone, Debug)]
 pub(crate) enum Token<'a> {
@@ -8,7 +8,7 @@ pub(crate) enum Token<'a> {
     Ident(&'a str),
     Symbol(Symbol),
     Whitespace,
-    StringLiteral(std::borrow::Cow<'a, str>),
+    StringLiteral(borrow::Cow<'a, str>),
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
