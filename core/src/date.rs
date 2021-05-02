@@ -33,16 +33,13 @@ impl Date {
         clippy::cast_possible_wrap
     )]
     pub(crate) fn today(context: &mut crate::Context) -> Result<Self, TodayError> {
-        let mut ms_since_epoch = if let Some(ms) = context.elapsed_unix_time_ms {
-            ms as i64
+        let current_time_info = if let Some(t) = &context.current_time {
+            t
         } else {
             return Err(TodayError);
         };
-        if let Some(offset_secs) = context.timezone_offset_secs {
-            ms_since_epoch -= offset_secs * 1000;
-        } else {
-            return Err(TodayError);
-        }
+        let mut ms_since_epoch = current_time_info.elapsed_unix_time_ms as i64;
+        ms_since_epoch -= current_time_info.timezone_offset_secs * 1000;
         let mut days = ms_since_epoch / 86_400_000; // no leap seconds
         let mut year = Year::new(1970);
         while days >= year.number_of_days().into() {

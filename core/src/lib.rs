@@ -100,12 +100,17 @@ impl FendResult {
     }
 }
 
+#[derive(Clone)]
+struct CurrentTimeInfo {
+    elapsed_unix_time_ms: u64,
+    timezone_offset_secs: i64,
+}
+
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
 #[derive(Clone)]
 pub struct Context {
-    elapsed_unix_time_ms: Option<u64>,
-    timezone_offset_secs: Option<i64>,
+    current_time: Option<CurrentTimeInfo>,
 }
 
 impl Default for Context {
@@ -119,22 +124,22 @@ impl Context {
     /// only be done once if possible.
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            elapsed_unix_time_ms: None,
-            timezone_offset_secs: None,
-        }
+        Self { current_time: None }
     }
 
-    /// Override the current time. This must be the number of elapsed milliseconds
+    /// Set the current time. This API will likely change in the future!
+    ///
+    /// The first argument (`ms_since_1970`) must be the number of elapsed milliseconds
     /// since January 1, 1970 at midnight UTC, ignoring leap seconds in the same way
     /// as unix time.
-    pub fn set_current_unix_time_ms(&mut self, ms_since_1970: u64) {
-        self.elapsed_unix_time_ms = Some(ms_since_1970);
-    }
-
-    /// Override the current time zone offset to UTC, in seconds.
-    pub fn set_timezone_offset(&mut self, tz_offset_secs: i64) {
-        self.timezone_offset_secs = Some(tz_offset_secs);
+    ///
+    /// The second argument (`tz_offset_secs`) is the current time zone
+    /// offset to UTC, in seconds.
+    pub fn set_current_time_v1(&mut self, ms_since_1970: u64, tz_offset_secs: i64) {
+        self.current_time = Some(CurrentTimeInfo {
+            elapsed_unix_time_ms: ms_since_1970,
+            timezone_offset_secs: tz_offset_secs,
+        });
     }
 }
 
