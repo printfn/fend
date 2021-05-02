@@ -49,7 +49,7 @@ impl Complex {
 
     pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if self.imag != 0.into() {
-            return Err("Factorial is not supported for complex numbers"
+            return Err("factorial is not supported for complex numbers"
                 .to_string()
                 .into());
         }
@@ -66,7 +66,7 @@ impl Complex {
     ) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err(
-                "Exponentiation is currently unsupported for complex numbers"
+                "exponentiation is currently unsupported for complex numbers"
                     .to_string()
                     .into(),
             );
@@ -214,7 +214,7 @@ impl Complex {
         int: &I,
     ) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.imag != 0.into() || n.imag != 0.into() {
-            return Err("Roots are currently unsupported for complex numbers"
+            return Err("roots are currently unsupported for complex numbers"
                 .to_string()
                 .into());
         }
@@ -232,7 +232,7 @@ impl Complex {
         if self.imag.is_zero() {
             Ok(self.real)
         } else {
-            Err("Expected a real number".to_string().into())
+            Err("expected a real number".to_string().into())
         }
     }
 

@@ -95,12 +95,12 @@ impl fmt::Display for ConvertToUsizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::OutOfRange(value_out_of_range_error) => write!(f, "{}", value_out_of_range_error),
-            Self::NegativeNumber => write!(f, "Negative numbers are not allowed"),
-            Self::Fraction => write!(f, "Cannot convert fraction to integer"),
-            Self::InvalidRealNumber => write!(f, "Number cannot be converted to an integer"),
-            Self::ComplexNumber => write!(f, "Cannot convert complex number to integer"),
-            Self::NumberWithUnit => write!(f, "Cannot convert number with unit to integer"),
-            Self::InexactNumber => write!(f, "Cannot convert inexact number to integer"),
+            Self::NegativeNumber => write!(f, "negative numbers are not allowed"),
+            Self::Fraction => write!(f, "cannot convert fraction to integer"),
+            Self::InvalidRealNumber => write!(f, "number cannot be converted to an integer"),
+            Self::ComplexNumber => write!(f, "cannot convert complex number to integer"),
+            Self::NumberWithUnit => write!(f, "cannot convert number with unit to integer"),
+            Self::InexactNumber => write!(f, "cannot convert inexact number to integer"),
         }
     }
 }
@@ -116,8 +116,8 @@ pub(crate) enum IntegerPowerError {
 impl fmt::Display for IntegerPowerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            Self::ExponentTooLarge => write!(f, "Exponent too large"),
-            Self::ZeroToThePowerOfZero => write!(f, "Zero to the power of zero is undefined"),
+            Self::ExponentTooLarge => write!(f, "exponent too large"),
+            Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
         }
     }
 }
@@ -127,7 +127,7 @@ impl crate::error::Error for IntegerPowerError {}
 pub(crate) struct DivideByZero {}
 impl fmt::Display for DivideByZero {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "Division by zero")
+        write!(f, "division by zero")
     }
 }
 impl crate::error::Error for DivideByZero {}

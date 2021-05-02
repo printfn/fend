@@ -74,7 +74,7 @@ impl BuiltInFunction {
             Self::Asinh => Value::BuiltInFunction(Self::Sinh),
             Self::Acosh => Value::BuiltInFunction(Self::Cosh),
             Self::Atanh => Value::BuiltInFunction(Self::Tanh),
-            _ => return Err(format!("Unable to invert function {}", self)),
+            _ => return Err(format!("unable to invert function {}", self)),
         })
     }
 
@@ -128,7 +128,7 @@ impl<'a> Value<'a> {
     pub(crate) fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
         match self {
             Self::Num(bigrat) => Ok(bigrat),
-            _ => Err("Expected a number".to_string().into()),
+            _ => Err("expected a number".to_string().into()),
         }
     }
 
@@ -142,7 +142,7 @@ impl<'a> Value<'a> {
             Self::Num(n) => Self::Num(eval_fn(n)?),
             Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
             Self::BuiltInFunction(f) => f.wrap_with_expr(lazy_fn, scope),
-            _ => return Err("Expected a number".to_string().into()),
+            _ => return Err("expected a number".to_string().into()),
         })
     }
 
@@ -168,7 +168,7 @@ impl<'a> Value<'a> {
             (Self::Num(a), Self::Fn(param, expr, scope)) => {
                 Self::Fn(param, Box::new(lazy_fn_rhs(a)(expr)), scope)
             }
-            _ => return Err("Expected a number".to_string().into()),
+            _ => return Err("expected a number".to_string().into()),
         })
     }
 
@@ -197,7 +197,7 @@ impl<'a> Value<'a> {
                         .try_as_usize(int)
                         .map_err(IntErr::into_string)?;
                     if num == 0 {
-                        return Err("Cannot format a number with zero significant figures."
+                        return Err("cannot format a number with zero significant figures."
                             .to_string()
                             .into());
                     }
@@ -269,7 +269,7 @@ impl<'a> Value<'a> {
                     .try_as_usize(int)
                     .map_err(IntErr::into_string)?
                     .try_into()
-                    .map_err(|_| "Unable to convert number to a valid base".to_string())?;
+                    .map_err(|_| "unable to convert number to a valid base".to_string())?;
                 return Ok(Self::Base(
                     Base::from_plain_base(n).map_err(|e| e.to_string())?,
                 ));
@@ -388,9 +388,9 @@ impl<'a> Value<'a> {
                         return Ok(*v);
                     }
                 }
-                Err("Could not find key in object")
+                Err("could not find key in object")
             }
-            _ => Err("Expected an object"),
+            _ => Err("expected an object"),
         }
     }
 
@@ -403,9 +403,9 @@ impl<'a> Value<'a> {
             Self::Num(_) => Ok(Value::Num(Number::from(0))),
             Self::BuiltInFunction(f) => Ok(f
                 .differentiate()
-                .ok_or(format!("Cannot differentiate built-in function {}", f))?),
+                .ok_or(format!("cannot differentiate built-in function {}", f))?),
             _ => Err(format!(
-                "Cannot differentiate {}",
+                "cannot differentiate {}",
                 self.format_to_plain_string(0, int)?
             )
             .into()),

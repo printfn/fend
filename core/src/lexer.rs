@@ -54,40 +54,40 @@ pub(crate) enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            Self::ExpectedACharacter => write!(f, "Expected a character"),
-            Self::ExpectedADigit(ch) => write!(f, "Expected a digit, found '{}'", ch),
-            Self::ExpectedChar(ex, fnd) => write!(f, "Expected '{}', found '{}'", ex, fnd),
+            Self::ExpectedACharacter => write!(f, "expected a character"),
+            Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
+            Self::ExpectedChar(ex, fnd) => write!(f, "expected '{}', found '{}'", ex, fnd),
             Self::ExpectedDigitSeparator(ch) => {
-                write!(f, "Expected a digit separator, found {}", ch)
+                write!(f, "expected a digit separator, found {}", ch)
             }
-            Self::DigitSeparatorsNotAllowed => write!(f, "Digit separators are not allowed"),
+            Self::DigitSeparatorsNotAllowed => write!(f, "digit separators are not allowed"),
             Self::DigitSeparatorsOnlyBetweenDigits => {
-                write!(f, "Digit separators can only occur between digits")
+                write!(f, "digit separators can only occur between digits")
             }
             Self::BaseOutOfRange(e) => write!(f, "{}", e),
             Self::InvalidBasePrefix(e) => write!(f, "{}", e),
             Self::InvalidCharAtBeginningOfIdent(ch) => {
                 write!(f, "'{}' is not valid at the beginning of an identifier", ch)
             }
-            Self::UnexpectedChar(ch) => write!(f, "Unexpected character '{}'", ch),
+            Self::UnexpectedChar(ch) => write!(f, "unexpected character '{}'", ch),
             Self::NumberParse(s) => write!(f, "{}", s),
-            Self::UnterminatedStringLiteral => write!(f, "Unterminated string literal"),
+            Self::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
             Self::UnknownBackslashEscapeSequence(ch) => {
-                write!(f, "Unknown escape sequence: \\{}", ch)
+                write!(f, "unknown escape sequence: \\{}", ch)
             }
             Self::BackslashXOutOfRange => {
-                write!(f, "Expected an escape sequence between \\x00 and \\x7f")
+                write!(f, "expected an escape sequence between \\x00 and \\x7f")
             }
             Self::ExpectedALetterOrCode => {
                 write!(
                     f,
-                    "Expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
+                    "expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
                 )
             }
             Self::InvalidUnicodeEscapeSequence => {
                 write!(
                     f,
-                    "Invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
+                    "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
                 )
             }
         }
@@ -357,7 +357,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     }
 
     if !allow_zero && res.is_zero() {
-        return Err("Invalid number: 0".to_string().into());
+        return Err("invalid number: 0".to_string().into());
     }
 
     // parse optional exponent, but only for base 10 and below

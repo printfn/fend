@@ -133,7 +133,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
                     context,
                     int,
                 )?,
-                _ => return Err("Invalid operands for subtraction".to_string().into()),
+                _ => return Err("invalid operands for subtraction".to_string().into()),
             }
         }
         Expr::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
@@ -165,7 +165,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => {
-                        return Err("Inverses of lambda functions are not currently supported"
+                        return Err("inverses of lambda functions are not currently supported"
                             .to_string()
                             .into())
                     }
@@ -222,7 +222,7 @@ fn evaluate_add<'a, I: Interrupt>(
             Box::new(Expr::Add(Box::new(Expr::Num(a)), expr)),
             scope,
         ),
-        _ => return Err("Expected a number".to_string().into()),
+        _ => return Err("expected a number".to_string().into()),
     })
 }
 
@@ -242,7 +242,7 @@ fn evaluate_as<'a, I: Interrupt>(
                         crate::date::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
                     ))
                 } else {
-                    Err("Expected a string".to_string().into())
+                    Err("expected a string".to_string().into())
                 };
             }
             "string" => {
@@ -259,16 +259,16 @@ fn evaluate_as<'a, I: Interrupt>(
                         .as_ref()
                         .chars()
                         .next()
-                        .ok_or_else(|| "String cannot be empty".to_string())?;
+                        .ok_or_else(|| "string cannot be empty".to_string())?;
                     if s.len() > ch.len_utf8() {
-                        return Err("String cannot be longer than one codepoint"
+                        return Err("string cannot be longer than one codepoint"
                             .to_string()
                             .into());
                     }
                     let value = Value::Num(Number::from(u64::from(ch as u32)).with_base(Base::HEX));
                     return Ok(value);
                 }
-                return Err("Expected a string".to_string().into());
+                return Err("expected a string".to_string().into());
             }
             _ => (),
         }
@@ -286,14 +286,14 @@ fn evaluate_as<'a, I: Interrupt>(
         ),
         Value::Dp => {
             return Err(
-                "You need to specify what number of decimal places to use, e.g. '10 dp'"
+                "you need to specify what number of decimal places to use, e.g. '10 dp'"
                     .to_string()
                     .into(),
             );
         }
         Value::Sf => {
             return Err(
-                "You need to specify what number of significant figures to use, e.g. '10 sf'"
+                "you need to specify what number of significant figures to use, e.g. '10 sf'"
                     .to_string()
                     .into(),
             );
@@ -304,16 +304,16 @@ fn evaluate_as<'a, I: Interrupt>(
                 .with_base(base),
         ),
         Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
-            return Err("Unable to convert value to a function".to_string().into());
+            return Err("unable to convert value to a function".to_string().into());
         }
         Value::Object(_) => {
-            return Err("Cannot convert value to object".to_string().into());
+            return Err("cannot convert value to object".to_string().into());
         }
         Value::String(_) => {
-            return Err("Cannot convert value to string".to_string().into());
+            return Err("cannot convert value to string".to_string().into());
         }
         Value::Date(_) => {
-            return Err("Cannot convert value to date".to_string().into());
+            return Err("cannot convert value to date".to_string().into());
         }
     })
 }

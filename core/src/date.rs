@@ -22,7 +22,7 @@ pub(crate) struct TodayError;
 
 impl fmt::Display for TodayError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Unable to get the current date")
+        write!(f, "unable to get the current date")
     }
 }
 

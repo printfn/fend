@@ -109,7 +109,7 @@ fn pi_to_fraction() {
         .starts_with("approx."));
 }
 
-const DIVISION_BY_ZERO_ERROR: &str = "Division by zero";
+const DIVISION_BY_ZERO_ERROR: &str = "division by zero";
 #[test]
 fn one_over_zero() {
     expect_error("1/0", Some(DIVISION_BY_ZERO_ERROR));
@@ -4404,7 +4404,7 @@ fn two_km_sq_to_hectares() {
 
 #[test]
 fn kg_to_unitless() {
-    expect_error("kg to unitless", Some("Units are incompatible"));
+    expect_error("kg to unitless", Some("units are incompatible"));
 }
 
 #[test]
@@ -4672,12 +4672,12 @@ fn one_plus_one() {
 
 #[test]
 fn unterminated_raw_empty_string() {
-    expect_error("#\"", Some("Unterminated string literal"));
+    expect_error("#\"", Some("unterminated string literal"));
 }
 
 #[test]
 fn unterminated_raw_string() {
-    expect_error("#\"hello", Some("Unterminated string literal"));
+    expect_error("#\"hello", Some("unterminated string literal"));
 }
 
 #[test]
@@ -4717,12 +4717,12 @@ fn cis_4() {
 
 #[test]
 fn a_prime() {
-    expect_error("a'", Some("Unknown identifier 'a''"));
+    expect_error("a'", Some("unknown identifier 'a''"));
 }
 
 #[test]
 fn a_double_prime() {
-    expect_error("a\"", Some("Unknown identifier 'a\"'"));
+    expect_error("a\"", Some("unknown identifier 'a\"'"));
 }
 
 #[test]
@@ -4737,12 +4737,12 @@ fn empty_string() {
 
 #[test]
 fn unterminated_empty_string() {
-    expect_error("\"", Some("Unterminated string literal"));
+    expect_error("\"", Some("unterminated string literal"));
 }
 
 #[test]
 fn unterminated_string() {
-    expect_error("\"hello", Some("Unterminated string literal"));
+    expect_error("\"hello", Some("unterminated string literal"));
 }
 
 #[test]
@@ -4757,7 +4757,7 @@ fn backslash_in_string_literal() {
 
 #[test]
 fn add_string_to_number() {
-    expect_error("\"hi\" + 2", Some("Expected a number"));
+    expect_error("\"hi\" + 2", Some("expected a number"));
 }
 
 #[test]
@@ -4819,7 +4819,7 @@ fn escape_sequence_tilde() {
 fn escape_sequence_first_char_out_of_range() {
     expect_error(
         r#""\x9e""#,
-        Some("Expected an escape sequence between \\x00 and \\x7f"),
+        Some("expected an escape sequence between \\x00 and \\x7f"),
     );
 }
 
@@ -4827,7 +4827,7 @@ fn escape_sequence_first_char_out_of_range() {
 fn escape_sequence_second_char_out_of_range() {
     expect_error(
         r#""\x7g""#,
-        Some("Expected an escape sequence between \\x00 and \\x7f"),
+        Some("expected an escape sequence between \\x00 and \\x7f"),
     );
 }
 
@@ -4863,7 +4863,7 @@ fn single_quote_string() {
 
 #[test]
 fn single_quote_string_unterminated() {
-    expect_error(r#"'hi\"\'"#, Some("Unterminated string literal"));
+    expect_error(r#"'hi\"\'"#, Some("unterminated string literal"));
 }
 
 #[test]
@@ -5010,7 +5010,7 @@ fn unicode_escape_7e() {
 fn unicode_escape_696969() {
     expect_error(
         "'\\u{696969}'",
-        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+        Some("invalid Unicode escape sequence, expected e.g. \\u{7e}"),
     );
 }
 
@@ -5023,7 +5023,7 @@ fn unicode_escape_69() {
 fn unicode_escape_69x() {
     expect_error(
         "'\\u{69x}'",
-        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+        Some("invalid Unicode escape sequence, expected e.g. \\u{7e}"),
     );
 }
 
@@ -5031,7 +5031,7 @@ fn unicode_escape_69x() {
 fn unicode_escape_empty() {
     expect_error(
         "'\\u{}'",
-        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+        Some("invalid Unicode escape sequence, expected e.g. \\u{7e}"),
     );
 }
 

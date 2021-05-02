@@ -6,7 +6,7 @@ pub(crate) struct ParseDateError<'a>(&'a str);
 
 impl fmt::Display for ParseDateError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to convert '{}' to a date", self.0)
+        write!(f, "failed to convert '{}' to a date", self.0)
     }
 }
 

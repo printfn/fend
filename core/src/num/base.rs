@@ -23,7 +23,7 @@ impl fmt::Display for InvalidBasePrefixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(
             f,
-            "Unable to parse a valid base prefix, expected 0b, 0o, 0d or 0x"
+            "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
         )
     }
 }
@@ -36,8 +36,8 @@ pub(crate) enum OutOfRangeError {
 impl fmt::Display for OutOfRangeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            Self::BaseTooSmall => write!(f, "Base must be at least 2"),
-            Self::BaseTooLarge => write!(f, "Base cannot be larger than 36"),
+            Self::BaseTooSmall => write!(f, "base must be at least 2"),
+            Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
         }
     }
 }

@@ -5,7 +5,7 @@ pub(crate) struct Year(i32);
 
 impl Year {
     pub(crate) fn new(year: i32) -> Self {
-        assert!(year != 0, "Year 0 is invalid");
+        assert!(year != 0, "year 0 is invalid");
         Self(year)
     }
 

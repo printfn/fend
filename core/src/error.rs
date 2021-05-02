@@ -21,7 +21,7 @@ impl<E, I: Interrupt> IntErr<E, I> {
     pub(crate) fn unwrap(self) -> IntErr<Never, I> {
         match self {
             Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
-            Self::Error(_) => panic!("Unwrap"),
+            Self::Error(_) => panic!("unwrap"),
         }
     }
 

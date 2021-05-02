@@ -20,26 +20,26 @@ pub(crate) enum ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            Self::ExpectedAToken => write!(f, "Expected a token"),
-            Self::ExpectedToken(fnd, ex) => write!(f, "Found '{}' while expecting '{}'", fnd, ex),
+            Self::ExpectedAToken => write!(f, "expected a token"),
+            Self::ExpectedToken(fnd, ex) => write!(f, "found '{}' while expecting '{}'", fnd, ex),
             Self::FoundInvalidTokenWhileExpecting(sym) => {
-                write!(f, "Found an invalid token while expecting '{}'", sym)
+                write!(f, "found an invalid token while expecting '{}'", sym)
             }
-            Self::ExpectedANumber => write!(f, "Expected a number"),
+            Self::ExpectedANumber => write!(f, "expected a number"),
             Self::ExpectedIdentifier | Self::ExpectedIdentifierAsArgument => {
-                write!(f, "Expected an identifier")
+                write!(f, "expected an identifier")
             }
             Self::UnexpectedSymbol(s) => {
-                write!(f, "Expected a value, instead found '{}'", s)
+                write!(f, "expected a value, instead found '{}'", s)
             }
             // TODO improve this message or remove this error type
-            Self::InvalidApplyOperands => write!(f, "Error"),
-            Self::UnexpectedInput => write!(f, "Unexpected input found"),
+            Self::InvalidApplyOperands => write!(f, "error"),
+            Self::UnexpectedInput => write!(f, "unexpected input found"),
             Self::ExpectedDotInLambda(_) => {
-                write!(f, "Missing '.' in lambda (expected e.g. \\x.x)")
+                write!(f, "missing '.' in lambda (expected e.g. \\x.x)")
             }
-            Self::InvalidMixedFraction => write!(f, "Invalid mixed fraction"),
-            Self::UnexpectedWhitespace => write!(f, "Unexpected whitespace"),
+            Self::InvalidMixedFraction => write!(f, "invalid mixed fraction"),
+            Self::UnexpectedWhitespace => write!(f, "unexpected whitespace"),
         }
     }
 }

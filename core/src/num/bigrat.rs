@@ -692,7 +692,7 @@ impl BigRat {
                 Ok((sign, Exact::new(trailing_digits, true))) // the recurring decimal is exact
             }
             Err(NextDigitErr::Terminated) => {
-                panic!("Decimal number terminated unexpectedly");
+                panic!("decimal number terminated unexpectedly");
             }
             Err(NextDigitErr::Interrupt(i)) => Err(i),
         }
@@ -840,7 +840,7 @@ impl BigRat {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
-            return Err("Roots of negative numbers are not supported"
+            return Err("roots of negative numbers are not supported"
                 .to_string()
                 .into());
         }
@@ -914,11 +914,13 @@ impl BigRat {
         int: &I,
     ) -> Result<Exact<Self>, IntErr<String, I>> {
         if self.num != 0.into() && self.sign == Sign::Negative {
-            return Err("Can't compute roots of negative numbers".to_string().into());
+            return Err("cannot compute roots of negative numbers"
+                .to_string()
+                .into());
         }
         let n = n.clone().simplify(int)?;
         if n.den != 1.into() || n.sign == Sign::Negative {
-            return Err("Can't compute non-integer or negative roots"
+            return Err("cannot compute non-integer or negative roots"
                 .to_string()
                 .into());
         }

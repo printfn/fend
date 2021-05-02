@@ -168,7 +168,7 @@ impl BigUint {
         while b >= 1.into() {
             let r = a
                 .rem(&b, int)
-                .map_err(|e| e.expect("Unexpected division by zero"))?;
+                .map_err(|e| e.expect("unexpected division by zero"))?;
             a = b;
             b = r;
         }
@@ -424,7 +424,7 @@ impl BigUint {
         }
         match self.cmp(other) {
             Ordering::Equal => return Self::from(0),
-            Ordering::Less => unreachable!("Number would be less than 0"),
+            Ordering::Less => unreachable!("number would be less than 0"),
             Ordering::Greater => (),
         };
         if other.is_zero() {
@@ -595,7 +595,7 @@ impl Format for BigUint {
                 while divisor
                     < u128::MAX
                         .checked_div(base_as_u128)
-                        .expect("Base appears to be 0")
+                        .expect("base appears to be 0")
                 {
                     divisor *= base_as_u128;
                     rounds += 1;
@@ -606,7 +606,7 @@ impl Format for BigUint {
                     test_int(int)?;
                     let divmod_res = num
                         .divmod(&divisor, int)
-                        .map_err(|e| e.expect("Division by zero is not allowed"))?;
+                        .map_err(|e| e.expect("division by zero is not allowed"))?;
                     let mut digit_group_value =
                         u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
                     for _ in 0..rounds {

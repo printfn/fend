@@ -81,7 +81,7 @@ impl<'a> Value<'a> {
 
     pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !self.is_unitless() {
-            return Err("Factorial is only supported for unitless numbers"
+            return Err("factorial is only supported for unitless numbers"
                 .to_string()
                 .into());
         }
@@ -128,7 +128,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if rhs.value != 1.into() {
-            return Err("Right-hand side of unit conversion has a numerical value"
+            return Err("right-hand side of unit conversion has a numerical value"
                 .to_string()
                 .into());
         }
@@ -195,7 +195,7 @@ impl<'a> Value<'a> {
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
         if !rhs.is_unitless() {
-            return Err("Only unitless exponents are currently supported"
+            return Err("only unitless exponents are currently supported"
                 .to_string()
                 .into());
         }
@@ -285,7 +285,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if require_unitless && !self.is_unitless() {
-            return Err("Expected a unitless number".to_string().into());
+            return Err("expected a unitless number".to_string().into());
         }
         let exact = f(self.value, int)?;
         Ok(Self {
@@ -304,7 +304,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         if require_unitless && !self.is_unitless() {
-            return Err("Expected a unitless number".to_string().into());
+            return Err("expected a unitless number".to_string().into());
         }
         Ok(Self {
             value: f(self.value, int)?,
@@ -804,7 +804,7 @@ impl<'a> Unit<'a> {
                 scale_2: scale_b.mul(&adj_b, int)?,
             })
         } else {
-            Err("Units are incompatible".to_string().into())
+            Err("units are incompatible".to_string().into())
         }
     }
 

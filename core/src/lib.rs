@@ -173,7 +173,7 @@ pub fn evaluate_with_interrupt(
     let result = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
         // TODO: handle different interrupt values
-        Err(error::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
+        Err(error::IntErr::Interrupt(_)) => return Err("interrupted".to_string()),
         Err(error::IntErr::Error(e)) => return Err(e),
     };
     let mut plain_result = String::new();
@@ -198,7 +198,7 @@ pub fn get_version() -> String {
 
 /// Deprecated: use `get_version()` instead.
 #[must_use]
-#[deprecated = "Use `get_version()` instead"]
+#[deprecated = "use `get_version()` instead"]
 pub fn get_extended_version() -> String {
     get_version()
 }

@@ -22,7 +22,7 @@ impl<'a> fmt::Display for GetIdentError<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::EvalError(s) => write!(f, "{}", s),
-            Self::IdentifierNotFound(s) => write!(f, "Unknown identifier '{}'", s),
+            Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
         }
     }
 }
