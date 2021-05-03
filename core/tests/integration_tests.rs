@@ -5076,6 +5076,17 @@ fn today() {
 }
 
 #[test]
+#[ignore]
+fn today_with_tz() {
+    let mut context = Context::new();
+    context.set_current_time_v1(1619943083155, 43200);
+    assert_eq!(
+        evaluate("today", &mut context).unwrap().get_main_result(),
+        "Sunday, 2 May 2021"
+    );
+}
+
+#[test]
 fn acre_foot_to_m_3() {
     test_eval("acre foot to m^3", "1233.48183754752 m^3");
 }

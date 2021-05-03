@@ -38,6 +38,11 @@ fn eval_and_print_res(
     int: &impl fend_core::Interrupt,
     config: &config::Config,
 ) -> EvalResult {
+    /*
+    let ms_since_1970 = chrono::Utc::now().timestamp_millis();
+    let tz_offset_secs = chrono::Local::now().offset().local_minus_utc();
+    context.set_current_time_v1(convert::TryInto::try_into(ms_since_1970).unwrap(), tz_offset_secs.into());
+    */
     match fend_core::evaluate_with_interrupt(line, context, int) {
         Ok(res) => {
             let result: Vec<_> = res.get_main_result_spans().collect();
