@@ -5,7 +5,7 @@ use std::{convert, error, fmt};
 pub(crate) struct ParseDateError<'a>(&'a str);
 
 impl fmt::Display for ParseDateError<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "failed to convert '{}' to a date", self.0)
     }
 }
@@ -66,7 +66,7 @@ fn parse_yyyymmdd(s: &str) -> Result<(Date, &str), ()> {
     Ok((Date { year, month, day }, s))
 }
 
-pub(crate) fn parse_date(s: &str) -> Result<Date, ParseDateError> {
+pub(crate) fn parse_date(s: &str) -> Result<Date, ParseDateError<'_>> {
     let trimmed = s.trim();
     if let Ok((date, remaining)) = parse_yyyymmdd(trimmed) {
         if remaining.is_empty() {

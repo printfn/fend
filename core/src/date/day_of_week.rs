@@ -12,7 +12,7 @@ pub(crate) enum DayOfWeek {
 }
 
 impl fmt::Debug for DayOfWeek {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             Self::Sunday => "Sunday",
             Self::Monday => "Monday",
@@ -27,7 +27,7 @@ impl fmt::Debug for DayOfWeek {
 }
 
 impl fmt::Display for DayOfWeek {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }

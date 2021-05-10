@@ -60,7 +60,7 @@ impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
 }
 
 impl<E: fmt::Debug, I: Interrupt> fmt::Debug for IntErr<E, I> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::Interrupt(i) => write!(f, "{:?}", i)?,
             Self::Error(e) => write!(f, "{:?}", e)?,

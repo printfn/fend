@@ -73,7 +73,7 @@ impl<'a> Expr<'a> {
 }
 
 /// returns true if rhs is '-1' or '(-1)'
-fn should_compute_inverse(rhs: &Expr) -> bool {
+fn should_compute_inverse(rhs: &Expr<'_>) -> bool {
     if let Expr::UnaryMinus(inner) = &*rhs {
         if let Expr::Num(n) = &**inner {
             if n.is_unitless_one() {

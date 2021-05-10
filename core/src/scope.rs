@@ -19,7 +19,7 @@ pub(crate) enum GetIdentError<'a> {
 }
 
 impl<'a> fmt::Display for GetIdentError<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::EvalError(s) => write!(f, "{}", s),
             Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),

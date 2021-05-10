@@ -13,7 +13,7 @@ pub(crate) struct Complex {
 }
 
 impl fmt::Debug for Complex {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.real)?;
         if !self.imag.is_definitely_zero() {
             write!(f, " + {:?}i", self.imag)?;
@@ -476,7 +476,7 @@ pub(crate) struct Formatted {
 }
 
 impl fmt::Display for Formatted {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.use_parentheses {
             write!(f, "(")?;
         }

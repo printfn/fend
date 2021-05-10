@@ -47,7 +47,7 @@ pub(crate) struct BigRat {
 }
 
 impl fmt::Debug for BigRat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.sign == Sign::Negative {
             write!(f, "-")?;
         }
@@ -1170,7 +1170,7 @@ pub(crate) struct FormattedBigRat {
 }
 
 impl fmt::Display for FormattedBigRat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         if self.sign == Sign::Negative {
             write!(f, "-")?;
         }

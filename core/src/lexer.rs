@@ -52,7 +52,7 @@ pub(crate) enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::ExpectedACharacter => write!(f, "expected a character"),
             Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
@@ -114,7 +114,7 @@ impl<I: Interrupt> From<Error> for IntErr<String, I> {
 }
 
 impl fmt::Display for Symbol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         let s = match self {
             Self::OpenParens => "(",
             Self::CloseParens => ")",
@@ -253,7 +253,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
 
 fn parse_recurring_digits<'a, I: Interrupt>(
     input: &'a str,
-    number: &mut Number,
+    number: &mut Number<'_>,
     num_nonrec_digits: usize,
     base: Base,
     int: &I,
@@ -405,7 +405,7 @@ fn parse_basic_number<'a, I: Interrupt>(
                 if negative_exponent {
                     exp = -exp;
                 }
-                let base_as_number: Number = base_as_u64.into();
+                let base_as_number: Number<'_> = base_as_u64.into();
                 res = res.mul(base_as_number.pow(exp, int)?, int)?;
                 input = remaining2;
             }
@@ -452,7 +452,7 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     }
 }
 
-fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
+fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token<'_>, &str), Error> {
     let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
         return Err(Error::InvalidCharAtBeginningOfIdent(first_char));
@@ -539,7 +539,7 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
     }))
 }
 
-fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices) -> Result<char, Error> {
+fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices<'_>) -> Result<char, Error> {
     if chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?.1 != '{' {
         return Err(Error::InvalidUnicodeEscapeSequence);
     }
@@ -570,7 +570,7 @@ fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices) -> Result<char, 
     }
 }
 
-fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), Error> {
+fn parse_string_literal(input: &str, terminator: char) -> Result<(Token<'_>, &str), Error> {
     let (_, input) = input.split_at(1);
     let mut chars_iter = input.char_indices();
     let mut literal_length = None;
@@ -648,7 +648,7 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
 }
 
 // parses a unit beginning with ' or "
-fn parse_quote_unit(input: &str) -> (Token, &str) {
+fn parse_quote_unit(input: &str) -> (Token<'_>, &str) {
     let mut split_idx = 1;
     if let Some(ch) = input.split_at(1).1.chars().next() {
         if ch.is_alphabetic() {

@@ -14,7 +14,7 @@ impl<'a> Ident<'a> {
 }
 
 impl fmt::Display for Ident<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for ch in self.0.chars() {
             if ch == '_' {
                 write!(f, " ")?;

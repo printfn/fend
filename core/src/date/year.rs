@@ -63,7 +63,7 @@ impl convert::TryFrom<i32> for Year {
 }
 
 impl fmt::Debug for Year {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.value() < 0 {
             write!(f, "{} BC", -self.0)
         } else {
@@ -73,7 +73,7 @@ impl fmt::Debug for Year {
 }
 
 impl fmt::Display for Year {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.value() < 0 {
             write!(f, "{} BC", -self.0)
         } else {

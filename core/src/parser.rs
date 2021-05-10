@@ -18,7 +18,7 @@ pub(crate) enum ParseError {
     UnexpectedWhitespace,
 }
 impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::ExpectedAToken => write!(f, "expected a token"),
             Self::ExpectedToken(fnd, ex) => write!(f, "found '{}' while expecting '{}'", fnd, ex),

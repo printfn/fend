@@ -15,7 +15,7 @@ pub(crate) struct Real {
 }
 
 impl fmt::Debug for Real {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.pattern {
             Pattern::Simple(x) => write!(f, "{:?}", x),
             Pattern::Pi(x) => {
@@ -479,7 +479,7 @@ pub(crate) struct Formatted {
 }
 
 impl fmt::Display for Formatted {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.num)
     }
 }

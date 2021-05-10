@@ -29,7 +29,7 @@ impl Default for FormattingStyle {
 }
 
 impl fmt::Display for FormattingStyle {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::ImproperFraction => write!(f, "fraction"),
             Self::MixedFraction => write!(f, "mixed_fraction"),
@@ -43,7 +43,7 @@ impl fmt::Display for FormattingStyle {
 }
 
 impl fmt::Debug for FormattingStyle {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::ImproperFraction => write!(f, "improper fraction"),
             Self::MixedFraction => write!(f, "mixed fraction"),

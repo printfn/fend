@@ -113,7 +113,7 @@ impl BuiltInFunction {
 }
 
 impl fmt::Display for BuiltInFunction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
 }
@@ -414,7 +414,7 @@ impl<'a> Value<'a> {
 }
 
 impl<'a> fmt::Debug for Value<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Num(n) => write!(f, "{:?}", n),
             Self::BuiltInFunction(name) => write!(f, "built-in function: {}", name.as_str()),

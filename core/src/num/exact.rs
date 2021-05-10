@@ -10,7 +10,7 @@ pub(crate) struct Exact<T: fmt::Debug> {
 }
 
 impl<T: fmt::Debug> fmt::Debug for Exact<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.exact {
             write!(f, "exactly ")?;
         } else {

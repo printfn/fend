@@ -21,7 +21,7 @@ pub(crate) struct Date {
 pub(crate) struct TodayError;
 
 impl fmt::Display for TodayError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unable to get the current date")
     }
 }
@@ -133,13 +133,13 @@ impl Date {
         }
     }
 
-    pub(crate) fn parse(s: &str) -> Result<Self, parser::ParseDateError> {
+    pub(crate) fn parse(s: &str) -> Result<Self, parser::ParseDateError<'_>> {
         parser::parse_date(s)
     }
 }
 
 impl fmt::Debug for Date {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}, {} {} {}",
@@ -152,7 +152,7 @@ impl fmt::Debug for Date {
 }
 
 impl fmt::Display for Date {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}, {} {} {}",

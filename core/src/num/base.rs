@@ -20,7 +20,7 @@ enum BaseEnum {
 pub(crate) struct InvalidBasePrefixError {}
 
 impl fmt::Display for InvalidBasePrefixError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         write!(
             f,
             "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
@@ -34,7 +34,7 @@ pub(crate) enum OutOfRangeError {
 }
 
 impl fmt::Display for OutOfRangeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
@@ -83,7 +83,7 @@ impl Base {
         Ok(Self(BaseEnum::Custom(base)))
     }
 
-    pub(crate) fn write_prefix(self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    pub(crate) fn write_prefix(self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self.0 {
             BaseEnum::Binary => write!(f, "0b")?,
             BaseEnum::Octal => write!(f, "0o")?,
@@ -148,7 +148,7 @@ impl Default for Base {
 }
 
 impl fmt::Debug for Base {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0 {
             BaseEnum::Binary => write!(f, "binary"),
             BaseEnum::Octal => write!(f, "octal"),

@@ -5,6 +5,7 @@
 #![forbid(clippy::needless_borrow)]
 #![forbid(clippy::cognitive_complexity)]
 #![forbid(unreachable_pub)]
+#![forbid(elided_lifetimes_in_paths)]
 #![doc(html_root_url = "https://docs.rs/fend-core/0.1.14")]
 
 mod ast;

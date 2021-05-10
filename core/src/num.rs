@@ -45,7 +45,7 @@ impl Range<i32> {
 }
 
 impl<T: fmt::Display> fmt::Display for Range<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match &self.start {
             RangeBound::None => write!(f, "(-\u{221e}, ")?, // infinity symbol
             RangeBound::Open(v) => write!(f, "({}, ", v)?,
@@ -64,7 +64,7 @@ impl<T: fmt::Display> fmt::Display for Range<T> {
 pub(crate) struct ValueOutOfRange<T: fmt::Display, U: fmt::Display>(T, Range<U>);
 
 impl<T: fmt::Display, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         write!(f, "{} must lie in the interval {}", self.0, self.1)
     }
 }
@@ -74,7 +74,7 @@ impl<T: fmt::Display, U: fmt::Display> crate::error::Error for ValueOutOfRange<T
 pub(crate) struct MustBeAnInteger<T>(T);
 
 impl<T: fmt::Display> fmt::Display for MustBeAnInteger<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         write!(f, "{} is not an integer", self.0)
     }
 }
@@ -92,7 +92,7 @@ pub(crate) enum ConvertToUsizeError {
 }
 
 impl fmt::Display for ConvertToUsizeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::OutOfRange(value_out_of_range_error) => write!(f, "{}", value_out_of_range_error),
             Self::NegativeNumber => write!(f, "negative numbers are not allowed"),
@@ -114,7 +114,7 @@ pub(crate) enum IntegerPowerError {
 }
 
 impl fmt::Display for IntegerPowerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::ExponentTooLarge => write!(f, "exponent too large"),
             Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
@@ -126,7 +126,7 @@ impl crate::error::Error for IntegerPowerError {}
 #[derive(Debug)]
 pub(crate) struct DivideByZero {}
 impl fmt::Display for DivideByZero {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         write!(f, "division by zero")
     }
 }

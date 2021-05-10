@@ -516,7 +516,7 @@ impl<'a> Value<'a> {
     }
 
     fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
-        let mut res_components: Vec<UnitExponent> = vec![];
+        let mut res_components: Vec<UnitExponent<'_>> = vec![];
         let mut res_exact = self.exact;
         let mut res_value = self.value;
 
@@ -627,7 +627,7 @@ impl From<u64> for Value<'_> {
 }
 
 impl<'a> fmt::Debug for Value<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.exact {
             write!(f, "approx. ")?;
         }
@@ -667,7 +667,7 @@ impl FormattedValue {
 }
 
 impl fmt::Display for FormattedValue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.exact {
             write!(f, "approx. ")?;
         }
@@ -699,7 +699,7 @@ impl<'a> Unit<'a> {
         &self,
         int: &I,
     ) -> Result<HashmapScale<'a>, IntErr<String, I>> {
-        let mut hashmap = HashMap::<BaseUnit, Complex>::new();
+        let mut hashmap = HashMap::<BaseUnit<'_>, Complex>::new();
         let mut scale = Exact::new(Complex::from(1), true);
         let mut exact = true;
         for named_unit_exp in &self.components {
@@ -814,7 +814,7 @@ impl<'a> Unit<'a> {
 }
 
 impl<'a> fmt::Debug for Unit<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.components.is_empty() {
             write!(f, "(unitless)")?;
         }
@@ -851,7 +851,7 @@ impl<'a> UnitExponent<'a> {
         plural: bool,
         invert_exp: bool,
         int: &I,
-    ) -> Result<Exact<FormattedExponent>, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedExponent<'_>>, IntErr<Never, I>> {
         let name = if plural {
             self.unit.plural_name
         } else {
@@ -881,7 +881,7 @@ impl<'a> UnitExponent<'a> {
 }
 
 impl<'a> fmt::Debug for UnitExponent<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.unit)?;
         if !self.exponent.is_definitely_one() {
             write!(f, "^{:?}", self.exponent)?;
@@ -898,7 +898,7 @@ struct FormattedExponent<'a> {
 }
 
 impl<'a> fmt::Display for FormattedExponent<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.prefix, self.name.replace('_', " "))?;
         if let Some(number) = &self.number {
             write!(f, "^{}", number)?;
@@ -964,7 +964,7 @@ impl<'a> NamedUnit<'a> {
 }
 
 impl<'a> fmt::Debug for NamedUnit<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.prefix.is_empty() {
             write!(f, "{}", self.singular_name)?;
         } else {
@@ -999,7 +999,7 @@ struct BaseUnit<'a> {
 }
 
 impl<'a> fmt::Debug for BaseUnit<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
     }
 }
@@ -1015,7 +1015,7 @@ mod tests {
     use super::*;
     use crate::interrupt::Never;
 
-    fn to_string(n: &Value) -> String {
+    fn to_string(n: &Value<'_>) -> String {
         let int = &crate::interrupt::Never::default();
         // TODO: this unwrap call should be unnecessary
         n.format(int).unwrap().to_string()

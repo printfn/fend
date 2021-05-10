@@ -511,7 +511,7 @@ impl From<u64> for BigUint {
 }
 
 impl fmt::Debug for BigUint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Small(n) => write!(f, "{}", n)?,
             Large(value) => {
@@ -659,7 +659,7 @@ pub(crate) struct FormattedBigUint {
 }
 
 impl fmt::Display for FormattedBigUint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         if let Some(base) = self.base {
             base.write_prefix(f)?;
         }
