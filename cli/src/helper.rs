@@ -46,7 +46,7 @@ impl Helper {
 impl rustyline::hint::Hinter for Helper {
     type Hint = Hint;
 
-    fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context) -> Option<Hint> {
+    fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context<'_>) -> Option<Hint> {
         let int = HintInterrupt::default();
         Some(
             match fend_core::evaluate_with_interrupt(line, &mut self.ctx.clone(), &int) {

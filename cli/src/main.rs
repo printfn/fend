@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
+#![deny(elided_lifetimes_in_paths)]
 
 use fend_core::{Context, SpanKind};
 use std::{env, mem, path, process};
@@ -15,7 +16,7 @@ enum EvalResult {
     NoInput,
 }
 
-fn print_spans(spans: Vec<fend_core::SpanRef>) -> String {
+fn print_spans(spans: Vec<fend_core::SpanRef<'_>>) -> String {
     let mut strings = vec![];
     let default_style = ansi_term::Style::default();
     for span in spans {
