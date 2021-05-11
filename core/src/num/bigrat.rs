@@ -992,7 +992,7 @@ impl BigRat {
     }
 
     pub(crate) fn is_definitely_one(&self) -> bool {
-        self.num.is_definitely_one() && self.den.is_definitely_one()
+        self.sign == Sign::Positive && self.num.is_definitely_one() && self.den.is_definitely_one()
     }
 }
 enum NextDigitErr<I: Interrupt> {
