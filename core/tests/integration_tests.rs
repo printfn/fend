@@ -4357,7 +4357,7 @@ fn kwh_conversion() {
 fn debug_pi_n() {
     test_eval_simple(
         "!debug pi N",
-        "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto)",
+        "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto, simplifiable)",
     );
 }
 
@@ -5167,4 +5167,17 @@ fn asin_minus_1() {
 #[test]
 fn custom_unit_test() {
     test_eval_simple("15*3*50/1000 'cases'", "2.25 cases");
+}
+
+#[test]
+fn simplify_ms_per_year() {
+    test_eval("ms/year", "approx. 0");
+}
+
+#[test]
+fn not_simplify_explicit_to() {
+    test_eval_simple(
+        "1.550519768*10^-8 to ms/year",
+        "489.296375410515266426112 ms / year",
+    );
 }

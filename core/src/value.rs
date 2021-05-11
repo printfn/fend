@@ -1,4 +1,4 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::{ast::Expr, ident::Ident};
@@ -283,7 +283,7 @@ impl<'a> Value<'a> {
         &self,
         indent: usize,
         int: &I,
-    ) -> Result<String, IntErr<Never, I>> {
+    ) -> Result<String, IntErr<String, I>> {
         let mut spans = vec![];
         self.format(indent, &mut spans, int)?;
         let mut res = String::new();
@@ -298,10 +298,10 @@ impl<'a> Value<'a> {
         indent: usize,
         spans: &mut Vec<Span>,
         int: &I,
-    ) -> Result<(), IntErr<Never, I>> {
+    ) -> Result<(), IntErr<String, I>> {
         match self {
             Self::Num(n) => {
-                n.format(int)?.spans(spans);
+                n.clone().simplify(int)?.format(int)?.spans(spans);
             }
             Self::BuiltInFunction(name) => {
                 spans.push(Span {

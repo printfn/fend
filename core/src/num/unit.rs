@@ -19,6 +19,7 @@ pub(crate) struct Value<'a> {
     exact: bool,
     base: Base,
     format: FormattingStyle,
+    simplifiable: bool,
 }
 
 impl<'a> Value<'a> {
@@ -65,6 +66,7 @@ impl<'a> Value<'a> {
             unit: self.unit,
             exact: self.exact,
             base: self.base,
+            simplifiable: self.simplifiable,
             format,
         }
     }
@@ -75,6 +77,7 @@ impl<'a> Value<'a> {
             unit: self.unit,
             exact: self.exact,
             format: self.format,
+            simplifiable: self.simplifiable,
             base,
         }
     }
@@ -91,6 +94,7 @@ impl<'a> Value<'a> {
             exact: self.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -103,6 +107,7 @@ impl<'a> Value<'a> {
             exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
+            simplifiable: true,
         }
     }
 
@@ -119,6 +124,7 @@ impl<'a> Value<'a> {
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -144,6 +150,7 @@ impl<'a> Value<'a> {
             exact: self.exact && rhs.exact && new_value.exact,
             base: self.base,
             format: self.format,
+            simplifiable: false,
         })
     }
 
@@ -160,6 +167,7 @@ impl<'a> Value<'a> {
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -174,14 +182,14 @@ impl<'a> Value<'a> {
         let value = Exact::new(self.value, self.exact)
             .div(Exact::new(rhs.value, rhs.exact), int)
             .map_err(IntErr::into_string)?;
-        Self {
+        Ok(Self {
             value: value.value,
             unit: Unit { components },
             exact: value.exact && self.exact && rhs.exact,
             base: self.base,
             format: self.format,
-        }
-        .simplify(int)
+            simplifiable: self.simplifiable,
+        })
     }
 
     fn is_unitless(&self) -> bool {
@@ -220,6 +228,7 @@ impl<'a> Value<'a> {
             exact: self.exact && rhs.exact && exact_res && value.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -230,6 +239,7 @@ impl<'a> Value<'a> {
             exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
+            simplifiable: true,
         }
     }
 
@@ -240,6 +250,7 @@ impl<'a> Value<'a> {
             exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
+            simplifiable: true,
         }
     }
 
@@ -251,6 +262,7 @@ impl<'a> Value<'a> {
             exact: self.exact && value.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -261,6 +273,7 @@ impl<'a> Value<'a> {
             exact: false,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         }
     }
 
@@ -271,6 +284,7 @@ impl<'a> Value<'a> {
             exact: true,
             base,
             format: FormattingStyle::default(),
+            simplifiable: true,
         }
     }
 
@@ -294,6 +308,7 @@ impl<'a> Value<'a> {
             exact: self.exact && exact.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -312,6 +327,7 @@ impl<'a> Value<'a> {
             exact: false,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 
@@ -333,6 +349,7 @@ impl<'a> Value<'a> {
             exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
+            simplifiable: true,
         }
     }
 
@@ -505,17 +522,21 @@ impl<'a> Value<'a> {
         let components = [self.unit.components, rhs.unit.components].concat();
         let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
-        Self {
+        Ok(Self {
             value: value.value,
             unit: Unit { components },
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
             format: self.format,
-        }
-        .simplify(int)
+            simplifiable: self.simplifiable,
+        })
     }
 
-    fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+        if !self.simplifiable {
+            return Ok(self);
+        }
+
         let mut res_components: Vec<UnitExponent<'_>> = vec![];
         let mut res_exact = self.exact;
         let mut res_value = self.value;
@@ -597,6 +618,7 @@ impl<'a> Value<'a> {
             exact: res_exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 }
@@ -610,6 +632,7 @@ impl Neg for Value<'_> {
             exact: self.exact,
             base: self.base,
             format: self.format,
+            simplifiable: self.simplifiable,
         }
     }
 }
@@ -622,6 +645,7 @@ impl From<u64> for Value<'_> {
             exact: true,
             base: Base::default(),
             format: FormattingStyle::default(),
+            simplifiable: true,
         }
     }
 }
@@ -631,10 +655,11 @@ impl<'a> fmt::Debug for Value<'a> {
         if !self.exact {
             write!(f, "approx. ")?;
         }
+        let simplifiable = if self.simplifiable { "" } else { "not " };
         write!(
             f,
-            "{:?} {:?} ({:?}, {:?})",
-            self.value, self.unit, self.base, self.format
+            "{:?} {:?} ({:?}, {:?}, {}simplifiable)",
+            self.value, self.unit, self.base, self.format, simplifiable
         )?;
         Ok(())
     }
