@@ -29,7 +29,8 @@ impl Base {
 #[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Color {
-    foreground: Base,
+    #[serde(default)]
+    foreground: Option<Base>,
     #[serde(default)]
     underline: bool,
     #[serde(default)]
@@ -39,15 +40,17 @@ pub struct Color {
 impl Color {
     fn new(foreground: Base) -> Self {
         Self {
-            foreground,
+            foreground: Some(foreground),
             underline: false,
             bold: false,
         }
     }
 
     fn to_ansi(&self) -> ansi_term::Style {
-        let mut style = ansi_term::Style::new();
-        style = style.fg(self.foreground.as_ansi());
+        let mut style = ansi_term::Style::default();
+        if let Some(foreground) = self.foreground {
+            style = style.fg(foreground.as_ansi());
+        }
         if self.underline {
             style = style.underline();
         }
@@ -62,6 +65,7 @@ impl Color {
 #[serde(deny_unknown_fields, default)]
 pub struct OutputColours {
     string: Color,
+    identifier: Color,
 }
 
 impl Default for OutputColours {
@@ -71,6 +75,7 @@ impl Default for OutputColours {
                 bold: true,
                 ..Color::new(Base::Yellow)
             },
+            identifier: Color::new(Base::White),
         }
     }
 }
@@ -81,7 +86,7 @@ impl OutputColours {
 
         match kind {
             SpanKind::String => self.string.to_ansi(),
-            SpanKind::Ident => ansi_term::Colour::White.normal(),
+            SpanKind::Ident => self.identifier.to_ansi(),
             SpanKind::Keyword | SpanKind::BuiltInFunction => ansi_term::Colour::Red.bold(),
             _ => ansi_term::Style::default(),
         }

@@ -3,3 +3,4 @@ enable-colors = false
 
 [colors]
 string = { foreground = 'yellow', bold = true }
+identifier = { foreground = 'white' }
