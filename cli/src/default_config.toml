@@ -1,2 +1,5 @@
 prompt = '> '
 enable-colors = false
+
+[colors]
+string = { foreground = 'yellow', bold = true }
