@@ -2,7 +2,7 @@ use crate::color;
 use std::{env, fs, io, path};
 
 #[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct Config {
     pub prompt: String,
     #[serde(alias = "color")]
