@@ -5066,6 +5066,7 @@ fn unicode_escape_aaa_uppercase() {
 }
 
 #[test]
+#[ignore]
 fn today() {
     let mut context = Context::new();
     context.set_current_time_v1(1617517099000, 0);
