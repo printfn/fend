@@ -3,9 +3,10 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use fend_core::{Context, SpanKind};
+use fend_core::Context;
 use std::{env, mem, path, process};
 
+mod color;
 mod config;
 mod helper;
 mod interrupt;
@@ -16,19 +17,11 @@ enum EvalResult {
     NoInput,
 }
 
-fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, _config: &config::Config) -> String {
+fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> String {
     let mut strings = vec![];
-    let default_style = ansi_term::Style::default();
     for span in spans {
-        let s = match span.kind() {
-            SpanKind::String => ansi_term::Colour::Yellow.bold().paint(span.string()),
-            SpanKind::Ident => ansi_term::Colour::White.paint(span.string()),
-            SpanKind::Keyword | SpanKind::BuiltInFunction => {
-                ansi_term::Colour::Red.bold().paint(span.string())
-            }
-            _ => default_style.paint(span.string()),
-        };
-        strings.push(s);
+        let style = config.colors.get_color(span.kind());
+        strings.push(style.paint(span.string()));
     }
     ansi_term::ANSIStrings(strings.as_slice()).to_string()
 }

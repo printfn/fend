@@ -1,10 +1,13 @@
+use crate::color;
 use std::{env, fs, io, path};
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct Config {
     pub prompt: String,
     #[serde(rename = "color")]
     pub enable_colors: bool,
+    #[serde(default)]
+    pub colors: color::OutputColours,
 }
 
 impl Default for Config {
@@ -12,9 +15,12 @@ impl Default for Config {
         Self {
             prompt: "> ".to_string(),
             enable_colors: false,
+            colors: color::OutputColours::default(),
         }
     }
 }
+
+static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
 fn get_config_dir() -> Option<path::PathBuf> {
     // first try $FEND_CONFIG_DIR
@@ -56,11 +62,8 @@ fn read_config_file() -> Config {
         config
     } else {
         eprintln!("Invalid config file in {:?}", &path);
-        let default_config = Config::default();
-        if let Ok(s) = toml::ser::to_string_pretty(&default_config) {
-            eprintln!("Using default config file:\n{}", s);
-        }
-        default_config
+        eprintln!("Using default config file:\n{}", DEFAULT_CONFIG_FILE);
+        Config::default()
     }
 }
 
@@ -83,4 +86,15 @@ pub fn get_history_file_path() -> Option<path::PathBuf> {
     }
     config_dir.push(".history");
     Some(config_dir)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config_file() {
+        let deserialized: Config = toml::de::from_str(DEFAULT_CONFIG_FILE).unwrap();
+        assert_eq!(deserialized, Default::default());
+    }
 }
