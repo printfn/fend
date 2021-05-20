@@ -4,3 +4,6 @@ enable-colors = false
 [colors]
 string = { foreground = 'yellow', bold = true }
 identifier = { foreground = 'white' }
+keyword = { foreground = 'red', bold = true }
+built-in-function = { foreground = 'red', bold = true }
+other = {}

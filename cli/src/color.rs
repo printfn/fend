@@ -26,14 +26,11 @@ impl Base {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Default, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields, default)]
 pub struct Color {
-    #[serde(default)]
     foreground: Option<Base>,
-    #[serde(default)]
     underline: bool,
-    #[serde(default)]
     bold: bool,
 }
 
@@ -43,6 +40,13 @@ impl Color {
             foreground: Some(foreground),
             underline: false,
             bold: false,
+        }
+    }
+
+    fn bold(foreground: Base) -> Self {
+        Self {
+            bold: true,
+            ..Self::new(foreground)
         }
     }
 
@@ -62,20 +66,23 @@ impl Color {
 }
 
 #[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields, default)]
+#[serde(deny_unknown_fields, default, rename_all = "kebab-case")]
 pub struct OutputColours {
     string: Color,
     identifier: Color,
+    keyword: Color,
+    built_in_function: Color,
+    other: Color,
 }
 
 impl Default for OutputColours {
     fn default() -> Self {
         Self {
-            string: Color {
-                bold: true,
-                ..Color::new(Base::Yellow)
-            },
+            string: Color::bold(Base::Yellow),
             identifier: Color::new(Base::White),
+            keyword: Color::bold(Base::Red),
+            built_in_function: Color::bold(Base::Red),
+            other: Color::default(),
         }
     }
 }
@@ -87,8 +94,9 @@ impl OutputColours {
         match kind {
             SpanKind::String => self.string.to_ansi(),
             SpanKind::Ident => self.identifier.to_ansi(),
-            SpanKind::Keyword | SpanKind::BuiltInFunction => ansi_term::Colour::Red.bold(),
-            _ => ansi_term::Style::default(),
+            SpanKind::Keyword => self.keyword.to_ansi(),
+            SpanKind::BuiltInFunction => self.built_in_function.to_ansi(),
+            _ => self.other.to_ansi(),
         }
     }
 }
