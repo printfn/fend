@@ -68,20 +68,24 @@ impl Color {
 #[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields, default, rename_all = "kebab-case")]
 pub struct OutputColours {
+    number: Color,
     string: Color,
     identifier: Color,
     keyword: Color,
     built_in_function: Color,
+    date: Color,
     other: Color,
 }
 
 impl Default for OutputColours {
     fn default() -> Self {
         Self {
+            number: Color::default(),
             string: Color::bold(Base::Yellow),
             identifier: Color::new(Base::White),
             keyword: Color::bold(Base::Red),
             built_in_function: Color::bold(Base::Red),
+            date: Color::default(),
             other: Color::default(),
         }
     }
@@ -92,10 +96,12 @@ impl OutputColours {
         use fend_core::SpanKind;
 
         match kind {
+            SpanKind::Number => self.number.to_ansi(),
             SpanKind::String => self.string.to_ansi(),
             SpanKind::Ident => self.identifier.to_ansi(),
             SpanKind::Keyword => self.keyword.to_ansi(),
             SpanKind::BuiltInFunction => self.built_in_function.to_ansi(),
+            SpanKind::Date => self.date.to_ansi(),
             _ => self.other.to_ansi(),
         }
     }

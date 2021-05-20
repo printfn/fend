@@ -2,8 +2,10 @@ prompt = '> '
 enable-colors = false
 
 [colors]
+number = {}
 string = { foreground = 'yellow', bold = true }
 identifier = { foreground = 'white' }
 keyword = { foreground = 'red', bold = true }
 built-in-function = { foreground = 'red', bold = true }
+date = {}
 other = {}
