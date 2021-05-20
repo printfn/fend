@@ -128,6 +128,8 @@ impl Context {
         Self { current_time: None }
     }
 
+    /// This method currently has no effect!
+    ///
     /// Set the current time. This API will likely change in the future!
     ///
     /// The first argument (`ms_since_1970`) must be the number of elapsed milliseconds
@@ -136,11 +138,12 @@ impl Context {
     ///
     /// The second argument (`tz_offset_secs`) is the current time zone
     /// offset to UTC, in seconds.
-    pub fn set_current_time_v1(&mut self, ms_since_1970: u64, tz_offset_secs: i64) {
-        self.current_time = Some(CurrentTimeInfo {
-            elapsed_unix_time_ms: ms_since_1970,
-            timezone_offset_secs: tz_offset_secs,
-        });
+    pub fn set_current_time_v1(&mut self, _ms_since_1970: u64, _tz_offset_secs: i64) {
+        // self.current_time = Some(CurrentTimeInfo {
+        //     elapsed_unix_time_ms: ms_since_1970,
+        //     timezone_offset_secs: tz_offset_secs,
+        // });
+        self.current_time = None;
     }
 }
 
