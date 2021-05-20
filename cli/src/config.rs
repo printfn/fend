@@ -2,9 +2,10 @@ use crate::color;
 use std::{env, fs, io, path};
 
 #[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub prompt: String,
-    #[serde(rename = "color")]
+    #[serde(alias = "color")]
     pub enable_colors: bool,
     #[serde(default)]
     pub colors: color::OutputColours,

@@ -1,2 +1,2 @@
 prompt = '> '
-color = false
+enable-colors = false
