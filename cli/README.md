@@ -16,7 +16,7 @@ See the [manual](https://github.com/printfn/fend/wiki) for more information.
 
 ## [Web Interface](https://printfn.github.io/fend-website)
 
-fend is now available on the web at [printfn.github.io/fend-website](https://printfn.github.io/fend-website).
+fend is available on the web at [printfn.github.io/fend-website](https://printfn.github.io/fend-website).
 
 ## Installation
 
