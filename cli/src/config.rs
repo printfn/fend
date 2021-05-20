@@ -97,6 +97,6 @@ mod tests {
     #[test]
     fn test_default_config_file() {
         let deserialized: Config = toml::de::from_str(DEFAULT_CONFIG_FILE).unwrap();
-        assert_eq!(deserialized, Default::default());
+        assert_eq!(deserialized, Config::default());
     }
 }
