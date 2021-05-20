@@ -40,7 +40,6 @@ fend cli TOML version requirement for fend-core
 fend wasm TOML
 fend web initialisation"
 echo "Building and running tests..."
-touch core/src/lib.rs
 cargo clippy --workspace --all-targets --all-features
 cargo build
 cargo run -- version
