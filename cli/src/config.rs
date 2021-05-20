@@ -3,14 +3,15 @@ use std::{env, fs, io, path};
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     pub prompt: String,
-    pub color: bool,
+    #[serde(rename = "color")]
+    pub enable_colors: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             prompt: "> ".to_string(),
-            color: false,
+            enable_colors: false,
         }
     }
 }
@@ -66,10 +67,10 @@ fn read_config_file() -> Config {
 pub fn read(interactive: bool) -> Config {
     let mut config = read_config_file();
     if !interactive {
-        config.color = false;
+        config.enable_colors = false;
     }
     if env::var_os("NO_COLOR").is_some() {
-        config.color = false;
+        config.enable_colors = false;
     }
     config
 }

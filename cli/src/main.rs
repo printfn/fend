@@ -16,7 +16,7 @@ enum EvalResult {
     NoInput,
 }
 
-fn print_spans(spans: Vec<fend_core::SpanRef<'_>>) -> String {
+fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, _config: &config::Config) -> String {
     let mut strings = vec![];
     let default_style = ansi_term::Style::default();
     for span in spans {
@@ -50,8 +50,8 @@ fn eval_and_print_res(
             if result.is_empty() {
                 return EvalResult::NoInput;
             }
-            if config.color {
-                println!("{}", print_spans(result));
+            if config.enable_colors {
+                println!("{}", print_spans(result, config));
             } else {
                 println!("{}", res.get_main_result());
             }
@@ -83,7 +83,7 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn save_history(rl: &mut rustyline::Editor<helper::Helper>, path: &Option<path::PathBuf>) {
+fn save_history(rl: &mut rustyline::Editor<helper::Helper<'_>>, path: &Option<path::PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
@@ -93,7 +93,7 @@ fn save_history(rl: &mut rustyline::Editor<helper::Helper>, path: &Option<path::
 
 fn repl_loop(config: &config::Config) -> i32 {
     // `()` can be used when no completer is required
-    let mut rl = rustyline::Editor::<helper::Helper>::with_config(
+    let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
@@ -101,7 +101,7 @@ fn repl_loop(config: &config::Config) -> i32 {
             .build(),
     );
     let mut context = Context::new();
-    rl.set_helper(Some(helper::Helper::new(context.clone(), config.color)));
+    rl.set_helper(Some(helper::Helper::new(context.clone(), &config)));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {

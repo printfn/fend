@@ -1,3 +1,4 @@
+use crate::config;
 use std::time;
 
 pub struct HintInterrupt {
@@ -32,18 +33,18 @@ impl rustyline::hint::Hint for Hint {
     }
 }
 
-pub struct Helper {
+pub struct Helper<'a> {
     ctx: fend_core::Context,
-    enable_color: bool,
+    config: &'a config::Config,
 }
 
-impl Helper {
-    pub fn new(ctx: fend_core::Context, enable_color: bool) -> Self {
-        Self { ctx, enable_color }
+impl<'a> Helper<'a> {
+    pub fn new(ctx: fend_core::Context, config: &'a config::Config) -> Self {
+        Self { ctx, config }
     }
 }
 
-impl rustyline::hint::Hinter for Helper {
+impl rustyline::hint::Hinter for Helper<'_> {
     type Hint = Hint;
 
     fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context<'_>) -> Option<Hint> {
@@ -59,10 +60,13 @@ impl rustyline::hint::Hinter for Helper {
                     {
                         return None;
                     }
-                    if self.enable_color {
+                    if self.config.enable_colors {
                         Hint(format!(
                             "\n{}",
-                            crate::print_spans(result.get_main_result_spans().collect())
+                            crate::print_spans(
+                                result.get_main_result_spans().collect(),
+                                self.config
+                            )
                         ))
                     } else {
                         Hint(format!("\n{}", res))
@@ -74,9 +78,9 @@ impl rustyline::hint::Hinter for Helper {
     }
 }
 
-impl rustyline::highlight::Highlighter for Helper {}
+impl rustyline::highlight::Highlighter for Helper<'_> {}
 
-impl rustyline::validate::Validator for Helper {}
+impl rustyline::validate::Validator for Helper<'_> {}
 
 pub struct FendCandidate {}
 impl rustyline::completion::Candidate for FendCandidate {
@@ -88,8 +92,8 @@ impl rustyline::completion::Candidate for FendCandidate {
     }
 }
 
-impl rustyline::completion::Completer for Helper {
+impl rustyline::completion::Completer for Helper<'_> {
     type Candidate = FendCandidate;
 }
 
-impl rustyline::Helper for Helper {}
+impl rustyline::Helper for Helper<'_> {}
