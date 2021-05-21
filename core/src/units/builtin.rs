@@ -78,6 +78,9 @@ const STANDARD_PREFIXES: &[UnitTuple] = &[
     ("zepto", "", "lp@1e-21", ""),
     ("yocto", "", "lp@1e-24", ""),
     ("k", "", "=1000", ""),
+    ("M", "", "=1,000,000", ""),
+    ("G", "", "=1,000,000,000", ""),
+    ("T", "", "=1,000,000,000,000", ""),
 ];
 
 const NON_STANDARD_PREFIXES: &[UnitTuple] = &[
@@ -212,7 +215,7 @@ const CONSTANTS: &[UnitTuple] = &[
     ),
     ("N_A", "", "=avogadro", ""),
     (
-        "G",
+        "gravitational_constant",
         "",
         "=6.67430e-11 N m^2 / kg^2",
         "gravitational constant",
