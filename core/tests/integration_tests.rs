@@ -5182,3 +5182,8 @@ fn not_simplify_explicit_to() {
         "489.296375410515266426112 ms / year",
     );
 }
+
+#[test]
+fn unicode_operators() {
+    test_eval("5 − 2 ✕ 3 × 1 ÷ 1 ∕ 3", "3");
+}

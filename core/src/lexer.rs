@@ -495,21 +495,22 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
         ')' => Symbol::CloseParens,
         '+' => Symbol::Add,
         '!' => Symbol::Factorial,
-        '-' => {
+        '-' | '\u{2212}' => {
+            // unicode minus sign
             if test_next('>') {
                 Symbol::ArrowConversion
             } else {
                 Symbol::Sub
             }
         }
-        '*' => {
+        '*' | '\u{d7}' | '\u{2715}' => {
             if test_next('*') {
                 Symbol::Pow
             } else {
                 Symbol::Mul
             }
         }
-        '/' => Symbol::Div,
+        '/' | '\u{f7}' | '\u{2215}' => Symbol::Div, // unicode division symbol and slash
         '^' => Symbol::Pow,
         ':' => Symbol::Fn,
         '=' => {
