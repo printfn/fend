@@ -224,7 +224,7 @@ impl<'a> Value<'a> {
                 let n2 = n.clone();
                 other.handle_num(
                     |x| n.mul(x, int).map_err(IntErr::into_string),
-                    |x| Expr::Mul(Box::new(Expr::Num(*n2)), x),
+                    |x| Expr::Mul(Box::new(Expr::Literal(Value::Num(n2))), x),
                     scope,
                 )?
             }

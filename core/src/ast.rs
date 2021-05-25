@@ -10,7 +10,6 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub(crate) enum Expr<'a> {
     Literal(Value<'a>),
-    Num(Number<'a>),
     Ident(Ident<'a>),
     Parens(Box<Expr<'a>>),
     UnaryMinus(Box<Expr<'a>>),
@@ -41,7 +40,6 @@ impl<'a> Expr<'a> {
         Ok(match self {
             Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
             Self::Literal(v) => v.format_to_plain_string(0, int)?,
-            Self::Num(n) => n.format(int)?.to_string(),
             Self::Ident(ident) => ident.to_string(),
             Self::Parens(x) => format!("({})", x.format(int)?),
             Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
@@ -75,14 +73,14 @@ impl<'a> Expr<'a> {
 /// returns true if rhs is '-1' or '(-1)'
 fn should_compute_inverse(rhs: &Expr<'_>) -> bool {
     if let Expr::UnaryMinus(inner) = &*rhs {
-        if let Expr::Num(n) = &**inner {
+        if let Expr::Literal(Value::Num(n)) = &**inner {
             if n.is_unitless_one() {
                 return true;
             }
         }
     } else if let Expr::Parens(inner) = &*rhs {
         if let Expr::UnaryMinus(inner2) = &**inner {
-            if let Expr::Num(n) = &**inner2 {
+            if let Expr::Literal(Value::Num(n)) = &**inner2 {
                 if n.is_unitless_one() {
                     return true;
                 }
@@ -106,7 +104,6 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
     test_int(int)?;
     Ok(match expr {
         Expr::<'a>::Literal(v) => v,
-        Expr::<'a>::Num(n) => Value::Num(Box::new(n)),
         Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, context, int)?,
         Expr::<'a>::Parens(x) => eval!(*x)?,
         Expr::<'a>::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
@@ -139,8 +136,8 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.mul(b, int).map_err(IntErr::into_string),
-            |a| |f| Expr::Mul(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Mul(Box::new(Expr::Num(a)), f),
+            |a| |f| Expr::Mul(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
+            |a| |f| Expr::Mul(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
         )?,
         Expr::<'a>::Apply(a, b) | Expr::<'a>::ApplyMul(a, b) => {
@@ -155,8 +152,8 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.div(b, int).map_err(IntErr::into_string),
-            |a| |f| Expr::Div(f, Box::new(Expr::Num(a))),
-            |a| |f| Expr::Div(Box::new(Expr::Num(a)), f),
+            |a| |f| Expr::Div(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
+            |a| |f| Expr::Div(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
         )?,
         Expr::<'a>::Pow(a, b) => {
@@ -178,8 +175,8 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             lhs.handle_two_nums(
                 eval!(*b)?,
                 |a, b| a.pow(b, int),
-                |a| |f| Expr::Pow(f, Box::new(Expr::Num(a))),
-                |a| |f| Expr::Pow(Box::new(Expr::Num(a)), f),
+                |a| |f| Expr::Pow(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
+                |a| |f| Expr::Pow(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
                 scope,
             )?
         }
@@ -206,20 +203,22 @@ fn evaluate_add<'a, I: Interrupt>(
         (Value::String(a), Value::String(b)) => {
             Value::String(format!("{}{}", a.as_ref(), b.as_ref()).into())
         }
-        (Value::BuiltInFunction(f), Value::Num(a)) => {
-            f.wrap_with_expr(|f| Expr::Add(f, Box::new(Expr::Num(*a))), scope)
-        }
-        (Value::Num(a), Value::BuiltInFunction(f)) => {
-            f.wrap_with_expr(|f| Expr::Add(Box::new(Expr::Num(*a)), f), scope)
-        }
+        (Value::BuiltInFunction(f), Value::Num(a)) => f.wrap_with_expr(
+            |f| Expr::Add(f, Box::new(Expr::Literal(Value::Num(a)))),
+            scope,
+        ),
+        (Value::Num(a), Value::BuiltInFunction(f)) => f.wrap_with_expr(
+            |f| Expr::Add(Box::new(Expr::Literal(Value::Num(a))), f),
+            scope,
+        ),
         (Value::Fn(param, expr, scope), Value::Num(a)) => Value::Fn(
             param,
-            Box::new(Expr::Add(expr, Box::new(Expr::Num(*a)))),
+            Box::new(Expr::Add(expr, Box::new(Expr::Literal(Value::Num(a))))),
             scope,
         ),
         (Value::Num(a), Value::Fn(param, expr, scope)) => Value::Fn(
             param,
-            Box::new(Expr::Add(Box::new(Expr::Num(*a)), expr)),
+            Box::new(Expr::Add(Box::new(Expr::Literal(Value::Num(a))), expr)),
             scope,
         ),
         _ => return Err("expected a number".to_string().into()),

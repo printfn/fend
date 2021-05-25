@@ -80,7 +80,7 @@ fn parse_fixed_symbol<'a, 'b>(input: &'b [Token<'a>], symbol: Symbol) -> ParseRe
 
 fn parse_number<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     match parse_token(input, true)? {
-        (Token::Num(num), remaining) => Ok((Expr::Num(num), remaining)),
+        (Token::Num(num), remaining) => Ok((Expr::Literal(Value::Num(Box::new(num))), remaining)),
         _ => Err(ParseError::ExpectedANumber),
     }
 }
@@ -176,23 +176,25 @@ fn parse_apply_cont<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResu
     let (rhs, input) = parse_power(input, false)?;
     Ok((
         match (lhs, &rhs) {
-            (Expr::Num(_), Expr::Num(_))
-            | (Expr::UnaryMinus(_), Expr::Num(_))
-            | (Expr::ApplyMul(_, _), Expr::Num(_)) => {
+            (Expr::Literal(Value::Num(_)), Expr::Literal(Value::Num(_)))
+            | (Expr::UnaryMinus(_), Expr::Literal(Value::Num(_)))
+            | (Expr::ApplyMul(_, _), Expr::Literal(Value::Num(_))) => {
                 // this may later be parsed as a compound fraction, e.g. 1 2/3
                 // or as an addition, e.g. 6 feet 1 inch
                 return Err(ParseError::InvalidApplyOperands);
             }
-            (Expr::Num(_), Expr::Pow(a, _))
+            (Expr::Literal(Value::Num(_)), Expr::Pow(a, _))
             | (Expr::UnaryMinus(_), Expr::Pow(a, _))
             | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
-                if let Expr::Num(_) = **a {
+                if let Expr::Literal(Value::Num(_)) = **a {
                     return Err(ParseError::InvalidApplyOperands);
                 }
                 Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
             }
-            (_, Expr::Num(_)) => Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs)),
-            (Expr::Num(_), _) | (Expr::ApplyMul(_, _), _) => {
+            (_, Expr::Literal(Value::Num(_))) => {
+                Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs))
+            }
+            (Expr::Literal(Value::Num(_)), _) | (Expr::ApplyMul(_, _), _) => {
                 Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
             }
             _ => Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)),
@@ -203,18 +205,18 @@ fn parse_apply_cont<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResu
 
 fn parse_mixed_fraction<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResult<'a, 'b> {
     let (positive, lhs, other_factor) = match lhs {
-        Expr::Num(_) => (true, lhs, None),
+        Expr::Literal(Value::Num(_)) => (true, lhs, None),
         Expr::UnaryMinus(x) => {
-            if let Expr::Num(_) = &**x {
+            if let Expr::Literal(Value::Num(_)) = &**x {
                 (false, lhs, None)
             } else {
                 return Err(ParseError::InvalidMixedFraction);
             }
         }
         Expr::Mul(a, b) => match &**b {
-            Expr::Num(_) => (true, &**b, Some(&**a)),
+            Expr::Literal(Value::Num(_)) => (true, &**b, Some(&**a)),
             Expr::UnaryMinus(x) => {
-                if let Expr::Num(_) = &**x {
+                if let Expr::Literal(Value::Num(_)) = &**x {
                     (false, &**b, Some(&**a))
                 } else {
                     return Err(ParseError::InvalidMixedFraction);
@@ -225,13 +227,13 @@ fn parse_mixed_fraction<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> Parse
         _ => return Err(ParseError::InvalidMixedFraction),
     };
     let (rhs_top, input) = parse_power(input, false)?;
-    if let Expr::Num(_) = rhs_top {
+    if let Expr::Literal(Value::Num(_)) = rhs_top {
     } else {
         return Err(ParseError::InvalidMixedFraction);
     }
     let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
     let (rhs_bottom, input) = parse_power(input, false)?;
-    if let Expr::Num(_) = rhs_bottom {
+    if let Expr::Literal(Value::Num(_)) = rhs_bottom {
     } else {
         return Err(ParseError::InvalidMixedFraction);
     }
