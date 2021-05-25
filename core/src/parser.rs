@@ -1,5 +1,6 @@
 use crate::ast::Expr;
 use crate::lexer::{Symbol, Token};
+use crate::value::Value;
 use std::fmt;
 
 pub(crate) enum ParseError {
@@ -128,7 +129,7 @@ fn parse_parens_or_literal<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b
     match token {
         Token::Num(_) => parse_number(input),
         Token::Ident(_) => parse_ident(input),
-        Token::StringLiteral(s) => Ok((Expr::String(s), remaining)),
+        Token::StringLiteral(s) => Ok((Expr::Literal(Value::String(s)), remaining)),
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
         Token::Symbol(s) => Err(ParseError::UnexpectedSymbol(s)),
