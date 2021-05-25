@@ -7,7 +7,8 @@ use std::{borrow, fmt, sync::Arc};
 
 #[derive(Clone)]
 pub(crate) enum Value<'a> {
-    Num(Number<'a>),
+    Bool(bool),
+    Num(Box<Number<'a>>),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
     Dp,
@@ -42,6 +43,7 @@ pub(crate) enum BuiltInFunction {
     Base,
     Differentiate,
     Conjugate,
+    Not,
 }
 
 impl BuiltInFunction {
@@ -100,6 +102,7 @@ impl BuiltInFunction {
             Self::Base => "base",
             Self::Differentiate => "differentiate",
             Self::Conjugate => "conjugate",
+            Self::Not => "not",
         }
     }
 
@@ -127,8 +130,15 @@ pub(crate) enum ApplyMulHandling {
 impl<'a> Value<'a> {
     pub(crate) fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
         match self {
-            Self::Num(bigrat) => Ok(bigrat),
+            Self::Num(bigrat) => Ok(*bigrat),
             _ => Err("expected a number".to_string().into()),
+        }
+    }
+
+    pub(crate) fn expect_bool<I: Interrupt>(self) -> Result<bool, IntErr<String, I>> {
+        match self {
+            Self::Bool(b) => Ok(b),
+            _ => Err("expected a boolean".to_string().into()),
         }
     }
 
@@ -139,7 +149,7 @@ impl<'a> Value<'a> {
         scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
-            Self::Num(n) => Self::Num(eval_fn(n)?),
+            Self::Num(n) => Self::Num(Box::new(eval_fn(*n)?)),
             Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
             Self::BuiltInFunction(f) => f.wrap_with_expr(lazy_fn, scope),
             _ => return Err("expected a number".to_string().into()),
@@ -159,14 +169,14 @@ impl<'a> Value<'a> {
         scope: Option<Arc<Scope<'a>>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match (self, rhs) {
-            (Self::Num(a), Self::Num(b)) => Self::Num(eval_fn(a, b)?),
-            (Self::BuiltInFunction(f), Self::Num(a)) => f.wrap_with_expr(lazy_fn_lhs(a), scope),
-            (Self::Num(a), Self::BuiltInFunction(f)) => f.wrap_with_expr(lazy_fn_rhs(a), scope),
+            (Self::Num(a), Self::Num(b)) => Self::Num(Box::new(eval_fn(*a, *b)?)),
+            (Self::BuiltInFunction(f), Self::Num(a)) => f.wrap_with_expr(lazy_fn_lhs(*a), scope),
+            (Self::Num(a), Self::BuiltInFunction(f)) => f.wrap_with_expr(lazy_fn_rhs(*a), scope),
             (Self::Fn(param, expr, scope), Self::Num(a)) => {
-                Self::Fn(param, Box::new(lazy_fn_lhs(a)(expr)), scope)
+                Self::Fn(param, Box::new(lazy_fn_lhs(*a)(expr)), scope)
             }
             (Self::Num(a), Self::Fn(param, expr, scope)) => {
-                Self::Fn(param, Box::new(lazy_fn_rhs(a)(expr)), scope)
+                Self::Fn(param, Box::new(lazy_fn_rhs(*a)(expr)), scope)
             }
             _ => return Err("expected a number".to_string().into()),
         })
@@ -214,7 +224,7 @@ impl<'a> Value<'a> {
                 let n2 = n.clone();
                 other.handle_num(
                     |x| n.mul(x, int).map_err(IntErr::into_string),
-                    |x| Expr::Mul(Box::new(Expr::Num(n2)), x),
+                    |x| Expr::Mul(Box::new(Expr::Num(*n2)), x),
                     scope,
                 )?
             }
@@ -236,6 +246,7 @@ impl<'a> Value<'a> {
         })
     }
 
+    #[allow(clippy::cognitive_complexity)]
     fn apply_built_in_function<I: Interrupt>(
         func: BuiltInFunction,
         arg: Expr<'a>,
@@ -244,7 +255,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let arg = crate::ast::evaluate(arg, scope.clone(), context, int)?;
-        Ok(Self::Num(match func {
+        Ok(Self::Num(Box::new(match func {
             BuiltInFunction::Approximately => arg.expect_num()?.make_approximate(),
             BuiltInFunction::Abs => arg.expect_num()?.abs(int)?,
             BuiltInFunction::Sin => arg.expect_num()?.sin(scope, context, int)?,
@@ -276,7 +287,8 @@ impl<'a> Value<'a> {
             }
             BuiltInFunction::Differentiate => return arg.differentiate("x", int),
             BuiltInFunction::Conjugate => arg.expect_num()?.conjugate(),
-        }))
+            BuiltInFunction::Not => return Ok(Value::Bool(!arg.expect_bool()?)),
+        })))
     }
 
     pub(crate) fn format_to_plain_string<I: Interrupt>(
@@ -300,6 +312,10 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
         match self {
+            Self::Bool(b) => spans.push(Span {
+                string: format!("{}", b),
+                kind: SpanKind::Boolean,
+            }),
             Self::Num(n) => {
                 n.clone().simplify(int)?.format(int)?.spans(spans);
             }
@@ -400,7 +416,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         match self {
-            Self::Num(_) => Ok(Value::Num(Number::from(0))),
+            Self::Num(_) => Ok(Value::Num(Box::new(Number::from(0)))),
             Self::BuiltInFunction(f) => Ok(f
                 .differentiate()
                 .ok_or(format!("cannot differentiate built-in function {}", f))?),
@@ -416,6 +432,7 @@ impl<'a> Value<'a> {
 impl<'a> fmt::Debug for Value<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Bool(b) => write!(f, "{}", b),
             Self::Num(n) => write!(f, "{:?}", n),
             Self::BuiltInFunction(name) => write!(f, "built-in function: {}", name.as_str()),
             Self::Format(fmt) => write!(f, "format: {:?}", fmt),

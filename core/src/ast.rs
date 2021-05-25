@@ -105,7 +105,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
     }
     test_int(int)?;
     Ok(match expr {
-        Expr::<'a>::Num(n) => Value::Num(n),
+        Expr::<'a>::Num(n) => Value::Num(Box::new(n)),
         Expr::<'a>::String(s) => Value::String(s),
         Expr::<'a>::Ident(ident) => resolve_identifier(ident, scope, context, int)?,
         Expr::<'a>::Parens(x) => eval!(*x)?,
@@ -125,7 +125,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Sub(a, b) => {
             let a = eval!(*a)?;
             match a {
-                Value::Num(a) => Value::Num(a.sub(eval!(*b)?.expect_num()?, int)?),
+                Value::Num(a) => Value::Num(Box::new(a.sub(eval!(*b)?.expect_num()?, int)?)),
                 f @ Value::BuiltInFunction(_) | f @ Value::Fn(_, _, _) => f.apply(
                     Expr::<'a>::UnaryMinus(b),
                     ApplyMulHandling::OnlyApply,
@@ -202,24 +202,24 @@ fn evaluate_add<'a, I: Interrupt>(
     int: &I,
 ) -> Result<Value<'a>, IntErr<String, I>> {
     Ok(match (a, b) {
-        (Value::Num(a), Value::Num(b)) => Value::Num(a.add(b, int)?),
+        (Value::Num(a), Value::Num(b)) => Value::Num(Box::new(a.add(*b, int)?)),
         (Value::String(a), Value::String(b)) => {
             Value::String(format!("{}{}", a.as_ref(), b.as_ref()).into())
         }
         (Value::BuiltInFunction(f), Value::Num(a)) => {
-            f.wrap_with_expr(|f| Expr::Add(f, Box::new(Expr::Num(a))), scope)
+            f.wrap_with_expr(|f| Expr::Add(f, Box::new(Expr::Num(*a))), scope)
         }
         (Value::Num(a), Value::BuiltInFunction(f)) => {
-            f.wrap_with_expr(|f| Expr::Add(Box::new(Expr::Num(a)), f), scope)
+            f.wrap_with_expr(|f| Expr::Add(Box::new(Expr::Num(*a)), f), scope)
         }
         (Value::Fn(param, expr, scope), Value::Num(a)) => Value::Fn(
             param,
-            Box::new(Expr::Add(expr, Box::new(Expr::Num(a)))),
+            Box::new(Expr::Add(expr, Box::new(Expr::Num(*a)))),
             scope,
         ),
         (Value::Num(a), Value::Fn(param, expr, scope)) => Value::Fn(
             param,
-            Box::new(Expr::Add(Box::new(Expr::Num(a)), expr)),
+            Box::new(Expr::Add(Box::new(Expr::Num(*a)), expr)),
             scope,
         ),
         _ => return Err("expected a number".to_string().into()),
@@ -235,6 +235,10 @@ fn evaluate_as<'a, I: Interrupt>(
 ) -> Result<Value<'a>, IntErr<String, I>> {
     if let Expr::Ident(ident) = &b {
         match ident.as_str() {
+            "bool" | "boolean" => {
+                let num = evaluate(a, scope.clone(), context, int)?.expect_num()?;
+                return Ok(Value::Bool(!num.is_zero()));
+            }
             "date" => {
                 let a = evaluate(a, scope.clone(), context, int)?;
                 return if let Value::String(s) = a {
@@ -265,7 +269,9 @@ fn evaluate_as<'a, I: Interrupt>(
                             .to_string()
                             .into());
                     }
-                    let value = Value::Num(Number::from(u64::from(ch as u32)).with_base(Base::HEX));
+                    let value = Value::Num(Box::new(
+                        Number::from(u64::from(ch as u32)).with_base(Base::HEX),
+                    ));
                     return Ok(value);
                 }
                 return Err("expected a string".to_string().into());
@@ -274,16 +280,16 @@ fn evaluate_as<'a, I: Interrupt>(
         }
     }
     Ok(match evaluate(b, scope.clone(), context, int)? {
-        Value::Num(b) => Value::Num(
+        Value::Num(b) => Value::Num(Box::new(
             evaluate(a, scope, context, int)?
                 .expect_num()?
-                .convert_to(b, int)?,
-        ),
-        Value::Format(fmt) => Value::Num(
+                .convert_to(*b, int)?,
+        )),
+        Value::Format(fmt) => Value::Num(Box::new(
             evaluate(a, scope, context, int)?
                 .expect_num()?
                 .with_format(fmt),
-        ),
+        )),
         Value::Dp => {
             return Err(
                 "you need to specify what number of decimal places to use, e.g. '10 dp'"
@@ -298,11 +304,11 @@ fn evaluate_as<'a, I: Interrupt>(
                     .into(),
             );
         }
-        Value::Base(base) => Value::Num(
+        Value::Base(base) => Value::Num(Box::new(
             evaluate(a, scope, context, int)?
                 .expect_num()?
                 .with_base(base),
-        ),
+        )),
         Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
             return Err("unable to convert value to a function".to_string().into());
         }
@@ -314,6 +320,9 @@ fn evaluate_as<'a, I: Interrupt>(
         }
         Value::Date(_) => {
             return Err("cannot convert value to date".to_string().into());
+        }
+        Value::Bool(_) => {
+            return Err("cannot convert value to boolean value".to_string().into());
         }
     })
 }
@@ -340,10 +349,12 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         }
     }
     Ok(match ident.as_str() {
-        "pi" | "\u{3c0}" => Value::Num(Number::pi()),
-        "tau" | "\u{3c4}" => Value::Num(Number::pi().mul(2.into(), int)?),
+        "pi" | "\u{3c0}" => Value::Num(Box::new(Number::pi())),
+        "tau" | "\u{3c4}" => Value::Num(Box::new(Number::pi().mul(2.into(), int)?)),
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
-        "i" => Value::Num(Number::i()),
+        "i" => Value::Num(Box::new(Number::i())),
+        "true" => Value::Bool(true),
+        "false" => Value::Bool(false),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
         "conjugate" => Value::BuiltInFunction(BuiltInFunction::Conjugate),
@@ -364,6 +375,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
+        "not" => Value::BuiltInFunction(BuiltInFunction::Not),
         "exp" => evaluate_to_value("x: e^x", scope, context, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),

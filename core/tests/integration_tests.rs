@@ -5187,3 +5187,48 @@ fn not_simplify_explicit_to() {
 fn unicode_operators() {
     test_eval("5 − 2 ✕ 3 × 1 ÷ 1 ∕ 3", "3");
 }
+
+#[test]
+fn bool_true() {
+    test_eval("true", "true");
+}
+
+#[test]
+fn bool_false() {
+    test_eval("false", "false");
+}
+
+#[test]
+fn zero_to_bool() {
+    test_eval("0 to bool", "false");
+}
+
+#[test]
+fn zero_to_boolean() {
+    test_eval("0 to boolean", "false");
+}
+
+#[test]
+fn one_to_bool() {
+    test_eval("1 to bool", "true");
+}
+
+#[test]
+fn minus_one_to_bool() {
+    test_eval("-1 to bool", "true");
+}
+
+#[test]
+fn not_true() {
+    test_eval("not true", "false");
+}
+
+#[test]
+fn not_false() {
+    test_eval("not false", "true");
+}
+
+#[test]
+fn not_one() {
+    expect_error("not 1", None);
+}

@@ -50,7 +50,7 @@ fn expr_unit<I: Interrupt>(
     }
     if definition == "!" {
         return Ok(UnitDef {
-            value: Value::Num(Number::new_base_unit(singular, plural)),
+            value: Value::Num(Box::new(Number::new_base_unit(singular, plural))),
             prefix_rule: rule,
             singular,
             plural,
@@ -64,7 +64,7 @@ fn expr_unit<I: Interrupt>(
         num = Number::create_unit_value_from_value(&num, "", singular, plural, int)?;
     }
     Ok(UnitDef {
-        value: Value::Num(num),
+        value: Value::Num(Box::new(num)),
         prefix_rule: rule,
         singular,
         plural,
@@ -80,7 +80,7 @@ fn construct_prefixed_unit<I: Interrupt>(
     assert_eq!(a.singular, a.plural);
     let unit =
         Number::create_unit_value_from_value(&product, a.singular, b.singular, b.plural, int)?;
-    Ok(Value::Num(unit))
+    Ok(Value::Num(Box::new(unit)))
 }
 
 pub(crate) fn query_unit<'a, I: Interrupt>(
@@ -91,7 +91,7 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
         let ident = ident.split_at(1).1;
         let ident = ident.split_at(ident.len() - 1).0;
-        return Ok(Value::Num(Number::new_base_unit(ident, ident)));
+        return Ok(Value::Num(Box::new(Number::new_base_unit(ident, ident))));
     }
     query_unit_static(ident, context, int)
 }
