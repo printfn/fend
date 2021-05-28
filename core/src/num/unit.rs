@@ -460,61 +460,14 @@ impl<'a> Value<'a> {
             self.value
                 .format(self.exact, self.format, self.base, use_parentheses, int)?;
         let mut exact = formatted_value.exact;
-        let mut unit_string = String::new();
-        if !self.unit.components.is_empty() {
-            // Pluralisation:
-            // All units should be singular, except for the last unit
-            // that has a positive exponent, iff the number is not equal to 1
-            let mut positive_components = vec![];
-            let mut negative_components = vec![];
-            let mut first = true;
-            for unit_exponent in &self.unit.components {
-                if unit_exponent.exponent < 0.into() {
-                    negative_components.push(unit_exponent);
-                } else {
-                    positive_components.push(unit_exponent);
-                }
-            }
-            let invert_negative_component =
-                !positive_components.is_empty() && negative_components.len() == 1;
-            let mut merged_components = vec![];
-            let pluralised_idx = if positive_components.is_empty() {
-                usize::MAX
-            } else {
-                positive_components.len() - 1
-            };
-            for pos_comp in positive_components {
-                merged_components.push((pos_comp, false));
-            }
-            for neg_comp in negative_components {
-                merged_components.push((neg_comp, invert_negative_component));
-            }
-            let last_component_plural = self.value != 1.into();
-            for (i, (unit_exponent, invert)) in merged_components.into_iter().enumerate() {
-                if !first || unit_exponent.unit.print_with_space() {
-                    unit_string.push(' ');
-                }
-                first = false;
-                if invert {
-                    unit_string.push('/');
-                    unit_string.push(' ');
-                }
-                let plural = last_component_plural && i == pluralised_idx;
-                let exp_format = if self.format == FormattingStyle::Auto {
-                    FormattingStyle::Exact
-                } else {
-                    self.format
-                };
-                let formatted_exp =
-                    unit_exponent.format(self.base, exp_format, plural, invert, int)?;
-                unit_string.push_str(formatted_exp.value.to_string().as_str());
-                exact = exact && formatted_exp.exact;
-            }
-        }
+        let unit_string =
+            self.unit
+                .format("", self.value == 1.into(), self.base, self.format, int)?;
+        exact = exact && unit_string.exact;
         Ok(FormattedValue {
             number: formatted_value.value,
             exact,
-            unit_str: unit_string,
+            unit_str: unit_string.value,
         })
     }
 
@@ -835,6 +788,70 @@ impl<'a> Unit<'a> {
 
     const fn unitless() -> Self {
         Self { components: vec![] }
+    }
+
+    fn format<I: Interrupt>(
+        &self,
+        unitless: &str,
+        value_is_one: bool,
+        base: Base,
+        format: FormattingStyle,
+        int: &I,
+    ) -> Result<Exact<String>, IntErr<Never, I>> {
+        let mut unit_string = String::new();
+        if self.components.is_empty() {
+            unit_string.push_str(unitless);
+            return Ok(Exact::new(unit_string, true));
+        }
+        // Pluralisation:
+        // All units should be singular, except for the last unit
+        // that has a positive exponent, iff the number is not equal to 1
+        let mut exact = true;
+        let mut positive_components = vec![];
+        let mut negative_components = vec![];
+        let mut first = true;
+        for unit_exponent in &self.components {
+            if unit_exponent.exponent < 0.into() {
+                negative_components.push(unit_exponent);
+            } else {
+                positive_components.push(unit_exponent);
+            }
+        }
+        let invert_negative_component =
+            !positive_components.is_empty() && negative_components.len() == 1;
+        let mut merged_components = vec![];
+        let pluralised_idx = if positive_components.is_empty() {
+            usize::MAX
+        } else {
+            positive_components.len() - 1
+        };
+        for pos_comp in positive_components {
+            merged_components.push((pos_comp, false));
+        }
+        for neg_comp in negative_components {
+            merged_components.push((neg_comp, invert_negative_component));
+        }
+        let last_component_plural = !value_is_one;
+        for (i, (unit_exponent, invert)) in merged_components.into_iter().enumerate() {
+            if !first || unit_exponent.unit.print_with_space() {
+                unit_string.push(' ');
+            }
+            first = false;
+            if invert {
+                unit_string.push('/');
+                unit_string.push(' ');
+            }
+            let plural = last_component_plural && i == pluralised_idx;
+            let exp_format = if format == FormattingStyle::Auto {
+                FormattingStyle::Exact
+            } else {
+                format
+            };
+            let formatted_exp = unit_exponent.format(base, exp_format, plural, invert, int)?;
+            unit_string.push_str(formatted_exp.value.to_string().as_str());
+            exact = exact && formatted_exp.exact;
+        }
+        Ok(Exact::new(unit_string, true))
     }
 }
 
