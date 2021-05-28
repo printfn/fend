@@ -103,6 +103,10 @@ const BINARY_PREFIXES: &[UnitTuple] = &[
     ("exbi", "", "lp@2^60", ""),
     ("zebi", "", "lp@2^70", ""),
     ("yobi", "", "lp@2^80", ""),
+    ("Ki", "", "=2^10", ""),
+    ("Mi", "", "=2^20", ""),
+    ("Gi", "", "=2^30", ""),
+    ("Ti", "", "=2^40", ""),
 ];
 
 const NUMBER_WORDS: &[UnitTuple] = &[
