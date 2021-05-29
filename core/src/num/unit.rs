@@ -460,9 +460,14 @@ impl<'a> Value<'a> {
             self.value
                 .format(self.exact, self.format, self.base, use_parentheses, int)?;
         let mut exact = formatted_value.exact;
-        let unit_string =
-            self.unit
-                .format("", self.value == 1.into(), self.base, self.format, int)?;
+        let unit_string = self.unit.format(
+            "",
+            self.value == 1.into(),
+            self.base,
+            self.format,
+            true,
+            int,
+        )?;
         exact = exact && unit_string.exact;
         Ok(FormattedValue {
             number: formatted_value.value,
@@ -782,7 +787,31 @@ impl<'a> Unit<'a> {
                 scale_2: scale_b.mul(&adj_b, int)?,
             })
         } else {
-            Err("units are incompatible".to_string().into())
+            let from_formatted = from
+                .format(
+                    "unitless",
+                    false,
+                    Base::default(),
+                    FormattingStyle::Auto,
+                    false,
+                    int,
+                )?
+                .value;
+            let into_formatted = into
+                .format(
+                    "unitless",
+                    false,
+                    Base::default(),
+                    FormattingStyle::Auto,
+                    false,
+                    int,
+                )?
+                .value;
+            Err(format!(
+                "cannot convert from {} to {}: units are incompatible",
+                from_formatted, into_formatted
+            )
+            .into())
         }
     }
 
@@ -796,6 +825,7 @@ impl<'a> Unit<'a> {
         value_is_one: bool,
         base: Base,
         format: FormattingStyle,
+        consider_printing_space: bool,
         int: &I,
     ) -> Result<Exact<String>, IntErr<Never, I>> {
         let mut unit_string = String::new();
@@ -833,7 +863,7 @@ impl<'a> Unit<'a> {
         }
         let last_component_plural = !value_is_one;
         for (i, (unit_exponent, invert)) in merged_components.into_iter().enumerate() {
-            if !first || unit_exponent.unit.print_with_space() {
+            if !first || (consider_printing_space && unit_exponent.unit.print_with_space()) {
                 unit_string.push(' ');
             }
             first = false;

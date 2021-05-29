@@ -4404,7 +4404,10 @@ fn two_km_sq_to_hectares() {
 
 #[test]
 fn kg_to_unitless() {
-    expect_error("kg to unitless", Some("units are incompatible"));
+    expect_error(
+        "kg to unitless",
+        Some("cannot convert from kg to unitless: units are incompatible"),
+    );
 }
 
 #[test]
