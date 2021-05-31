@@ -37,6 +37,13 @@ impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> 
     }
 }
 
+#[allow(clippy::use_self)]
+impl<'a, I: Interrupt> From<String> for IntErr<GetIdentError<'a>, I> {
+    fn from(e: String) -> Self {
+        IntErr::Error(GetIdentError::EvalError(e))
+    }
+}
+
 impl<'a> ScopeValue<'a> {
     fn eval<I: Interrupt>(
         &self,

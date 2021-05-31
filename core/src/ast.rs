@@ -381,7 +381,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
-        "not" => Value::BuiltInFunction(BuiltInFunction::Not),
+        "not" => crate::value::func::NOT.into(),
         "exp" => evaluate_to_value("x: e^x", scope, context, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),

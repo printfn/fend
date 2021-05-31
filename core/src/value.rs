@@ -6,9 +6,10 @@ use crate::{Span, SpanKind};
 use std::{borrow, fmt, sync::Arc};
 
 mod boolean;
+pub(crate) mod func;
 
 pub(crate) trait ValueTrait: fmt::Debug {
-    fn box_clone(&self) -> Box<dyn ValueTrait>;
+    fn box_clone(&self) -> Box<dyn ValueTrait + 'static>;
     fn type_name(&self) -> &'static str;
 
     fn format(&self, indent: usize, spans: &mut Vec<Span>);
@@ -18,6 +19,10 @@ pub(crate) trait ValueTrait: fmt::Debug {
 
     fn as_bool(&self) -> Result<bool, String> {
         Err(format!("expected a bool (found {})", self.type_name()))
+    }
+
+    fn apply(&self, _arg: Value<'_>) -> Option<Result<Value<'static>, String>> {
+        None
     }
 }
 
@@ -70,7 +75,6 @@ pub(crate) enum BuiltInFunction {
     Base,
     Differentiate,
     Conjugate,
-    Not,
 }
 
 impl BuiltInFunction {
@@ -129,7 +133,6 @@ impl BuiltInFunction {
             Self::Base => "base",
             Self::Differentiate => "differentiate",
             Self::Conjugate => "conjugate",
-            Self::Not => "not",
         }
     }
 
@@ -155,19 +158,17 @@ pub(crate) enum ApplyMulHandling {
 }
 
 impl<'a> Value<'a> {
-    pub(crate) fn expect_num<I: Interrupt>(self) -> Result<Number<'a>, IntErr<String, I>> {
+    pub(crate) fn expect_num(self) -> Result<Number<'a>, String> {
         match self {
             Self::Num(bigrat) => Ok(*bigrat),
-            _ => Err("expected a number".to_string().into()),
+            _ => Err("expected a number".to_string()),
         }
     }
 
-    pub(crate) fn expect_dyn<I: Interrupt>(
-        self,
-    ) -> Result<Box<dyn ValueTrait + 'a>, IntErr<String, I>> {
+    pub(crate) fn expect_dyn(self) -> Result<Box<dyn ValueTrait + 'a>, String> {
         match self {
             Self::Dynamic(d) => Ok(d),
-            _ => Err("invalid type".to_string().into()),
+            _ => Err("invalid type".to_string()),
         }
     }
 
@@ -220,6 +221,7 @@ impl<'a> Value<'a> {
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
+        let stringified_self = self.format_to_plain_string(0, int)?;
         Ok(match self {
             Self::Num(n) => {
                 let other = crate::ast::evaluate(other, scope.clone(), context, int)?;
@@ -265,12 +267,20 @@ impl<'a> Value<'a> {
                     Scope::with_variable(param.as_str(), other, scope.clone(), custom_scope);
                 return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), context, int);
             }
+            Self::Dynamic(d) => {
+                let other = crate::ast::evaluate(other, scope.clone(), context, int)?;
+                match d.apply(other) {
+                    None => {
+                        return Err(
+                            format!("'{}' is not a function or a number", stringified_self).into(),
+                        )
+                    }
+                    Some(Err(msg)) => return Err(msg.into()),
+                    Some(Ok(val)) => val,
+                }
+            }
             _ => {
-                return Err(format!(
-                    "'{}' is not a function or a number",
-                    self.format_to_plain_string(0, int)?
-                )
-                .into());
+                return Err(format!("'{}' is not a function or a number", stringified_self).into());
             }
         })
     }
@@ -315,7 +325,6 @@ impl<'a> Value<'a> {
             }
             BuiltInFunction::Differentiate => return arg.differentiate("x", int),
             BuiltInFunction::Conjugate => arg.expect_num()?.conjugate(),
-            BuiltInFunction::Not => return Ok((!arg.expect_dyn()?.as_bool()?).into()),
         })))
     }
 
