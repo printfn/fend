@@ -11,6 +11,8 @@ use day_of_week::DayOfWeek;
 use month::Month;
 use year::Year;
 
+use crate::value::ValueTrait;
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
     year: Year,
@@ -161,5 +163,19 @@ impl fmt::Display for Date {
             self.month,
             self.year
         )
+    }
+}
+
+impl ValueTrait for Date {
+    fn type_name(&self) -> &'static str {
+        "date"
+    }
+
+    fn box_clone(&self) -> Box<dyn ValueTrait> {
+        Box::new(*self)
+    }
+
+    fn format(&self) -> (String, crate::SpanKind) {
+        (self.to_string(), crate::SpanKind::Date)
     }
 }

@@ -251,8 +251,10 @@ fn evaluate_as<'a, I: Interrupt>(
             "date" => {
                 let a = evaluate(a, scope.clone(), context, int)?;
                 return if let Value::String(s) = a {
-                    Ok(Value::Date(
-                        crate::date::Date::parse(s.as_ref()).map_err(|e| e.to_string())?,
+                    Ok(Value::Dynamic(
+                        crate::date::Date::parse(s.as_ref())
+                            .map_err(|e| e.to_string())?
+                            .into(),
                     ))
                 } else {
                     Err("expected a string".to_string().into())
@@ -327,11 +329,11 @@ fn evaluate_as<'a, I: Interrupt>(
         Value::String(_) => {
             return Err("cannot convert value to string".to_string().into());
         }
-        Value::Date(_) => {
-            return Err("cannot convert value to date".to_string().into());
-        }
         Value::Bool(_) => {
-            return Err("cannot convert value to boolean value".to_string().into());
+            return Err("cannot convert value to boolean".to_string().into());
+        }
+        Value::Dynamic(d) => {
+            return Err(format!("cannot convert value to {}", d.type_name()).into());
         }
     })
 }
@@ -411,16 +413,22 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
             ("volume", eval_box!("1.08321e12 km^3")),
         ]),
         "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
-        "today" => Value::Date(crate::date::Date::today(context).map_err(|e| e.to_string())?),
-        "tomorrow" => Value::Date(
+        "today" => Value::Dynamic(
             crate::date::Date::today(context)
                 .map_err(|e| e.to_string())?
-                .next(),
+                .into(),
         ),
-        "yesterday" => Value::Date(
+        "tomorrow" => Value::Dynamic(
             crate::date::Date::today(context)
                 .map_err(|e| e.to_string())?
-                .prev(),
+                .next()
+                .into(),
+        ),
+        "yesterday" => Value::Dynamic(
+            crate::date::Date::today(context)
+                .map_err(|e| e.to_string())?
+                .prev()
+                .into(),
         ),
         _ => {
             return crate::units::query_unit(ident.as_str(), context, int)

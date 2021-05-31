@@ -3,7 +3,35 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
-use std::{borrow, fmt, sync::Arc};
+use std::{borrow, fmt, ops, sync::Arc};
+
+pub(crate) trait ValueTrait: fmt::Debug {
+    fn box_clone(&self) -> Box<dyn ValueTrait>;
+    fn type_name(&self) -> &'static str;
+
+    fn format(&self) -> (String, SpanKind);
+}
+
+pub(crate) struct DynValue(Box<dyn ValueTrait>);
+
+impl Clone for DynValue {
+    fn clone(&self) -> Self {
+        Self(self.0.box_clone())
+    }
+}
+
+impl ops::Deref for DynValue {
+    type Target = dyn ValueTrait;
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
+    }
+}
+
+impl<T: ValueTrait + 'static> From<T> for DynValue {
+    fn from(value: T) -> Self {
+        Self(Box::new(value))
+    }
+}
 
 #[derive(Clone)]
 pub(crate) enum Value<'a> {
@@ -18,7 +46,7 @@ pub(crate) enum Value<'a> {
     Fn(Ident<'a>, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
     String(borrow::Cow<'a, str>),
-    Date(crate::date::Date),
+    Dynamic(DynValue),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -386,11 +414,9 @@ impl<'a> Value<'a> {
                     kind: SpanKind::String,
                 });
             }
-            Self::Date(d) => {
-                spans.push(Span {
-                    string: d.to_string(),
-                    kind: SpanKind::Date,
-                });
+            Self::Dynamic(d) => {
+                let (string, kind) = d.format();
+                spans.push(Span { string, kind });
             }
         }
         Ok(())
@@ -454,7 +480,7 @@ impl<'a> fmt::Debug for Value<'a> {
                 write!(f, "{}", s)
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
-            Self::Date(d) => write!(f, "{:?}", d),
+            Self::Dynamic(d) => write!(f, "{:?}", d.0),
         }
     }
 }
