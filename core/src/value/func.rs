@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Clone)]
 pub(crate) struct Func {
     name: &'static str,
-    f: fn(bool) -> Value<'static>,
+    f: fn(Box<dyn ValueTrait + '_>) -> Result<Value<'static>, String>,
 }
 
 impl fmt::Debug for Func {
@@ -31,19 +31,18 @@ impl ValueTrait for Func {
 
     fn apply(&self, arg: Value<'_>) -> Option<Result<Value<'static>, String>> {
         let dyn_val = match arg.expect_dyn() {
-            Ok(b) => b,
+            Ok(v) => v,
             Err(msg) => return Some(Err(msg)),
         };
-        let b = match dyn_val.as_bool() {
-            Ok(b) => b,
+        let res = match (self.f)(dyn_val) {
+            Ok(v) => v,
             Err(msg) => return Some(Err(msg)),
         };
-        let res = (self.f)(b);
         Some(Ok(res))
     }
 }
 
 pub(crate) const NOT: Func = Func {
     name: "not",
-    f: |val| (!val).into(),
+    f: |val| Ok((!val.as_bool()?).into()),
 };
