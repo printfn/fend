@@ -5235,3 +5235,13 @@ fn not_false() {
 fn not_one() {
     expect_error("not 1", None);
 }
+
+#[test]
+fn sqm() {
+    test_eval("5 sqm", "5 m^2");
+}
+
+#[test]
+fn sqft() {
+    test_eval("5 sqft", "5 ft^2");
+}

@@ -434,6 +434,7 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("Wh", "", "s@W hour", ""),
     ("bar", "", "l@1e5 Pa", "about 1 atmosphere"),
     ("diopter", "", "l@/m", "reciprocal of focal length"),
+    ("sqm", "", "=m^2", ""),
     // TODO remove these compatibility units
     ("lightyear", "lightyears", "light_year", ""),
     ("light", "", "c", ""),
@@ -447,6 +448,7 @@ const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("\"", "", "inch", ""),
     ("foot", "feet", "l@12 inch", ""),
     ("ft", "", "foot", ""),
+    ("sqft", "", "=ft^2", ""),
     ("yard", "yards", "l@3 ft", ""),
     ("yd", "", "yard", ""),
     ("mile", "miles", "l@5280 ft", ""),
