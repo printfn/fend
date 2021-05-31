@@ -246,7 +246,7 @@ fn evaluate_as<'a, I: Interrupt>(
         match ident.as_str() {
             "bool" | "boolean" => {
                 let num = evaluate(a, scope.clone(), context, int)?.expect_num()?;
-                return Ok(Value::Bool(!num.is_zero()));
+                return Ok((!num.is_zero()).into());
             }
             "date" => {
                 let a = evaluate(a, scope.clone(), context, int)?;
@@ -327,9 +327,6 @@ fn evaluate_as<'a, I: Interrupt>(
         Value::String(_) => {
             return Err("cannot convert value to string".to_string().into());
         }
-        Value::Bool(_) => {
-            return Err("cannot convert value to boolean".to_string().into());
-        }
         Value::Dynamic(d) => {
             return Err(format!("cannot convert value to {}", d.type_name()).into());
         }
@@ -362,8 +359,8 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "tau" | "\u{3c4}" => Value::Num(Box::new(Number::pi().mul(2.into(), int)?)),
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
         "i" => Value::Num(Box::new(Number::i())),
-        "true" => Value::Bool(true),
-        "false" => Value::Bool(false),
+        "true" => Value::from(true),
+        "false" => Value::from(false),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
         "conjugate" => Value::BuiltInFunction(BuiltInFunction::Conjugate),

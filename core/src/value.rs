@@ -5,6 +5,8 @@ use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use std::{borrow, fmt, ops, sync::Arc};
 
+mod boolean;
+
 pub(crate) trait ValueTrait: fmt::Debug {
     fn box_clone(&self) -> Box<dyn ValueTrait>;
     fn type_name(&self) -> &'static str;
@@ -12,6 +14,10 @@ pub(crate) trait ValueTrait: fmt::Debug {
     fn format(&self, indent: usize, spans: &mut Vec<Span>);
     fn get_object_member(&self, _key: &str) -> Option<Value<'static>> {
         None
+    }
+
+    fn not(&self) -> Result<Value<'static>, String> {
+        Err(format!("expected a bool (found {})", self.type_name()))
     }
 }
 
@@ -38,7 +44,6 @@ impl<'a, T: ValueTrait + 'a> From<T> for Value<'a> {
 
 #[derive(Clone)]
 pub(crate) enum Value<'a> {
-    Bool(bool),
     Num(Box<Number<'a>>),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
@@ -166,10 +171,10 @@ impl<'a> Value<'a> {
         }
     }
 
-    pub(crate) fn expect_bool<I: Interrupt>(self) -> Result<bool, IntErr<String, I>> {
+    pub(crate) fn expect_dyn<I: Interrupt>(self) -> Result<DynValue<'a>, IntErr<String, I>> {
         match self {
-            Self::Bool(b) => Ok(b),
-            _ => Err("expected a boolean".to_string().into()),
+            Self::Dynamic(d) => Ok(d),
+            _ => Err("invalid type".to_string().into()),
         }
     }
 
@@ -318,7 +323,12 @@ impl<'a> Value<'a> {
             }
             BuiltInFunction::Differentiate => return arg.differentiate("x", int),
             BuiltInFunction::Conjugate => arg.expect_num()?.conjugate(),
-            BuiltInFunction::Not => return Ok(Value::Bool(!arg.expect_bool()?)),
+            BuiltInFunction::Not => {
+                return match arg.expect_dyn()?.not() {
+                    Ok(res) => Ok(res),
+                    Err(msg) => Err(msg.into()),
+                }
+            }
         })))
     }
 
@@ -343,10 +353,6 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<(), IntErr<String, I>> {
         match self {
-            Self::Bool(b) => spans.push(Span {
-                string: format!("{}", b),
-                kind: SpanKind::Boolean,
-            }),
             Self::Num(n) => {
                 n.clone().simplify(int)?.format(int)?.spans(spans);
             }
@@ -464,7 +470,6 @@ impl<'a> Value<'a> {
 impl<'a> fmt::Debug for Value<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Bool(b) => write!(f, "{}", b),
             Self::Num(n) => write!(f, "{:?}", n),
             Self::BuiltInFunction(name) => write!(f, "built-in function: {}", name.as_str()),
             Self::Format(fmt) => write!(f, "format: {:?}", fmt),
