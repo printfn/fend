@@ -30,9 +30,9 @@ impl ops::Deref for DynValue {
     }
 }
 
-impl<T: ValueTrait + 'static> From<T> for DynValue {
+impl<T: ValueTrait + 'static> From<T> for Value<'static> {
     fn from(value: T) -> Self {
-        Self(Box::new(value))
+        Self::Dynamic(DynValue(Box::new(value)))
     }
 }
 

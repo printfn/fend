@@ -251,11 +251,9 @@ fn evaluate_as<'a, I: Interrupt>(
             "date" => {
                 let a = evaluate(a, scope.clone(), context, int)?;
                 return if let Value::String(s) = a {
-                    Ok(Value::Dynamic(
-                        crate::date::Date::parse(s.as_ref())
-                            .map_err(|e| e.to_string())?
-                            .into(),
-                    ))
+                    Ok(crate::date::Date::parse(s.as_ref())
+                        .map_err(|e| e.to_string())?
+                        .into())
                 } else {
                     Err("expected a string".to_string().into())
                 };
@@ -413,23 +411,17 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
             ("volume", eval_box!("1.08321e12 km^3")),
         ]),
         "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
-        "today" => Value::Dynamic(
-            crate::date::Date::today(context)
-                .map_err(|e| e.to_string())?
-                .into(),
-        ),
-        "tomorrow" => Value::Dynamic(
-            crate::date::Date::today(context)
-                .map_err(|e| e.to_string())?
-                .next()
-                .into(),
-        ),
-        "yesterday" => Value::Dynamic(
-            crate::date::Date::today(context)
-                .map_err(|e| e.to_string())?
-                .prev()
-                .into(),
-        ),
+        "today" => crate::date::Date::today(context)
+            .map_err(|e| e.to_string())?
+            .into(),
+        "tomorrow" => crate::date::Date::today(context)
+            .map_err(|e| e.to_string())?
+            .next()
+            .into(),
+        "yesterday" => crate::date::Date::today(context)
+            .map_err(|e| e.to_string())?
+            .prev()
+            .into(),
         _ => {
             return crate::units::query_unit(ident.as_str(), context, int)
                 .map_err(IntErr::into_string)

@@ -184,7 +184,7 @@ impl ValueTrait for Date {
 
     fn get_object_member(&self, key: &str) -> Option<crate::value::Value<'static>> {
         if key == "month" {
-            Some(crate::value::Value::Dynamic(self.month.into()))
+            Some(self.month.into())
         } else {
             None
         }
