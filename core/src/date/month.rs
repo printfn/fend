@@ -130,7 +130,7 @@ impl ValueTrait for Month {
         Box::new(*self)
     }
 
-    fn format(&self, spans: &mut Vec<crate::Span>) {
+    fn format(&self, _indent: usize, spans: &mut Vec<crate::Span>) {
         spans.push(crate::Span {
             string: self.to_string(),
             kind: crate::SpanKind::Date,

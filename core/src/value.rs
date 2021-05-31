@@ -9,7 +9,7 @@ pub(crate) trait ValueTrait: fmt::Debug {
     fn box_clone(&self) -> Box<dyn ValueTrait>;
     fn type_name(&self) -> &'static str;
 
-    fn format(&self, spans: &mut Vec<Span>);
+    fn format(&self, indent: usize, spans: &mut Vec<Span>);
     fn get_object_member(&self, _key: &str) -> Option<Value<'static>> {
         None
     }
@@ -418,7 +418,7 @@ impl<'a> Value<'a> {
                 });
             }
             Self::Dynamic(d) => {
-                d.format(spans);
+                d.format(indent, spans);
             }
         }
         Ok(())
