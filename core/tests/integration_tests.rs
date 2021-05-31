@@ -5271,3 +5271,8 @@ fn binary_modulo() {
 fn month_of_date() {
     test_eval_simple("month of ('2020-03-04' to date)", "March");
 }
+
+#[test]
+fn weekday_of_date() {
+    test_eval_simple("day_of_week of ('2020-05-08' to date)", "Friday");
+}
