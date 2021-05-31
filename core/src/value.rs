@@ -3,7 +3,7 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
-use std::{borrow, fmt, ops, sync::Arc};
+use std::{borrow, fmt, sync::Arc};
 
 mod boolean;
 
@@ -21,24 +21,15 @@ pub(crate) trait ValueTrait: fmt::Debug {
     }
 }
 
-pub(crate) struct DynValue<'a>(Box<dyn ValueTrait + 'a>);
-
-impl Clone for DynValue<'_> {
+impl<'a> Clone for Box<dyn ValueTrait + 'a> {
     fn clone(&self) -> Self {
-        Self(self.0.box_clone())
-    }
-}
-
-impl<'a> ops::Deref for DynValue<'a> {
-    type Target = dyn ValueTrait + 'a;
-    fn deref(&self) -> &Self::Target {
-        self.0.as_ref()
+        self.box_clone()
     }
 }
 
 impl<'a, T: ValueTrait + 'a> From<T> for Value<'a> {
     fn from(value: T) -> Self {
-        Self::Dynamic(DynValue(Box::new(value)))
+        Self::Dynamic(Box::new(value))
     }
 }
 
@@ -54,7 +45,7 @@ pub(crate) enum Value<'a> {
     Fn(Ident<'a>, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
     String(borrow::Cow<'a, str>),
-    Dynamic(DynValue<'a>),
+    Dynamic(Box<dyn ValueTrait + 'a>),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -171,7 +162,9 @@ impl<'a> Value<'a> {
         }
     }
 
-    pub(crate) fn expect_dyn<I: Interrupt>(self) -> Result<DynValue<'a>, IntErr<String, I>> {
+    pub(crate) fn expect_dyn<I: Interrupt>(
+        self,
+    ) -> Result<Box<dyn ValueTrait + 'a>, IntErr<String, I>> {
         match self {
             Self::Dynamic(d) => Ok(d),
             _ => Err("invalid type".to_string().into()),
@@ -491,7 +484,7 @@ impl<'a> fmt::Debug for Value<'a> {
                 write!(f, "{}", s)
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
-            Self::Dynamic(d) => write!(f, "{:?}", d.0),
+            Self::Dynamic(d) => write!(f, "{:?}", d),
         }
     }
 }
