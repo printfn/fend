@@ -181,4 +181,12 @@ impl ValueTrait for Date {
             kind: crate::SpanKind::Date,
         });
     }
+
+    fn get_object_member(&self, key: &str) -> Option<crate::value::Value<'static>> {
+        if key == "month" {
+            Some(crate::value::Value::Dynamic(self.month.into()))
+        } else {
+            None
+        }
+    }
 }

@@ -1,4 +1,5 @@
 use crate::date::Year;
+use crate::value::ValueTrait;
 use std::{convert, fmt};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -117,5 +118,22 @@ impl convert::TryFrom<i32> for Month {
             12 => Self::December,
             _ => return Err(InvalidMonthError),
         })
+    }
+}
+
+impl ValueTrait for Month {
+    fn type_name(&self) -> &'static str {
+        "month"
+    }
+
+    fn box_clone(&self) -> Box<dyn ValueTrait> {
+        Box::new(*self)
+    }
+
+    fn format(&self, spans: &mut Vec<crate::Span>) {
+        spans.push(crate::Span {
+            string: self.to_string(),
+            kind: crate::SpanKind::Date,
+        });
     }
 }

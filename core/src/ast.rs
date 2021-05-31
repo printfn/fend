@@ -197,7 +197,7 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
         Expr::<'a>::Fn(a, b) => Value::Fn(a, b, scope),
         Expr::<'a>::Of(a, b) => match eval!(*b)?.get_object_member(a) {
             Ok(value) => value,
-            Err(msg) => return Err(msg.to_string().into()),
+            Err(msg) => return Err(msg.into()),
         },
     })
 }

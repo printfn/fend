@@ -89,7 +89,7 @@ fn parse_ident<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     match parse_token(input, true)? {
         (Token::Ident(ident), remaining) => {
             if let Ok(((), remaining2)) = parse_fixed_symbol(remaining, Symbol::Of) {
-                let (inner, remaining3) = parse_ident(remaining2)?;
+                let (inner, remaining3) = parse_parens_or_literal(remaining2)?;
                 Ok((Expr::Of(ident, Box::new(inner)), remaining3))
             } else {
                 Ok((Expr::Ident(ident), remaining))

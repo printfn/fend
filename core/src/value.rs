@@ -10,6 +10,9 @@ pub(crate) trait ValueTrait: fmt::Debug {
     fn type_name(&self) -> &'static str;
 
     fn format(&self, spans: &mut Vec<Span>);
+    fn get_object_member(&self, _key: &str) -> Option<Value<'static>> {
+        None
+    }
 }
 
 pub(crate) struct DynValue(Box<dyn ValueTrait>);
@@ -421,7 +424,7 @@ impl<'a> Value<'a> {
         Ok(())
     }
 
-    pub(crate) fn get_object_member(self, key: Ident<'_>) -> Result<Self, &'static str> {
+    pub(crate) fn get_object_member(self, key: Ident<'_>) -> Result<Self, String> {
         match self {
             Self::Object(kv) => {
                 for (k, v) in kv {
@@ -429,9 +432,13 @@ impl<'a> Value<'a> {
                         return Ok(*v);
                     }
                 }
-                Err("could not find key in object")
+                Err("could not find key in object".to_string())
             }
-            _ => Err("expected an object"),
+            Self::Dynamic(d) => match d.get_object_member(key.as_str()) {
+                Some(v) => Ok(v),
+                None => Err(format!("could not find key {}", key.as_str())),
+            },
+            _ => Err("expected an object".to_string()),
         }
     }
 
