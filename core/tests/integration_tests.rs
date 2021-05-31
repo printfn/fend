@@ -5276,3 +5276,11 @@ fn month_of_date() {
 fn weekday_of_date() {
     test_eval_simple("day_of_week of ('2020-05-08' to date)", "Friday");
 }
+
+#[test]
+fn day_of_week_type_name() {
+    expect_error(
+        "5 to (day_of_week of ('2020-05-08' to date)",
+        Some("cannot convert value to day of week"),
+    );
+}

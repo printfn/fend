@@ -1,5 +1,5 @@
-use std::fmt;
 use crate::value::ValueTrait;
+use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum DayOfWeek {
@@ -35,7 +35,7 @@ impl fmt::Display for DayOfWeek {
 
 impl ValueTrait for DayOfWeek {
     fn type_name(&self) -> &'static str {
-        "month"
+        "day of week"
     }
 
     fn box_clone(&self) -> Box<dyn ValueTrait> {
