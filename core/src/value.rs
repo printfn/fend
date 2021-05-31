@@ -9,7 +9,7 @@ pub(crate) trait ValueTrait: fmt::Debug {
     fn box_clone(&self) -> Box<dyn ValueTrait>;
     fn type_name(&self) -> &'static str;
 
-    fn format(&self) -> (String, SpanKind);
+    fn format(&self, spans: &mut Vec<Span>);
 }
 
 pub(crate) struct DynValue(Box<dyn ValueTrait>);
@@ -415,8 +415,7 @@ impl<'a> Value<'a> {
                 });
             }
             Self::Dynamic(d) => {
-                let (string, kind) = d.format();
-                spans.push(Span { string, kind });
+                d.format(spans);
             }
         }
         Ok(())

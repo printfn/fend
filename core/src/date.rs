@@ -175,7 +175,10 @@ impl ValueTrait for Date {
         Box::new(*self)
     }
 
-    fn format(&self) -> (String, crate::SpanKind) {
-        (self.to_string(), crate::SpanKind::Date)
+    fn format(&self, spans: &mut Vec<crate::Span>) {
+        spans.push(crate::Span {
+            string: self.to_string(),
+            kind: crate::SpanKind::Date,
+        });
     }
 }
