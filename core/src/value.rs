@@ -15,22 +15,22 @@ pub(crate) trait ValueTrait: fmt::Debug {
     }
 }
 
-pub(crate) struct DynValue(Box<dyn ValueTrait>);
+pub(crate) struct DynValue<'a>(Box<dyn ValueTrait + 'a>);
 
-impl Clone for DynValue {
+impl Clone for DynValue<'_> {
     fn clone(&self) -> Self {
         Self(self.0.box_clone())
     }
 }
 
-impl ops::Deref for DynValue {
-    type Target = dyn ValueTrait;
+impl<'a> ops::Deref for DynValue<'a> {
+    type Target = dyn ValueTrait + 'a;
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
     }
 }
 
-impl<T: ValueTrait + 'static> From<T> for Value<'static> {
+impl<'a, T: ValueTrait + 'a> From<T> for Value<'a> {
     fn from(value: T) -> Self {
         Self::Dynamic(DynValue(Box::new(value)))
     }
@@ -49,7 +49,7 @@ pub(crate) enum Value<'a> {
     Fn(Ident<'a>, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
     Object(Vec<(&'a str, Box<Value<'a>>)>),
     String(borrow::Cow<'a, str>),
-    Dynamic(DynValue),
+    Dynamic(DynValue<'a>),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
