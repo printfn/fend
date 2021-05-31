@@ -5245,3 +5245,19 @@ fn sqm() {
 fn sqft() {
     test_eval("5 sqft", "5 ft^2");
 }
+
+#[test]
+fn modulo() {
+    for a in 0..30 {
+        for b in 1..30 {
+            let input = format!("{} mod {}", a, b);
+            let output = (a % b).to_string();
+            test_eval(&input, &output);
+        }
+    }
+}
+
+#[test]
+fn modulo_zero() {
+    expect_error("5 mod 0", Some("modulo by zero"));
+}

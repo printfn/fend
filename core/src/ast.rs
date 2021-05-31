@@ -21,6 +21,7 @@ pub(crate) enum Expr<'a> {
     Sub(Box<Expr<'a>>, Box<Expr<'a>>),
     Mul(Box<Expr<'a>>, Box<Expr<'a>>),
     Div(Box<Expr<'a>>, Box<Expr<'a>>),
+    Mod(Box<Expr<'a>>, Box<Expr<'a>>),
     Pow(Box<Expr<'a>>, Box<Expr<'a>>),
     // Call a function or multiply the expressions
     Apply(Box<Expr<'a>>, Box<Expr<'a>>),
@@ -52,6 +53,7 @@ impl<'a> Expr<'a> {
             Self::Sub(a, b) => format!("({}-{})", a.format(int)?, b.format(int)?),
             Self::Mul(a, b) => format!("({}*{})", a.format(int)?, b.format(int)?),
             Self::Div(a, b) => format!("({}/{})", a.format(int)?, b.format(int)?),
+            Self::Mod(a, b) => format!("({} mod {})", a.format(int)?, b.format(int)?),
             Self::Pow(a, b) => format!("({}^{})", a.format(int)?, b.format(int)?),
             Self::Apply(a, b) => format!("({} ({}))", a.format(int)?, b.format(int)?),
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
@@ -90,6 +92,7 @@ fn should_compute_inverse(rhs: &Expr<'_>) -> bool {
     false
 }
 
+#[allow(clippy::too_many_lines)]
 pub(crate) fn evaluate<'a, I: Interrupt>(
     expr: Expr<'a>,
     scope: Option<Arc<Scope<'a>>>,
@@ -154,6 +157,13 @@ pub(crate) fn evaluate<'a, I: Interrupt>(
             |a, b| a.div(b, int).map_err(IntErr::into_string),
             |a| |f| Expr::Div(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
             |a| |f| Expr::Div(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
+            scope,
+        )?,
+        Expr::<'a>::Mod(a, b) => eval!(*a)?.handle_two_nums(
+            eval!(*b)?,
+            |a, b| a.modulo(b, int).map_err(IntErr::into_string),
+            |a| |f| Expr::Mod(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
+            |a| |f| Expr::Mod(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
         )?,
         Expr::<'a>::Pow(a, b) => {

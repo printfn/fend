@@ -261,6 +261,12 @@ fn parse_division_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     Ok((b, input))
 }
 
+fn parse_modulo_cont<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
+    let (_, input) = parse_fixed_symbol(input, Symbol::Mod)?;
+    let (b, input) = parse_power(input, true)?;
+    Ok((b, input))
+}
+
 fn parse_multiplicative<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
     let (mut res, mut input) = parse_power(input, true)?;
     loop {
@@ -269,6 +275,9 @@ fn parse_multiplicative<'a, 'b>(input: &'b [Token<'a>]) -> ParseResult<'a, 'b> {
             input = remaining;
         } else if let Ok((term, remaining)) = parse_division_cont(input) {
             res = Expr::Div(Box::new(res.clone()), Box::new(term));
+            input = remaining;
+        } else if let Ok((term, remaining)) = parse_modulo_cont(input) {
+            res = Expr::Mod(Box::new(res.clone()), Box::new(term));
             input = remaining;
         } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res) {
             res = new_res;
