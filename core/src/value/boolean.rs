@@ -1,4 +1,4 @@
-use super::{Value, ValueTrait};
+use super::ValueTrait;
 
 impl ValueTrait for bool {
     fn type_name(&self) -> &'static str {
@@ -16,7 +16,7 @@ impl ValueTrait for bool {
         });
     }
 
-    fn not(&self) -> Result<Value<'static>, String> {
-        Ok((!self).into())
+    fn as_bool(&self) -> Result<bool, String> {
+        Ok(*self)
     }
 }

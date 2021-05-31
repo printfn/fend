@@ -16,7 +16,7 @@ pub(crate) trait ValueTrait: fmt::Debug {
         None
     }
 
-    fn not(&self) -> Result<Value<'static>, String> {
+    fn as_bool(&self) -> Result<bool, String> {
         Err(format!("expected a bool (found {})", self.type_name()))
     }
 }
@@ -316,12 +316,7 @@ impl<'a> Value<'a> {
             }
             BuiltInFunction::Differentiate => return arg.differentiate("x", int),
             BuiltInFunction::Conjugate => arg.expect_num()?.conjugate(),
-            BuiltInFunction::Not => {
-                return match arg.expect_dyn()?.not() {
-                    Ok(res) => Ok(res),
-                    Err(msg) => Err(msg.into()),
-                }
-            }
+            BuiltInFunction::Not => return Ok((!arg.expect_dyn()?.as_bool()?).into()),
         })))
     }
 
