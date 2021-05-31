@@ -5261,3 +5261,8 @@ fn modulo() {
 fn modulo_zero() {
     expect_error("5 mod 0", Some("modulo by zero"));
 }
+
+#[test]
+fn binary_modulo() {
+    test_eval("0b1001010 mod 5", "0b100");
+}
