@@ -43,11 +43,7 @@ impl ValueTrait for Func {
     }
 }
 
-fn not_fn(val: bool) -> Value<'static> {
-    (!val).into()
-}
-
 pub(crate) const NOT: Func = Func {
     name: "not",
-    f: not_fn,
+    f: |val| (!val).into(),
 };
