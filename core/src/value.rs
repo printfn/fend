@@ -275,7 +275,6 @@ impl<'a> Value<'a> {
         })
     }
 
-    #[allow(clippy::cognitive_complexity)]
     fn apply_built_in_function<I: Interrupt>(
         func: BuiltInFunction,
         arg: Expr<'a>,
