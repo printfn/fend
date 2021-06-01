@@ -171,10 +171,6 @@ impl ValueTrait for Date {
         "date"
     }
 
-    fn box_clone(&self) -> Box<dyn ValueTrait> {
-        Box::new(*self)
-    }
-
     fn format(&self, _indent: usize, spans: &mut Vec<crate::Span>) {
         spans.push(crate::Span {
             string: self.to_string(),

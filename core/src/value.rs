@@ -8,8 +8,17 @@ use std::{borrow, fmt, sync::Arc};
 mod boolean;
 pub(crate) mod func;
 
-pub(crate) trait ValueTrait: fmt::Debug {
+pub(crate) trait BoxClone {
     fn box_clone(&self) -> Box<dyn ValueTrait + 'static>;
+}
+
+impl<T: Clone + ValueTrait + 'static> BoxClone for T {
+    fn box_clone(&self) -> Box<dyn ValueTrait + 'static> {
+        Box::new(self.clone())
+    }
+}
+
+pub(crate) trait ValueTrait: fmt::Debug + BoxClone {
     fn type_name(&self) -> &'static str;
 
     fn format(&self, indent: usize, spans: &mut Vec<Span>);

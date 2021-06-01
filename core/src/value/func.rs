@@ -18,10 +18,6 @@ impl ValueTrait for Func {
         "function"
     }
 
-    fn box_clone(&self) -> Box<dyn ValueTrait> {
-        Box::new(self.clone())
-    }
-
     fn format(&self, _indent: usize, spans: &mut Vec<crate::Span>) {
         spans.push(crate::Span {
             string: self.name.to_string(),
