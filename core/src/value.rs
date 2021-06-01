@@ -1,3 +1,4 @@
+use dyn_clone::DynClone;
 use crate::error::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
@@ -8,17 +9,7 @@ use std::{borrow, fmt, sync::Arc};
 mod boolean;
 pub(crate) mod func;
 
-pub(crate) trait BoxClone {
-    fn box_clone(&self) -> Box<dyn ValueTrait + 'static>;
-}
-
-impl<T: Clone + ValueTrait + 'static> BoxClone for T {
-    fn box_clone(&self) -> Box<dyn ValueTrait + 'static> {
-        Box::new(self.clone())
-    }
-}
-
-pub(crate) trait ValueTrait: fmt::Debug + BoxClone {
+pub(crate) trait ValueTrait: fmt::Debug + DynClone {
     fn type_name(&self) -> &'static str;
 
     fn format(&self, indent: usize, spans: &mut Vec<Span>);
@@ -37,7 +28,7 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone {
 
 impl<'a> Clone for Box<dyn ValueTrait + 'a> {
     fn clone(&self) -> Self {
-        self.box_clone()
+        dyn_clone::clone_box(&**self)
     }
 }
 
