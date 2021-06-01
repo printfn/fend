@@ -1,9 +1,9 @@
-use dyn_clone::DynClone;
 use crate::error::{IntErr, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
+use dyn_clone::DynClone;
 use std::{borrow, fmt, sync::Arc};
 
 mod boolean;
