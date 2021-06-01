@@ -30,7 +30,7 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone {
         Err(format!("expected a bool (found {})", self.type_name()))
     }
 
-    fn apply(&self, _arg: Value<'_>) -> Option<Result<Value<'static>, String>> {
+    fn apply<'a>(&self, _arg: Value<'a>) -> Option<Result<Value<'a>, String>> {
         None
     }
 }
