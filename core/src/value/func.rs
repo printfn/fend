@@ -38,3 +38,8 @@ pub(crate) const NOT: Func = Func {
     name: "not",
     f: |val| Ok((!val.expect_dyn()?.as_bool()?).into()),
 };
+
+pub(crate) const CONJUGATE: Func = Func {
+    name: "conjugate",
+    f: |val| Ok(Value::Num(Box::new(val.expect_num()?.conjugate()))),
+};

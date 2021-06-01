@@ -83,7 +83,6 @@ pub(crate) enum BuiltInFunction {
     Log10,
     Base,
     Differentiate,
-    Conjugate,
 }
 
 impl BuiltInFunction {
@@ -141,7 +140,6 @@ impl BuiltInFunction {
             Self::Log10 => "log10",
             Self::Base => "base",
             Self::Differentiate => "differentiate",
-            Self::Conjugate => "conjugate",
         }
     }
 
@@ -333,7 +331,6 @@ impl<'a> Value<'a> {
                 ));
             }
             BuiltInFunction::Differentiate => return arg.differentiate("x", int),
-            BuiltInFunction::Conjugate => arg.expect_num()?.conjugate(),
         })))
     }
 
