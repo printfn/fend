@@ -358,6 +358,7 @@ pub(crate) fn resolve_identifier<'a, I: Interrupt>(
         "pi" | "\u{3c0}" => Value::Num(Box::new(Number::pi())),
         "tau" | "\u{3c4}" => Value::Num(Box::new(Number::pi().mul(2.into(), int)?)),
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
+        "phi" => evaluate_to_value("(1 + sqrt(5))/2", scope, context, int)?,
         "i" => Value::Num(Box::new(Number::i())),
         "true" => Value::from(true),
         "false" => Value::from(false),

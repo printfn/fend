@@ -5284,3 +5284,8 @@ fn day_of_week_type_name() {
         Some("cannot convert value to day of week"),
     );
 }
+
+#[test]
+fn phi() {
+    test_eval("phi", "approx. 1.6180339886");
+}
