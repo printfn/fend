@@ -38,13 +38,16 @@ echo "Running cargo fmt..."
 cargo fmt
 manualstep "Update README"
 manualstep "Bump version number in these places:
-fend-core TOML,
-fend-core docs attr,
-fend-core get_version_as_str(),
-fend cli TOML,
-fend cli TOML version requirement for fend-core
-fend wasm TOML
-fend web initialisation"
+* fend-core TOML,
+* fend-core docs attr,
+* fend-core get_version_as_str(),
+* fend cli TOML,
+* fend cli TOML version requirement for fend-core
+* fend wasm TOML
+* fend web initialisation
+* fend wiki
+
+Add changelog to wiki"
 echo "Building and running tests..."
 cargo clippy --workspace --all-targets --all-features
 cargo build
@@ -89,5 +92,4 @@ manualstep "Create GitHub release (including changelog):
 Changes in this version:
 
 * ..."
-manualstep "Update manual (including changelog): https://github.com/printfn/fend/wiki"
 manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"
