@@ -13,7 +13,9 @@ fail() {
     exit 1
 }
 
-echo "$NEW_VERSION" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
+checkversion() {
+    echo "$1" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
+}
 
 confirm() {
     echo "$1"
@@ -27,7 +29,11 @@ manualstep() {
     confirm "$1"
 }
 
-confirm "Releasing version $NEW_VERSION"
+checkversion "$NEW_VERSION"
+
+OLD_VERSION="$(cargo run -q -- version)"
+
+confirm "Releasing update $OLD_VERSION -> $NEW_VERSION"
 echo "Running cargo fmt..."
 cargo fmt
 manualstep "Update README"
