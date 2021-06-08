@@ -6,14 +6,14 @@ if [[ $# -eq 0 ]] ; then
     echo "Please specify new version number, e.g. '0.1.0'"
     exit 0
 fi
-VERSION=$1
+NEW_VERSION=$1
 
 fail() {
     echo "$1"
     exit 1
 }
 
-echo "$VERSION" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
+echo "$NEW_VERSION" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
 
 confirm() {
     echo "$1"
@@ -27,7 +27,7 @@ manualstep() {
     confirm "$1"
 }
 
-confirm "Releasing version $VERSION"
+confirm "Releasing version $NEW_VERSION"
 echo "Running cargo fmt..."
 cargo fmt
 manualstep "Update README"
@@ -46,12 +46,12 @@ cargo run -- version
 cargo test --all
 echo "'cargo run -- version'"
 cargo run -q -- version
-cargo run -q -- version | grep "$VERSION" || fail "cargo run -- version returned the wrong version"
+cargo run -q -- version | grep "$NEW_VERSION" || fail "cargo run -- version returned the wrong version"
 echo "Committing..."
 git add -A
 git --no-pager diff --cached
-confirm "'git commit -am \"Release version $VERSION\"'"
-git commit -am "Release version $VERSION"
+confirm "'git commit -am \"Release version $NEW_VERSION\"'"
+git commit -am "Release version $NEW_VERSION"
 git status
 confirm "'git push'"
 git push
@@ -67,7 +67,7 @@ echo "'(cd cli && cargo publish --dry-run)'"
 confirm "cargo publish for fend"
 (cd cli && cargo publish)
 confirm "Tag and push tag to GitHub"
-git tag "v$VERSION"
+git tag "v$NEW_VERSION"
 git push --tags
 confirm "Build NPM package"
 (cd wasm && wasm-pack build)
@@ -78,7 +78,7 @@ confirm "Publish npm package"
 (cd wasm/pkg && npm publish)
 manualstep "Create GitHub release (including changelog):
   * Download artifacts
-  * Title: Version $VERSION
+  * Title: Version $NEW_VERSION
   * Text:
 Changes in this version:
 
