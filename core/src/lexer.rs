@@ -449,8 +449,8 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     } else if ch.is_alphabetic() || allowed_chars.contains(&ch) {
         true
     } else {
-        // these are valid only if there was a previous char in this identifier
-        prev.is_some() && ".0123456789'\"".contains(ch)
+        // these are valid only if there was a previous non-$ char in this identifier
+        prev.is_some() && prev != Some('$') && ".0123456789'\"".contains(ch)
     }
 }
 

@@ -5289,3 +5289,8 @@ fn day_of_week_type_name() {
 fn phi() {
     test_eval("phi", "approx. 1.6180339886");
 }
+
+#[test]
+fn no_digit_in_ident_after_dollar() {
+    expect_error("$5", Some("1$ is not a function"));
+}
