@@ -671,6 +671,17 @@ impl FormattedValue {
                 kind: SpanKind::Ident,
             });
         }
+        if self.unit_str == "$" {
+            spans.push(Span {
+                string: self.unit_str,
+                kind: SpanKind::Ident,
+            });
+            spans.push(Span {
+                string: self.number.to_string(),
+                kind: SpanKind::Number,
+            });
+            return;
+        }
         spans.push(Span {
             string: self.number.to_string(),
             kind: SpanKind::Number,

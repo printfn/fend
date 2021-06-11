@@ -5291,6 +5291,22 @@ fn phi() {
 }
 
 #[test]
-fn no_digit_in_ident_after_dollar() {
-    expect_error("$5", Some("1$ is not a function"));
+fn five_dollars() {
+    test_eval("$5", "$5");
+}
+
+#[test]
+fn dollar_prefix() {
+    test_eval_simple("$200/3 to 2dp", "approx. $66.66");
+}
+
+#[test]
+fn dollar_multiplication() {
+    test_eval("$3 * 7", "$21");
+}
+
+#[test]
+#[ignore]
+fn dollar_multiplication_reverse() {
+    test_eval("7 * $3", "$21");
 }
