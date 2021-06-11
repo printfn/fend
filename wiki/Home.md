@@ -150,6 +150,19 @@ approx. 6.2831853071
 120
 ```
 
+You can use `=` to declare variables:
+
+```
+> a = 1
+a
+> a
+1
+> a + 8
+9
+> a = 4 kg; b = 2; a * b^2
+16 kg
+```
+
 These are all the supported operators:
 
 | Operators | Precedence | Associativity |
@@ -161,7 +174,9 @@ These are all the supported operators:
 | `*`, `/`, `per`, function application (e.g. `sin 2`), `mod` | | left |
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
 | `+`, `-`, `to`, `as`, `->`, `in` | | left |
-| `\ .`, `:`, `=>` | lowest | left |
+| `\ .`, `:`, `=>` | | left |
+| `=` | | left |
+| `;` | lowest | left |
 
 
 ## Units
@@ -345,6 +360,10 @@ approx. 1.4142135619
 The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
+
+### Next release
+
+* Add variables and multiple statements (e.g. `a = 4; b = 10; a * b` is `40`)
 
 ### v0.1.17 (2021-06-08)
 

@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Clone)]
 pub(crate) struct Func {
     name: &'static str,
-    f: for<'a> fn(Value<'a>) -> Result<Value<'a>, String>,
+    f: for<'a> fn(Value) -> Result<Value, String>,
 }
 
 impl fmt::Debug for Func {
@@ -25,7 +25,7 @@ impl ValueTrait for Func {
         });
     }
 
-    fn apply<'a>(&self, arg: Value<'a>) -> Option<Result<Value<'a>, String>> {
+    fn apply<'a>(&self, arg: Value) -> Option<Result<Value, String>> {
         let res = match (self.f)(arg) {
             Ok(v) => v,
             Err(msg) => return Some(Err(msg)),

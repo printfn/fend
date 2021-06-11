@@ -4,16 +4,17 @@ use crate::scope::Scope;
 use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use dyn_clone::DynClone;
-use std::{borrow, fmt, sync::Arc};
+use std::borrow::Cow;
+use std::{fmt, sync::Arc};
 
 mod boolean;
 pub(crate) mod func;
 
-pub(crate) trait ValueTrait: fmt::Debug + DynClone {
+pub(crate) trait ValueTrait: fmt::Debug + DynClone + 'static {
     fn type_name(&self) -> &'static str;
 
     fn format(&self, indent: usize, spans: &mut Vec<Span>);
-    fn get_object_member(&self, _key: &str) -> Option<Value<'static>> {
+    fn get_object_member(&self, _key: &str) -> Option<Value> {
         None
     }
 
@@ -21,36 +22,36 @@ pub(crate) trait ValueTrait: fmt::Debug + DynClone {
         Err(format!("expected a bool (found {})", self.type_name()))
     }
 
-    fn apply<'a>(&self, _arg: Value<'a>) -> Option<Result<Value<'a>, String>> {
+    fn apply(&self, _arg: Value) -> Option<Result<Value, String>> {
         None
     }
 }
 
-impl<'a> Clone for Box<dyn ValueTrait + 'a> {
+impl Clone for Box<dyn ValueTrait> {
     fn clone(&self) -> Self {
         dyn_clone::clone_box(&**self)
     }
 }
 
-impl<'a, T: ValueTrait + 'a> From<T> for Value<'a> {
+impl<T: ValueTrait + 'static> From<T> for Value {
     fn from(value: T) -> Self {
         Self::Dynamic(Box::new(value))
     }
 }
 
 #[derive(Clone)]
-pub(crate) enum Value<'a> {
-    Num(Box<Number<'a>>),
+pub(crate) enum Value {
+    Num(Box<Number>),
     BuiltInFunction(BuiltInFunction),
     Format(FormattingStyle),
     Dp,
     Sf,
     Base(Base),
     // user-defined function with a named parameter
-    Fn(Ident<'a>, Box<Expr<'a>>, Option<Arc<Scope<'a>>>),
-    Object(Vec<(&'a str, Box<Value<'a>>)>),
-    String(borrow::Cow<'a, str>),
-    Dynamic(Box<dyn ValueTrait + 'a>),
+    Fn(Ident, Box<Expr>, Option<Arc<Scope>>),
+    Object(Vec<(Cow<'static, str>, Box<Value>)>),
+    String(Cow<'static, str>),
+    Dynamic(Box<dyn ValueTrait>),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -77,22 +78,22 @@ pub(crate) enum BuiltInFunction {
 }
 
 impl BuiltInFunction {
-    pub(crate) fn wrap_with_expr<'a>(
+    pub(crate) fn wrap_with_expr(
         self,
-        lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
-        scope: Option<Arc<Scope<'a>>>,
-    ) -> Value<'a> {
+        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        scope: Option<Arc<Scope>>,
+    ) -> Value {
         Value::Fn(
-            Ident::new("x"),
+            Ident::new_str("x"),
             Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                Box::new(Expr::Ident(Ident::new(self.as_str()))),
-                Box::new(Expr::Ident(Ident::new("x"))),
+                Box::new(Expr::Ident(Ident::new_str(self.as_str()))),
+                Box::new(Expr::Ident(Ident::new_str("x"))),
             )))),
             scope,
         )
     }
 
-    pub(crate) fn invert(self) -> Result<Value<'static>, String> {
+    pub(crate) fn invert(self) -> Result<Value, String> {
         Ok(match self {
             Self::Sin => Value::BuiltInFunction(Self::Asin),
             Self::Cos => Value::BuiltInFunction(Self::Acos),
@@ -134,7 +135,7 @@ impl BuiltInFunction {
         }
     }
 
-    fn differentiate(self) -> Option<Value<'static>> {
+    fn differentiate(self) -> Option<Value> {
         if self == Self::Sin {
             Some(Value::BuiltInFunction(Self::Cos))
         } else {
@@ -155,15 +156,15 @@ pub(crate) enum ApplyMulHandling {
     Both,
 }
 
-impl<'a> Value<'a> {
-    pub(crate) fn expect_num(self) -> Result<Number<'a>, String> {
+impl Value {
+    pub(crate) fn expect_num(self) -> Result<Number, String> {
         match self {
             Self::Num(bigrat) => Ok(*bigrat),
             _ => Err("expected a number".to_string()),
         }
     }
 
-    pub(crate) fn expect_dyn(self) -> Result<Box<dyn ValueTrait + 'a>, String> {
+    pub(crate) fn expect_dyn(self) -> Result<Box<dyn ValueTrait>, String> {
         match self {
             Self::Dynamic(d) => Ok(d),
             _ => Err("invalid type".to_string()),
@@ -172,9 +173,9 @@ impl<'a> Value<'a> {
 
     pub(crate) fn handle_num<I: Interrupt>(
         self,
-        eval_fn: impl FnOnce(Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
-        lazy_fn: impl FnOnce(Box<Expr<'a>>) -> Expr<'a>,
-        scope: Option<Arc<Scope<'a>>>,
+        eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<String, I>>,
+        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
+        scope: Option<Arc<Scope>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match self {
             Self::Num(n) => Self::Num(Box::new(eval_fn(*n)?)),
@@ -186,15 +187,15 @@ impl<'a> Value<'a> {
 
     pub(crate) fn handle_two_nums<
         I: Interrupt,
-        F1: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
-        F2: FnOnce(Box<Expr<'a>>) -> Expr<'a>,
+        F1: FnOnce(Box<Expr>) -> Expr,
+        F2: FnOnce(Box<Expr>) -> Expr,
     >(
         self,
         rhs: Self,
-        eval_fn: impl FnOnce(Number<'a>, Number<'a>) -> Result<Number<'a>, IntErr<String, I>>,
-        lazy_fn_lhs: impl FnOnce(Number<'a>) -> F1,
-        lazy_fn_rhs: impl FnOnce(Number<'a>) -> F2,
-        scope: Option<Arc<Scope<'a>>>,
+        eval_fn: impl FnOnce(Number, Number) -> Result<Number, IntErr<String, I>>,
+        lazy_fn_lhs: impl FnOnce(Number) -> F1,
+        lazy_fn_rhs: impl FnOnce(Number) -> F2,
+        scope: Option<Arc<Scope>>,
     ) -> Result<Self, IntErr<String, I>> {
         Ok(match (self, rhs) {
             (Self::Num(a), Self::Num(b)) => Self::Num(Box::new(eval_fn(*a, *b)?)),
@@ -213,9 +214,9 @@ impl<'a> Value<'a> {
     #[allow(clippy::map_err_ignore)]
     pub(crate) fn apply<I: Interrupt>(
         self,
-        other: Expr<'a>,
+        other: Expr,
         apply_mul_handling: ApplyMulHandling,
-        scope: Option<Arc<Scope<'a>>>,
+        scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
@@ -253,7 +254,7 @@ impl<'a> Value<'a> {
                 let n2 = n.clone();
                 other.handle_num(
                     |x| n.mul(x, int).map_err(IntErr::into_string),
-                    |x| Expr::Mul(Box::new(Expr::Literal(Value::Num(n2))), x),
+                    |x| Expr::Mul(Box::new(Expr::Literal(Self::Num(n2))), x),
                     scope,
                 )?
             }
@@ -261,12 +262,11 @@ impl<'a> Value<'a> {
                 Self::apply_built_in_function(func, other, scope, context, int)?
             }
             Self::Fn(param, expr, custom_scope) => {
-                let new_scope =
-                    Scope::with_variable(param.as_str(), other, scope.clone(), custom_scope);
+                let new_scope = Scope::with_variable(param, other, scope, custom_scope);
                 return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), context, int);
             }
             Self::Dynamic(d) => {
-                let other = crate::ast::evaluate(other, scope.clone(), context, int)?;
+                let other = crate::ast::evaluate(other, scope, context, int)?;
                 match d.apply(other) {
                     None => {
                         return Err(
@@ -285,8 +285,8 @@ impl<'a> Value<'a> {
 
     fn apply_built_in_function<I: Interrupt>(
         func: BuiltInFunction,
-        arg: Expr<'a>,
-        scope: Option<Arc<Scope<'a>>>,
+        arg: Expr,
+        scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
@@ -423,7 +423,7 @@ impl<'a> Value<'a> {
         Ok(())
     }
 
-    pub(crate) fn get_object_member(self, key: Ident<'_>) -> Result<Self, String> {
+    pub(crate) fn get_object_member(self, key: &Ident) -> Result<Self, String> {
         match self {
             Self::Object(kv) => {
                 for (k, v) in kv {
@@ -447,7 +447,7 @@ impl<'a> Value<'a> {
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         match self {
-            Self::Num(_) => Ok(Value::Num(Box::new(Number::from(0)))),
+            Self::Num(_) => Ok(Self::Num(Box::new(Number::from(0)))),
             Self::BuiltInFunction(f) => Ok(f
                 .differentiate()
                 .ok_or(format!("cannot differentiate built-in function {}", f))?),
@@ -460,7 +460,7 @@ impl<'a> Value<'a> {
     }
 }
 
-impl<'a> fmt::Debug for Value<'a> {
+impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Num(n) => write!(f, "{:?}", n),

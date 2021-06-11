@@ -11,7 +11,7 @@ mod unit;
 
 pub(crate) use formatting_style::FormattingStyle;
 
-pub(crate) type Number<'a> = unit::Value<'a>;
+pub(crate) type Number = unit::Value;
 pub(crate) type Base = base::Base;
 pub(crate) type Exact<T> = exact::Exact<T>;
 pub(crate) type BaseOutOfRangeError = base::OutOfRangeError;

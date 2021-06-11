@@ -1,4 +1,4 @@
-use crate::config;
+use crate::{config, context::Context};
 use std::time;
 
 pub struct HintInterrupt {
@@ -34,12 +34,12 @@ impl rustyline::hint::Hint for Hint {
 }
 
 pub struct Helper<'a> {
-    ctx: fend_core::Context,
+    ctx: Context<'a>,
     config: &'a config::Config,
 }
 
 impl<'a> Helper<'a> {
-    pub fn new(ctx: fend_core::Context, config: &'a config::Config) -> Self {
+    pub fn new(ctx: Context<'a>, config: &'a config::Config) -> Self {
         Self { ctx, config }
     }
 }
@@ -49,32 +49,27 @@ impl rustyline::hint::Hinter for Helper<'_> {
 
     fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context<'_>) -> Option<Hint> {
         let int = HintInterrupt::default();
-        Some(
-            match fend_core::evaluate_with_interrupt(line, &mut self.ctx.clone(), &int) {
-                Ok(result) => {
-                    let res = result.get_main_result();
-                    if res.is_empty()
-                        || res.len() > 50
-                        || res.trim() == line.trim()
-                        || res.contains(|c| c < ' ')
-                    {
-                        return None;
-                    }
-                    if self.config.enable_colors {
-                        Hint(format!(
-                            "\n{}",
-                            crate::print_spans(
-                                result.get_main_result_spans().collect(),
-                                self.config
-                            )
-                        ))
-                    } else {
-                        Hint(format!("\n{}", res))
-                    }
+        Some(match self.ctx.eval(line, false, &int) {
+            Ok(result) => {
+                let res = result.get_main_result();
+                if res.is_empty()
+                    || res.len() > 50
+                    || res.trim() == line.trim()
+                    || res.contains(|c| c < ' ')
+                {
+                    return None;
                 }
-                Err(_msg) => return None,
-            },
-        )
+                if self.config.enable_colors {
+                    Hint(format!(
+                        "\n{}",
+                        crate::print_spans(result.get_main_result_spans().collect(), self.config)
+                    ))
+                } else {
+                    Hint(format!("\n{}", res))
+                }
+            }
+            Err(_msg) => return None,
+        })
     }
 }
 

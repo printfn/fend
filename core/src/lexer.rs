@@ -4,12 +4,12 @@ use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
 use std::{borrow, convert, fmt};
 
 #[derive(Clone, Debug)]
-pub(crate) enum Token<'a> {
-    Num(Number<'a>),
-    Ident(Ident<'a>),
+pub(crate) enum Token {
+    Num(Number),
+    Ident(Ident),
     Symbol(Symbol),
     Whitespace,
-    StringLiteral(borrow::Cow<'a, str>),
+    StringLiteral(borrow::Cow<'static, str>),
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -30,6 +30,8 @@ pub(crate) enum Symbol {
     Of,
     ShiftLeft,
     ShiftRight,
+    Semicolon,
+    Equals, // used for assignment
 }
 
 pub(crate) enum Error {
@@ -133,6 +135,8 @@ impl fmt::Display for Symbol {
             Self::Of => "of",
             Self::ShiftLeft => "<<",
             Self::ShiftRight => ">>",
+            Self::Semicolon => ";",
+            Self::Equals => "=",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -255,7 +259,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
 
 fn parse_recurring_digits<'a, I: Interrupt>(
     input: &'a str,
-    number: &mut Number<'_>,
+    number: &mut Number,
     num_nonrec_digits: usize,
     base: Base,
     int: &I,
@@ -305,7 +309,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     base: Base,
     allow_zero: bool,
     int: &I,
-) -> Result<(Number<'a>, &'a str), IntErr<String, I>> {
+) -> Result<(Number, &'a str), IntErr<String, I>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let base_as_u64 = u64::from(base.base_as_u8());
@@ -407,7 +411,7 @@ fn parse_basic_number<'a, I: Interrupt>(
                 if negative_exponent {
                     exp = -exp;
                 }
-                let base_as_number: Number<'_> = base_as_u64.into();
+                let base_as_number: Number = base_as_u64.into();
                 res = res.mul(base_as_number.pow(exp, int)?, int)?;
                 input = remaining2;
             }
@@ -420,7 +424,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 fn parse_number<'a, I: Interrupt>(
     input: &'a str,
     int: &I,
-) -> Result<(Number<'a>, &'a str), IntErr<String, I>> {
+) -> Result<(Number, &'a str), IntErr<String, I>> {
     let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
     let (res, input) = parse_basic_number(input, base, true, int)?;
     Ok((res, input))
@@ -457,7 +461,7 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     }
 }
 
-fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token<'_>, &str), Error> {
+fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
     let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
         return Err(Error::InvalidCharAtBeginningOfIdent(first_char));
@@ -480,13 +484,13 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token<'_>, &str), Error
             "per" => Token::Symbol(Symbol::Div),
             "of" => Token::Symbol(Symbol::Of),
             "mod" => Token::Symbol(Symbol::Mod),
-            _ => Token::Ident(Ident::new(ident)),
+            _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,
     ))
 }
 
-fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
+fn parse_symbol(ch: char, input: &mut &str) -> Result<Token, Error> {
     let mut test_next = |next: char| {
         if input.starts_with(next) {
             let (_, remaining) = input.split_at(next.len_utf8());
@@ -523,7 +527,7 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
             if test_next('>') {
                 Symbol::Fn
             } else {
-                return Err(Error::UnexpectedChar(ch));
+                Symbol::Equals
             }
         }
         '\\' => Symbol::Backslash,
@@ -542,6 +546,7 @@ fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
                 return Err(Error::UnexpectedChar(ch));
             }
         }
+        ';' => Symbol::Semicolon,
         _ => return Err(Error::UnexpectedChar(ch)),
     }))
 }
@@ -577,7 +582,7 @@ fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices<'_>) -> Result<ch
     }
 }
 
-fn parse_string_literal(input: &str, terminator: char) -> Result<(Token<'_>, &str), Error> {
+fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), Error> {
     let (_, input) = input.split_at(1);
     let mut chars_iter = input.char_indices();
     let mut literal_length = None;
@@ -655,7 +660,7 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token<'_>, &st
 }
 
 // parses a unit beginning with ' or "
-fn parse_quote_unit(input: &str) -> (Token<'_>, &str) {
+fn parse_quote_unit(input: &str) -> (Token, &str) {
     let mut split_idx = 1;
     if let Some(ch) = input.split_at(1).1.chars().next() {
         if ch.is_alphabetic() {
@@ -674,7 +679,7 @@ fn parse_quote_unit(input: &str) -> (Token<'_>, &str) {
         }
     }
     let (a, b) = input.split_at(split_idx);
-    (Token::Ident(Ident::new(a)), b)
+    (Token::Ident(Ident::new_string(a.to_string())), b)
 }
 
 pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
@@ -686,7 +691,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
 }
 
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
-    fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<Error, I>> {
+    fn next_token(&mut self) -> Result<Option<Token>, IntErr<Error, I>> {
         while let Some(ch) = self.input.chars().next() {
             if self.input.starts_with("# ") {
                 let (_, remaining) = self.input.split_at(2);
@@ -735,7 +740,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     let (literal, remaining) = remaining.split_at(literal_length);
                     let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
-                    Token::StringLiteral(literal.into())
+                    Token::StringLiteral(literal.to_string().into())
                 } else if is_valid_in_ident(ch, None) {
                     // dots aren't allowed in idents after a backslash
                     let (ident, remaining) =
@@ -754,7 +759,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
 }
 
 impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
-    type Item = Result<Token<'a>, IntErr<Error, I>>;
+    type Item = Result<Token, IntErr<Error, I>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let res = match self.next_token() {

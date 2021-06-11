@@ -5,6 +5,7 @@ use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
 use crate::scope::Scope;
 use crate::{ast, ident::Ident};
 use crate::{Span, SpanKind};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Neg;
 use std::sync::Arc;
@@ -13,16 +14,16 @@ use std::{convert, fmt};
 use super::Exact;
 
 #[derive(Clone)]
-pub(crate) struct Value<'a> {
+pub(crate) struct Value {
     value: Complex,
-    unit: Unit<'a>,
+    unit: Unit,
     exact: bool,
     base: Base,
     format: FormattingStyle,
     simplifiable: bool,
 }
 
-impl<'a> Value<'a> {
+impl Value {
     pub(crate) fn try_as_usize<I: Interrupt>(
         self,
         int: &I,
@@ -38,9 +39,9 @@ impl<'a> Value<'a> {
 
     pub(crate) fn create_unit_value_from_value<I: Interrupt>(
         value: &Self,
-        prefix: &'a str,
-        singular_name: &'a str,
-        plural_name: &'a str,
+        prefix: Cow<'static, str>,
+        singular_name: Cow<'static, str>,
+        plural_name: Cow<'static, str>,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
@@ -52,11 +53,14 @@ impl<'a> Value<'a> {
         Ok(result)
     }
 
-    pub(crate) fn new_base_unit(singular_name: &'a str, plural_name: &'a str) -> Self {
-        let base_unit = BaseUnit::new(singular_name);
+    pub(crate) fn new_base_unit(
+        singular_name: Cow<'static, str>,
+        plural_name: Cow<'static, str>,
+    ) -> Self {
+        let base_unit = BaseUnit::new(singular_name.clone());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_unit, 1.into());
-        let unit = NamedUnit::new("", singular_name, plural_name, hashmap, 1);
+        let unit = NamedUnit::new(Cow::Borrowed(""), singular_name, plural_name, hashmap, 1);
         Self::new(1, vec![UnitExponent::new(unit, 1)])
     }
 
@@ -98,7 +102,7 @@ impl<'a> Value<'a> {
         })
     }
 
-    fn new(value: impl Into<Complex>, unit_components: Vec<UnitExponent<'a>>) -> Self {
+    fn new(value: impl Into<Complex>, unit_components: Vec<UnitExponent>) -> Self {
         Self {
             value: value.into(),
             unit: Unit {
@@ -366,12 +370,12 @@ impl<'a> Value<'a> {
 
     fn convert_angle_to_rad<I: Interrupt>(
         self,
-        scope: Option<Arc<Scope<'a>>>,
+        scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
-        let radians =
-            ast::resolve_identifier(Ident::new("radians"), scope, context, int)?.expect_num()?;
+        let radians = ast::resolve_identifier(&Ident::new_str("radians"), scope, context, int)?
+            .expect_num()?;
         self.convert_to(radians, int)
     }
 
@@ -395,7 +399,7 @@ impl<'a> Value<'a> {
 
     pub(crate) fn sin<I: Interrupt>(
         self,
-        scope: Option<Arc<Scope<'a>>>,
+        scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
@@ -409,7 +413,7 @@ impl<'a> Value<'a> {
 
     pub(crate) fn cos<I: Interrupt>(
         self,
-        scope: Option<Arc<Scope<'a>>>,
+        scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
@@ -423,7 +427,7 @@ impl<'a> Value<'a> {
 
     pub(crate) fn tan<I: Interrupt>(
         self,
-        scope: Option<Arc<Scope<'a>>>,
+        scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, IntErr<String, I>> {
@@ -528,7 +532,7 @@ impl<'a> Value<'a> {
             return Ok(self);
         }
 
-        let mut res_components: Vec<UnitExponent<'_>> = vec![];
+        let mut res_components: Vec<UnitExponent> = vec![];
         let mut res_exact = self.exact;
         let mut res_value = self.value;
 
@@ -614,7 +618,7 @@ impl<'a> Value<'a> {
     }
 }
 
-impl Neg for Value<'_> {
+impl Neg for Value {
     type Output = Self;
     fn neg(self) -> Self {
         Self {
@@ -628,7 +632,7 @@ impl Neg for Value<'_> {
     }
 }
 
-impl From<u64> for Value<'_> {
+impl From<u64> for Value {
     fn from(i: u64) -> Self {
         Self {
             value: i.into(),
@@ -641,7 +645,7 @@ impl From<u64> for Value<'_> {
     }
 }
 
-impl<'a> fmt::Debug for Value<'a> {
+impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.exact {
             write!(f, "approx. ")?;
@@ -704,16 +708,12 @@ impl fmt::Display for FormattedValue {
 }
 
 #[derive(Clone)]
-struct Unit<'a> {
-    components: Vec<UnitExponent<'a>>,
+struct Unit {
+    components: Vec<UnitExponent>,
 }
 
-type HashmapScale<'a> = (HashMap<BaseUnit<'a>, Complex>, Exact<Complex>);
-type HashmapScaleOffset<'a> = (
-    HashMap<BaseUnit<'a>, Complex>,
-    Exact<Complex>,
-    Exact<Complex>,
-);
+type HashmapScale = (HashMap<BaseUnit, Complex>, Exact<Complex>);
+type HashmapScaleOffset = (HashMap<BaseUnit, Complex>, Exact<Complex>, Exact<Complex>);
 
 struct ScaleFactor {
     scale_1: Exact<Complex>,
@@ -721,12 +721,12 @@ struct ScaleFactor {
     scale_2: Exact<Complex>,
 }
 
-impl<'a> Unit<'a> {
+impl Unit {
     fn to_hashmap_and_scale<I: Interrupt>(
         &self,
         int: &I,
-    ) -> Result<HashmapScale<'a>, IntErr<String, I>> {
-        let mut hashmap = HashMap::<BaseUnit<'_>, Complex>::new();
+    ) -> Result<HashmapScale, IntErr<String, I>> {
+        let mut hashmap = HashMap::<BaseUnit, Complex>::new();
         let mut scale = Exact::new(Complex::from(1), true);
         let mut exact = true;
         for named_unit_exp in &self.components {
@@ -766,12 +766,14 @@ impl<'a> Unit<'a> {
     }
 
     fn reduce_hashmap<I: Interrupt>(
-        hashmap: &HashMap<BaseUnit<'a>, Complex>,
+        hashmap: &HashMap<BaseUnit, Complex>,
         int: &I,
-    ) -> Result<HashmapScaleOffset<'a>, IntErr<String, I>> {
-        if hashmap.len() == 1 && hashmap.get(&BaseUnit::new("celsius")) == Some(&1.into()) {
+    ) -> Result<HashmapScaleOffset, IntErr<String, I>> {
+        if hashmap.len() == 1
+            && hashmap.get(&BaseUnit::new(Cow::Borrowed("celsius"))) == Some(&1.into())
+        {
             let mut result_hashmap = HashMap::new();
-            result_hashmap.insert(BaseUnit::new("kelvin"), 1.into());
+            result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
             return Ok((
                 result_hashmap,
                 Exact::new(1.into(), true),
@@ -780,9 +782,11 @@ impl<'a> Unit<'a> {
                     .map_err(IntErr::into_string)?,
             ));
         }
-        if hashmap.len() == 1 && hashmap.get(&BaseUnit::new("fahrenheit")) == Some(&1.into()) {
+        if hashmap.len() == 1
+            && hashmap.get(&BaseUnit::new(Cow::Borrowed("fahrenheit"))) == Some(&1.into())
+        {
             let mut result_hashmap = HashMap::new();
-            result_hashmap.insert(BaseUnit::new("kelvin"), 1.into());
+            result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
             return Ok((
                 result_hashmap,
                 Exact::new(Complex::from(5), true)
@@ -797,9 +801,13 @@ impl<'a> Unit<'a> {
         let mut result_hashmap = HashMap::new();
         for (mut base_unit, exponent) in hashmap {
             if base_unit.name == "celsius" {
-                base_unit = &BaseUnit { name: "kelvin" };
+                base_unit = &BaseUnit {
+                    name: Cow::Borrowed("kelvin"),
+                };
             } else if base_unit.name == "fahrenheit" {
-                base_unit = &BaseUnit { name: "kelvin" };
+                base_unit = &BaseUnit {
+                    name: Cow::Borrowed("kelvin"),
+                };
                 scale_adjustment = scale_adjustment.mul(
                     &Exact::new(Complex::from(5), true)
                         .div(Exact::new(Complex::from(9), true), int)
@@ -929,7 +937,7 @@ impl<'a> Unit<'a> {
     }
 }
 
-impl<'a> fmt::Debug for Unit<'a> {
+impl fmt::Debug for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.components.is_empty() {
             write!(f, "(unitless)")?;
@@ -947,13 +955,13 @@ impl<'a> fmt::Debug for Unit<'a> {
 }
 
 #[derive(Clone)]
-struct UnitExponent<'a> {
-    unit: NamedUnit<'a>,
+struct UnitExponent {
+    unit: NamedUnit,
     exponent: Complex,
 }
 
-impl<'a> UnitExponent<'a> {
-    fn new(unit: NamedUnit<'a>, exponent: impl Into<Complex>) -> Self {
+impl UnitExponent {
+    fn new(unit: NamedUnit, exponent: impl Into<Complex>) -> Self {
         Self {
             unit,
             exponent: exponent.into(),
@@ -969,9 +977,9 @@ impl<'a> UnitExponent<'a> {
         int: &I,
     ) -> Result<Exact<FormattedExponent<'_>>, IntErr<Never, I>> {
         let name = if plural {
-            self.unit.plural_name
+            &self.unit.plural_name
         } else {
-            self.unit.singular_name
+            &self.unit.singular_name
         };
         let exp = if invert_exp {
             -self.exponent.clone()
@@ -987,8 +995,8 @@ impl<'a> UnitExponent<'a> {
         };
         Ok(Exact::new(
             FormattedExponent {
-                prefix: self.unit.prefix,
-                name,
+                prefix: self.unit.prefix.as_ref(),
+                name: name.as_ref(),
                 number: exponent,
             },
             exact,
@@ -996,7 +1004,7 @@ impl<'a> UnitExponent<'a> {
     }
 }
 
-impl<'a> fmt::Debug for UnitExponent<'a> {
+impl fmt::Debug for UnitExponent {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.unit)?;
         if !self.exponent.is_definitely_one() {
@@ -1025,20 +1033,20 @@ impl<'a> fmt::Display for FormattedExponent<'a> {
 
 /// A named unit, like kilogram, megabyte or percent.
 #[derive(Clone, Eq, PartialEq)]
-struct NamedUnit<'a> {
-    prefix: &'a str,
-    singular_name: &'a str,
-    plural_name: &'a str,
-    base_units: HashMap<BaseUnit<'a>, Complex>,
+struct NamedUnit {
+    prefix: Cow<'static, str>,
+    singular_name: Cow<'static, str>,
+    plural_name: Cow<'static, str>,
+    base_units: HashMap<BaseUnit, Complex>,
     scale: Complex,
 }
 
-impl<'a> NamedUnit<'a> {
+impl NamedUnit {
     fn new(
-        prefix: &'a str,
-        singular_name: &'a str,
-        plural_name: &'a str,
-        base_units: HashMap<BaseUnit<'a>, Complex>,
+        prefix: Cow<'static, str>,
+        singular_name: Cow<'static, str>,
+        plural_name: Cow<'static, str>,
+        base_units: HashMap<BaseUnit, Complex>,
         scale: impl Into<Complex>,
     ) -> Self {
         Self {
@@ -1079,7 +1087,7 @@ impl<'a> NamedUnit<'a> {
     }
 }
 
-impl<'a> fmt::Debug for NamedUnit<'a> {
+impl fmt::Debug for NamedUnit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.prefix.is_empty() {
             write!(f, "{}", self.singular_name)?;
@@ -1096,7 +1104,7 @@ impl<'a> fmt::Debug for NamedUnit<'a> {
         }
         write!(f, "= {:?}", self.scale)?;
         let mut it = self.base_units.iter().collect::<Vec<_>>();
-        it.sort_by_key(|(k, _v)| k.name);
+        it.sort_by_key(|(k, _v)| &k.name);
         for (base_unit, exponent) in &it {
             write!(f, " {:?}", base_unit)?;
             if !exponent.is_definitely_one() {
@@ -1110,18 +1118,18 @@ impl<'a> fmt::Debug for NamedUnit<'a> {
 
 /// Represents a base unit, identified solely by its name. The name is not exposed to the user.
 #[derive(Clone, PartialEq, Eq, Hash)]
-struct BaseUnit<'a> {
-    name: &'a str,
+struct BaseUnit {
+    name: Cow<'static, str>,
 }
 
-impl<'a> fmt::Debug for BaseUnit<'a> {
+impl fmt::Debug for BaseUnit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
     }
 }
 
-impl<'a> BaseUnit<'a> {
-    const fn new(name: &'a str) -> Self {
+impl BaseUnit {
+    const fn new(name: Cow<'static, str>) -> Self {
         Self { name }
     }
 }
@@ -1131,7 +1139,7 @@ mod tests {
     use super::*;
     use crate::interrupt::Never;
 
-    fn to_string(n: &Value<'_>) -> String {
+    fn to_string(n: &Value) -> String {
         let int = &crate::interrupt::Never::default();
         // TODO: this unwrap call should be unnecessary
         n.format(int).unwrap().to_string()
@@ -1139,10 +1147,10 @@ mod tests {
 
     #[test]
     fn test_basic_kg() {
-        let base_kg = BaseUnit::new("kilogram");
+        let base_kg = BaseUnit::new("kilogram".into());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new("k", "g", "g", hashmap, 1);
+        let kg = NamedUnit::new("k".into(), "g".into(), "g".into(), hashmap, 1);
         let one_kg = Value::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
         let two_kg = Value::new(2, vec![UnitExponent::new(kg, 1)]);
         let sum = one_kg.add(two_kg, &Never::default()).unwrap();
@@ -1152,14 +1160,14 @@ mod tests {
     #[test]
     fn test_basic_kg_and_g() {
         let int = &Never::default();
-        let base_kg = BaseUnit::new("kilogram");
+        let base_kg = BaseUnit::new("kilogram".into());
         let mut hashmap = HashMap::new();
         hashmap.insert(base_kg, 1.into());
-        let kg = NamedUnit::new("k", "g", "g", hashmap.clone(), 1);
+        let kg = NamedUnit::new("k".into(), "g".into(), "g".into(), hashmap.clone(), 1);
         let g = NamedUnit::new(
-            "",
-            "g",
-            "g",
+            Cow::Borrowed(""),
+            Cow::Borrowed("g"),
+            Cow::Borrowed("g"),
             hashmap,
             Exact::new(Complex::from(1), true)
                 .div(Exact::new(1000.into(), true), int)

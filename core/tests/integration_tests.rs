@@ -5315,3 +5315,28 @@ fn dollar_multiplication_reverse() {
 fn gbp_symbol() {
     test_eval("£5 + £3", "£8");
 }
+
+#[test]
+fn two_statements() {
+    test_eval("2; 4", "4");
+}
+
+#[test]
+fn five_statements() {
+    test_eval("2; 4; 8kg; c:2c; a = 2", "2");
+}
+
+#[test]
+fn variable_assignment() {
+    test_eval("a = b = 2; b", "2");
+}
+
+#[test]
+fn overwrite_variable() {
+    test_eval("a = 3; a = a + 4a; a", "15");
+}
+
+#[test]
+fn multiple_variables() {
+    test_eval("a = 3; b = 2a; c = a * b; c + a", "21");
+}

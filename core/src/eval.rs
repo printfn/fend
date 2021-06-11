@@ -11,10 +11,10 @@ use crate::{
 
 pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     input: &'a str,
-    scope: Option<Arc<Scope<'a>>>,
+    scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value<'a>, IntErr<String, I>> {
+) -> Result<Value, IntErr<String, I>> {
     let lex = lexer::lex(input, int);
     let mut tokens = vec![];
     let mut missing_open_parens: i32 = 0;
@@ -35,7 +35,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
 
 pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
     mut input: &'a str,
-    scope: Option<Arc<Scope<'a>>>,
+    scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Vec<Span>, IntErr<String, I>> {

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::error::{IntErr, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
@@ -20,7 +22,7 @@ pub(crate) struct UnitDef {
     singular: &'static str,
     plural: &'static str,
     prefix_rule: PrefixRule,
-    value: Value<'static>,
+    value: Value,
 }
 
 fn expr_unit<I: Interrupt>(
@@ -29,7 +31,7 @@ fn expr_unit<I: Interrupt>(
     definition: &'static str,
     context: &mut crate::Context,
     int: &I,
-) -> Result<UnitDef, IntErr<GetIdentError<'static>, I>> {
+) -> Result<UnitDef, IntErr<GetIdentError, I>> {
     let mut definition = definition.trim();
     let mut rule = PrefixRule::NoPrefixesAllowed;
     if let Some(remaining) = definition.strip_prefix("l@") {
@@ -50,7 +52,10 @@ fn expr_unit<I: Interrupt>(
     }
     if definition == "!" {
         return Ok(UnitDef {
-            value: Value::Num(Box::new(Number::new_base_unit(singular, plural))),
+            value: Value::Num(Box::new(Number::new_base_unit(
+                Cow::Borrowed(singular),
+                Cow::Borrowed(plural),
+            ))),
             prefix_rule: rule,
             singular,
             plural,
@@ -61,7 +66,13 @@ fn expr_unit<I: Interrupt>(
         .map_or((false, definition), |remaining| (true, remaining));
     let mut num = evaluate_to_value(definition, None, context, int)?.expect_num()?;
     if !alias && rule != PrefixRule::LongPrefix {
-        num = Number::create_unit_value_from_value(&num, "", singular, plural, int)?;
+        num = Number::create_unit_value_from_value(
+            &num,
+            Cow::Borrowed(""),
+            Cow::Borrowed(singular),
+            Cow::Borrowed(plural),
+            int,
+        )?;
     }
     Ok(UnitDef {
         value: Value::Num(Box::new(num)),
@@ -75,11 +86,16 @@ fn construct_prefixed_unit<I: Interrupt>(
     a: UnitDef,
     b: UnitDef,
     int: &I,
-) -> Result<Value<'static>, IntErr<String, I>> {
+) -> Result<Value, IntErr<String, I>> {
     let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
     assert_eq!(a.singular, a.plural);
-    let unit =
-        Number::create_unit_value_from_value(&product, a.singular, b.singular, b.plural, int)?;
+    let unit = Number::create_unit_value_from_value(
+        &product,
+        Cow::Borrowed(a.singular),
+        Cow::Borrowed(b.singular),
+        Cow::Borrowed(b.plural),
+        int,
+    )?;
     Ok(Value::Num(Box::new(unit)))
 }
 
@@ -87,11 +103,14 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
+) -> Result<Value, IntErr<GetIdentError, I>> {
     if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
         let ident = ident.split_at(1).1;
         let ident = ident.split_at(ident.len() - 1).0;
-        return Ok(Value::Num(Box::new(Number::new_base_unit(ident, ident))));
+        return Ok(Value::Num(Box::new(Number::new_base_unit(
+            ident.to_string().into(),
+            ident.to_string().into(),
+        ))));
     }
     query_unit_static(ident, context, int)
 }
@@ -100,7 +119,7 @@ pub(crate) fn query_unit_static<'a, I: Interrupt>(
     ident: &'a str,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value<'static>, IntErr<GetIdentError<'a>, I>> {
+) -> Result<Value, IntErr<GetIdentError, I>> {
     match query_unit_case_sensitive(ident, true, context, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),
@@ -111,12 +130,12 @@ pub(crate) fn query_unit_static<'a, I: Interrupt>(
     query_unit_case_sensitive(ident, false, context, int)
 }
 
-fn query_unit_case_sensitive<'a, I: Interrupt>(
-    ident: &'a str,
+fn query_unit_case_sensitive<I: Interrupt>(
+    ident: &str,
     case_sensitive: bool,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value<'static>, IntErr<GetIdentError<'a>, I>> {
+) -> Result<Value, IntErr<GetIdentError, I>> {
     match query_unit_internal(ident, false, case_sensitive, context, int) {
         Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
         Err(e) => return Err(e),
@@ -150,12 +169,12 @@ fn query_unit_case_sensitive<'a, I: Interrupt>(
                     // now construct a new unit!
                     return Ok(construct_prefixed_unit(a, b, int)?);
                 }
-                return Err(GetIdentError::IdentifierNotFound(ident).into());
+                return Err(GetIdentError::IdentifierNotFound(ident.to_string().into()).into());
             }
             Err(_) => (),
         };
     }
-    Err(GetIdentError::IdentifierNotFound(ident).into())
+    Err(GetIdentError::IdentifierNotFound(ident.to_string().into()).into())
 }
 
 fn query_unit_internal<'a, I: Interrupt>(
@@ -164,10 +183,10 @@ fn query_unit_internal<'a, I: Interrupt>(
     case_sensitive: bool,
     context: &mut crate::Context,
     int: &I,
-) -> Result<UnitDef, IntErr<GetIdentError<'a>, I>> {
+) -> Result<UnitDef, IntErr<GetIdentError, I>> {
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
         expr_unit(s, p, expr, context, int)
     } else {
-        Err(GetIdentError::IdentifierNotFound(ident).into())
+        Err(GetIdentError::IdentifierNotFound(ident.to_string().into()).into())
     }
 }

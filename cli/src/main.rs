@@ -3,13 +3,15 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use fend_core::Context;
 use std::{env, mem, path, process};
 
 mod color;
 mod config;
+mod context;
 mod helper;
 mod interrupt;
+
+use context::Context;
 
 enum EvalResult {
     Ok,
@@ -28,7 +30,7 @@ fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> S
 
 fn eval_and_print_res(
     line: &str,
-    context: &mut Context,
+    context: &mut Context<'_>,
     int: &impl fend_core::Interrupt,
     config: &config::Config,
 ) -> EvalResult {
@@ -37,7 +39,7 @@ fn eval_and_print_res(
     let tz_offset_secs = chrono::Local::now().offset().local_minus_utc();
     context.set_current_time_v1(convert::TryInto::try_into(ms_since_1970).unwrap(), tz_offset_secs.into());
     */
-    match fend_core::evaluate_with_interrupt(line, context, int) {
+    match context.eval(line, true, int) {
         Ok(res) => {
             let result: Vec<_> = res.get_main_result_spans().collect();
             if result.is_empty() {
@@ -93,7 +95,8 @@ fn repl_loop(config: &config::Config) -> i32 {
             .max_history_size(10000)
             .build(),
     );
-    let mut context = Context::new();
+    let core_context = std::cell::RefCell::new(fend_core::Context::new());
+    let mut context = Context::new(&core_context);
     rl.set_helper(Some(helper::Helper::new(context.clone(), &config)));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
@@ -169,10 +172,11 @@ fn main() {
             return;
         }
         let config = config::read(false);
+        let core_context = std::cell::RefCell::new(fend_core::Context::new());
         process::exit(
             match eval_and_print_res(
                 expr.as_str(),
-                &mut Context::new(),
+                &mut Context::new(&core_context),
                 &interrupt::Never::default(),
                 &config,
             ) {

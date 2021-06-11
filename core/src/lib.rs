@@ -22,6 +22,8 @@ mod scope;
 mod units;
 mod value;
 
+use std::collections::HashMap;
+
 pub use interrupt::Interrupt;
 
 /// This contains the result of a computation.
@@ -102,7 +104,7 @@ impl FendResult {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct CurrentTimeInfo {
     elapsed_unix_time_ms: u64,
     timezone_offset_secs: i64,
@@ -110,9 +112,10 @@ struct CurrentTimeInfo {
 
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Context {
     current_time: Option<CurrentTimeInfo>,
+    variables: HashMap<String, value::Value>,
 }
 
 impl Default for Context {
@@ -126,7 +129,10 @@ impl Context {
     /// only be done once if possible.
     #[must_use]
     pub fn new() -> Self {
-        Self { current_time: None }
+        Self {
+            current_time: None,
+            variables: HashMap::new(),
+        }
     }
 
     /// This method currently has no effect!
