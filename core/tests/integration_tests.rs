@@ -5310,3 +5310,8 @@ fn dollar_multiplication() {
 fn dollar_multiplication_reverse() {
     test_eval("7 * $3", "$21");
 }
+
+#[test]
+fn gbp_symbol() {
+    test_eval("£5 + £3", "£8");
+}

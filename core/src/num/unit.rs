@@ -671,7 +671,7 @@ impl FormattedValue {
                 kind: SpanKind::Ident,
             });
         }
-        if self.unit_str == "$" {
+        if self.unit_str == "$" || self.unit_str == "\u{a3}" {
             spans.push(Span {
                 string: self.unit_str,
                 kind: SpanKind::Ident,

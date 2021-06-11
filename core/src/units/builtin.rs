@@ -548,6 +548,7 @@ const CURRENCIES: &[UnitTuple] = &[
     ("$", "$", "USD", ""),
     ("euro", "euros", "EUR", ""),
     ("\u{20ac}", "\u{20ac}", "EUR", ""), // Euro symbol
+    ("\u{a3}", "\u{a3}", "GBP", ""),
     ("AU$", "AU$", "AUD", ""),
     ("HK$", "HK$", "HKD", ""),
     ("NZ$", "NZ$", "NZD", ""),

@@ -191,8 +191,8 @@ fn parse_apply_cont<'a, 'b>(input: &'b [Token<'a>], lhs: &Expr<'a>) -> ParseResu
                 }
                 Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
             }
-            // support e.g. '$5'
-            (Expr::Ident(i), Expr::Literal(Value::Num(_))) if i.as_str() == "$" => {
+            // support e.g. '$5' or '£3'
+            (Expr::Ident(i), Expr::Literal(Value::Num(_))) if i.is_prefix_unit() => {
                 Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
             }
             (_, Expr::Literal(Value::Num(_))) => {

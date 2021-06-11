@@ -439,6 +439,7 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
         '㏊', '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
     ];
     let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
+    let split_on_subsequent_digit = ['$', '£'];
     if only_valid_by_themselves.contains(&ch) {
         // these are only valid if there was no previous char
         prev.is_none()
@@ -450,7 +451,9 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
         true
     } else {
         // these are valid only if there was a previous non-$ char in this identifier
-        prev.is_some() && prev != Some('$') && ".0123456789'\"".contains(ch)
+        prev.is_some()
+            && !(split_on_subsequent_digit.contains(&prev.unwrap_or('a')))
+            && ".0123456789'\"".contains(ch)
     }
 }
 
