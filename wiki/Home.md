@@ -7,17 +7,18 @@ The current latest version of fend is `0.1.17`. You can check your version at an
 # Table of Contents
 1. [Installation](#installation)
     1. [Packages](#packages)
-    2. [Pre-built binaries](#pre-built-binaries)
-    3. [Install via crates.io](#install-via-cratesio)
-2. [Numbers](#numbers)
-3. [Arithmetic](#arithmetic)
-4. [Units](#units)
+    1. [Pre-built binaries](#pre-built-binaries)
+    1. [Install via crates.io](#install-via-cratesio)
+1. [Numbers](#numbers)
+1. [Arithmetic](#arithmetic)
+1. [Units](#units)
     1. [Temperature](#temperature)
-5. [Functions and constants](#functions-and-constants)
-6. [Strings](#strings)
-7. [Configuration](#configuration)
-8. [Scripting](#scripting)
-9. [Changelog](#changelog)
+1. [Functions and constants](#functions-and-constants)
+1. [Number formats](#number-formats)
+1. [Strings](#strings)
+1. [Configuration](#configuration)
+1. [Scripting](#scripting)
+1. [Changelog](#changelog)
 
 ## Installation
 
@@ -154,7 +155,7 @@ You can use `=` to declare variables:
 
 ```
 > a = 1
-a
+1
 > a
 1
 > a + 8
