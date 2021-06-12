@@ -18,4 +18,3 @@ default = []
 gpl = []
 
 [dependencies]
-dyn-clone = "1.0.4"
