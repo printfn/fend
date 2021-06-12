@@ -10,11 +10,11 @@ mod boolean;
 pub(crate) mod func;
 
 pub(crate) trait BoxClone {
-    fn box_clone(&self) -> Box<dyn ValueTrait + 'static>;
+    fn box_clone(&self) -> Box<dyn ValueTrait>;
 }
 
-impl<T: Clone + ValueTrait + 'static> BoxClone for T {
-    fn box_clone(&self) -> Box<dyn ValueTrait + 'static> {
+impl<T: Clone + ValueTrait> BoxClone for T {
+    fn box_clone(&self) -> Box<dyn ValueTrait> {
         Box::new(self.clone())
     }
 }
@@ -42,7 +42,7 @@ impl Clone for Box<dyn ValueTrait> {
     }
 }
 
-impl<T: ValueTrait + 'static> From<T> for Value {
+impl<T: ValueTrait> From<T> for Value {
     fn from(value: T) -> Self {
         Self::Dynamic(Box::new(value))
     }
