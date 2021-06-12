@@ -5340,3 +5340,8 @@ fn overwrite_variable() {
 fn multiple_variables() {
     test_eval("a = 3; b = 2a; c = a * b; c + a", "21");
 }
+
+#[test]
+fn mixed_frac() {
+    test_eval_simple("4/3 to mixed_frac", "1 1/3");
+}

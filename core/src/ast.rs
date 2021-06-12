@@ -405,7 +405,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::Exact),
         "frac" | "fraction" => Value::Format(FormattingStyle::ImproperFraction),
-        "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
+        "mixed_frac" | "mixed_fraction" => Value::Format(FormattingStyle::MixedFraction),
         "float" => Value::Format(FormattingStyle::ExactFloat),
         "dp" => Value::Dp,
         "sf" => Value::Sf,

@@ -283,7 +283,7 @@ fend supports a few different output formats. It tries to choose an appropriate 
 * `exact`: In this format numbers are printed as exact values whenever possible. `1/3` is shown as a fraction, and multiples of π are also shown directly without being approximated as decimals.
 * `float`: In this format, the value is always printed as a "decimal" (albeit not necessarily in base 10), with arbitrary precision. [Recurring digits](https://en.wikipedia.org/wiki/Repeating_decimal) are represented using parentheses. For example, `1/3` is shown as `0.(3)` to indicate the repeating `3`s.
 * `fraction` (or `frac`): In this format, any non-integer value is printed as its simplest fraction (i.e. the fraction with the lowest possible denominator). For example, `0.25` becomes `1/4`.
-* `mixed_fraction`: Numbers larger than 1 are shown as mixed fractions, so `4/3` is written as `1 1/3`.
+* `mixed_fraction` (or `mixed_frac`): Numbers larger than 1 are shown as mixed fractions, so `4/3` is written as `1 1/3`.
 * `<n> sf`: Numbers are shown with the given number of significant figures. For example `pi to 3 sf` becomes `approx. 3.14`.
 * `<n> dp`: This format shows the number as a decimal, with up to the given number of digits after the decimal point. Recurring digits will also be shown normally. For example, `1/3 to 5 dp` becomes `0.33333`.
 
@@ -365,6 +365,9 @@ The return code is 0 on success, or 1 if an error occurs during evaluation.
 ### Next release
 
 * Add variables and multiple statements (e.g. `a = 4; b = 10; a * b` is `40`)
+* Add `mixed_frac` as an alias for `mixed_fraction`
+* Support the `£` symbol for GBP
+* Allow `$` and `£` before the associated number, e.g. `$100/4` is `$25`
 
 ### v0.1.17 (2021-06-08)
 
