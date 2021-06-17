@@ -150,14 +150,14 @@ fn query_unit_case_sensitive<I: Interrupt>(
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         split_idx += remaining_ident.chars().next().unwrap().len_utf8();
         let a = match query_unit_internal(prefix, true, case_sensitive, context, int) {
-            Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
+            Err(e @ (IntErr::Interrupt(_) | IntErr::Error(GetIdentError::EvalError(_)))) => {
                 return Err(e);
             }
             Ok(a) => a,
             Err(_) => continue,
         };
         match query_unit_internal(remaining_ident, false, case_sensitive, context, int) {
-            Err(e @ IntErr::Interrupt(_)) | Err(e @ IntErr::Error(GetIdentError::EvalError(_))) => {
+            Err(e @ (IntErr::Interrupt(_) | IntErr::Error(GetIdentError::EvalError(_)))) => {
                 return Err(e)
             }
             Ok(b) => {

@@ -176,16 +176,18 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
     let (rhs, input) = parse_power(input, false)?;
     Ok((
         match (lhs, &rhs) {
-            (Expr::Literal(Value::Num(_)), Expr::Literal(Value::Num(_)))
-            | (Expr::UnaryMinus(_), Expr::Literal(Value::Num(_)))
-            | (Expr::ApplyMul(_, _), Expr::Literal(Value::Num(_))) => {
+            (
+                Expr::Literal(Value::Num(_)) | Expr::UnaryMinus(_) | Expr::ApplyMul(_, _),
+                Expr::Literal(Value::Num(_)),
+            ) => {
                 // this may later be parsed as a compound fraction, e.g. 1 2/3
                 // or as an addition, e.g. 6 feet 1 inch
                 return Err(ParseError::InvalidApplyOperands);
             }
-            (Expr::Literal(Value::Num(_)), Expr::Pow(a, _))
-            | (Expr::UnaryMinus(_), Expr::Pow(a, _))
-            | (Expr::ApplyMul(_, _), Expr::Pow(a, _)) => {
+            (
+                Expr::Literal(Value::Num(_)) | Expr::UnaryMinus(_) | Expr::ApplyMul(_, _),
+                Expr::Pow(a, _),
+            ) => {
                 if let Expr::Literal(Value::Num(_)) = **a {
                     return Err(ParseError::InvalidApplyOperands);
                 }
@@ -198,7 +200,7 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
             (_, Expr::Literal(Value::Num(_))) => {
                 Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs))
             }
-            (Expr::Literal(Value::Num(_)), _) | (Expr::ApplyMul(_, _), _) => {
+            (Expr::Literal(Value::Num(_)) | Expr::ApplyMul(_, _), _) => {
                 Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
             }
             _ => Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)),
@@ -299,13 +301,10 @@ fn parse_multiplicative(input: &[Token]) -> ParseResult<'_> {
 fn parse_implicit_addition(input: &[Token]) -> ParseResult<'_> {
     let (res, input) = parse_multiplicative(input)?;
     if let Ok((rhs, remaining)) = parse_implicit_addition(input) {
-        match (&res, &rhs) {
-            // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
-            (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _))
-            | (Expr::ApplyMul(_, _), Expr::ImplicitAdd(_, _)) => {
-                return Ok((Expr::ImplicitAdd(Box::new(res), Box::new(rhs)), remaining))
-            }
-            _ => (),
+        // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
+        if let (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _) | Expr::ImplicitAdd(_, _)) = (&res, &rhs)
+        {
+            return Ok((Expr::ImplicitAdd(Box::new(res), Box::new(rhs)), remaining));
         };
     }
     Ok((res, input))
