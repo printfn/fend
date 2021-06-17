@@ -737,7 +737,7 @@ mod tests {
         test_sqrt_inner(1_740_123_984_719_364_372, 1_319_137_591, false)?;
         let val = BigUint::Large(vec![0, 3_260_954_456_333_195_555]).root_n(two, &int)?;
         assert_eq!(val.value, BigUint::from(7_755_900_482_342_532_476));
-        assert_eq!(val.exact, false);
+        assert!(!val.exact);
         Ok(())
     }
 
