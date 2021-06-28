@@ -94,8 +94,10 @@ approx. 0.3066013937 parsecs
 ```
 
 ```
-> (x: 2x) pi
-approx. 6.2831853071
+> temperature = 30 °C
+30 °C
+> temperature to °F
+86 °F
 ```
 
 ## License
