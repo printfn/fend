@@ -86,10 +86,18 @@ vim wasm/pkg/package.json
 confirm "Publish npm package"
 (cd wasm/pkg && npm publish)
 manualstep "Create GitHub release (including changelog):
-  * Download artifacts
+  * Download artifacts from 'https://github.com/printfn/fend/actions'
+  * Go to 'https://github.com/printfn/fend/releases/new'
   * Title: Version $NEW_VERSION
   * Text:
 Changes in this version:
 
 * ..."
-manualstep "Update AUR package, see https://github.com/printfn/fend-aur/wiki"
+manualstep "Go to AUR package folder"
+manualstep "Run this command: 'wget https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate'"
+manualstep "Run this command: shasum -a 512 fend-$NEW_VERSION.crate"
+manualstep "Update '.SRCINFO' and 'PKGBUILD' to include the new version number and hash. 5 lines should change."
+manualstep "Run this command: 'rm fend-$NEW_VERSION.crate'"
+manualstep "Run this command: 'rm fend-$NEW_VERSION.crate'"
+manualstep "Run this command: 'git commit -am \"fend $OLD_VERSION -> $NEW_VERSION\""
+manualstep "Run these commands: 'git push origin && git push github'"
