@@ -442,6 +442,7 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("inch", "inches", "2.54 cm", ""),
+    ("mil", "mils", "1/1000 inch", ""),
     ("\u{2019}", "", "foot", ""), // unicode single quote
     ("\u{201d}", "", "inch", ""), // unicode double quote
     ("'", "", "foot", ""),
