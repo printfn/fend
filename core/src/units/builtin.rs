@@ -323,6 +323,30 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
     ("lx", "lux", "l@lm/m^2", "illuminance"),
     ("phot", "phots", "l@1e4 lx", ""),
     ("ph", "", "s@phot", ""),
+    ("becquerel", "becquerels", "l@/s", "radioactivity"),
+    ("Bq", "", "s@becquerel", ""),
+    ("curie", "curies", "l@3.7e10 Bq", ""),
+    ("Ci", "", "s@curie", ""),
+    ("rutherford", "rutherfords", "l@1e6 Bq", ""),
+    ("Rd", "", "s@rutherford", ""),
+    (
+        "gray",
+        "grays",
+        "l@J/kg",
+        "absorbed dose of ionising radiation",
+    ),
+    ("Gy", "", "s@gray", ""),
+    ("rad", "", "l@1/100 Gy", ""),
+    (
+        "sievert",
+        "sieverts",
+        "l@J / kg",
+        "equivalent dose of ionising radiation",
+    ),
+    ("Sv", "", "s@sievert", ""),
+    ("rem", "", "l@1/100 Sv", ""),
+    ("roentgen", "roentgens", "l@0.000258 coulomb/kg", ""),
+    ("R", "", "s@roentgen", ""),
 ];
 
 const TIME_UNITS: &[UnitTuple] = &[
