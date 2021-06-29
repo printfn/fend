@@ -292,7 +292,12 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
     ("J", "", "s@joule", ""),
     ("watt", "watts", "l@J/s", "power"),
     ("W", "", "s@watt", ""),
-    ("horsepower", "horsepowers", "l@745.699987158227022 watts", ""),
+    (
+        "horsepower",
+        "horsepowers",
+        "l@745.699987158227022 watts",
+        "",
+    ),
     ("hp", "", "s@horsepower", ""),
     ("coulomb", "", "l@A s", "charge"),
     ("C", "", "s@coulomb", ""),
