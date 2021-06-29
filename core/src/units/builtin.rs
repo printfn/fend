@@ -39,12 +39,12 @@ const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
 const TEMPERATURE_SCALES: &[UnitTuple] = &[
     ("celsius", "", "l@!", ""),
     ("\u{b0}C", "", "celsius", ""), // degree symbol
-    ("C", "", "=\u{b0}C", ""),
+    ("oC", "", "=\u{b0}C", ""),
     ("rankine", "", "l@5/9 K", ""),
     ("\u{b0}R", "", "rankine", ""),
     ("fahrenheit", "", "l@!", ""),
     ("\u{b0}F", "", "fahrenheit", ""),
-    ("F", "", "=\u{b0}F", ""),
+    ("oF", "", "=\u{b0}F", ""),
 ];
 
 const BITS_AND_BYTES: &[UnitTuple] = &[
