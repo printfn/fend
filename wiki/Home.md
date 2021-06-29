@@ -365,7 +365,7 @@ The return code is 0 on success, or 1 if an error occurs during evaluation.
 ### v0.1.19 (2021-06-29)
 
 * Add more units: `atmosphere`, `mmHg`, `inHg`, `dB`, `mil` and more
-* Support variables over multiple statements in the WASM API
+* Support variables over multiple statements in the wasm API
 
 ### v0.1.18 (2021-06-28)
 
