@@ -4610,12 +4610,12 @@ fn fifteen_celsius_to_kelvin() {
 
 #[test]
 fn celsius_as_c() {
-    test_eval("4C", "4 °C");
+    test_eval("4oC", "4 °C");
 }
 
 #[test]
 fn fahrenheit_as_f() {
-    test_eval("4C to F", "39.2 °F");
+    test_eval("4oC to oF", "39.2 °F");
 }
 
 #[test]
@@ -4625,7 +4625,7 @@ fn radians_to_degrees() {
 
 #[test]
 fn minus_40_fahrenheit_to_celsius() {
-    test_eval("-40 F to C", "-40 °C");
+    test_eval("-40 °F to °C", "-40 °C");
 }
 
 #[test]
