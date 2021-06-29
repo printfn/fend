@@ -463,6 +463,9 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("bicron", "bicrons", "l@picometer", ""),
     ("gsm", "", "grams / meter^2", ""),
     ("hectare", "hectares", "hectoare", ""),
+    ("ha", "", "s@hectare", ""),
+    ("decare", "decares", "l@decaare", ""),
+    ("da", "", "s@decare", ""),
     ("calorie", "calories", "l@4.184 J", ""),
     ("cal", "", "s@calorie", ""),
     (
