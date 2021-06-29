@@ -17,6 +17,7 @@ const BASE_UNITS: &[UnitTuple] = &[
     ("ampere", "amperes", "l@!", ""),
     ("mole", "moles", "l@!", ""),
     ("candela", "candelas", "l@!", ""),
+    ("neper", "nepers", "l@!", ""),
 ];
 
 const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
@@ -31,6 +32,7 @@ const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
     ("A", "", "s@ampere", ""),
     ("mol", "", "s@mole", ""),
     ("cd", "", "s@candela", ""),
+    ("Np", "", "s@neper", ""),
 ];
 
 // some temperature scales have special support for conversions
@@ -381,6 +383,9 @@ const RATIOS: &[UnitTuple] = &[
     ("\u{2030}", "", "0.001", ""), // per mille
     ("percent", "", "0.01", ""),
     ("%", "", "percent", ""),
+    ("bel", "bels", "0.5 * ln(10) neper", ""),
+    ("decibel", "decibels", "1/10 bel", ""),
+    ("dB", "", "decibel", ""),
     ("mill", "mills", "0.001", ""),
     ("ppm", "", "1e-6", ""),
     ("parts_per_million", "", "ppm", ""),
