@@ -5353,3 +5353,8 @@ fn multiple_variables() {
 fn mixed_frac() {
     test_eval_simple("4/3 to mixed_frac", "1 1/3");
 }
+
+#[test]
+fn farad_conversion() {
+    test_eval("1 farad to A^2 kg^-1 m^-2 s^4", "1 A^2 s^4 kg^-1 m^-2");
+}

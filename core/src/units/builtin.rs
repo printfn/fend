@@ -306,7 +306,7 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
     ("ohm", "ohms", "l@V/A", "electrical resistance"),
     ("siemens", "", "l@A/V", "electrical conductance"),
     ("S", "", "s@siemens", ""),
-    ("farad", "", "l@C/V", "capacitance"),
+    ("farad", "", "l@coulomb/V", "capacitance"),
     ("F", "", "s@farad", ""),
     ("weber", "", "l@V s", "magnetic flux"),
     ("Wb", "", "s@weber", ""),
