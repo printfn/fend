@@ -2,7 +2,7 @@
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
 
-The current latest version of fend is `0.1.19`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
+The current latest version of fend is `0.1.20`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
 
 # Table of Contents
 1. [Installation](#installation)
@@ -366,12 +366,12 @@ The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
 
-### Next Release
+### v0.1.20 (2021-06-29)
 
-* Support modulo with arbitrary-size integers
+* Support modulo with arbitrarily large integers
 * Add a config option to use `C` and `F` as coulomb and farad instead of
   degrees celsius and degrees fahrenheit
-* Add more units: `horsepower`, `lumen`, `lux`, `decare` and more
+* Add more units: `horsepower`, `lumen`, `lux`, `decare` etc.
 
 ### v0.1.19 (2021-06-29)
 
