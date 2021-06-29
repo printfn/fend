@@ -94,5 +94,5 @@ manualstep "Run this command: 'wget https://static.crates.io/crates/fend/fend-$N
 manualstep "Run this command: shasum -a 512 fend-$NEW_VERSION.crate"
 manualstep "Update '.SRCINFO' and 'PKGBUILD' to include the new version number and hash. 5 lines should change."
 manualstep "Run this command: 'rm fend-$NEW_VERSION.crate'"
-manualstep "Run this command: 'git commit -am \"fend $OLD_VERSION -> $NEW_VERSION\""
+manualstep "Run this command: 'git commit -am \"fend $OLD_VERSION -> $NEW_VERSION\"'"
 manualstep "Run these commands: 'git push origin && git push github'"
