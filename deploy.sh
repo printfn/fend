@@ -65,14 +65,10 @@ git status
 confirm "'git push'"
 git push
 manualstep "Ensure CI passes"
-echo "'(cd core && cargo publish --dry-run)'"
-(cd core && cargo publish --dry-run)
 confirm "cargo publish for fend-core"
 (cd core && cargo publish)
 echo "Sleeping for 30 seconds to let crates.io update"
 sleep 30
-echo "'(cd cli && cargo publish --dry-run)'"
-(cd cli && cargo publish --dry-run)
 confirm "cargo publish for fend"
 (cd cli && cargo publish)
 confirm "Tag and push tag to GitHub"
