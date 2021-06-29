@@ -332,6 +332,16 @@ impl Complex {
     pub(crate) fn is_definitely_one(&self) -> bool {
         self.real.is_definitely_one() && self.imag.is_definitely_zero()
     }
+
+    pub(crate) fn modulo<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
+        Ok(Self::from(
+            self.expect_real()?.modulo(rhs.expect_real()?, int)?,
+        ))
+    }
 }
 
 #[allow(clippy::use_self)]

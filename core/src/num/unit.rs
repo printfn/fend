@@ -7,9 +7,9 @@ use crate::{ast, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt;
 use std::ops::Neg;
 use std::sync::Arc;
-use std::{convert, fmt};
 
 use super::Exact;
 
@@ -206,26 +206,13 @@ impl Value {
                 .to_string()
                 .into());
         }
-        let base = self.base;
-        let format = self.format;
-        let simplifiable = self.simplifiable;
-        let lhs = self.try_as_usize(int).map_err(IntErr::into_string)?;
-        let rhs = rhs.try_as_usize(int).map_err(IntErr::into_string)?;
-        if rhs == 0 {
-            return Err("modulo by zero".to_string().into());
-        }
-        let val = lhs % rhs;
-        let val = match <u64 as convert::TryFrom<usize>>::try_from(val) {
-            Ok(val) => Self::from(val),
-            Err(_) => return Err(format!("value {} is larger than {}", val, u64::MAX).into()),
-        };
         Ok(Self {
-            value: val.value,
-            unit: val.unit,
-            exact: val.exact,
-            base,
-            format,
-            simplifiable,
+            value: self.value.modulo(rhs.value, int)?,
+            unit: self.unit,
+            exact: self.exact && rhs.exact,
+            base: self.base,
+            format: self.format,
+            simplifiable: self.simplifiable,
         })
     }
 

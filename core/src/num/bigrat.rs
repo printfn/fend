@@ -386,6 +386,36 @@ impl BigRat {
         })
     }
 
+    pub(crate) fn modulo<I: Interrupt>(
+        mut self,
+        mut rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
+        if rhs.num == 0.into() {
+            return Err("modulo by zero".to_string().into());
+        }
+        self = self.simplify(int)?;
+        rhs = rhs.simplify(int)?;
+        if (self.sign == Sign::Negative && self.num != 0.into())
+            || rhs.sign == Sign::Negative
+            || self.den != 1.into()
+            || rhs.den != 1.into()
+        {
+            return Err("modulo is only supported for positive integers"
+                .to_string()
+                .into());
+        }
+        Ok(Self {
+            sign: Sign::Positive,
+            num: self
+                .num
+                .divmod(&rhs.num, int)
+                .map_err(IntErr::into_string)?
+                .1,
+            den: 1.into(),
+        })
+    }
+
     // test if this fraction has a terminating representation
     // e.g. in base 10: 1/4 = 0.25, but not 1/3
     fn terminates_in_base<I: Interrupt>(

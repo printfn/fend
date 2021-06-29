@@ -343,6 +343,24 @@ impl Real {
             Pattern::Pi(_) => false,
         }
     }
+
+    pub(crate) fn expect_rational(self) -> Result<BigRat, String> {
+        match self.pattern {
+            Pattern::Simple(a) => Ok(a),
+            Pattern::Pi(_) => Err("expected a rational number".to_string()),
+        }
+    }
+
+    pub(crate) fn modulo<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<String, I>> {
+        Ok(Self::from(
+            self.expect_rational()?
+                .modulo(rhs.expect_rational()?, int)?,
+        ))
+    }
 }
 
 #[allow(clippy::use_self)]

@@ -5268,6 +5268,14 @@ fn binary_modulo() {
 }
 
 #[test]
+fn huge_modulo() {
+    test_eval(
+        "9283749283460298374027364928736492873469287354267354 mod 4",
+        "2",
+    );
+}
+
+#[test]
 fn month_of_date() {
     test_eval_simple("month of ('2020-03-04' to date)", "March");
 }
