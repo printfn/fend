@@ -337,6 +337,10 @@ These are the options currently available, along with their default values:
 prompt = '> '
 enable-colors = false
 
+# change 'C' and 'F' to refer to coulomb and farad
+# instead of degrees celsius and degrees fahrenheit
+coulomb-and-farad = false
+
 [colors]
 number = {}
 string = { foreground = 'yellow', bold = true }
@@ -361,6 +365,13 @@ approx. 1.4142135619
 The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
+
+### Next Release
+
+* Support modulo with arbitrary-size integers
+* Add a config option to use `C` and `F` as coulomb and farad instead of
+  degrees celsius and degrees fahrenheit
+* Add more units: `horsepower`, `lumen`, `lux`, `decare` and more
 
 ### v0.1.19 (2021-06-29)
 

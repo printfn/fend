@@ -1,6 +1,10 @@
 prompt = '> '
 enable-colors = false
 
+# change 'C' and 'F' to refer to coulomb and farad
+# instead of degrees celsius and degrees fahrenheit
+coulomb-and-farad = false
+
 [colors]
 number = {}
 string = { foreground = 'yellow', bold = true }

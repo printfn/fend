@@ -5358,3 +5358,21 @@ fn mixed_frac() {
 fn farad_conversion() {
     test_eval("1 farad to A^2 kg^-1 m^-2 s^4", "1 A^2 s^4 kg^-1 m^-2");
 }
+
+#[test]
+fn coulomb_farad_mode() {
+    let mut ctx = Context::new();
+    ctx.use_coulomb_and_farad();
+    assert_eq!(
+        evaluate("5C to coulomb", &mut ctx)
+            .unwrap()
+            .get_main_result(),
+        "5 coulomb"
+    );
+    assert_eq!(
+        evaluate("5uF to farad", &mut ctx)
+            .unwrap()
+            .get_main_result(),
+        "0.000005 farad"
+    );
+}

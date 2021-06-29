@@ -8,6 +8,8 @@ pub struct Config {
     #[serde(alias = "color")]
     pub enable_colors: bool,
     #[serde(default)]
+    pub coulomb_and_farad: bool,
+    #[serde(default)]
     pub colors: color::OutputColours,
 }
 
@@ -16,6 +18,7 @@ impl Default for Config {
         Self {
             prompt: "> ".to_string(),
             enable_colors: false,
+            coulomb_and_farad: false,
             colors: color::OutputColours::default(),
         }
     }

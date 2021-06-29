@@ -96,6 +96,9 @@ fn repl_loop(config: &config::Config) -> i32 {
             .build(),
     );
     let core_context = std::cell::RefCell::new(fend_core::Context::new());
+    if config.coulomb_and_farad {
+        core_context.borrow_mut().use_coulomb_and_farad();
+    }
     let mut context = Context::new(&core_context);
     rl.set_helper(Some(helper::Helper::new(context.clone(), &config)));
     let history_path = config::get_history_file_path();
@@ -173,6 +176,9 @@ fn main() {
         }
         let config = config::read(false);
         let core_context = std::cell::RefCell::new(fend_core::Context::new());
+        if config.coulomb_and_farad {
+            core_context.borrow_mut().use_coulomb_and_farad();
+        }
         process::exit(
             match eval_and_print_res(
                 expr.as_str(),

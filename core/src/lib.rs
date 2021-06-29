@@ -110,12 +110,19 @@ struct CurrentTimeInfo {
     timezone_offset_secs: i64,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum FCMode {
+    CelsiusFahrenheit,
+    CoulombFarad,
+}
+
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
 #[derive(Clone, Debug)]
 pub struct Context {
     current_time: Option<CurrentTimeInfo>,
     variables: HashMap<String, value::Value>,
+    fc_mode: FCMode,
 }
 
 impl Default for Context {
@@ -132,6 +139,7 @@ impl Context {
         Self {
             current_time: None,
             variables: HashMap::new(),
+            fc_mode: FCMode::CelsiusFahrenheit,
         }
     }
 
@@ -151,6 +159,12 @@ impl Context {
         //     timezone_offset_secs: tz_offset_secs,
         // });
         self.current_time = None;
+    }
+
+    /// Define the units `C` and `F` as coulomb and farad instead of degrees
+    /// celsius and degrees fahrenheit.
+    pub fn use_coulomb_and_farad(&mut self) {
+        self.fc_mode = FCMode::CoulombFarad;
     }
 }
 

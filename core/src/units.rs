@@ -184,6 +184,19 @@ fn query_unit_internal<'a, I: Interrupt>(
     context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, IntErr<GetIdentError, I>> {
+    if ident == "C" {
+        return if context.fc_mode == crate::FCMode::CelsiusFahrenheit {
+            expr_unit("C", "C", "=\u{b0}C", context, int)
+        } else {
+            expr_unit("C", "C", "s@coulomb", context, int)
+        };
+    } else if ident == "F" {
+        return if context.fc_mode == crate::FCMode::CelsiusFahrenheit {
+            expr_unit("F", "F", "=\u{b0}F", context, int)
+        } else {
+            expr_unit("F", "F", "s@farad", context, int)
+        };
+    }
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
         expr_unit(s, p, expr, context, int)
     } else {

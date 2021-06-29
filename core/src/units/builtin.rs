@@ -39,12 +39,10 @@ const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
 const TEMPERATURE_SCALES: &[UnitTuple] = &[
     ("celsius", "", "l@!", ""),
     ("\u{b0}C", "", "celsius", ""), // degree symbol
-    ("C", "", "=\u{b0}C", ""),
     ("rankine", "", "l@5/9 K", ""),
     ("\u{b0}R", "", "rankine", ""),
     ("fahrenheit", "", "l@!", ""),
     ("\u{b0}F", "", "fahrenheit", ""),
-    ("F", "", "=\u{b0}F", ""),
 ];
 
 const BITS_AND_BYTES: &[UnitTuple] = &[
@@ -300,14 +298,12 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
     ),
     ("hp", "", "s@horsepower", ""),
     ("coulomb", "", "l@A s", "charge"),
-    ("C", "", "s@coulomb", ""),
     ("volt", "volts", "l@W/A", "potential difference"),
     ("V", "", "s@volt", ""),
     ("ohm", "ohms", "l@V/A", "electrical resistance"),
     ("siemens", "", "l@A/V", "electrical conductance"),
     ("S", "", "s@siemens", ""),
     ("farad", "", "l@coulomb/V", "capacitance"),
-    ("F", "", "s@farad", ""),
     ("weber", "", "l@V s", "magnetic flux"),
     ("Wb", "", "s@weber", ""),
     ("henry", "", "l@V s / A", "inductance"),
