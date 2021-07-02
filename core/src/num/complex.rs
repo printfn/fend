@@ -1,4 +1,4 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::num::real::{self, Real};
 use crate::num::Exact;
 use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
@@ -47,7 +47,7 @@ impl Complex {
         }
     }
 
-    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if self.imag != 0.into() {
             return Err("factorial is not supported for complex numbers"
                 .to_string()
@@ -63,7 +63,7 @@ impl Complex {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
             return Err(
                 "exponentiation is currently unsupported for complex numbers"
@@ -95,7 +95,7 @@ impl Complex {
         }
     }
 
-    pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         Ok(if self.imag.is_zero() {
             if self.real < 0.into() {
                 Exact::new(
@@ -212,7 +212,7 @@ impl Complex {
         self,
         n: &Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         if self.imag != 0.into() || n.imag != 0.into() {
             return Err("roots are currently unsupported for complex numbers"
                 .to_string()
@@ -228,7 +228,7 @@ impl Complex {
         ))
     }
 
-    fn expect_real<I: Interrupt>(self) -> Result<Real, IntErr<String, I>> {
+    fn expect_real<I: Interrupt>(self) -> Result<Real, IntErr<FendError, I>> {
         if self.imag.is_zero() {
             Ok(self.real)
         } else {
@@ -236,11 +236,11 @@ impl Complex {
         }
     }
 
-    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         Ok(self.expect_real()?.sin(int)?.apply(Self::from))
     }
 
-    pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         // cos(self) == sin(pi/2 - self)
         let pi = Exact::new(Self::pi(), true);
         let half_pi = pi
@@ -255,45 +255,45 @@ impl Complex {
             .apply(Self::from))
     }
 
-    pub(crate) fn tan<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<String, I>> {
+    pub(crate) fn tan<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         let num = self.clone().sin(int)?;
         let den = self.cos(int)?;
-        num.div(den, int).map_err(IntErr::into_string)
+        Ok(num.div(den, int).map_err(IntErr::into_string)?)
     }
 
-    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?.asin(int).map_err(IntErr::into_string)?,
         ))
     }
 
-    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?.acos(int).map_err(IntErr::into_string)?,
         ))
     }
 
-    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.expect_real()?.atan(int)?))
     }
 
-    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.expect_real()?.sinh(int)?))
     }
 
-    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.expect_real()?.cosh(int)?))
     }
 
-    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.expect_real()?.tanh(int)?))
     }
 
-    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.expect_real()?.asinh(int)?))
     }
 
-    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?
                 .acosh(int)
@@ -301,7 +301,7 @@ impl Complex {
         ))
     }
 
-    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?
                 .atanh(int)
@@ -309,19 +309,19 @@ impl Complex {
         ))
     }
 
-    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?.ln(int).map_err(IntErr::into_string)?,
         ))
     }
 
-    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?.log2(int).map_err(IntErr::into_string)?,
         ))
     }
 
-    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?
                 .log10(int)
@@ -337,7 +337,7 @@ impl Complex {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_real()?.modulo(rhs.expect_real()?, int)?,
         ))

@@ -1,48 +1,16 @@
+use crate::error::FendError;
 use crate::ident::Ident;
 use crate::value::Value;
 use crate::{
     ast::Expr,
     error::{IntErr, Interrupt},
 };
-use std::fmt;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 enum ScopeValue {
     //Variable(Value),
     LazyVariable(Expr, Option<Arc<Scope>>),
-}
-
-#[derive(Debug)]
-pub(crate) enum GetIdentError {
-    EvalError(String),
-    IdentifierNotFound(Ident),
-}
-
-impl fmt::Display for GetIdentError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::EvalError(s) => write!(f, "{}", s),
-            Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
-        }
-    }
-}
-
-#[allow(clippy::use_self)]
-impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError, I> {
-    fn from(e: IntErr<String, I>) -> Self {
-        match e {
-            IntErr::Interrupt(i) => IntErr::Interrupt(i),
-            IntErr::Error(s) => IntErr::Error(GetIdentError::EvalError(s)),
-        }
-    }
-}
-
-#[allow(clippy::use_self)]
-impl<'a, I: Interrupt> From<String> for IntErr<GetIdentError, I> {
-    fn from(e: String) -> Self {
-        IntErr::Error(GetIdentError::EvalError(e))
-    }
 }
 
 impl ScopeValue {
@@ -90,16 +58,13 @@ impl Scope {
         ident: &Ident,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value, IntErr<GetIdentError, I>> {
+    ) -> Result<Value, IntErr<FendError, I>> {
         if self.ident.as_str() == ident.as_str() {
-            let value = self
-                .value
-                .eval(context, int)
-                .map_err(|e| e.map(GetIdentError::EvalError))?;
+            let value = self.value.eval(context, int)?;
             Ok(value)
         } else {
             self.inner.as_ref().map_or_else(
-                || Err(GetIdentError::IdentifierNotFound(ident.clone()).into()),
+                || Err(FendError::IdentifierNotFound(ident.clone()).into()),
                 |inner| inner.get(ident, context, int),
             )
         }

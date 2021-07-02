@@ -7,6 +7,12 @@ pub(crate) enum FendError {
     BaseTooSmall,
     BaseTooLarge,
 
+    MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
+
+    ExpectedARationalNumber,
+
+    IdentifierNotFound(crate::ident::Ident),
+
     ExpectedACharacter,
     ExpectedADigit(char),
     ExpectedChar(char, char),
@@ -22,6 +28,8 @@ pub(crate) enum FendError {
     InvalidUnicodeEscapeSequence,
     // todo remove this
     NumberParse(String),
+
+    String(String),
 }
 
 impl fmt::Display for FendError {
@@ -33,6 +41,13 @@ impl fmt::Display for FendError {
             ),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
+
+            Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
+
+            Self::ExpectedARationalNumber => write!(f, "expected a rational number"),
+
+            Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
+
             Self::ExpectedACharacter => write!(f, "expected a character"),
             Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
             Self::ExpectedChar(ex, fnd) => write!(f, "expected '{}', found '{}'", ex, fnd),
@@ -47,7 +62,6 @@ impl fmt::Display for FendError {
                 write!(f, "'{}' is not valid at the beginning of an identifier", ch)
             }
             Self::UnexpectedChar(ch) => write!(f, "unexpected character '{}'", ch),
-            Self::NumberParse(s) => write!(f, "{}", s),
             Self::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
             Self::UnknownBackslashEscapeSequence(ch) => {
                 write!(f, "unknown escape sequence: \\{}", ch)
@@ -67,16 +81,43 @@ impl fmt::Display for FendError {
                     "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
                 )
             }
+            Self::NumberParse(s) | Self::String(s) => write!(f, "{}", s),
         }
     }
 }
 
 impl error::Error for FendError {}
 
-// todo remove this impl
+impl Error for FendError {}
+
+// todo remove these impls
 impl<I: Interrupt> From<FendError> for IntErr<String, I> {
     fn from(e: FendError) -> Self {
         e.to_string().into()
+    }
+}
+
+impl<I: Interrupt> From<String> for IntErr<FendError, I> {
+    fn from(e: String) -> Self {
+        Self::Error(FendError::String(e))
+    }
+}
+
+impl<I: Interrupt> From<IntErr<String, I>> for IntErr<FendError, I> {
+    fn from(e: IntErr<String, I>) -> Self {
+        match e {
+            IntErr::Interrupt(i) => Self::Interrupt(i),
+            IntErr::Error(e) => e.into(),
+        }
+    }
+}
+
+impl<I: Interrupt> From<IntErr<FendError, I>> for IntErr<String, I> {
+    fn from(e: IntErr<FendError, I>) -> Self {
+        match e {
+            IntErr::Interrupt(i) => Self::Interrupt(i),
+            IntErr::Error(e) => Self::Error(e.to_string()),
+        }
     }
 }
 

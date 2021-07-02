@@ -1,4 +1,4 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
@@ -202,7 +202,7 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.log10(int)?))
     }
 
-    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.factorial(int)?))
     }
 
@@ -267,7 +267,7 @@ impl Real {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         // x^1 == x
         if let Pattern::Simple(n) = &rhs.pattern {
             if n == &1.into() {
@@ -299,7 +299,7 @@ impl Real {
         self,
         n: &Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         // TODO: Combining these match blocks is not currently possible because
         // 'binding by-move and by-ref in the same pattern is unstable'
         // https://github.com/rust-lang/rust/pull/76119
@@ -344,10 +344,10 @@ impl Real {
         }
     }
 
-    pub(crate) fn expect_rational(self) -> Result<BigRat, String> {
+    pub(crate) fn expect_rational(self) -> Result<BigRat, FendError> {
         match self.pattern {
             Pattern::Simple(a) => Ok(a),
-            Pattern::Pi(_) => Err("expected a rational number".to_string()),
+            Pattern::Pi(_) => Err(FendError::ExpectedARationalNumber),
         }
     }
 
@@ -355,7 +355,7 @@ impl Real {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(
             self.expect_rational()?
                 .modulo(rhs.expect_rational()?, int)?,

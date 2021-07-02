@@ -1,10 +1,10 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{
-    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, MustBeAnInteger, Range,
-    RangeBound, ValueOutOfRange,
+    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, Range, RangeBound,
+    ValueOutOfRange,
 };
 use std::{cmp, fmt, ops};
 
@@ -278,10 +278,11 @@ impl BigRat {
         Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
     }
 
-    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err(MustBeAnInteger(self.fm(int)?).to_string().into());
+            let n = self.fm(int)?;
+            return Err(FendError::MustBeAnInteger(Box::new(n)).into());
         }
         if self.sign == Sign::Negative && self.num != 0.into() {
             return Err(ValueOutOfRange(self.fm(int)?, Range::ZERO_OR_GREATER)
@@ -390,7 +391,7 @@ impl BigRat {
         mut self,
         mut rhs: Self,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if rhs.num == 0.into() {
             return Err("modulo by zero".to_string().into());
         }
@@ -866,7 +867,7 @@ impl BigRat {
         mut self,
         mut rhs: Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
@@ -916,7 +917,7 @@ impl BigRat {
         val: &Self,
         n: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         let mut high_bound = low_bound.clone().add(1.into(), int)?;
         for _ in 0..30 {
             let guess = low_bound
@@ -930,10 +931,10 @@ impl BigRat {
                 high_bound = guess;
             }
         }
-        low_bound
+        Ok(low_bound
             .add(high_bound, int)?
             .div(&2.into(), int)
-            .map_err(IntErr::into_string)
+            .map_err(IntErr::into_string)?)
     }
 
     // the boolean indicates whether or not the result is exact
@@ -942,7 +943,7 @@ impl BigRat {
         self,
         n: &Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<String, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         if self.num != 0.into() && self.sign == Sign::Negative {
             return Err("cannot compute roots of negative numbers"
                 .to_string()

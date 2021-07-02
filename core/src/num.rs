@@ -69,16 +69,6 @@ impl<T: fmt::Display, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
 
 impl<T: fmt::Display, U: fmt::Display> crate::error::Error for ValueOutOfRange<T, U> {}
 
-pub(crate) struct MustBeAnInteger<T>(T);
-
-impl<T: fmt::Display> fmt::Display for MustBeAnInteger<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "{} is not an integer", self.0)
-    }
-}
-
-impl<T: fmt::Display> crate::error::Error for MustBeAnInteger<T> {}
-
 pub(crate) enum ConvertToUsizeError {
     OutOfRange(ValueOutOfRange<biguint::FormattedBigUint, usize>),
     NegativeNumber,

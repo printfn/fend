@@ -1,4 +1,4 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{self, Complex, UseParentheses};
 use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
@@ -43,7 +43,7 @@ impl Value {
         singular_name: Cow<'static, str>,
         plural_name: Cow<'static, str>,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
         let scale = scale.mul(&Exact::new(value.value.clone(), true), int)?;
         let resulting_unit =
@@ -86,7 +86,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if !self.is_unitless() {
             return Err("factorial is only supported for unitless numbers"
                 .to_string()
@@ -115,7 +115,11 @@ impl Value {
         }
     }
 
-    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn add<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
             .mul(&scale_factor.scale_1, int)?
@@ -136,7 +140,7 @@ impl Value {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if rhs.value != 1.into() {
             return Err("right-hand side of unit conversion has a numerical value"
                 .to_string()
@@ -158,7 +162,11 @@ impl Value {
         })
     }
 
-    pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn sub<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
             .mul(&scale_factor.scale_1, int)?
@@ -175,7 +183,11 @@ impl Value {
         })
     }
 
-    pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn div<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         let mut components = self.unit.components.clone();
         for rhs_component in rhs.unit.components {
             components.push(UnitExponent::new(
@@ -200,7 +212,7 @@ impl Value {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if !self.is_unitless() || !rhs.is_unitless() {
             return Err("modulo is only supported for only unitless numbers"
                 .to_string()
@@ -225,7 +237,11 @@ impl Value {
         self.is_unitless() && self.exact && self.value == Complex::from(1)
     }
 
-    pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn pow<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         if !rhs.is_unitless() {
             return Err("only unitless exponents are currently supported"
                 .to_string()
@@ -278,7 +294,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         let value = self.value.abs(int)?;
         Ok(Self {
             value: value.value,
@@ -318,10 +334,10 @@ impl Value {
 
     fn apply_fn_exact<I: Interrupt>(
         self,
-        f: impl FnOnce(Complex, &I) -> Result<Exact<Complex>, IntErr<String, I>>,
+        f: impl FnOnce(Complex, &I) -> Result<Exact<Complex>, IntErr<FendError, I>>,
         require_unitless: bool,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if require_unitless && !self.is_unitless() {
             return Err("expected a unitless number".to_string().into());
         }
@@ -338,10 +354,10 @@ impl Value {
 
     fn apply_fn<I: Interrupt>(
         self,
-        f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<String, I>>,
+        f: impl FnOnce(Complex, &I) -> Result<Complex, IntErr<FendError, I>>,
         require_unitless: bool,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if require_unitless && !self.is_unitless() {
             return Err("expected a unitless number".to_string().into());
         }
@@ -360,7 +376,7 @@ impl Value {
         scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         let radians = ast::resolve_identifier(&Ident::new_str("radians"), scope, context, int)?
             .expect_num()?;
         self.convert_to(radians, int)
@@ -389,10 +405,11 @@ impl Value {
         scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
-            rad.apply_fn_exact(Complex::sin, false, int)?
-                .convert_to(Self::unitless(), int)
+            Ok(rad
+                .apply_fn_exact(Complex::sin, false, int)?
+                .convert_to(Self::unitless(), int)?)
         } else {
             self.apply_fn_exact(Complex::sin, false, int)
         }
@@ -403,7 +420,7 @@ impl Value {
         scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
             rad.apply_fn_exact(Complex::cos, false, int)?
                 .convert_to(Self::unitless(), int)
@@ -417,7 +434,7 @@ impl Value {
         scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Self, IntErr<String, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
             rad.apply_fn_exact(Complex::tan, false, int)?
                 .convert_to(Self::unitless(), int)
@@ -426,51 +443,51 @@ impl Value {
         }
     }
 
-    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::asin, false, int)
     }
 
-    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::acos, false, int)
     }
 
-    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::atan, false, int)
     }
 
-    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::sinh, false, int)
     }
 
-    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::cosh, false, int)
     }
 
-    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::tanh, false, int)
     }
 
-    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::asinh, false, int)
     }
 
-    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::acosh, false, int)
     }
 
-    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::atanh, false, int)
     }
 
-    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::ln, true, int)
     }
 
-    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::log2, true, int)
     }
 
-    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         self.apply_fn(Complex::log10, true, int)
     }
 
@@ -500,7 +517,11 @@ impl Value {
         })
     }
 
-    pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn mul<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         let components = [self.unit.components, rhs.unit.components].concat();
         let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
@@ -514,7 +535,7 @@ impl Value {
         })
     }
 
-    pub(crate) fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<String, I>> {
+    pub(crate) fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if !self.simplifiable {
             return Ok(self);
         }
@@ -712,7 +733,7 @@ impl Unit {
     fn to_hashmap_and_scale<I: Interrupt>(
         &self,
         int: &I,
-    ) -> Result<HashmapScale, IntErr<String, I>> {
+    ) -> Result<HashmapScale, IntErr<FendError, I>> {
         let mut hashmap = HashMap::<BaseUnit, Complex>::new();
         let mut scale = Exact::new(Complex::from(1), true);
         let mut exact = true;
@@ -755,7 +776,7 @@ impl Unit {
     fn reduce_hashmap<I: Interrupt>(
         hashmap: &HashMap<BaseUnit, Complex>,
         int: &I,
-    ) -> Result<HashmapScaleOffset, IntErr<String, I>> {
+    ) -> Result<HashmapScaleOffset, IntErr<FendError, I>> {
         if hashmap.len() == 1
             && hashmap.get(&BaseUnit::new(Cow::Borrowed("celsius"))) == Some(&1.into())
         {
@@ -814,7 +835,7 @@ impl Unit {
         from: &Self,
         into: &Self,
         int: &I,
-    ) -> Result<ScaleFactor, IntErr<String, I>> {
+    ) -> Result<ScaleFactor, IntErr<FendError, I>> {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
         let (hash_a, adj_a, offset_a) = Self::reduce_hashmap(&hash_a, int)?;

@@ -1,9 +1,9 @@
-use crate::error::{IntErr, Interrupt};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::ident::Ident;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
-use crate::scope::{GetIdentError, Scope};
+use crate::scope::Scope;
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::sync::Arc;
 
@@ -40,7 +40,7 @@ pub(crate) enum Expr {
 }
 
 impl<'a> Expr {
-    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<String, I>> {
+    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<FendError, I>> {
         Ok(match self {
             Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
             Self::Literal(v) => v.format_to_plain_string(0, int)?,
@@ -103,7 +103,7 @@ pub(crate) fn evaluate<I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value, IntErr<FendError, I>> {
     macro_rules! eval {
         ($e:expr) => {
             evaluate($e, scope.clone(), context, int)
@@ -116,11 +116,9 @@ pub(crate) fn evaluate<I: Interrupt>(
         Expr::Parens(x) => eval!(*x)?,
         Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
-        Expr::UnaryDiv(x) => eval!(*x)?.handle_num(
-            |x| Number::from(1).div(x, int).map_err(IntErr::into_string),
-            Expr::UnaryDiv,
-            scope,
-        )?,
+        Expr::UnaryDiv(x) => {
+            eval!(*x)?.handle_num(|x| Number::from(1).div(x, int), Expr::UnaryDiv, scope)?
+        }
         Expr::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
@@ -143,7 +141,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::Mul(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
-            |a, b| a.mul(b, int).map_err(IntErr::into_string),
+            |a, b| a.mul(b, int),
             |a| |f| Expr::Mul(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
             |a| |f| Expr::Mul(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
@@ -159,14 +157,14 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
-            |a, b| a.div(b, int).map_err(IntErr::into_string),
+            |a, b| a.div(b, int),
             |a| |f| Expr::Div(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
             |a| |f| Expr::Div(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
         )?,
         Expr::Mod(a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
-            |a, b| a.modulo(b, int).map_err(IntErr::into_string),
+            |a, b| a.modulo(b, int),
             |a| |f| Expr::Mod(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
             |a| |f| Expr::Mod(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
@@ -221,7 +219,7 @@ fn evaluate_add<I: Interrupt>(
     b: Value,
     scope: Option<Arc<Scope>>,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value, IntErr<FendError, I>> {
     Ok(match (a, b) {
         (Value::Num(a), Value::Num(b)) => Value::Num(Box::new(a.add(*b, int)?)),
         (Value::String(a), Value::String(b)) => {
@@ -255,7 +253,7 @@ fn evaluate_as<I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value, IntErr<FendError, I>> {
     if let Expr::Ident(ident) = &b {
         match ident.as_str() {
             "bool" | "boolean" => {
@@ -352,7 +350,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value, IntErr<FendError, I>> {
     macro_rules! eval_box {
         ($input:expr) => {
             Box::new(evaluate_to_value($input, scope.clone(), context, int)?)
@@ -362,10 +360,8 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         match scope.get(ident, context, int) {
             Ok(val) => return Ok(val),
             Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
-            Err(IntErr::Error(GetIdentError::IdentifierNotFound(_))) => (),
-            Err(IntErr::Error(err @ GetIdentError::EvalError(_))) => {
-                return Err(IntErr::Error(err.to_string()))
-            }
+            Err(IntErr::Error(FendError::IdentifierNotFound(_))) => (),
+            Err(IntErr::Error(err)) => return Err(IntErr::Error(err)),
         }
     }
     if let Some(val) = context.variables.get(ident.as_str()) {
@@ -437,9 +433,6 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
             .map_err(|e| e.to_string())?
             .prev()
             .into(),
-        _ => {
-            return crate::units::query_unit(ident.as_str(), context, int)
-                .map_err(IntErr::into_string)
-        }
+        _ => return crate::units::query_unit(ident.as_str(), context, int),
     })
 }

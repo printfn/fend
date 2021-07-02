@@ -18,3 +18,7 @@ pub(crate) trait Format {
         Ok(self.format(&Default::default(), int)?.value)
     }
 }
+
+pub(crate) trait DisplayDebug: fmt::Display + fmt::Debug {}
+
+impl<T: fmt::Display + fmt::Debug> DisplayDebug for T {}
