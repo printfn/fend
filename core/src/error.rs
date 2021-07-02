@@ -73,6 +73,13 @@ impl fmt::Display for FendError {
 
 impl error::Error for FendError {}
 
+// todo remove this impl
+impl<I: Interrupt> From<FendError> for IntErr<String, I> {
+    fn from(e: FendError) -> Self {
+        e.to_string().into()
+    }
+}
+
 pub(crate) trait Error: fmt::Display {}
 
 pub(crate) type Never = convert::Infallible;

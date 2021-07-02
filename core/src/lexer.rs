@@ -34,12 +34,6 @@ pub(crate) enum Symbol {
     Equals, // used for assignment
 }
 
-impl<I: Interrupt> From<FendError> for IntErr<String, I> {
-    fn from(e: FendError) -> Self {
-        e.to_string().into()
-    }
-}
-
 impl fmt::Display for Symbol {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         let s = match self {
