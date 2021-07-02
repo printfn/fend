@@ -110,12 +110,3 @@ impl fmt::Display for IntegerPowerError {
     }
 }
 impl crate::error::Error for IntegerPowerError {}
-
-#[derive(Debug)]
-pub(crate) struct DivideByZero {}
-impl fmt::Display for DivideByZero {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "division by zero")
-    }
-}
-impl crate::error::Error for DivideByZero {}

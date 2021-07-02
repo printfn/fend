@@ -1,9 +1,7 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::interrupt::test_int;
-use crate::num::{
-    Base, DivideByZero, Exact, IntegerPowerError, Range, RangeBound, ValueOutOfRange,
-};
+use crate::num::{Base, Exact, IntegerPowerError, Range, RangeBound, ValueOutOfRange};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
@@ -285,15 +283,15 @@ impl BigUint {
         &self,
         other: &Self,
         int: &I,
-    ) -> Result<(Self, Self), IntErr<DivideByZero, I>> {
+    ) -> Result<(Self, Self), IntErr<FendError, I>> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok((Small(div_res), Small(mod_res)));
             }
-            return Err(DivideByZero {}.into());
+            return Err(FendError::DivideByZero.into());
         }
         if other.is_zero() {
-            return Err(DivideByZero {}.into());
+            return Err(FendError::DivideByZero.into());
         }
         if other == &Self::from(1) {
             return Ok((self.clone(), Self::from(0)));
@@ -397,11 +395,11 @@ impl BigUint {
         Ok(self)
     }
 
-    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(self.divmod(other, int)?.1)
     }
 
-    pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<DivideByZero, I>> {
+    pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<FendError, I>> {
         Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
     }
 
@@ -409,7 +407,7 @@ impl BigUint {
         self,
         other: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<DivideByZero, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         Ok(self.divmod(other, int)?.0)
     }
 
@@ -699,7 +697,7 @@ impl FormattedBigUint {
 #[cfg(test)]
 mod tests {
     use super::BigUint;
-    use crate::error::{IntErr, Never};
+    use crate::error::{FendError, IntErr, Never};
     type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
 
     #[test]
@@ -777,7 +775,7 @@ mod tests {
     }
 
     #[test]
-    fn test_small_division_by_two() -> Res<crate::num::DivideByZero> {
+    fn test_small_division_by_two() -> Res<FendError> {
         let int = &crate::interrupt::Never::default();
         let two = BigUint::from(2);
         assert_eq!(BigUint::from(0).div(&two, int)?, BigUint::from(0));
@@ -793,7 +791,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem() -> Res<crate::num::DivideByZero> {
+    fn test_rem() -> Res<FendError> {
         let int = &crate::interrupt::Never::default();
         let three = BigUint::from(3);
         assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));

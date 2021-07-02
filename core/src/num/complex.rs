@@ -1,7 +1,7 @@
 use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::num::real::{self, Real};
 use crate::num::Exact;
-use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle};
+use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -386,7 +386,7 @@ impl Exact<Complex> {
         self,
         rhs: Self,
         int: &I,
-    ) -> Result<Self, IntErr<DivideByZero, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         // (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
         let (u, v) = self.apply(|x| (x.real, x.imag)).pair();
         let (x, y) = rhs.apply(|x| (x.real, x.imag)).pair();

@@ -2,7 +2,7 @@ use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
-use crate::num::{Base, ConvertToUsizeError, DivideByZero, FormattingStyle, ValueOutOfRange};
+use crate::num::{Base, ConvertToUsizeError, FormattingStyle, ValueOutOfRange};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -434,9 +434,9 @@ impl Exact<Real> {
         self,
         rhs: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<DivideByZero, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if rhs.value.is_zero() {
-            return Err(DivideByZero {}.into());
+            return Err(FendError::DivideByZero.into());
         }
         if self.exact && self.value.is_zero() {
             return Ok(self);

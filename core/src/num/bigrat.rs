@@ -3,8 +3,7 @@ use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{
-    Base, ConvertToUsizeError, DivideByZero, Exact, FormattingStyle, Range, RangeBound,
-    ValueOutOfRange,
+    Base, ConvertToUsizeError, Exact, FormattingStyle, Range, RangeBound, ValueOutOfRange,
 };
 use std::{cmp, fmt, ops};
 
@@ -376,9 +375,9 @@ impl BigRat {
         self,
         rhs: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<DivideByZero, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if rhs.num == 0.into() {
-            return Err(DivideByZero {}.into());
+            return Err(FendError::DivideByZero.into());
         }
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
