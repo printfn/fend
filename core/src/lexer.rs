@@ -211,12 +211,9 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     for _ in 0..num_nonrec_digits {
         recurring_number_den = recurring_number_den.clone().mul(base_as_u64.into(), int)?;
     }
-    *number = number.clone().add(
-        recurring_number_num
-            .div(recurring_number_den, int)
-            .map_err(IntErr::into_string)?,
-        int,
-    )?;
+    *number = number
+        .clone()
+        .add(recurring_number_num.div(recurring_number_den, int)?, int)?;
     // return an error if there are any other characters before the closing parentheses
     let (_, input) = parse_fixed_char(input, ')')?;
     Ok(((), input))
@@ -268,12 +265,7 @@ fn parse_basic_number<'a, I: Interrupt>(
         } else {
             input = remaining;
         }
-        res = res.add(
-            numerator
-                .div(denominator, int)
-                .map_err(IntErr::into_string)?,
-            int,
-        )?;
+        res = res.add(numerator.div(denominator, int)?, int)?;
 
         // try parsing recurring decimals
         let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
