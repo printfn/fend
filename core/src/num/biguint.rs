@@ -1,7 +1,7 @@
 use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::interrupt::test_int;
-use crate::num::{Base, Exact, Range, RangeBound, ValueOutOfRange};
+use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
@@ -56,10 +56,10 @@ impl BigUint {
     pub(crate) fn try_as_usize<I: Interrupt>(
         &self,
         int: &I,
-    ) -> Result<usize, IntErr<ValueOutOfRange<FormattedBigUint, usize>, I>> {
+    ) -> Result<usize, IntErr<FendError, I>> {
         use std::convert::TryFrom;
         let error = || -> Result<_, IntErr<Never, I>> {
-            Ok(ValueOutOfRange(
+            Ok(out_of_range(
                 self.fm(int)?,
                 Range {
                     start: RangeBound::Closed(0),

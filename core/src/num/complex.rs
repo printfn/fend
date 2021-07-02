@@ -1,7 +1,7 @@
 use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::num::real::{self, Real};
 use crate::num::Exact;
-use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
+use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -30,12 +30,9 @@ pub(crate) enum UseParentheses {
 }
 
 impl Complex {
-    pub(crate) fn try_as_usize<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<FendError, I>> {
         if self.imag != 0.into() {
-            return Err(ConvertToUsizeError::ComplexNumber.into());
+            return Err(FendError::ComplexToInteger.into());
         }
         self.real.try_as_usize(int)
     }
@@ -260,15 +257,11 @@ impl Complex {
     }
 
     pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?.asin(int).map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.asin(int)?))
     }
 
     pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?.acos(int).map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.acos(int)?))
     }
 
     pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
@@ -292,39 +285,23 @@ impl Complex {
     }
 
     pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?
-                .acosh(int)
-                .map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.acosh(int)?))
     }
 
     pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?
-                .atanh(int)
-                .map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.atanh(int)?))
     }
 
     pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?.ln(int).map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.ln(int)?))
     }
 
     pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?.log2(int).map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.log2(int)?))
     }
 
     pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
-        Ok(Self::from(
-            self.expect_real()?
-                .log10(int)
-                .map_err(IntErr::into_string)?,
-        ))
+        Ok(Self::from(self.expect_real()?.log10(int)?))
     }
 
     pub(crate) fn is_definitely_one(&self) -> bool {

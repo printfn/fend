@@ -1,5 +1,7 @@
 use std::{convert, error, fmt};
 
+use crate::num::Range;
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub(crate) enum FendError {
@@ -9,8 +11,18 @@ pub(crate) enum FendError {
     DivideByZero,
     ExponentTooLarge,
     ZeroToThePowerOfZero,
+    OutOfRange {
+        value: Box<dyn crate::format::DisplayDebug>,
+        range: Range<Box<dyn crate::format::DisplayDebug>>,
+    },
+    NegativeNumbersNotAllowed,
+    FractionToInteger,
     MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
     ExpectedARationalNumber,
+    CannotConvertToInteger,
+    ComplexToInteger,
+    NumberWithUnitToInt,
+    InexactNumberToInt,
     IdentifierNotFound(crate::ident::Ident),
     ExpectedACharacter,
     ExpectedADigit(char),
@@ -41,12 +53,18 @@ impl fmt::Display for FendError {
             Self::DivideByZero => write!(f, "division by zero"),
             Self::ExponentTooLarge => write!(f, "exponent too large"),
             Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
+            Self::OutOfRange { range, value } => {
+                write!(f, "{} must lie in the interval {}", value, range)
+            }
+            Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
+            Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
-
             Self::ExpectedARationalNumber => write!(f, "expected a rational number"),
-
+            Self::CannotConvertToInteger => write!(f, "number cannot be converted to an integer"),
+            Self::ComplexToInteger => write!(f, "cannot convert complex number to integer"),
+            Self::NumberWithUnitToInt => write!(f, "cannot convert number with unit to integer"),
+            Self::InexactNumberToInt => write!(f, "cannot convert inexact number to integer"),
             Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
-
             Self::ExpectedACharacter => write!(f, "expected a character"),
             Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
             Self::ExpectedChar(ex, fnd) => write!(f, "expected '{}', found '{}'", ex, fnd),
@@ -142,23 +160,6 @@ impl<E, I: Interrupt> IntErr<E, I> {
         match self {
             Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
             Self::Error(_) => panic!("unwrap"),
-        }
-    }
-
-    pub(crate) fn map<F>(self, f: impl FnOnce(E) -> F) -> IntErr<F, I> {
-        match self {
-            Self::Interrupt(i) => IntErr::Interrupt(i),
-            Self::Error(e) => IntErr::Error(f(e)),
-        }
-    }
-}
-
-#[allow(clippy::use_self)]
-impl<E: fmt::Display, I: Interrupt> IntErr<E, I> {
-    pub(crate) fn into_string(self) -> IntErr<String, I> {
-        match self {
-            Self::Interrupt(i) => IntErr::<String, I>::Interrupt(i),
-            Self::Error(e) => IntErr::<String, I>::Error(e.to_string()),
         }
     }
 }

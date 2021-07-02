@@ -1,7 +1,7 @@
 use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::interrupt::test_int;
 use crate::num::complex::{self, Complex, UseParentheses};
-use crate::num::{Base, ConvertToUsizeError, FormattingStyle};
+use crate::num::{Base, FormattingStyle};
 use crate::scope::Scope;
 use crate::{ast, ident::Ident};
 use crate::{Span, SpanKind};
@@ -24,15 +24,12 @@ pub(crate) struct Value {
 }
 
 impl Value {
-    pub(crate) fn try_as_usize<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<FendError, I>> {
         if !self.is_unitless() {
-            return Err(ConvertToUsizeError::NumberWithUnit.into());
+            return Err(FendError::NumberWithUnitToInt.into());
         }
         if !self.exact {
-            return Err(ConvertToUsizeError::InexactNumber.into());
+            return Err(FendError::InexactNumberToInt.into());
         }
         self.value.try_as_usize(int)
     }

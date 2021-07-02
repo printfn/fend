@@ -11,16 +11,30 @@ mod unit;
 
 pub(crate) use formatting_style::FormattingStyle;
 
+use crate::error::FendError;
+
 pub(crate) type Number = unit::Value;
 pub(crate) type Base = base::Base;
 pub(crate) type Exact<T> = exact::Exact<T>;
 
+#[derive(Debug)]
 pub(crate) enum RangeBound<T> {
     None,
     Open(T),
     Closed(T),
 }
 
+impl<T: fmt::Display + fmt::Debug + 'static> RangeBound<T> {
+    fn into_dyn(self) -> RangeBound<Box<dyn crate::format::DisplayDebug>> {
+        match self {
+            Self::None => RangeBound::None,
+            Self::Open(v) => RangeBound::Open(Box::new(v)),
+            Self::Closed(v) => RangeBound::Closed(Box::new(v)),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub(crate) struct Range<T> {
     start: RangeBound<T>,
     end: RangeBound<T>,
@@ -58,39 +72,15 @@ impl<T: fmt::Display> fmt::Display for Range<T> {
     }
 }
 
-#[allow(clippy::pub_enum_variant_names)]
-pub(crate) struct ValueOutOfRange<T: fmt::Display, U: fmt::Display>(T, Range<U>);
-
-impl<T: fmt::Display, U: fmt::Display> fmt::Display for ValueOutOfRange<T, U> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "{} must lie in the interval {}", self.0, self.1)
+fn out_of_range<T: fmt::Display + fmt::Debug + 'static, U: fmt::Display + fmt::Debug + 'static>(
+    value: T,
+    range: Range<U>,
+) -> FendError {
+    FendError::OutOfRange {
+        value: Box::new(value),
+        range: Range {
+            start: range.start.into_dyn(),
+            end: range.end.into_dyn(),
+        },
     }
 }
-
-impl<T: fmt::Display, U: fmt::Display> crate::error::Error for ValueOutOfRange<T, U> {}
-
-pub(crate) enum ConvertToUsizeError {
-    OutOfRange(ValueOutOfRange<biguint::FormattedBigUint, usize>),
-    NegativeNumber,
-    Fraction,
-    InvalidRealNumber,
-    ComplexNumber,
-    NumberWithUnit,
-    InexactNumber,
-}
-
-impl fmt::Display for ConvertToUsizeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        match self {
-            Self::OutOfRange(value_out_of_range_error) => write!(f, "{}", value_out_of_range_error),
-            Self::NegativeNumber => write!(f, "negative numbers are not allowed"),
-            Self::Fraction => write!(f, "cannot convert fraction to integer"),
-            Self::InvalidRealNumber => write!(f, "number cannot be converted to an integer"),
-            Self::ComplexNumber => write!(f, "cannot convert complex number to integer"),
-            Self::NumberWithUnit => write!(f, "cannot convert number with unit to integer"),
-            Self::InexactNumber => write!(f, "cannot convert inexact number to integer"),
-        }
-    }
-}
-
-impl crate::error::Error for ConvertToUsizeError {}

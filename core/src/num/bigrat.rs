@@ -2,9 +2,7 @@ use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
-use crate::num::{
-    Base, ConvertToUsizeError, Exact, FormattingStyle, Range, RangeBound, ValueOutOfRange,
-};
+use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use std::{cmp, fmt, ops};
 
 mod sign {
@@ -36,6 +34,7 @@ mod sign {
 }
 
 use super::biguint::{self, FormattedBigUint};
+use super::out_of_range;
 use sign::Sign;
 
 #[derive(Clone)]
@@ -90,17 +89,17 @@ impl BigRat {
     pub(crate) fn try_as_usize<I: Interrupt>(
         mut self,
         int: &I,
-    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
+    ) -> Result<usize, IntErr<FendError, I>> {
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err(ConvertToUsizeError::NegativeNumber.into());
+            return Err(FendError::NegativeNumbersNotAllowed.into());
         }
         self = self.simplify(int)?;
         if self.den != 1.into() {
-            return Err(ConvertToUsizeError::Fraction.into());
+            return Err(FendError::FractionToInteger.into());
         }
         match self.num.try_as_usize(int) {
             Ok(res) => Ok(res),
-            Err(e) => Err(e.map(ConvertToUsizeError::OutOfRange)),
+            Err(e) => Err(e),
         }
     }
 
@@ -152,24 +151,18 @@ impl BigRat {
     }
 
     // asin, acos and atan only work for values between -1 and 1
-    pub(crate) fn asin<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
-        let one: Self = 1.into();
+    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+        let one = Self::from(1);
         if self > one || self < -one {
-            return Err(ValueOutOfRange(self.fm(int)?, Range::open(-1, 1)).into());
+            return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)).into());
         }
         Ok(Self::from_f64(f64::asin(self.into_f64(int)?), int)?)
     }
 
-    pub(crate) fn acos<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
-        let one: Self = 1.into();
+    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+        let one = Self::from(1);
         if self > one || self < -one {
-            return Err(ValueOutOfRange(self.fm(int)?, Range::open(-1, 1)).into());
+            return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)).into());
         }
         Ok(Self::from_f64(f64::acos(self.into_f64(int)?), int)?)
     }
@@ -196,12 +189,9 @@ impl BigRat {
     }
 
     // value must not be less than 1
-    pub(crate) fn acosh<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if self < 1.into() {
-            return Err(ValueOutOfRange(
+            return Err(out_of_range(
                 self.fm(int)?,
                 Range {
                     start: RangeBound::Closed(1),
@@ -214,24 +204,18 @@ impl BigRat {
     }
 
     // value must be between -1 and 1.
-    pub(crate) fn atanh<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         let one: Self = 1.into();
         if self >= one || self <= -one {
-            return Err(ValueOutOfRange(self.fm(int)?, Range::open(-1, 1)).into());
+            return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)).into());
         }
         Ok(Self::from_f64(f64::atanh(self.into_f64(int)?), int)?)
     }
 
     // For all logs: value must be greater than 0
-    pub(crate) fn ln<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange(
+            return Err(out_of_range(
                 self.fm(int)?,
                 Range {
                     start: RangeBound::Open(0),
@@ -243,12 +227,9 @@ impl BigRat {
         Ok(Self::from_f64(f64::ln(self.into_f64(int)?), int)?)
     }
 
-    pub(crate) fn log2<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange(
+            return Err(out_of_range(
                 self.fm(int)?,
                 Range {
                     start: RangeBound::Open(0),
@@ -260,12 +241,9 @@ impl BigRat {
         Ok(Self::from_f64(f64::log2(self.into_f64(int)?), int)?)
     }
 
-    pub(crate) fn log10<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if self <= 0.into() {
-            return Err(ValueOutOfRange(
+            return Err(out_of_range(
                 self.fm(int)?,
                 Range {
                     start: RangeBound::Open(0),
@@ -284,7 +262,7 @@ impl BigRat {
             return Err(FendError::MustBeAnInteger(Box::new(n)).into());
         }
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err(ValueOutOfRange(self.fm(int)?, Range::ZERO_OR_GREATER)
+            return Err(out_of_range(self.fm(int)?, Range::ZERO_OR_GREATER)
                 .to_string()
                 .into());
         }

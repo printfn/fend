@@ -2,7 +2,7 @@ use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
-use crate::num::{Base, ConvertToUsizeError, FormattingStyle, ValueOutOfRange};
+use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
@@ -78,17 +78,14 @@ impl Real {
         }
     }
 
-    pub(crate) fn try_as_usize<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<usize, IntErr<ConvertToUsizeError, I>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<FendError, I>> {
         match self.pattern {
             Pattern::Simple(s) => s.try_as_usize(int),
             Pattern::Pi(n) => {
                 if n == 0.into() {
                     Ok(0)
                 } else {
-                    Err(ConvertToUsizeError::InvalidRealNumber.into())
+                    Err(FendError::CannotConvertToInteger.into())
                 }
             }
         }
@@ -132,17 +129,11 @@ impl Real {
         })
     }
 
-    pub(crate) fn asin<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.asin(int)?))
     }
 
-    pub(crate) fn acos<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 
@@ -166,39 +157,24 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.asinh(int)?))
     }
 
-    pub(crate) fn acosh<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.acosh(int)?))
     }
 
-    pub(crate) fn atanh<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.atanh(int)?))
     }
 
     // For all logs: value must be greater than 0
-    pub(crate) fn ln<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.ln(int)?))
     }
 
-    pub(crate) fn log2<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.log2(int)?))
     }
 
-    pub(crate) fn log10<I: Interrupt>(
-        self,
-        int: &I,
-    ) -> Result<Self, IntErr<ValueOutOfRange<FormattedBigRat, i32>, I>> {
+    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.log10(int)?))
     }
 
