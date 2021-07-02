@@ -6,6 +6,22 @@ pub(crate) enum FendError {
     InvalidBasePrefix,
     BaseTooSmall,
     BaseTooLarge,
+
+    ExpectedACharacter,
+    ExpectedADigit(char),
+    ExpectedChar(char, char),
+    ExpectedDigitSeparator(char),
+    DigitSeparatorsNotAllowed,
+    DigitSeparatorsOnlyBetweenDigits,
+    InvalidCharAtBeginningOfIdent(char),
+    UnexpectedChar(char),
+    UnterminatedStringLiteral,
+    UnknownBackslashEscapeSequence(char),
+    BackslashXOutOfRange,
+    ExpectedALetterOrCode,
+    InvalidUnicodeEscapeSequence,
+    // todo remove this
+    NumberParse(String),
 }
 
 impl fmt::Display for FendError {
@@ -17,6 +33,40 @@ impl fmt::Display for FendError {
             ),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
+            Self::ExpectedACharacter => write!(f, "expected a character"),
+            Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
+            Self::ExpectedChar(ex, fnd) => write!(f, "expected '{}', found '{}'", ex, fnd),
+            Self::ExpectedDigitSeparator(ch) => {
+                write!(f, "expected a digit separator, found {}", ch)
+            }
+            Self::DigitSeparatorsNotAllowed => write!(f, "digit separators are not allowed"),
+            Self::DigitSeparatorsOnlyBetweenDigits => {
+                write!(f, "digit separators can only occur between digits")
+            }
+            Self::InvalidCharAtBeginningOfIdent(ch) => {
+                write!(f, "'{}' is not valid at the beginning of an identifier", ch)
+            }
+            Self::UnexpectedChar(ch) => write!(f, "unexpected character '{}'", ch),
+            Self::NumberParse(s) => write!(f, "{}", s),
+            Self::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
+            Self::UnknownBackslashEscapeSequence(ch) => {
+                write!(f, "unknown escape sequence: \\{}", ch)
+            }
+            Self::BackslashXOutOfRange => {
+                write!(f, "expected an escape sequence between \\x00 and \\x7f")
+            }
+            Self::ExpectedALetterOrCode => {
+                write!(
+                    f,
+                    "expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
+                )
+            }
+            Self::InvalidUnicodeEscapeSequence => {
+                write!(
+                    f,
+                    "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
+                )
+            }
         }
     }
 }
