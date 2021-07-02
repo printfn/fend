@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::interrupt::test_int;
 use crate::num::complex::{self, Complex, UseParentheses};
 use crate::num::{Base, FormattingStyle};
@@ -484,7 +484,10 @@ impl Value {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, IntErr<Never, I>> {
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        int: &I,
+    ) -> Result<FormattedValue, IntErr<FendError, I>> {
         let use_parentheses = if self.unit.components.is_empty() {
             UseParentheses::No
         } else {
@@ -872,7 +875,7 @@ impl Unit {
         format: FormattingStyle,
         consider_printing_space: bool,
         int: &I,
-    ) -> Result<Exact<String>, IntErr<Never, I>> {
+    ) -> Result<Exact<String>, IntErr<FendError, I>> {
         let mut unit_string = String::new();
         if self.components.is_empty() {
             unit_string.push_str(unitless);
@@ -968,7 +971,7 @@ impl UnitExponent {
         plural: bool,
         invert_exp: bool,
         int: &I,
-    ) -> Result<Exact<FormattedExponent<'_>>, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedExponent<'_>>, IntErr<FendError, I>> {
         let name = if plural {
             &self.unit.plural_name
         } else {

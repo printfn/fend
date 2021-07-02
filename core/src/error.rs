@@ -5,6 +5,7 @@ use crate::num::Range;
 #[derive(Debug)]
 #[non_exhaustive]
 pub(crate) enum FendError {
+    Interrupted,
     InvalidBasePrefix,
     BaseTooSmall,
     BaseTooLarge,
@@ -44,6 +45,7 @@ pub(crate) enum FendError {
 impl fmt::Display for FendError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Interrupted => write!(f, "interrupted"),
             Self::InvalidBasePrefix => write!(
                 f,
                 "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
@@ -143,19 +145,12 @@ pub(crate) trait Error: fmt::Display {}
 pub(crate) type Never = convert::Infallible;
 
 pub(crate) enum IntErr<E, I: Interrupt> {
-    Interrupt(I::Int),
+    Interrupt(I),
     Error(E),
 }
 
 #[allow(clippy::use_self)]
 impl<E, I: Interrupt> IntErr<E, I> {
-    pub(crate) fn expect(self, msg: &'static str) -> IntErr<Never, I> {
-        match self {
-            Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
-            Self::Error(_) => panic!("{}", msg),
-        }
-    }
-
     pub(crate) fn unwrap(self) -> IntErr<Never, I> {
         match self {
             Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
@@ -183,7 +178,7 @@ impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
 impl<E: fmt::Debug, I: Interrupt> fmt::Debug for IntErr<E, I> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
-            Self::Interrupt(i) => write!(f, "{:?}", i)?,
+            Self::Interrupt(_) => write!(f, "interrupt")?,
             Self::Error(e) => write!(f, "{:?}", e)?,
         }
         Ok(())
@@ -193,23 +188,13 @@ impl<E: fmt::Debug, I: Interrupt> fmt::Debug for IntErr<E, I> {
 impl Error for String {}
 
 pub(crate) trait Interrupt {
-    type Int: fmt::Debug;
-    fn test(&self) -> Result<(), Self::Int>;
+    fn test(&self) -> Result<(), ()>;
 }
 
 #[derive(Default)]
 pub(crate) struct NeverInterrupt {}
 impl Interrupt for NeverInterrupt {
-    type Int = convert::Infallible;
-    fn test(&self) -> Result<(), Self::Int> {
-        Ok(())
-    }
-}
-
-pub(crate) struct PossibleInterrupt {}
-impl Interrupt for PossibleInterrupt {
-    type Int = ();
-    fn test(&self) -> Result<(), Self::Int> {
+    fn test(&self) -> Result<(), ()> {
         Ok(())
     }
 }

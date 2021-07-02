@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
@@ -66,7 +66,7 @@ impl PartialEq for Real {
 impl Eq for Real {}
 
 impl Real {
-    fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, IntErr<Never, I>> {
+    fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, IntErr<FendError, I>> {
         match self.pattern {
             Pattern::Simple(s) => Ok(s),
             Pattern::Pi(n) => {
@@ -92,7 +92,7 @@ impl Real {
     }
 
     // sin works for all real numbers
-    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
+    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         Ok(match self.pattern {
             Pattern::Simple(s) => s.sin(int)?.apply(Self::from),
             Pattern::Pi(n) => {
@@ -113,12 +113,10 @@ impl Real {
                         return Ok(Exact::new(-Self::from(1), true));
                     } else if integer % 12 == 1 || integer % 12 == 5 {
                         return Exact::new(Self::from(1), true)
-                            .div(&Exact::new(2.into(), true), int)
-                            .map_err(IntErr::unwrap);
+                            .div(&Exact::new(2.into(), true), int);
                     } else if integer % 12 == 7 || integer % 12 == 11 {
                         return Exact::new(-Self::from(1), true)
-                            .div(&Exact::new(2.into(), true), int)
-                            .map_err(IntErr::unwrap);
+                            .div(&Exact::new(2.into(), true), int);
                     }
                 }
                 let s = Self {
@@ -137,23 +135,23 @@ impl Real {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 
-    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.atan(int)?))
     }
 
-    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.sinh(int)?))
     }
 
-    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.cosh(int)?))
     }
 
-    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.tanh(int)?))
     }
 
-    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self::from(self.approximate(int)?.asinh(int)?))
     }
 
@@ -189,7 +187,7 @@ impl Real {
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<Exact<Formatted>, IntErr<Never, I>> {
+    ) -> Result<Exact<Formatted>, IntErr<FendError, I>> {
         let mut pi = false;
         if style == FormattingStyle::Exact && !self.is_zero() {
             if let Pattern::Pi(_) = self.pattern {
@@ -341,7 +339,11 @@ impl Real {
 
 #[allow(clippy::use_self)]
 impl Exact<Real> {
-    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn add<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         if self.exact && self.value.is_zero() {
             return Ok(rhs);
         } else if rhs.exact && rhs.value.is_zero() {
@@ -372,7 +374,7 @@ impl Exact<Real> {
         self,
         rhs: Exact<&Real>,
         int: &I,
-    ) -> Result<Self, IntErr<Never, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if self.exact && self.value.is_zero() {
             return Ok(self);
         } else if rhs.exact && rhs.value.is_zero() {

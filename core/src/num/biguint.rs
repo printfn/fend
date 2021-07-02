@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
@@ -58,7 +58,7 @@ impl BigUint {
         int: &I,
     ) -> Result<usize, IntErr<FendError, I>> {
         use std::convert::TryFrom;
-        let error = || -> Result<_, IntErr<Never, I>> {
+        let error = || -> Result<_, IntErr<FendError, I>> {
             Ok(out_of_range(
                 self.fm(int)?,
                 Range {
@@ -162,11 +162,9 @@ impl BigUint {
         mut a: Self,
         mut b: Self,
         int: &I,
-    ) -> Result<Self, IntErr<Never, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         while b >= 1.into() {
-            let r = a
-                .rem(&b, int)
-                .map_err(|e| e.expect("unexpected division by zero"))?;
+            let r = a.rem(&b, int)?;
             a = b;
             b = r;
         }
@@ -188,7 +186,7 @@ impl BigUint {
         if b.value_len() > 1 {
             return Err(FendError::ExponentTooLarge.into());
         }
-        Ok(a.pow_internal(b.get(0), int)?)
+        a.pow_internal(b.get(0), int)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
@@ -221,7 +219,7 @@ impl BigUint {
         &self,
         mut exponent: u64,
         int: &I,
-    ) -> Result<Self, IntErr<Never, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
@@ -235,7 +233,7 @@ impl BigUint {
         Ok(result)
     }
 
-    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<Never, I>> {
+    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<FendError, I>> {
         match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
@@ -260,7 +258,7 @@ impl BigUint {
         Ok(())
     }
 
-    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<Never, I>> {
+    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<FendError, I>> {
         match self {
             Small(n) => *n >>= 1,
             Large(value) => {
@@ -334,7 +332,7 @@ impl BigUint {
         &mut self,
         other: &Self,
         int: &I,
-    ) -> Result<(), IntErr<Never, I>> {
+    ) -> Result<(), IntErr<FendError, I>> {
         if self.is_zero() || other.is_zero() {
             *self = Self::from(0);
             return Ok(());
@@ -371,7 +369,7 @@ impl BigUint {
     }
 
     // Note: 0! = 1, 1! = 1
-    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
@@ -385,7 +383,7 @@ impl BigUint {
         mut self,
         other: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<Never, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if let (Small(a), Small(b)) = (&self, &other) {
             if let Some(res) = a.checked_mul(*b) {
                 return Ok(Self::from(res));
@@ -548,7 +546,7 @@ impl Default for FormatOptions {
 impl Format for BigUint {
     type Params = FormatOptions;
     type Out = FormattedBigUint;
-    type Error = Never;
+    type Error = FendError;
 
     fn format<I: Interrupt>(
         &self,
@@ -602,9 +600,7 @@ impl Format for BigUint {
                 let mut output = String::with_capacity(rounds);
                 while !num.is_zero() {
                     test_int(int)?;
-                    let divmod_res = num
-                        .divmod(&divisor, int)
-                        .map_err(|e| e.expect("division by zero is not allowed"))?;
+                    let divmod_res = num.divmod(&divisor, int)?;
                     let mut digit_group_value =
                         u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
                     for _ in 0..rounds {
@@ -697,14 +693,14 @@ impl FormattedBigUint {
 #[cfg(test)]
 mod tests {
     use super::BigUint;
-    use crate::error::{FendError, IntErr, Never};
-    type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
+    use crate::error::{FendError, IntErr};
+    type Res = Result<(), IntErr<FendError, crate::interrupt::Never>>;
 
     #[test]
-    fn test_sqrt() -> Res<FendError> {
+    fn test_sqrt() -> Res {
         let two = &BigUint::from(2);
         let int = crate::interrupt::Never::default();
-        let test_sqrt_inner = |n, expected_root, exact| -> Res<FendError> {
+        let test_sqrt_inner = |n, expected_root, exact| -> Res {
             let actual = BigUint::from(n).root_n(two, &int)?;
             assert_eq!(actual.value, BigUint::from(expected_root));
             assert_eq!(actual.exact, exact);
@@ -775,7 +771,7 @@ mod tests {
     }
 
     #[test]
-    fn test_small_division_by_two() -> Res<FendError> {
+    fn test_small_division_by_two() -> Res {
         let int = &crate::interrupt::Never::default();
         let two = BigUint::from(2);
         assert_eq!(BigUint::from(0).div(&two, int)?, BigUint::from(0));
@@ -791,7 +787,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem() -> Res<FendError> {
+    fn test_rem() -> Res {
         let int = &crate::interrupt::Never::default();
         let three = BigUint::from(3);
         assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));

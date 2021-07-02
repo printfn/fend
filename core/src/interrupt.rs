@@ -1,12 +1,11 @@
-use crate::error::IntErr;
+use crate::error::FendError;
 
 pub trait Interrupt {
     fn should_interrupt(&self) -> bool;
 }
 
 impl<T: Interrupt> crate::error::Interrupt for T {
-    type Int = ();
-    fn test(&self) -> Result<(), Self::Int> {
+    fn test(&self) -> Result<(), ()> {
         if self.should_interrupt() {
             Err(())
         } else {
@@ -15,11 +14,9 @@ impl<T: Interrupt> crate::error::Interrupt for T {
     }
 }
 
-pub(crate) fn test_int<I: crate::error::Interrupt>(
-    int: &I,
-) -> Result<(), IntErr<crate::error::Never, I>> {
-    if let Err(i) = int.test() {
-        Err(IntErr::Interrupt(i))
+pub(crate) fn test_int<I: crate::error::Interrupt>(int: &I) -> Result<(), FendError> {
+    if let Err(()) = int.test() {
+        Err(FendError::Interrupted)
     } else {
         Ok(())
     }

@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
@@ -104,7 +104,7 @@ impl BigRat {
     }
 
     #[allow(clippy::float_arithmetic)]
-    pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, IntErr<Never, I>> {
+    pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, IntErr<FendError, I>> {
         self = self.simplify(int)?;
         let positive_result = self.num.as_f64() / self.den.as_f64();
         if self.sign == Sign::Positive {
@@ -121,7 +121,10 @@ impl BigRat {
         clippy::cast_sign_loss,
         clippy::cast_precision_loss
     )]
-    pub(crate) fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn from_f64<I: Interrupt>(
+        mut f: f64,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         let negative = f < 0.0;
         if negative {
             f = -f;
@@ -142,7 +145,7 @@ impl BigRat {
     }
 
     // sin works for all real numbers
-    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<Never, I>> {
+    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         Ok(if self == 0.into() {
             Exact::new(Self::from(0), true)
         } else {
@@ -156,7 +159,7 @@ impl BigRat {
         if self > one || self < -one {
             return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)).into());
         }
-        Ok(Self::from_f64(f64::asin(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::asin(self.into_f64(int)?), int)
     }
 
     pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
@@ -164,27 +167,27 @@ impl BigRat {
         if self > one || self < -one {
             return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)).into());
         }
-        Ok(Self::from_f64(f64::acos(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::acos(self.into_f64(int)?), int)
     }
 
     // note that this works for any real number, unlike asin and acos
-    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Self::from_f64(f64::atan(self.into_f64(int)?), int)
     }
 
-    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Self::from_f64(f64::sinh(self.into_f64(int)?), int)
     }
 
-    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Self::from_f64(f64::cosh(self.into_f64(int)?), int)
     }
 
-    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Self::from_f64(f64::tanh(self.into_f64(int)?), int)
     }
 
-    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         Self::from_f64(f64::asinh(self.into_f64(int)?), int)
     }
 
@@ -200,7 +203,7 @@ impl BigRat {
             )
             .into());
         }
-        Ok(Self::from_f64(f64::acosh(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::acosh(self.into_f64(int)?), int)
     }
 
     // value must be between -1 and 1.
@@ -209,7 +212,7 @@ impl BigRat {
         if self >= one || self <= -one {
             return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)).into());
         }
-        Ok(Self::from_f64(f64::atanh(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::atanh(self.into_f64(int)?), int)
     }
 
     // For all logs: value must be greater than 0
@@ -224,7 +227,7 @@ impl BigRat {
             )
             .into());
         }
-        Ok(Self::from_f64(f64::ln(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::ln(self.into_f64(int)?), int)
     }
 
     pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
@@ -238,7 +241,7 @@ impl BigRat {
             )
             .into());
         }
-        Ok(Self::from_f64(f64::log2(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::log2(self.into_f64(int)?), int)
     }
 
     pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
@@ -252,7 +255,7 @@ impl BigRat {
             )
             .into());
         }
-        Ok(Self::from_f64(f64::log10(self.into_f64(int)?), int)?)
+        Self::from_f64(f64::log10(self.into_f64(int)?), int)
     }
 
     pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<FendError, I>> {
@@ -274,7 +277,7 @@ impl BigRat {
     }
 
     /// compute a + b
-    fn add_internal<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    fn add_internal<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         // a + b == -((-a) + (-b))
         if self.sign == Sign::Negative {
             return Ok(-((-self).add_internal(-rhs, int)?));
@@ -339,7 +342,7 @@ impl BigRat {
         })
     }
 
-    fn simplify<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    fn simplify<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<FendError, I>> {
         if self.den == 1.into() {
             return Ok(self);
         }
@@ -396,7 +399,7 @@ impl BigRat {
         &self,
         base: Base,
         int: &I,
-    ) -> Result<bool, IntErr<Never, I>> {
+    ) -> Result<bool, IntErr<FendError, I>> {
         let mut x = self.clone();
         let base_as_u64: u64 = base.base_as_u8().into();
         let base = Self {
@@ -423,7 +426,7 @@ impl BigRat {
         use_parens_if_product: bool,
         sf_limit: Option<usize>,
         int: &I,
-    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedBigRat>, IntErr<FendError, I>> {
         let (ty, exact) = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
             (FormattedBigRatType::Integer(None, false, term, false), true)
         } else {
@@ -457,7 +460,7 @@ impl BigRat {
         mixed: bool,
         use_parens: bool,
         int: &I,
-    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedBigRat>, IntErr<FendError, I>> {
         let format_options = biguint::FormatOptions {
             base,
             write_base_prefix: true,
@@ -525,9 +528,9 @@ impl BigRat {
         base: Base,
         sign: Sign,
         term: &'static str,
-        mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
+        mut terminating: impl FnMut() -> Result<bool, IntErr<FendError, I>>,
         int: &I,
-    ) -> Result<Exact<FormattedBigRat>, IntErr<Never, I>> {
+    ) -> Result<Exact<FormattedBigRat>, IntErr<FendError, I>> {
         let integer_part = self
             .clone()
             .num
@@ -623,31 +626,29 @@ impl BigRat {
         numerator: &BigUint,
         denominator: &BigUint,
         max_digits: MaxDigitsToPrint,
-        mut terminating: impl FnMut() -> Result<bool, IntErr<Never, I>>,
-        print_integer_part: impl Fn(bool) -> Result<(Sign, String), IntErr<Never, I>>,
+        mut terminating: impl FnMut() -> Result<bool, IntErr<FendError, I>>,
+        print_integer_part: impl Fn(bool) -> Result<(Sign, String), IntErr<FendError, I>>,
         int: &I,
-    ) -> Result<(Sign, Exact<String>), IntErr<Never, I>> {
+    ) -> Result<(Sign, Exact<String>), IntErr<FendError, I>> {
         let base_as_u64: u64 = base.base_as_u8().into();
         let b: BigUint = base_as_u64.into();
-        let next_digit = |i: usize,
-                          num: BigUint,
-                          base: &BigUint|
-         -> Result<(BigUint, BigUint), NextDigitErr<I>> {
-            test_int(int)?;
-            if num == 0.into()
-                || max_digits == MaxDigitsToPrint::DecimalPlaces(i)
-                || max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
-            {
-                return Err(NextDigitErr::Terminated);
-            }
-            // digit = base * numerator / denominator
-            // next_numerator = base * numerator - digit * denominator
-            let bnum = num.mul(base, int)?;
-            let digit = bnum.clone().div(denominator, int).map_err(IntErr::unwrap)?;
-            let next_num = bnum.sub(&digit.clone().mul(denominator, int)?);
-            Ok((next_num, digit))
-        };
-        let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<Never, I>> {
+        let next_digit =
+            |i: usize, num: BigUint, base: &BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
+                test_int(int)?;
+                if num == 0.into()
+                    || max_digits == MaxDigitsToPrint::DecimalPlaces(i)
+                    || max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
+                {
+                    return Err(NextDigitErr::Terminated);
+                }
+                // digit = base * numerator / denominator
+                // next_numerator = base * numerator - digit * denominator
+                let bnum = num.mul(base, int)?;
+                let digit = bnum.clone().div(denominator, int)?;
+                let next_num = bnum.sub(&digit.clone().mul(denominator, int)?);
+                Ok((next_num, digit))
+            };
+        let fold_digits = |mut s: String, digit: BigUint| -> Result<String, IntErr<FendError, I>> {
             let digit_str = digit
                 .format(
                     &biguint::FormatOptions {
@@ -698,7 +699,7 @@ impl BigRat {
             Err(NextDigitErr::Terminated) => {
                 panic!("decimal number terminated unexpectedly");
             }
-            Err(NextDigitErr::Interrupt(i)) => Err(i),
+            Err(NextDigitErr::Error(e)) => Err(e.into()),
         }
     }
 
@@ -706,14 +707,10 @@ impl BigRat {
         numerator: &BigUint,
         base: Base,
         ignore_number_of_leading_zeroes: bool,
-        mut next_digit: impl FnMut(
-            usize,
-            BigUint,
-            &BigUint,
-        ) -> Result<(BigUint, BigUint), NextDigitErr<I>>,
-        print_integer_part: impl Fn(bool) -> Result<(Sign, String), IntErr<Never, I>>,
+        mut next_digit: impl FnMut(usize, BigUint, &BigUint) -> Result<(BigUint, BigUint), NextDigitErr>,
+        print_integer_part: impl Fn(bool) -> Result<(Sign, String), IntErr<FendError, I>>,
         int: &I,
-    ) -> Result<(Sign, Exact<String>), IntErr<Never, I>> {
+    ) -> Result<(Sign, Exact<String>), IntErr<FendError, I>> {
         let mut current_numerator = numerator.clone();
         let mut i = 0;
         let mut trailing_zeroes = 0;
@@ -772,8 +769,8 @@ impl BigRat {
                     let exact = current_numerator == 0.into();
                     return Ok((sign, Exact::new(trailing_digits, exact)));
                 }
-                Err(NextDigitErr::Interrupt(i)) => {
-                    return Err(i);
+                Err(NextDigitErr::Error(e)) => {
+                    return Err(e.into());
                 }
             }
         }
@@ -961,7 +958,11 @@ impl BigRat {
         Ok(Exact::new(num_rat.div(&den_rat, int)?, false))
     }
 
-    pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(
+        self,
+        rhs: &Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         Ok(Self {
             sign: Sign::sign_of_product(self.sign, rhs.sign),
             num: self.num.mul(&rhs.num, int)?,
@@ -969,7 +970,11 @@ impl BigRat {
         })
     }
 
-    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn add<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         self.add_internal(rhs, int)
     }
 
@@ -981,14 +986,23 @@ impl BigRat {
         self.sign == Sign::Positive && self.num.is_definitely_one() && self.den.is_definitely_one()
     }
 }
-enum NextDigitErr<I: Interrupt> {
-    Interrupt(IntErr<Never, I>),
+enum NextDigitErr {
+    Error(FendError),
     Terminated,
 }
 
-impl<I: Interrupt> From<IntErr<Never, I>> for NextDigitErr<I> {
-    fn from(i: IntErr<Never, I>) -> Self {
-        Self::Interrupt(i)
+impl<I: Interrupt> From<IntErr<FendError, I>> for NextDigitErr {
+    fn from(e: IntErr<FendError, I>) -> Self {
+        match e {
+            IntErr::Interrupt(_) => Self::Error(FendError::Interrupted),
+            IntErr::Error(e) => Self::Error(e),
+        }
+    }
+}
+
+impl From<FendError> for NextDigitErr {
+    fn from(e: FendError) -> Self {
+        Self::Error(e)
     }
 }
 
@@ -1054,7 +1068,7 @@ impl Default for FormatOptions {
 impl Format for BigRat {
     type Params = FormatOptions;
     type Out = FormattedBigRat;
-    type Error = Never;
+    type Error = FendError;
 
     // Formats as an integer if possible, or a terminating float, otherwise as
     // either a fraction or a potentially approximated floating-point number.
@@ -1214,7 +1228,7 @@ impl fmt::Display for FormattedBigRat {
 mod tests {
     use super::sign::Sign;
     use super::BigRat;
-    use crate::error::{IntErr, Never};
+    use crate::error::{FendError, IntErr};
     use crate::num::biguint::BigUint;
 
     #[test]
@@ -1226,7 +1240,7 @@ mod tests {
     }
 
     #[test]
-    fn test_addition() -> Result<(), IntErr<Never, crate::interrupt::Never>> {
+    fn test_addition() -> Result<(), IntErr<FendError, crate::interrupt::Never>> {
         let int = &crate::interrupt::Never::default();
         let two = BigRat::from(2);
         assert_eq!(two.clone().add(two, int)?, BigRat::from(4));

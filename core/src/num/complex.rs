@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt, Never};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::num::real::{self, Real};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
@@ -143,7 +143,7 @@ impl Complex {
         base: Base,
         use_parentheses: UseParentheses,
         int: &I,
-    ) -> Result<Exact<Formatted>, IntErr<Never, I>> {
+    ) -> Result<Exact<Formatted>, IntErr<FendError, I>> {
         let style = if !exact && style == FormattingStyle::Auto {
             FormattingStyle::DecimalPlaces(10)
         } else if self.imag != 0.into() && style == FormattingStyle::Auto {
@@ -321,7 +321,11 @@ impl Complex {
 
 #[allow(clippy::use_self)]
 impl Exact<Complex> {
-    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn add<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         let (self_real, self_imag) = self.apply(|x| (x.real, x.imag)).pair();
         let (rhs_real, rhs_imag) = rhs.apply(|x| (x.real, x.imag)).pair();
         let real = self_real.add(rhs_real, int)?;
@@ -335,7 +339,11 @@ impl Exact<Complex> {
         ))
     }
 
-    pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(
+        self,
+        rhs: &Self,
+        int: &I,
+    ) -> Result<Self, IntErr<FendError, I>> {
         // (a + bi) * (c + di)
         //     => ac + bci + adi - bd
         //     => (ac - bd) + (bc + ad)i
