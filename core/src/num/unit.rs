@@ -123,8 +123,7 @@ impl Value {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
             .mul(&scale_factor.scale_1, int)?
-            .div(scale_factor.scale_2, int)
-            .map_err(IntErr::into_string)?;
+            .div(scale_factor.scale_2, int)?;
         let value = Exact::new(self.value, self.exact).add(scaled, int)?;
         Ok(Self {
             value: value.value,
@@ -150,8 +149,7 @@ impl Value {
         let new_value = Exact::new(self.value, self.exact)
             .mul(&scale_factor.scale_1, int)?
             .add(scale_factor.offset, int)?
-            .div(scale_factor.scale_2, int)
-            .map_err(IntErr::into_string)?;
+            .div(scale_factor.scale_2, int)?;
         Ok(Self {
             value: new_value.value,
             unit: rhs.unit,
@@ -170,8 +168,7 @@ impl Value {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
             .mul(&scale_factor.scale_1, int)?
-            .div(scale_factor.scale_2, int)
-            .map_err(IntErr::into_string)?;
+            .div(scale_factor.scale_2, int)?;
         let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
         Ok(Self {
             value: value.value,
@@ -195,9 +192,8 @@ impl Value {
                 -rhs_component.exponent,
             ));
         }
-        let value = Exact::new(self.value, self.exact)
-            .div(Exact::new(rhs.value, rhs.exact), int)
-            .map_err(IntErr::into_string)?;
+        let value =
+            Exact::new(self.value, self.exact).div(Exact::new(rhs.value, rhs.exact), int)?;
         Ok(Self {
             value: value.value,
             unit: Unit { components },
@@ -572,10 +568,7 @@ impl Value {
                             // don't merge units that have offsets
                             break;
                         }
-                        let scale = scale_factor
-                            .scale_1
-                            .div(scale_factor.scale_2, int)
-                            .map_err(IntErr::into_string)?;
+                        let scale = scale_factor.scale_1.div(scale_factor.scale_2, int)?;
 
                         let lhs = Exact {
                             value: res_comp.exponent.clone(),
@@ -786,8 +779,7 @@ impl Unit {
                 result_hashmap,
                 Exact::new(1.into(), true),
                 Exact::new(Complex::from(27315), true)
-                    .div(Exact::new(Complex::from(100), true), int)
-                    .map_err(IntErr::into_string)?,
+                    .div(Exact::new(Complex::from(100), true), int)?,
             ));
         }
         if hashmap.len() == 1
@@ -797,12 +789,9 @@ impl Unit {
             result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
             return Ok((
                 result_hashmap,
-                Exact::new(Complex::from(5), true)
-                    .div(Exact::new(Complex::from(9), true), int)
-                    .map_err(IntErr::into_string)?,
+                Exact::new(Complex::from(5), true).div(Exact::new(Complex::from(9), true), int)?,
                 Exact::new(Complex::from(45967), true)
-                    .div(Exact::new(Complex::from(180), true), int)
-                    .map_err(IntErr::into_string)?,
+                    .div(Exact::new(Complex::from(180), true), int)?,
             ));
         }
         let mut scale_adjustment = Exact::new(Complex::from(1), true);
@@ -818,8 +807,7 @@ impl Unit {
                 };
                 scale_adjustment = scale_adjustment.mul(
                     &Exact::new(Complex::from(5), true)
-                        .div(Exact::new(Complex::from(9), true), int)
-                        .map_err(IntErr::into_string)?
+                        .div(Exact::new(Complex::from(9), true), int)?
                         .value
                         .pow(exponent.clone(), int)?,
                     int,

@@ -407,11 +407,7 @@ impl BigRat {
         }
         Ok(Self {
             sign: Sign::Positive,
-            num: self
-                .num
-                .divmod(&rhs.num, int)
-                .map_err(IntErr::into_string)?
-                .1,
+            num: self.num.divmod(&rhs.num, int)?.1,
             den: 1.into(),
         })
     }
@@ -879,22 +875,19 @@ impl BigRat {
             rhs.sign = Sign::Positive;
             let inverse_res = self.pow(rhs, int)?;
             return Ok(Exact::new(
-                Self::from(1)
-                    .div(&inverse_res.value, int)
-                    .map_err(IntErr::into_string)?,
+                Self::from(1).div(&inverse_res.value, int)?,
                 inverse_res.exact,
             ));
         }
-        let result_sign =
-            if self.sign == Sign::Positive || rhs.num.is_even(int).map_err(IntErr::into_string)? {
-                Sign::Positive
-            } else {
-                Sign::Negative
-            };
+        let result_sign = if self.sign == Sign::Positive || rhs.num.is_even(int)? {
+            Sign::Positive
+        } else {
+            Sign::Negative
+        };
         let pow_res = Self {
             sign: result_sign,
-            num: BigUint::pow(&self.num, &rhs.num, int).map_err(IntErr::into_string)?,
-            den: BigUint::pow(&self.den, &rhs.num, int).map_err(IntErr::into_string)?,
+            num: BigUint::pow(&self.num, &rhs.num, int)?,
+            den: BigUint::pow(&self.den, &rhs.num, int)?,
         };
         if rhs.den == 1.into() {
             Ok(Exact::new(pow_res, true))
@@ -922,18 +915,14 @@ impl BigRat {
             let guess = low_bound
                 .clone()
                 .add(high_bound.clone(), int)?
-                .div(&2.into(), int)
-                .map_err(IntErr::into_string)?;
+                .div(&2.into(), int)?;
             if &guess.clone().pow(n.clone(), int)?.value < val {
                 low_bound = guess;
             } else {
                 high_bound = guess;
             }
         }
-        Ok(low_bound
-            .add(high_bound, int)?
-            .div(&2.into(), int)
-            .map_err(IntErr::into_string)?)
+        low_bound.add(high_bound, int)?.div(&2.into(), int)
     }
 
     // the boolean indicates whether or not the result is exact
@@ -958,16 +947,8 @@ impl BigRat {
         if self.num == 0.into() {
             return Ok(Exact::new(self, true));
         }
-        let num = self
-            .clone()
-            .num
-            .root_n(n, int)
-            .map_err(IntErr::into_string)?;
-        let den = self
-            .clone()
-            .den
-            .root_n(n, int)
-            .map_err(IntErr::into_string)?;
+        let num = self.clone().num.root_n(n, int)?;
+        let den = self.clone().den.root_n(n, int)?;
         if num.exact && den.exact {
             return Ok(Exact::new(
                 Self {
@@ -999,10 +980,7 @@ impl BigRat {
                 int,
             )?
         };
-        Ok(Exact::new(
-            num_rat.div(&den_rat, int).map_err(IntErr::into_string)?,
-            false,
-        ))
+        Ok(Exact::new(num_rat.div(&den_rat, int)?, false))
     }
 
     pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {

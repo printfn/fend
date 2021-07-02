@@ -1,7 +1,7 @@
 use crate::error::{FendError, IntErr, Interrupt, Never};
 use crate::format::Format;
 use crate::interrupt::test_int;
-use crate::num::{Base, Exact, IntegerPowerError, Range, RangeBound, ValueOutOfRange};
+use crate::num::{Base, Exact, Range, RangeBound, ValueOutOfRange};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
@@ -178,15 +178,15 @@ impl BigUint {
         a: &Self,
         b: &Self,
         int: &I,
-    ) -> Result<Self, IntErr<IntegerPowerError, I>> {
+    ) -> Result<Self, IntErr<FendError, I>> {
         if a.is_zero() && b.is_zero() {
-            return Err(IntegerPowerError::ZeroToThePowerOfZero.into());
+            return Err(FendError::ZeroToThePowerOfZero.into());
         }
         if b.is_zero() {
             return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
-            return Err(IntegerPowerError::ExponentTooLarge.into());
+            return Err(FendError::ExponentTooLarge.into());
         }
         Ok(a.pow_internal(b.get(0), int)?)
     }
@@ -196,7 +196,7 @@ impl BigUint {
         self,
         n: &Self,
         int: &I,
-    ) -> Result<Exact<Self>, IntErr<IntegerPowerError, I>> {
+    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok(Exact::new(self, true));
         }
@@ -701,10 +701,10 @@ mod tests {
     type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
 
     #[test]
-    fn test_sqrt() -> Res<crate::num::IntegerPowerError> {
+    fn test_sqrt() -> Res<FendError> {
         let two = &BigUint::from(2);
         let int = crate::interrupt::Never::default();
-        let test_sqrt_inner = |n, expected_root, exact| -> Res<crate::num::IntegerPowerError> {
+        let test_sqrt_inner = |n, expected_root, exact| -> Res<FendError> {
             let actual = BigUint::from(n).root_n(two, &int)?;
             assert_eq!(actual.value, BigUint::from(expected_root));
             assert_eq!(actual.exact, exact);

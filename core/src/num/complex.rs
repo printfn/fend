@@ -243,9 +243,7 @@ impl Complex {
     pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         // cos(self) == sin(pi/2 - self)
         let pi = Exact::new(Self::pi(), true);
-        let half_pi = pi
-            .div(Exact::new(2.into(), true), int)
-            .map_err(IntErr::into_string)?;
+        let half_pi = pi.div(Exact::new(2.into(), true), int)?;
         let sin_arg = half_pi.add(-Exact::new(self, true), int)?;
         Ok(sin_arg
             .value
@@ -258,7 +256,7 @@ impl Complex {
     pub(crate) fn tan<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
         let num = self.clone().sin(int)?;
         let den = self.cos(int)?;
-        Ok(num.div(den, int).map_err(IntErr::into_string)?)
+        num.div(den, int)
     }
 
     pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {

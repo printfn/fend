@@ -19,7 +19,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     let mut tokens = vec![];
     let mut missing_open_parens: i32 = 0;
     for token in lex {
-        let token = token.map_err(IntErr::into_string)?;
+        let token = token?;
         if let lexer::Token::Symbol(lexer::Symbol::CloseParens) = token {
             missing_open_parens += 1
         }

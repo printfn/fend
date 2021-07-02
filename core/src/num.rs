@@ -94,19 +94,3 @@ impl fmt::Display for ConvertToUsizeError {
 }
 
 impl crate::error::Error for ConvertToUsizeError {}
-
-#[derive(Debug)]
-pub(crate) enum IntegerPowerError {
-    ExponentTooLarge,
-    ZeroToThePowerOfZero,
-}
-
-impl fmt::Display for IntegerPowerError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        match self {
-            Self::ExponentTooLarge => write!(f, "exponent too large"),
-            Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
-        }
-    }
-}
-impl crate::error::Error for IntegerPowerError {}

@@ -7,6 +7,8 @@ pub(crate) enum FendError {
     BaseTooSmall,
     BaseTooLarge,
     DivideByZero,
+    ExponentTooLarge,
+    ZeroToThePowerOfZero,
     MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
     ExpectedARationalNumber,
     IdentifierNotFound(crate::ident::Ident),
@@ -37,6 +39,8 @@ impl fmt::Display for FendError {
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
             Self::DivideByZero => write!(f, "division by zero"),
+            Self::ExponentTooLarge => write!(f, "exponent too large"),
+            Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
 
             Self::ExpectedARationalNumber => write!(f, "expected a rational number"),
