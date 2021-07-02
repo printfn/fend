@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::{ast::Expr, ident::Ident};
@@ -180,12 +180,12 @@ impl Value {
         }
     }
 
-    pub(crate) fn handle_num<I: Interrupt>(
+    pub(crate) fn handle_num(
         self,
-        eval_fn: impl FnOnce(Number) -> Result<Number, IntErr<FendError, I>>,
+        eval_fn: impl FnOnce(Number) -> Result<Number, FendError>,
         lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
         scope: Option<Arc<Scope>>,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    ) -> Result<Self, FendError> {
         Ok(match self {
             Self::Num(n) => Self::Num(Box::new(eval_fn(*n)?)),
             Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
@@ -194,18 +194,14 @@ impl Value {
         })
     }
 
-    pub(crate) fn handle_two_nums<
-        I: Interrupt,
-        F1: FnOnce(Box<Expr>) -> Expr,
-        F2: FnOnce(Box<Expr>) -> Expr,
-    >(
+    pub(crate) fn handle_two_nums<F1: FnOnce(Box<Expr>) -> Expr, F2: FnOnce(Box<Expr>) -> Expr>(
         self,
         rhs: Self,
-        eval_fn: impl FnOnce(Number, Number) -> Result<Number, IntErr<FendError, I>>,
+        eval_fn: impl FnOnce(Number, Number) -> Result<Number, FendError>,
         lazy_fn_lhs: impl FnOnce(Number) -> F1,
         lazy_fn_rhs: impl FnOnce(Number) -> F2,
         scope: Option<Arc<Scope>>,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    ) -> Result<Self, FendError> {
         Ok(match (self, rhs) {
             (Self::Num(a), Self::Num(b)) => Self::Num(Box::new(eval_fn(*a, *b)?)),
             (Self::BuiltInFunction(f), Self::Num(a)) => f.wrap_with_expr(lazy_fn_lhs(*a), scope),
@@ -228,7 +224,7 @@ impl Value {
         scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    ) -> Result<Self, FendError> {
         let stringified_self = self.format_to_plain_string(0, int)?;
         Ok(match self {
             Self::Num(n) => {
@@ -292,7 +288,7 @@ impl Value {
         scope: Option<Arc<Scope>>,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    ) -> Result<Self, FendError> {
         let arg = crate::ast::evaluate(arg, scope.clone(), context, int)?;
         Ok(Self::Num(Box::new(match func {
             BuiltInFunction::Approximately => arg.expect_num()?.make_approximate(),
@@ -331,7 +327,7 @@ impl Value {
         &self,
         indent: usize,
         int: &I,
-    ) -> Result<String, IntErr<FendError, I>> {
+    ) -> Result<String, FendError> {
         let mut spans = vec![];
         self.format(indent, &mut spans, int)?;
         let mut res = String::new();
@@ -346,7 +342,7 @@ impl Value {
         indent: usize,
         spans: &mut Vec<Span>,
         int: &I,
-    ) -> Result<(), IntErr<FendError, I>> {
+    ) -> Result<(), FendError> {
         match self {
             Self::Num(n) => {
                 n.clone().simplify(int)?.format(int)?.spans(spans);
@@ -443,11 +439,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn differentiate<I: Interrupt>(
-        self,
-        _to: &str,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn differentiate<I: Interrupt>(self, _to: &str, int: &I) -> Result<Self, FendError> {
         match self {
             Self::Num(_) => Ok(Self::Num(Box::new(Number::from(0)))),
             Self::BuiltInFunction(f) => Ok(f

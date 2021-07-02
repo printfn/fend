@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::error::{FendError, IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
 use crate::value::Value;
@@ -30,7 +30,7 @@ fn expr_unit<I: Interrupt>(
     definition: &'static str,
     context: &mut crate::Context,
     int: &I,
-) -> Result<UnitDef, IntErr<FendError, I>> {
+) -> Result<UnitDef, FendError> {
     let mut definition = definition.trim();
     let mut rule = PrefixRule::NoPrefixesAllowed;
     if let Some(remaining) = definition.strip_prefix("l@") {
@@ -85,7 +85,7 @@ fn construct_prefixed_unit<I: Interrupt>(
     a: UnitDef,
     b: UnitDef,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
     assert_eq!(a.singular, a.plural);
     let unit = Number::create_unit_value_from_value(
@@ -102,7 +102,7 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     ident: &'a str,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
         let ident = ident.split_at(1).1;
         let ident = ident.split_at(ident.len() - 1).0;
@@ -118,9 +118,9 @@ pub(crate) fn query_unit_static<'a, I: Interrupt>(
     ident: &'a str,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     match query_unit_case_sensitive(ident, true, context, int) {
-        Err(IntErr::Error(FendError::IdentifierNotFound(_))) => (),
+        Err(FendError::IdentifierNotFound(_)) => (),
         Err(e) => return Err(e),
         Ok(value) => {
             return Ok(value);
@@ -134,9 +134,9 @@ fn query_unit_case_sensitive<I: Interrupt>(
     case_sensitive: bool,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     match query_unit_internal(ident, false, case_sensitive, context, int) {
-        Err(IntErr::Error(FendError::IdentifierNotFound(_))) => (),
+        Err(FendError::IdentifierNotFound(_)) => (),
         Err(e) => return Err(e),
         Ok(unit) => {
             // Return value without prefix. Note that lone short prefixes
@@ -149,15 +149,15 @@ fn query_unit_case_sensitive<I: Interrupt>(
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         split_idx += remaining_ident.chars().next().unwrap().len_utf8();
         let a = match query_unit_internal(prefix, true, case_sensitive, context, int) {
-            Err(IntErr::Error(FendError::IdentifierNotFound(_))) => continue,
-            Err(e @ (IntErr::Interrupt(_) | IntErr::Error(_))) => {
+            Err(FendError::IdentifierNotFound(_)) => continue,
+            Err(e) => {
                 return Err(e);
             }
             Ok(a) => a,
         };
         match query_unit_internal(remaining_ident, false, case_sensitive, context, int) {
-            Err(IntErr::Error(FendError::IdentifierNotFound(_))) => continue,
-            Err(e @ (IntErr::Interrupt(_) | IntErr::Error(_))) => return Err(e),
+            Err(FendError::IdentifierNotFound(_)) => continue,
+            Err(e) => return Err(e),
             Ok(b) => {
                 if (a.prefix_rule == PrefixRule::LongPrefix
                     && b.prefix_rule == PrefixRule::LongPrefixAllowed)
@@ -167,11 +167,11 @@ fn query_unit_case_sensitive<I: Interrupt>(
                     // now construct a new unit!
                     return construct_prefixed_unit(a, b, int);
                 }
-                return Err(FendError::IdentifierNotFound(ident.to_string().into()).into());
+                return Err(FendError::IdentifierNotFound(ident.to_string().into()));
             }
         };
     }
-    Err(FendError::IdentifierNotFound(ident.to_string().into()).into())
+    Err(FendError::IdentifierNotFound(ident.to_string().into()))
 }
 
 fn query_unit_internal<'a, I: Interrupt>(
@@ -180,7 +180,7 @@ fn query_unit_internal<'a, I: Interrupt>(
     case_sensitive: bool,
     context: &mut crate::Context,
     int: &I,
-) -> Result<UnitDef, IntErr<FendError, I>> {
+) -> Result<UnitDef, FendError> {
     if ident == "C" {
         return if context.fc_mode == crate::FCMode::CelsiusFahrenheit {
             expr_unit("C", "C", "=\u{b0}C", context, int)
@@ -197,6 +197,6 @@ fn query_unit_internal<'a, I: Interrupt>(
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
         expr_unit(s, p, expr, context, int)
     } else {
-        Err(FendError::IdentifierNotFound(ident.to_string().into()).into())
+        Err(FendError::IdentifierNotFound(ident.to_string().into()))
     }
 }

@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
@@ -66,33 +66,33 @@ impl PartialEq for Real {
 impl Eq for Real {}
 
 impl Real {
-    fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, IntErr<FendError, I>> {
+    fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, FendError> {
         match self.pattern {
             Pattern::Simple(s) => Ok(s),
             Pattern::Pi(n) => {
                 let num = BigRat::from(3_141_592_653_589_793_238);
                 let den = BigRat::from(1_000_000_000_000_000_000);
-                let pi = num.div(&den, int).map_err(IntErr::unwrap)?;
+                let pi = num.div(&den, int)?;
                 Ok(n.mul(&pi, int)?)
             }
         }
     }
 
-    pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, IntErr<FendError, I>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
         match self.pattern {
             Pattern::Simple(s) => s.try_as_usize(int),
             Pattern::Pi(n) => {
                 if n == 0.into() {
                     Ok(0)
                 } else {
-                    Err(FendError::CannotConvertToInteger.into())
+                    Err(FendError::CannotConvertToInteger)
                 }
             }
         }
     }
 
     // sin works for all real numbers
-    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, IntErr<FendError, I>> {
+    pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
         Ok(match self.pattern {
             Pattern::Simple(s) => s.sin(int)?.apply(Self::from),
             Pattern::Pi(n) => {
@@ -127,56 +127,56 @@ impl Real {
         })
     }
 
-    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.asin(int)?))
     }
 
-    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.acos(int)?))
     }
 
-    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.atan(int)?))
     }
 
-    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.sinh(int)?))
     }
 
-    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.cosh(int)?))
     }
 
-    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.tanh(int)?))
     }
 
-    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.asinh(int)?))
     }
 
-    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.acosh(int)?))
     }
 
-    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.atanh(int)?))
     }
 
     // For all logs: value must be greater than 0
-    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.ln(int)?))
     }
 
-    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.log2(int)?))
     }
 
-    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.log10(int)?))
     }
 
-    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(self.approximate(int)?.factorial(int)?))
     }
 
@@ -187,7 +187,7 @@ impl Real {
         imag: bool,
         use_parens_if_fraction: bool,
         int: &I,
-    ) -> Result<Exact<Formatted>, IntErr<FendError, I>> {
+    ) -> Result<Exact<Formatted>, FendError> {
         let mut pi = false;
         if style == FormattingStyle::Exact && !self.is_zero() {
             if let Pattern::Pi(_) = self.pattern {
@@ -237,11 +237,7 @@ impl Real {
         ))
     }
 
-    pub(crate) fn pow<I: Interrupt>(
-        self,
-        rhs: Self,
-        int: &I,
-    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
+    pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
         // x^1 == x
         if let Pattern::Simple(n) = &rhs.pattern {
             if n == &1.into() {
@@ -269,11 +265,7 @@ impl Real {
         }
     }
 
-    pub(crate) fn root_n<I: Interrupt>(
-        self,
-        n: &Self,
-        int: &I,
-    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
+    pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
         // TODO: Combining these match blocks is not currently possible because
         // 'binding by-move and by-ref in the same pattern is unstable'
         // https://github.com/rust-lang/rust/pull/76119
@@ -325,11 +317,7 @@ impl Real {
         }
     }
 
-    pub(crate) fn modulo<I: Interrupt>(
-        self,
-        rhs: Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         Ok(Self::from(
             self.expect_rational()?
                 .modulo(rhs.expect_rational()?, int)?,
@@ -339,11 +327,7 @@ impl Real {
 
 #[allow(clippy::use_self)]
 impl Exact<Real> {
-    pub(crate) fn add<I: Interrupt>(
-        self,
-        rhs: Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if self.exact && self.value.is_zero() {
             return Ok(rhs);
         } else if rhs.exact && rhs.value.is_zero() {
@@ -370,11 +354,7 @@ impl Exact<Real> {
         )
     }
 
-    pub(crate) fn mul<I: Interrupt>(
-        self,
-        rhs: Exact<&Real>,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> Result<Self, FendError> {
         if self.exact && self.value.is_zero() {
             return Ok(self);
         } else if rhs.exact && rhs.value.is_zero() {
@@ -408,13 +388,9 @@ impl Exact<Real> {
         })
     }
 
-    pub(crate) fn div<I: Interrupt>(
-        self,
-        rhs: &Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
         if rhs.value.is_zero() {
-            return Err(FendError::DivideByZero.into());
+            return Err(FendError::DivideByZero);
         }
         if self.exact && self.value.is_zero() {
             return Ok(self);

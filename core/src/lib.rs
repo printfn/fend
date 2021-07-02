@@ -202,9 +202,7 @@ pub fn evaluate_with_interrupt(
     }
     let result = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
-        // TODO: handle different interrupt values
-        Err(error::IntErr::Interrupt(_)) => return Err("interrupted".to_string()),
-        Err(error::IntErr::Error(e)) => return Err(e.to_string()),
+        Err(e) => return Err(e.to_string()),
     };
     let mut plain_result = String::new();
     for s in &result {

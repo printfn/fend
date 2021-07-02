@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::ident::Ident;
 use crate::num::{Base, Number};
 use std::{borrow, convert, fmt};
@@ -181,7 +181,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     num_nonrec_digits: usize,
     base: Base,
     int: &I,
-) -> Result<((), &'a str), IntErr<FendError, I>> {
+) -> Result<((), &'a str), FendError> {
     let original_input = input;
     // If there's no '(': return Ok but don't parse anything
     if parse_fixed_char(input, '(').is_err() {
@@ -195,10 +195,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     let mut recurring_number_num = Number::from(0);
     let mut recurring_number_den = Number::from(1);
     let base_as_u64 = u64::from(base.base_as_u8());
-    let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<
-        (),
-        IntErr<FendError, I>,
-    > {
+    let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
         let digit_as_u64 = u64::from(digit);
         recurring_number_num = recurring_number_num
             .clone()
@@ -224,22 +221,20 @@ fn parse_basic_number<'a, I: Interrupt>(
     base: Base,
     allow_zero: bool,
     int: &I,
-) -> Result<(Number, &'a str), IntErr<FendError, I>> {
+) -> Result<(Number, &'a str), FendError> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let base_as_u64 = u64::from(base.base_as_u8());
 
     if parse_fixed_char(input, '.').is_err() {
-        let (_, remaining) = parse_integer(input, true, base, &mut |digit| -> Result<
-            (),
-            IntErr<FendError, I>,
-        > {
-            res = res
-                .clone()
-                .mul(base_as_u64.into(), int)?
-                .add(u64::from(digit).into(), int)?;
-            Ok(())
-        })?;
+        let (_, remaining) =
+            parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
+                res = res
+                    .clone()
+                    .mul(base_as_u64.into(), int)?
+                    .add(u64::from(digit).into(), int)?;
+                Ok(())
+            })?;
         input = remaining;
     }
 
@@ -251,7 +246,7 @@ fn parse_basic_number<'a, I: Interrupt>(
         if parse_fixed_char(remaining, '(').is_err() {
             let (_, remaining) = parse_integer(remaining, true, base, &mut |digit| -> Result<
                 (),
-                IntErr<FendError, I>,
+                FendError,
             > {
                 numerator = numerator
                     .clone()
@@ -310,14 +305,12 @@ fn parse_basic_number<'a, I: Interrupt>(
                 }
                 let mut exp = Number::zero_with_base(base);
                 let base_num = Number::from(u64::from(base.base_as_u8()));
-                let (_, remaining2) = parse_integer(input, true, base, &mut |digit| -> Result<
-                    (),
-                    IntErr<FendError, I>,
-                > {
-                    exp = (exp.clone().mul(base_num.clone(), int)?)
-                        .add(u64::from(digit).into(), int)?;
-                    Ok(())
-                })?;
+                let (_, remaining2) =
+                    parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
+                        exp = (exp.clone().mul(base_num.clone(), int)?)
+                            .add(u64::from(digit).into(), int)?;
+                        Ok(())
+                    })?;
                 if negative_exponent {
                     exp = -exp;
                 }
@@ -331,10 +324,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     Ok((res, input))
 }
 
-fn parse_number<'a, I: Interrupt>(
-    input: &'a str,
-    int: &I,
-) -> Result<(Number, &'a str), IntErr<FendError, I>> {
+fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> Result<(Number, &'a str), FendError> {
     let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
     let (res, input) = parse_basic_number(input, base, true, int)?;
     Ok((res, input))
@@ -618,7 +608,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
 }
 
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
-    fn next_token(&mut self) -> Result<Option<Token>, IntErr<FendError, I>> {
+    fn next_token(&mut self) -> Result<Option<Token>, FendError> {
         while let Some(ch) = self.input.chars().next() {
             if self.input.starts_with("# ") {
                 let (_, remaining) = self.input.split_at(2);
@@ -685,7 +675,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
 }
 
 impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
-    type Item = Result<Token, IntErr<FendError, I>>;
+    type Item = Result<Token, FendError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let res = match self.next_token() {

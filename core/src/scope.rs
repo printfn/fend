@@ -1,10 +1,7 @@
 use crate::error::FendError;
 use crate::ident::Ident;
 use crate::value::Value;
-use crate::{
-    ast::Expr,
-    error::{IntErr, Interrupt},
-};
+use crate::{ast::Expr, error::Interrupt};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -18,7 +15,7 @@ impl ScopeValue {
         &self,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value, IntErr<FendError, I>> {
+    ) -> Result<Value, FendError> {
         match self {
             Self::LazyVariable(expr, scope) => {
                 let value = crate::ast::evaluate(expr.clone(), scope.clone(), context, int)?;
@@ -58,13 +55,13 @@ impl Scope {
         ident: &Ident,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value, IntErr<FendError, I>> {
+    ) -> Result<Value, FendError> {
         if self.ident.as_str() == ident.as_str() {
             let value = self.value.eval(context, int)?;
             Ok(value)
         } else {
             self.inner.as_ref().map_or_else(
-                || Err(FendError::IdentifierNotFound(ident.clone()).into()),
+                || Err(FendError::IdentifierNotFound(ident.clone())),
                 |inner| inner.get(ident, context, int),
             )
         }

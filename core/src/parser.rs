@@ -47,7 +47,6 @@ impl fmt::Display for ParseError {
         }
     }
 }
-impl crate::error::Error for ParseError {}
 
 type ParseResult<'a, T = Expr> = Result<(T, &'a [Token]), ParseError>;
 

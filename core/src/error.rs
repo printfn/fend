@@ -1,4 +1,4 @@
-use std::{convert, error, fmt};
+use std::{error, fmt};
 
 use crate::num::Range;
 
@@ -107,85 +107,12 @@ impl fmt::Display for FendError {
 
 impl error::Error for FendError {}
 
-impl Error for FendError {}
-
-// todo remove these impls
-impl<I: Interrupt> From<FendError> for IntErr<String, I> {
-    fn from(e: FendError) -> Self {
-        e.to_string().into()
-    }
-}
-
-impl<I: Interrupt> From<String> for IntErr<FendError, I> {
+// todo remove this impl
+impl From<String> for FendError {
     fn from(e: String) -> Self {
-        Self::Error(FendError::String(e))
+        Self::String(e)
     }
 }
-
-impl<I: Interrupt> From<IntErr<String, I>> for IntErr<FendError, I> {
-    fn from(e: IntErr<String, I>) -> Self {
-        match e {
-            IntErr::Interrupt(i) => Self::Interrupt(i),
-            IntErr::Error(e) => e.into(),
-        }
-    }
-}
-
-impl<I: Interrupt> From<IntErr<FendError, I>> for IntErr<String, I> {
-    fn from(e: IntErr<FendError, I>) -> Self {
-        match e {
-            IntErr::Interrupt(i) => Self::Interrupt(i),
-            IntErr::Error(e) => Self::Error(e.to_string()),
-        }
-    }
-}
-
-pub(crate) trait Error: fmt::Display {}
-
-pub(crate) type Never = convert::Infallible;
-
-pub(crate) enum IntErr<E, I: Interrupt> {
-    Interrupt(I),
-    Error(E),
-}
-
-#[allow(clippy::use_self)]
-impl<E, I: Interrupt> IntErr<E, I> {
-    pub(crate) fn unwrap(self) -> IntErr<Never, I> {
-        match self {
-            Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
-            Self::Error(_) => panic!("unwrap"),
-        }
-    }
-}
-
-impl<E, I: Interrupt> From<E> for IntErr<E, I> {
-    fn from(e: E) -> Self {
-        Self::Error(e)
-    }
-}
-
-#[allow(clippy::use_self)]
-impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
-    fn from(e: IntErr<Never, I>) -> Self {
-        match e {
-            IntErr::Error(never) => match never {},
-            IntErr::Interrupt(i) => Self::Interrupt(i),
-        }
-    }
-}
-
-impl<E: fmt::Debug, I: Interrupt> fmt::Debug for IntErr<E, I> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        match self {
-            Self::Interrupt(_) => write!(f, "interrupt")?,
-            Self::Error(e) => write!(f, "{:?}", e)?,
-        }
-        Ok(())
-    }
-}
-
-impl Error for String {}
 
 pub(crate) trait Interrupt {
     fn test(&self) -> Result<(), ()>;

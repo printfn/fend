@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::ident::Ident;
 use crate::interrupt::test_int;
@@ -40,7 +40,7 @@ pub(crate) enum Expr {
 }
 
 impl<'a> Expr {
-    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, IntErr<FendError, I>> {
+    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, FendError> {
         Ok(match self {
             Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
             Self::Literal(v) => v.format_to_plain_string(0, int)?,
@@ -103,7 +103,7 @@ pub(crate) fn evaluate<I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     macro_rules! eval {
         ($e:expr) => {
             evaluate($e, scope.clone(), context, int)
@@ -219,7 +219,7 @@ fn evaluate_add<I: Interrupt>(
     b: Value,
     scope: Option<Arc<Scope>>,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     Ok(match (a, b) {
         (Value::Num(a), Value::Num(b)) => Value::Num(Box::new(a.add(*b, int)?)),
         (Value::String(a), Value::String(b)) => {
@@ -253,7 +253,7 @@ fn evaluate_as<I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     if let Expr::Ident(ident) = &b {
         match ident.as_str() {
             "bool" | "boolean" => {
@@ -350,7 +350,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Value, IntErr<FendError, I>> {
+) -> Result<Value, FendError> {
     macro_rules! eval_box {
         ($input:expr) => {
             Box::new(evaluate_to_value($input, scope.clone(), context, int)?)
@@ -359,9 +359,8 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
     if let Some(scope) = scope.clone() {
         match scope.get(ident, context, int) {
             Ok(val) => return Ok(val),
-            Err(IntErr::Interrupt(int)) => return Err(IntErr::Interrupt(int)),
-            Err(IntErr::Error(FendError::IdentifierNotFound(_))) => (),
-            Err(IntErr::Error(err)) => return Err(IntErr::Error(err)),
+            Err(FendError::IdentifierNotFound(_)) => (),
+            Err(err) => return Err(err),
         }
     }
     if let Some(val) = context.variables.get(ident.as_str()) {

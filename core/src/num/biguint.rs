@@ -1,4 +1,4 @@
-use crate::error::{FendError, IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
@@ -53,12 +53,9 @@ impl BigUint {
         }
     }
 
-    pub(crate) fn try_as_usize<I: Interrupt>(
-        &self,
-        int: &I,
-    ) -> Result<usize, IntErr<FendError, I>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> Result<usize, FendError> {
         use std::convert::TryFrom;
-        let error = || -> Result<_, IntErr<FendError, I>> {
+        let error = || -> Result<_, FendError> {
             Ok(out_of_range(
                 self.fm(int)?,
                 Range {
@@ -73,7 +70,7 @@ impl BigUint {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return Err(error()?.into());
+                    return Err(error()?);
                 }
             }
             Large(v) => {
@@ -82,10 +79,10 @@ impl BigUint {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return Err(error()?.into());
+                        return Err(error()?);
                     }
                 } else {
-                    return Err(error()?.into());
+                    return Err(error()?);
                 }
             }
         })
@@ -158,11 +155,7 @@ impl BigUint {
         }
     }
 
-    pub(crate) fn gcd<I: Interrupt>(
-        mut a: Self,
-        mut b: Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> Result<Self, FendError> {
         while b >= 1.into() {
             let r = a.rem(&b, int)?;
             a = b;
@@ -172,29 +165,21 @@ impl BigUint {
         Ok(a)
     }
 
-    pub(crate) fn pow<I: Interrupt>(
-        a: &Self,
-        b: &Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> Result<Self, FendError> {
         if a.is_zero() && b.is_zero() {
-            return Err(FendError::ZeroToThePowerOfZero.into());
+            return Err(FendError::ZeroToThePowerOfZero);
         }
         if b.is_zero() {
             return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
-            return Err(FendError::ExponentTooLarge.into());
+            return Err(FendError::ExponentTooLarge);
         }
         a.pow_internal(b.get(0), int)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
-    pub(crate) fn root_n<I: Interrupt>(
-        self,
-        n: &Self,
-        int: &I,
-    ) -> Result<Exact<Self>, IntErr<FendError, I>> {
+    pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok(Exact::new(self, true));
         }
@@ -215,11 +200,7 @@ impl BigUint {
         Ok(Exact::new(low_guess, false))
     }
 
-    fn pow_internal<I: Interrupt>(
-        &self,
-        mut exponent: u64,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> Result<Self, FendError> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
@@ -233,7 +214,7 @@ impl BigUint {
         Ok(result)
     }
 
-    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<FendError, I>> {
+    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), FendError> {
         match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
@@ -258,7 +239,7 @@ impl BigUint {
         Ok(())
     }
 
-    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<FendError, I>> {
+    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), FendError> {
         match self {
             Small(n) => *n >>= 1,
             Large(value) => {
@@ -281,15 +262,15 @@ impl BigUint {
         &self,
         other: &Self,
         int: &I,
-    ) -> Result<(Self, Self), IntErr<FendError, I>> {
+    ) -> Result<(Self, Self), FendError> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok((Small(div_res), Small(mod_res)));
             }
-            return Err(FendError::DivideByZero.into());
+            return Err(FendError::DivideByZero);
         }
         if other.is_zero() {
-            return Err(FendError::DivideByZero.into());
+            return Err(FendError::DivideByZero);
         }
         if other == &Self::from(1) {
             return Ok((self.clone(), Self::from(0)));
@@ -328,11 +309,7 @@ impl BigUint {
     }
 
     /// computes self *= other
-    fn mul_internal<I: Interrupt>(
-        &mut self,
-        other: &Self,
-        int: &I,
-    ) -> Result<(), IntErr<FendError, I>> {
+    fn mul_internal<I: Interrupt>(&mut self, other: &Self, int: &I) -> Result<(), FendError> {
         if self.is_zero() || other.is_zero() {
             *self = Self::from(0);
             return Ok(());
@@ -369,7 +346,7 @@ impl BigUint {
     }
 
     // Note: 0! = 1, 1! = 1
-    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, FendError> {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
@@ -379,11 +356,7 @@ impl BigUint {
         Ok(res)
     }
 
-    pub(crate) fn mul<I: Interrupt>(
-        mut self,
-        other: &Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> Result<Self, FendError> {
         if let (Small(a), Small(b)) = (&self, &other) {
             if let Some(res) = a.checked_mul(*b) {
                 return Ok(Self::from(res));
@@ -393,19 +366,15 @@ impl BigUint {
         Ok(self)
     }
 
-    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, IntErr<FendError, I>> {
+    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
         Ok(self.divmod(other, int)?.1)
     }
 
-    pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<FendError, I>> {
+    pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, FendError> {
         Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
     }
 
-    pub(crate) fn div<I: Interrupt>(
-        self,
-        other: &Self,
-        int: &I,
-    ) -> Result<Self, IntErr<FendError, I>> {
+    pub(crate) fn div<I: Interrupt>(self, other: &Self, int: &I) -> Result<Self, FendError> {
         Ok(self.divmod(other, int)?.0)
     }
 
@@ -546,13 +515,12 @@ impl Default for FormatOptions {
 impl Format for BigUint {
     type Params = FormatOptions;
     type Out = FormattedBigUint;
-    type Error = FendError;
 
     fn format<I: Interrupt>(
         &self,
         params: &Self::Params,
         int: &I,
-    ) -> Result<Exact<Self::Out>, IntErr<Self::Error, I>> {
+    ) -> Result<Exact<Self::Out>, FendError> {
         let base_prefix = if params.write_base_prefix {
             Some(params.base)
         } else {
@@ -693,8 +661,7 @@ impl FormattedBigUint {
 #[cfg(test)]
 mod tests {
     use super::BigUint;
-    use crate::error::{FendError, IntErr};
-    type Res = Result<(), IntErr<FendError, crate::interrupt::Never>>;
+    type Res = Result<(), crate::error::FendError>;
 
     #[test]
     fn test_sqrt() -> Res {

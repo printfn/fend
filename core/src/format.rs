@@ -1,20 +1,19 @@
-use crate::error::{IntErr, Interrupt};
+use crate::error::{FendError, Interrupt};
 use crate::num::Exact;
 use std::fmt;
 
 pub(crate) trait Format {
     type Params: Default;
     type Out: fmt::Display + fmt::Debug;
-    type Error;
 
     fn format<I: Interrupt>(
         &self,
         params: &Self::Params,
         int: &I,
-    ) -> Result<Exact<Self::Out>, IntErr<Self::Error, I>>;
+    ) -> Result<Exact<Self::Out>, FendError>;
 
     /// Simpler alternative to calling format
-    fn fm<I: Interrupt>(&self, int: &I) -> Result<Self::Out, IntErr<Self::Error, I>> {
+    fn fm<I: Interrupt>(&self, int: &I) -> Result<Self::Out, FendError> {
         Ok(self.format(&Default::default(), int)?.value)
     }
 }
