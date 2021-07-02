@@ -89,10 +89,32 @@ manualstep "Create GitHub release (including changelog):
 Changes in this version:
 
 * ..."
-manualstep "Go to AUR package folder"
-manualstep "Run this command: 'wget https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate'"
-manualstep "Run this command: shasum -a 512 fend-$NEW_VERSION.crate"
-manualstep "Update '.SRCINFO' and 'PKGBUILD' to include the new version number and hash. 5 lines should change."
-manualstep "Run this command: 'rm fend-$NEW_VERSION.crate'"
-manualstep "Run this command: 'git commit -am \"fend $OLD_VERSION -> $NEW_VERSION\"'"
-manualstep "Run these commands: 'git push origin && git push github'"
+
+# AUR release
+TMPDIR="$(mktemp -d)"
+if [ ! -e "$TMPDIR" ]; then
+    >&2 echo "Failed to create temp directory"
+    exit 1
+fi
+echo "Switching to temporary directory $TMPDIR"
+pushd "$TMPDIR" >/dev/null
+git clone ssh://aur@aur.archlinux.org/fend.git
+cd fend
+git config user.name printfn
+git config user.email printfn@users.noreply.github.com
+curl -o "fend-$NEW_VERSION.crate" "https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate"
+HASH=$(shasum -a 512 "fend-$NEW_VERSION.crate" | grep -o '[a-f0-9]\{128\}')
+echo "Hash: $HASH"
+rm "fend-$NEW_VERSION.crate"
+sed "s/$OLD_VERSION/$NEW_VERSION/g" .SRCINFO|sed "s/[a-f0-9]\{128\}/$HASH/" >.SRCINFO_NEW
+sed "s/$OLD_VERSION/$NEW_VERSION/" PKGBUILD|sed "s/[a-f0-9]\{128\}/$HASH/" >PKGBUILD_NEW
+mv .SRCINFO_NEW .SRCINFO
+mv PKGBUILD_NEW PKGBUILD
+git --no-pager diff --cached
+manualstep "Check the diff: 5 lines should have changed"
+git commit -am "fend $OLD_VERSION -> $NEW_VERSION"
+git --no-pager log
+manualstep "Check the log"
+git push origin
+popd >/dev/null
+rm -rf "$TMPDIR"
