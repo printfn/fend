@@ -204,7 +204,7 @@ pub fn evaluate_with_interrupt(
         Ok(value) => value,
         // TODO: handle different interrupt values
         Err(error::IntErr::Interrupt(_)) => return Err("interrupted".to_string()),
-        Err(error::IntErr::Error(e)) => return Err(e),
+        Err(error::IntErr::Error(e)) => return Err(e.to_string()),
     };
     let mut plain_result = String::new();
     for s in &result {

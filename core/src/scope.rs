@@ -18,7 +18,7 @@ impl ScopeValue {
         &self,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value, IntErr<String, I>> {
+    ) -> Result<Value, IntErr<FendError, I>> {
         match self {
             Self::LazyVariable(expr, scope) => {
                 let value = crate::ast::evaluate(expr.clone(), scope.clone(), context, int)?;

@@ -85,7 +85,7 @@ fn construct_prefixed_unit<I: Interrupt>(
     a: UnitDef,
     b: UnitDef,
     int: &I,
-) -> Result<Value, IntErr<String, I>> {
+) -> Result<Value, IntErr<FendError, I>> {
     let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
     assert_eq!(a.singular, a.plural);
     let unit = Number::create_unit_value_from_value(
@@ -165,7 +165,7 @@ fn query_unit_case_sensitive<I: Interrupt>(
                         && b.prefix_rule == PrefixRule::ShortPrefixAllowed)
                 {
                     // now construct a new unit!
-                    return Ok(construct_prefixed_unit(a, b, int)?);
+                    return construct_prefixed_unit(a, b, int);
                 }
                 return Err(FendError::IdentifierNotFound(ident.to_string().into()).into());
             }

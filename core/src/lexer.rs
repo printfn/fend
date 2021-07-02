@@ -181,7 +181,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     num_nonrec_digits: usize,
     base: Base,
     int: &I,
-) -> Result<((), &'a str), IntErr<String, I>> {
+) -> Result<((), &'a str), IntErr<FendError, I>> {
     let original_input = input;
     // If there's no '(': return Ok but don't parse anything
     if parse_fixed_char(input, '(').is_err() {
@@ -197,7 +197,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     let base_as_u64 = u64::from(base.base_as_u8());
     let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<
         (),
-        IntErr<String, I>,
+        IntErr<FendError, I>,
     > {
         let digit_as_u64 = u64::from(digit);
         recurring_number_num = recurring_number_num
@@ -227,7 +227,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     base: Base,
     allow_zero: bool,
     int: &I,
-) -> Result<(Number, &'a str), IntErr<String, I>> {
+) -> Result<(Number, &'a str), IntErr<FendError, I>> {
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let base_as_u64 = u64::from(base.base_as_u8());
@@ -235,7 +235,7 @@ fn parse_basic_number<'a, I: Interrupt>(
     if parse_fixed_char(input, '.').is_err() {
         let (_, remaining) = parse_integer(input, true, base, &mut |digit| -> Result<
             (),
-            IntErr<String, I>,
+            IntErr<FendError, I>,
         > {
             res = res
                 .clone()
@@ -254,7 +254,7 @@ fn parse_basic_number<'a, I: Interrupt>(
         if parse_fixed_char(remaining, '(').is_err() {
             let (_, remaining) = parse_integer(remaining, true, base, &mut |digit| -> Result<
                 (),
-                IntErr<String, I>,
+                IntErr<FendError, I>,
             > {
                 numerator = numerator
                     .clone()
@@ -320,7 +320,7 @@ fn parse_basic_number<'a, I: Interrupt>(
                 let base_num = Number::from(u64::from(base.base_as_u8()));
                 let (_, remaining2) = parse_integer(input, true, base, &mut |digit| -> Result<
                     (),
-                    IntErr<String, I>,
+                    IntErr<FendError, I>,
                 > {
                     exp = (exp.clone().mul(base_num.clone(), int)?)
                         .add(u64::from(digit).into(), int)?;
@@ -342,7 +342,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 fn parse_number<'a, I: Interrupt>(
     input: &'a str,
     int: &I,
-) -> Result<(Number, &'a str), IntErr<String, I>> {
+) -> Result<(Number, &'a str), IntErr<FendError, I>> {
     let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
     let (res, input) = parse_basic_number(input, base, true, int)?;
     Ok((res, input))
@@ -649,8 +649,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                 if ch.is_whitespace() {
                     Token::Whitespace
                 } else if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
-                    let (num, remaining) = parse_number(self.input, self.int)
-                        .map_err(|e| e.map(FendError::NumberParse))?;
+                    let (num, remaining) = parse_number(self.input, self.int)?;
                     self.input = remaining;
                     Token::Num(num)
                 } else if ch == '\'' || ch == '"' {

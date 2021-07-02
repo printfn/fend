@@ -27,8 +27,6 @@ pub(crate) enum FendError {
     ExpectedALetterOrCode,
     InvalidUnicodeEscapeSequence,
     // todo remove this
-    NumberParse(String),
-
     String(String),
 }
 
@@ -81,7 +79,7 @@ impl fmt::Display for FendError {
                     "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
                 )
             }
-            Self::NumberParse(s) | Self::String(s) => write!(f, "{}", s),
+            Self::String(s) => write!(f, "{}", s),
         }
     }
 }
