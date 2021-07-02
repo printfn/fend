@@ -1,4 +1,27 @@
-use std::{convert, fmt};
+use std::{convert, error, fmt};
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub(crate) enum FendError {
+    InvalidBasePrefix,
+    BaseTooSmall,
+    BaseTooLarge,
+}
+
+impl fmt::Display for FendError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidBasePrefix => write!(
+                f,
+                "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
+            ),
+            Self::BaseTooSmall => write!(f, "base must be at least 2"),
+            Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
+        }
+    }
+}
+
+impl error::Error for FendError {}
 
 pub(crate) trait Error: fmt::Display {}
 

@@ -1,6 +1,6 @@
-use crate::error::{IntErr, Interrupt};
+use crate::error::{FendError, IntErr, Interrupt};
 use crate::ident::Ident;
-use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
+use crate::num::{Base, Number};
 use std::{borrow, convert, fmt};
 
 #[derive(Clone, Debug)]
@@ -41,8 +41,9 @@ pub(crate) enum Error {
     ExpectedDigitSeparator(char),
     DigitSeparatorsNotAllowed,
     DigitSeparatorsOnlyBetweenDigits,
-    BaseOutOfRange(BaseOutOfRangeError),
-    InvalidBasePrefix(InvalidBasePrefixError),
+    BaseTooSmall,
+    BaseTooLarge,
+    InvalidBasePrefix,
     InvalidCharAtBeginningOfIdent(char),
     UnexpectedChar(char),
     UnterminatedStringLiteral,
@@ -67,8 +68,9 @@ impl fmt::Display for Error {
             Self::DigitSeparatorsOnlyBetweenDigits => {
                 write!(f, "digit separators can only occur between digits")
             }
-            Self::BaseOutOfRange(e) => write!(f, "{}", e),
-            Self::InvalidBasePrefix(e) => write!(f, "{}", e),
+            Self::BaseTooSmall => write!(f, "{}", FendError::BaseTooSmall),
+            Self::BaseTooLarge => write!(f, "{}", FendError::BaseTooLarge),
+            Self::InvalidBasePrefix => write!(f, "{}", FendError::InvalidBasePrefix),
             Self::InvalidCharAtBeginningOfIdent(ch) => {
                 write!(f, "'{}' is not valid at the beginning of an identifier", ch)
             }
@@ -98,15 +100,13 @@ impl fmt::Display for Error {
 }
 impl crate::error::Error for Error {}
 
-impl From<BaseOutOfRangeError> for Error {
-    fn from(e: BaseOutOfRangeError) -> Self {
-        Self::BaseOutOfRange(e)
-    }
-}
-
-impl From<InvalidBasePrefixError> for Error {
-    fn from(e: InvalidBasePrefixError) -> Self {
-        Self::InvalidBasePrefix(e)
+impl From<FendError> for Error {
+    fn from(e: FendError) -> Self {
+        match e {
+            FendError::InvalidBasePrefix => Self::InvalidBasePrefix,
+            FendError::BaseTooSmall => Self::BaseTooSmall,
+            FendError::BaseTooLarge => Self::BaseTooLarge,
+        }
     }
 }
 
@@ -232,8 +232,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
             (),
             Error,
         > {
-            let base_too_large = BaseOutOfRangeError::BaseTooLarge;
-            let error = Error::BaseOutOfRange(base_too_large);
+            let error = Error::BaseTooLarge;
             if custom_base > 3 {
                 return Err(error);
             }
@@ -244,8 +243,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
             Ok(())
         })?;
         if custom_base < 2 {
-            let base_too_small = BaseOutOfRangeError::BaseTooSmall;
-            return Err(Error::BaseOutOfRange(base_too_small));
+            return Err(Error::BaseTooSmall);
         }
         let (_, input) = parse_fixed_char(input, '#')?;
         Ok((Base::from_custom_base(custom_base)?, input))

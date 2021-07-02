@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::error::FendError;
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) struct Base(BaseEnum);
 
@@ -17,31 +19,6 @@ enum BaseEnum {
     Plain(u8),
 }
 
-pub(crate) struct InvalidBasePrefixError {}
-
-impl fmt::Display for InvalidBasePrefixError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(
-            f,
-            "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
-        )
-    }
-}
-
-pub(crate) enum OutOfRangeError {
-    BaseTooSmall,
-    BaseTooLarge,
-}
-
-impl fmt::Display for OutOfRangeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        match self {
-            Self::BaseTooSmall => write!(f, "base must be at least 2"),
-            Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
-        }
-    }
-}
-
 impl Base {
     pub(crate) const HEX: Self = Self(BaseEnum::Hex);
 
@@ -54,31 +31,29 @@ impl Base {
         }
     }
 
-    pub(crate) const fn from_zero_based_prefix_char(
-        ch: char,
-    ) -> Result<Self, InvalidBasePrefixError> {
+    pub(crate) const fn from_zero_based_prefix_char(ch: char) -> Result<Self, FendError> {
         Ok(match ch {
             'x' => Self(BaseEnum::Hex),
             'o' => Self(BaseEnum::Octal),
             'b' => Self(BaseEnum::Binary),
-            _ => return Err(InvalidBasePrefixError {}),
+            _ => return Err(FendError::InvalidBasePrefix),
         })
     }
 
-    pub(crate) const fn from_plain_base(base: u8) -> Result<Self, OutOfRangeError> {
+    pub(crate) const fn from_plain_base(base: u8) -> Result<Self, FendError> {
         if base < 2 {
-            return Err(OutOfRangeError::BaseTooSmall);
+            return Err(FendError::BaseTooSmall);
         } else if base > 36 {
-            return Err(OutOfRangeError::BaseTooLarge);
+            return Err(FendError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Plain(base)))
     }
 
-    pub(crate) const fn from_custom_base(base: u8) -> Result<Self, OutOfRangeError> {
+    pub(crate) const fn from_custom_base(base: u8) -> Result<Self, FendError> {
         if base < 2 {
-            return Err(OutOfRangeError::BaseTooSmall);
+            return Err(FendError::BaseTooSmall);
         } else if base > 36 {
-            return Err(OutOfRangeError::BaseTooLarge);
+            return Err(FendError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Custom(base)))
     }
