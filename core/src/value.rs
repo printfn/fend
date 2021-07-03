@@ -166,17 +166,17 @@ pub(crate) enum ApplyMulHandling {
 }
 
 impl Value {
-    pub(crate) fn expect_num(self) -> Result<Number, String> {
+    pub(crate) fn expect_num(self) -> Result<Number, FendError> {
         match self {
             Self::Num(bigrat) => Ok(*bigrat),
-            _ => Err("expected a number".to_string()),
+            _ => Err(FendError::ExpectedANumber),
         }
     }
 
-    pub(crate) fn expect_dyn(self) -> Result<Box<dyn ValueTrait>, String> {
+    pub(crate) fn expect_dyn(self) -> Result<Box<dyn ValueTrait>, FendError> {
         match self {
             Self::Dynamic(d) => Ok(d),
-            _ => Err("invalid type".to_string()),
+            _ => Err(FendError::InvalidType),
         }
     }
 
@@ -190,7 +190,7 @@ impl Value {
             Self::Num(n) => Self::Num(Box::new(eval_fn(*n)?)),
             Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
             Self::BuiltInFunction(f) => f.wrap_with_expr(lazy_fn, scope),
-            _ => return Err("expected a number".to_string().into()),
+            _ => return Err(FendError::ExpectedANumber),
         })
     }
 
@@ -212,7 +212,7 @@ impl Value {
             (Self::Num(a), Self::Fn(param, expr, scope)) => {
                 Self::Fn(param, Box::new(lazy_fn_rhs(*a)(expr)), scope)
             }
-            _ => return Err("expected a number".to_string().into()),
+            _ => return Err(FendError::ExpectedANumber),
         })
     }
 
@@ -236,19 +236,15 @@ impl Value {
                 if let Self::Sf = other {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     if num == 0 {
-                        return Err("cannot format a number with zero significant figures."
-                            .to_string()
-                            .into());
+                        return Err(FendError::CannotFormatWithZeroSf);
                     }
                     return Ok(Self::Format(FormattingStyle::SignificantFigures(num)));
                 }
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
-                    return Err(format!(
-                        "{} is not a function",
-                        self_.format_to_plain_string(0, int)?
-                    )
-                    .into());
+                    return Err(FendError::IsNotAFunction(
+                        self_.format_to_plain_string(0, int)?,
+                    ));
                 }
                 let n2 = n.clone();
                 other.handle_num(
@@ -267,18 +263,12 @@ impl Value {
             Self::Dynamic(d) => {
                 let other = crate::ast::evaluate(other, scope, context, int)?;
                 match d.apply(other) {
-                    None => {
-                        return Err(
-                            format!("'{}' is not a function or a number", stringified_self).into(),
-                        )
-                    }
+                    None => return Err(FendError::IsNotAFunctionOrNumber(stringified_self)),
                     Some(Err(msg)) => return Err(msg.into()),
                     Some(Ok(val)) => val,
                 }
             }
-            _ => {
-                return Err(format!("'{}' is not a function or a number", stringified_self).into());
-            }
+            _ => return Err(FendError::IsNotAFunctionOrNumber(stringified_self)),
         })
     }
 
@@ -314,7 +304,7 @@ impl Value {
                     .expect_num()?
                     .try_as_usize(int)?
                     .try_into()
-                    .map_err(|_| "unable to convert number to a valid base".to_string())?;
+                    .map_err(|_| FendError::UnableToConvertToBase)?;
                 return Ok(Self::Base(
                     Base::from_plain_base(n).map_err(|e| e.to_string())?,
                 ));

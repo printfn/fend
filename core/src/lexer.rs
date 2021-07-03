@@ -219,7 +219,6 @@ fn parse_recurring_digits<'a, I: Interrupt>(
 fn parse_basic_number<'a, I: Interrupt>(
     mut input: &'a str,
     base: Base,
-    allow_zero: bool,
     int: &I,
 ) -> Result<(Number, &'a str), FendError> {
     // parse integer component
@@ -265,10 +264,6 @@ fn parse_basic_number<'a, I: Interrupt>(
         // try parsing recurring decimals
         let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
         input = remaining;
-    }
-
-    if !allow_zero && res.is_zero() {
-        return Err("invalid number: 0".to_string().into());
     }
 
     // parse optional exponent, but only for base 10 and below
@@ -326,7 +321,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 
 fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> Result<(Number, &'a str), FendError> {
     let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
-    let (res, input) = parse_basic_number(input, base, true, int)?;
+    let (res, input) = parse_basic_number(input, base, int)?;
     Ok((res, input))
 }
 

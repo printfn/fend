@@ -9,6 +9,7 @@ pub(crate) enum FendError {
     InvalidBasePrefix,
     BaseTooSmall,
     BaseTooLarge,
+    UnableToConvertToBase,
     DivideByZero,
     ExponentTooLarge,
     ZeroToThePowerOfZero,
@@ -24,6 +25,11 @@ pub(crate) enum FendError {
     ComplexToInteger,
     NumberWithUnitToInt,
     InexactNumberToInt,
+    ExpectedANumber,
+    InvalidType,
+    CannotFormatWithZeroSf,
+    IsNotAFunction(String),
+    IsNotAFunctionOrNumber(String),
     IdentifierNotFound(crate::ident::Ident),
     ExpectedACharacter,
     ExpectedADigit(char),
@@ -52,6 +58,7 @@ impl fmt::Display for FendError {
             ),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
+            Self::UnableToConvertToBase => write!(f, "unable to convert number to a valid base"),
             Self::DivideByZero => write!(f, "division by zero"),
             Self::ExponentTooLarge => write!(f, "exponent too large"),
             Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
@@ -66,6 +73,13 @@ impl fmt::Display for FendError {
             Self::ComplexToInteger => write!(f, "cannot convert complex number to integer"),
             Self::NumberWithUnitToInt => write!(f, "cannot convert number with unit to integer"),
             Self::InexactNumberToInt => write!(f, "cannot convert inexact number to integer"),
+            Self::ExpectedANumber => write!(f, "expected a number"),
+            Self::InvalidType => write!(f, "invalid type"),
+            Self::CannotFormatWithZeroSf => {
+                write!(f, "cannot format a number with zero significant figures")
+            }
+            Self::IsNotAFunction(s) => write!(f, "'{}' is not a function", s),
+            Self::IsNotAFunctionOrNumber(s) => write!(f, "'{}' is not a function or number", s),
             Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
             Self::ExpectedACharacter => write!(f, "expected a character"),
             Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
@@ -114,14 +128,4 @@ impl From<String> for FendError {
     }
 }
 
-pub(crate) trait Interrupt {
-    fn test(&self) -> Result<(), ()>;
-}
-
-#[derive(Default)]
-pub(crate) struct NeverInterrupt {}
-impl Interrupt for NeverInterrupt {
-    fn test(&self) -> Result<(), ()> {
-        Ok(())
-    }
-}
+pub(crate) use crate::interrupt::Interrupt;

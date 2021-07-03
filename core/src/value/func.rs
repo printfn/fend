@@ -1,10 +1,11 @@
 use super::{Value, ValueTrait};
+use crate::error::FendError;
 use std::fmt;
 
 #[derive(Clone)]
 pub(crate) struct Func {
     name: &'static str,
-    f: for<'a> fn(Value) -> Result<Value, String>,
+    f: for<'a> fn(Value) -> Result<Value, FendError>,
 }
 
 impl fmt::Debug for Func {
@@ -28,7 +29,7 @@ impl ValueTrait for Func {
     fn apply<'a>(&self, arg: Value) -> Option<Result<Value, String>> {
         let res = match (self.f)(arg) {
             Ok(v) => v,
-            Err(msg) => return Some(Err(msg)),
+            Err(msg) => return Some(Err(msg.to_string())),
         };
         Some(Ok(res))
     }
