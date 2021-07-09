@@ -306,8 +306,12 @@ impl Value {
         self.value.equals_int(0)
     }
 
-    pub(crate) fn new_die<I: Interrupt>(n: u32, int: &I) -> Result<Self, FendError> {
-        Ok(Self::new(Dist::new_die(n, int)?, vec![]))
+    pub(crate) fn new_die<I: Interrupt>(
+        count: u32,
+        faces: u32,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        Ok(Self::new(Dist::new_die(count, faces, int)?, vec![]))
     }
 
     fn apply_fn_exact<I: Interrupt>(
