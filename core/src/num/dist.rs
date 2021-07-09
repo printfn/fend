@@ -57,7 +57,7 @@ impl fmt::Debug for Dist {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.one_point_ref() {
             Ok(complex) => write!(f, "{:?}", complex),
-            Err(_) => write!(f, "dist {{ {:?} }}", self.parts),
+            Err(_) => write!(f, "dist {:?}", self.parts),
         }
     }
 }
