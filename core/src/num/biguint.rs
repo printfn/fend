@@ -3,13 +3,26 @@ use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
 use std::cmp::{max, Ordering};
-use std::fmt;
+use std::{fmt, hash};
 
-#[derive(Clone, Hash)]
+#[derive(Clone)]
 pub(crate) enum BigUint {
     Small(u64),
     // little-endian, len >= 1
     Large(Vec<u64>),
+}
+
+impl hash::Hash for BigUint {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Small(u) => u.hash(state),
+            Large(v) => {
+                for u in v {
+                    u.hash(state);
+                }
+            }
+        }
+    }
 }
 
 use BigUint::{Large, Small};
