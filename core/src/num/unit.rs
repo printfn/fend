@@ -308,6 +308,10 @@ impl Value {
         self.value.one_point_ref().ok() == Some(&0.into())
     }
 
+    pub(crate) fn new_die<I: Interrupt>(n: u32, int: &I) -> Result<Self, FendError> {
+        Ok(Self::new(Dist::new_die(n, int)?, vec![]))
+    }
+
     fn apply_fn_exact<I: Interrupt>(
         self,
         f: impl FnOnce(Complex, &I) -> Result<Exact<Complex>, FendError>,

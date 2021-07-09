@@ -1,4 +1,4 @@
-use crate::error::FendError;
+use crate::error::{FendError, Interrupt};
 use crate::num::bigrat::BigRat;
 use crate::num::complex::Complex;
 use std::collections::HashMap;
@@ -26,6 +26,16 @@ impl Dist {
         } else {
             Err(FendError::ProbabilityDistributionsNotAllowed)
         }
+    }
+
+    pub(crate) fn new_die<I: Interrupt>(n: u32, int: &I) -> Result<Self, FendError> {
+        assert!(n != 0);
+        let mut hashmap = HashMap::new();
+        let probability = BigRat::from(1).div(&BigRat::from(u64::from(n)), int)?;
+        for i in 1..=n {
+            hashmap.insert(Complex::from(u64::from(i)), probability.clone());
+        }
+        Ok(Self { parts: hashmap })
     }
 }
 
