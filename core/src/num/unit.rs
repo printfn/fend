@@ -212,9 +212,7 @@ impl Value {
     }
 
     pub(crate) fn is_unitless_one(&self) -> bool {
-        self.is_unitless()
-            && self.exact
-            && self.value.one_point_ref().ok() == Some(&Complex::from(1))
+        self.is_unitless() && self.exact && self.value.equals_int(1)
     }
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
@@ -305,7 +303,7 @@ impl Value {
     }
 
     pub(crate) fn is_zero(&self) -> bool {
-        self.value.one_point_ref().ok() == Some(&0.into())
+        self.value.equals_int(0)
     }
 
     pub(crate) fn new_die<I: Interrupt>(n: u32, int: &I) -> Result<Self, FendError> {
@@ -488,17 +486,21 @@ impl Value {
         } else {
             UseParentheses::IfComplex
         };
-        let formatted_value = self.value.one_point_ref()?.format(
-            self.exact,
-            self.format,
-            self.base,
-            use_parentheses,
-            int,
-        )?;
-        let mut exact = formatted_value.exact;
+        let mut formatted_value = String::new();
+        let mut exact = self
+            .value
+            .format(
+                self.exact,
+                self.format,
+                self.base,
+                use_parentheses,
+                &mut formatted_value,
+                int,
+            )?
+            .exact;
         let unit_string = self.unit.format(
             "",
-            self.value.one_point_ref().ok() == Some(&1.into()),
+            self.value.equals_int(1),
             self.base,
             self.format,
             true,
@@ -506,7 +508,7 @@ impl Value {
         )?;
         exact = exact && unit_string.exact;
         Ok(FormattedValue {
-            number: formatted_value.value,
+            number: formatted_value,
             exact,
             unit_str: unit_string.value,
         })
@@ -533,7 +535,7 @@ impl Value {
 
         let mut res_components: Vec<UnitExponent> = vec![];
         let mut res_exact = self.exact;
-        let mut res_value = self.value.one_point()?;
+        let mut res_value = self.value;
 
         // combine identical or compatible units by summing their exponents
         // and potentially adjusting the value
@@ -579,11 +581,11 @@ impl Value {
 
                         let scale = scale.value.pow(comp.exponent, int)?;
                         let adjusted_value = Exact {
-                            value: res_value,
+                            value: res_value.one_point()?,
                             exact: res_exact,
                         }
                         .mul(&scale, int)?;
-                        res_value = adjusted_value.value;
+                        res_value = Dist::from(adjusted_value.value);
                         res_exact = res_exact && adjusted_value.exact;
 
                         continue 'outer;
@@ -602,7 +604,7 @@ impl Value {
             .collect();
 
         Ok(Self {
-            value: res_value.into(),
+            value: res_value,
             unit: Unit {
                 components: res_components,
             },
@@ -659,7 +661,7 @@ impl fmt::Debug for Value {
 #[derive(Debug)]
 pub(crate) struct FormattedValue {
     exact: bool,
-    number: complex::Formatted,
+    number: String,
     unit_str: String,
 }
 
@@ -677,7 +679,7 @@ impl FormattedValue {
                 kind: SpanKind::Ident,
             });
             spans.push(Span {
-                string: self.number.to_string(),
+                string: self.number,
                 kind: SpanKind::Number,
             });
             return;

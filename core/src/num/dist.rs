@@ -1,9 +1,14 @@
 use crate::error::{FendError, Interrupt};
-use crate::num::bigrat::BigRat;
-use crate::num::complex::Complex;
+use crate::format::Format;
+use crate::num::bigrat::{self, BigRat};
+use crate::num::complex::{self, Complex};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt;
+use std::fmt::Write;
 use std::ops::Neg;
+
+use super::{Base, Exact, FormattingStyle};
 
 #[derive(Clone)]
 pub(crate) struct Dist {
@@ -38,6 +43,10 @@ impl Dist {
         Ok(Self { parts: hashmap })
     }
 
+    pub(crate) fn equals_int(&self, val: u64) -> bool {
+        self.parts.len() == 1 && self.parts.keys().next().unwrap() == &val.into()
+    }
+
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     pub(crate) fn sample<I: Interrupt>(
         self,
@@ -57,6 +66,60 @@ impl Dist {
             res = Some(Self::from(k));
         }
         Ok(res.expect("there must be at least one part in a dist"))
+    }
+
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        exact: bool,
+        style: FormattingStyle,
+        base: Base,
+        use_parentheses: complex::UseParentheses,
+        out: &mut String,
+        int: &I,
+    ) -> Result<Exact<()>, FendError> {
+        if self.parts.len() == 1 {
+            let res = self.parts.iter().next().unwrap().0.format(
+                exact,
+                style,
+                base,
+                use_parentheses,
+                int,
+            )?;
+            write!(out, "{}", res.value)?;
+            Ok(Exact::new((), res.exact))
+        } else {
+            let mut ordered_kvs = vec![];
+            for kv in &self.parts {
+                ordered_kvs.push(kv);
+            }
+            ordered_kvs
+                .sort_unstable_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+            let mut first = true;
+            for (num, prob) in &ordered_kvs {
+                if first {
+                    first = false;
+                } else {
+                    writeln!(out)?;
+                }
+                write!(
+                    out,
+                    "{}: {}",
+                    num.format(exact, style, base, use_parentheses, int)?.value,
+                    prob.format(
+                        &bigrat::FormatOptions {
+                            base,
+                            style: FormattingStyle::ImproperFraction,
+                            term: "",
+                            use_parens_if_fraction: false
+                        },
+                        int
+                    )?
+                    .value
+                )?;
+            }
+            // TODO check exactness
+            Ok(Exact::new((), true))
+        }
     }
 }
 

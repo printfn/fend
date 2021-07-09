@@ -46,6 +46,7 @@ pub(crate) enum FendError {
     BackslashXOutOfRange,
     ExpectedALetterOrCode,
     InvalidUnicodeEscapeSequence,
+    FormattingError(fmt::Error),
     // todo remove this
     String(String),
 }
@@ -69,7 +70,10 @@ impl fmt::Display for FendError {
             }
             Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
             Self::ProbabilityDistributionsNotAllowed => {
-                write!(f, "probability distributions are not allowed")
+                write!(
+                    f,
+                    "probability distributions are not allowed (consider using `sample`)"
+                )
             }
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
@@ -120,17 +124,31 @@ impl fmt::Display for FendError {
                     "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
                 )
             }
+            Self::FormattingError(_) => write!(f, "error during formatting"),
             Self::String(s) => write!(f, "{}", s),
         }
     }
 }
 
-impl error::Error for FendError {}
+impl error::Error for FendError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Self::FormattingError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
 
 // todo remove this impl
 impl From<String> for FendError {
     fn from(e: String) -> Self {
         Self::String(e)
+    }
+}
+
+impl From<fmt::Error> for FendError {
+    fn from(e: fmt::Error) -> Self {
+        Self::FormattingError(e)
     }
 }
 
