@@ -22,7 +22,7 @@ impl Dist {
 
     pub(crate) fn one_point_ref(&self) -> Result<&Complex, FendError> {
         if self.parts.len() == 1 {
-            Ok(&self.parts.iter().next().unwrap().0)
+            Ok(self.parts.iter().next().unwrap().0)
         } else {
             Err(FendError::ProbabilityDistributionsNotAllowed)
         }

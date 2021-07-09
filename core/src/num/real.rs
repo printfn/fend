@@ -4,12 +4,12 @@ use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt;
 use std::ops::Neg;
+use std::{fmt, hash};
 
 use super::bigrat;
 
-#[derive(Clone, Hash)]
+#[derive(Clone)]
 pub(crate) struct Real {
     pattern: Pattern,
 }
@@ -29,7 +29,7 @@ impl fmt::Debug for Real {
     }
 }
 
-#[derive(Clone, Debug, Hash)]
+#[derive(Clone, Debug)]
 pub(crate) enum Pattern {
     /// a simple fraction
     Simple(BigRat),
@@ -64,6 +64,14 @@ impl PartialEq for Real {
 }
 
 impl Eq for Real {}
+
+impl hash::Hash for Real {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        match &self.pattern {
+            Pattern::Simple(r) | Pattern::Pi(r) => r.hash(state),
+        }
+    }
+}
 
 impl Real {
     fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, FendError> {
