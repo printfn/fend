@@ -5,7 +5,7 @@ use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
 use std::cmp::{max, Ordering};
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 pub(crate) enum BigUint {
     Small(u64),
     // little-endian, len >= 1

@@ -9,7 +9,7 @@ use std::ops::Neg;
 
 use super::bigrat;
 
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 pub(crate) struct Real {
     pattern: Pattern,
 }
@@ -29,7 +29,7 @@ impl fmt::Debug for Real {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 pub(crate) enum Pattern {
     /// a simple fraction
     Simple(BigRat),

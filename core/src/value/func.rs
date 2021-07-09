@@ -42,5 +42,5 @@ pub(crate) const NOT: Func = Func {
 
 pub(crate) const CONJUGATE: Func = Func {
     name: "conjugate",
-    f: |val| Ok(Value::Num(Box::new(val.expect_num()?.conjugate()))),
+    f: |val| Ok(Value::Num(Box::new(val.expect_num()?.conjugate()?))),
 };

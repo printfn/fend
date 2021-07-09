@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Neg;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Complex {
     real: Real,
     imag: Real,

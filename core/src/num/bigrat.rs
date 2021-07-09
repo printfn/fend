@@ -6,7 +6,7 @@ use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use std::{cmp, fmt, ops};
 
 mod sign {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub(crate) enum Sign {
         Positive,
         Negative,
@@ -37,7 +37,7 @@ use super::biguint::{self, FormattedBigUint};
 use super::out_of_range;
 use sign::Sign;
 
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 pub(crate) struct BigRat {
     sign: Sign,
     num: BigUint,

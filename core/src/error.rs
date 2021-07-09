@@ -18,6 +18,7 @@ pub(crate) enum FendError {
         range: Range<Box<dyn crate::format::DisplayDebug>>,
     },
     NegativeNumbersNotAllowed,
+    ProbabilityDistributionsNotAllowed,
     FractionToInteger,
     MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
     ExpectedARationalNumber,
@@ -66,6 +67,9 @@ impl fmt::Display for FendError {
                 write!(f, "{} must lie in the interval {}", value, range)
             }
             Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
+            Self::ProbabilityDistributionsNotAllowed => {
+                write!(f, "probability distributions are not allowed")
+            }
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
             Self::ExpectedARationalNumber => write!(f, "expected a rational number"),

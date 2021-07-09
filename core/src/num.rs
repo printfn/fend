@@ -4,6 +4,7 @@ mod base;
 mod bigrat;
 mod biguint;
 mod complex;
+mod dist;
 mod exact;
 mod formatting_style;
 mod real;
