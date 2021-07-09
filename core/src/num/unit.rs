@@ -351,6 +351,17 @@ impl Value {
         })
     }
 
+    pub(crate) fn sample<I: Interrupt>(
+        self,
+        ctx: &crate::Context,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        Ok(Self {
+            value: self.value.sample(ctx, int)?,
+            ..self
+        })
+    }
+
     fn convert_angle_to_rad<I: Interrupt>(
         self,
         scope: Option<Arc<Scope>>,

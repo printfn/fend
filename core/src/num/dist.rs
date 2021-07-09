@@ -37,6 +37,27 @@ impl Dist {
         }
         Ok(Self { parts: hashmap })
     }
+
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    pub(crate) fn sample<I: Interrupt>(
+        self,
+        ctx: &crate::Context,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        if self.parts.len() == 1 {
+            return Ok(self);
+        }
+        let mut random = ctx.random_u32.ok_or(FendError::RandomNumbersNotAvailable)?();
+        let mut res = None;
+        for (k, v) in self.parts {
+            random = random.saturating_sub((v.into_f64(int)? * f64::from(u32::MAX)) as u32);
+            if random == 0 {
+                return Ok(Self::from(k));
+            }
+            res = Some(Self::from(k));
+        }
+        Ok(res.expect("there must be at least one part in a dist"))
+    }
 }
 
 impl From<Complex> for Dist {

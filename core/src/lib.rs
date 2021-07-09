@@ -123,6 +123,7 @@ pub struct Context {
     current_time: Option<CurrentTimeInfo>,
     variables: HashMap<String, value::Value>,
     fc_mode: FCMode,
+    random_u32: Option<fn() -> u32>,
 }
 
 impl Default for Context {
@@ -140,6 +141,7 @@ impl Context {
             current_time: None,
             variables: HashMap::new(),
             fc_mode: FCMode::CelsiusFahrenheit,
+            random_u32: None,
         }
     }
 
@@ -165,6 +167,16 @@ impl Context {
     /// celsius and degrees fahrenheit.
     pub fn use_coulomb_and_farad(&mut self) {
         self.fc_mode = FCMode::CoulombFarad;
+    }
+
+    /// Set a random number generator
+    pub fn set_random_u32_fn(&mut self, random_u32: fn() -> u32) {
+        self.random_u32 = Some(random_u32);
+    }
+
+    /// Clear the random number generator after setting it with via [`Self::set_random_u32_fn`]
+    pub fn disable_rng(&mut self) {
+        self.random_u32 = None;
     }
 }
 
