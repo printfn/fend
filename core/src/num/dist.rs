@@ -1,4 +1,5 @@
 use crate::error::{FendError, Interrupt};
+use crate::interrupt::test_int;
 use crate::num::bigrat::BigRat;
 use crate::num::complex::{self, Complex};
 use std::cmp::Ordering;
@@ -42,6 +43,7 @@ impl Dist {
         if count > 1 {
             let mut result = Self::new_die(1, faces, int)?;
             for _ in 1..count {
+                test_int(int)?;
                 result = Exact::new(result, true)
                     .add(&Exact::new(Self::new_die(1, faces, int)?, true), int)?
                     .value;
@@ -51,6 +53,7 @@ impl Dist {
         let mut hashmap = HashMap::new();
         let probability = BigRat::from(1).div(&BigRat::from(u64::from(faces)), int)?;
         for face in 1..=faces {
+            test_int(int)?;
             hashmap.insert(Complex::from(u64::from(face)), probability.clone());
         }
         Ok(Self { parts: hashmap })
