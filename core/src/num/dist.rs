@@ -100,7 +100,7 @@ impl Dist {
             ordered_kvs
                 .sort_unstable_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
             let mut first = true;
-            for (num, prob) in &ordered_kvs {
+            for (num, prob) in ordered_kvs {
                 if first {
                     first = false;
                 } else {
@@ -108,18 +108,20 @@ impl Dist {
                 }
                 write!(
                     out,
-                    "{}: {}",
+                    "{}: {}%",
                     num.format(exact, style, base, use_parentheses, int)?.value,
-                    prob.format(
-                        &bigrat::FormatOptions {
-                            base,
-                            style: FormattingStyle::ImproperFraction,
-                            term: "",
-                            use_parens_if_fraction: false
-                        },
-                        int
-                    )?
-                    .value
+                    prob.clone()
+                        .mul(&BigRat::from(100), int)?
+                        .format(
+                            &bigrat::FormatOptions {
+                                base,
+                                style: FormattingStyle::DecimalPlaces(2),
+                                term: "",
+                                use_parens_if_fraction: false
+                            },
+                            int
+                        )?
+                        .value
                 )?;
             }
             // TODO check exactness
