@@ -12,6 +12,8 @@ Unique features:
 
 * Arbitrary-precision arithmetic using rational numbers
 * Full support for complex numbers
+* D&D-style dice rolls
+* Variables
 * Binary, octal, hexadecimal and all other bases between 2 and 36
 * Keep track of units, with support for SI, US and UK customary and many historical units
 * Emacs-style CLI shortcuts
@@ -104,6 +106,13 @@ approx. 0.3066013937 parsecs
 30 °C
 > temperature to °F
 86 °F
+```
+
+```
+> roll d20
+8
+> roll 4d6
+17
 ```
 
 ## License

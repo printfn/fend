@@ -34,6 +34,9 @@ checkversion "$NEW_VERSION"
 OLD_VERSION="$(cargo run -q -- version)"
 
 confirm "Releasing update $OLD_VERSION -> $NEW_VERSION"
+echo "Checking if the README files are in sync..."
+diff README.md cli/README.md
+diff README.md core/README.md
 echo "Running cargo fmt..."
 cargo fmt
 manualstep "Update README"
