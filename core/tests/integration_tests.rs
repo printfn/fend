@@ -5383,8 +5383,3 @@ fn test_rolling_dice() {
     ctx.set_random_u32_fn(|| 5);
     evaluate("roll d20", &mut ctx).unwrap();
 }
-
-#[test]
-fn formatted_dist() {
-    test_eval_simple("d6", "1: 1/6\n2: 1/6\n3: 1/6\n4: 1/6\n5: 1/6\n6: 1/6");
-}
