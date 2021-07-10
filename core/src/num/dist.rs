@@ -126,6 +126,87 @@ impl Dist {
             Ok(Exact::new((), true))
         }
     }
+
+    fn bop<I: Interrupt>(
+        self,
+        rhs: &Self,
+        mut f: impl FnMut(&Complex, &Complex, &I) -> Result<Complex, FendError>,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        let mut result = HashMap::<Complex, BigRat>::new();
+        for (n1, p1) in &self.parts {
+            for (n2, p2) in &rhs.parts {
+                let n = f(n1, n2, int)?;
+                let p = p1.clone().mul(p2, int)?;
+                if let Some(prob) = result.get_mut(&n) {
+                    *prob = prob.clone().add(p, int)?;
+                } else {
+                    result.insert(n, p);
+                }
+            }
+        }
+        Ok(Self { parts: result })
+    }
+}
+
+#[allow(clippy::use_self)]
+impl Exact<Dist> {
+    pub(crate) fn add<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let self_exact = self.exact;
+        let rhs_exact = rhs.exact;
+        let mut exact = true;
+        Ok(Exact::new(
+            self.value.bop(
+                &rhs.value,
+                |a, b, int| {
+                    let sum = Exact::new(a.clone(), self_exact)
+                        .add(Exact::new(b.clone(), rhs_exact), int)?;
+                    exact &= sum.exact;
+                    Ok(sum.value)
+                },
+                int,
+            )?,
+            exact,
+        ))
+    }
+
+    pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let self_exact = self.exact;
+        let rhs_exact = rhs.exact;
+        let mut exact = true;
+        Ok(Exact::new(
+            self.value.bop(
+                &rhs.value,
+                |a, b, int| {
+                    let sum = Exact::new(a.clone(), self_exact)
+                        .mul(&Exact::new(b.clone(), rhs_exact), int)?;
+                    exact &= sum.exact;
+                    Ok(sum.value)
+                },
+                int,
+            )?,
+            exact,
+        ))
+    }
+
+    pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let self_exact = self.exact;
+        let rhs_exact = rhs.exact;
+        let mut exact = true;
+        Ok(Exact::new(
+            self.value.bop(
+                &rhs.value,
+                |a, b, int| {
+                    let sum = Exact::new(a.clone(), self_exact)
+                        .div(Exact::new(b.clone(), rhs_exact), int)?;
+                    exact &= sum.exact;
+                    Ok(sum.value)
+                },
+                int,
+            )?,
+            exact,
+        ))
+    }
 }
 
 impl From<Complex> for Dist {

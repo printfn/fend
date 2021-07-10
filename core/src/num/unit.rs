@@ -115,12 +115,13 @@ impl Value {
 
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
-        let scaled = Exact::new(rhs.value.one_point()?, rhs.exact)
-            .mul(&scale_factor.scale_1, int)?
-            .div(scale_factor.scale_2, int)?;
-        let value = Exact::new(self.value.one_point()?, self.exact).add(scaled, int)?;
+        let scaled = Exact::new(rhs.value, rhs.exact)
+            .mul(&scale_factor.scale_1.apply(Dist::from), int)?
+            .div(&scale_factor.scale_2.apply(Dist::from), int)?;
+        let value =
+            Exact::new(self.value, self.exact).add(&Exact::new(scaled.value, scaled.exact), int)?;
         Ok(Self {
-            value: Dist::from(value.value),
+            value: value.value,
             unit: self.unit,
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
