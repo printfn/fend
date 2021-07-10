@@ -83,7 +83,6 @@ pub(crate) enum BuiltInFunction {
     Log2,
     Log10,
     Base,
-    Differentiate,
     Sample,
 }
 
@@ -141,16 +140,7 @@ impl BuiltInFunction {
             Self::Log2 => "log2",
             Self::Log10 => "log10",
             Self::Base => "base",
-            Self::Differentiate => "differentiate",
             Self::Sample => "sample",
-        }
-    }
-
-    fn differentiate(self) -> Option<Value> {
-        if self == Self::Sin {
-            Some(Value::BuiltInFunction(Self::Cos))
-        } else {
-            None
         }
     }
 }
@@ -227,7 +217,7 @@ impl Value {
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        let stringified_self = self.format_to_plain_string(0, int)?;
+        let stringified_self = self.format_to_plain_string(0, context, int)?;
         Ok(match self {
             Self::Num(n) => {
                 let other = crate::ast::evaluate(other, scope.clone(), context, int)?;
@@ -245,7 +235,7 @@ impl Value {
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
                     return Err(FendError::IsNotAFunction(
-                        self_.format_to_plain_string(0, int)?,
+                        self_.format_to_plain_string(0, context, int)?,
                     ));
                 }
                 let n2 = n.clone();
@@ -311,7 +301,6 @@ impl Value {
                     Base::from_plain_base(n).map_err(|e| e.to_string())?,
                 ));
             }
-            BuiltInFunction::Differentiate => return arg.differentiate("x", int),
             BuiltInFunction::Sample => arg.expect_num()?.sample(context, int)?,
         })))
     }
@@ -319,10 +308,11 @@ impl Value {
     pub(crate) fn format_to_plain_string<I: Interrupt>(
         &self,
         indent: usize,
+        ctx: &crate::Context,
         int: &I,
     ) -> Result<String, FendError> {
         let mut spans = vec![];
-        self.format(indent, &mut spans, int)?;
+        self.format(indent, &mut spans, ctx, int)?;
         let mut res = String::new();
         for span in spans {
             res.push_str(&span.string);
@@ -334,11 +324,12 @@ impl Value {
         &self,
         indent: usize,
         spans: &mut Vec<Span>,
+        ctx: &crate::Context,
         int: &I,
     ) -> Result<(), FendError> {
         match self {
             Self::Num(n) => {
-                n.clone().simplify(int)?.format(int)?.spans(spans);
+                n.clone().simplify(int)?.format(ctx, int)?.spans(spans);
             }
             Self::BuiltInFunction(name) => {
                 spans.push(Span {
@@ -375,7 +366,7 @@ impl Value {
                 });
             }
             Self::Fn(name, expr, _scope) => {
-                let expr_str = (&**expr).format(int)?;
+                let expr_str = (&**expr).format(ctx, int)?;
                 let res = if name.as_str().contains('.') {
                     format!("{}:{}", name, expr_str)
                 } else {
@@ -397,7 +388,7 @@ impl Value {
                         spans.push(Span::from_string(" ".to_string()));
                     }
                     spans.push(Span::from_string(format!("{}: ", k)));
-                    v.format(indent + 4, spans, int)?;
+                    v.format(indent + 4, spans, ctx, int)?;
                 }
                 spans.push(Span::from_string("\n}".to_string()));
             }
@@ -429,20 +420,6 @@ impl Value {
                 None => Err(format!("could not find key {}", key.as_str())),
             },
             _ => Err("expected an object".to_string()),
-        }
-    }
-
-    pub(crate) fn differentiate<I: Interrupt>(self, _to: &str, int: &I) -> Result<Self, FendError> {
-        match self {
-            Self::Num(_) => Ok(Self::Num(Box::new(Number::from(0)))),
-            Self::BuiltInFunction(f) => Ok(f
-                .differentiate()
-                .ok_or(format!("cannot differentiate built-in function {}", f))?),
-            _ => Err(format!(
-                "cannot differentiate {}",
-                self.format_to_plain_string(0, int)?
-            )
-            .into()),
         }
     }
 }

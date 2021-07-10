@@ -116,6 +116,12 @@ enum FCMode {
     CoulombFarad,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum OutputMode {
+    SimpleText,
+    TerminalFixedWidth,
+}
+
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
 #[derive(Clone, Debug)]
@@ -124,6 +130,7 @@ pub struct Context {
     variables: HashMap<String, value::Value>,
     fc_mode: FCMode,
     random_u32: Option<fn() -> u32>,
+    output_mode: OutputMode,
 }
 
 impl Default for Context {
@@ -142,6 +149,7 @@ impl Context {
             variables: HashMap::new(),
             fc_mode: FCMode::CelsiusFahrenheit,
             random_u32: None,
+            output_mode: OutputMode::SimpleText,
         }
     }
 
@@ -177,6 +185,12 @@ impl Context {
     /// Clear the random number generator after setting it with via [`Self::set_random_u32_fn`]
     pub fn disable_rng(&mut self) {
         self.random_u32 = None;
+    }
+
+    /// Change the output mode fixed-width terminal style. This enables ASCII
+    /// graphs in the output.
+    pub fn set_output_mode_terminal(&mut self) {
+        self.output_mode = OutputMode::TerminalFixedWidth;
     }
 }
 

@@ -485,7 +485,7 @@ impl Value {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<FormattedValue, FendError> {
+    pub(crate) fn format<I: Interrupt>(&self, ctx: &crate::Context, int: &I) -> Result<FormattedValue, FendError> {
         let use_parentheses = if self.unit.components.is_empty() {
             UseParentheses::No
         } else {
@@ -500,6 +500,7 @@ impl Value {
                 self.base,
                 use_parentheses,
                 &mut formatted_value,
+                ctx,
                 int,
             )?
             .exact;
@@ -1137,7 +1138,7 @@ mod tests {
     fn to_string(n: &Value) -> String {
         let int = &crate::interrupt::Never::default();
         // TODO: this unwrap call should be unnecessary
-        n.format(int).unwrap().to_string()
+        n.format(&crate::Context::new(), int).unwrap().to_string()
     }
 
     #[test]

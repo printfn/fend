@@ -40,39 +40,39 @@ pub(crate) enum Expr {
 }
 
 impl<'a> Expr {
-    pub(crate) fn format<I: Interrupt>(&self, int: &I) -> Result<String, FendError> {
+    pub(crate) fn format<I: Interrupt>(&self, ctx: &crate::Context, int: &I) -> Result<String, FendError> {
         Ok(match self {
             Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
-            Self::Literal(v) => v.format_to_plain_string(0, int)?,
+            Self::Literal(v) => v.format_to_plain_string(0, ctx, int)?,
             Self::Ident(ident) => ident.to_string(),
-            Self::Parens(x) => format!("({})", x.format(int)?),
-            Self::UnaryMinus(x) => format!("(-{})", x.format(int)?),
-            Self::UnaryPlus(x) => format!("(+{})", x.format(int)?),
-            Self::UnaryDiv(x) => format!("(/{})", x.format(int)?),
-            Self::Factorial(x) => format!("{}!", x.format(int)?),
+            Self::Parens(x) => format!("({})", x.format(ctx, int)?),
+            Self::UnaryMinus(x) => format!("(-{})", x.format(ctx, int)?),
+            Self::UnaryPlus(x) => format!("(+{})", x.format(ctx, int)?),
+            Self::UnaryDiv(x) => format!("(/{})", x.format(ctx, int)?),
+            Self::Factorial(x) => format!("{}!", x.format(ctx, int)?),
             Self::Add(a, b) | Self::ImplicitAdd(a, b) => {
-                format!("({}+{})", a.format(int)?, b.format(int)?)
+                format!("({}+{})", a.format(ctx, int)?, b.format(ctx, int)?)
             }
-            Self::Sub(a, b) => format!("({}-{})", a.format(int)?, b.format(int)?),
-            Self::Mul(a, b) => format!("({}*{})", a.format(int)?, b.format(int)?),
-            Self::Div(a, b) => format!("({}/{})", a.format(int)?, b.format(int)?),
-            Self::Mod(a, b) => format!("({} mod {})", a.format(int)?, b.format(int)?),
-            Self::Pow(a, b) => format!("({}^{})", a.format(int)?, b.format(int)?),
-            Self::Apply(a, b) => format!("({} ({}))", a.format(int)?, b.format(int)?),
+            Self::Sub(a, b) => format!("({}-{})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Mul(a, b) => format!("({}*{})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Div(a, b) => format!("({}/{})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Mod(a, b) => format!("({} mod {})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Pow(a, b) => format!("({}^{})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Apply(a, b) => format!("({} ({}))", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
-                format!("({} {})", a.format(int)?, b.format(int)?)
+                format!("({} {})", a.format(ctx, int)?, b.format(ctx, int)?)
             }
-            Self::As(a, b) => format!("({} as {})", a.format(int)?, b.format(int)?),
+            Self::As(a, b) => format!("({} as {})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Fn(a, b) => {
                 if a.as_str().contains('.') {
-                    format!("({}:{})", a, b.format(int)?)
+                    format!("({}:{})", a, b.format(ctx, int)?)
                 } else {
-                    format!("\\{}.{}", a, b.format(int)?)
+                    format!("\\{}.{}", a, b.format(ctx, int)?)
                 }
             }
-            Self::Of(a, b) => format!("{} of {}", a, b.format(int)?),
-            Self::Assign(a, b) => format!("{} = {}", a, b.format(int)?),
-            Self::Statements(a, b) => format!("{}; {}", a.format(int)?, b.format(int)?),
+            Self::Of(a, b) => format!("{} of {}", a, b.format(ctx, int)?),
+            Self::Assign(a, b) => format!("{} = {}", a, b.format(ctx, int)?),
+            Self::Statements(a, b) => format!("{}; {}", a.format(ctx, int)?, b.format(ctx, int)?),
         })
     }
 }
@@ -273,7 +273,7 @@ fn evaluate_as<I: Interrupt>(
             "string" => {
                 return Ok(Value::String(
                     evaluate(a, scope, context, int)?
-                        .format_to_plain_string(0, int)?
+                        .format_to_plain_string(0, context, int)?
                         .into(),
                 ));
             }
@@ -421,7 +421,6 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
             ("mass".into(), eval_box!("5.97237e24 kg")),
             ("volume".into(), eval_box!("1.08321e12 km^3")),
         ]),
-        "differentiate" => Value::BuiltInFunction(BuiltInFunction::Differentiate),
         "today" => crate::date::Date::today(context)
             .map_err(|e| e.to_string())?
             .into(),

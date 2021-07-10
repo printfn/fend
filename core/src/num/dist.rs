@@ -89,6 +89,7 @@ impl Dist {
         base: Base,
         use_parentheses: complex::UseParentheses,
         out: &mut String,
+        ctx: &crate::Context,
         int: &I,
     ) -> Result<Exact<()>, FendError> {
         if self.parts.len() == 1 {
