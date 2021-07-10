@@ -1,3 +1,5 @@
+#![allow(unused_unsafe)]
+
 mod utils;
 
 use instant::Instant;
@@ -42,14 +44,25 @@ pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
     evaluate_fend_with_timeout(input, timeout)
 }
 
-#[wasm_bindgen]
-pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
+fn random_u32() -> u32 {
+    let random_f64 = unsafe { js_sys::Math::random() };
+    (random_f64 * f64::from(u32::MAX)) as u32
+}
+
+fn create_context() -> fend_core::Context {
     let mut ctx = fend_core::Context::new();
     let date = js_sys::Date::new_0();
     ctx.set_current_time_v1(
         date.get_time() as u64,
         date.get_timezone_offset() as i64 * 60,
     );
+    ctx.set_random_u32_fn(random_u32);
+    ctx
+}
+
+#[wasm_bindgen]
+pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
+    let mut ctx = create_context();
     let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
     match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
         Ok(res) => res.get_main_result().to_string(),
@@ -60,12 +73,7 @@ pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
 /// Takes a '\0'-separated string of inputs, and returns a '\0'-separated string of results
 #[wasm_bindgen(js_name = evaluateFendWithTimeoutMultiple)]
 pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String {
-    let mut ctx = fend_core::Context::new();
-    let date = js_sys::Date::new_0();
-    ctx.set_current_time_v1(
-        date.get_time() as u64,
-        date.get_timezone_offset() as i64 * 60,
-    );
+    let mut ctx = create_context();
     let mut result = String::new();
     for input in inputs.split('\0') {
         if !result.is_empty() {
