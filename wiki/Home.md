@@ -345,8 +345,8 @@ coulomb-and-farad = false
 number = {}
 string = { foreground = 'yellow', bold = true }
 identifier = { foreground = 'white' }
-keyword = { foreground = 'red', bold = true }
-built-in-function = { foreground = 'red', bold = true }
+keyword = { foreground = 'blue', bold = true }
+built-in-function = { foreground = 'blue', bold = true }
 date = {}
 other = {}
 ```
