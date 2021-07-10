@@ -1,6 +1,5 @@
 use crate::error::{FendError, Interrupt};
-use crate::format::Format;
-use crate::num::bigrat::{self, BigRat};
+use crate::num::bigrat::BigRat;
 use crate::num::complex::{self, Complex};
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -73,6 +72,7 @@ impl Dist {
         Ok(res.expect("there must be at least one part in a dist"))
     }
 
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     pub(crate) fn format<I: Interrupt>(
         &self,
         exact: bool,
@@ -94,34 +94,36 @@ impl Dist {
             Ok(Exact::new((), res.exact))
         } else {
             let mut ordered_kvs = vec![];
-            for kv in &self.parts {
-                ordered_kvs.push(kv);
+            let mut max_prob = 0.0;
+            for (n, prob) in &self.parts {
+                let prob_f64 = prob.clone().into_f64(int)?;
+                if prob_f64 > max_prob {
+                    max_prob = prob_f64;
+                }
+                ordered_kvs.push((n, prob, prob_f64));
             }
-            ordered_kvs
-                .sort_unstable_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+            ordered_kvs.sort_unstable_by(|(a, _, _), (b, _, _)| {
+                a.partial_cmp(b).unwrap_or(Ordering::Equal)
+            });
             let mut first = true;
-            for (num, prob) in ordered_kvs {
+            for (num, _prob, prob_f64) in ordered_kvs {
                 if first {
                     first = false;
                 } else {
                     writeln!(out)?;
                 }
+                let mut bar = String::new();
+                for _ in 0..(prob_f64 / max_prob * 30.0).min(30.0) as u32 {
+                    bar.push('#');
+                }
                 write!(
                     out,
-                    "{}: {}%",
-                    num.format(exact, style, base, use_parentheses, int)?.value,
-                    prob.clone()
-                        .mul(&BigRat::from(100), int)?
-                        .format(
-                            &bigrat::FormatOptions {
-                                base,
-                                style: FormattingStyle::DecimalPlaces(2),
-                                term: "",
-                                use_parens_if_fraction: false
-                            },
-                            int
-                        )?
+                    "{:>2}: {:>5.2}%  {}",
+                    num.format(exact, style, base, use_parentheses, int)?
                         .value
+                        .to_string(),
+                    prob_f64 * 100.0,
+                    bar
                 )?;
             }
             // TODO check exactness
