@@ -137,12 +137,12 @@ impl Value {
                 .into());
         }
         let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
-        let new_value = Exact::new(self.value.one_point()?, self.exact)
-            .mul(&scale_factor.scale_1, int)?
-            .add(scale_factor.offset, int)?
-            .div(scale_factor.scale_2, int)?;
+        let new_value = Exact::new(self.value, self.exact)
+            .mul(&scale_factor.scale_1.apply(Dist::from), int)?
+            .add(&scale_factor.offset.apply(Dist::from), int)?
+            .div(&scale_factor.scale_2.apply(Dist::from), int)?;
         Ok(Self {
-            value: new_value.value.into(),
+            value: new_value.value,
             unit: rhs.unit,
             exact: self.exact && rhs.exact && new_value.exact,
             base: self.base,
@@ -175,10 +175,10 @@ impl Value {
                 -rhs_component.exponent,
             ));
         }
-        let value = Exact::new(self.value.one_point()?, self.exact)
-            .div(Exact::new(rhs.value.one_point()?, rhs.exact), int)?;
+        let value =
+            Exact::new(self.value, self.exact).div(&Exact::new(rhs.value, rhs.exact), int)?;
         Ok(Self {
-            value: Dist::from(value.value),
+            value: value.value,
             unit: Unit { components },
             exact: value.exact && self.exact && rhs.exact,
             base: self.base,
@@ -521,10 +521,10 @@ impl Value {
 
     pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         let components = [self.unit.components, rhs.unit.components].concat();
-        let value = Exact::new(self.value.one_point()?, self.exact)
-            .mul(&Exact::new(rhs.value.one_point()?, rhs.exact), int)?;
+        let value =
+            Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
         Ok(Self {
-            value: value.value.into(),
+            value: value.value,
             unit: Unit { components },
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
