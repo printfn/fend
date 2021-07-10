@@ -374,6 +374,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "i" => Value::Num(Box::new(Number::i())),
         "true" => Value::from(true),
         "false" => Value::from(false),
+        "sample" | "roll" => Value::BuiltInFunction(BuiltInFunction::Sample),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
         "conjugate" => crate::value::func::CONJUGATE.into(),

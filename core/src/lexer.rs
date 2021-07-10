@@ -138,7 +138,6 @@ fn parse_integer<'a, E: From<FendError>>(
 
 fn parse_base_prefix(input: &str) -> Result<(Base, &str), FendError> {
     // 0x -> 16
-    // 0d -> 10
     // 0o -> 8
     // 0b -> 2
     // base# -> base (where 2 <= base <= 36)
@@ -216,16 +215,28 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     Ok(((), input))
 }
 
+#[allow(clippy::too_many_lines)]
 fn parse_basic_number<'a, I: Interrupt>(
     mut input: &'a str,
     base: Base,
     int: &I,
 ) -> Result<(Number, &'a str), FendError> {
+    let mut is_dice_with_no_count = false;
+    if input.starts_with('d') && base.base_as_u8() <= 10 {
+        let mut chars = input.chars();
+        chars.next();
+        let following = chars.next();
+        if following.is_some() && following.unwrap().is_ascii_digit() {
+            is_dice_with_no_count = true;
+        }
+    }
+
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let base_as_u64 = u64::from(base.base_as_u8());
+    let mut is_integer = true;
 
-    if parse_fixed_char(input, '.').is_err() {
+    if parse_fixed_char(input, '.').is_err() && !is_dice_with_no_count {
         let (_, remaining) =
             parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
                 res = res
@@ -239,6 +250,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
+        is_integer = false;
         let mut num_nonrec_digits = 0;
         let mut numerator = Number::zero_with_base(base);
         let mut denominator = Number::zero_with_base(base).add(1.into(), int)?;
@@ -264,6 +276,38 @@ fn parse_basic_number<'a, I: Interrupt>(
         // try parsing recurring decimals
         let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
         input = remaining;
+    }
+
+    // parse dice syntax
+    if is_integer && base.base_as_u8() <= 10 {
+        if let Ok((_, remaining)) = parse_fixed_char(input, 'd') {
+            // peek to see if there's a digit immediately after the `d`:
+            if parse_ascii_digit(remaining, base).is_ok() {
+                let dice_count: u32 = if is_dice_with_no_count {
+                    1
+                } else {
+                    convert::TryFrom::try_from(res.try_as_usize(int)?)
+                        .map_err(|_| FendError::InvalidDiceSyntax)?
+                };
+                let mut face_count = 0;
+                let (_, remaining2) = parse_integer(
+                    remaining,
+                    false,
+                    base,
+                    &mut |digit| -> Result<(), FendError> {
+                        face_count *= u32::from(base.base_as_u8());
+                        face_count += u32::from(digit);
+                        Ok(())
+                    },
+                )?;
+                if dice_count == 0 || face_count == 0 {
+                    return Err(FendError::InvalidDiceSyntax);
+                }
+                res = Number::new_die(dice_count, face_count, int)?;
+                res = res.with_base(base);
+                return Ok((res, remaining2));
+            }
+        }
     }
 
     // parse optional exponent, but only for base 10 and below
@@ -621,11 +665,20 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
             let (_, remaining) = self.input.split_at(ch.len_utf8());
             self.input = remaining;
         }
-        Ok(Some(match self.input.chars().next() {
+        let (ch, following) = {
+            let mut chars = self.input.chars();
+            let ch = chars.next();
+            let following = chars.next();
+            (ch, following)
+        };
+        Ok(Some(match ch {
             Some(ch) => {
                 if ch.is_whitespace() {
                     Token::Whitespace
-                } else if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
+                } else if ch.is_ascii_digit()
+                    || (ch == '.' && self.after_backslash_state == 0)
+                    || (ch == 'd' && following.is_some() && following.unwrap().is_ascii_digit())
+                {
                     let (num, remaining) = parse_number(self.input, self.int)?;
                     self.input = remaining;
                     Token::Num(num)

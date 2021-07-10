@@ -20,6 +20,7 @@ ansi_term = "0.12.1"
 toml = "0.5.8"
 serde = { version = "1.0.126", features = ["derive"] }
 chrono = "0.4.19"
+rand = "0.8.4"
 
 [dependencies.fend-core]
 version = "0.1.20"

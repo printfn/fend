@@ -3,10 +3,10 @@ use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
-use std::{cmp, fmt, ops};
+use std::{cmp, fmt, hash, ops};
 
 mod sign {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub(crate) enum Sign {
         Positive,
         Negative,
@@ -84,6 +84,17 @@ impl PartialEq for BigRat {
 }
 
 impl Eq for BigRat {}
+
+impl hash::Hash for BigRat {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        let int = &crate::interrupt::Never::default();
+        if let Ok(res) = self.clone().simplify(int) {
+            // don't hash the sign
+            res.num.hash(state);
+            res.den.hash(state);
+        }
+    }
+}
 
 impl BigRat {
     pub(crate) fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, FendError> {

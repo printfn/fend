@@ -83,8 +83,8 @@ impl Default for OutputColours {
             number: Color::default(),
             string: Color::bold(Base::Yellow),
             identifier: Color::new(Base::White),
-            keyword: Color::bold(Base::Red),
-            built_in_function: Color::bold(Base::Red),
+            keyword: Color::bold(Base::Blue),
+            built_in_function: Color::bold(Base::Blue),
             date: Color::default(),
             other: Color::default(),
         }

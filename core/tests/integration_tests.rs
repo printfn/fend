@@ -5376,3 +5376,10 @@ fn coulomb_farad_mode() {
         "0.000005 farad"
     );
 }
+
+#[test]
+fn test_rolling_dice() {
+    let mut ctx = Context::new();
+    ctx.set_random_u32_fn(|| 5);
+    evaluate("roll d20", &mut ctx).unwrap();
+}

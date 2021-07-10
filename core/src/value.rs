@@ -84,6 +84,7 @@ pub(crate) enum BuiltInFunction {
     Log10,
     Base,
     Differentiate,
+    Sample,
 }
 
 impl BuiltInFunction {
@@ -141,6 +142,7 @@ impl BuiltInFunction {
             Self::Log10 => "log10",
             Self::Base => "base",
             Self::Differentiate => "differentiate",
+            Self::Sample => "sample",
         }
     }
 
@@ -310,6 +312,7 @@ impl Value {
                 ));
             }
             BuiltInFunction::Differentiate => return arg.differentiate("x", int),
+            BuiltInFunction::Sample => arg.expect_num()?.sample(context, int)?,
         })))
     }
 

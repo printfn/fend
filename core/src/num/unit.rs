@@ -1,6 +1,7 @@
 use crate::error::{FendError, Interrupt};
 use crate::interrupt::test_int;
 use crate::num::complex::{self, Complex, UseParentheses};
+use crate::num::dist::Dist;
 use crate::num::{Base, FormattingStyle};
 use crate::scope::Scope;
 use crate::{ast, ident::Ident};
@@ -15,7 +16,7 @@ use super::Exact;
 
 #[derive(Clone)]
 pub(crate) struct Value {
-    value: Complex,
+    value: Dist,
     unit: Unit,
     exact: bool,
     base: Base,
@@ -31,7 +32,7 @@ impl Value {
         if !self.exact {
             return Err(FendError::InexactNumberToInt);
         }
-        self.value.try_as_usize(int)
+        self.value.one_point()?.try_as_usize(int)
     }
 
     pub(crate) fn create_unit_value_from_value<I: Interrupt>(
@@ -42,7 +43,7 @@ impl Value {
         int: &I,
     ) -> Result<Self, FendError> {
         let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
-        let scale = scale.mul(&Exact::new(value.value.clone(), true), int)?;
+        let scale = scale.mul(&Exact::new(value.value.one_point_ref()?.clone(), true), int)?;
         let resulting_unit =
             NamedUnit::new(prefix, singular_name, plural_name, hashmap, scale.value);
         let mut result = Self::new(1, vec![UnitExponent::new(resulting_unit, 1)]);
@@ -90,7 +91,7 @@ impl Value {
                 .into());
         }
         Ok(Self {
-            value: self.value.factorial(int)?,
+            value: Dist::from(self.value.one_point()?.factorial(int)?),
             unit: self.unit,
             exact: self.exact,
             base: self.base,
@@ -99,7 +100,7 @@ impl Value {
         })
     }
 
-    fn new(value: impl Into<Complex>, unit_components: Vec<UnitExponent>) -> Self {
+    fn new(value: impl Into<Dist>, unit_components: Vec<UnitExponent>) -> Self {
         Self {
             value: value.into(),
             unit: Unit {
@@ -115,9 +116,10 @@ impl Value {
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
-            .mul(&scale_factor.scale_1, int)?
-            .div(scale_factor.scale_2, int)?;
-        let value = Exact::new(self.value, self.exact).add(scaled, int)?;
+            .mul(&scale_factor.scale_1.apply(Dist::from), int)?
+            .div(&scale_factor.scale_2.apply(Dist::from), int)?;
+        let value =
+            Exact::new(self.value, self.exact).add(&Exact::new(scaled.value, scaled.exact), int)?;
         Ok(Self {
             value: value.value,
             unit: self.unit,
@@ -129,16 +131,16 @@ impl Value {
     }
 
     pub(crate) fn convert_to<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
-        if rhs.value != 1.into() {
+        if rhs.value.one_point()? != 1.into() {
             return Err("right-hand side of unit conversion has a numerical value"
                 .to_string()
                 .into());
         }
         let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
         let new_value = Exact::new(self.value, self.exact)
-            .mul(&scale_factor.scale_1, int)?
-            .add(scale_factor.offset, int)?
-            .div(scale_factor.scale_2, int)?;
+            .mul(&scale_factor.scale_1.apply(Dist::from), int)?
+            .add(&scale_factor.offset.apply(Dist::from), int)?
+            .div(&scale_factor.scale_2.apply(Dist::from), int)?;
         Ok(Self {
             value: new_value.value,
             unit: rhs.unit,
@@ -152,9 +154,9 @@ impl Value {
     pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
         let scaled = Exact::new(rhs.value, rhs.exact)
-            .mul(&scale_factor.scale_1, int)?
-            .div(scale_factor.scale_2, int)?;
-        let value = Exact::new(self.value, self.exact).add(-scaled, int)?;
+            .mul(&scale_factor.scale_1.apply(Dist::from), int)?
+            .div(&scale_factor.scale_2.apply(Dist::from), int)?;
+        let value = Exact::new(self.value, self.exact).add(&-scaled, int)?;
         Ok(Self {
             value: value.value,
             unit: self.unit,
@@ -174,7 +176,7 @@ impl Value {
             ));
         }
         let value =
-            Exact::new(self.value, self.exact).div(Exact::new(rhs.value, rhs.exact), int)?;
+            Exact::new(self.value, self.exact).div(&Exact::new(rhs.value, rhs.exact), int)?;
         Ok(Self {
             value: value.value,
             unit: Unit { components },
@@ -192,7 +194,11 @@ impl Value {
                 .into());
         }
         Ok(Self {
-            value: self.value.modulo(rhs.value, int)?,
+            value: Dist::from(
+                self.value
+                    .one_point()?
+                    .modulo(rhs.value.one_point()?, int)?,
+            ),
             unit: self.unit,
             exact: self.exact && rhs.exact,
             base: self.base,
@@ -207,7 +213,7 @@ impl Value {
     }
 
     pub(crate) fn is_unitless_one(&self) -> bool {
-        self.is_unitless() && self.exact && self.value == Complex::from(1)
+        self.is_unitless() && self.exact && self.value.equals_int(1)
     }
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
@@ -220,7 +226,7 @@ impl Value {
         let mut exact_res = true;
         for unit_exp in self.unit.components {
             let exponent = Exact::new(unit_exp.exponent, self.exact)
-                .mul(&Exact::new(rhs.value.clone(), rhs.exact), int)?;
+                .mul(&Exact::new(rhs.value.clone().one_point()?, rhs.exact), int)?;
             exact_res = exact_res && exponent.exact;
             new_components.push(UnitExponent {
                 unit: unit_exp.unit,
@@ -230,9 +236,9 @@ impl Value {
         let new_unit = Unit {
             components: new_components,
         };
-        let value = self.value.pow(rhs.value, int)?;
+        let value = self.value.one_point()?.pow(rhs.value.one_point()?, int)?;
         Ok(Self {
-            value: value.value,
+            value: value.value.into(),
             unit: new_unit,
             exact: self.exact && rhs.exact && exact_res && value.exact,
             base: self.base,
@@ -243,7 +249,7 @@ impl Value {
 
     pub(crate) fn i() -> Self {
         Self {
-            value: Complex::i(),
+            value: Complex::i().into(),
             unit: Unit { components: vec![] },
             exact: true,
             base: Base::default(),
@@ -254,7 +260,7 @@ impl Value {
 
     pub(crate) fn pi() -> Self {
         Self {
-            value: Complex::pi(),
+            value: Complex::pi().into(),
             unit: Unit { components: vec![] },
             exact: true,
             base: Base::default(),
@@ -264,9 +270,9 @@ impl Value {
     }
 
     pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-        let value = self.value.abs(int)?;
+        let value = self.value.one_point()?.abs(int)?;
         Ok(Self {
-            value: value.value,
+            value: value.value.into(),
             unit: self.unit,
             exact: self.exact && value.exact,
             base: self.base,
@@ -288,7 +294,7 @@ impl Value {
 
     pub(crate) fn zero_with_base(base: Base) -> Self {
         Self {
-            value: Complex::from(0),
+            value: Dist::from(0),
             unit: Unit::unitless(),
             exact: true,
             base,
@@ -298,7 +304,15 @@ impl Value {
     }
 
     pub(crate) fn is_zero(&self) -> bool {
-        self.value == 0.into()
+        self.value.equals_int(0)
+    }
+
+    pub(crate) fn new_die<I: Interrupt>(
+        count: u32,
+        faces: u32,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        Ok(Self::new(Dist::new_die(count, faces, int)?, vec![]))
     }
 
     fn apply_fn_exact<I: Interrupt>(
@@ -310,9 +324,9 @@ impl Value {
         if require_unitless && !self.is_unitless() {
             return Err("expected a unitless number".to_string().into());
         }
-        let exact = f(self.value, int)?;
+        let exact = f(self.value.one_point()?, int)?;
         Ok(Self {
-            value: exact.value,
+            value: exact.value.into(),
             unit: self.unit,
             exact: self.exact && exact.exact,
             base: self.base,
@@ -331,12 +345,23 @@ impl Value {
             return Err("expected a unitless number".to_string().into());
         }
         Ok(Self {
-            value: f(self.value, int)?,
+            value: f(self.value.one_point()?, int)?.into(),
             unit: self.unit,
             exact: false,
             base: self.base,
             format: self.format,
             simplifiable: self.simplifiable,
+        })
+    }
+
+    pub(crate) fn sample<I: Interrupt>(
+        self,
+        ctx: &crate::Context,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        Ok(Self {
+            value: self.value.sample(ctx, int)?,
+            ..self
         })
     }
 
@@ -362,11 +387,11 @@ impl Value {
         }
     }
 
-    pub(crate) fn conjugate(self) -> Self {
-        Self {
-            value: self.value.conjugate(),
+    pub(crate) fn conjugate(self) -> Result<Self, FendError> {
+        Ok(Self {
+            value: self.value.one_point()?.conjugate().into(),
             ..self
-        }
+        })
     }
 
     pub(crate) fn sin<I: Interrupt>(
@@ -466,13 +491,21 @@ impl Value {
         } else {
             UseParentheses::IfComplex
         };
-        let formatted_value =
-            self.value
-                .format(self.exact, self.format, self.base, use_parentheses, int)?;
-        let mut exact = formatted_value.exact;
+        let mut formatted_value = String::new();
+        let mut exact = self
+            .value
+            .format(
+                self.exact,
+                self.format,
+                self.base,
+                use_parentheses,
+                &mut formatted_value,
+                int,
+            )?
+            .exact;
         let unit_string = self.unit.format(
             "",
-            self.value == 1.into(),
+            self.value.equals_int(1),
             self.base,
             self.format,
             true,
@@ -480,7 +513,7 @@ impl Value {
         )?;
         exact = exact && unit_string.exact;
         Ok(FormattedValue {
-            number: formatted_value.value,
+            number: formatted_value,
             exact,
             unit_str: unit_string.value,
         })
@@ -553,11 +586,11 @@ impl Value {
 
                         let scale = scale.value.pow(comp.exponent, int)?;
                         let adjusted_value = Exact {
-                            value: res_value,
+                            value: res_value.one_point()?,
                             exact: res_exact,
                         }
                         .mul(&scale, int)?;
-                        res_value = adjusted_value.value;
+                        res_value = Dist::from(adjusted_value.value);
                         res_exact = res_exact && adjusted_value.exact;
 
                         continue 'outer;
@@ -633,7 +666,7 @@ impl fmt::Debug for Value {
 #[derive(Debug)]
 pub(crate) struct FormattedValue {
     exact: bool,
-    number: complex::Formatted,
+    number: String,
     unit_str: String,
 }
 
@@ -651,7 +684,7 @@ impl FormattedValue {
                 kind: SpanKind::Ident,
             });
             spans.push(Span {
-                string: self.number.to_string(),
+                string: self.number,
                 kind: SpanKind::Number,
             });
             return;

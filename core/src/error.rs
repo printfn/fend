@@ -18,7 +18,9 @@ pub(crate) enum FendError {
         range: Range<Box<dyn crate::format::DisplayDebug>>,
     },
     NegativeNumbersNotAllowed,
+    ProbabilityDistributionsNotAllowed,
     FractionToInteger,
+    RandomNumbersNotAvailable,
     MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
     ExpectedARationalNumber,
     CannotConvertToInteger,
@@ -26,6 +28,7 @@ pub(crate) enum FendError {
     NumberWithUnitToInt,
     InexactNumberToInt,
     ExpectedANumber,
+    InvalidDiceSyntax,
     InvalidType,
     CannotFormatWithZeroSf,
     IsNotAFunction(String),
@@ -44,6 +47,7 @@ pub(crate) enum FendError {
     BackslashXOutOfRange,
     ExpectedALetterOrCode,
     InvalidUnicodeEscapeSequence,
+    FormattingError(fmt::Error),
     // todo remove this
     String(String),
 }
@@ -66,7 +70,14 @@ impl fmt::Display for FendError {
                 write!(f, "{} must lie in the interval {}", value, range)
             }
             Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
+            Self::ProbabilityDistributionsNotAllowed => {
+                write!(
+                    f,
+                    "probability distributions are not allowed (consider using `sample`)"
+                )
+            }
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
+            Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
             Self::ExpectedARationalNumber => write!(f, "expected a rational number"),
             Self::CannotConvertToInteger => write!(f, "number cannot be converted to an integer"),
@@ -74,6 +85,7 @@ impl fmt::Display for FendError {
             Self::NumberWithUnitToInt => write!(f, "cannot convert number with unit to integer"),
             Self::InexactNumberToInt => write!(f, "cannot convert inexact number to integer"),
             Self::ExpectedANumber => write!(f, "expected a number"),
+            Self::InvalidDiceSyntax => write!(f, "invalid dice syntax, try e.g. `4d6`"),
             Self::InvalidType => write!(f, "invalid type"),
             Self::CannotFormatWithZeroSf => {
                 write!(f, "cannot format a number with zero significant figures")
@@ -114,17 +126,31 @@ impl fmt::Display for FendError {
                     "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
                 )
             }
+            Self::FormattingError(_) => write!(f, "error during formatting"),
             Self::String(s) => write!(f, "{}", s),
         }
     }
 }
 
-impl error::Error for FendError {}
+impl error::Error for FendError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Self::FormattingError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
 
 // todo remove this impl
 impl From<String> for FendError {
     fn from(e: String) -> Self {
         Self::String(e)
+    }
+}
+
+impl From<fmt::Error> for FendError {
+    fn from(e: fmt::Error) -> Self {
+        Self::FormattingError(e)
     }
 }
 
