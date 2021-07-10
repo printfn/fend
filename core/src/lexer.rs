@@ -22,7 +22,7 @@ pub(crate) enum Symbol {
     Div,
     Mod,
     Pow,
-    ArrowConversion,
+    UnitConversion,
     Factorial,
     Fn,
     Backslash,
@@ -45,7 +45,7 @@ impl fmt::Display for Symbol {
             Self::Div => "/",
             Self::Mod => "mod",
             Self::Pow => "^",
-            Self::ArrowConversion => "->",
+            Self::UnitConversion => "to",
             Self::Factorial => "!",
             Self::Fn => ":",
             Self::Backslash => "\"",
@@ -419,7 +419,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError
     let (ident, input) = input.split_at(byte_idx);
     Ok((
         match ident {
-            "to" | "as" | "in" => Token::Symbol(Symbol::ArrowConversion),
+            "to" | "as" | "in" => Token::Symbol(Symbol::UnitConversion),
             "per" => Token::Symbol(Symbol::Div),
             "of" => Token::Symbol(Symbol::Of),
             "mod" => Token::Symbol(Symbol::Mod),
@@ -444,14 +444,8 @@ fn parse_symbol(ch: char, input: &mut &str) -> Result<Token, FendError> {
         ')' => Symbol::CloseParens,
         '+' => Symbol::Add,
         '!' => Symbol::Factorial,
-        '-' | '\u{2212}' => {
-            // unicode minus sign
-            if test_next('>') {
-                Symbol::ArrowConversion
-            } else {
-                Symbol::Sub
-            }
-        }
+        // unicode minus sign
+        '-' | '\u{2212}' => Symbol::Sub,
         '*' | '\u{d7}' | '\u{2715}' => {
             if test_next('*') {
                 Symbol::Pow
@@ -733,7 +727,7 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
         };
         if let Some(Ok(Token::Num(_))) = res {
             self.after_number_or_to = true;
-        } else if let Some(Ok(Token::Symbol(Symbol::ArrowConversion))) = res {
+        } else if let Some(Ok(Token::Symbol(Symbol::UnitConversion))) = res {
             self.after_number_or_to = true;
         } else {
             self.after_number_or_to = false;

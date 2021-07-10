@@ -277,7 +277,7 @@ fn to_float_13() {
 
 #[test]
 fn to_float_14() {
-    test_eval_simple("6#0.(1) to float to base 10", "0.2");
+    test_eval_simple("6#0.(1) to float in base 10", "0.2");
 }
 
 #[test]
@@ -2134,7 +2134,7 @@ fn units_6() {
 
 #[test]
 fn units_9() {
-    test_eval("365.25 light days -> ly", "1 ly");
+    test_eval("365.25 light days to ly", "1 ly");
 }
 
 #[test]
@@ -2169,7 +2169,7 @@ fn units_15() {
 
 #[test]
 fn units_22() {
-    test_eval("1psi -> kPa -> 5dp", "approx. 6.89475 kPa");
+    test_eval("1psi as kPa as 5dp", "approx. 6.89475 kPa");
 }
 
 #[test]
@@ -2412,7 +2412,7 @@ fn meter_to_kg_ft() {
 
 #[test]
 fn one_foot_to_inches() {
-    test_eval("1' -> inches", "12 inches");
+    test_eval("1' to inches", "12 inches");
 }
 
 #[test]
@@ -2537,12 +2537,12 @@ fn negative_mixed_fraction_subtraction() {
 
 #[test]
 fn barn_to_meters_squared() {
-    test_eval("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
+    test_eval("1 barn to m^2", "0.0000000000000000000000000001 m^2");
 }
 
 #[test]
 fn liter_to_cubic_meters() {
-    test_eval("1L -> m^3", "0.001 m^3");
+    test_eval("1L to m^3", "0.001 m^3");
 }
 
 #[test]
@@ -2627,37 +2627,37 @@ fn factorial_of_three_kg() {
 
 #[test]
 fn recurring_digits_1() {
-    test_eval_simple("9/11 -> float", "0.(81)");
+    test_eval_simple("9/11 to float", "0.(81)");
 }
 
 #[test]
 fn recurring_digits_2() {
-    test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
+    test_eval_simple("6#1 / 11 to float", "6#0.(0313452421)");
 }
 
 #[test]
 fn recurring_digits_3() {
-    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)");
+    test_eval_simple("6#0 + 6#1 / 7 to float", "6#0.(05)");
 }
 
 #[test]
 fn recurring_digits_4() {
-    test_eval_simple("0.25 -> fraction", "1/4");
+    test_eval_simple("0.25 as fraction", "1/4");
 }
 
 #[test]
 fn recurring_digits_5() {
-    test_eval_simple("0.21 -> 1 dp", "approx. 0.2");
+    test_eval_simple("0.21 as 1 dp", "approx. 0.2");
 }
 
 #[test]
 fn recurring_digits_6() {
-    test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
+    test_eval_simple("0.21 to 1 dp to auto", "0.21");
 }
 
 #[test]
 fn recurring_digits_7() {
-    test_eval_simple("502938/700 -> float", "718.48(285714)");
+    test_eval_simple("502938/700 to float", "718.48(285714)");
 }
 
 #[test]

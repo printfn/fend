@@ -322,7 +322,7 @@ fn parse_subtraction_cont(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_to_cont(input: &[Token]) -> ParseResult<'_> {
-    let (_, input) = parse_fixed_symbol(input, Symbol::ArrowConversion)?;
+    let (_, input) = parse_fixed_symbol(input, Symbol::UnitConversion)?;
     let (b, input) = parse_implicit_addition(input)?;
     Ok((b, input))
 }

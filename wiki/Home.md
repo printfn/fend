@@ -174,7 +174,7 @@ These are all the supported operators:
 | `^`, `**` | | right |
 | `*`, `/`, `per`, function application (e.g. `sin 2`), `mod` | | left |
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
-| `+`, `-`, `to`, `as`, `->`, `in` | | left |
+| `+`, `-`, `to`, `as`, `in` | | left |
 | `\ .`, `:`, `=>` | | left |
 | `=` | | left |
 | `;` | lowest | left |
@@ -182,16 +182,16 @@ These are all the supported operators:
 
 ## Units
 
-fend supports many units, such as `kg`, `lb`, `N`, `lightyear`, etc. You can interchangeably use `to`, `as` and `->` to convert between units.
+fend supports many units, such as `kg`, `lb`, `N`, `lightyear`, etc. You can interchangeably use `to`, `as` and `in` to convert between units.
 
 ```
 > 5'10" to cm
 177.8 cm
 > 1 mile to km
 1.609344 km
-> 1 GiB -> bytes
+> 1 GiB to bytes
 1073741824 bytes
-> 1m -> kg
+> 1m to kg
 Error: cannot convert from m to kg: units are incompatible
 ```
 
@@ -199,7 +199,7 @@ Error: cannot convert from m to kg: units are incompatible
 
 Temperature units are handled differently to other units, because celsius (°C) and fahrenheit (°F) don't start at zero. Namely, absolute zero (0 kelvin) corresponds to -273.15 °C or -459.67 °F. This means that conversions between °C, °F and kelvin (K) need to differentiate between converting *absolute* temperatures and *differences* of temperatures.
 
-If you use the `to` keyword (or equivalently `->`) to convert a plain temperature explicitly, fend will perform an *absolute* conversion. Here are some examples:
+If you use the `to` keyword to convert a plain temperature explicitly, fend will perform an *absolute* conversion. Here are some examples:
 
 ```
 > 0 °C to °F
@@ -491,7 +491,7 @@ This build was only released on NPM.
 ### v0.1.5 (2020-09-29)
 
 * Add support for lambda functions (e.g. `\x.x`)
-* Change precedence of `to`, `as` and `->`
+* Change precedence of `to` and `as`
 * Add live CLI output
 
 ### v0.1.4 (2020-09-15)
