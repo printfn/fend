@@ -37,8 +37,17 @@ impl Dist {
         faces: u32,
         int: &I,
     ) -> Result<Self, FendError> {
-        assert_eq!(count, 1);
+        assert!(count != 0);
         assert!(faces != 0);
+        if count > 1 {
+            let mut result = Self::new_die(1, faces, int)?;
+            for _ in 1..count {
+                result = Exact::new(result, true)
+                    .add(&Exact::new(Self::new_die(1, faces, int)?, true), int)?
+                    .value;
+            }
+            return Ok(result);
+        }
         let mut hashmap = HashMap::new();
         let probability = BigRat::from(1).div(&BigRat::from(u64::from(faces)), int)?;
         for face in 1..=faces {
