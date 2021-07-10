@@ -5381,3 +5381,19 @@ fn test_invalid_dice_syntax_2() {
 fn test_invalid_dice_syntax_3() {
     expect_error("0d0", Some("invalid dice syntax, try e.g. `4d6`"));
 }
+
+#[test]
+fn test_invalid_dice_syntax_4() {
+    expect_error(
+        "d30000000000000000",
+        Some("invalid dice syntax, try e.g. `4d6`"),
+    );
+}
+
+#[test]
+fn test_invalid_dice_syntax_5() {
+    expect_error(
+        "30000000000000000d2",
+        Some("invalid dice syntax, try e.g. `4d6`"),
+    );
+}

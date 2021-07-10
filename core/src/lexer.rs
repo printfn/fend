@@ -289,14 +289,17 @@ fn parse_basic_number<'a, I: Interrupt>(
                     convert::TryFrom::try_from(res.try_as_usize(int)?)
                         .map_err(|_| FendError::InvalidDiceSyntax)?
                 };
-                let mut face_count = 0;
+                let mut face_count = 0_u32;
                 let (_, remaining2) = parse_integer(
                     remaining,
                     false,
                     base,
                     &mut |digit| -> Result<(), FendError> {
-                        face_count *= u32::from(base.base_as_u8());
-                        face_count += u32::from(digit);
+                        face_count = face_count
+                            .checked_mul(base.base_as_u8().into())
+                            .ok_or(FendError::InvalidDiceSyntax)?
+                            .checked_add(digit.into())
+                            .ok_or(FendError::InvalidDiceSyntax)?;
                         Ok(())
                     },
                 )?;
