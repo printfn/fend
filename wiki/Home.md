@@ -197,7 +197,7 @@ Error: cannot convert from m to kg: units are incompatible
 
 ### Temperature
 
-Temperature units are handled differently to other units, because celsius (°C) and fahrenheit (°F) don't start at zero. Namely, absolute zero (0K) corresponds to -273.15 °C or -459.67 °F. This means that conversions between °C, °F and kelvin (K) need to differentiate between converting *absolute* temperatures and *differences* of temperatures.
+Temperature units are handled differently to other units, because celsius (°C) and fahrenheit (°F) don't start at zero. Namely, absolute zero (0 kelvin) corresponds to -273.15 °C or -459.67 °F. This means that conversions between °C, °F and kelvin (K) need to differentiate between converting *absolute* temperatures and *differences* of temperatures.
 
 If you use the `to` keyword (or equivalently `->`) to convert a plain temperature explicitly, fend will perform an *absolute* conversion. Here are some examples:
 
