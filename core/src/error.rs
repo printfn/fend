@@ -28,6 +28,7 @@ pub(crate) enum FendError {
     NumberWithUnitToInt,
     InexactNumberToInt,
     ExpectedANumber,
+    InvalidDiceSyntax,
     InvalidType,
     CannotFormatWithZeroSf,
     IsNotAFunction(String),
@@ -84,6 +85,7 @@ impl fmt::Display for FendError {
             Self::NumberWithUnitToInt => write!(f, "cannot convert number with unit to integer"),
             Self::InexactNumberToInt => write!(f, "cannot convert inexact number to integer"),
             Self::ExpectedANumber => write!(f, "expected a number"),
+            Self::InvalidDiceSyntax => write!(f, "invalid dice syntax, try e.g. `4d6`"),
             Self::InvalidType => write!(f, "invalid type"),
             Self::CannotFormatWithZeroSf => {
                 write!(f, "cannot format a number with zero significant figures")

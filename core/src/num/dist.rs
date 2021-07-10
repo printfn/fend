@@ -127,7 +127,7 @@ impl Dist {
                 }
                 write!(
                     out,
-                    "{:>2}: {:>5.2}%  {}",
+                    "{:>3}: {:>5.2}%  {}",
                     num.format(exact, style, base, use_parentheses, int)?
                         .value
                         .to_string(),
