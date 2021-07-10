@@ -1624,6 +1624,11 @@ fn different_base_10() {
 }
 
 #[test]
+fn different_base_potential_dice_overlap() {
+    test_eval("16#D3AD_BEEF", "16#d3adbeef");
+}
+
+#[test]
 fn different_base_11() {
     expect_error("#", None);
 }
@@ -4629,41 +4634,6 @@ fn minus_40_fahrenheit_to_celsius() {
 }
 
 #[test]
-fn differentiate() {
-    test_eval("differentiate", "differentiate");
-}
-
-#[test]
-fn differentiate_zero() {
-    test_eval("differentiate 0", "0");
-}
-
-#[test]
-fn differentiate_one() {
-    test_eval("differentiate 1", "0");
-}
-
-#[test]
-fn differentiate_pi() {
-    test_eval("differentiate pi", "0");
-}
-
-#[test]
-fn differentiate_one_thousand() {
-    test_eval("differentiate 1000", "0");
-}
-
-#[test]
-fn differentiate_i() {
-    test_eval("differentiate i", "0");
-}
-
-#[test]
-fn differentiate_sin() {
-    test_eval("differentiate sin", "cos");
-}
-
-#[test]
 fn gigabits_to_gigabytes() {
     test_eval("25Gib/s to GB/s", "3.3554432 GB / s");
 }
@@ -5382,4 +5352,32 @@ fn test_rolling_dice() {
     let mut ctx = Context::new();
     ctx.set_random_u32_fn(|| 5);
     evaluate("roll d20", &mut ctx).unwrap();
+}
+
+#[test]
+fn test_d6() {
+    test_eval_simple(
+        "d6",
+        "{ 1: 16.67%, 2: 16.67%, 3: 16.67%, 4: 16.67%, 5: 16.67%, 6: 16.67% }",
+    );
+}
+
+#[test]
+fn test_2d6() {
+    test_eval_simple("2d6", "{ 2: 2.78%, 3: 5.56%, 4: 8.33%, 5: 11.11%, 6: 13.89%, 7: 16.67%, 8: 13.89%, 9: 11.11%, 10: 8.33%, 11: 5.56%, 12: 2.78% }")
+}
+
+#[test]
+fn test_invalid_dice_syntax_1() {
+    expect_error("0d6", Some("invalid dice syntax, try e.g. `4d6`"));
+}
+
+#[test]
+fn test_invalid_dice_syntax_2() {
+    expect_error("1d0", Some("invalid dice syntax, try e.g. `4d6`"));
+}
+
+#[test]
+fn test_invalid_dice_syntax_3() {
+    expect_error("0d0", Some("invalid dice syntax, try e.g. `4d6`"));
 }

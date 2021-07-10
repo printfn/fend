@@ -485,7 +485,11 @@ impl Value {
         self.apply_fn(Complex::log10, true, int)
     }
 
-    pub(crate) fn format<I: Interrupt>(&self, ctx: &crate::Context, int: &I) -> Result<FormattedValue, FendError> {
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        ctx: &crate::Context,
+        int: &I,
+    ) -> Result<FormattedValue, FendError> {
         let use_parentheses = if self.unit.components.is_empty() {
             UseParentheses::No
         } else {

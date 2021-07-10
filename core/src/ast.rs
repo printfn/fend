@@ -40,7 +40,11 @@ pub(crate) enum Expr {
 }
 
 impl<'a> Expr {
-    pub(crate) fn format<I: Interrupt>(&self, ctx: &crate::Context, int: &I) -> Result<String, FendError> {
+    pub(crate) fn format<I: Interrupt>(
+        &self,
+        ctx: &crate::Context,
+        int: &I,
+    ) -> Result<String, FendError> {
         Ok(match self {
             Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
             Self::Literal(v) => v.format_to_plain_string(0, ctx, int)?,

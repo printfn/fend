@@ -81,7 +81,11 @@ impl Dist {
         Ok(res.expect("there must be at least one part in a dist"))
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::too_many_arguments
+    )]
     pub(crate) fn format<I: Interrupt>(
         &self,
         exact: bool,
@@ -115,26 +119,36 @@ impl Dist {
             ordered_kvs.sort_unstable_by(|(a, _, _), (b, _, _)| {
                 a.partial_cmp(b).unwrap_or(Ordering::Equal)
             });
+            if ctx.output_mode == crate::OutputMode::SimpleText {
+                write!(out, "{{ ")?;
+            }
             let mut first = true;
             for (num, _prob, prob_f64) in ordered_kvs {
+                let num = num
+                    .format(exact, style, base, use_parentheses, int)?
+                    .value
+                    .to_string();
+                if ctx.output_mode == crate::OutputMode::TerminalFixedWidth {
+                    if !first {
+                        writeln!(out)?;
+                    }
+                    let mut bar = String::new();
+                    for _ in 0..(prob_f64 / max_prob * 30.0).min(30.0) as u32 {
+                        bar.push('#');
+                    }
+                    write!(out, "{:>3}: {:>5.2}%  {}", num, prob_f64 * 100.0, bar)?;
+                } else {
+                    if !first {
+                        write!(out, ", ")?;
+                    }
+                    write!(out, "{}: {:.2}%", num, prob_f64 * 100.0)?;
+                }
                 if first {
                     first = false;
-                } else {
-                    writeln!(out)?;
                 }
-                let mut bar = String::new();
-                for _ in 0..(prob_f64 / max_prob * 30.0).min(30.0) as u32 {
-                    bar.push('#');
-                }
-                write!(
-                    out,
-                    "{:>3}: {:>5.2}%  {}",
-                    num.format(exact, style, base, use_parentheses, int)?
-                        .value
-                        .to_string(),
-                    prob_f64 * 100.0,
-                    bar
-                )?;
+            }
+            if ctx.output_mode == crate::OutputMode::SimpleText {
+                write!(out, " }}")?;
             }
             // TODO check exactness
             Ok(Exact::new((), true))

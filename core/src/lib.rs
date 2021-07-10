@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![forbid(clippy::all)]
+#![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::use_self)]
 #![forbid(clippy::needless_borrow)]
