@@ -228,6 +228,33 @@ Additionally, conversions between more complex units (such as joules per degree 
 approx. 55.5555555555 J / °F
 ```
 
+## Dice
+
+fend has support for D&D-style dice syntax. For example, `d6` refers to a standard 6-sided die.
+
+```
+> roll d6
+4
+> roll d20 # 20-sided die
+17
+> roll 2d6 # sum of two 6-sided dice
+7
+> 2d6 # view the probability distribution
+  2:  2.78%  #####
+  3:  5.56%  ##########
+  4:  8.33%  ###############
+  5: 11.11%  ####################
+  6: 13.89%  #########################
+  7: 16.67%  ##############################
+  8: 13.89%  #########################
+  9: 11.11%  ####################
+ 10:  8.33%  ###############
+ 11:  5.56%  ##########
+ 12:  2.78%  #####
+> roll(d20 + d6 + 4) # arithmetic operations
+14
+```
+
 ## Functions and constants
 
 fend has a number of predefined functions:
@@ -365,6 +392,34 @@ approx. 1.4142135619
 The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
+
+### v0.1.21
+
+* Add support for D&D-style dice syntax. For example, `d6` refers to a standard 6-sided die.
+    ```
+    > roll d6
+    4
+    > roll d20 # 20-sided die
+    17
+    > roll 2d6 # sum of two 6-sided dice
+    7
+    > 2d6 # view the probability distribution
+      2:  2.78%  #####
+      3:  5.56%  ##########
+      4:  8.33%  ###############
+      5: 11.11%  ####################
+      6: 13.89%  #########################
+      7: 16.67%  ##############################
+      8: 13.89%  #########################
+      9: 11.11%  ####################
+     10:  8.33%  ###############
+     11:  5.56%  ##########
+     12:  2.78%  #####
+    > roll(d20 + d6 + 4) # arithmetic operations
+    14
+    ```
+* Fix `lux` unit definition
+* Remove the `->` conversion syntax: use `to` instead
 
 ### v0.1.20 (2021-06-29)
 
