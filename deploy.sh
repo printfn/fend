@@ -79,8 +79,6 @@ git tag "v$NEW_VERSION"
 git push --tags
 confirm "Build NPM package"
 (cd wasm && wasm-pack build)
-confirm 'Opening vim to add "fend_wasm_bg.js" to package.json'
-vim wasm/pkg/package.json
 (cd wasm/pkg && npm publish --dry-run)
 confirm "Publish npm package"
 (cd wasm/pkg && npm publish)
