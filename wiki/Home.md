@@ -2,7 +2,7 @@
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
 
-The current latest version of fend is `0.1.20`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
+The current latest version of fend is `0.1.21`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
 
 # Table of Contents
 1. [Installation](#installation)
@@ -13,6 +13,7 @@ The current latest version of fend is `0.1.20`. You can check your version at an
 1. [Arithmetic](#arithmetic)
 1. [Units](#units)
     1. [Temperature](#temperature)
+1. [Dice](#dice)
 1. [Functions and constants](#functions-and-constants)
 1. [Number formats](#number-formats)
 1. [Strings](#strings)
@@ -393,7 +394,7 @@ The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
 
-### v0.1.21
+### v0.1.21 (2021-07-11)
 
 * Add support for D&D-style dice syntax. For example, `d6` refers to a standard 6-sided die.
     ```

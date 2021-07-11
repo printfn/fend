@@ -1,6 +1,6 @@
 [package]
 name = "fend-wasm"
-version = "0.1.20"
+version = "0.1.21"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 edition = "2018"
 license = "MIT"
