@@ -79,6 +79,7 @@ git tag "v$NEW_VERSION"
 git push --tags
 confirm "Build NPM package"
 (cd wasm && wasm-pack build)
+grep 'fend_wasm_bg.js' wasm/pkg/package.json
 (cd wasm/pkg && npm publish --dry-run)
 confirm "Publish npm package"
 (cd wasm/pkg && npm publish)
