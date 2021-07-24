@@ -302,6 +302,7 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
     ("coulomb", "", "l@A s", "charge"),
     ("volt", "volts", "l@W/A", "potential difference"),
     ("V", "", "s@volt", ""),
+    ("Ah", "", "s@ampere hour", ""),
     ("ohm", "ohms", "l@V/A", "electrical resistance"),
     ("siemens", "", "l@A/V", "electrical conductance"),
     ("S", "", "s@siemens", ""),
