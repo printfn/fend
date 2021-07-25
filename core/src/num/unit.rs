@@ -1,5 +1,4 @@
 use crate::error::{FendError, Interrupt};
-use crate::interrupt::test_int;
 use crate::num::complex::{Complex, UseParentheses};
 use crate::num::dist::Dist;
 use crate::num::{Base, FormattingStyle};
@@ -740,42 +739,12 @@ struct ScaleFactor {
 impl Unit {
     fn to_hashmap_and_scale<I: Interrupt>(&self, int: &I) -> Result<HashmapScale, FendError> {
         let mut hashmap = HashMap::<BaseUnit, Complex>::new();
-        let mut scale = Exact::new(Complex::from(1), true);
+        let mut scale = Complex::from(1);
         let mut exact = true;
         for named_unit_exp in &self.components {
-            test_int(int)?;
-            let overall_exp = &Exact::new(named_unit_exp.exponent.clone(), true);
-            for (base_unit, base_exp) in &named_unit_exp.unit.base_units {
-                test_int(int)?;
-                let base_exp = Exact::new(base_exp.clone(), true);
-                if let Some(exp) = hashmap.get_mut(base_unit) {
-                    let product = overall_exp.clone().mul(&base_exp, int)?;
-                    let new_exp = Exact::new(exp.clone(), true).add(product, int)?;
-                    exact = exact && new_exp.exact;
-                    if new_exp.value == 0.into() {
-                        hashmap.remove(base_unit);
-                    } else {
-                        *exp = new_exp.value;
-                    }
-                } else {
-                    let new_exp = overall_exp.clone().mul(&base_exp, int)?;
-                    exact = exact && new_exp.exact;
-                    if new_exp.value != 0.into() {
-                        let adj_exp = overall_exp.clone().mul(&base_exp, int)?;
-                        hashmap.insert(base_unit.clone(), adj_exp.value);
-                        exact = exact && adj_exp.exact;
-                    }
-                }
-            }
-            let pow_result = named_unit_exp
-                .unit
-                .scale
-                .clone()
-                .pow(overall_exp.value.clone(), int)?;
-            scale = scale.mul(&pow_result, int)?;
-            exact = exact && pow_result.exact;
+            named_unit_exp.add_to_hashmap(&mut hashmap, &mut scale, &mut exact, int)?;
         }
-        Ok((hashmap, Exact::new(scale.value, exact)))
+        Ok((hashmap, Exact::new(scale, exact)))
     }
 
     fn reduce_hashmap<I: Interrupt>(

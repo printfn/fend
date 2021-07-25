@@ -9,8 +9,8 @@ pub(crate) struct NamedUnit {
     prefix: Cow<'static, str>,
     singular_name: Cow<'static, str>,
     plural_name: Cow<'static, str>,
-    pub(crate) base_units: HashMap<BaseUnit, Complex>,
-    pub(crate) scale: Complex,
+    pub(super) base_units: HashMap<BaseUnit, Complex>,
+    pub(super) scale: Complex,
 }
 
 impl NamedUnit {
