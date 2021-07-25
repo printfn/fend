@@ -12,6 +12,9 @@ use std::fmt;
 use std::ops::Neg;
 use std::sync::Arc;
 
+mod base_unit;
+use base_unit::BaseUnit;
+
 use super::Exact;
 
 #[derive(Clone)]
@@ -771,7 +774,7 @@ impl Unit {
     }
 
     fn reduce_hashmap<I: Interrupt>(
-        hashmap: &HashMap<BaseUnit, Complex>,
+        hashmap: HashMap<BaseUnit, Complex>,
         int: &I,
     ) -> Result<HashmapScaleOffset, FendError> {
         if hashmap.len() == 1
@@ -801,14 +804,10 @@ impl Unit {
         let mut scale_adjustment = Exact::new(Complex::from(1), true);
         let mut result_hashmap = HashMap::new();
         for (mut base_unit, exponent) in hashmap {
-            if base_unit.name == "celsius" {
-                base_unit = &BaseUnit {
-                    name: Cow::Borrowed("kelvin"),
-                };
-            } else if base_unit.name == "fahrenheit" {
-                base_unit = &BaseUnit {
-                    name: Cow::Borrowed("kelvin"),
-                };
+            if base_unit.name() == "celsius" {
+                base_unit = BaseUnit::new_static("kelvin");
+            } else if base_unit.name() == "fahrenheit" {
+                base_unit = BaseUnit::new_static("kelvin");
                 scale_adjustment = scale_adjustment.mul(
                     &Exact::new(Complex::from(5), true)
                         .div(Exact::new(Complex::from(9), true), int)?
@@ -830,8 +829,8 @@ impl Unit {
     ) -> Result<ScaleFactor, FendError> {
         let (hash_a, scale_a) = from.to_hashmap_and_scale(int)?;
         let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
-        let (hash_a, adj_a, offset_a) = Self::reduce_hashmap(&hash_a, int)?;
-        let (hash_b, adj_b, offset_b) = Self::reduce_hashmap(&hash_b, int)?;
+        let (hash_a, adj_a, offset_a) = Self::reduce_hashmap(hash_a, int)?;
+        let (hash_b, adj_b, offset_b) = Self::reduce_hashmap(hash_b, int)?;
         if hash_a == hash_b {
             Ok(ScaleFactor {
                 scale_1: scale_a.mul(&adj_a, int)?,
@@ -1104,7 +1103,7 @@ impl fmt::Debug for NamedUnit {
         }
         write!(f, "= {:?}", self.scale)?;
         let mut it = self.base_units.iter().collect::<Vec<_>>();
-        it.sort_by_key(|(k, _v)| &k.name);
+        it.sort_by_key(|(k, _v)| k.name());
         for (base_unit, exponent) in &it {
             write!(f, " {:?}", base_unit)?;
             if !exponent.is_definitely_one() {
@@ -1113,24 +1112,6 @@ impl fmt::Debug for NamedUnit {
         }
         write!(f, ")")?;
         Ok(())
-    }
-}
-
-/// Represents a base unit, identified solely by its name. The name is not exposed to the user.
-#[derive(Clone, PartialEq, Eq, Hash)]
-struct BaseUnit {
-    name: Cow<'static, str>,
-}
-
-impl fmt::Debug for BaseUnit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)
-    }
-}
-
-impl BaseUnit {
-    const fn new(name: Cow<'static, str>) -> Self {
-        Self { name }
     }
 }
 
