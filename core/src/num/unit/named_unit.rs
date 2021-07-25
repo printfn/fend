@@ -30,6 +30,20 @@ impl NamedUnit {
         }
     }
 
+    pub(crate) fn new_from_base(base_unit: BaseUnit) -> Self {
+        Self {
+            prefix: "".into(),
+            singular_name: base_unit.name().to_string().into(),
+            plural_name: base_unit.name().to_string().into(),
+            base_units: {
+                let mut base_units = HashMap::new();
+                base_units.insert(base_unit, 1.into());
+                base_units
+            },
+            scale: 1.into(),
+        }
+    }
+
     pub(crate) fn prefix_and_name(&self, plural: bool) -> (&str, &str) {
         (
             self.prefix.as_ref(),

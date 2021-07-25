@@ -795,6 +795,30 @@ impl Unit {
         Ok((result_hashmap, scale_adjustment, Exact::new(0.into(), true)))
     }
 
+    fn print_base_units<I: Interrupt>(
+        hash: HashMap<BaseUnit, Complex>,
+        int: &I,
+    ) -> Result<String, FendError> {
+        let from_base_units: Vec<_> = hash
+            .into_iter()
+            .map(|(base_unit, exponent)| {
+                UnitExponent::new(NamedUnit::new_from_base(base_unit), exponent)
+            })
+            .collect();
+        Ok(Self {
+            components: from_base_units,
+        }
+        .format(
+            "unitless",
+            false,
+            Base::default(),
+            FormattingStyle::Auto,
+            false,
+            int,
+        )?
+        .value)
+    }
+
     /// Returns the combined scale factor if successful
     fn compute_scale_factor<I: Interrupt>(
         from: &Self,
@@ -833,8 +857,11 @@ impl Unit {
                 )?
                 .value;
             Err(format!(
-                "cannot convert from {} to {}: units are incompatible",
-                from_formatted, into_formatted
+                "cannot convert from {} to {}: units '{}' and '{}' are incompatible",
+                from_formatted,
+                into_formatted,
+                Self::print_base_units(hash_a, int)?,
+                Self::print_base_units(hash_b, int)?,
             )
             .into())
         }
