@@ -1,6 +1,6 @@
 use crate::error::{FendError, Interrupt};
 use crate::interrupt::test_int;
-use crate::num::complex::{self, Complex, UseParentheses};
+use crate::num::complex::{Complex, UseParentheses};
 use crate::num::dist::Dist;
 use crate::num::{Base, FormattingStyle};
 use crate::scope::Scope;
@@ -14,9 +14,11 @@ use std::sync::Arc;
 
 pub(crate) mod base_unit;
 pub(crate) mod named_unit;
+pub(crate) mod unit_exponent;
 
 use base_unit::BaseUnit;
 use named_unit::NamedUnit;
+use unit_exponent::UnitExponent;
 
 use super::Exact;
 
@@ -951,79 +953,6 @@ impl fmt::Debug for Unit {
             }
             write!(f, "{:?}", component)?;
             first = false;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone)]
-struct UnitExponent {
-    unit: NamedUnit,
-    exponent: Complex,
-}
-
-impl UnitExponent {
-    fn new(unit: NamedUnit, exponent: impl Into<Complex>) -> Self {
-        Self {
-            unit,
-            exponent: exponent.into(),
-        }
-    }
-
-    fn format<I: Interrupt>(
-        &self,
-        base: Base,
-        format: FormattingStyle,
-        plural: bool,
-        invert_exp: bool,
-        int: &I,
-    ) -> Result<Exact<FormattedExponent<'_>>, FendError> {
-        let (prefix, name) = self.unit.prefix_and_name(plural);
-        let exp = if invert_exp {
-            -self.exponent.clone()
-        } else {
-            self.exponent.clone()
-        };
-        let (exact, exponent) = if exp == 1.into() {
-            (true, None)
-        } else {
-            let formatted =
-                exp.format(true, format, base, UseParentheses::IfComplexOrFraction, int)?;
-            (formatted.exact, Some(formatted.value))
-        };
-        Ok(Exact::new(
-            FormattedExponent {
-                prefix,
-                name,
-                number: exponent,
-            },
-            exact,
-        ))
-    }
-}
-
-impl fmt::Debug for UnitExponent {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.unit)?;
-        if !self.exponent.is_definitely_one() {
-            write!(f, "^{:?}", self.exponent)?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-struct FormattedExponent<'a> {
-    prefix: &'a str,
-    name: &'a str,
-    number: Option<complex::Formatted>,
-}
-
-impl<'a> fmt::Display for FormattedExponent<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}", self.prefix, self.name.replace('_', " "))?;
-        if let Some(number) = &self.number {
-            write!(f, "^{}", number)?;
         }
         Ok(())
     }
