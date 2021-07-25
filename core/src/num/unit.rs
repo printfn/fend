@@ -12,8 +12,11 @@ use std::fmt;
 use std::ops::Neg;
 use std::sync::Arc;
 
-mod base_unit;
+pub(crate) mod base_unit;
+pub(crate) mod named_unit;
+
 use base_unit::BaseUnit;
+use named_unit::NamedUnit;
 
 use super::Exact;
 
@@ -554,7 +557,7 @@ impl Value {
         // and potentially adjusting the value
         'outer: for comp in self.unit.components {
             for res_comp in &mut res_components {
-                if comp.unit.base_units.is_empty() && comp.unit != res_comp.unit {
+                if comp.unit.has_no_base_units() && comp.unit != res_comp.unit {
                     continue;
                 }
                 let conversion = Unit::compute_scale_factor(
@@ -975,11 +978,7 @@ impl UnitExponent {
         invert_exp: bool,
         int: &I,
     ) -> Result<Exact<FormattedExponent<'_>>, FendError> {
-        let name = if plural {
-            &self.unit.plural_name
-        } else {
-            &self.unit.singular_name
-        };
+        let (prefix, name) = self.unit.prefix_and_name(plural);
         let exp = if invert_exp {
             -self.exponent.clone()
         } else {
@@ -994,8 +993,8 @@ impl UnitExponent {
         };
         Ok(Exact::new(
             FormattedExponent {
-                prefix: self.unit.prefix.as_ref(),
-                name: name.as_ref(),
+                prefix,
+                name,
                 number: exponent,
             },
             exact,
@@ -1026,91 +1025,6 @@ impl<'a> fmt::Display for FormattedExponent<'a> {
         if let Some(number) = &self.number {
             write!(f, "^{}", number)?;
         }
-        Ok(())
-    }
-}
-
-/// A named unit, like kilogram, megabyte or percent.
-#[derive(Clone, Eq, PartialEq)]
-struct NamedUnit {
-    prefix: Cow<'static, str>,
-    singular_name: Cow<'static, str>,
-    plural_name: Cow<'static, str>,
-    base_units: HashMap<BaseUnit, Complex>,
-    scale: Complex,
-}
-
-impl NamedUnit {
-    fn new(
-        prefix: Cow<'static, str>,
-        singular_name: Cow<'static, str>,
-        plural_name: Cow<'static, str>,
-        base_units: HashMap<BaseUnit, Complex>,
-        scale: impl Into<Complex>,
-    ) -> Self {
-        Self {
-            prefix,
-            singular_name,
-            plural_name,
-            base_units,
-            scale: scale.into(),
-        }
-    }
-
-    /// Returns whether or not this unit should be printed with a
-    /// space (between the number and the unit). This should be true for most
-    /// units like kg or m, but not for % or °
-    fn print_with_space(&self) -> bool {
-        // Alphabetic names like kg or m should have a space,
-        // while non-alphabetic names like % or ' shouldn't.
-        // Empty names shouldn't really exist, but they might as well have a space.
-
-        // degree symbol
-        if self.singular_name == "\u{b0}" {
-            return false;
-        }
-
-        // if it starts with a quote and is more than one character long, print it with a space
-        if (self.singular_name.starts_with('\'') || self.singular_name.starts_with('\"'))
-            && self.singular_name.len() > 1
-        {
-            return true;
-        }
-
-        self.singular_name
-            .chars()
-            .next()
-            .map_or(true, |first_char| {
-                char::is_alphabetic(first_char) || first_char == '\u{b0}'
-            })
-    }
-}
-
-impl fmt::Debug for NamedUnit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.prefix.is_empty() {
-            write!(f, "{}", self.singular_name)?;
-        } else {
-            write!(f, "{}-{}", self.prefix, self.singular_name)?;
-        }
-        write!(f, " (")?;
-        if self.plural_name != self.singular_name {
-            if self.prefix.is_empty() {
-                write!(f, "{}, ", self.plural_name)?;
-            } else {
-                write!(f, "{}-{}, ", self.prefix, self.plural_name)?;
-            }
-        }
-        write!(f, "= {:?}", self.scale)?;
-        let mut it = self.base_units.iter().collect::<Vec<_>>();
-        it.sort_by_key(|(k, _v)| k.name());
-        for (base_unit, exponent) in &it {
-            write!(f, " {:?}", base_unit)?;
-            if !exponent.is_definitely_one() {
-                write!(f, "^{:?}", exponent)?;
-            }
-        }
-        write!(f, ")")?;
         Ok(())
     }
 }
