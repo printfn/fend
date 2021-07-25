@@ -965,7 +965,6 @@ mod tests {
 
     fn to_string(n: &Value) -> String {
         let int = &crate::interrupt::Never::default();
-        // TODO: this unwrap call should be unnecessary
         n.format(&crate::Context::new(), int).unwrap().to_string()
     }
 
