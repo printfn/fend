@@ -112,7 +112,7 @@ sed "s/$OLD_VERSION/$NEW_VERSION/g" .SRCINFO|sed "s/[a-f0-9]\{128\}/$HASH/" >.SR
 sed "s/$OLD_VERSION/$NEW_VERSION/" PKGBUILD|sed "s/[a-f0-9]\{128\}/$HASH/" >PKGBUILD_NEW
 mv .SRCINFO_NEW .SRCINFO
 mv PKGBUILD_NEW PKGBUILD
-git --no-pager diff --cached
+git --no-pager diff
 manualstep "Check the diff: 5 lines should have changed"
 git commit -am "fend $OLD_VERSION -> $NEW_VERSION"
 git --no-pager log
