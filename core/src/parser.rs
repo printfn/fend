@@ -374,12 +374,13 @@ fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_statements(input: &[Token]) -> ParseResult<'_> {
-    let (lhs, input) = parse_assignment(input)?;
-    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
-        let (rhs, remaining) = parse_statements(remaining)?;
-        return Ok((Expr::Statements(Box::new(lhs), Box::new(rhs)), remaining));
+    let (mut result, mut input) = parse_assignment(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
+        let (rhs, remaining) = parse_assignment(remaining)?;
+        result = Expr::Statements(Box::new(result), Box::new(rhs));
+        input = remaining;
     }
-    Ok((lhs, input))
+    Ok((result, input))
 }
 
 pub(crate) fn parse_expression(input: &[Token]) -> ParseResult<'_> {
