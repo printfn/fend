@@ -373,9 +373,19 @@ fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
     Ok((lhs, input))
 }
 
-fn parse_statements(input: &[Token]) -> ParseResult<'_> {
+fn parse_statements(mut input: &[Token]) -> ParseResult<'_> {
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
+        input = remaining;
+    }
+    if input.is_empty() {
+        return Ok((Expr::Literal(Value::from(())), &[]));
+    }
     let (mut result, mut input) = parse_assignment(input)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
+        if remaining.is_empty() || matches!(remaining[0], Token::Symbol(Symbol::Semicolon)) {
+            input = remaining;
+            continue;
+        }
         let (rhs, remaining) = parse_assignment(remaining)?;
         result = Expr::Statements(Box::new(result), Box::new(rhs));
         input = remaining;
