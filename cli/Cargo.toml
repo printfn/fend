@@ -18,7 +18,7 @@ directories = "3.0.2"
 ctrlc = "3.1.9"
 ansi_term = "0.12.1"
 toml = "0.5.8"
-serde = { version = "1.0.126", features = ["derive"] }
+serde = { version = "1.0.127", features = ["derive"] }
 chrono = "0.4.19"
 rand = "0.8.4"
 
