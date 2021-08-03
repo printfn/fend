@@ -100,6 +100,9 @@ fn parse_ident(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_parens(input: &[Token]) -> ParseResult<'_> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
+    if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::CloseParens) {
+        return Ok((Expr::Literal(Value::from(())), remaining));
+    }
     let (inner, mut input) = parse_expression(input)?;
     // allow omitting closing parentheses at end of input
     if !input.is_empty() {

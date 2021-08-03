@@ -5399,3 +5399,8 @@ fn test_invalid_dice_syntax_5() {
         Some("invalid dice syntax, try e.g. `4d6`"),
     );
 }
+
+#[test]
+fn unit_literal() {
+    test_eval("()", "()");
+}

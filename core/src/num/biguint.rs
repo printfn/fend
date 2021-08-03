@@ -138,7 +138,7 @@ impl BigUint {
                     // no need to do anything
                 } else {
                     self.make_large();
-                    self.set(idx, new_value)
+                    self.set(idx, new_value);
                 }
             }
             Large(value) => {

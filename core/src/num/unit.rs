@@ -611,7 +611,7 @@ impl Value {
                     Err(_) => (),
                 };
             }
-            res_components.push(comp.clone())
+            res_components.push(comp.clone());
         }
 
         // remove units with exponent == 0

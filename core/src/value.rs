@@ -8,6 +8,7 @@ use std::{fmt, sync::Arc};
 
 mod boolean;
 pub(crate) mod func;
+mod unit;
 
 pub(crate) trait BoxClone {
     fn box_clone(&self) -> Box<dyn ValueTrait>;

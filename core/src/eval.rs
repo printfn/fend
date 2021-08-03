@@ -21,7 +21,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     for token in lex {
         let token = token?;
         if let lexer::Token::Symbol(lexer::Symbol::CloseParens) = token {
-            missing_open_parens += 1
+            missing_open_parens += 1;
         }
         tokens.push(token);
     }

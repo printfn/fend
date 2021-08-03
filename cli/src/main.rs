@@ -74,7 +74,7 @@ fn print_help(explain_quitting: bool) {
         )
     );
     if explain_quitting {
-        println!("\nTo quit, type `quit`.")
+        println!("\nTo quit, type `quit`.");
     }
 }
 
@@ -100,7 +100,7 @@ fn repl_loop(config: &config::Config) -> i32 {
         core_context.borrow_mut().use_coulomb_and_farad();
     }
     let mut context = Context::new(&core_context);
-    rl.set_helper(Some(helper::Helper::new(context.clone(), &config)));
+    rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {

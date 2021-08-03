@@ -31,7 +31,7 @@ pub fn register_handler() -> CtrlC {
         r.store(false, sync::atomic::Ordering::SeqCst);
     };
     if ctrlc::set_handler(handler).is_err() {
-        eprintln!("Unable to set Ctrl-C handler")
+        eprintln!("Unable to set Ctrl-C handler");
     }
 
     interrupt
