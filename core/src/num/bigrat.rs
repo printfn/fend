@@ -1206,7 +1206,7 @@ mod tests {
                 num: BigUint::from(16),
                 den: BigUint::from(9)
             } < BigRat::from(2)
-        )
+        );
     }
 
     #[test]
@@ -1221,6 +1221,6 @@ mod tests {
                 num: BigUint::from(3),
                 den: BigUint::from(4)
             }
-        )
+        );
     }
 }

@@ -94,6 +94,6 @@ mod tests {
 
     #[test]
     fn negative_year_string() {
-        assert_eq!(Year::new(-823).to_string(), "823 BC")
+        assert_eq!(Year::new(-823).to_string(), "823 BC");
     }
 }
