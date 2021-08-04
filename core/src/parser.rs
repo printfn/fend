@@ -50,17 +50,16 @@ impl fmt::Display for ParseError {
 
 type ParseResult<'a, T = Expr> = Result<(T, &'a [Token]), ParseError>;
 
-fn parse_token(input: &[Token], skip_whitespace: bool) -> ParseResult<'_, Token> {
-    if input.is_empty() {
-        Err(ParseError::ExpectedAToken)
-    } else if let Token::Whitespace = input[0] {
-        if skip_whitespace {
-            parse_token(&input[1..], skip_whitespace)
-        } else {
-            Ok((input[0].clone(), &input[1..]))
+fn parse_token(mut input: &[Token], skip_whitespace: bool) -> ParseResult<'_, Token> {
+    loop {
+        if input.is_empty() {
+            return Err(ParseError::ExpectedAToken);
         }
-    } else {
-        Ok((input[0].clone(), &input[1..]))
+        if skip_whitespace && matches!(input[0], Token::Whitespace) {
+            input = &input[1..];
+            continue;
+        }
+        return Ok((input[0].clone(), &input[1..]));
     }
 }
 
