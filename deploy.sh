@@ -29,6 +29,18 @@ manualstep() {
     confirm "$1"
 }
 
+gitdiff() {
+    # checks the expected number of lines + files are different
+    added_lines=$(git --no-pager diff|grep '^+'|wc -l)
+    if [ $added_lines -ne $1 ]; then
+        fail "Expected $1 lines + files to be different"
+    fi
+    removed_lines=$(git --no-pager diff|grep '^-'|wc -l)
+    if [ $removed_lines -ne $1 ]; then
+        fail "Expected $1 lines + files to be different"
+    fi
+}
+
 checkversion "$NEW_VERSION"
 
 OLD_VERSION="$(cargo run -q -- version)"
@@ -76,15 +88,7 @@ mv temp web/index.html
 sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" wiki/Home.md >temp
 mv temp wiki/Home.md
 
-# this counts the added lines + number of different files
-added_lines=$(git --no-pager diff|grep '^+'|wc -l)
-if [ $added_lines -ne 14 ]; then
-    fail "Expected 8 lines to be different"
-fi
-removed_lines=$(git --no-pager diff|grep '^-'|wc -l)
-if [ $removed_lines -ne 14 ]; then
-    fail "Expected 8 lines to be different"
-fi
+gitdiff 14
 
 manualstep "Add changelog to wiki"
 echo "Building and running tests..."
@@ -149,11 +153,10 @@ sed "s/$OLD_VERSION/$NEW_VERSION/g" .SRCINFO|sed "s/[a-f0-9]\{128\}/$HASH/" >.SR
 sed "s/$OLD_VERSION/$NEW_VERSION/" PKGBUILD|sed "s/[a-f0-9]\{128\}/$HASH/" >PKGBUILD_NEW
 mv .SRCINFO_NEW .SRCINFO
 mv PKGBUILD_NEW PKGBUILD
-git --no-pager diff
-manualstep "Check the diff: 5 lines should have changed"
+gitdiff 7 # 5 lines in 2 files
 git commit -am "fend $OLD_VERSION -> $NEW_VERSION"
-git --no-pager log
-manualstep "Check the log"
-git push origin
+git --no-pager log --pretty=full HEAD~..|grep '^Author: printfn <printfn@users.noreply.github.com>$'
+git --no-pager log --pretty=full HEAD~..|grep '^Commit: printfn <printfn@users.noreply.github.com>$'
+git push origin master
 popd >/dev/null
 rm -rf "$TMPDIR"
