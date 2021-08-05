@@ -2,7 +2,7 @@
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
 
-The current latest version of fend is `0.1.22`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
+The current latest version of fend is `0.1.23`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
 
 # Table of Contents
 1. [Installation](#installation)
@@ -393,6 +393,10 @@ approx. 1.4142135619
 The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
+
+### v0.1.23 (2021-08-06)
+
+* Fully support empty statements and trailing semicolons
 
 ### v0.1.22 (2021-07-29)
 
