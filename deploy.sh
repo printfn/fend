@@ -31,12 +31,12 @@ manualstep() {
 
 gitdiff() {
     # checks the expected number of lines + files are different
-    added_lines=$(git --no-pager diff|grep '^+'|wc -l)
-    if [ $added_lines -ne $1 ]; then
+    added_lines=$(git --no-pager diff|grep -c '^+')
+    if [ "$added_lines" -ne "$1" ]; then
         fail "Expected $1 lines + files to be different"
     fi
-    removed_lines=$(git --no-pager diff|grep '^-'|wc -l)
-    if [ $removed_lines -ne $1 ]; then
+    removed_lines=$(git --no-pager diff|grep -c '^-')
+    if [ "$removed_lines" -ne "$1" ]; then
         fail "Expected $1 lines + files to be different"
     fi
 }
@@ -107,26 +107,27 @@ cargo run -q -- version | grep "$NEW_VERSION" || fail "cargo run -- version retu
 echo "Committing..."
 git add -A
 git --no-pager diff --cached
-confirm "'git commit -am \"Release version $NEW_VERSION\"'"
+echo "'git commit -am \"Release version $NEW_VERSION\"'"
 git commit -am "Release version $NEW_VERSION"
 git status
-confirm "'git push'"
-git push
+echo "'git push origin main'"
+git push origin main
 manualstep "Ensure CI passes"
-confirm "cargo publish for fend-core"
+echo "cargo publish for fend-core"
 (cd core && cargo publish)
 echo "Sleeping for 30 seconds to let crates.io update"
 sleep 30
-confirm "cargo publish for fend"
+echo "cargo publish for fend"
 (cd cli && cargo publish)
-confirm "Tag and push tag to GitHub"
+echo "Tag and push tag to GitHub"
 git tag "v$NEW_VERSION"
 git push --tags
-confirm "Build NPM package"
+
+echo "Building NPM package"
 (cd wasm && wasm-pack build)
 grep 'fend_wasm_bg.js' wasm/pkg/package.json
-(cd wasm/pkg && npm publish --dry-run)
-confirm "Publish npm package"
+(cd wasm/pkg && npm publish --dry-run 2>&1)|grep "total files:"|grep 7
+echo "Publishing npm package"
 (cd wasm/pkg && npm publish)
 manualstep "Create GitHub release (including changelog):
   * Download artifacts from 'https://github.com/printfn/fend/actions'
