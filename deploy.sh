@@ -141,6 +141,7 @@ cd fend
 git config user.name printfn
 git config user.email printfn@users.noreply.github.com
 curl -o "fend-$NEW_VERSION.crate" "https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate"
+echo test|shasum -a 512 -|grep "^0e3e75234abc68f4378a86b3f4b32"
 HASH=$(shasum -a 512 "fend-$NEW_VERSION.crate" | grep -o '[a-f0-9]\{128\}')
 echo "Hash: $HASH"
 rm "fend-$NEW_VERSION.crate"
