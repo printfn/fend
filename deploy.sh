@@ -38,19 +38,55 @@ echo "Checking if the README files are in sync..."
 diff README.md cli/README.md
 diff README.md core/README.md
 echo "Running cargo fmt..."
-cargo fmt
-manualstep "Update README"
-manualstep "Bump version number in these places:
-* fend-core TOML,
-* fend-core docs attr,
-* fend-core get_version_as_str(),
-* fend cli TOML,
-* fend cli TOML version requirement for fend-core
-* fend wasm TOML
-* fend web initialisation
-* fend wiki
+cargo fmt -- --check
 
-Add changelog to wiki"
+echo "Making sure the git repository is clean..."
+# from https://stackoverflow.com/a/5143914
+if ! git diff-index --quiet HEAD --; then
+    fail "The local repository has uncommitted changes"
+fi
+
+echo "Bumping version numbers..."
+
+# version number in fend-core
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" core/Cargo.toml >temp
+mv temp core/Cargo.toml
+
+# fend-core docs attr
+sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" core/src/lib.rs >temp
+mv temp core/src/lib.rs
+
+# fend-core get_version_as_str()
+sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" core/src/lib.rs >temp
+mv temp core/src/lib.rs
+
+# fend cli TOML x2
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" cli/Cargo.toml >temp
+mv temp cli/Cargo.toml
+
+# wasm TOML
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" wasm/Cargo.toml >temp
+mv temp wasm/Cargo.toml
+
+# fend web initialisation
+sed "s/release: \"fend@$OLD_VERSION\"/release: \"fend@$NEW_VERSION\"/" web/index.html >temp
+mv temp web/index.html
+
+# wiki
+sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" wiki/Home.md >temp
+mv temp wiki/Home.md
+
+# this counts the added lines + number of different files
+added_lines=$(git --no-pager diff|grep '^+'|wc -l)
+if [ $added_lines -ne 14 ]; then
+    fail "Expected 8 lines to be different"
+fi
+removed_lines=$(git --no-pager diff|grep '^-'|wc -l)
+if [ $removed_lines -ne 14 ]; then
+    fail "Expected 8 lines to be different"
+fi
+
+manualstep "Add changelog to wiki, and potentially update README"
 echo "Building and running tests..."
 cargo clippy --workspace --all-targets --all-features
 cargo build
