@@ -33,7 +33,7 @@ checkversion "$NEW_VERSION"
 
 OLD_VERSION="$(cargo run -q -- version)"
 
-confirm "Releasing update $OLD_VERSION -> $NEW_VERSION"
+confirm "Releasing update $OLD_VERSION -> $NEW_VERSION. Update the README file if necessary."
 echo "Checking if the README files are in sync..."
 diff README.md cli/README.md
 diff README.md core/README.md
@@ -86,7 +86,7 @@ if [ $removed_lines -ne 14 ]; then
     fail "Expected 8 lines to be different"
 fi
 
-manualstep "Add changelog to wiki, and potentially update README"
+manualstep "Add changelog to wiki"
 echo "Building and running tests..."
 cargo clippy --workspace --all-targets --all-features
 cargo build
