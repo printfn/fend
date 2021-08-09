@@ -252,6 +252,29 @@ pub fn evaluate_with_interrupt(
     })
 }
 
+#[derive(Debug)]
+pub struct Completion {
+    display: String,
+    insert: String,
+}
+
+impl Completion {
+    #[must_use]
+    pub fn display(&self) -> &str {
+        &self.display
+    }
+
+    #[must_use]
+    pub fn insert(&self) -> &str {
+        &self.insert
+    }
+}
+
+#[must_use]
+pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
+    units::get_completions_for_prefix(prefix)
+}
+
 const fn get_version_as_str() -> &'static str {
     "0.1.23"
 }

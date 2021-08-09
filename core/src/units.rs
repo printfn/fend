@@ -200,3 +200,30 @@ fn query_unit_internal<'a, I: Interrupt>(
         Err(FendError::IdentifierNotFound(ident.to_string().into()))
     }
 }
+
+pub(crate) fn get_completions_for_prefix(prefix: &str) -> Vec<crate::Completion> {
+    use crate::Completion;
+
+    let mut result = vec![];
+
+    let mut add = |name: &str| {
+        if name.starts_with(prefix) && name != prefix {
+            result.push(Completion {
+                display: name.to_string(),
+                insert: name.split_at(prefix.len()).1.to_string(),
+            });
+        }
+    };
+
+    for group in builtin::ALL_UNIT_DEFS {
+        for (s, _, _, _) in *group {
+            // only add singular name, since plurals
+            // unnecessarily clutter autocompletions
+            add(s);
+        }
+    }
+
+    result.sort_by(|a, b| a.display().cmp(b.display()));
+
+    result
+}
