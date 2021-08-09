@@ -272,17 +272,7 @@ impl Completion {
 
 #[must_use]
 pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
-    if prefix == "m" {
-        vec![Completion {
-            display: "mol".to_string(),
-            insert: "ol".to_string(),
-        }, Completion {
-            display: "meter - SI unit for distance".to_string(),
-            insert: "eter".to_string(),
-        }]
-    } else {
-        vec![]
-    }
+    units::get_completions_for_prefix(prefix)
 }
 
 const fn get_version_as_str() -> &'static str {

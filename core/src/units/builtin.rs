@@ -642,7 +642,7 @@ const EXCHANGE_RATES: &[UnitTuple] = &[
     ("ZAR", "ZAR", "(1/16.3923) _EUR", ""),
 ];
 
-const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
+pub(crate) const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
     BASE_UNITS,
     BASE_UNIT_ABBREVIATIONS,
     TEMPERATURE_SCALES,
