@@ -1,4 +1,4 @@
-use std::sync;
+use std::{process, sync};
 
 pub struct CtrlC {
     running: sync::Arc<sync::atomic::AtomicBool>,
@@ -26,12 +26,12 @@ pub fn register_handler() -> CtrlC {
     let handler = move || {
         if !r.load(sync::atomic::Ordering::SeqCst) {
             // we already pressed Ctrl+C, so now kill the program
-            std::process::exit(1);
+            process::exit(1);
         }
         r.store(false, sync::atomic::Ordering::SeqCst);
     };
     if ctrlc::set_handler(handler).is_err() {
-        eprintln!("Unable to set Ctrl-C handler")
+        eprintln!("Unable to set Ctrl-C handler");
     }
 
     interrupt

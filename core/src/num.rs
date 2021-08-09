@@ -4,6 +4,7 @@ mod base;
 mod bigrat;
 mod biguint;
 mod complex;
+mod dist;
 mod exact;
 mod formatting_style;
 mod real;
@@ -11,88 +12,76 @@ mod unit;
 
 pub(crate) use formatting_style::FormattingStyle;
 
-pub(crate) type Number<'a> = unit::Value<'a>;
+use crate::error::FendError;
+
+pub(crate) type Number = unit::Value;
 pub(crate) type Base = base::Base;
-type Exact<T> = exact::Exact<T>;
-pub(crate) type BaseOutOfRangeError = base::OutOfRangeError;
-pub(crate) type InvalidBasePrefixError = base::InvalidBasePrefixError;
-
-#[allow(clippy::pub_enum_variant_names)]
-pub enum ValueOutOfRange<T: fmt::Display> {
-    MustBeLessThanOrEqualTo(T),
-    MustBeBetween(T, T),
-    MustNotBeLessThan(T),
-    MustBeGreaterThan(T),
-}
-
-impl<T: fmt::Display> fmt::Display for ValueOutOfRange<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::MustBeLessThanOrEqualTo(x) => {
-                write!(f, "Value must be less than or equal to {}", x)
-            }
-            Self::MustBeBetween(a, b) => {
-                write!(f, "Value must be between {} and {}", a, b)
-            }
-            Self::MustNotBeLessThan(x) => {
-                write!(f, "Value must not be less than {}", x)
-            }
-            Self::MustBeGreaterThan(x) => {
-                write!(f, "Value must be greater than {}", x)
-            }
-        }
-    }
-}
-
-impl<T: fmt::Display> crate::error::Error for ValueOutOfRange<T> {}
-
-pub enum ConvertToUsizeError {
-    OutOfRange(ValueOutOfRange<usize>),
-    NegativeNumber,
-    Fraction,
-    InvalidRealNumber,
-    ComplexNumber,
-    NumberWithUnit,
-    InexactNumber,
-}
-
-impl fmt::Display for ConvertToUsizeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::OutOfRange(value_out_of_range_error) => write!(f, "{}", value_out_of_range_error),
-            Self::NegativeNumber => write!(f, "Negative numbers are not allowed"),
-            Self::Fraction => write!(f, "Cannot convert fraction to integer"),
-            Self::InvalidRealNumber => write!(f, "Number cannot be converted to an integer"),
-            Self::ComplexNumber => write!(f, "Cannot convert complex number to integer"),
-            Self::NumberWithUnit => write!(f, "Cannot convert number with unit to integer"),
-            Self::InexactNumber => write!(f, "Cannot convert inexact number to integer"),
-        }
-    }
-}
-
-impl crate::error::Error for ConvertToUsizeError {}
+pub(crate) type Exact<T> = exact::Exact<T>;
 
 #[derive(Debug)]
-pub enum IntegerPowerError {
-    ExponentTooLarge,
-    ZeroToThePowerOfZero,
+pub(crate) enum RangeBound<T> {
+    None,
+    Open(T),
+    Closed(T),
 }
 
-impl fmt::Display for IntegerPowerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+impl<T: fmt::Display + fmt::Debug + 'static> RangeBound<T> {
+    fn into_dyn(self) -> RangeBound<Box<dyn crate::format::DisplayDebug>> {
         match self {
-            Self::ExponentTooLarge => write!(f, "Exponent too large"),
-            Self::ZeroToThePowerOfZero => write!(f, "Zero to the power of zero is undefined"),
+            Self::None => RangeBound::None,
+            Self::Open(v) => RangeBound::Open(Box::new(v)),
+            Self::Closed(v) => RangeBound::Closed(Box::new(v)),
         }
     }
 }
-impl crate::error::Error for IntegerPowerError {}
 
 #[derive(Debug)]
-pub struct DivideByZero {}
-impl fmt::Display for DivideByZero {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "Division by zero")
+pub(crate) struct Range<T> {
+    start: RangeBound<T>,
+    end: RangeBound<T>,
+}
+
+impl<T> Range<T> {
+    pub(crate) fn open(start: T, end: T) -> Self {
+        Self {
+            start: RangeBound::Open(start),
+            end: RangeBound::Open(end),
+        }
     }
 }
-impl crate::error::Error for DivideByZero {}
+
+impl Range<i32> {
+    const ZERO_OR_GREATER: Self = Self {
+        start: RangeBound::Closed(0),
+        end: RangeBound::None,
+    };
+}
+
+impl<T: fmt::Display> fmt::Display for Range<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        match &self.start {
+            RangeBound::None => write!(f, "(-\u{221e}, ")?, // infinity symbol
+            RangeBound::Open(v) => write!(f, "({}, ", v)?,
+            RangeBound::Closed(v) => write!(f, "[{}, ", v)?,
+        }
+        match &self.end {
+            RangeBound::None => write!(f, "\u{221e})")?,
+            RangeBound::Open(v) => write!(f, "{})", v)?,
+            RangeBound::Closed(v) => write!(f, "{}]", v)?,
+        }
+        Ok(())
+    }
+}
+
+fn out_of_range<T: fmt::Display + fmt::Debug + 'static, U: fmt::Display + fmt::Debug + 'static>(
+    value: T,
+    range: Range<U>,
+) -> FendError {
+    FendError::OutOfRange {
+        value: Box::new(value),
+        range: Range {
+            start: range.start.into_dyn(),
+            end: range.end.into_dyn(),
+        },
+    }
+}

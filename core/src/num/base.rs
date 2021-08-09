@@ -1,7 +1,9 @@
 use std::fmt;
 
+use crate::error::FendError;
+
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct Base(BaseEnum);
+pub(crate) struct Base(BaseEnum);
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum BaseEnum {
@@ -17,35 +19,10 @@ enum BaseEnum {
     Plain(u8),
 }
 
-pub struct InvalidBasePrefixError {}
-
-impl fmt::Display for InvalidBasePrefixError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(
-            f,
-            "Unable to parse a valid base prefix, expected 0b, 0o, 0d or 0x"
-        )
-    }
-}
-
-pub(crate) enum OutOfRangeError {
-    BaseTooSmall,
-    BaseTooLarge,
-}
-
-impl fmt::Display for OutOfRangeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::BaseTooSmall => write!(f, "Base must be at least 2"),
-            Self::BaseTooLarge => write!(f, "Base cannot be larger than 36"),
-        }
-    }
-}
-
 impl Base {
-    pub const HEX: Self = Self(BaseEnum::Hex);
+    pub(crate) const HEX: Self = Self(BaseEnum::Hex);
 
-    pub const fn base_as_u8(self) -> u8 {
+    pub(crate) const fn base_as_u8(self) -> u8 {
         match self.0 {
             BaseEnum::Binary => 2,
             BaseEnum::Octal => 8,
@@ -54,34 +31,34 @@ impl Base {
         }
     }
 
-    pub const fn from_zero_based_prefix_char(ch: char) -> Result<Self, InvalidBasePrefixError> {
+    pub(crate) const fn from_zero_based_prefix_char(ch: char) -> Result<Self, FendError> {
         Ok(match ch {
             'x' => Self(BaseEnum::Hex),
             'o' => Self(BaseEnum::Octal),
             'b' => Self(BaseEnum::Binary),
-            _ => return Err(InvalidBasePrefixError {}),
+            _ => return Err(FendError::InvalidBasePrefix),
         })
     }
 
-    pub(crate) const fn from_plain_base(base: u8) -> Result<Self, OutOfRangeError> {
+    pub(crate) const fn from_plain_base(base: u8) -> Result<Self, FendError> {
         if base < 2 {
-            return Err(OutOfRangeError::BaseTooSmall);
+            return Err(FendError::BaseTooSmall);
         } else if base > 36 {
-            return Err(OutOfRangeError::BaseTooLarge);
+            return Err(FendError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Plain(base)))
     }
 
-    pub(crate) const fn from_custom_base(base: u8) -> Result<Self, OutOfRangeError> {
+    pub(crate) const fn from_custom_base(base: u8) -> Result<Self, FendError> {
         if base < 2 {
-            return Err(OutOfRangeError::BaseTooSmall);
+            return Err(FendError::BaseTooSmall);
         } else if base > 36 {
-            return Err(OutOfRangeError::BaseTooLarge);
+            return Err(FendError::BaseTooLarge);
         }
         Ok(Self(BaseEnum::Custom(base)))
     }
 
-    pub fn write_prefix(self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    pub(crate) fn write_prefix(self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self.0 {
             BaseEnum::Binary => write!(f, "0b")?,
             BaseEnum::Octal => write!(f, "0o")?,
@@ -92,11 +69,11 @@ impl Base {
         Ok(())
     }
 
-    pub const fn has_prefix(self) -> bool {
+    pub(crate) const fn has_prefix(self) -> bool {
         !matches!(self.0, BaseEnum::Plain(_))
     }
 
-    pub const fn digit_as_char(digit: u64) -> Option<char> {
+    pub(crate) const fn digit_as_char(digit: u64) -> Option<char> {
         Some(match digit {
             0 => '0',
             1 => '1',
@@ -146,7 +123,7 @@ impl Default for Base {
 }
 
 impl fmt::Debug for Base {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0 {
             BaseEnum::Binary => write!(f, "binary"),
             BaseEnum::Octal => write!(f, "octal"),

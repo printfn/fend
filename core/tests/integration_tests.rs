@@ -109,7 +109,7 @@ fn pi_to_fraction() {
         .starts_with("approx."));
 }
 
-const DIVISION_BY_ZERO_ERROR: &str = "Division by zero";
+const DIVISION_BY_ZERO_ERROR: &str = "division by zero";
 #[test]
 fn one_over_zero() {
     expect_error("1/0", Some(DIVISION_BY_ZERO_ERROR));
@@ -277,7 +277,7 @@ fn to_float_13() {
 
 #[test]
 fn to_float_14() {
-    test_eval_simple("6#0.(1) to float to base 10", "0.2");
+    test_eval_simple("6#0.(1) to float in base 10", "0.2");
 }
 
 #[test]
@@ -1624,6 +1624,11 @@ fn different_base_10() {
 }
 
 #[test]
+fn different_base_potential_dice_overlap() {
+    test_eval("16#D3AD_BEEF", "16#d3adbeef");
+}
+
+#[test]
 fn different_base_11() {
     expect_error("#", None);
 }
@@ -1772,7 +1777,10 @@ fn different_base_38() {
 
 #[test]
 fn three_electroncharge() {
-    test_eval("3electroncharge", "0.0000000000000000004806529902 coulomb");
+    test_eval(
+        "3 electron_charge",
+        "0.0000000000000000004806529902 coulomb",
+    );
 }
 
 #[test]
@@ -2126,7 +2134,7 @@ fn units_6() {
 
 #[test]
 fn units_9() {
-    test_eval("365.25 light days -> ly", "1 ly");
+    test_eval("365.25 light days to ly", "1 ly");
 }
 
 #[test]
@@ -2161,7 +2169,7 @@ fn units_15() {
 
 #[test]
 fn units_22() {
-    test_eval("1psi -> kPa -> 5dp", "approx. 6.89475 kPa");
+    test_eval("1psi as kPa as 5dp", "approx. 6.89475 kPa");
 }
 
 #[test]
@@ -2260,16 +2268,6 @@ fn units_40() {
 #[test]
 fn units_41() {
     test_eval("5 foot 1 inch 1 inch", "approx. 5.1666666666 feet");
-}
-
-// this tests if "e" is parsed as the electron charge (instead of Euler's number)
-// in unit definitions
-#[test]
-fn electroncharge_and_bohrmagneton() {
-    test_eval(
-        "(bohrmagneton to coulomb J s/kg) * 1e35",
-        "approx. 927401007831.8305442879 coulomb J s / kg",
-    );
 }
 
 #[test]
@@ -2414,7 +2412,7 @@ fn meter_to_kg_ft() {
 
 #[test]
 fn one_foot_to_inches() {
-    test_eval("1' -> inches", "12 inches");
+    test_eval("1' to inches", "12 inches");
 }
 
 #[test]
@@ -2539,12 +2537,12 @@ fn negative_mixed_fraction_subtraction() {
 
 #[test]
 fn barn_to_meters_squared() {
-    test_eval("1 barn -> m^2", "0.0000000000000000000000000001 m^2");
+    test_eval("1 barn to m^2", "0.0000000000000000000000000001 m^2");
 }
 
 #[test]
 fn liter_to_cubic_meters() {
-    test_eval("1L -> m^3", "0.001 m^3");
+    test_eval("1L to m^3", "0.001 m^3");
 }
 
 #[test]
@@ -2629,37 +2627,37 @@ fn factorial_of_three_kg() {
 
 #[test]
 fn recurring_digits_1() {
-    test_eval_simple("9/11 -> float", "0.(81)");
+    test_eval_simple("9/11 to float", "0.(81)");
 }
 
 #[test]
 fn recurring_digits_2() {
-    test_eval_simple("6#1 / 11 -> float", "6#0.(0313452421)");
+    test_eval_simple("6#1 / 11 to float", "6#0.(0313452421)");
 }
 
 #[test]
 fn recurring_digits_3() {
-    test_eval_simple("6#0 + 6#1 / 7 -> float", "6#0.(05)");
+    test_eval_simple("6#0 + 6#1 / 7 to float", "6#0.(05)");
 }
 
 #[test]
 fn recurring_digits_4() {
-    test_eval_simple("0.25 -> fraction", "1/4");
+    test_eval_simple("0.25 as fraction", "1/4");
 }
 
 #[test]
 fn recurring_digits_5() {
-    test_eval_simple("0.21 -> 1 dp", "approx. 0.2");
+    test_eval_simple("0.21 as 1 dp", "approx. 0.2");
 }
 
 #[test]
 fn recurring_digits_6() {
-    test_eval_simple("0.21 -> 1 dp -> auto", "0.21");
+    test_eval_simple("0.21 to 1 dp to auto", "0.21");
 }
 
 #[test]
 fn recurring_digits_7() {
-    test_eval_simple("502938/700 -> float", "718.48(285714)");
+    test_eval_simple("502938/700 to float", "718.48(285714)");
 }
 
 #[test]
@@ -3517,11 +3515,6 @@ fn name_two() {
 }
 
 #[test]
-fn name_pair() {
-    test_eval("pair", "2");
-}
-
-#[test]
 fn name_three() {
     test_eval("three", "3");
 }
@@ -4369,7 +4362,7 @@ fn kwh_conversion() {
 fn debug_pi_n() {
     test_eval_simple(
         "!debug pi N",
-        "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto)",
+        "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto, simplifiable)",
     );
 }
 
@@ -4416,7 +4409,12 @@ fn two_km_sq_to_hectares() {
 
 #[test]
 fn kg_to_unitless() {
-    expect_error("kg to unitless", Some("Units are incompatible"));
+    expect_error(
+        "kg to unitless",
+        Some(
+            "cannot convert from kg to unitless: units 'kilogram' and 'unitless' are incompatible",
+        ),
+    );
 }
 
 #[test]
@@ -4638,41 +4636,6 @@ fn minus_40_fahrenheit_to_celsius() {
 }
 
 #[test]
-fn differentiate() {
-    test_eval("differentiate", "differentiate");
-}
-
-#[test]
-fn differentiate_zero() {
-    test_eval("differentiate 0", "0");
-}
-
-#[test]
-fn differentiate_one() {
-    test_eval("differentiate 1", "0");
-}
-
-#[test]
-fn differentiate_pi() {
-    test_eval("differentiate pi", "0");
-}
-
-#[test]
-fn differentiate_one_thousand() {
-    test_eval("differentiate 1000", "0");
-}
-
-#[test]
-fn differentiate_i() {
-    test_eval("differentiate i", "0");
-}
-
-#[test]
-fn differentiate_sin() {
-    test_eval("differentiate sin", "cos");
-}
-
-#[test]
 fn gigabits_to_gigabytes() {
     test_eval("25Gib/s to GB/s", "3.3554432 GB / s");
 }
@@ -4684,12 +4647,12 @@ fn one_plus_one() {
 
 #[test]
 fn unterminated_raw_empty_string() {
-    expect_error("#\"", Some("Unterminated string literal"));
+    expect_error("#\"", Some("unterminated string literal"));
 }
 
 #[test]
 fn unterminated_raw_string() {
-    expect_error("#\"hello", Some("Unterminated string literal"));
+    expect_error("#\"hello", Some("unterminated string literal"));
 }
 
 #[test]
@@ -4729,12 +4692,12 @@ fn cis_4() {
 
 #[test]
 fn a_prime() {
-    expect_error("a'", Some("Unknown identifier 'a''"));
+    expect_error("a'", Some("unknown identifier 'a''"));
 }
 
 #[test]
 fn a_double_prime() {
-    expect_error("a\"", Some("Unknown identifier 'a\"'"));
+    expect_error("a\"", Some("unknown identifier 'a\"'"));
 }
 
 #[test]
@@ -4749,12 +4712,12 @@ fn empty_string() {
 
 #[test]
 fn unterminated_empty_string() {
-    expect_error("\"", Some("Unterminated string literal"));
+    expect_error("\"", Some("unterminated string literal"));
 }
 
 #[test]
 fn unterminated_string() {
-    expect_error("\"hello", Some("Unterminated string literal"));
+    expect_error("\"hello", Some("unterminated string literal"));
 }
 
 #[test]
@@ -4769,7 +4732,7 @@ fn backslash_in_string_literal() {
 
 #[test]
 fn add_string_to_number() {
-    expect_error("\"hi\" + 2", Some("Expected a number"));
+    expect_error("\"hi\" + 2", Some("expected a number"));
 }
 
 #[test]
@@ -4831,7 +4794,7 @@ fn escape_sequence_tilde() {
 fn escape_sequence_first_char_out_of_range() {
     expect_error(
         r#""\x9e""#,
-        Some("Expected an escape sequence between \\x00 and \\x7f"),
+        Some("expected an escape sequence between \\x00 and \\x7f"),
     );
 }
 
@@ -4839,7 +4802,7 @@ fn escape_sequence_first_char_out_of_range() {
 fn escape_sequence_second_char_out_of_range() {
     expect_error(
         r#""\x7g""#,
-        Some("Expected an escape sequence between \\x00 and \\x7f"),
+        Some("expected an escape sequence between \\x00 and \\x7f"),
     );
 }
 
@@ -4875,7 +4838,7 @@ fn single_quote_string() {
 
 #[test]
 fn single_quote_string_unterminated() {
-    expect_error(r#"'hi\"\'"#, Some("Unterminated string literal"));
+    expect_error(r#"'hi\"\'"#, Some("unterminated string literal"));
 }
 
 #[test]
@@ -5022,7 +4985,7 @@ fn unicode_escape_7e() {
 fn unicode_escape_696969() {
     expect_error(
         "'\\u{696969}'",
-        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+        Some("invalid Unicode escape sequence, expected e.g. \\u{7e}"),
     );
 }
 
@@ -5035,7 +4998,7 @@ fn unicode_escape_69() {
 fn unicode_escape_69x() {
     expect_error(
         "'\\u{69x}'",
-        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+        Some("invalid Unicode escape sequence, expected e.g. \\u{7e}"),
     );
 }
 
@@ -5043,7 +5006,7 @@ fn unicode_escape_69x() {
 fn unicode_escape_empty() {
     expect_error(
         "'\\u{}'",
-        Some("Invalid Unicode escape sequence, expected e.g. \\u{7e}"),
+        Some("invalid Unicode escape sequence, expected e.g. \\u{7e}"),
     );
 }
 
@@ -5078,13 +5041,24 @@ fn unicode_escape_aaa_uppercase() {
 }
 
 #[test]
+#[ignore]
 fn today() {
     let mut context = Context::new();
-    context.set_current_unix_time_ms(1617517099000);
-    context.set_timezone_offset(0);
+    context.set_current_time_v1(1617517099000, 0);
     assert_eq!(
         evaluate("today", &mut context).unwrap().get_main_result(),
         "Sunday, 4 April 2021"
+    );
+}
+
+#[test]
+#[ignore]
+fn today_with_tz() {
+    let mut context = Context::new();
+    context.set_current_time_v1(1619943083155, 43200);
+    assert_eq!(
+        evaluate("today", &mut context).unwrap().get_main_result(),
+        "Sunday, 2 May 2021"
     );
 }
 
@@ -5123,4 +5097,321 @@ fn single_line_comment_and_linebreak_2() {
 #[ignore]
 fn single_line_comment_and_linebreak_3() {
     test_eval("30.48cm to \' # converting cm\n ' # to feet", "1'");
+}
+
+#[test]
+fn percent_plus_per_mille() {
+    test_eval("4% + 3\u{2030}", "4.3%");
+}
+
+#[test]
+fn custom_base_unit() {
+    test_eval_simple("5 'tests'", "5 tests");
+}
+
+#[test]
+fn custom_base_unit_in_calculation() {
+    test_eval_simple("5 'pigeons' per meter", "5 pigeons / meter");
+}
+
+#[test]
+#[ignore]
+fn custom_base_unit_in_calculation_2() {
+    test_eval("5 'pigeons' per meter / 'pigeons'", "5 meters");
+}
+
+#[test]
+fn five_k() {
+    test_eval("5k", "5000");
+}
+
+#[test]
+fn upper_case_meter() {
+    test_eval("4 Metres", "4 metres");
+}
+
+#[test]
+fn mixed_case_meter() {
+    test_eval("4 mEtRes", "4 metres");
+}
+
+#[test]
+fn asin_minus_1() {
+    expect_error("asin -1.1", Some("-1.1 must lie in the interval (-1, 1)"));
+}
+
+#[test]
+fn custom_unit_test() {
+    test_eval_simple("15*3*50/1000 'cases'", "2.25 cases");
+}
+
+#[test]
+fn simplify_ms_per_year() {
+    test_eval("ms/year", "approx. 0");
+}
+
+#[test]
+fn not_simplify_explicit_to() {
+    test_eval_simple(
+        "1.550519768*10^-8 to ms/year",
+        "489.296375410515266426112 ms / year",
+    );
+}
+
+#[test]
+fn unicode_operators() {
+    test_eval("5 − 2 ✕ 3 × 1 ÷ 1 ∕ 3", "3");
+}
+
+#[test]
+fn bool_true() {
+    test_eval("true", "true");
+}
+
+#[test]
+fn bool_false() {
+    test_eval("false", "false");
+}
+
+#[test]
+fn zero_to_bool() {
+    test_eval("0 to bool", "false");
+}
+
+#[test]
+fn zero_to_boolean() {
+    test_eval("0 to boolean", "false");
+}
+
+#[test]
+fn one_to_bool() {
+    test_eval("1 to bool", "true");
+}
+
+#[test]
+fn minus_one_to_bool() {
+    test_eval("-1 to bool", "true");
+}
+
+#[test]
+fn not_true() {
+    test_eval("not true", "false");
+}
+
+#[test]
+fn not_false() {
+    test_eval("not false", "true");
+}
+
+#[test]
+fn not_one() {
+    expect_error("not 1", None);
+}
+
+#[test]
+fn sqm() {
+    test_eval("5 sqm", "5 m^2");
+}
+
+#[test]
+fn sqft() {
+    test_eval("5 sqft", "5 ft^2");
+}
+
+#[test]
+fn modulo() {
+    for a in 0..30 {
+        for b in 1..30 {
+            let input = format!("{} mod {}", a, b);
+            let output = (a % b).to_string();
+            test_eval(&input, &output);
+        }
+    }
+}
+
+#[test]
+fn modulo_zero() {
+    expect_error("5 mod 0", Some("modulo by zero"));
+}
+
+#[test]
+fn binary_modulo() {
+    test_eval("0b1001010 mod 5", "0b100");
+}
+
+#[test]
+fn huge_modulo() {
+    test_eval(
+        "9283749283460298374027364928736492873469287354267354 mod 4",
+        "2",
+    );
+}
+
+#[test]
+fn month_of_date() {
+    test_eval_simple("month of ('2020-03-04' to date)", "March");
+}
+
+#[test]
+fn weekday_of_date() {
+    test_eval_simple("day_of_week of ('2020-05-08' to date)", "Friday");
+}
+
+#[test]
+fn day_of_week_type_name() {
+    expect_error(
+        "5 to (day_of_week of ('2020-05-08' to date)",
+        Some("cannot convert value to day of week"),
+    );
+}
+
+#[test]
+fn phi() {
+    test_eval("phi", "approx. 1.6180339886");
+}
+
+#[test]
+fn five_dollars() {
+    test_eval("$5", "$5");
+}
+
+#[test]
+fn dollar_prefix() {
+    test_eval_simple("$200/3 to 2dp", "approx. $66.66");
+}
+
+#[test]
+fn dollar_multiplication() {
+    test_eval("$3 * 7", "$21");
+}
+
+#[test]
+#[ignore]
+fn dollar_multiplication_reverse() {
+    test_eval("7 * $3", "$21");
+}
+
+#[test]
+fn gbp_symbol() {
+    test_eval("£5 + £3", "£8");
+}
+
+#[test]
+fn two_statements() {
+    test_eval("2; 4", "4");
+}
+
+#[test]
+fn five_statements() {
+    test_eval("2; 4; 8kg; c:2c; a = 2", "2");
+}
+
+#[test]
+fn variable_assignment() {
+    test_eval("a = b = 2; b", "2");
+}
+
+#[test]
+fn overwrite_variable() {
+    test_eval("a = 3; a = a + 4a; a", "15");
+}
+
+#[test]
+fn multiple_variables() {
+    test_eval("a = 3; b = 2a; c = a * b; c + a", "21");
+}
+
+#[test]
+fn mixed_frac() {
+    test_eval_simple("4/3 to mixed_frac", "1 1/3");
+}
+
+#[test]
+fn farad_conversion() {
+    test_eval("1 farad to A^2 kg^-1 m^-2 s^4", "1 A^2 s^4 kg^-1 m^-2");
+}
+
+#[test]
+fn coulomb_farad_mode() {
+    let mut ctx = Context::new();
+    ctx.use_coulomb_and_farad();
+    assert_eq!(
+        evaluate("5C to coulomb", &mut ctx)
+            .unwrap()
+            .get_main_result(),
+        "5 coulomb"
+    );
+    assert_eq!(
+        evaluate("5uF to farad", &mut ctx)
+            .unwrap()
+            .get_main_result(),
+        "0.000005 farad"
+    );
+}
+
+#[test]
+fn test_rolling_dice() {
+    let mut ctx = Context::new();
+    ctx.set_random_u32_fn(|| 5);
+    evaluate("roll d20", &mut ctx).unwrap();
+}
+
+#[test]
+fn test_d6() {
+    test_eval_simple(
+        "d6",
+        "{ 1: 16.67%, 2: 16.67%, 3: 16.67%, 4: 16.67%, 5: 16.67%, 6: 16.67% }",
+    );
+}
+
+#[test]
+fn test_2d6() {
+    test_eval_simple("2d6", "{ 2: 2.78%, 3: 5.56%, 4: 8.33%, 5: 11.11%, 6: 13.89%, 7: 16.67%, 8: 13.89%, 9: 11.11%, 10: 8.33%, 11: 5.56%, 12: 2.78% }")
+}
+
+#[test]
+fn test_invalid_dice_syntax_1() {
+    expect_error("0d6", Some("invalid dice syntax, try e.g. `4d6`"));
+}
+
+#[test]
+fn test_invalid_dice_syntax_2() {
+    expect_error("1d0", Some("invalid dice syntax, try e.g. `4d6`"));
+}
+
+#[test]
+fn test_invalid_dice_syntax_3() {
+    expect_error("0d0", Some("invalid dice syntax, try e.g. `4d6`"));
+}
+
+#[test]
+fn test_invalid_dice_syntax_4() {
+    expect_error(
+        "d30000000000000000",
+        Some("invalid dice syntax, try e.g. `4d6`"),
+    );
+}
+
+#[test]
+fn test_invalid_dice_syntax_5() {
+    expect_error(
+        "30000000000000000d2",
+        Some("invalid dice syntax, try e.g. `4d6`"),
+    );
+}
+
+#[test]
+fn unit_literal() {
+    test_eval("()", "()");
+}
+
+#[test]
+fn empty_statements() {
+    test_eval("1234;", "1234");
+    test_eval(";432", "432");
+    test_eval(";", "()");
+    test_eval(";;3", "3");
+    test_eval("34;;;", "34");
+    test_eval(";2;;3;a=4;;4a", "16");
+    test_eval(";2;;3;a=4;;4a;;;()", "()");
 }

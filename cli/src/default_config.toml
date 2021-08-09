@@ -1,0 +1,15 @@
+prompt = '> '
+enable-colors = false
+
+# change 'C' and 'F' to refer to coulomb and farad
+# instead of degrees celsius and degrees fahrenheit
+coulomb-and-farad = false
+
+[colors]
+number = {}
+string = { foreground = 'yellow', bold = true }
+identifier = { foreground = 'white' }
+keyword = { foreground = 'blue', bold = true }
+built-in-function = { foreground = 'blue', bold = true }
+date = {}
+other = {}

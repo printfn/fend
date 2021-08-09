@@ -1,48 +1,21 @@
+use crate::error::FendError;
+use crate::ident::Ident;
 use crate::value::Value;
-use crate::{
-    ast::Expr,
-    error::{IntErr, Interrupt},
-};
-use std::fmt;
+use crate::{ast::Expr, error::Interrupt};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-enum ScopeValue<'a> {
+enum ScopeValue {
     //Variable(Value),
-    LazyVariable(Expr<'a>, Option<Arc<Scope<'a>>>),
+    LazyVariable(Expr, Option<Arc<Scope>>),
 }
 
-#[derive(Debug)]
-pub enum GetIdentError<'a> {
-    EvalError(String),
-    IdentifierNotFound(&'a str),
-}
-
-impl<'a> fmt::Display for GetIdentError<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::EvalError(s) => write!(f, "{}", s),
-            Self::IdentifierNotFound(s) => write!(f, "Unknown identifier '{}'", s),
-        }
-    }
-}
-
-#[allow(clippy::use_self)]
-impl<'a, I: Interrupt> From<IntErr<String, I>> for IntErr<GetIdentError<'a>, I> {
-    fn from(e: IntErr<String, I>) -> Self {
-        match e {
-            IntErr::Interrupt(i) => IntErr::Interrupt(i),
-            IntErr::Error(s) => IntErr::Error(GetIdentError::EvalError(s)),
-        }
-    }
-}
-
-impl<'a> ScopeValue<'a> {
+impl ScopeValue {
     fn eval<I: Interrupt>(
         &self,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value<'a>, IntErr<String, I>> {
+    ) -> Result<Value, FendError> {
         match self {
             Self::LazyVariable(expr, scope) => {
                 let value = crate::ast::evaluate(expr.clone(), scope.clone(), context, int)?;
@@ -53,18 +26,14 @@ impl<'a> ScopeValue<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Scope<'a> {
-    ident: &'a str,
-    value: ScopeValue<'a>,
-    inner: Option<Arc<Scope<'a>>>,
+pub(crate) struct Scope {
+    ident: Ident,
+    value: ScopeValue,
+    inner: Option<Arc<Scope>>,
 }
 
-impl<'a> Scope<'a> {
-    const fn with_scope_value(
-        ident: &'a str,
-        value: ScopeValue<'a>,
-        inner: Option<Arc<Self>>,
-    ) -> Self {
+impl Scope {
+    const fn with_scope_value(ident: Ident, value: ScopeValue, inner: Option<Arc<Self>>) -> Self {
         Self {
             ident,
             value,
@@ -73,8 +42,8 @@ impl<'a> Scope<'a> {
     }
 
     pub(crate) fn with_variable(
-        name: &'a str,
-        expr: Expr<'a>,
+        name: Ident,
+        expr: Expr,
         scope: Option<Arc<Self>>,
         inner: Option<Arc<Self>>,
     ) -> Self {
@@ -83,19 +52,16 @@ impl<'a> Scope<'a> {
 
     pub(crate) fn get<I: Interrupt>(
         &self,
-        ident: &'a str,
+        ident: &Ident,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value<'a>, IntErr<GetIdentError<'a>, I>> {
-        if self.ident == ident {
-            let value = self
-                .value
-                .eval(context, int)
-                .map_err(|e| e.map(GetIdentError::EvalError))?;
+    ) -> Result<Value, FendError> {
+        if self.ident.as_str() == ident.as_str() {
+            let value = self.value.eval(context, int)?;
             Ok(value)
         } else {
             self.inner.as_ref().map_or_else(
-                || Err(GetIdentError::IdentifierNotFound(ident).into()),
+                || Err(FendError::IdentifierNotFound(ident.clone())),
                 |inner| inner.get(ident, context, int),
             )
         }

@@ -1,16 +1,19 @@
 #![forbid(unsafe_code)]
-#![forbid(clippy::all)]
+#![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::use_self)]
 #![forbid(clippy::needless_borrow)]
-#![forbid(clippy::cognitive_complexity)]
+//#![forbid(clippy::cognitive_complexity)]
 #![forbid(unreachable_pub)]
-#![doc(html_root_url = "https://docs.rs/fend-core/0.1.14")]
+#![forbid(elided_lifetimes_in_paths)]
+#![doc(html_root_url = "https://docs.rs/fend-core/0.1.23")]
 
 mod ast;
-mod datetime;
+mod date;
 mod error;
 mod eval;
+mod format;
+mod ident;
 mod interrupt;
 mod lexer;
 mod num;
@@ -19,6 +22,8 @@ mod scope;
 mod units;
 mod value;
 
+use std::collections::HashMap;
+
 pub use interrupt::Interrupt;
 
 /// This contains the result of a computation.
@@ -26,6 +31,7 @@ pub use interrupt::Interrupt;
 pub struct FendResult {
     plain_result: String,
     span_result: Vec<Span>,
+    is_unit: bool, // is this the () type
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -38,6 +44,7 @@ pub enum SpanKind {
     Date,
     Whitespace,
     Ident,
+    Boolean,
     Other,
 }
 
@@ -81,11 +88,20 @@ impl FendResult {
         self.plain_result.as_str()
     }
 
+    /// This retrieves the main result as a list of spans, which is useful
+    /// for coloured output.
     pub fn get_main_result_spans(&self) -> impl Iterator<Item = SpanRef<'_>> {
         self.span_result.iter().map(|span| SpanRef {
             string: &span.string,
             kind: span.kind,
         })
+    }
+
+    /// Returns whether or not the result is the `()` type. It can sometimes
+    /// be useful to hide these values.
+    #[must_use]
+    pub fn is_unit_type(&self) -> bool {
+        self.is_unit
     }
 
     /// This used to retrieve a list of other results of the computation,
@@ -98,12 +114,33 @@ impl FendResult {
     }
 }
 
+#[derive(Clone, Debug)]
+struct CurrentTimeInfo {
+    elapsed_unix_time_ms: u64,
+    timezone_offset_secs: i64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum FCMode {
+    CelsiusFahrenheit,
+    CoulombFarad,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum OutputMode {
+    SimpleText,
+    TerminalFixedWidth,
+}
+
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Context {
-    elapsed_unix_time_ms: Option<u64>,
-    timezone_offset_secs: Option<i64>,
+    current_time: Option<CurrentTimeInfo>,
+    variables: HashMap<String, value::Value>,
+    fc_mode: FCMode,
+    random_u32: Option<fn() -> u32>,
+    output_mode: OutputMode,
 }
 
 impl Default for Context {
@@ -118,21 +155,52 @@ impl Context {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            elapsed_unix_time_ms: None,
-            timezone_offset_secs: None,
+            current_time: None,
+            variables: HashMap::new(),
+            fc_mode: FCMode::CelsiusFahrenheit,
+            random_u32: None,
+            output_mode: OutputMode::SimpleText,
         }
     }
 
-    /// Override the current time. This must be the number of elapsed milliseconds
+    /// This method currently has no effect!
+    ///
+    /// Set the current time. This API will likely change in the future!
+    ///
+    /// The first argument (`ms_since_1970`) must be the number of elapsed milliseconds
     /// since January 1, 1970 at midnight UTC, ignoring leap seconds in the same way
     /// as unix time.
-    pub fn set_current_unix_time_ms(&mut self, ms_since_1970: u64) {
-        self.elapsed_unix_time_ms = Some(ms_since_1970);
+    ///
+    /// The second argument (`tz_offset_secs`) is the current time zone
+    /// offset to UTC, in seconds.
+    pub fn set_current_time_v1(&mut self, _ms_since_1970: u64, _tz_offset_secs: i64) {
+        // self.current_time = Some(CurrentTimeInfo {
+        //     elapsed_unix_time_ms: ms_since_1970,
+        //     timezone_offset_secs: tz_offset_secs,
+        // });
+        self.current_time = None;
     }
 
-    /// Override the current time zone offset to UTC, in seconds.
-    pub fn set_timezone_offset(&mut self, tz_offset_secs: i64) {
-        self.timezone_offset_secs = Some(tz_offset_secs);
+    /// Define the units `C` and `F` as coulomb and farad instead of degrees
+    /// celsius and degrees fahrenheit.
+    pub fn use_coulomb_and_farad(&mut self) {
+        self.fc_mode = FCMode::CoulombFarad;
+    }
+
+    /// Set a random number generator
+    pub fn set_random_u32_fn(&mut self, random_u32: fn() -> u32) {
+        self.random_u32 = Some(random_u32);
+    }
+
+    /// Clear the random number generator after setting it with via [`Self::set_random_u32_fn`]
+    pub fn disable_rng(&mut self) {
+        self.random_u32 = None;
+    }
+
+    /// Change the output mode fixed-width terminal style. This enables ASCII
+    /// graphs in the output.
+    pub fn set_output_mode_terminal(&mut self) {
+        self.output_mode = OutputMode::TerminalFixedWidth;
     }
 }
 
@@ -166,13 +234,12 @@ pub fn evaluate_with_interrupt(
         return Ok(FendResult {
             plain_result: String::new(),
             span_result: vec![],
+            is_unit: true,
         });
     }
-    let result = match eval::evaluate_to_spans(input, None, context, int) {
+    let (result, is_unit) = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
-        // TODO: handle different interrupt values
-        Err(error::IntErr::Interrupt(_)) => return Err("Interrupted".to_string()),
-        Err(error::IntErr::Error(e)) => return Err(e),
+        Err(e) => return Err(e.to_string()),
     };
     let mut plain_result = String::new();
     for s in &result {
@@ -181,6 +248,7 @@ pub fn evaluate_with_interrupt(
     Ok(FendResult {
         plain_result,
         span_result: result,
+        is_unit,
     })
 }
 
@@ -215,7 +283,7 @@ pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
 }
 
 const fn get_version_as_str() -> &'static str {
-    "0.1.14"
+    "0.1.23"
 }
 
 /// Returns the current version of `fend-core`.
@@ -226,7 +294,7 @@ pub fn get_version() -> String {
 
 /// Deprecated: use `get_version()` instead.
 #[must_use]
-#[deprecated = "Use `get_version()` instead"]
+#[deprecated = "use `get_version()` instead"]
 pub fn get_extended_version() -> String {
     get_version()
 }

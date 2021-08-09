@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: Update Rust
       run: rustup update
     - name: Clippy
@@ -64,6 +64,13 @@ jobs:
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
         (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
         rm web/pkg/.gitignore
+    - name: Upload Manual to Wiki
+      uses: SwiftDocOrg/github-wiki-publish-action@v1
+      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+      with:
+        path: "wiki"
+      env:
+        GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_TOKEN }}
     - name: Deploy to GitHub Pages
       if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
       uses: peaceiris/actions-gh-pages@v3.8.0

@@ -1,7 +1,7 @@
 [package]
 name = "fend"
 # Don't forget to update print_version()
-version = "0.1.14"
+version = "0.1.23"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Arbitrary-precision unit-aware calculator"
 homepage = "https://github.com/printfn/fend"
@@ -13,13 +13,15 @@ edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
-rustyline = { version =  "7.1.0", default-features = false, package = "rustyline-with-hint-fix" }
-directories = "3.0.1"
-ctrlc = "3.1.8"
+rustyline = { version =  "8.2.0", default-features = false, package = "rustyline-with-hint-fix" }
+directories = "3.0.2"
+ctrlc = "3.1.9"
 ansi_term = "0.12.1"
 toml = "0.5.8"
-serde = { version = "1.0.125", features = ["derive"] }
+serde = { version = "1.0.127", features = ["derive"] }
+chrono = "0.4.19"
+rand = "0.8.4"
 
 [dependencies.fend-core]
-version = "0.1.14"
+version = "0.1.23"
 path = "../core"

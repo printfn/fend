@@ -1,14 +1,28 @@
-use crate::error::{IntErr, Interrupt, Never};
+use crate::error::{FendError, Interrupt};
+use crate::format::Format;
 use crate::interrupt::test_int;
-use crate::num::{Base, DivideByZero, Exact, IntegerPowerError, ValueOutOfRange};
+use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
 use std::cmp::{max, Ordering};
-use std::fmt;
+use std::{fmt, hash};
 
 #[derive(Clone)]
-pub enum BigUint {
+pub(crate) enum BigUint {
     Small(u64),
     // little-endian, len >= 1
     Large(Vec<u64>),
+}
+
+impl hash::Hash for BigUint {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Small(u) => u.hash(state),
+            Large(v) => {
+                for u in v {
+                    u.hash(state);
+                }
+            }
+        }
+    }
 }
 
 use BigUint::{Large, Small};
@@ -52,19 +66,24 @@ impl BigUint {
         }
     }
 
-    pub fn try_as_usize(&self) -> Result<usize, ValueOutOfRange<usize>> {
+    pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> Result<usize, FendError> {
         use std::convert::TryFrom;
-        // todo: include `self` in the error message
-        // This requires rewriting the BigUint format code to use a separate
-        // struct that implements Display
-        let error = ValueOutOfRange::MustBeLessThanOrEqualTo(usize::MAX);
+        let error = || -> Result<_, FendError> {
+            Ok(out_of_range(
+                self.fm(int)?,
+                Range {
+                    start: RangeBound::Closed(0),
+                    end: RangeBound::Closed(usize::MAX),
+                },
+            ))
+        };
 
         Ok(match self {
             Small(n) => {
                 if let Ok(res) = usize::try_from(*n) {
                     res
                 } else {
-                    return Err(error);
+                    return Err(error()?);
                 }
             }
             Large(v) => {
@@ -73,10 +92,10 @@ impl BigUint {
                     if let Ok(res) = usize::try_from(v[0]) {
                         res
                     } else {
-                        return Err(error);
+                        return Err(error()?);
                     }
                 } else {
-                    return Err(error);
+                    return Err(error()?);
                 }
             }
         })
@@ -87,7 +106,7 @@ impl BigUint {
         clippy::cast_precision_loss,
         clippy::float_arithmetic
     )]
-    pub fn as_f64(&self) -> f64 {
+    pub(crate) fn as_f64(&self) -> f64 {
         match self {
             Small(n) => *n as f64,
             Large(v) => {
@@ -119,7 +138,7 @@ impl BigUint {
                     // no need to do anything
                 } else {
                     self.make_large();
-                    self.set(idx, new_value)
+                    self.set(idx, new_value);
                 }
             }
             Large(value) => {
@@ -149,11 +168,9 @@ impl BigUint {
         }
     }
 
-    pub fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> Result<Self, FendError> {
         while b >= 1.into() {
-            let r = a
-                .rem(&b, int)
-                .map_err(|e| e.expect("Unexpected division by zero"))?;
+            let r = a.rem(&b, int)?;
             a = b;
             b = r;
         }
@@ -161,29 +178,21 @@ impl BigUint {
         Ok(a)
     }
 
-    pub fn pow<I: Interrupt>(
-        a: &Self,
-        b: &Self,
-        int: &I,
-    ) -> Result<Self, IntErr<IntegerPowerError, I>> {
+    pub(crate) fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> Result<Self, FendError> {
         if a.is_zero() && b.is_zero() {
-            return Err(IntegerPowerError::ZeroToThePowerOfZero.into());
+            return Err(FendError::ZeroToThePowerOfZero);
         }
         if b.is_zero() {
             return Ok(Self::from(1));
         }
         if b.value_len() > 1 {
-            return Err(IntegerPowerError::ExponentTooLarge.into());
+            return Err(FendError::ExponentTooLarge);
         }
-        Ok(a.pow_internal(b.get(0), int)?)
+        a.pow_internal(b.get(0), int)
     }
 
     // computes the exact square root if possible, otherwise the next lower integer
-    pub fn root_n<I: Interrupt>(
-        self,
-        n: &Self,
-        int: &I,
-    ) -> Result<Exact<Self>, IntErr<IntegerPowerError, I>> {
+    pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok(Exact::new(self, true));
         }
@@ -204,11 +213,7 @@ impl BigUint {
         Ok(Exact::new(low_guess, false))
     }
 
-    fn pow_internal<I: Interrupt>(
-        &self,
-        mut exponent: u64,
-        int: &I,
-    ) -> Result<Self, IntErr<Never, I>> {
+    fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> Result<Self, FendError> {
         let mut result = Self::from(1);
         let mut base = self.clone();
         while exponent > 0 {
@@ -222,7 +227,7 @@ impl BigUint {
         Ok(result)
     }
 
-    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<Never, I>> {
+    fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), FendError> {
         match self {
             Small(n) => {
                 if *n & 0xc000_0000_0000_0000 == 0 {
@@ -247,7 +252,7 @@ impl BigUint {
         Ok(())
     }
 
-    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), IntErr<Never, I>> {
+    fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), FendError> {
         match self {
             Small(n) => *n >>= 1,
             Large(value) => {
@@ -266,19 +271,19 @@ impl BigUint {
         Ok(())
     }
 
-    pub fn divmod<I: Interrupt>(
+    pub(crate) fn divmod<I: Interrupt>(
         &self,
         other: &Self,
         int: &I,
-    ) -> Result<(Self, Self), IntErr<DivideByZero, I>> {
+    ) -> Result<(Self, Self), FendError> {
         if let (Small(a), Small(b)) = (self, other) {
             if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
                 return Ok((Small(div_res), Small(mod_res)));
             }
-            return Err(DivideByZero {}.into());
+            return Err(FendError::DivideByZero);
         }
         if other.is_zero() {
-            return Err(DivideByZero {}.into());
+            return Err(FendError::DivideByZero);
         }
         if other == &Self::from(1) {
             return Ok((self.clone(), Self::from(0)));
@@ -317,11 +322,7 @@ impl BigUint {
     }
 
     /// computes self *= other
-    fn mul_internal<I: Interrupt>(
-        &mut self,
-        other: &Self,
-        int: &I,
-    ) -> Result<(), IntErr<Never, I>> {
+    fn mul_internal<I: Interrupt>(&mut self, other: &Self, int: &I) -> Result<(), FendError> {
         if self.is_zero() || other.is_zero() {
             *self = Self::from(0);
             return Ok(());
@@ -357,95 +358,8 @@ impl BigUint {
         }
     }
 
-    pub fn format<I: Interrupt>(
-        &self,
-        base: Base,
-        write_base_prefix: bool,
-        sf_limit: Option<usize>,
-        int: &I,
-    ) -> Result<Exact<FormattedBigUint>, IntErr<Never, I>> {
-        let base_prefix = if write_base_prefix { Some(base) } else { None };
-
-        if self.is_zero() {
-            return Ok(Exact::new(
-                FormattedBigUint {
-                    base: base_prefix,
-                    ty: FormattedBigUintType::Zero,
-                },
-                true,
-            ));
-        }
-
-        let mut num = self.clone();
-        Ok(
-            if num.value_len() == 1 && base.base_as_u8() == 10 && sf_limit.is_none() {
-                Exact::new(
-                    FormattedBigUint {
-                        base: base_prefix,
-                        ty: FormattedBigUintType::Simple(num.get(0)),
-                    },
-                    true,
-                )
-            } else {
-                let base_as_u128: u128 = base.base_as_u8().into();
-                let mut divisor = base_as_u128;
-                let mut rounds = 1;
-                // note that the string is reversed: this is the number of trailing zeroes while
-                // printing, but actually the number of leading zeroes in the final number
-                let mut num_trailing_zeroes = 0;
-                let mut num_leading_zeroes = 0;
-                let mut finished_counting_leading_zeroes = false;
-                while divisor
-                    < u128::MAX
-                        .checked_div(base_as_u128)
-                        .expect("Base appears to be 0")
-                {
-                    divisor *= base_as_u128;
-                    rounds += 1;
-                }
-                let divisor = Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]);
-                let mut output = String::with_capacity(rounds);
-                while !num.is_zero() {
-                    test_int(int)?;
-                    let divmod_res = num
-                        .divmod(&divisor, int)
-                        .map_err(|e| e.expect("Division by zero is not allowed"))?;
-                    let mut digit_group_value =
-                        u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
-                    for _ in 0..rounds {
-                        let digit_value = digit_group_value % base_as_u128;
-                        digit_group_value /= base_as_u128;
-                        let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
-                        if ch == '0' {
-                            num_trailing_zeroes += 1;
-                        } else {
-                            for _ in 0..num_trailing_zeroes {
-                                output.push('0');
-                                if !finished_counting_leading_zeroes {
-                                    num_leading_zeroes += 1;
-                                }
-                            }
-                            finished_counting_leading_zeroes = true;
-                            num_trailing_zeroes = 0;
-                            output.push(ch);
-                        }
-                    }
-                    num = divmod_res.0;
-                }
-                let exact = sf_limit.map_or(true, |sf| sf >= output.len() - num_leading_zeroes);
-                Exact::new(
-                    FormattedBigUint {
-                        base: base_prefix,
-                        ty: FormattedBigUintType::Complex(output, sf_limit),
-                    },
-                    exact,
-                )
-            },
-        )
-    }
-
     // Note: 0! = 1, 1! = 1
-    pub fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, FendError> {
         let mut res = Self::from(1);
         while self > 1.into() {
             test_int(int)?;
@@ -455,7 +369,7 @@ impl BigUint {
         Ok(res)
     }
 
-    pub fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> Result<Self, IntErr<Never, I>> {
+    pub(crate) fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> Result<Self, FendError> {
         if let (Small(a), Small(b)) = (&self, &other) {
             if let Some(res) = a.checked_mul(*b) {
                 return Ok(Self::from(res));
@@ -465,30 +379,30 @@ impl BigUint {
         Ok(self)
     }
 
-    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
         Ok(self.divmod(other, int)?.1)
     }
 
-    pub fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, IntErr<DivideByZero, I>> {
+    pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, FendError> {
         Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
     }
 
-    pub fn div<I: Interrupt>(self, other: &Self, int: &I) -> Result<Self, IntErr<DivideByZero, I>> {
+    pub(crate) fn div<I: Interrupt>(self, other: &Self, int: &I) -> Result<Self, FendError> {
         Ok(self.divmod(other, int)?.0)
     }
 
-    pub fn add(mut self, other: &Self) -> Self {
+    pub(crate) fn add(mut self, other: &Self) -> Self {
         self.add_assign_internal(other, 1, 0);
         self
     }
 
-    pub fn sub(self, other: &Self) -> Self {
+    pub(crate) fn sub(self, other: &Self) -> Self {
         if let (Small(a), Small(b)) = (&self, &other) {
             return Self::from(a - b);
         }
         match self.cmp(other) {
             Ordering::Equal => return Self::from(0),
-            Ordering::Less => unreachable!("Number would be less than 0"),
+            Ordering::Less => unreachable!("number would be less than 0"),
             Ordering::Greater => (),
         };
         if other.is_zero() {
@@ -575,7 +489,7 @@ impl From<u64> for BigUint {
 }
 
 impl fmt::Debug for BigUint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Small(n) => write!(f, "{}", n)?,
             Large(value) => {
@@ -595,6 +509,116 @@ impl fmt::Debug for BigUint {
     }
 }
 
+pub(crate) struct FormatOptions {
+    pub(crate) base: Base,
+    pub(crate) write_base_prefix: bool,
+    pub(crate) sf_limit: Option<usize>,
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self {
+            base: Base::default(),
+            write_base_prefix: false,
+            sf_limit: None,
+        }
+    }
+}
+
+impl Format for BigUint {
+    type Params = FormatOptions;
+    type Out = FormattedBigUint;
+
+    fn format<I: Interrupt>(
+        &self,
+        params: &Self::Params,
+        int: &I,
+    ) -> Result<Exact<Self::Out>, FendError> {
+        let base_prefix = if params.write_base_prefix {
+            Some(params.base)
+        } else {
+            None
+        };
+
+        if self.is_zero() {
+            return Ok(Exact::new(
+                FormattedBigUint {
+                    base: base_prefix,
+                    ty: FormattedBigUintType::Zero,
+                },
+                true,
+            ));
+        }
+
+        let mut num = self.clone();
+        Ok(
+            if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
+                Exact::new(
+                    FormattedBigUint {
+                        base: base_prefix,
+                        ty: FormattedBigUintType::Simple(num.get(0)),
+                    },
+                    true,
+                )
+            } else {
+                let base_as_u128: u128 = params.base.base_as_u8().into();
+                let mut divisor = base_as_u128;
+                let mut rounds = 1;
+                // note that the string is reversed: this is the number of trailing zeroes while
+                // printing, but actually the number of leading zeroes in the final number
+                let mut num_trailing_zeroes = 0;
+                let mut num_leading_zeroes = 0;
+                let mut finished_counting_leading_zeroes = false;
+                while divisor
+                    < u128::MAX
+                        .checked_div(base_as_u128)
+                        .expect("base appears to be 0")
+                {
+                    divisor *= base_as_u128;
+                    rounds += 1;
+                }
+                let divisor = Self::Large(vec![truncate(divisor), truncate(divisor >> 64)]);
+                let mut output = String::with_capacity(rounds);
+                while !num.is_zero() {
+                    test_int(int)?;
+                    let divmod_res = num.divmod(&divisor, int)?;
+                    let mut digit_group_value =
+                        u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
+                    for _ in 0..rounds {
+                        let digit_value = digit_group_value % base_as_u128;
+                        digit_group_value /= base_as_u128;
+                        let ch = Base::digit_as_char(truncate(digit_value)).unwrap();
+                        if ch == '0' {
+                            num_trailing_zeroes += 1;
+                        } else {
+                            for _ in 0..num_trailing_zeroes {
+                                output.push('0');
+                                if !finished_counting_leading_zeroes {
+                                    num_leading_zeroes += 1;
+                                }
+                            }
+                            finished_counting_leading_zeroes = true;
+                            num_trailing_zeroes = 0;
+                            output.push(ch);
+                        }
+                    }
+                    num = divmod_res.0;
+                }
+                let exact = params
+                    .sf_limit
+                    .map_or(true, |sf| sf >= output.len() - num_leading_zeroes);
+                Exact::new(
+                    FormattedBigUint {
+                        base: base_prefix,
+                        ty: FormattedBigUintType::Complex(output, params.sf_limit),
+                    },
+                    exact,
+                )
+            },
+        )
+    }
+}
+
 #[derive(Debug)]
 enum FormattedBigUintType {
     Zero,
@@ -604,13 +628,13 @@ enum FormattedBigUintType {
 
 #[must_use]
 #[derive(Debug)]
-pub struct FormattedBigUint {
+pub(crate) struct FormattedBigUint {
     base: Option<Base>,
     ty: FormattedBigUintType,
 }
 
 impl fmt::Display for FormattedBigUint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         if let Some(base) = self.base {
             base.write_prefix(f)?;
         }
@@ -650,14 +674,13 @@ impl FormattedBigUint {
 #[cfg(test)]
 mod tests {
     use super::BigUint;
-    use crate::error::{IntErr, Never};
-    type Res<E = Never> = Result<(), IntErr<E, crate::interrupt::Never>>;
+    type Res = Result<(), crate::error::FendError>;
 
     #[test]
-    fn test_sqrt() -> Res<crate::num::IntegerPowerError> {
+    fn test_sqrt() -> Res {
         let two = &BigUint::from(2);
         let int = crate::interrupt::Never::default();
-        let test_sqrt_inner = |n, expected_root, exact| -> Res<crate::num::IntegerPowerError> {
+        let test_sqrt_inner = |n, expected_root, exact| -> Res {
             let actual = BigUint::from(n).root_n(two, &int)?;
             assert_eq!(actual.value, BigUint::from(expected_root));
             assert_eq!(actual.exact, exact);
@@ -688,7 +711,7 @@ mod tests {
         test_sqrt_inner(1_740_123_984_719_364_372, 1_319_137_591, false)?;
         let val = BigUint::Large(vec![0, 3_260_954_456_333_195_555]).root_n(two, &int)?;
         assert_eq!(val.value, BigUint::from(7_755_900_482_342_532_476));
-        assert_eq!(val.exact, false);
+        assert!(!val.exact);
         Ok(())
     }
 
@@ -728,7 +751,7 @@ mod tests {
     }
 
     #[test]
-    fn test_small_division_by_two() -> Res<crate::num::DivideByZero> {
+    fn test_small_division_by_two() -> Res {
         let int = &crate::interrupt::Never::default();
         let two = BigUint::from(2);
         assert_eq!(BigUint::from(0).div(&two, int)?, BigUint::from(0));
@@ -744,7 +767,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rem() -> Res<crate::num::DivideByZero> {
+    fn test_rem() -> Res {
         let int = &crate::interrupt::Never::default();
         let three = BigUint::from(3);
         assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));

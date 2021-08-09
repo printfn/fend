@@ -1,14 +1,15 @@
-use crate::error::{IntErr, Interrupt};
-use crate::num::{Base, BaseOutOfRangeError, InvalidBasePrefixError, Number};
-use std::{convert, fmt};
+use crate::error::{FendError, Interrupt};
+use crate::ident::Ident;
+use crate::num::{Base, Number};
+use std::{borrow, convert, fmt};
 
 #[derive(Clone, Debug)]
-pub(crate) enum Token<'a> {
-    Num(Number<'a>),
-    Ident(&'a str),
+pub(crate) enum Token {
+    Num(Number),
+    Ident(Ident),
     Symbol(Symbol),
     Whitespace,
-    StringLiteral(std::borrow::Cow<'a, str>),
+    StringLiteral(borrow::Cow<'static, str>),
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -19,99 +20,22 @@ pub(crate) enum Symbol {
     Sub,
     Mul,
     Div,
+    Mod,
     Pow,
-    ArrowConversion,
+    UnitConversion,
     Factorial,
     Fn,
     Backslash,
     Dot,
     Of,
-}
-
-pub(crate) enum Error {
-    ExpectedACharacter,
-    ExpectedADigit(char),
-    ExpectedChar(char, char),
-    ExpectedDigitSeparator(char),
-    DigitSeparatorsNotAllowed,
-    DigitSeparatorsOnlyBetweenDigits,
-    BaseOutOfRange(BaseOutOfRangeError),
-    InvalidBasePrefix(InvalidBasePrefixError),
-    InvalidCharAtBeginningOfIdent(char),
-    UnexpectedChar(char),
-    UnterminatedStringLiteral,
-    UnknownBackslashEscapeSequence(char),
-    BackslashXOutOfRange,
-    ExpectedALetterOrCode,
-    InvalidUnicodeEscapeSequence,
-    // todo remove this
-    NumberParse(String),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::ExpectedACharacter => write!(f, "Expected a character"),
-            Self::ExpectedADigit(ch) => write!(f, "Expected a digit, found '{}'", ch),
-            Self::ExpectedChar(ex, fnd) => write!(f, "Expected '{}', found '{}'", ex, fnd),
-            Self::ExpectedDigitSeparator(ch) => {
-                write!(f, "Expected a digit separator, found {}", ch)
-            }
-            Self::DigitSeparatorsNotAllowed => write!(f, "Digit separators are not allowed"),
-            Self::DigitSeparatorsOnlyBetweenDigits => {
-                write!(f, "Digit separators can only occur between digits")
-            }
-            Self::BaseOutOfRange(e) => write!(f, "{}", e),
-            Self::InvalidBasePrefix(e) => write!(f, "{}", e),
-            Self::InvalidCharAtBeginningOfIdent(ch) => {
-                write!(f, "'{}' is not valid at the beginning of an identifier", ch)
-            }
-            Self::UnexpectedChar(ch) => write!(f, "Unexpected character '{}'", ch),
-            Self::NumberParse(s) => write!(f, "{}", s),
-            Self::UnterminatedStringLiteral => write!(f, "Unterminated string literal"),
-            Self::UnknownBackslashEscapeSequence(ch) => {
-                write!(f, "Unknown escape sequence: \\{}", ch)
-            }
-            Self::BackslashXOutOfRange => {
-                write!(f, "Expected an escape sequence between \\x00 and \\x7f")
-            }
-            Self::ExpectedALetterOrCode => {
-                write!(
-                    f,
-                    "Expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
-                )
-            }
-            Self::InvalidUnicodeEscapeSequence => {
-                write!(
-                    f,
-                    "Invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
-                )
-            }
-        }
-    }
-}
-impl crate::error::Error for Error {}
-
-impl From<BaseOutOfRangeError> for Error {
-    fn from(e: BaseOutOfRangeError) -> Self {
-        Self::BaseOutOfRange(e)
-    }
-}
-
-impl From<InvalidBasePrefixError> for Error {
-    fn from(e: InvalidBasePrefixError) -> Self {
-        Self::InvalidBasePrefix(e)
-    }
-}
-
-impl<I: Interrupt> From<Error> for IntErr<String, I> {
-    fn from(e: Error) -> Self {
-        e.to_string().into()
-    }
+    ShiftLeft,
+    ShiftRight,
+    Semicolon,
+    Equals, // used for assignment
 }
 
 impl fmt::Display for Symbol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         let s = match self {
             Self::OpenParens => "(",
             Self::CloseParens => ")",
@@ -119,58 +43,65 @@ impl fmt::Display for Symbol {
             Self::Sub => "-",
             Self::Mul => "*",
             Self::Div => "/",
+            Self::Mod => "mod",
             Self::Pow => "^",
-            Self::ArrowConversion => "->",
+            Self::UnitConversion => "to",
             Self::Factorial => "!",
             Self::Fn => ":",
             Self::Backslash => "\"",
             Self::Dot => ".",
             Self::Of => "of",
+            Self::ShiftLeft => "<<",
+            Self::ShiftRight => ">>",
+            Self::Semicolon => ";",
+            Self::Equals => "=",
         };
         write!(f, "{}", s)?;
         Ok(())
     }
 }
 
-fn parse_char(input: &str) -> Result<(char, &str), Error> {
+fn parse_char(input: &str) -> Result<(char, &str), FendError> {
     input
         .chars()
         .next()
-        .map_or(Err(Error::ExpectedACharacter), |ch| {
+        .map_or(Err(FendError::ExpectedACharacter), |ch| {
             let (_, b) = input.split_at(ch.len_utf8());
             Ok((ch, b))
         })
 }
 
-fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), Error> {
+fn parse_ascii_digit(input: &str, base: Base) -> Result<(u8, &str), FendError> {
     let (ch, input) = parse_char(input)?;
     let possible_digit = ch.to_digit(base.base_as_u8().into());
     possible_digit
         .and_then(|d| <u32 as convert::TryInto<u8>>::try_into(d).ok())
-        .map_or(Err(Error::ExpectedADigit(ch)), |digit| Ok((digit, input)))
+        .map_or(Err(FendError::ExpectedADigit(ch)), |digit| {
+            Ok((digit, input))
+        })
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), Error> {
+fn parse_fixed_char(input: &str, ch: char) -> Result<((), &str), FendError> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == ch {
         Ok(((), input))
     } else {
-        Err(Error::ExpectedChar(ch, parsed_ch))
+        Err(FendError::ExpectedChar(ch, parsed_ch))
     }
 }
 
-fn parse_digit_separator(input: &str) -> Result<((), &str), Error> {
+fn parse_digit_separator(input: &str) -> Result<((), &str), FendError> {
     let (parsed_ch, input) = parse_char(input)?;
     if parsed_ch == '_' || parsed_ch == ',' {
         Ok(((), input))
     } else {
-        Err(Error::ExpectedDigitSeparator(parsed_ch))
+        Err(FendError::ExpectedDigitSeparator(parsed_ch))
     }
 }
 
 // Parses a plain integer with no whitespace and no base prefix.
 // Leading minus sign is not allowed.
-fn parse_integer<'a, E: From<Error>>(
+fn parse_integer<'a, E: From<FendError>>(
     input: &'a str,
     allow_digit_separator: bool,
     base: Base,
@@ -184,7 +115,7 @@ fn parse_integer<'a, E: From<Error>>(
             input = remaining;
             parsed_digit_separator = true;
             if !allow_digit_separator {
-                return Err(Error::DigitSeparatorsNotAllowed.into());
+                return Err(FendError::DigitSeparatorsNotAllowed.into());
             }
         } else {
             parsed_digit_separator = false;
@@ -192,7 +123,7 @@ fn parse_integer<'a, E: From<Error>>(
         match parse_ascii_digit(input, base) {
             Err(_) => {
                 if parsed_digit_separator {
-                    return Err(Error::DigitSeparatorsOnlyBetweenDigits.into());
+                    return Err(FendError::DigitSeparatorsOnlyBetweenDigits.into());
                 }
                 break;
             }
@@ -205,9 +136,8 @@ fn parse_integer<'a, E: From<Error>>(
     Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
+fn parse_base_prefix(input: &str) -> Result<(Base, &str), FendError> {
     // 0x -> 16
-    // 0d -> 10
     // 0o -> 8
     // 0b -> 2
     // base# -> base (where 2 <= base <= 36)
@@ -219,10 +149,9 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
         let mut custom_base: u8 = 0;
         let (_, input) = parse_integer(input, false, Base::default(), &mut |digit| -> Result<
             (),
-            Error,
+            FendError,
         > {
-            let base_too_large = BaseOutOfRangeError::BaseTooLarge;
-            let error = Error::BaseOutOfRange(base_too_large);
+            let error = FendError::BaseTooLarge;
             if custom_base > 3 {
                 return Err(error);
             }
@@ -233,8 +162,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
             Ok(())
         })?;
         if custom_base < 2 {
-            let base_too_small = BaseOutOfRangeError::BaseTooSmall;
-            return Err(Error::BaseOutOfRange(base_too_small));
+            return Err(FendError::BaseTooSmall);
         }
         let (_, input) = parse_fixed_char(input, '#')?;
         Ok((Base::from_custom_base(custom_base)?, input))
@@ -244,7 +172,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), Error> {
 // Try and parse recurring digits in parentheses.
 // '1.0(0)' -> success
 // '1.0(a)', '1.0( 0)' -> Ok, but not parsed
-// '1.0(3a)' -> Error
+// '1.0(3a)' -> FendError
 
 fn parse_recurring_digits<'a, I: Interrupt>(
     input: &'a str,
@@ -252,7 +180,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     num_nonrec_digits: usize,
     base: Base,
     int: &I,
-) -> Result<((), &'a str), IntErr<String, I>> {
+) -> Result<((), &'a str), FendError> {
     let original_input = input;
     // If there's no '(': return Ok but don't parse anything
     if parse_fixed_char(input, '(').is_err() {
@@ -266,10 +194,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     let mut recurring_number_num = Number::from(0);
     let mut recurring_number_den = Number::from(1);
     let base_as_u64 = u64::from(base.base_as_u8());
-    let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<
-        (),
-        IntErr<String, I>,
-    > {
+    let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
         let digit_as_u64 = u64::from(digit);
         recurring_number_num = recurring_number_num
             .clone()
@@ -282,50 +207,57 @@ fn parse_recurring_digits<'a, I: Interrupt>(
     for _ in 0..num_nonrec_digits {
         recurring_number_den = recurring_number_den.clone().mul(base_as_u64.into(), int)?;
     }
-    *number = number.clone().add(
-        recurring_number_num
-            .div(recurring_number_den, int)
-            .map_err(IntErr::into_string)?,
-        int,
-    )?;
+    *number = number
+        .clone()
+        .add(recurring_number_num.div(recurring_number_den, int)?, int)?;
     // return an error if there are any other characters before the closing parentheses
     let (_, input) = parse_fixed_char(input, ')')?;
     Ok(((), input))
 }
 
+#[allow(clippy::too_many_lines)]
 fn parse_basic_number<'a, I: Interrupt>(
     mut input: &'a str,
     base: Base,
-    allow_zero: bool,
     int: &I,
-) -> Result<(Number<'a>, &'a str), IntErr<String, I>> {
+) -> Result<(Number, &'a str), FendError> {
+    let mut is_dice_with_no_count = false;
+    if input.starts_with('d') && base.base_as_u8() <= 10 {
+        let mut chars = input.chars();
+        chars.next();
+        let following = chars.next();
+        if following.is_some() && following.unwrap().is_ascii_digit() {
+            is_dice_with_no_count = true;
+        }
+    }
+
     // parse integer component
     let mut res = Number::zero_with_base(base);
     let base_as_u64 = u64::from(base.base_as_u8());
+    let mut is_integer = true;
 
-    if parse_fixed_char(input, '.').is_err() {
-        let (_, remaining) = parse_integer(input, true, base, &mut |digit| -> Result<
-            (),
-            IntErr<String, I>,
-        > {
-            res = res
-                .clone()
-                .mul(base_as_u64.into(), int)?
-                .add(u64::from(digit).into(), int)?;
-            Ok(())
-        })?;
+    if parse_fixed_char(input, '.').is_err() && !is_dice_with_no_count {
+        let (_, remaining) =
+            parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
+                res = res
+                    .clone()
+                    .mul(base_as_u64.into(), int)?
+                    .add(u64::from(digit).into(), int)?;
+                Ok(())
+            })?;
         input = remaining;
     }
 
     // parse decimal point and at least one digit
     if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
+        is_integer = false;
         let mut num_nonrec_digits = 0;
         let mut numerator = Number::zero_with_base(base);
         let mut denominator = Number::zero_with_base(base).add(1.into(), int)?;
         if parse_fixed_char(remaining, '(').is_err() {
             let (_, remaining) = parse_integer(remaining, true, base, &mut |digit| -> Result<
                 (),
-                IntErr<String, I>,
+                FendError,
             > {
                 numerator = numerator
                     .clone()
@@ -339,20 +271,46 @@ fn parse_basic_number<'a, I: Interrupt>(
         } else {
             input = remaining;
         }
-        res = res.add(
-            numerator
-                .div(denominator, int)
-                .map_err(IntErr::into_string)?,
-            int,
-        )?;
+        res = res.add(numerator.div(denominator, int)?, int)?;
 
         // try parsing recurring decimals
         let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
         input = remaining;
     }
 
-    if !allow_zero && res.is_zero() {
-        return Err("Invalid number: 0".to_string().into());
+    // parse dice syntax
+    if is_integer && base.base_as_u8() <= 10 {
+        if let Ok((_, remaining)) = parse_fixed_char(input, 'd') {
+            // peek to see if there's a digit immediately after the `d`:
+            if parse_ascii_digit(remaining, base).is_ok() {
+                let dice_count: u32 = if is_dice_with_no_count {
+                    1
+                } else {
+                    convert::TryFrom::try_from(res.try_as_usize(int)?)
+                        .map_err(|_| FendError::InvalidDiceSyntax)?
+                };
+                let mut face_count = 0_u32;
+                let (_, remaining2) = parse_integer(
+                    remaining,
+                    false,
+                    base,
+                    &mut |digit| -> Result<(), FendError> {
+                        face_count = face_count
+                            .checked_mul(base.base_as_u8().into())
+                            .ok_or(FendError::InvalidDiceSyntax)?
+                            .checked_add(digit.into())
+                            .ok_or(FendError::InvalidDiceSyntax)?;
+                        Ok(())
+                    },
+                )?;
+                if dice_count == 0 || face_count == 0 {
+                    return Err(FendError::InvalidDiceSyntax);
+                }
+                res = Number::new_die(dice_count, face_count, int)?;
+                res = res.with_base(base);
+                return Ok((res, remaining2));
+            }
+        }
     }
 
     // parse optional exponent, but only for base 10 and below
@@ -389,14 +347,12 @@ fn parse_basic_number<'a, I: Interrupt>(
                 }
                 let mut exp = Number::zero_with_base(base);
                 let base_num = Number::from(u64::from(base.base_as_u8()));
-                let (_, remaining2) = parse_integer(input, true, base, &mut |digit| -> Result<
-                    (),
-                    IntErr<String, I>,
-                > {
-                    exp = (exp.clone().mul(base_num.clone(), int)?)
-                        .add(u64::from(digit).into(), int)?;
-                    Ok(())
-                })?;
+                let (_, remaining2) =
+                    parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
+                        exp = (exp.clone().mul(base_num.clone(), int)?)
+                            .add(u64::from(digit).into(), int)?;
+                        Ok(())
+                    })?;
                 if negative_exponent {
                     exp = -exp;
                 }
@@ -410,16 +366,13 @@ fn parse_basic_number<'a, I: Interrupt>(
     Ok((res, input))
 }
 
-fn parse_number<'a, I: Interrupt>(
-    input: &'a str,
-    int: &I,
-) -> Result<(Number<'a>, &'a str), IntErr<String, I>> {
+fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> Result<(Number, &'a str), FendError> {
     let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
-    let (res, input) = parse_basic_number(input, base, true, int)?;
+    let (res, input) = parse_basic_number(input, base, int)?;
     Ok((res, input))
 }
 
-pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
+fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     let allowed_chars = [
         ',', '&', '_', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞', '⅙', '⅓', '⅔', '⅚', '⅕', '⅖', '⅗', '⅘',
         '°', '$', '℃', '℉', '℧', '℈', '℥', '℔', '¢', '£', '¥', '€', '₩', '₪', '₤', '₨', '฿', '₡',
@@ -431,23 +384,29 @@ pub(crate) fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
         '㎹', '㎺', '㎻', '㎼', '㎽', '㎾', '㎿', '㏀', '㏁', '㏃', '㏄', '㏅', '㏆', '㏈', '㏉',
         '㏊', '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
     ];
-    // these chars are only valid by themselves
     let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
-    if only_valid_by_themselves.contains(&ch)
-        || only_valid_by_themselves.contains(&prev.unwrap_or('a'))
-    {
+    let split_on_subsequent_digit = ['$', '£'];
+    if only_valid_by_themselves.contains(&ch) {
+        // these are only valid if there was no previous char
         prev.is_none()
+    } else if only_valid_by_themselves.contains(&prev.unwrap_or('a')) {
+        // if prev was a char that's only valid by itself, then this next
+        // char cannot be part of an identifier
+        false
     } else if ch.is_alphabetic() || allowed_chars.contains(&ch) {
         true
     } else {
-        prev.is_some() && ".0123456789'\"".contains(ch)
+        // these are valid only if there was a previous non-$ char in this identifier
+        prev.is_some()
+            && !(split_on_subsequent_digit.contains(&prev.unwrap_or('a')))
+            && ".0123456789'\"".contains(ch)
     }
 }
 
-fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
+fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError> {
     let (first_char, _) = parse_char(input)?;
     if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
-        return Err(Error::InvalidCharAtBeginningOfIdent(first_char));
+        return Err(FendError::InvalidCharAtBeginningOfIdent(first_char));
     }
     let mut byte_idx = first_char.len_utf8();
     let (_, mut remaining) = input.split_at(byte_idx);
@@ -463,89 +422,112 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), Error> {
     let (ident, input) = input.split_at(byte_idx);
     Ok((
         match ident {
-            "to" | "as" | "in" => Token::Symbol(Symbol::ArrowConversion),
+            "to" | "as" | "in" => Token::Symbol(Symbol::UnitConversion),
             "per" => Token::Symbol(Symbol::Div),
             "of" => Token::Symbol(Symbol::Of),
-            _ => Token::Ident(ident),
+            "mod" => Token::Symbol(Symbol::Mod),
+            _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,
     ))
 }
 
-fn parse_symbol<'a>(ch: char, input: &mut &'a str) -> Result<Token<'a>, Error> {
+fn parse_symbol(ch: char, input: &mut &str) -> Result<Token, FendError> {
+    let mut test_next = |next: char| {
+        if input.starts_with(next) {
+            let (_, remaining) = input.split_at(next.len_utf8());
+            *input = remaining;
+            true
+        } else {
+            false
+        }
+    };
     Ok(Token::Symbol(match ch {
         '(' => Symbol::OpenParens,
         ')' => Symbol::CloseParens,
         '+' => Symbol::Add,
         '!' => Symbol::Factorial,
-        '-' => {
-            if input.starts_with('>') {
-                let (_, remaining) = input.split_at('>'.len_utf8());
-                *input = remaining;
-                Symbol::ArrowConversion
-            } else {
-                Symbol::Sub
-            }
-        }
-        '*' => {
-            if input.starts_with('*') {
-                let (_, remaining) = input.split_at('*'.len_utf8());
-                *input = remaining;
+        // unicode minus sign
+        '-' | '\u{2212}' => Symbol::Sub,
+        '*' | '\u{d7}' | '\u{2715}' => {
+            if test_next('*') {
                 Symbol::Pow
             } else {
                 Symbol::Mul
             }
         }
-        '/' => Symbol::Div,
+        '/' | '\u{f7}' | '\u{2215}' => Symbol::Div, // unicode division symbol and slash
         '^' => Symbol::Pow,
         ':' => Symbol::Fn,
         '=' => {
-            if input.starts_with('>') {
-                let (_, remaining) = input.split_at('>'.len_utf8());
-                *input = remaining;
+            if test_next('>') {
                 Symbol::Fn
             } else {
-                return Err(Error::UnexpectedChar(ch));
+                Symbol::Equals
             }
         }
         '\\' => Symbol::Backslash,
         '.' => Symbol::Dot,
-        _ => return Err(Error::UnexpectedChar(ch)),
+        '<' => {
+            if test_next('<') {
+                Symbol::ShiftLeft
+            } else {
+                return Err(FendError::UnexpectedChar(ch));
+            }
+        }
+        '>' => {
+            if test_next('>') {
+                Symbol::ShiftRight
+            } else {
+                return Err(FendError::UnexpectedChar(ch));
+            }
+        }
+        ';' => Symbol::Semicolon,
+        _ => return Err(FendError::UnexpectedChar(ch)),
     }))
 }
 
-fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices) -> Result<char, Error> {
-    if chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?.1 != '{' {
-        return Err(Error::InvalidUnicodeEscapeSequence);
+fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices<'_>) -> Result<char, FendError> {
+    if chars_iter
+        .next()
+        .ok_or(FendError::UnterminatedStringLiteral)?
+        .1
+        != '{'
+    {
+        return Err(FendError::InvalidUnicodeEscapeSequence);
     }
     let mut result_value = 0;
     let mut zero_length = true;
     loop {
-        let (_, ch) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+        let (_, ch) = chars_iter
+            .next()
+            .ok_or(FendError::UnterminatedStringLiteral)?;
         if ch.is_ascii_hexdigit() {
             zero_length = false;
             result_value *= 16;
-            result_value += ch.to_digit(16).ok_or(Error::InvalidUnicodeEscapeSequence)?;
+            result_value += ch
+                .to_digit(16)
+                .ok_or(FendError::InvalidUnicodeEscapeSequence)?;
             if result_value > 0x10_ffff {
-                return Err(Error::InvalidUnicodeEscapeSequence);
+                return Err(FendError::InvalidUnicodeEscapeSequence);
             }
         } else if ch == '}' {
             break;
         } else {
-            return Err(Error::InvalidUnicodeEscapeSequence);
+            return Err(FendError::InvalidUnicodeEscapeSequence);
         }
     }
     if zero_length {
-        return Err(Error::InvalidUnicodeEscapeSequence);
+        return Err(FendError::InvalidUnicodeEscapeSequence);
     }
     if let Ok(ch) = <char as convert::TryFrom<u32>>::try_from(result_value) {
         Ok(ch)
     } else {
-        Err(Error::InvalidUnicodeEscapeSequence)
+        Err(FendError::InvalidUnicodeEscapeSequence)
     }
 }
 
-fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), Error> {
+fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), FendError> {
     let (_, input) = input.split_at(1);
     let mut chars_iter = input.char_indices();
     let mut literal_length = None;
@@ -563,7 +545,9 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
             break;
         }
         if ch == '\\' {
-            let (_, next) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+            let (_, next) = chars_iter
+                .next()
+                .ok_or(FendError::UnterminatedStringLiteral)?;
             let escaped_char = match next {
                 '\\' => Some('\\'),
                 '"' => Some('"'),
@@ -578,14 +562,18 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                 'v' => Some('\u{0b}'), // vertical tab
                 'x' => {
                     // two-character hex code
-                    let (_, hex1) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
-                    let (_, hex2) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
-                    let hex1: u8 = <u32 as convert::TryInto<u8>>::try_into(
-                        hex1.to_digit(8).ok_or(Error::BackslashXOutOfRange)?,
+                    let (_, hex1) = chars_iter
+                        .next()
+                        .ok_or(FendError::UnterminatedStringLiteral)?;
+                    let (_, hex2) = chars_iter
+                        .next()
+                        .ok_or(FendError::UnterminatedStringLiteral)?;
+                    let hex1: u8 = convert::TryInto::try_into(
+                        hex1.to_digit(8).ok_or(FendError::BackslashXOutOfRange)?,
                     )
                     .unwrap();
-                    let hex2: u8 = <u32 as convert::TryInto<u8>>::try_into(
-                        hex2.to_digit(16).ok_or(Error::BackslashXOutOfRange)?,
+                    let hex2: u8 = convert::TryInto::try_into(
+                        hex2.to_digit(16).ok_or(FendError::BackslashXOutOfRange)?,
                     )
                     .unwrap();
                     Some((hex1 * 16 + hex2) as u8 as char)
@@ -597,10 +585,12 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                 }
                 '^' => {
                     // control character escapes
-                    let (_, letter) = chars_iter.next().ok_or(Error::UnterminatedStringLiteral)?;
+                    let (_, letter) = chars_iter
+                        .next()
+                        .ok_or(FendError::UnterminatedStringLiteral)?;
                     let code = letter as u8;
                     if !(63..=95).contains(&code) {
-                        return Err(Error::ExpectedALetterOrCode);
+                        return Err(FendError::ExpectedALetterOrCode);
                     }
                     Some(if code == b'?' {
                         '\x7f'
@@ -608,7 +598,7 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                         (code - 64) as char
                     })
                 }
-                _ => return Err(Error::UnknownBackslashEscapeSequence(next)),
+                _ => return Err(FendError::UnknownBackslashEscapeSequence(next)),
             };
             if let Some(escaped_char) = escaped_char {
                 literal_string.push(escaped_char);
@@ -617,9 +607,32 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
             literal_string.push(ch);
         }
     }
-    let literal_length = literal_length.ok_or(Error::UnterminatedStringLiteral)?;
+    let literal_length = literal_length.ok_or(FendError::UnterminatedStringLiteral)?;
     let (_, remaining) = input.split_at(literal_length + 1);
     Ok((Token::StringLiteral(literal_string.into()), remaining))
+}
+
+// parses a unit beginning with ' or "
+fn parse_quote_unit(input: &str) -> (Token, &str) {
+    let mut split_idx = 1;
+    if let Some(ch) = input.split_at(1).1.chars().next() {
+        if ch.is_alphabetic() {
+            split_idx += ch.len_utf8();
+            let mut prev = ch;
+            let (_, mut remaining) = input.split_at(split_idx);
+            while let Some(next) = remaining.chars().next() {
+                if !is_valid_in_ident(next, Some(prev)) {
+                    break;
+                }
+                split_idx += next.len_utf8();
+                prev = next;
+                let (_, remaining2) = input.split_at(split_idx);
+                remaining = remaining2;
+            }
+        }
+    }
+    let (a, b) = input.split_at(split_idx);
+    (Token::Ident(Ident::new_string(a.to_string())), b)
 }
 
 pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
@@ -631,7 +644,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
 }
 
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
-    fn next_token(&mut self) -> Result<Option<Token<'a>>, IntErr<Error, I>> {
+    fn next_token(&mut self) -> Result<Option<Token>, FendError> {
         while let Some(ch) = self.input.chars().next() {
             if self.input.starts_with("# ") {
                 let (_, remaining) = self.input.split_at(2);
@@ -649,24 +662,28 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
             let (_, remaining) = self.input.split_at(ch.len_utf8());
             self.input = remaining;
         }
-        Ok(Some(match self.input.chars().next() {
+        let (ch, following) = {
+            let mut chars = self.input.chars();
+            let ch = chars.next();
+            let following = chars.next();
+            (ch, following)
+        };
+        Ok(Some(match ch {
             Some(ch) => {
                 if ch.is_whitespace() {
                     Token::Whitespace
-                } else if ch.is_ascii_digit() || (ch == '.' && self.after_backslash_state == 0) {
-                    let (num, remaining) = parse_number(self.input, self.int)
-                        .map_err(|e| e.map(Error::NumberParse))?;
+                } else if ch.is_ascii_digit()
+                    || (ch == '.' && self.after_backslash_state == 0)
+                    || (ch == 'd' && following.is_some() && following.unwrap().is_ascii_digit())
+                {
+                    let (num, remaining) = parse_number(self.input, self.int)?;
                     self.input = remaining;
                     Token::Num(num)
                 } else if ch == '\'' || ch == '"' {
                     if self.after_number_or_to {
-                        let (_, remaining) = self.input.split_at(1);
+                        let (token, remaining) = parse_quote_unit(self.input);
                         self.input = remaining;
-                        if ch == '\'' {
-                            Token::Ident("'")
-                        } else {
-                            Token::Ident("\"")
-                        }
+                        token
                     } else {
                         // normal string literal, with possible escape sequences
                         let (token, remaining) = parse_string_literal(self.input, ch)?;
@@ -679,12 +696,12 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                     let literal_length = remaining
                         .match_indices("\"#")
                         .next()
-                        .ok_or(Error::UnterminatedStringLiteral)?
+                        .ok_or(FendError::UnterminatedStringLiteral)?
                         .0;
                     let (literal, remaining) = remaining.split_at(literal_length);
                     let (_terminator, remaining) = remaining.split_at(2);
                     self.input = remaining;
-                    Token::StringLiteral(literal.into())
+                    Token::StringLiteral(literal.to_string().into())
                 } else if is_valid_in_ident(ch, None) {
                     // dots aren't allowed in idents after a backslash
                     let (ident, remaining) =
@@ -703,7 +720,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
 }
 
 impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
-    type Item = Result<Token<'a>, IntErr<Error, I>>;
+    type Item = Result<Token, FendError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let res = match self.next_token() {
@@ -713,7 +730,7 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
         };
         if let Some(Ok(Token::Num(_))) = res {
             self.after_number_or_to = true;
-        } else if let Some(Ok(Token::Symbol(Symbol::ArrowConversion))) = res {
+        } else if let Some(Ok(Token::Symbol(Symbol::UnitConversion))) = res {
             self.after_number_or_to = true;
         } else {
             self.after_number_or_to = false;

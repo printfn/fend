@@ -1,95 +1,157 @@
-use std::fmt;
+use std::{error, fmt};
 
-pub trait Error: fmt::Display {}
+use crate::num::Range;
 
-pub(crate) type Never = std::convert::Infallible;
-
-pub enum IntErr<E, I: Interrupt> {
-    Interrupt(I::Int),
-    Error(E),
+#[derive(Debug)]
+#[non_exhaustive]
+pub(crate) enum FendError {
+    Interrupted,
+    InvalidBasePrefix,
+    BaseTooSmall,
+    BaseTooLarge,
+    UnableToConvertToBase,
+    DivideByZero,
+    ExponentTooLarge,
+    ZeroToThePowerOfZero,
+    OutOfRange {
+        value: Box<dyn crate::format::DisplayDebug>,
+        range: Range<Box<dyn crate::format::DisplayDebug>>,
+    },
+    NegativeNumbersNotAllowed,
+    ProbabilityDistributionsNotAllowed,
+    FractionToInteger,
+    RandomNumbersNotAvailable,
+    MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
+    ExpectedARationalNumber,
+    CannotConvertToInteger,
+    ComplexToInteger,
+    NumberWithUnitToInt,
+    InexactNumberToInt,
+    ExpectedANumber,
+    InvalidDiceSyntax,
+    InvalidType,
+    CannotFormatWithZeroSf,
+    IsNotAFunction(String),
+    IsNotAFunctionOrNumber(String),
+    IdentifierNotFound(crate::ident::Ident),
+    ExpectedACharacter,
+    ExpectedADigit(char),
+    ExpectedChar(char, char),
+    ExpectedDigitSeparator(char),
+    DigitSeparatorsNotAllowed,
+    DigitSeparatorsOnlyBetweenDigits,
+    InvalidCharAtBeginningOfIdent(char),
+    UnexpectedChar(char),
+    UnterminatedStringLiteral,
+    UnknownBackslashEscapeSequence(char),
+    BackslashXOutOfRange,
+    ExpectedALetterOrCode,
+    InvalidUnicodeEscapeSequence,
+    FormattingError(fmt::Error),
+    // todo remove this
+    String(String),
 }
 
-#[allow(clippy::use_self)]
-impl<E, I: Interrupt> IntErr<E, I> {
-    pub fn expect(self, msg: &'static str) -> IntErr<Never, I> {
+impl fmt::Display for FendError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
-            Self::Error(_) => panic!("{}", msg),
+            Self::Interrupted => write!(f, "interrupted"),
+            Self::InvalidBasePrefix => write!(
+                f,
+                "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
+            ),
+            Self::BaseTooSmall => write!(f, "base must be at least 2"),
+            Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
+            Self::UnableToConvertToBase => write!(f, "unable to convert number to a valid base"),
+            Self::DivideByZero => write!(f, "division by zero"),
+            Self::ExponentTooLarge => write!(f, "exponent too large"),
+            Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
+            Self::OutOfRange { range, value } => {
+                write!(f, "{} must lie in the interval {}", value, range)
+            }
+            Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
+            Self::ProbabilityDistributionsNotAllowed => {
+                write!(
+                    f,
+                    "probability distributions are not allowed (consider using `sample`)"
+                )
+            }
+            Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
+            Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
+            Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
+            Self::ExpectedARationalNumber => write!(f, "expected a rational number"),
+            Self::CannotConvertToInteger => write!(f, "number cannot be converted to an integer"),
+            Self::ComplexToInteger => write!(f, "cannot convert complex number to integer"),
+            Self::NumberWithUnitToInt => write!(f, "cannot convert number with unit to integer"),
+            Self::InexactNumberToInt => write!(f, "cannot convert inexact number to integer"),
+            Self::ExpectedANumber => write!(f, "expected a number"),
+            Self::InvalidDiceSyntax => write!(f, "invalid dice syntax, try e.g. `4d6`"),
+            Self::InvalidType => write!(f, "invalid type"),
+            Self::CannotFormatWithZeroSf => {
+                write!(f, "cannot format a number with zero significant figures")
+            }
+            Self::IsNotAFunction(s) => write!(f, "'{}' is not a function", s),
+            Self::IsNotAFunctionOrNumber(s) => write!(f, "'{}' is not a function or number", s),
+            Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
+            Self::ExpectedACharacter => write!(f, "expected a character"),
+            Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
+            Self::ExpectedChar(ex, fnd) => write!(f, "expected '{}', found '{}'", ex, fnd),
+            Self::ExpectedDigitSeparator(ch) => {
+                write!(f, "expected a digit separator, found {}", ch)
+            }
+            Self::DigitSeparatorsNotAllowed => write!(f, "digit separators are not allowed"),
+            Self::DigitSeparatorsOnlyBetweenDigits => {
+                write!(f, "digit separators can only occur between digits")
+            }
+            Self::InvalidCharAtBeginningOfIdent(ch) => {
+                write!(f, "'{}' is not valid at the beginning of an identifier", ch)
+            }
+            Self::UnexpectedChar(ch) => write!(f, "unexpected character '{}'", ch),
+            Self::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
+            Self::UnknownBackslashEscapeSequence(ch) => {
+                write!(f, "unknown escape sequence: \\{}", ch)
+            }
+            Self::BackslashXOutOfRange => {
+                write!(f, "expected an escape sequence between \\x00 and \\x7f")
+            }
+            Self::ExpectedALetterOrCode => {
+                write!(
+                    f,
+                    "expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
+                )
+            }
+            Self::InvalidUnicodeEscapeSequence => {
+                write!(
+                    f,
+                    "invalid Unicode escape sequence, expected e.g. \\u{{7e}}"
+                )
+            }
+            Self::FormattingError(_) => write!(f, "error during formatting"),
+            Self::String(s) => write!(f, "{}", s),
         }
     }
+}
 
-    pub fn unwrap(self) -> IntErr<Never, I> {
+impl error::Error for FendError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::Interrupt(i) => IntErr::<Never, I>::Interrupt(i),
-            Self::Error(_) => panic!("Unwrap"),
-        }
-    }
-
-    pub fn map<F>(self, f: impl FnOnce(E) -> F) -> IntErr<F, I> {
-        match self {
-            Self::Interrupt(i) => IntErr::Interrupt(i),
-            Self::Error(e) => IntErr::Error(f(e)),
+            Self::FormattingError(e) => Some(e),
+            _ => None,
         }
     }
 }
 
-#[allow(clippy::use_self)]
-impl<E: fmt::Display, I: Interrupt> IntErr<E, I> {
-    pub fn into_string(self) -> IntErr<String, I> {
-        match self {
-            Self::Interrupt(i) => IntErr::<String, I>::Interrupt(i),
-            Self::Error(e) => IntErr::<String, I>::Error(e.to_string()),
-        }
+// todo remove this impl
+impl From<String> for FendError {
+    fn from(e: String) -> Self {
+        Self::String(e)
     }
 }
 
-impl<E, I: Interrupt> From<E> for IntErr<E, I> {
-    fn from(e: E) -> Self {
-        Self::Error(e)
+impl From<fmt::Error> for FendError {
+    fn from(e: fmt::Error) -> Self {
+        Self::FormattingError(e)
     }
 }
 
-#[allow(clippy::use_self)]
-impl<E: Error, I: Interrupt> From<IntErr<Never, I>> for IntErr<E, I> {
-    fn from(e: IntErr<Never, I>) -> Self {
-        match e {
-            IntErr::Error(never) => match never {},
-            IntErr::Interrupt(i) => Self::Interrupt(i),
-        }
-    }
-}
-
-impl<E: std::fmt::Debug, I: Interrupt> std::fmt::Debug for IntErr<E, I> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        match self {
-            Self::Interrupt(i) => write!(f, "{:?}", i)?,
-            Self::Error(e) => write!(f, "{:?}", e)?,
-        }
-        Ok(())
-    }
-}
-
-impl Error for std::fmt::Error {}
-impl Error for String {}
-
-pub trait Interrupt {
-    type Int: fmt::Debug;
-    fn test(&self) -> Result<(), Self::Int>;
-}
-
-#[derive(Default)]
-pub(crate) struct NeverInterrupt {}
-impl Interrupt for NeverInterrupt {
-    type Int = std::convert::Infallible;
-    fn test(&self) -> Result<(), Self::Int> {
-        Ok(())
-    }
-}
-
-pub(crate) struct PossibleInterrupt {}
-impl Interrupt for PossibleInterrupt {
-    type Int = ();
-    fn test(&self) -> Result<(), Self::Int> {
-        Ok(())
-    }
-}
+pub(crate) use crate::interrupt::Interrupt;

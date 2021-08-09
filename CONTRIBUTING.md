@@ -6,6 +6,9 @@ You can take a look at the [GitHub Issue List](https://github.com/printfn/fend/i
 to find anything you'd like to improve. Alternatively, feel free to make any change
 you'd consider useful.
 
+If you want to add a unit definition to fend, take a look at
+[`core/src/units/builtin.rs`](https://github.com/printfn/fend/blob/main/core/src/units/builtin.rs).
+
 The repository is organised as a cargo workspace. `core` contains the fend back-end,
 performs all the actual calculations, and exposes a small Rust API. It also contains
 many unit and integration tests. `cli` depends on `core` and provides an interactive

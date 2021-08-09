@@ -1,6 +1,6 @@
 [package]
 name = "fend-wasm"
-version = "0.1.14"
+version = "0.1.23"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 edition = "2018"
 license = "MIT"
@@ -15,8 +15,8 @@ crate-type = ["cdylib", "rlib"]
 default = []
 
 [dependencies]
-wasm-bindgen = "0.2.73"
-js-sys = "0.3.50"
+wasm-bindgen = "0.2.74"
+js-sys = "0.3.51"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -32,12 +32,12 @@ js-sys = "0.3.50"
 #wee_alloc = { version = "0.4.5", optional = true }
 
 # std::time is not available on wasm, so this library provides a replacement
-instant = { version = "0.1.9", features = [ "wasm-bindgen" ] }
+instant = { version = "0.1.10", features = [ "wasm-bindgen" ] }
 
 fend-core = { path = "../core" }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.23"
+wasm-bindgen-test = "0.3.24"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]

@@ -1,13 +1,17 @@
 #![forbid(unsafe_code)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
+#![deny(elided_lifetimes_in_paths)]
 
-use fend_core::{Context, SpanKind};
-use std::path;
+use std::{env, mem, path, process};
 
+mod color;
 mod config;
+mod context;
 mod helper;
 mod interrupt;
+
+use context::Context;
 
 enum EvalResult {
     Ok,
@@ -15,37 +19,34 @@ enum EvalResult {
     NoInput,
 }
 
-fn print_spans(spans: Vec<fend_core::SpanRef>) -> String {
+fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> String {
     let mut strings = vec![];
-    let default_style = ansi_term::Style::default();
     for span in spans {
-        let s = match span.kind() {
-            SpanKind::String => ansi_term::Colour::Yellow.bold().paint(span.string()),
-            SpanKind::Ident => ansi_term::Colour::White.paint(span.string()),
-            SpanKind::Keyword | SpanKind::BuiltInFunction => {
-                ansi_term::Colour::Red.bold().paint(span.string())
-            }
-            _ => default_style.paint(span.string()),
-        };
-        strings.push(s);
+        let style = config.colors.get_color(span.kind());
+        strings.push(style.paint(span.string()));
     }
     ansi_term::ANSIStrings(strings.as_slice()).to_string()
 }
 
 fn eval_and_print_res(
     line: &str,
-    context: &mut Context,
+    context: &mut Context<'_>,
     int: &impl fend_core::Interrupt,
     config: &config::Config,
 ) -> EvalResult {
-    match fend_core::evaluate_with_interrupt(line, context, int) {
+    /*
+    let ms_since_1970 = chrono::Utc::now().timestamp_millis();
+    let tz_offset_secs = chrono::Local::now().offset().local_minus_utc();
+    context.set_current_time_v1(convert::TryInto::try_into(ms_since_1970).unwrap(), tz_offset_secs.into());
+    */
+    match context.eval(line, true, int) {
         Ok(res) => {
             let result: Vec<_> = res.get_main_result_spans().collect();
-            if result.is_empty() {
+            if result.is_empty() || res.is_unit_type() {
                 return EvalResult::NoInput;
             }
-            if config.color {
-                println!("{}", print_spans(result));
+            if config.enable_colors {
+                println!("{}", print_spans(result, config));
             } else {
                 println!("{}", res.get_main_result());
             }
@@ -73,11 +74,11 @@ fn print_help(explain_quitting: bool) {
         )
     );
     if explain_quitting {
-        println!("\nTo quit, type `quit`.")
+        println!("\nTo quit, type `quit`.");
     }
 }
 
-fn save_history(rl: &mut rustyline::Editor<helper::Helper>, path: &Option<path::PathBuf>) {
+fn save_history(rl: &mut rustyline::Editor<helper::Helper<'_>>, path: &Option<path::PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
@@ -87,15 +88,19 @@ fn save_history(rl: &mut rustyline::Editor<helper::Helper>, path: &Option<path::
 
 fn repl_loop(config: &config::Config) -> i32 {
     // `()` can be used when no completer is required
-    let mut rl = rustyline::Editor::<helper::Helper>::with_config(
+    let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
             .max_history_size(10000)
             .build(),
     );
-    let mut context = Context::new();
-    rl.set_helper(Some(helper::Helper::new(context.clone(), config.color)));
+    let core_context = std::cell::RefCell::new(fend_core::Context::new());
+    if config.coulomb_and_farad {
+        core_context.borrow_mut().use_coulomb_and_farad();
+    }
+    let mut context = Context::new(&core_context);
+    rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
     let history_path = config::get_history_file_path();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
@@ -153,12 +158,12 @@ fn repl_loop(config: &config::Config) -> i32 {
 }
 
 fn main() {
-    let mut args = std::env::args();
+    let mut args = env::args();
     if args.len() >= 3 {
         eprintln!("Too many arguments");
-        std::process::exit(1);
+        process::exit(1);
     }
-    std::mem::drop(args.next());
+    mem::drop(args.next());
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
             print_help(false);
@@ -170,10 +175,14 @@ fn main() {
             return;
         }
         let config = config::read(false);
-        std::process::exit(
+        let core_context = std::cell::RefCell::new(fend_core::Context::new());
+        if config.coulomb_and_farad {
+            core_context.borrow_mut().use_coulomb_and_farad();
+        }
+        process::exit(
             match eval_and_print_res(
                 expr.as_str(),
-                &mut Context::new(),
+                &mut Context::new(&core_context),
                 &interrupt::Never::default(),
                 &config,
             ) {
@@ -184,6 +193,6 @@ fn main() {
     } else {
         let config = config::read(true);
         let exit_code = repl_loop(&config);
-        std::process::exit(exit_code);
+        process::exit(exit_code);
     }
 }

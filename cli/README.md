@@ -1,11 +1,19 @@
-[fend](https://printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
+# [fend](https://printfn.github.io/fend-website)
 
-This is the cross-platform CLI for fend.
+[![build](https://github.com/printfn/fend/workflows/build/badge.svg)](https://github.com/printfn/fend)
+[![codecov](https://codecov.io/gh/printfn/fend/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend)
+[![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
+[![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
+[![docs.rs](https://docs.rs/fend-core/badge.svg)](https://docs.rs/fend-core)
+
+[fend](https://printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
 
 Unique features:
 
 * Arbitrary-precision arithmetic using rational numbers
 * Full support for complex numbers
+* D&D-style dice rolls
+* Variables
 * Binary, octal, hexadecimal and all other bases between 2 and 36
 * Keep track of units, with support for SI, US and UK customary and many historical units
 * Emacs-style CLI shortcuts
@@ -16,17 +24,36 @@ See the [manual](https://github.com/printfn/fend/wiki) for more information.
 
 ## [Web Interface](https://printfn.github.io/fend-website)
 
-fend is now available on the web at [printfn.github.io/fend-website](https://printfn.github.io/fend-website).
+fend is available on the web at [printfn.github.io/fend-website](https://printfn.github.io/fend-website).
 
 ## Installation
 
-Install `fend` by running `cargo install fend` in your terminal. Alternatively you can download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest). fend is also available in the [AUR](https://aur.archlinux.org/packages/fend/).
+The easiest way to install fend locally is via your package manager.
 
-You can then run `fend` to start a REPL session:
+On systems with Rust:
+
+```bash
+rustup update
+cargo install fend
+```
+
+On Arch Linux (using `yay`):
+
+```bash
+yay -Sy aur/fend
+```
+
+Using the nix package manager:
+
+```bash
+nix-env -iA nixpkgs.fend
+```
+
+You can also download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
+
+Once fend is installed, run `fend` to start a REPL session:
 
 ```
-$ cargo install fend
-...
 $ fend
 > 1 ft to cm
 30.48 cm
@@ -75,14 +102,19 @@ approx. 0.3066013937 parsecs
 ```
 
 ```
-> (x: 2x) pi
-approx. 6.2831853071
+> temperature = 30 °C
+30 °C
+> temperature to °F
+86 °F
+```
+
+```
+> roll d20
+8
+> roll 4d6
+17
 ```
 
 ## License
 
 fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
-
-fend optionally includes the GPLv3-licenced `definitions.units` and
-`currency.units` data files from [GNU Units](https://www.gnu.org/software/units/).
-This can be changed via the `gpl` feature defined in `core/Cargo.toml`.
