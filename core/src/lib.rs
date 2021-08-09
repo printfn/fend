@@ -99,6 +99,7 @@ impl FendResult {
 
     /// Returns whether or not the result is the `()` type. It can sometimes
     /// be useful to hide these values.
+    #[must_use]
     pub fn is_unit_type(&self) -> bool {
         self.is_unit
     }
