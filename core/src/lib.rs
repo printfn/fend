@@ -259,15 +259,18 @@ pub struct Completion {
 }
 
 impl Completion {
+    #[must_use]
     pub fn display(&self) -> &str {
         &self.display
     }
 
+    #[must_use]
     pub fn insert(&self) -> &str {
         &self.insert
     }
 }
 
+#[must_use]
 pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
     if prefix == "m" {
         vec![Completion {
