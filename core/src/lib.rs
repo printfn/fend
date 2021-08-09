@@ -271,11 +271,21 @@ impl Completion {
 }
 
 #[must_use]
-pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
-    if prefix.is_empty() {
-        return vec![];
+pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) {
+    let mut prepend = "";
+    let position = prefix.len();
+    if let Some((a, b)) = prefix.rsplit_once(' ') {
+        prepend = a;
+        prefix = b;
     }
-    units::get_completions_for_prefix(prefix)
+    if prefix.is_empty() {
+        return (0, vec![]);
+    }
+    let mut res = units::get_completions_for_prefix(prefix);
+    for c in &mut res {
+        c.display.insert_str(0, prepend);
+    }
+    (position, res)
 }
 
 const fn get_version_as_str() -> &'static str {

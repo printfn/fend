@@ -100,12 +100,12 @@ impl rustyline::completion::Completer for Helper<'_> {
         pos: usize,
         _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        let completions = fend_core::get_completions_for_prefix(&line[..pos]);
+        let (pos, completions) = fend_core::get_completions_for_prefix(&line[..pos]);
         let v: Vec<_> = completions
             .into_iter()
             .map(|c| FendCandidate { completion: c })
             .collect();
-        Ok((1, v))
+        Ok((pos, v))
     }
 }
 
