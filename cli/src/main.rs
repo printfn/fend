@@ -42,7 +42,7 @@ fn eval_and_print_res(
     match context.eval(line, true, int) {
         Ok(res) => {
             let result: Vec<_> = res.get_main_result_spans().collect();
-            if result.is_empty() {
+            if result.is_empty() || res.is_unit_type() {
                 return EvalResult::NoInput;
             }
             if config.enable_colors {

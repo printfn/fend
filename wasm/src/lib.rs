@@ -65,7 +65,12 @@ pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
     let mut ctx = create_context();
     let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
     match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
-        Ok(res) => res.get_main_result().to_string(),
+        Ok(res) => {
+            if res.is_unit_type() {
+                return "".to_string();
+            }
+            res.get_main_result().to_string()
+        }
         Err(msg) => format!("Error: {}", msg),
     }
 }
@@ -81,7 +86,11 @@ pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String
         }
         let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
         match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
-            Ok(res) => result.push_str(res.get_main_result()),
+            Ok(res) => {
+                if !res.is_unit_type() {
+                    result.push_str(res.get_main_result());
+                }
+            }
             Err(msg) => result.push_str(&format!("Error: {}", msg)),
         };
     }

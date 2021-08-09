@@ -53,6 +53,7 @@ impl rustyline::hint::Hinter for Helper<'_> {
             Ok(result) => {
                 let res = result.get_main_result();
                 if res.is_empty()
+                    || result.is_unit_type()
                     || res.len() > 50
                     || res.trim() == line.trim()
                     || res.contains(|c| c < ' ')

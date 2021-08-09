@@ -35,6 +35,10 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
     fn apply(&self, _arg: Value) -> Option<Result<Value, String>> {
         None
     }
+
+    fn is_unit(&self) -> bool {
+        false
+    }
 }
 
 impl Clone for Box<dyn ValueTrait> {
@@ -170,6 +174,13 @@ impl Value {
         match self {
             Self::Dynamic(d) => Ok(d),
             _ => Err(FendError::InvalidType),
+        }
+    }
+
+    pub(crate) fn is_unit(&self) -> bool {
+        match self {
+            Self::Dynamic(d) => d.is_unit(),
+            _ => false,
         }
     }
 

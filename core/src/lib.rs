@@ -31,6 +31,7 @@ pub use interrupt::Interrupt;
 pub struct FendResult {
     plain_result: String,
     span_result: Vec<Span>,
+    is_unit: bool, // is this the () type
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -87,11 +88,19 @@ impl FendResult {
         self.plain_result.as_str()
     }
 
+    /// This retrieves the main result as a list of spans, which is useful
+    /// for coloured output.
     pub fn get_main_result_spans(&self) -> impl Iterator<Item = SpanRef<'_>> {
         self.span_result.iter().map(|span| SpanRef {
             string: &span.string,
             kind: span.kind,
         })
+    }
+
+    /// Returns whether or not the result is the `()` type. It can sometimes
+    /// be useful to hide these values.
+    pub fn is_unit_type(&self) -> bool {
+        self.is_unit
     }
 
     /// This used to retrieve a list of other results of the computation,
@@ -224,9 +233,10 @@ pub fn evaluate_with_interrupt(
         return Ok(FendResult {
             plain_result: String::new(),
             span_result: vec![],
+            is_unit: true,
         });
     }
-    let result = match eval::evaluate_to_spans(input, None, context, int) {
+    let (result, is_unit) = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
         Err(e) => return Err(e.to_string()),
     };
@@ -237,6 +247,7 @@ pub fn evaluate_with_interrupt(
     Ok(FendResult {
         plain_result,
         span_result: result,
+        is_unit,
     })
 }
 

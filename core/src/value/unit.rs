@@ -11,4 +11,8 @@ impl ValueTrait for () {
             kind: crate::SpanKind::Ident,
         });
     }
+
+    fn is_unit(&self) -> bool {
+        true
+    }
 }

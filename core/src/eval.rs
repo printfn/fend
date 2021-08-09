@@ -38,17 +38,20 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<Vec<Span>, FendError> {
+) -> Result<(Vec<Span>, bool), FendError> {
     let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {
         input = remaining;
         true
     });
     let value = evaluate_to_value(input, scope, context, int)?;
-    Ok(if debug {
-        vec![Span::from_string(format!("{:?}", value))]
-    } else {
-        let mut spans = vec![];
-        value.format(0, &mut spans, context, int)?;
-        spans
-    })
+    Ok((
+        if debug {
+            vec![Span::from_string(format!("{:?}", value))]
+        } else {
+            let mut spans = vec![];
+            value.format(0, &mut spans, context, int)?;
+            spans
+        },
+        value.is_unit(),
+    ))
 }
