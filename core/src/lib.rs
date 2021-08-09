@@ -272,6 +272,9 @@ impl Completion {
 
 #[must_use]
 pub fn get_completions_for_prefix(prefix: &str) -> Vec<Completion> {
+    if prefix.is_empty() {
+        return vec![];
+    }
     units::get_completions_for_prefix(prefix)
 }
 
