@@ -13,7 +13,7 @@ edition = "2018"
 categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
-rustyline = { version =  "8.2.0", default-features = false, package = "rustyline-with-hint-fix" }
+rustyline = { version =  "9.0.0", default-features = false, package = "rustyline-with-hint-fix" }
 directories = "3.0.2"
 ctrlc = "3.2.0"
 ansi_term = "0.12.1"
