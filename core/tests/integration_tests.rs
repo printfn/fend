@@ -5415,3 +5415,11 @@ fn empty_statements() {
     test_eval(";2;;3;a=4;;4a", "16");
     test_eval(";2;;3;a=4;;4a;;;()", "()");
 }
+
+#[test]
+fn add_days_to_date() {
+    test_eval(
+        "('2020-05-04' to date) + 500 days",
+        "Thursday, 16 September 2021",
+    );
+}

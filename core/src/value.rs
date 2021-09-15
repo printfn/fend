@@ -36,6 +36,10 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
         None
     }
 
+    fn add(&self, _rhs: Value) -> Result<Value, FendError> {
+        Err(FendError::ExpectedANumber)
+    }
+
     fn is_unit(&self) -> bool {
         false
     }
@@ -181,6 +185,13 @@ impl Value {
         match self {
             Self::Dynamic(d) => d.is_unit(),
             _ => false,
+        }
+    }
+
+    pub(crate) fn add_dyn(self, rhs: Self) -> Result<Self, FendError> {
+        match self {
+            Self::Dynamic(d) => d.add(rhs),
+            _ => Err(FendError::ExpectedANumber),
         }
     }
 

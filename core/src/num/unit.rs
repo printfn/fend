@@ -36,6 +36,10 @@ impl Value {
         if !self.is_unitless() {
             return Err(FendError::NumberWithUnitToInt);
         }
+        self.try_as_usize_unit(int)
+    }
+
+    pub(crate) fn try_as_usize_unit<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
         if !self.exact {
             return Err(FendError::InexactNumberToInt);
         }
@@ -631,6 +635,10 @@ impl Value {
             simplifiable: self.simplifiable,
         })
     }
+
+    pub(crate) fn unit_equal_to(&self, rhs: &str) -> bool {
+        self.unit.equal_to(rhs)
+    }
 }
 
 impl Neg for Value {
@@ -737,6 +745,18 @@ struct ScaleFactor {
 }
 
 impl Unit {
+    pub(crate) fn equal_to(&self, rhs: &str) -> bool {
+        if self.components.len() != 1 {
+            return false;
+        }
+        let unit = &self.components[0];
+        if unit.exponent != 1.into() {
+            return false;
+        }
+        let (prefix, name) = unit.unit.prefix_and_name(false);
+        prefix.is_empty() && name == rhs
+    }
+
     fn to_hashmap_and_scale<I: Interrupt>(&self, int: &I) -> Result<HashmapScale, FendError> {
         let mut hashmap = HashMap::<BaseUnit, Complex>::new();
         let mut scale = Complex::from(1);

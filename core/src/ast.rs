@@ -247,7 +247,7 @@ fn evaluate_add<I: Interrupt>(
             Box::new(Expr::Add(Box::new(Expr::Literal(Value::Num(a))), expr)),
             scope,
         ),
-        _ => return Err("expected a number".to_string().into()),
+        (a, b) => return a.add_dyn(b),
     })
 }
 

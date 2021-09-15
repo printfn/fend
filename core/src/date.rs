@@ -11,7 +11,10 @@ use day_of_week::DayOfWeek;
 use month::Month;
 use year::Year;
 
-use crate::value::ValueTrait;
+use crate::{
+    error::FendError,
+    value::{Value, ValueTrait},
+};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
@@ -184,5 +187,20 @@ impl ValueTrait for Date {
             "day_of_week" => self.day_of_week().into(),
             _ => return None,
         })
+    }
+
+    fn add(&self, rhs: Value) -> Result<Value, FendError> {
+        let rhs = rhs.expect_num()?;
+        let int = &crate::interrupt::Never::default();
+        if rhs.unit_equal_to("day") {
+            let num_days = rhs.try_as_usize_unit(int)?;
+            let mut result = *self;
+            for _ in 0..num_days {
+                result = result.next();
+            }
+            Ok(result.into())
+        } else {
+            Err(FendError::ExpectedANumber)
+        }
     }
 }
