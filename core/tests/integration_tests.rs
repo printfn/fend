@@ -5418,7 +5418,7 @@ fn empty_statements() {
 
 #[test]
 fn add_days_to_date() {
-    test_eval(
+    test_eval_simple(
         "('2020-05-04' to date) + 500 days",
         "Thursday, 16 September 2021",
     );
