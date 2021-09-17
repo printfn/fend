@@ -541,6 +541,8 @@ const AVOIRDUPOIS_WEIGHT: &[UnitTuple] = &[
     ("cwt", "", "hundredweight", ""),
     ("short_ton", "short_tons", "2000 pounds", ""),
     ("quarterweight", "quarterweights", "1/4 short_ton", ""),
+    ("stone", "stones", "14 pounds", ""),
+    ("st", "", "stone", ""),
 ];
 
 const TROY_WEIGHT: &[UnitTuple] = &[
