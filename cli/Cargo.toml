@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
 rustyline = { version =  "9.0.0", default-features = false, package = "rustyline-with-hint-fix" }
-directories = "3.0.2"
+directories = "4.0.1"
 ctrlc = "3.2.0"
 ansi_term = "0.12.1"
 toml = "0.5.8"
