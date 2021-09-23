@@ -32,7 +32,7 @@ wasm-bindgen = "0.2.78"
 #wee_alloc = { version = "0.4.5", optional = true }
 
 # std::time is not available on wasm, so this library provides a replacement
-instant = { version = "0.1.10", features = [ "wasm-bindgen" ] }
+instant = { version = "0.1.11", features = [ "wasm-bindgen" ] }
 
 fend-core = { path = "../core" }
 
