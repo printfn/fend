@@ -123,12 +123,19 @@ echo "Tag and push tag to GitHub"
 git tag "v$NEW_VERSION"
 git push --tags
 
-echo "Building NPM package"
+echo "Building NPM package fend-wasm"
 (cd wasm && wasm-pack build)
 grep 'fend_wasm_bg.js' wasm/pkg/package.json
 (cd wasm/pkg && npm publish --dry-run 2>&1)|grep "total files:"|grep 7
 echo "Publishing npm package"
 (cd wasm/pkg && npm publish)
+
+echo "Building NPM package fend-wasm-web"
+(cd wasm && wasm-pack build --target web --out-dir pkgweb)
+sed 's/"name": "fend-wasm"/"name": "fend-wasm-web"/' wasm/pkgweb/package.json >temp
+mv temp wasm/pkgweb/package.json
+(cd wasm/pkgweb && npm publish)
+
 manualstep "Create GitHub release (including changelog):
   * Download artifacts from 'https://github.com/printfn/fend/actions'
   * Go to 'https://github.com/printfn/fend/releases/new'
