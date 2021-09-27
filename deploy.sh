@@ -124,6 +124,7 @@ git tag "v$NEW_VERSION"
 git push --tags
 
 echo "Building NPM package fend-wasm"
+rm -rfv wasm/pkg
 (cd wasm && wasm-pack build)
 grep 'fend_wasm_bg.js' wasm/pkg/package.json
 (cd wasm/pkg && npm publish --dry-run 2>&1)|grep "total files:"|grep 7
@@ -131,8 +132,14 @@ echo "Publishing npm package"
 (cd wasm/pkg && npm publish)
 
 echo "Building NPM package fend-wasm-web"
+rm -rfv wasm/pkgweb
 (cd wasm && wasm-pack build --target web --out-dir pkgweb)
+echo "Renaming package to 'fend-wasm-web'"
 sed 's/"name": "fend-wasm"/"name": "fend-wasm-web"/' wasm/pkgweb/package.json >temp
+mv temp wasm/pkgweb/package.json
+echo "Removing 'sideEffects: false'"
+sed 's/"sideEffects": false//' wasm/pkgweb/package.json |
+    sed 's/"types": "fend_wasm.d.ts",/"types": "fend_wasm.d.ts"/' >temp
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
 
