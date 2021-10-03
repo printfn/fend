@@ -1,3 +1,4 @@
+use crate::ast::Bop;
 use crate::error::{FendError, Interrupt};
 use crate::num::complex::{Complex, UseParentheses};
 use crate::num::dist::Dist;
@@ -198,7 +199,7 @@ impl Value {
         })
     }
 
-    pub(crate) fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+    fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if !self.is_unitless() || !rhs.is_unitless() {
             return Err("modulo is only supported for only unitless numbers"
                 .to_string()
@@ -216,6 +217,16 @@ impl Value {
             format: self.format,
             simplifiable: self.simplifiable,
         })
+    }
+
+    pub(crate) fn bop<I: Interrupt>(self, op: Bop, rhs: Self, int: &I) -> Result<Self, FendError> {
+        match op {
+            Bop::Plus => self.add(rhs, int),
+            Bop::Minus => self.sub(rhs, int),
+            Bop::Mul => self.mul(rhs, int),
+            Bop::Div => self.div(rhs, int),
+            Bop::Mod => self.modulo(rhs, int),
+        }
     }
 
     fn is_unitless(&self) -> bool {
