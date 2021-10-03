@@ -5,7 +5,23 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
+use std::fmt;
 use std::sync::Arc;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Bop {
+    Plus,
+    Minus,
+}
+
+impl fmt::Display for Bop {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Plus => write!(f, "+"),
+            Self::Minus => write!(f, "-"),
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub(crate) enum Expr {
@@ -16,9 +32,8 @@ pub(crate) enum Expr {
     UnaryPlus(Box<Expr>),
     UnaryDiv(Box<Expr>),
     Factorial(Box<Expr>),
-    Add(Box<Expr>, Box<Expr>),
+    Bop(Bop, Box<Expr>, Box<Expr>),
     ImplicitAdd(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
     Mod(Box<Expr>, Box<Expr>),
@@ -54,10 +69,12 @@ impl<'a> Expr {
             Self::UnaryPlus(x) => format!("(+{})", x.format(ctx, int)?),
             Self::UnaryDiv(x) => format!("(/{})", x.format(ctx, int)?),
             Self::Factorial(x) => format!("{}!", x.format(ctx, int)?),
-            Self::Add(a, b) | Self::ImplicitAdd(a, b) => {
+            Self::ImplicitAdd(a, b) => {
                 format!("({}+{})", a.format(ctx, int)?, b.format(ctx, int)?)
             }
-            Self::Sub(a, b) => format!("({}-{})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Bop(op, a, b) => {
+                format!("({}{}{})", a.format(ctx, int)?, op, b.format(ctx, int)?)
+            }
             Self::Mul(a, b) => format!("({}*{})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Div(a, b) => format!("({}/{})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Mod(a, b) => format!("({} mod {})", a.format(ctx, int)?, b.format(ctx, int)?),
@@ -126,10 +143,10 @@ pub(crate) fn evaluate<I: Interrupt>(
         Expr::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::Add(a, b) | Expr::ImplicitAdd(a, b) => {
+        Expr::Bop(Bop::Plus, a, b) | Expr::ImplicitAdd(a, b) => {
             evaluate_add(eval!(*a)?, eval!(*b)?, scope, int)?
         }
-        Expr::Sub(a, b) => {
+        Expr::Bop(Bop::Minus, a, b) => {
             let a = eval!(*a)?;
             match a {
                 Value::Num(a) => Value::Num(Box::new(a.sub(eval!(*b)?.expect_num()?, int)?)),
@@ -230,21 +247,29 @@ fn evaluate_add<I: Interrupt>(
             Value::String(format!("{}{}", a.as_ref(), b.as_ref()).into())
         }
         (Value::BuiltInFunction(f), Value::Num(a)) => f.wrap_with_expr(
-            |f| Expr::Add(f, Box::new(Expr::Literal(Value::Num(a)))),
+            |f| Expr::Bop(Bop::Plus, f, Box::new(Expr::Literal(Value::Num(a)))),
             scope,
         ),
         (Value::Num(a), Value::BuiltInFunction(f)) => f.wrap_with_expr(
-            |f| Expr::Add(Box::new(Expr::Literal(Value::Num(a))), f),
+            |f| Expr::Bop(Bop::Plus, Box::new(Expr::Literal(Value::Num(a))), f),
             scope,
         ),
         (Value::Fn(param, expr, scope), Value::Num(a)) => Value::Fn(
             param,
-            Box::new(Expr::Add(expr, Box::new(Expr::Literal(Value::Num(a))))),
+            Box::new(Expr::Bop(
+                Bop::Plus,
+                expr,
+                Box::new(Expr::Literal(Value::Num(a))),
+            )),
             scope,
         ),
         (Value::Num(a), Value::Fn(param, expr, scope)) => Value::Fn(
             param,
-            Box::new(Expr::Add(Box::new(Expr::Literal(Value::Num(a))), expr)),
+            Box::new(Expr::Bop(
+                Bop::Plus,
+                Box::new(Expr::Literal(Value::Num(a))),
+                expr,
+            )),
             scope,
         ),
         (a, b) => return a.add_dyn(b),

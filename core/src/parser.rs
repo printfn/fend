@@ -1,4 +1,4 @@
-use crate::ast::Expr;
+use crate::ast::{Bop, Expr};
 use crate::lexer::{Symbol, Token};
 use crate::value::Value;
 use std::fmt;
@@ -246,9 +246,9 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
     }
     let rhs = Box::new(Expr::Div(Box::new(rhs_top), Box::new(rhs_bottom)));
     let mixed_fraction = if positive {
-        Expr::Add(Box::new(lhs.clone()), rhs)
+        Expr::Bop(Bop::Plus, Box::new(lhs.clone()), rhs)
     } else {
-        Expr::Sub(Box::new(lhs.clone()), rhs)
+        Expr::Bop(Bop::Minus, Box::new(lhs.clone()), rhs)
     };
     let mixed_fraction = other_factor.map_or(mixed_fraction.clone(), |other_factor| {
         Expr::Mul(Box::new(other_factor.clone()), Box::new(mixed_fraction))
@@ -333,10 +333,10 @@ fn parse_additive(input: &[Token]) -> ParseResult<'_> {
     let (mut res, mut input) = parse_implicit_addition(input)?;
     loop {
         if let Ok((term, remaining)) = parse_addition_cont(input) {
-            res = Expr::Add(Box::new(res), Box::new(term));
+            res = Expr::Bop(Bop::Plus, Box::new(res), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_subtraction_cont(input) {
-            res = Expr::Sub(Box::new(res), Box::new(term));
+            res = Expr::Bop(Bop::Minus, Box::new(res), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_to_cont(input) {
             res = Expr::As(Box::new(res), Box::new(term));
