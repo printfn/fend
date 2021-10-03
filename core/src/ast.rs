@@ -139,9 +139,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         Expr::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::Bop(Bop::Plus, a, b) => {
-            evaluate_add(eval!(*a)?, eval!(*b)?, scope, int)?
-        }
+        Expr::Bop(Bop::Plus, a, b) => evaluate_add(eval!(*a)?, eval!(*b)?, scope, int)?,
         Expr::Bop(Bop::Minus, a, b) => {
             let a = eval!(*a)?;
             match a {
