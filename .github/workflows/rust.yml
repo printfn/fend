@@ -14,13 +14,15 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        # replace macos-11 with macos-latest after 2021-11-03
+        # see https://github.com/actions/virtual-environments/issues/4060
+        platform: [ubuntu-latest, macos-11, windows-latest]
         include:
           - platform: ubuntu-latest
             artifact-path: target/release/fend
             artifact-platform-name: linux-x64
             env-command: ">> $GITHUB_ENV"
-          - platform: macos-latest
+          - platform: macos-11
             artifact-path: target/release/fend
             artifact-platform-name: macos-x64
             env-command: ">> $GITHUB_ENV"
@@ -57,6 +59,18 @@ jobs:
       with:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
+        if-no-files-found: error
+    - name: Build (Apple Silicon)
+      if: ${{ matrix.platform == 'macos-11' }}
+      run: |
+        rustup target add aarch64-apple-darwin
+        cargo build --release --workspace --target=aarch64-apple-darwin
+    - name: Upload artifacts (Apple Silicon)
+      uses: actions/upload-artifact@v2
+      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'macos-11' }}
+      with:
+        name: fend-${{ env.FEND_VERSION }}-macos-aarch64
+        path: target/aarch64-apple-darwin/release/fend
         if-no-files-found: error
     - name: Build fend-wasm
       if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
