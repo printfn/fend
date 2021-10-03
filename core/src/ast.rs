@@ -39,7 +39,6 @@ pub(crate) enum Expr {
     UnaryDiv(Box<Expr>),
     Factorial(Box<Expr>),
     Bop(Bop, Box<Expr>, Box<Expr>),
-    ImplicitAdd(Box<Expr>, Box<Expr>),
     Pow(Box<Expr>, Box<Expr>),
     // Call a function or multiply the expressions
     Apply(Box<Expr>, Box<Expr>),
@@ -72,9 +71,6 @@ impl<'a> Expr {
             Self::UnaryPlus(x) => format!("(+{})", x.format(ctx, int)?),
             Self::UnaryDiv(x) => format!("(/{})", x.format(ctx, int)?),
             Self::Factorial(x) => format!("{}!", x.format(ctx, int)?),
-            Self::ImplicitAdd(a, b) => {
-                format!("({}+{})", a.format(ctx, int)?, b.format(ctx, int)?)
-            }
             Self::Bop(op, a, b) => {
                 format!("({}{}{})", a.format(ctx, int)?, op, b.format(ctx, int)?)
             }
@@ -143,7 +139,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         Expr::Factorial(x) => {
             eval!(*x)?.handle_num(|x| x.factorial(int), Expr::Factorial, scope)?
         }
-        Expr::Bop(Bop::Plus, a, b) | Expr::ImplicitAdd(a, b) => {
+        Expr::Bop(Bop::Plus, a, b) => {
             evaluate_add(eval!(*a)?, eval!(*b)?, scope, int)?
         }
         Expr::Bop(Bop::Minus, a, b) => {
