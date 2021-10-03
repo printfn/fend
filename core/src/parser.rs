@@ -220,7 +220,7 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
                 return Err(ParseError::InvalidMixedFraction);
             }
         }
-        Expr::Mul(a, b) => match &**b {
+        Expr::Bop(Bop::Mul, a, b) => match &**b {
             Expr::Literal(Value::Num(_)) => (true, &**b, Some(&**a)),
             Expr::UnaryMinus(x) => {
                 if let Expr::Literal(Value::Num(_)) = &**x {
@@ -244,14 +244,18 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
     } else {
         return Err(ParseError::InvalidMixedFraction);
     }
-    let rhs = Box::new(Expr::Div(Box::new(rhs_top), Box::new(rhs_bottom)));
+    let rhs = Box::new(Expr::Bop(Bop::Div, Box::new(rhs_top), Box::new(rhs_bottom)));
     let mixed_fraction = if positive {
         Expr::Bop(Bop::Plus, Box::new(lhs.clone()), rhs)
     } else {
         Expr::Bop(Bop::Minus, Box::new(lhs.clone()), rhs)
     };
     let mixed_fraction = other_factor.map_or(mixed_fraction.clone(), |other_factor| {
-        Expr::Mul(Box::new(other_factor.clone()), Box::new(mixed_fraction))
+        Expr::Bop(
+            Bop::Mul,
+            Box::new(other_factor.clone()),
+            Box::new(mixed_fraction),
+        )
     });
     Ok((mixed_fraction, input))
 }
@@ -278,13 +282,13 @@ fn parse_multiplicative(input: &[Token]) -> ParseResult<'_> {
     let (mut res, mut input) = parse_power(input, true)?;
     loop {
         if let Ok((term, remaining)) = parse_multiplication_cont(input) {
-            res = Expr::Mul(Box::new(res.clone()), Box::new(term));
+            res = Expr::Bop(Bop::Mul, Box::new(res.clone()), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_division_cont(input) {
-            res = Expr::Div(Box::new(res.clone()), Box::new(term));
+            res = Expr::Bop(Bop::Div, Box::new(res.clone()), Box::new(term));
             input = remaining;
         } else if let Ok((term, remaining)) = parse_modulo_cont(input) {
-            res = Expr::Mod(Box::new(res.clone()), Box::new(term));
+            res = Expr::Bop(Bop::Mod, Box::new(res.clone()), Box::new(term));
             input = remaining;
         } else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res) {
             res = new_res;

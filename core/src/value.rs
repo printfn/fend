@@ -1,3 +1,4 @@
+use crate::ast::Bop;
 use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
@@ -264,7 +265,7 @@ impl Value {
                 let n2 = n.clone();
                 other.handle_num(
                     |x| n.mul(x, int),
-                    |x| Expr::Mul(Box::new(Expr::Literal(Self::Num(n2))), x),
+                    |x| Expr::Bop(Bop::Mul, Box::new(Expr::Literal(Self::Num(n2))), x),
                     scope,
                 )?
             }

@@ -12,6 +12,9 @@ use std::sync::Arc;
 pub(crate) enum Bop {
     Plus,
     Minus,
+    Mul,
+    Div,
+    Mod,
 }
 
 impl fmt::Display for Bop {
@@ -19,6 +22,9 @@ impl fmt::Display for Bop {
         match self {
             Self::Plus => write!(f, "+"),
             Self::Minus => write!(f, "-"),
+            Self::Mul => write!(f, "*"),
+            Self::Div => write!(f, "/"),
+            Self::Mod => write!(f, " mod "),
         }
     }
 }
@@ -34,9 +40,6 @@ pub(crate) enum Expr {
     Factorial(Box<Expr>),
     Bop(Bop, Box<Expr>, Box<Expr>),
     ImplicitAdd(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
-    Div(Box<Expr>, Box<Expr>),
-    Mod(Box<Expr>, Box<Expr>),
     Pow(Box<Expr>, Box<Expr>),
     // Call a function or multiply the expressions
     Apply(Box<Expr>, Box<Expr>),
@@ -75,9 +78,6 @@ impl<'a> Expr {
             Self::Bop(op, a, b) => {
                 format!("({}{}{})", a.format(ctx, int)?, op, b.format(ctx, int)?)
             }
-            Self::Mul(a, b) => format!("({}*{})", a.format(ctx, int)?, b.format(ctx, int)?),
-            Self::Div(a, b) => format!("({}/{})", a.format(ctx, int)?, b.format(ctx, int)?),
-            Self::Mod(a, b) => format!("({} mod {})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Pow(a, b) => format!("({}^{})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Apply(a, b) => format!("({} ({}))", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
@@ -160,11 +160,11 @@ pub(crate) fn evaluate<I: Interrupt>(
                 _ => return Err("invalid operands for subtraction".to_string().into()),
             }
         }
-        Expr::Mul(a, b) => eval!(*a)?.handle_two_nums(
+        Expr::Bop(bop, a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
-            |a, b| a.mul(b, int),
-            |a| |f| Expr::Mul(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
-            |a| |f| Expr::Mul(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
+            |a, b| a.bop(bop, b, int),
+            |a| |f| Expr::Bop(bop, f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
+            |a| |f| Expr::Bop(bop, Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
         )?,
         Expr::Apply(a, b) | Expr::ApplyMul(a, b) => {
@@ -176,20 +176,6 @@ pub(crate) fn evaluate<I: Interrupt>(
             }
             eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, context, int)?
         }
-        Expr::Div(a, b) => eval!(*a)?.handle_two_nums(
-            eval!(*b)?,
-            |a, b| a.div(b, int),
-            |a| |f| Expr::Div(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
-            |a| |f| Expr::Div(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
-            scope,
-        )?,
-        Expr::Mod(a, b) => eval!(*a)?.handle_two_nums(
-            eval!(*b)?,
-            |a, b| a.modulo(b, int),
-            |a| |f| Expr::Mod(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
-            |a| |f| Expr::Mod(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
-            scope,
-        )?,
         Expr::Pow(a, b) => {
             let lhs = eval!(*a)?;
             if should_compute_inverse(&*b) {
