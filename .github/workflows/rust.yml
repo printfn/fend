@@ -58,6 +58,18 @@ jobs:
         name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
         path: ${{ matrix.artifact-path }}
         if-no-files-found: error
+    - name: Apple Silicon
+      if: ${{ matrix.platform == 'macos-latest' }}
+      run: |
+        rustup target add aarch64-apple-darwin
+        cargo build --release --workspace --target=aarch64-apple-darwin
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'macos-latest' }}
+      with:
+        name: fend-${{ env.FEND_VERSION }}-macos-aarch64
+        path: target/aarch64-apple-darwin/release/fend
+        if-no-files-found: error
     - name: Build fend-wasm
       if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
       run: |
