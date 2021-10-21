@@ -728,9 +728,10 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
             Ok(None) => None,
             Ok(Some(t)) => Some(Ok(t)),
         };
-        if let Some(Ok(Token::Num(_))) = res {
-            self.after_number_or_to = true;
-        } else if let Some(Ok(Token::Symbol(Symbol::UnitConversion))) = res {
+        if matches!(
+            res,
+            Some(Ok(Token::Num(_) | Token::Symbol(Symbol::UnitConversion)))
+        ) {
             self.after_number_or_to = true;
         } else {
             self.after_number_or_to = false;

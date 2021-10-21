@@ -315,7 +315,6 @@ impl Value {
             BuiltInFunction::Log2 => arg.expect_num()?.log2(int)?,
             BuiltInFunction::Log10 => arg.expect_num()?.log10(int)?,
             BuiltInFunction::Base => {
-                use std::convert::TryInto;
                 let n: u8 = arg
                     .expect_num()?
                     .try_as_usize(int)?

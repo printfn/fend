@@ -38,8 +38,8 @@ impl UnitExponent {
         for (base_unit, base_exp) in &self.unit.base_units {
             test_int(int)?;
             let base_exp = Exact::new(base_exp.clone(), true);
+            let product = overall_exp.clone().mul(&base_exp, int)?;
             if let Some(exp) = hashmap.get_mut(base_unit) {
-                let product = overall_exp.clone().mul(&base_exp, int)?;
                 let new_exp = Exact::new(exp.clone(), true).add(product, int)?;
                 *exact = *exact && new_exp.exact;
                 if new_exp.value == 0.into() {
@@ -48,9 +48,8 @@ impl UnitExponent {
                     *exp = new_exp.value;
                 }
             } else {
-                let new_exp = overall_exp.clone().mul(&base_exp, int)?;
-                *exact = *exact && new_exp.exact;
-                if new_exp.value != 0.into() {
+                *exact = *exact && product.exact;
+                if product.value != 0.into() {
                     let adj_exp = overall_exp.clone().mul(&base_exp, int)?;
                     hashmap.insert(base_unit.clone(), adj_exp.value);
                     *exact = *exact && adj_exp.exact;

@@ -67,7 +67,6 @@ impl BigUint {
     }
 
     pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> Result<usize, FendError> {
-        use std::convert::TryFrom;
         let error = || -> Result<_, FendError> {
             Ok(out_of_range(
                 self.fm(int)?,

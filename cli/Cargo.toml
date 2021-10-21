@@ -9,7 +9,7 @@ repository = "https://github.com/printfn/fend"
 readme = "README.md"
 license = "MIT"
 keywords = ["calculator", "cli", "conversion", "math", "tool"]
-edition = "2018"
+edition = "2021"
 categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
