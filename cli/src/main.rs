@@ -225,7 +225,7 @@ impl FromIterator<String> for ArgsAction {
                 // NOTE: 'version' is already handled by fend itself
                 (Repl | Eval(_), "--version" | "-v" | "-V") | (Version, _) => Version,
                 // If neither help nor version is requested, evaluate the arguments
-                // Ignore
+                // Ignore empty arguments, so that `$ fend "" ""` will enter the repl.
                 (Repl, arg) if !arg.trim().is_empty() => Eval(String::from(arg)),
                 (Repl, _) => Repl,
                 (Eval(eval), arg) => Eval(eval + " " + arg),
