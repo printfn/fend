@@ -233,3 +233,63 @@ impl FromIterator<String> for ArgsAction {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ArgsAction;
+
+    macro_rules! action {
+        ($( $arg:literal ),*) => {
+            vec![ $( $arg.to_string() ),* ]
+                .into_iter()
+                .collect::<ArgsAction>()
+        }
+    }
+
+    #[test]
+    fn help_argument_works() {
+        // The --help argument wins!
+        assert_eq!(ArgsAction::Help, action!["-h"]);
+        assert_eq!(ArgsAction::Help, action!["--help"]);
+        assert_eq!(ArgsAction::Help, action!["help"]);
+        assert_eq!(ArgsAction::Help, action!["1", "+ 1", "help"]);
+        assert_eq!(ArgsAction::Help, action!["--version", "1!", "--help"]);
+        assert_eq!(ArgsAction::Help, action!["-h", "some", "arguments"]);
+    }
+
+    #[test]
+    fn version_argument_works() {
+        // --version wins over normal arguments
+        assert_eq!(ArgsAction::Version, action!["-v"]);
+        assert_eq!(ArgsAction::Version, action!["-V"]);
+        assert_eq!(ArgsAction::Version, action!["--version"]);
+        // `version` is handled by the eval
+        assert_eq!(
+            ArgsAction::Eval(String::from("version")),
+            action!["version"]
+        );
+        assert_eq!(ArgsAction::Version, action!["before", "-v", "and", "after"]);
+        assert_eq!(ArgsAction::Version, action!["-V", "here"]);
+        assert_eq!(
+            ArgsAction::Version,
+            action!["--version", "-v", "+1", "version"]
+        );
+    }
+
+    #[test]
+    fn normal_arguments_are_collected_correctly() {
+        use ArgsAction::Eval;
+        assert_eq!(Eval(String::from("1 + 1")), action!["1", "+", "1"]);
+        assert_eq!(Eval(String::from("1 + 1")), action!["1 + 1"]);
+        assert_eq!(Eval(String::from("1 '+' 1 ")), action!["1 '+' 1 "]);
+    }
+
+    #[test]
+    fn empty_arguments() {
+        assert_eq!(ArgsAction::Repl, action![]);
+        assert_eq!(ArgsAction::Repl, action![""]);
+        assert_eq!(ArgsAction::Repl, action!["", ""]);
+        assert_eq!(ArgsAction::Repl, action!["\t", " "]);
+        assert_eq!(ArgsAction::Eval(String::from("1")), action!["\t", " ", "1"]);
+    }
+}
