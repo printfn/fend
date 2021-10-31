@@ -158,41 +158,42 @@ fn repl_loop(config: &config::Config) -> i32 {
 }
 
 fn main() {
+    process::exit(real_main())
+}
+
+fn real_main() -> i32 {
     let mut args = env::args();
     if args.len() >= 3 {
         eprintln!("Too many arguments");
-        process::exit(1);
+        return 1;
     }
     mem::drop(args.next());
     if let Some(expr) = args.next() {
         if expr == "help" || expr == "--help" || expr == "-h" {
             print_help(false);
-            return;
+            return 0;
         }
         // 'version' is already handled by fend itself
         if expr == "--version" || expr == "-v" || expr == "-V" {
             println!("{}", fend_core::get_version());
-            return;
+            return 0;
         }
         let config = config::read(false);
         let core_context = std::cell::RefCell::new(fend_core::Context::new());
         if config.coulomb_and_farad {
             core_context.borrow_mut().use_coulomb_and_farad();
         }
-        process::exit(
-            match eval_and_print_res(
-                expr.as_str(),
-                &mut Context::new(&core_context),
-                &interrupt::Never::default(),
-                &config,
-            ) {
-                EvalResult::Ok | EvalResult::NoInput => 0,
-                EvalResult::Err => 1,
-            },
-        )
+        match eval_and_print_res(
+            expr.as_str(),
+            &mut Context::new(&core_context),
+            &interrupt::Never::default(),
+            &config,
+        ) {
+            EvalResult::Ok | EvalResult::NoInput => 0,
+            EvalResult::Err => 1,
+        }
     } else {
         let config = config::read(true);
-        let exit_code = repl_loop(&config);
-        process::exit(exit_code);
+        repl_loop(&config)
     }
 }
