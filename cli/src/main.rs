@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, mem, path, process};
+use std::{env, path, process};
 
 mod color;
 mod config;
@@ -17,6 +17,22 @@ enum EvalResult {
     Ok,
     Err,
     NoInput,
+}
+
+/// Which action should be executed?
+///
+/// This implements [`FromIterator`] and can be `collect`ed from
+/// the [`env::args()`]`.skip(1)` iterator.
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum ArgsAction {
+    /// Print the help message (without quitting explaination).
+    Help,
+    /// Print the current version.
+    Version,
+    /// Enter the REPL.
+    Repl,
+    /// Evaluate the arguments.
+    Eval(String),
 }
 
 fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> String {
@@ -162,38 +178,58 @@ fn main() {
 }
 
 fn real_main() -> i32 {
-    let mut args = env::args();
-    if args.len() >= 3 {
-        eprintln!("Too many arguments");
-        return 1;
-    }
-    mem::drop(args.next());
-    if let Some(expr) = args.next() {
-        if expr == "help" || expr == "--help" || expr == "-h" {
+    // Assemble the action from all but the first argument.
+    let action: ArgsAction = env::args().skip(1).collect();
+    match action {
+        ArgsAction::Help => {
             print_help(false);
-            return 0;
+            0
         }
-        // 'version' is already handled by fend itself
-        if expr == "--version" || expr == "-v" || expr == "-V" {
+        ArgsAction::Version => {
             println!("{}", fend_core::get_version());
-            return 0;
+            0
         }
-        let config = config::read(false);
-        let core_context = std::cell::RefCell::new(fend_core::Context::new());
-        if config.coulomb_and_farad {
-            core_context.borrow_mut().use_coulomb_and_farad();
+        ArgsAction::Eval(expr) => {
+            let config = config::read(false);
+            let core_context = std::cell::RefCell::new(fend_core::Context::new());
+            if config.coulomb_and_farad {
+                core_context.borrow_mut().use_coulomb_and_farad();
+            }
+            match eval_and_print_res(
+                expr.as_str(),
+                &mut Context::new(&core_context),
+                &interrupt::Never::default(),
+                &config,
+            ) {
+                EvalResult::Ok | EvalResult::NoInput => 0,
+                EvalResult::Err => 1,
+            }
         }
-        match eval_and_print_res(
-            expr.as_str(),
-            &mut Context::new(&core_context),
-            &interrupt::Never::default(),
-            &config,
-        ) {
-            EvalResult::Ok | EvalResult::NoInput => 0,
-            EvalResult::Err => 1,
+        ArgsAction::Repl => {
+            let config = config::read(true);
+            repl_loop(&config)
         }
-    } else {
-        let config = config::read(true);
-        repl_loop(&config)
+    }
+}
+
+impl FromIterator<String> for ArgsAction {
+    fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
+        iter.into_iter().fold(ArgsAction::Repl, |action, arg| {
+            use ArgsAction::{Eval, Help, Repl, Version};
+            match (action, arg.as_str()) {
+                // If any argument is shouting for help, print help!
+                (_, "help" | "--help" | "-h") | (Help, _) => Help,
+                // If no help is requested, but the version, print the version
+                // Once we're set on printing the version, only a request for help
+                // can overwrite that
+                // NOTE: 'version' is already handled by fend itself
+                (Repl | Eval(_), "--version" | "-v" | "-V") | (Version, _) => Version,
+                // If neither help nor version is requested, evaluate the arguments
+                // Ignore
+                (Repl, arg) if !arg.trim().is_empty() => Eval(String::from(arg)),
+                (Repl, _) => Repl,
+                (Eval(eval), arg) => Eval(eval + " " + arg),
+            }
+        })
     }
 }
