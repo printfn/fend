@@ -421,7 +421,7 @@ The return code is 0 on success, or 1 if an error occurs during evaluation.
     220
     ```
 
-### v0.1.26
+### v0.1.26 (2021-09-27)
 
 * Fix minor bug in the `fend-wasm-web` NPM package
 
