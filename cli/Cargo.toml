@@ -1,6 +1,6 @@
 [package]
 name = "fend"
-# Don't forget to update print_version()
+# Don't bump version numbers manually, use deploy.sh instead
 version = "0.1.26"
 authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Arbitrary-precision unit-aware calculator"
