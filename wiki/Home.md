@@ -2,7 +2,7 @@
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
 
-The current latest version of fend is `0.1.26`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
+The current latest version of fend is `0.1.27`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
 
 # Table of Contents
 1. [Installation](#installation)
@@ -180,6 +180,18 @@ These are all the supported operators:
 | `=` | | left |
 | `;` | lowest | left |
 
+The most recent calculation result is stored in a special variable `_` (or `ans`):
+
+```
+> 5 * 10
+50
+> _ + 5
+55
+> _ * 2
+110
+> ans * 2
+220
+```
 
 ## Units
 
@@ -393,6 +405,21 @@ approx. 1.4142135619
 The return code is 0 on success, or 1 if an error occurs during evaluation.
 
 ## Changelog
+
+### v0.1.27 (2021-11-02)
+
+* Improve command-line argument parsing, including support for multiple arguments
+* The most recent calculation result is now stored in a special variable `_` (or `ans`):
+    ```
+    > 5 * 10
+    50
+    > _ + 5
+    55
+    > _ * 2
+    110
+    > ans * 2
+    220
+    ```
 
 ### v0.1.26
 
