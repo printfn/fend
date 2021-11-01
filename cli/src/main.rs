@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, mem, path, process};
+use std::{env, path, process};
 
 mod color;
 mod config;
@@ -17,6 +17,22 @@ enum EvalResult {
     Ok,
     Err,
     NoInput,
+}
+
+/// Which action should be executed?
+///
+/// This implements [`FromIterator`] and can be `collect`ed from
+/// the [`env::args()`]`.skip(1)` iterator.
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum ArgsAction {
+    /// Print the help message (without quitting explaination).
+    Help,
+    /// Print the current version.
+    Version,
+    /// Enter the REPL.
+    Repl,
+    /// Evaluate the arguments.
+    Eval(String),
 }
 
 fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> String {
@@ -158,28 +174,27 @@ fn repl_loop(config: &config::Config) -> i32 {
 }
 
 fn main() {
-    let mut args = env::args();
-    if args.len() >= 3 {
-        eprintln!("Too many arguments");
-        process::exit(1);
-    }
-    mem::drop(args.next());
-    if let Some(expr) = args.next() {
-        if expr == "help" || expr == "--help" || expr == "-h" {
+    process::exit(real_main())
+}
+
+fn real_main() -> i32 {
+    // Assemble the action from all but the first argument.
+    let action: ArgsAction = env::args().skip(1).collect();
+    match action {
+        ArgsAction::Help => {
             print_help(false);
-            return;
+            0
         }
-        // 'version' is already handled by fend itself
-        if expr == "--version" || expr == "-v" || expr == "-V" {
+        ArgsAction::Version => {
             println!("{}", fend_core::get_version());
-            return;
+            0
         }
-        let config = config::read(false);
-        let core_context = std::cell::RefCell::new(fend_core::Context::new());
-        if config.coulomb_and_farad {
-            core_context.borrow_mut().use_coulomb_and_farad();
-        }
-        process::exit(
+        ArgsAction::Eval(expr) => {
+            let config = config::read(false);
+            let core_context = std::cell::RefCell::new(fend_core::Context::new());
+            if config.coulomb_and_farad {
+                core_context.borrow_mut().use_coulomb_and_farad();
+            }
             match eval_and_print_res(
                 expr.as_str(),
                 &mut Context::new(&core_context),
@@ -188,11 +203,93 @@ fn main() {
             ) {
                 EvalResult::Ok | EvalResult::NoInput => 0,
                 EvalResult::Err => 1,
-            },
-        )
-    } else {
-        let config = config::read(true);
-        let exit_code = repl_loop(&config);
-        process::exit(exit_code);
+            }
+        }
+        ArgsAction::Repl => {
+            let config = config::read(true);
+            repl_loop(&config)
+        }
+    }
+}
+
+impl FromIterator<String> for ArgsAction {
+    fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
+        iter.into_iter().fold(ArgsAction::Repl, |action, arg| {
+            use ArgsAction::{Eval, Help, Repl, Version};
+            match (action, arg.as_str()) {
+                // If any argument is shouting for help, print help!
+                (_, "help" | "--help" | "-h") | (Help, _) => Help,
+                // If no help is requested, but the version, print the version
+                // Once we're set on printing the version, only a request for help
+                // can overwrite that
+                // NOTE: 'version' is already handled by fend itself
+                (Repl | Eval(_), "--version" | "-v" | "-V") | (Version, _) => Version,
+                // If neither help nor version is requested, evaluate the arguments
+                // Ignore empty arguments, so that `$ fend "" ""` will enter the repl.
+                (Repl, arg) if !arg.trim().is_empty() => Eval(String::from(arg)),
+                (Repl, _) => Repl,
+                (Eval(eval), arg) => Eval(eval + " " + arg),
+            }
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ArgsAction;
+
+    macro_rules! action {
+        ($( $arg:literal ),*) => {
+            vec![ $( $arg.to_string() ),* ]
+                .into_iter()
+                .collect::<ArgsAction>()
+        }
+    }
+
+    #[test]
+    fn help_argument_works() {
+        // The --help argument wins!
+        assert_eq!(ArgsAction::Help, action!["-h"]);
+        assert_eq!(ArgsAction::Help, action!["--help"]);
+        assert_eq!(ArgsAction::Help, action!["help"]);
+        assert_eq!(ArgsAction::Help, action!["1", "+ 1", "help"]);
+        assert_eq!(ArgsAction::Help, action!["--version", "1!", "--help"]);
+        assert_eq!(ArgsAction::Help, action!["-h", "some", "arguments"]);
+    }
+
+    #[test]
+    fn version_argument_works() {
+        // --version wins over normal arguments
+        assert_eq!(ArgsAction::Version, action!["-v"]);
+        assert_eq!(ArgsAction::Version, action!["-V"]);
+        assert_eq!(ArgsAction::Version, action!["--version"]);
+        // `version` is handled by the eval
+        assert_eq!(
+            ArgsAction::Eval(String::from("version")),
+            action!["version"]
+        );
+        assert_eq!(ArgsAction::Version, action!["before", "-v", "and", "after"]);
+        assert_eq!(ArgsAction::Version, action!["-V", "here"]);
+        assert_eq!(
+            ArgsAction::Version,
+            action!["--version", "-v", "+1", "version"]
+        );
+    }
+
+    #[test]
+    fn normal_arguments_are_collected_correctly() {
+        use ArgsAction::Eval;
+        assert_eq!(Eval(String::from("1 + 1")), action!["1", "+", "1"]);
+        assert_eq!(Eval(String::from("1 + 1")), action!["1 + 1"]);
+        assert_eq!(Eval(String::from("1 '+' 1 ")), action!["1 '+' 1 "]);
+    }
+
+    #[test]
+    fn empty_arguments() {
+        assert_eq!(ArgsAction::Repl, action![]);
+        assert_eq!(ArgsAction::Repl, action![""]);
+        assert_eq!(ArgsAction::Repl, action!["", ""]);
+        assert_eq!(ArgsAction::Repl, action!["\t", " "]);
+        assert_eq!(ArgsAction::Eval(String::from("1")), action!["\t", " ", "1"]);
     }
 }
