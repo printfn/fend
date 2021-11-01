@@ -33,6 +33,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     Ok(result)
 }
 
+/// This also saves the calculation result in a variable `_` and `ans`
 pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
     mut input: &'a str,
     scope: Option<Arc<Scope>>,
@@ -44,6 +45,8 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
         true
     });
     let value = evaluate_to_value(input, scope, context, int)?;
+    context.variables.insert("_".to_string(), value.clone());
+    context.variables.insert("ans".to_string(), value.clone());
     Ok((
         if debug {
             vec![Span::from_string(format!("{:?}", value))]
