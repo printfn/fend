@@ -999,22 +999,12 @@ impl From<BigUint> for BigRat {
     }
 }
 
+#[derive(Default)]
 pub(crate) struct FormatOptions {
     pub(crate) base: Base,
     pub(crate) style: FormattingStyle,
     pub(crate) term: &'static str,
     pub(crate) use_parens_if_fraction: bool,
-}
-
-impl Default for FormatOptions {
-    fn default() -> Self {
-        Self {
-            base: Base::default(),
-            style: FormattingStyle::default(),
-            term: "",
-            use_parens_if_fraction: false,
-        }
-    }
 }
 
 impl Format for BigRat {

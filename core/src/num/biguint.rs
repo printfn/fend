@@ -508,20 +508,11 @@ impl fmt::Debug for BigUint {
     }
 }
 
+#[derive(Default)]
 pub(crate) struct FormatOptions {
     pub(crate) base: Base,
     pub(crate) write_base_prefix: bool,
     pub(crate) sf_limit: Option<usize>,
-}
-
-impl Default for FormatOptions {
-    fn default() -> Self {
-        Self {
-            base: Base::default(),
-            write_base_prefix: false,
-            sf_limit: None,
-        }
-    }
 }
 
 impl Format for BigUint {

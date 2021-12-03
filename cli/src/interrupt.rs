@@ -37,14 +37,10 @@ pub fn register_handler() -> CtrlC {
     interrupt
 }
 
+#[derive(Default)]
 pub struct Never {}
 impl fend_core::Interrupt for Never {
     fn should_interrupt(&self) -> bool {
         false
-    }
-}
-impl Default for Never {
-    fn default() -> Self {
-        Self {}
     }
 }
