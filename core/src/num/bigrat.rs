@@ -1171,13 +1171,14 @@ mod tests {
     use super::BigRat;
     use crate::error::FendError;
     use crate::num::biguint::BigUint;
+    use std::mem;
 
     #[test]
     fn test_bigrat_from() {
-        BigRat::from(2);
-        BigRat::from(0);
-        BigRat::from(u64::MAX);
-        BigRat::from(u64::from(u32::MAX));
+        mem::drop(BigRat::from(2));
+        mem::drop(BigRat::from(0));
+        mem::drop(BigRat::from(u64::MAX));
+        mem::drop(BigRat::from(u64::from(u32::MAX)));
     }
 
     #[test]
