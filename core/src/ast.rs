@@ -418,6 +418,8 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "dec" | "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
         "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
+        "ternary" => Value::Base(Base::from_plain_base(3).map_err(|e| e.to_string())?),
+        "senary" | "seximal" => Value::Base(Base::from_plain_base(6).map_err(|e| e.to_string())?),
         "oct" | "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
         "version" => Value::String(crate::get_version_as_str().into()),
         "square" => evaluate_to_value("x: x^2", scope, context, int)?,
