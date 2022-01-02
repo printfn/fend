@@ -51,6 +51,11 @@ jobs:
         echo "FEND_VERSION=$(./${{ matrix.artifact-path }} --version)" ${{ matrix.env-command }}
         cargo test --workspace -- --nocapture --quiet
 
+    - name: Strip binary
+      if: ${{ matrix.platform == 'ubuntu-latest' || matrix.platform == 'macos-latest' }}
+      run: |
+        strip ${{ matrix.artifact-path }}
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/main' }}
@@ -64,6 +69,7 @@ jobs:
       run: |
         rustup target add aarch64-apple-darwin
         cargo build --release --workspace --target=aarch64-apple-darwin
+        strip target/aarch64-apple-darwin/release/fend
 
     - name: Upload artifacts (Apple Silicon)
       uses: actions/upload-artifact@v2
