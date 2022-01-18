@@ -69,7 +69,7 @@ fn eval_and_print_res(
             EvalResult::Ok
         }
         Err(msg) => {
-            eprintln!("Error: {}", msg);
+            eprintln!("Error: {msg}");
             EvalResult::Err
         }
     }
@@ -159,7 +159,7 @@ fn repl_loop(config: &config::Config) -> i32 {
             }
             Err(rustyline::error::ReadlineError::Eof) => break,
             Err(err) => {
-                println!("Error: {}", err);
+                println!("Error: {err}");
                 break;
             }
         }

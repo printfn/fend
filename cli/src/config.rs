@@ -65,8 +65,8 @@ fn read_config_file() -> Config {
     match toml::de::from_slice(bytes.as_slice()) {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("Error: invalid config file in {:?}:\n{}", &path, e);
-            eprintln!("Using default config file:\n{}", DEFAULT_CONFIG_FILE);
+            eprintln!("Error: invalid config file in {path:?}:\n{e}");
+            eprintln!("Using default config file:\n{DEFAULT_CONFIG_FILE}");
             Config::default()
         }
     }
