@@ -95,7 +95,7 @@ mv temp wiki/Home.md
 
 gitdiff 14
 
-manualstep "Add changelog to wiki"
+manualstep "Add changelog to wiki/Home.md"
 echo "Building and running tests..."
 cargo clippy --workspace --all-targets --all-features
 cargo build
