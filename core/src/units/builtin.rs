@@ -750,7 +750,7 @@ mod tests {
         if s.is_empty() || s == "'" || s == "\"" {
             return;
         }
-        eprintln!("Testing '{s}'");
+        //eprintln!("Testing '{s}'");
         crate::evaluate(s, ctx).unwrap();
     }
 
