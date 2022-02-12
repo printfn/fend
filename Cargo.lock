@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "fend"
-version = "0.1.27"
+version = "0.1.28"
 dependencies = [
  "ansi_term",
  "chrono",
@@ -181,11 +181,11 @@ dependencies = [
 
 [[package]]
 name = "fend-core"
-version = "0.1.27"
+version = "0.1.28"
 
 [[package]]
 name = "fend-wasm"
-version = "0.1.27"
+version = "0.1.28"
 dependencies = [
  "fend-core",
  "instant",
