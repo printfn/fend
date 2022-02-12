@@ -2,9 +2,11 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: "**"
+    tags:
+      # Matches anything starting with a semantic version
+      - "v[0-9]+.[0-9]+.[0-9]+"
   pull_request:
-    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -133,3 +135,31 @@ jobs:
           publish_dir: ./web
           external_repository: printfn/fend-website
           force_orphan: true
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: startsWith(github.ref, 'refs/tags')
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions/download-artifact@v2
+      - name: Install markdown-extract
+        run: cargo install markdown-extract
+      - name: "Get version"
+        run: echo "FEND_VERSION=$GITHUB_REF_NAME" | sed 's/v//' >> $GITHUB_ENV
+      - name: "Extract release notes"
+        run: |
+          echo "Changes in this version:" > release.md
+          markdown-extract --no-print-matched-heading $GITHUB_REF_NAME wiki/Home.md >> release.md
+      - name: zip releases
+        run: for i in fend-*-*-*; do zip -j ${i}.zip ${i}/*; done
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Version ${{ env.FEND_VERSION }}
+          body_path: release.md
+          files: fend-*-*-*.zip

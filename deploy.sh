@@ -118,11 +118,14 @@ git status
 echo "'git push origin main'"
 git push origin main
 
+echo "Tag and push tag to GitHub"
+git tag "v$NEW_VERSION"
+git push origin v"$NEW_VERSION"
+
 echo "Waiting for CI to start..."
 sleep 5
-GH_RUN_ID=$(gh run list -b main --json headSha,conclusion,name,status,url,workflowDatabaseId,event \
-    | jq -r ".[] | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .url" \
-    | sed 's%https://github.com/printfn/fend/actions/runs/%%')
+GH_RUN_ID=$(gh run list -b v"$NEW_VERSION" --json headSha,databaseId \
+    | jq -r ".[] | .databaseId")
 gh run watch --exit-status "$GH_RUN_ID"
 
 echo "cargo publish for fend-core"
@@ -131,9 +134,6 @@ echo "Sleeping for 30 seconds to let crates.io update"
 sleep 30
 echo "cargo publish for fend"
 (cd cli && cargo publish)
-echo "Tag and push tag to GitHub"
-git tag "v$NEW_VERSION"
-git push --tags
 
 echo "Building NPM package fend-wasm"
 rm -rfv wasm/pkg
@@ -154,35 +154,6 @@ sed 's/"sideEffects": false//' wasm/pkgweb/package.json |
     sed 's/"types": "fend_wasm.d.ts",/"types": "fend_wasm.d.ts"/' >temp
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
-
-echo "Downloading Github artifacts..."
-gh run download "$GH_RUN_ID" --dir artifacts
-
-echo "Zipping artifacts"
-# --junk-paths prevents directory names from being stored in the zip file,
-# so the binary is stored at the top level
-zip --junk-paths "artifacts/fend-$NEW_VERSION-linux-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-linux-x64/fend"
-zip --junk-paths "artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
-zip --junk-paths "artifacts/fend-$NEW_VERSION-macos-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-x64/fend"
-zip --junk-paths "artifacts/fend-$NEW_VERSION-windows-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
-
-echo "Creating GitHub release..."
-gh release create "$NEW_VERSION" --title "Version $NEW_VERSION" \
-    --draft \
-    --notes "Changes in this version:\n\n* ..." \
-    "artifacts/fend-$NEW_VERSION-linux-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-windows-x64.zip"
-
-manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION, add changelog and publish"
-
-echo "Deleting artifacts..."
-rm -rfv artifacts
 
 # AUR release
 TMPDIR="$(mktemp -d)"
