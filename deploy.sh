@@ -32,16 +32,20 @@ manualstep() {
 gitdiff() {
     # checks the expected number of lines + files are different
     added_lines=$(git --no-pager diff|grep -c '^+')
-    if [ "$added_lines" -ne "$1" ]; then
+    if [[ "$added_lines" != "$1" ]]; then
         fail "Expected $1 lines + files to be different"
     fi
     removed_lines=$(git --no-pager diff|grep -c '^-')
-    if [ "$removed_lines" -ne "$1" ]; then
+    if [[ "$removed_lines" != "$1" ]]; then
         fail "Expected $1 lines + files to be different"
     fi
 }
 
 checkversion "$NEW_VERSION"
+
+if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
+    echo "Error: not on main branch"
+fi
 
 OLD_VERSION="$(cargo run -q -- version)"
 
@@ -109,10 +113,18 @@ git add -A
 git --no-pager diff --cached
 echo "'git commit -am \"Release version $NEW_VERSION\"'"
 git commit -am "Release version $NEW_VERSION"
+RELEASE_COMMIT_HASH=$(git rev-parse main)
 git status
 echo "'git push origin main'"
 git push origin main
-manualstep "Ensure CI passes"
+
+echo "Waiting for CI to start..."
+sleep 5
+GH_RUN_ID=$(gh run list -b main --json headSha,conclusion,name,status,url,workflowDatabaseId,event \
+    | jq -r ".[] | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .url" \
+    | sed 's%https://github.com/printfn/fend/actions/runs/%%')
+gh run watch --exit-status "$GH_RUN_ID"
+
 echo "cargo publish for fend-core"
 (cd core && cargo publish)
 echo "Sleeping for 30 seconds to let crates.io update"
@@ -143,18 +155,38 @@ sed 's/"sideEffects": false//' wasm/pkgweb/package.json |
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
 
-manualstep "Create GitHub release (including changelog):
-  * Download artifacts from 'https://github.com/printfn/fend/actions'
-  * Go to 'https://github.com/printfn/fend/releases/new'
-  * Title: Version $NEW_VERSION
-  * Text:
-Changes in this version:
+echo "Downloading Github artifacts..."
+gh run download "$GH_RUN_ID" --dir artifacts
 
-* ..."
+echo "Zipping artifacts"
+# --junk-paths prevents directory names from being stored in the zip file,
+# so the binary is stored at the top level
+zip --junk-paths "artifacts/fend-$NEW_VERSION-linux-x64.zip" \
+    "artifacts/fend-$NEW_VERSION-linux-x64/fend"
+zip --junk-paths "artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
+    "artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
+zip --junk-paths "artifacts/fend-$NEW_VERSION-macos-x64.zip" \
+    "artifacts/fend-$NEW_VERSION-macos-x64/fend"
+zip --junk-paths "artifacts/fend-$NEW_VERSION-windows-x64.zip" \
+    "artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
+
+echo "Creating GitHub release..."
+gh release create "$NEW_VERSION" --title "Version $NEW_VERSION" \
+    --draft \
+    --notes "Changes in this version:\n\n* ..." \
+    "artifacts/fend-$NEW_VERSION-linux-x64.zip" \
+    "artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
+    "artifacts/fend-$NEW_VERSION-macos-x64.zip" \
+    "artifacts/fend-$NEW_VERSION-windows-x64.zip"
+
+manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION, add changelog and publish"
+
+echo "Deleting artifacts..."
+rm -rfv artifacts
 
 # AUR release
 TMPDIR="$(mktemp -d)"
-if [ ! -e "$TMPDIR" ]; then
+if [[ ! -e "$TMPDIR" ]]; then
     >&2 echo "Failed to create temp directory"
     exit 1
 fi
