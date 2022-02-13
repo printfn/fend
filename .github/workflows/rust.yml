@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -34,96 +34,102 @@ jobs:
     timeout-minutes: 10
 
     steps:
-    - uses: actions/checkout@v2.4.0
-    - name: Update Rust
-      run: rustup update
+      - uses: actions/checkout@v2.4.0
+      - name: Install minimal stable with clippy and rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
 
-    - name: Clippy, rustfmt
-      if: ${{ matrix.platform == 'ubuntu-latest' }}
-      run: |
-        rustup component add clippy
-        cargo clippy --workspace --all-targets --all-features -- -D warnings
-        cargo fmt -- --check
+      - uses: Swatinem/rust-cache@v1
 
-    - name: Build, get version, run tests
-      run: |
-        cargo build --release --workspace
-        echo "FEND_VERSION=$(./${{ matrix.artifact-path }} --version)" ${{ matrix.env-command }}
-        cargo test --workspace -- --nocapture --quiet
+      - name: Clippy
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --workspace --all-targets --all-features -- -D warnings
 
-    - name: Strip binary
-      if: ${{ matrix.platform == 'ubuntu-latest' || matrix.platform == 'macos-latest' }}
-      run: |
-        strip ${{ matrix.artifact-path }}
+      - name: rustfmt
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          cargo fmt -- --check
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      if: ${{ github.ref == 'refs/heads/main' }}
-      with:
-        name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
-        path: ${{ matrix.artifact-path }}
-        if-no-files-found: error
+      - name: Build, get version
+        run: |
+          cargo build --release --workspace
+          echo "FEND_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages | .[0].version')" ${{ matrix.env-command }}
 
-    - name: Build (Apple Silicon)
-      if: ${{ matrix.platform == 'macos-latest' }}
-      run: |
-        rustup target add aarch64-apple-darwin
-        cargo build --release --workspace --target=aarch64-apple-darwin
-        strip target/aarch64-apple-darwin/release/fend
+      - name: Test
+        run: |
+          cargo test --workspace -- --nocapture --quiet
 
-    - name: Upload artifacts (Apple Silicon)
-      uses: actions/upload-artifact@v2
-      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'macos-latest' }}
-      with:
-        name: fend-${{ env.FEND_VERSION }}-macos-aarch64
-        path: target/aarch64-apple-darwin/release/fend
-        if-no-files-found: error
+      - name: Run cargo-tarpaulin
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          version: "0.19.1"
+          args: "--workspace"
 
-    - name: Build fend-wasm
-      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-      run: |
-        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-        (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
-        rm web/pkg/.gitignore
+      - name: Upload to codecov.io
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        uses: codecov/codecov-action@v2.1.0
 
-    - name: Upload Manual to Wiki
-      uses: SwiftDocOrg/github-wiki-publish-action@v1
-      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-      with:
-        path: "wiki"
-      env:
-        GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_TOKEN }}
+      - name: Archive code coverage results
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: code-coverage-report
+          path: cobertura.xml
 
-    - name: Deploy to GitHub Pages
-      if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-      uses: peaceiris/actions-gh-pages@v3.8.0
-      with:
-        personal_token: ${{ secrets.MY_TOKEN }}
-        publish_dir: ./web
-        external_repository: printfn/fend-website
-        force_orphan: true
+      - name: Strip binary
+        if: ${{ matrix.platform == 'ubuntu-latest' || matrix.platform == 'macos-latest' }}
+        run: |
+          strip ${{ matrix.artifact-path }}
 
-    - name: Code coverage
-      if: ${{ matrix.platform == 'ubuntu-latest' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc binutils-dev libiberty-dev
-        wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
-        tar xzf master.tar.gz
-        cd kcov-master
-        mkdir build
-        cd build
-        cmake ..
-        make
-        make install DESTDIR=../../kcov-build
-        cd ../..
-        rm -rf kcov-master
-        echo "Installed kcov"
-        for file in target/debug/deps/fend_core-* target/debug/deps/integration_tests-*;
-          do [ -x "${file}" ] || continue;
-          echo "$file";
-          mkdir -p "target/cov/$(basename $file)";
-          ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file";
-        done
-        bash <(curl -vs --retry 10 --connect-timeout 30 https://codecov.io/bash)
-        echo "Uploaded code coverage"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
+          path: ${{ matrix.artifact-path }}
+          if-no-files-found: error
+
+      - name: Build (Apple Silicon)
+        if: ${{ matrix.platform == 'macos-latest' }}
+        run: |
+          rustup target add aarch64-apple-darwin
+          cargo build --release --workspace --target=aarch64-apple-darwin
+          strip target/aarch64-apple-darwin/release/fend
+
+      - name: Upload artifacts (Apple Silicon)
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.platform == 'macos-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-macos-aarch64
+          path: target/aarch64-apple-darwin/release/fend
+          if-no-files-found: error
+
+      - name: Build fend-wasm
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
+          rm web/pkg/.gitignore
+
+      - name: Upload Manual to Wiki
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        uses: SwiftDocOrg/github-wiki-publish-action@v1
+        with:
+          path: "wiki"
+        env:
+          GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_TOKEN }}
+
+      - name: Deploy to GitHub Pages
+        if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          personal_token: ${{ secrets.MY_TOKEN }}
+          publish_dir: ./web
+          external_repository: printfn/fend-website
+          force_orphan: true
