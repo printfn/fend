@@ -69,7 +69,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions-rs/tarpaulin@v0.1
         with:
-          version: "0.19.1"
+          version: "latest"
           args: "--workspace"
 
       - name: Upload to codecov.io
