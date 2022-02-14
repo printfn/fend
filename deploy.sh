@@ -7,16 +7,12 @@ USAGE="Usage: ./deploy.sh [flags] <version>
 <version> should be the new version number to release, e.g. 0.1.0
 
 Flags:
--h  --help            show this help screen
--n  --dry-run         don't apply any changes"
+-h  --help            show this help screen"
 
 NEW_VERSION=""
-DRY_RUN=""
 while [[ "$#" != 0 ]]; do
     arg="$1"
-    if [[ "$arg" == "-n" || "$arg" == "--dry-run" ]]; then
-        DRY_RUN="--dry-run"
-    elif [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+    if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
         echo "$USAGE"
         exit
     elif [[ "$arg" =~ ^- ]]; then
@@ -34,10 +30,6 @@ done
 if [[ "$NEW_VERSION" == "" ]] ; then
     echo "$USAGE" >&2
     exit 1
-fi
-
-if [[ "$DRY_RUN" == "--dry-run" ]]; then
-    echo "dry run enabled"
 fi
 
 fail() {
@@ -62,20 +54,26 @@ manualstep() {
 }
 
 gitdiff() {
+    local gitdir="$1"
+    local expected_add_count="$2"
+    local expected_del_count="$2"
     # checks the expected number of lines + files are different
-    added_lines=$(git --no-pager diff|grep -c '^+')
-    if [[ "$added_lines" != "$1" ]]; then
-        fail "Expected $1 lines + files to be different"
+    local added_lines
+    added_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^+')"
+    if [[ "$added_lines" != "$expected_add_count" ]]; then
+        fail "Expected $expected_add_count lines + files to be different"
     fi
-    removed_lines=$(git --no-pager diff|grep -c '^-')
-    if [[ "$removed_lines" != "$1" ]]; then
-        fail "Expected $1 lines + files to be different"
+    local removed_lines
+    removed_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^-')"
+    if [[ "$removed_lines" != "$expected_del_count" ]]; then
+        fail "Expected $expected_del_count lines + files to be different"
     fi
 }
 
 checkversion "$NEW_VERSION"
 
-if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+if [[ "$current_branch" != "main" ]]; then
     echo "Error: not on main branch"
 fi
 
@@ -84,7 +82,7 @@ OLD_VERSION="$(cargo run -q -- version)"
 confirm "Releasing update $OLD_VERSION -> $NEW_VERSION. Update the README file if necessary."
 
 echo "Updating Cargo.lock" # also ensures the internet connection works
-cargo update "$DRY_RUN"
+cargo update
 
 echo "Checking if the README files are in sync..."
 diff README.md cli/README.md
@@ -103,42 +101,33 @@ echo "Bumping version numbers..."
 
 # version number in fend-core
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" core/Cargo.toml >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp core/Cargo.toml; fi
+mv temp core/Cargo.toml
 
 # fend-core docs attr
 sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" core/src/lib.rs >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp core/src/lib.rs; fi
+mv temp core/src/lib.rs
 
 # fend-core get_version_as_str()
 sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" core/src/lib.rs >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp core/src/lib.rs; fi
+mv temp core/src/lib.rs
 
 # fend cli TOML x2
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" cli/Cargo.toml >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp cli/Cargo.toml; fi
+mv temp cli/Cargo.toml
 
 # wasm TOML
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" wasm/Cargo.toml >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp wasm/Cargo.toml; fi
+mv temp wasm/Cargo.toml
 
 # fend web initialisation
 sed "s/release: \"fend@$OLD_VERSION\"/release: \"fend@$NEW_VERSION\"/" web/index.html >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp web/index.html; fi
+mv temp web/index.html
 
 # wiki
 sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" wiki/Home.md >temp
-if [[ "$DRY_RUN" == "" ]]; then mv temp wiki/Home.md; fi
+mv temp wiki/Home.md
 
-if [[ "$DRY_RUN" == "" ]]; then
-    gitdiff 14
-else
-    rm temp
-fi
-
-if [[ "$DRY_RUN" == "--dry-run" ]]; then
-    echo "dry run enabled: exiting"
-    exit
-fi
+gitdiff "" 14 14
 
 manualstep "Add changelog to wiki/Home.md"
 echo "Building and running tests..."
@@ -195,62 +184,109 @@ sed 's/"sideEffects": false//' wasm/pkgweb/package.json |
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
 
-echo "Downloading Github artifacts..."
-gh run download "$GH_RUN_ID" --dir artifacts
-
-echo "Zipping artifacts"
-# --junk-paths prevents directory names from being stored in the zip file,
-# so the binary is stored at the top level
-zip --junk-paths "artifacts/fend-$NEW_VERSION-linux-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-linux-x64/fend"
-zip --junk-paths "artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
-zip --junk-paths "artifacts/fend-$NEW_VERSION-macos-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-x64/fend"
-zip --junk-paths "artifacts/fend-$NEW_VERSION-windows-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
-
-echo "Creating GitHub release..."
-gh release create "$NEW_VERSION" --title "Version $NEW_VERSION" \
-    --draft \
-    --notes "Changes in this version:\n\n* ..." \
-    "artifacts/fend-$NEW_VERSION-linux-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
-    "artifacts/fend-$NEW_VERSION-macos-x64.zip" \
-    "artifacts/fend-$NEW_VERSION-windows-x64.zip"
-
-manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION, add changelog and publish"
-
-echo "Deleting artifacts..."
-rm -rfv artifacts
-
-# AUR release
 TMPDIR="$(mktemp -d)"
-if [[ ! -e "$TMPDIR" ]]; then
+if [[ ! -d "$TMPDIR" ]]; then
     >&2 echo "Failed to create temp directory"
     exit 1
 fi
-echo "Switching to temporary directory $TMPDIR"
-pushd "$TMPDIR" >/dev/null
-git clone ssh://aur@aur.archlinux.org/fend.git
-cd fend
-git config user.name printfn
-git config user.email printfn@users.noreply.github.com
-curl -O "https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate"
-echo test|shasum -a 512 -|grep "^0e3e75234abc68f4378a86b3f4b32"
-HASH=$(shasum -a 512 "fend-$NEW_VERSION.crate" | grep -o '[a-f0-9]\{128\}')
-echo "Hash: $HASH"
-rm "fend-$NEW_VERSION.crate"
-sed "s/$OLD_VERSION/$NEW_VERSION/g" .SRCINFO|sed "s/[a-f0-9]\{128\}/$HASH/" >.SRCINFO_NEW
-sed "s/$OLD_VERSION/$NEW_VERSION/" PKGBUILD|sed "s/[a-f0-9]\{128\}/$HASH/" >PKGBUILD_NEW
-mv .SRCINFO_NEW .SRCINFO
-mv PKGBUILD_NEW PKGBUILD
-gitdiff 7 # 5 lines in 2 files
-git commit -am "fend $OLD_VERSION -> $NEW_VERSION"
-git --no-pager log --pretty=full HEAD~..|grep '^Author: printfn <printfn@users.noreply.github.com>$'
-git --no-pager log --pretty=full HEAD~..|grep '^Commit: printfn <printfn@users.noreply.github.com>$'
-git push origin master
-popd >/dev/null
-rm -rf "$TMPDIR"
+echo "Created temporary directory $TMPDIR"
 
-manualstep "Update homebrew tap"
+echo "Downloading Github artifacts..."
+gh run download "$GH_RUN_ID" --dir "$TMPDIR/artifacts"
+
+echo "Zipping artifacts..."
+# --junk-paths prevents directory names from being stored in the zip file,
+# so the binary is stored at the top level
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64/fend"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64/fend"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
+
+echo "Creating GitHub release..."
+gh release --repo printfn/fend \
+    create "$NEW_VERSION" --title "Version $NEW_VERSION" \
+    --draft \
+    --notes "Changes in this version:\n\n* ..." \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip"
+
+manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION, add changelog and publish"
+
+# AUR release
+git clone ssh://aur@aur.archlinux.org/fend.git "$TMPDIR/fend-aur"
+git -C "$TMPDIR/fend-aur" config user.name printfn
+git -C "$TMPDIR/fend-aur" config user.email printfn@users.noreply.github.com
+echo test|shasum -a 512 -|grep "^0e3e75234abc68f4378a86b3f4b32" >/dev/null
+HASH=$(curl -L -o - "https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate" \
+    | shasum -a 512 - \
+    | grep -o '[a-f0-9]\{128\}')
+echo "Hash: $HASH"
+sed "s/$OLD_VERSION/$NEW_VERSION/g" "$TMPDIR/fend-aur/.SRCINFO" \
+    | sed "s/[a-f0-9]\{128\}/$HASH/" >"$TMPDIR/fend-aur/.SRCINFO_NEW"
+sed "s/$OLD_VERSION/$NEW_VERSION/" "$TMPDIR/fend-aur/PKGBUILD" \
+    | sed "s/[a-f0-9]\{128\}/$HASH/" >"$TMPDIR/fend-aur/PKGBUILD_NEW"
+mv "$TMPDIR/fend-aur/.SRCINFO_NEW" "$TMPDIR/fend-aur/.SRCINFO"
+mv "$TMPDIR/fend-aur/PKGBUILD_NEW" "$TMPDIR/fend-aur/PKGBUILD"
+gitdiff "$TMPDIR/fend-aur" 7 7 # 5 lines in 2 files
+git -C "$TMPDIR/fend-aur" commit -am "fend $OLD_VERSION -> $NEW_VERSION"
+git -C "$TMPDIR/fend-aur" --no-pager log --pretty=full HEAD~.. \
+    | grep '^Author: printfn <printfn@users.noreply.github.com>$'
+git -C "$TMPDIR/fend-aur" --no-pager log --pretty=full HEAD~.. \
+    | grep '^Commit: printfn <printfn@users.noreply.github.com>$'
+git -C "$TMPDIR/fend-aur" push origin master
+
+git clone git@github.com:printfn/homebrew-fend "$TMPDIR/homebrew-fend"
+git -C "$TMPDIR/homebrew-fend" config user.name printfn
+git -C "$TMPDIR/homebrew-fend" config user.email printfn@users.noreply.github.com
+echo test|shasum -a 256 -|grep "^f2ca1bb6c7e907d06dafe4687e579" >/dev/null
+HASH=$(curl -L -o - "https://github.com/printfn/fend/archive/refs/tags/v$NEW_VERSION.tar.gz" \
+    | shasum -a 256 - \
+    | grep -o '[a-f0-9]\{64\}')
+URL_START="https://github.com/printfn/fend/archive/refs/tags"
+URL2_START="https://github.com/printfn/homebrew-fend/releases/download"
+sed "s%${URL_START}/v$OLD_VERSION.tar.gz%${URL_START}/v$NEW_VERSION.tar.gz%" \
+    "$TMPDIR/homebrew-fend/Formula/fend.rb" \
+    | sed "s/^  sha256 \"[0-9a-f]\{64\}\"/  sha256 \"$HASH\"/" \
+    | sed "s%root_url \"$URL2_START/v$OLD_VERSION\"%root_url \"$URL2_START/v$NEW_VERSION\"%" \
+    | grep -v "sha256 cellar:" \
+    | grep -v "^    rebuild " \
+    >"$TMPDIR/homebrew-fend/Formula/fend-new.rb"
+mv "$TMPDIR/homebrew-fend/Formula/fend-new.rb" "$TMPDIR/homebrew-fend/Formula/fend.rb"
+gitdiff "$TMPDIR/homebrew-fend" 4 6
+git -C "$TMPDIR/homebrew-fend" commit -am "fend $OLD_VERSION -> $NEW_VERSION"
+git -C "$TMPDIR/homebrew-fend" --no-pager log --pretty=full HEAD~.. \
+    | grep '^Author: printfn <printfn@users.noreply.github.com>$'
+git -C "$TMPDIR/homebrew-fend" --no-pager log --pretty=full HEAD~.. \
+    | grep '^Commit: printfn <printfn@users.noreply.github.com>$'
+git -C "$TMPDIR/homebrew-fend" push origin main
+brew uninstall printfn/fend/fend
+brew update
+brew install rust
+brew install --build-bottle --verbose printfn/fend/fend
+brew bottle printfn/fend/fend
+mv "fend--$NEW_VERSION.monterey.bottle.1.tar.gz" \
+    "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+git -C "$TMPDIR/homebrew-fend" tag "v$NEW_VERSION"
+git -C "$TMPDIR/homebrew-fend" push --tags origin main
+gh release --repo printfn/homebrew-fend \
+    create "$NEW_VERSION" --title "Version $NEW_VERSION" \
+    --notes "v$NEW_VERSION" \
+    "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+manualstep "Add bottle info to $TMPDIR/homebrew-fend/Formula/fend.rb"
+gitdiff "$TMPDIR/homebrew-fend" 2 1
+git -C "$TMPDIR/homebrew-fend" commit -am \
+    "v$NEW_VERSION: Add reference to fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+git -C "$TMPDIR/homebrew-fend" push origin main
+brew uninstall printfn/fend/fend
+brew update
+brew install printfn/fend/fend
+manualstep "Make sure the bottle was used"
+
+rm "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+rm -rf "$TMPDIR"
