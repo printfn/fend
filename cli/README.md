@@ -30,23 +30,30 @@ fend is available on the web at [printfn.github.io/fend-website](https://printfn
 
 The easiest way to install fend locally is via your package manager.
 
-On systems with Rust:
+On macOS (using Homebrew):
 
 ```bash
-rustup update
-cargo install fend
+brew tap printfn/fend
+brew install fend
 ```
 
 On Arch Linux (using `yay`):
 
 ```bash
-yay -Sy aur/fend
+yay -Syu aur/fend
 ```
 
 Using the nix package manager:
 
 ```bash
 nix-env -iA nixpkgs.fend
+```
+
+On systems with Rust:
+
+```bash
+rustup update
+cargo install fend
 ```
 
 You can also download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
@@ -62,6 +69,7 @@ $ fend
 
 ### Packages
 
+* [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb)
 * [AUR](https://aur.archlinux.org/packages/fend/)
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)

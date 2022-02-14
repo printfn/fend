@@ -6,7 +6,9 @@ The current latest version of fend is `0.1.28`. You can check your version at an
 
 # Table of Contents
 1. [Installation](#installation)
-    1. [Packages](#packages)
+    1. [macOS](#macos)
+    1. [Arch Linux](#arch-linux)
+    1. [nix package manager](#nix-package-manager)
     1. [Pre-built binaries](#pre-built-binaries)
     1. [Install via crates.io](#install-via-cratesio)
 1. [Numbers](#numbers)
@@ -26,6 +28,15 @@ The current latest version of fend is `0.1.28`. You can check your version at an
 You can use fend without installing by visiting [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website).
 
 If you want to install the fend command-line application, you have the following options:
+
+### macOS
+
+fend is available on [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb):
+
+```bash
+brew tap printfn/fend
+brew install fend
+```
 
 ### Arch Linux
 
