@@ -78,7 +78,7 @@ jobs:
 
       - name: Archive code coverage results
         if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2.3.1
         with:
           name: code-coverage-report
           path: cobertura.xml
@@ -89,7 +89,7 @@ jobs:
           strip ${{ matrix.artifact-path }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2.3.1
         with:
           name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
           path: ${{ matrix.artifact-path }}
@@ -103,7 +103,7 @@ jobs:
           strip target/aarch64-apple-darwin/release/fend
 
       - name: Upload artifacts (Apple Silicon)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2.3.1
         if: ${{ matrix.platform == 'macos-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-macos-aarch64
