@@ -212,3 +212,5 @@ git --no-pager log --pretty=full HEAD~..|grep '^Commit: printfn <printfn@users.n
 git push origin master
 popd >/dev/null
 rm -rf "$TMPDIR"
+
+manualstep "Update homebrew tap"
