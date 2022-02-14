@@ -2,11 +2,43 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-if [[ $# -eq 0 ]] ; then
-    echo "Please specify new version number, e.g. '0.1.0'"
-    exit 0
+USAGE="Usage: ./deploy.sh [flags] <version>
+
+<version> should be the new version number to release, e.g. 0.1.0
+
+Flags:
+-h  --help            show this help screen
+-n  --dry-run         don't apply any changes"
+
+NEW_VERSION=""
+DRY_RUN=""
+while [[ "$#" != 0 ]]; do
+    arg="$1"
+    if [[ "$arg" == "-n" || "$arg" == "--dry-run" ]]; then
+        DRY_RUN="--dry-run"
+    elif [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+        echo "$USAGE"
+        exit
+    elif [[ "$arg" =~ ^- ]]; then
+        echo "error: unknown option '$arg'" >&2
+        exit 1
+    elif [[ "$NEW_VERSION" == "" ]]; then
+        NEW_VERSION="$arg"
+    else
+        echo "error: too many arguments" >&2
+        exit 1
+    fi
+    shift
+done
+
+if [[ "$NEW_VERSION" == "" ]] ; then
+    echo "$USAGE" >&2
+    exit 1
 fi
-NEW_VERSION=$1
+
+if [[ "$DRY_RUN" == "--dry-run" ]]; then
+    echo "dry run enabled"
+fi
 
 fail() {
     echo "$1"
@@ -52,7 +84,7 @@ OLD_VERSION="$(cargo run -q -- version)"
 confirm "Releasing update $OLD_VERSION -> $NEW_VERSION. Update the README file if necessary."
 
 echo "Updating Cargo.lock" # also ensures the internet connection works
-cargo update
+cargo update "$DRY_RUN"
 
 echo "Checking if the README files are in sync..."
 diff README.md cli/README.md
@@ -71,33 +103,42 @@ echo "Bumping version numbers..."
 
 # version number in fend-core
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" core/Cargo.toml >temp
-mv temp core/Cargo.toml
+if [[ "$DRY_RUN" == "" ]]; then mv temp core/Cargo.toml; fi
 
 # fend-core docs attr
 sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" core/src/lib.rs >temp
-mv temp core/src/lib.rs
+if [[ "$DRY_RUN" == "" ]]; then mv temp core/src/lib.rs; fi
 
 # fend-core get_version_as_str()
 sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" core/src/lib.rs >temp
-mv temp core/src/lib.rs
+if [[ "$DRY_RUN" == "" ]]; then mv temp core/src/lib.rs; fi
 
 # fend cli TOML x2
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" cli/Cargo.toml >temp
-mv temp cli/Cargo.toml
+if [[ "$DRY_RUN" == "" ]]; then mv temp cli/Cargo.toml; fi
 
 # wasm TOML
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" wasm/Cargo.toml >temp
-mv temp wasm/Cargo.toml
+if [[ "$DRY_RUN" == "" ]]; then mv temp wasm/Cargo.toml; fi
 
 # fend web initialisation
 sed "s/release: \"fend@$OLD_VERSION\"/release: \"fend@$NEW_VERSION\"/" web/index.html >temp
-mv temp web/index.html
+if [[ "$DRY_RUN" == "" ]]; then mv temp web/index.html; fi
 
 # wiki
 sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" wiki/Home.md >temp
-mv temp wiki/Home.md
+if [[ "$DRY_RUN" == "" ]]; then mv temp wiki/Home.md; fi
 
-gitdiff 14
+if [[ "$DRY_RUN" == "" ]]; then
+    gitdiff 14
+else
+    rm temp
+fi
+
+if [[ "$DRY_RUN" == "--dry-run" ]]; then
+    echo "dry run enabled: exiting"
+    exit
+fi
 
 manualstep "Add changelog to wiki/Home.md"
 echo "Building and running tests..."
@@ -120,9 +161,8 @@ git push origin main
 
 echo "Waiting for CI to start..."
 sleep 5
-GH_RUN_ID=$(gh run list -b main --json headSha,conclusion,name,status,url,workflowDatabaseId,event \
-    | jq -r ".[] | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .url" \
-    | sed 's%https://github.com/printfn/fend/actions/runs/%%')
+GH_RUN_ID=$(gh run list -b main --json databaseId,headSha \
+    | jq ".[] | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .databaseId")
 gh run watch --exit-status "$GH_RUN_ID"
 
 echo "cargo publish for fend-core"
