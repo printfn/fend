@@ -206,17 +206,28 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
 
+echo "Extracted changelog:"
+CHANGELOG=$(cat wiki/Home.md \
+    | tr "\n" "\1" \
+    | grep --text -o "### v$NEW_VERSION .*### v$OLD_VERSION" \
+    | tr "\1" "\n" \
+    | tail +3 \
+    | sed "\$d" \
+    | sed "\$d")
+echo "$CHANGELOG"
+
+manualstep "Make sure this is the correct changelog"
+
 echo "Creating GitHub release..."
 gh release --repo printfn/fend \
     create "$NEW_VERSION" --title "Version $NEW_VERSION" \
-    --draft \
-    --notes "Changes in this version:\n\n* ..." \
+    --notes "Changes in this version:\n\n$CHANGELOG" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip"
 
-manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION, add changelog and publish"
+manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION and check that it is correct"
 
 # AUR release
 git clone ssh://aur@aur.archlinux.org/fend.git "$TMPDIR/fend-aur"
