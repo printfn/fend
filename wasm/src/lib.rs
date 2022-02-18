@@ -3,16 +3,8 @@
 // https://github.com/rustwasm/wasm-bindgen/issues/2774#issuecomment-1030747023
 #![allow(clippy::unused_unit)]
 
-mod utils;
-
 use instant::Instant;
 use wasm_bindgen::prelude::*;
-
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 struct TimeoutInterrupt {
     start: Instant,
@@ -36,7 +28,6 @@ impl fend_core::Interrupt for TimeoutInterrupt {
 
 #[wasm_bindgen]
 pub fn initialise() {
-    utils::set_panic_hook();
 }
 
 // These two functions should be merged at some point, but that would be a breaking
