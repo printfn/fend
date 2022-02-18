@@ -1,16 +1,83 @@
 use crate::color;
-use std::{env, fs, io, path};
+use std::{env, fmt, fs, io, path};
 
-#[derive(Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Config {
     pub prompt: String,
-    #[serde(alias = "color")]
     pub enable_colors: bool,
-    #[serde(default)]
     pub coulomb_and_farad: bool,
-    #[serde(default)]
-    pub colors: color::OutputColours,
+    pub colors: color::OutputColors,
+}
+
+impl<'de> serde::Deserialize<'de> for Config {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct ConfigVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
+            type Value = Config;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a fend configuration struct")
+            }
+
+            fn visit_map<V: serde::de::MapAccess<'de>>(
+                self,
+                mut map: V,
+            ) -> Result<Config, V::Error> {
+                let mut result = Config::default();
+                let mut seen_prompt = false;
+                let mut seen_enable_colors = false;
+                let mut seen_coulomb_farad = false;
+                let mut seen_colors = false;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        "prompt" => {
+                            if seen_prompt {
+                                return Err(serde::de::Error::duplicate_field("prompt"));
+                            }
+                            result.prompt = map.next_value()?;
+                            seen_prompt = true;
+                        }
+                        "enable-colors" | "color" => {
+                            if seen_enable_colors {
+                                return Err(serde::de::Error::duplicate_field("enable-colors"));
+                            }
+                            result.enable_colors = map.next_value()?;
+                            seen_enable_colors = true;
+                        }
+                        "coulomb-and-farad" => {
+                            if seen_coulomb_farad {
+                                return Err(serde::de::Error::duplicate_field("coulomb-and-farad"));
+                            }
+                            result.coulomb_and_farad = map.next_value()?;
+                            seen_coulomb_farad = true;
+                        }
+                        "colors" => {
+                            if seen_colors {
+                                return Err(serde::de::Error::duplicate_field("colors"));
+                            }
+                            result.colors = map.next_value()?;
+                            seen_colors = true;
+                        }
+                        unknown_key => {
+                            return Err(serde::de::Error::unknown_field(unknown_key, FIELDS));
+                        }
+                    }
+                }
+                if !seen_prompt {
+                    return Err(serde::de::Error::missing_field("prompt"));
+                }
+                if !seen_enable_colors {
+                    return Err(serde::de::Error::missing_field("enable-colors"));
+                }
+                // other fields are optional
+                Ok(result)
+            }
+        }
+
+        const FIELDS: &[&str] = &["prompt", "enable-colors", "coulomb-and-farad", "colors"];
+        deserializer.deserialize_struct("Config", FIELDS, ConfigVisitor)
+    }
 }
 
 impl Default for Config {
@@ -19,7 +86,7 @@ impl Default for Config {
             prompt: "> ".to_string(),
             enable_colors: false,
             coulomb_and_farad: false,
-            colors: color::OutputColours::default(),
+            colors: color::OutputColors::default(),
         }
     }
 }
