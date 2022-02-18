@@ -27,8 +27,7 @@ impl fend_core::Interrupt for TimeoutInterrupt {
 }
 
 #[wasm_bindgen]
-pub fn initialise() {
-}
+pub fn initialise() {}
 
 // These two functions should be merged at some point, but that would be a breaking
 // API change.
