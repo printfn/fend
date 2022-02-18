@@ -110,6 +110,21 @@ jobs:
           path: target/aarch64-apple-darwin/release/fend
           if-no-files-found: error
 
+      - name: Build (Raspberry Pi)
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          rustup target add armv7-unknown-linux-gnueabihf
+          cargo build --release --workspace --target=armv7-unknown-linux-gnueabihf
+          strip armv7-unknown-linux-gnueabihf/release/fend
+
+      - name: Upload artifacts (Raspberry Pi)
+        uses: actions/upload-artifact@v2.3.1
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-armv7-unknown-linux-gnueabihf
+          path: target/armv7-unknown-linux-gnueabihf/release/fend
+          if-no-files-found: error
+
       - name: Build fend-wasm
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         run: |
