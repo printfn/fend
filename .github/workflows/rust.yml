@@ -107,10 +107,9 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add armv7-unknown-linux-gnueabihf
-          sudo apt-get install -y gcc-arm-linux-gnueabihf
+          sudo apt-get install -yq gcc-arm-linux-gnueabihf
           export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc
           cargo build --release --workspace --target=armv7-unknown-linux-gnueabihf
-          strip armv7-unknown-linux-gnueabihf/release/fend
 
       - name: Upload artifacts (Raspberry Pi)
         uses: actions/upload-artifact@v2.3.1
