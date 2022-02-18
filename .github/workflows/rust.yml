@@ -76,13 +76,6 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v2.1.0
 
-      - name: Archive code coverage results
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v2.3.1
-        with:
-          name: code-coverage-report
-          path: cobertura.xml
-
       - name: Strip binary
         if: ${{ matrix.platform == 'ubuntu-latest' || matrix.platform == 'macos-latest' }}
         run: |
@@ -108,6 +101,23 @@ jobs:
         with:
           name: fend-${{ env.FEND_VERSION }}-macos-aarch64
           path: target/aarch64-apple-darwin/release/fend
+          if-no-files-found: error
+
+      - name: Build (Raspberry Pi)
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          rustup target add armv7-unknown-linux-gnueabihf
+          sudo apt-get install -yq gcc-arm-linux-gnueabihf
+          export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc
+          cargo build --release --workspace --target=armv7-unknown-linux-gnueabihf
+          arm-linux-gnueabihf-strip target/armv7-unknown-linux-gnueabihf/release/fend
+
+      - name: Upload artifacts (Raspberry Pi)
+        uses: actions/upload-artifact@v2.3.1
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-armv7-unknown-linux-gnueabihf
+          path: target/armv7-unknown-linux-gnueabihf/release/fend
           if-no-files-found: error
 
       - name: Build fend-wasm
