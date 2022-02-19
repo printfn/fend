@@ -7,6 +7,7 @@ pub struct Config {
     pub enable_colors: bool,
     pub coulomb_and_farad: bool,
     pub colors: color::OutputColors,
+    pub max_history_size: usize,
 }
 
 impl<'de> serde::Deserialize<'de> for Config {
@@ -29,6 +30,7 @@ impl<'de> serde::Deserialize<'de> for Config {
                 let mut seen_enable_colors = false;
                 let mut seen_coulomb_farad = false;
                 let mut seen_colors = false;
+                let mut seen_max_hist_size = false;
                 while let Some(key) = map.next_key()? {
                     match key {
                         "prompt" => {
@@ -59,23 +61,29 @@ impl<'de> serde::Deserialize<'de> for Config {
                             result.colors = map.next_value()?;
                             seen_colors = true;
                         }
+                        "max-history-size" => {
+                            if seen_max_hist_size {
+                                return Err(serde::de::Error::duplicate_field("max-history-size"));
+                            }
+                            result.max_history_size = map.next_value()?;
+                            seen_max_hist_size = true;
+                        }
                         unknown_key => {
                             return Err(serde::de::Error::unknown_field(unknown_key, FIELDS));
                         }
                     }
                 }
-                if !seen_prompt {
-                    return Err(serde::de::Error::missing_field("prompt"));
-                }
-                if !seen_enable_colors {
-                    return Err(serde::de::Error::missing_field("enable-colors"));
-                }
-                // other fields are optional
                 Ok(result)
             }
         }
 
-        const FIELDS: &[&str] = &["prompt", "enable-colors", "coulomb-and-farad", "colors"];
+        const FIELDS: &[&str] = &[
+            "prompt",
+            "enable-colors",
+            "max-history-size",
+            "coulomb-and-farad",
+            "colors",
+        ];
         deserializer.deserialize_struct("Config", FIELDS, ConfigVisitor)
     }
 }
@@ -87,6 +95,7 @@ impl Default for Config {
             enable_colors: false,
             coulomb_and_farad: false,
             colors: color::OutputColors::default(),
+            max_history_size: 1000,
         }
     }
 }

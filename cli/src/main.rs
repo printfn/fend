@@ -103,7 +103,7 @@ fn repl_loop(config: &config::Config) -> i32 {
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
-            .max_history_size(10000)
+            .max_history_size(config.max_history_size)
             .build(),
     );
     let core_context = std::cell::RefCell::new(fend_core::Context::new());

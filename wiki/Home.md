@@ -385,8 +385,9 @@ You can always confirm the path that fend uses by typing `help`.
 These are the options currently available, along with their default values:
 
 ```toml
-prompt = '> '
 enable-colors = false
+max-history-size = 1000
+prompt = '> '
 
 # change 'C' and 'F' to refer to coulomb and farad
 # instead of degrees celsius and degrees fahrenheit
