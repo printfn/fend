@@ -21,6 +21,7 @@ The current latest version of fend is `0.1.28`. You can check your version at an
 1. [Strings](#strings)
 1. [Configuration](#configuration)
 1. [Scripting](#scripting)
+1. [Debug Representation](#debug-representation)
 1. [Changelog](#changelog)
 
 ## Installation
@@ -415,6 +416,16 @@ approx. 1.4142135619
 ```
 
 The return code is 0 on success, or 1 if an error occurs during evaluation.
+
+## Debug Representation
+
+You can see the debug representation of a value in fend by writing
+`!debug` at the start of your calculation. For example, you can type:
+
+```
+> !debug 1+1
+2 (unitless) (base 10, auto, simplifiable)
+```
 
 ## Changelog
 
