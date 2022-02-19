@@ -31,7 +31,6 @@ checksum = "b953a6887648bb07a535631f2bc00fbdb2a2216f135552cb3f534ed136b9c07f"
 dependencies = [
  "memchr",
  "safemem",
- "slice-deque",
 ]
 
 [[package]]
@@ -238,15 +237,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mach"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86dd2487cdfea56def77b88438a2c915fb45113c5319bfe7e14306ca4cd0b0e1"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -352,9 +342,9 @@ dependencies = [
 
 [[package]]
 name = "rustyline-with-hint-fix"
-version = "9.1.3"
+version = "9.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c071baec4e1b57f03325fdea6ca88e520b2325a89ea7688b802af7dd99786dbd"
+checksum = "23589823b9d113abba3c51a378cfdc469249a96a5fbd789ca43f307286f9053d"
 dependencies = [
  "bitflags",
  "buf_redux",
@@ -391,17 +381,6 @@ name = "serde"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
-
-[[package]]
-name = "slice-deque"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffddf594f5f597f63533d897427a570dbaa9feabaaa06595b74b71b7014507d7"
-dependencies = [
- "libc",
- "mach",
- "winapi",
-]
 
 [[package]]
 name = "smallvec"
