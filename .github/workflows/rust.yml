@@ -123,6 +123,22 @@ jobs:
           path: target/armv7-unknown-linux-gnueabihf/release/fend
           if-no-files-found: error
 
+      - name: Build (arm64)
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          rustup target add aarch64-unknown-linux-gnu
+          export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc
+          cargo build --release --package fend --target aarch64-unknown-linux-gnu
+          arm-linux-gnueabihf-strip target/aarch64-unknown-linux-gnu/release/fend
+
+      - name: Upload artifacts (arm64)
+        uses: actions/upload-artifact@v2.3.1
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-linux-aarch64
+          path: target/aarch64-unknown-linux-gnu/release/fend
+          if-no-files-found: error
+
       - name: Build fend-wasm
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         run: |
