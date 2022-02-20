@@ -128,7 +128,7 @@ impl Default for Config {
 
 pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
-fn get_config_dir() -> Option<path::PathBuf> {
+pub fn get_config_dir() -> Option<path::PathBuf> {
     // first try $FEND_CONFIG_DIR
     if let Some(env_var_config_dir) = env::var_os("FEND_CONFIG_DIR") {
         return Some(path::PathBuf::from(env_var_config_dir));
@@ -199,16 +199,6 @@ pub fn read(interactive: bool) -> Config {
         config.enable_colors = false;
     }
     config
-}
-
-pub fn get_history_file_path() -> Option<path::PathBuf> {
-    let mut config_dir = get_config_dir()?;
-    match fs::create_dir_all(config_dir.as_path()) {
-        Ok(_) => (),
-        Err(_) => return None,
-    }
-    config_dir.push(".history");
-    Some(config_dir)
 }
 
 #[cfg(test)]
