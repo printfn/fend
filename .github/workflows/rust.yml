@@ -61,6 +61,13 @@ jobs:
           cargo build --release --package fend
           echo "FEND_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages | .[0].version')" ${{ matrix.env-command }}
 
+        # Only run unit tests on non-Linux platforms since Linux runs
+        # them as part of code coverage testing
+      - name: Test
+        if: ${{ matrix.platform != 'ubuntu-latest' }}
+        run: |
+          cargo test --workspace -- --nocapture --quiet
+
       - name: Run cargo-tarpaulin
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions-rs/tarpaulin@v0.1
