@@ -58,7 +58,7 @@ jobs:
 
       - name: Build, get version
         run: |
-          cargo build --release --package fend
+          cargo run --release --package fend -- help
           echo "FEND_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages | .[0].version')" ${{ matrix.env-command }}
 
         # Only run unit tests on non-Linux platforms since Linux runs
