@@ -1,11 +1,12 @@
 use super::base::Base;
 use std::fmt;
 
-#[derive(Default, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub struct Color {
     foreground: Option<Base>,
     underline: bool,
     bold: bool,
+    unknown_keys: Vec<String>,
 }
 
 impl<'de> serde::Deserialize<'de> for Color {
@@ -51,7 +52,8 @@ impl<'de> serde::Deserialize<'de> for Color {
                             seen_bold = true;
                         }
                         unknown_key => {
-                            return Err(serde::de::Error::unknown_field(unknown_key, FIELDS));
+                            map.next_value::<toml::Value>()?;
+                            result.unknown_keys.push(unknown_key.to_string());
                         }
                     }
                 }
@@ -70,6 +72,7 @@ impl Color {
             foreground: Some(foreground),
             underline: false,
             bold: false,
+            unknown_keys: vec![],
         }
     }
 
@@ -82,7 +85,7 @@ impl Color {
 
     pub fn to_ansi(&self) -> ansi_term::Style {
         let mut style = ansi_term::Style::default();
-        if let Some(foreground) = self.foreground {
+        if let Some(foreground) = &self.foreground {
             style = style.fg(foreground.as_ansi());
         }
         if self.underline {
@@ -92,5 +95,16 @@ impl Color {
             style = style.bold();
         }
         style
+    }
+
+    pub fn print_warnings_about_unknown_keys(&self, style_assignment: &str) {
+        for key in &self.unknown_keys {
+            eprintln!(
+                "Warning: ignoring unknown configuration setting `colors.{style_assignment}.{key}`"
+            );
+        }
+        if let Some(base) = &self.foreground {
+            base.warn_about_unknown_colors();
+        }
     }
 }

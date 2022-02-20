@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Base {
     Black,
     Red,
@@ -10,6 +10,7 @@ pub enum Base {
     Purple,
     Cyan,
     White,
+    Unknown(String),
 }
 
 struct BaseVisitor;
@@ -32,14 +33,7 @@ impl<'de> serde::de::Visitor<'de> for BaseVisitor {
             "purple" => Base::Purple,
             "cyan" => Base::Cyan,
             "white" => Base::White,
-            _ => {
-                return Err(E::unknown_variant(
-                    v,
-                    &[
-                        "black", "red", "green", "yellow", "blue", "purple", "cyan", "white",
-                    ],
-                ))
-            }
+            unknown_color_name => Base::Unknown(unknown_color_name.to_string()),
         })
     }
 }
@@ -51,7 +45,7 @@ impl<'de> serde::Deserialize<'de> for Base {
 }
 
 impl Base {
-    pub fn as_ansi(self) -> ansi_term::Color {
+    pub fn as_ansi(&self) -> ansi_term::Color {
         match self {
             Self::Black => ansi_term::Color::Black,
             Self::Red => ansi_term::Color::Red,
@@ -60,7 +54,13 @@ impl Base {
             Self::Blue => ansi_term::Color::Blue,
             Self::Purple => ansi_term::Color::Purple,
             Self::Cyan => ansi_term::Color::Cyan,
-            Self::White => ansi_term::Color::White,
+            Self::White | Self::Unknown(_) => ansi_term::Color::White,
+        }
+    }
+
+    pub fn warn_about_unknown_colors(&self) {
+        if let Self::Unknown(name) = self {
+            eprintln!("Warning: ignoring unknown color `{name}`");
         }
     }
 }

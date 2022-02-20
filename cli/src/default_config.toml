@@ -1,11 +1,34 @@
+# Choose whether or not colours should be enabled
 enable-colors = false
+
+# Maximum number of calculations to store in fend's
+# history file
 max-history-size = 1000
+
+# The characters that are shown as the prompt when
+# using fend interactively
 prompt = '> '
 
-# change 'C' and 'F' to refer to coulomb and farad
+# Change 'C' and 'F' to refer to coulomb and farad
 # instead of degrees celsius and degrees fahrenheit
 coulomb-and-farad = false
 
+# What to do if this configuration file contains unknown
+# settings. These are the possible values:
+#  * 'warn': print a warning on startup if there are any
+#            unknown config settings (default)
+#  * 'ignore': ignore any unknown configuration settings
+unknown-settings = 'warn'
+
+# This section controls the colors that are used by
+# fend. Make sure the `enable-colors` setting is
+# turned on for this to work.
+#
+# Color options:
+#   foreground: the foreground colour to use
+#   bold:       whether or not to show text in bold font
+#   underline:  whether or not to underline text
+#
 [colors]
 number = {}
 string = { foreground = 'yellow', bold = true }

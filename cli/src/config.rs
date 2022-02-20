@@ -8,6 +8,14 @@ pub struct Config {
     pub coulomb_and_farad: bool,
     pub colors: color::OutputColors,
     pub max_history_size: usize,
+    unknown_settings: UnknownSettings,
+    unknown_keys: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum UnknownSettings {
+    Ignore,
+    Warn,
 }
 
 impl<'de> serde::Deserialize<'de> for Config {
@@ -68,8 +76,23 @@ impl<'de> serde::Deserialize<'de> for Config {
                             result.max_history_size = map.next_value()?;
                             seen_max_hist_size = true;
                         }
+                        "unknown-settings" => {
+                            let unknown_settings: &str = map.next_value()?;
+                            result.unknown_settings = match unknown_settings {
+                                "ignore" => UnknownSettings::Ignore,
+                                "warn" => UnknownSettings::Warn,
+                                v => {
+                                    return Err(serde::de::Error::invalid_value(
+                                        serde::de::Unexpected::Str(v),
+                                        &"`ignore` or `warn`",
+                                    ))
+                                }
+                            };
+                        }
                         unknown_key => {
-                            return Err(serde::de::Error::unknown_field(unknown_key, FIELDS));
+                            // this may occur if the user has multiple fend versions installed
+                            map.next_value::<toml::Value>()?;
+                            result.unknown_keys.push(unknown_key.to_string());
                         }
                     }
                 }
@@ -80,9 +103,10 @@ impl<'de> serde::Deserialize<'de> for Config {
         const FIELDS: &[&str] = &[
             "prompt",
             "enable-colors",
-            "max-history-size",
             "coulomb-and-farad",
             "colors",
+            "max-history-size",
+            "unknown-settings",
         ];
         deserializer.deserialize_struct("Config", FIELDS, ConfigVisitor)
     }
@@ -96,11 +120,13 @@ impl Default for Config {
             coulomb_and_farad: false,
             colors: color::OutputColors::default(),
             max_history_size: 1000,
+            unknown_settings: UnknownSettings::Warn,
+            unknown_keys: vec![],
         }
     }
 }
 
-static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
+pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
 fn get_config_dir() -> Option<path::PathBuf> {
     // first try $FEND_CONFIG_DIR
@@ -138,14 +164,28 @@ fn read_config_file() -> Config {
         Ok(_) => (),
         Err(_) => return Config::default(),
     }
-    match toml::de::from_slice(bytes.as_slice()) {
+    let config = match toml::de::from_slice(bytes.as_slice()) {
         Ok(config) => config,
         Err(e) => {
             eprintln!("Error: invalid config file in {path:?}:\n{e}");
-            eprintln!("Using default config file:\n{DEFAULT_CONFIG_FILE}");
+            eprint!("Using the default config file instead, you can view it ");
+            eprintln!("by running `fend --default-config`");
             Config::default()
         }
+    };
+    print_warnings_about_unknown_keys(&config);
+    config
+}
+
+fn print_warnings_about_unknown_keys(config: &Config) {
+    match config.unknown_settings {
+        UnknownSettings::Ignore => return,
+        UnknownSettings::Warn => (),
     }
+    for key in &config.unknown_keys {
+        eprintln!("Warning: ignoring unknown configuration setting `{key}`");
+    }
+    config.colors.print_warnings_about_unknown_keys();
 }
 
 pub fn read(interactive: bool) -> Config {

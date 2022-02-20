@@ -33,6 +33,8 @@ enum ArgsAction {
     Repl,
     /// Evaluate the arguments.
     Eval(String),
+    /// Show the default config file
+    DefaultConfig,
 }
 
 fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> String {
@@ -184,6 +186,10 @@ fn real_main() -> i32 {
             println!("{}", fend_core::get_version());
             0
         }
+        ArgsAction::DefaultConfig => {
+            println!("{}", config::DEFAULT_CONFIG_FILE);
+            0
+        }
         ArgsAction::Eval(expr) => {
             let config = config::read(false);
             let core_context = std::cell::RefCell::new(fend_core::Context::new());
@@ -210,7 +216,7 @@ fn real_main() -> i32 {
 impl FromIterator<String> for ArgsAction {
     fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
         iter.into_iter().fold(ArgsAction::Repl, |action, arg| {
-            use ArgsAction::{Eval, Help, Repl, Version};
+            use ArgsAction::{DefaultConfig, Eval, Help, Repl, Version};
             match (action, arg.as_str()) {
                 // If any argument is shouting for help, print help!
                 (_, "help" | "--help" | "-h") | (Help, _) => Help,
@@ -218,7 +224,11 @@ impl FromIterator<String> for ArgsAction {
                 // Once we're set on printing the version, only a request for help
                 // can overwrite that
                 // NOTE: 'version' is already handled by fend itself
-                (Repl | Eval(_), "--version" | "-v" | "-V") | (Version, _) => Version,
+                (Repl | Eval(_) | DefaultConfig, "--version" | "-v" | "-V") | (Version, _) => {
+                    Version
+                }
+
+                (Repl | Eval(_), "--default-config") | (DefaultConfig, _) => DefaultConfig,
                 // If neither help nor version is requested, evaluate the arguments
                 // Ignore empty arguments, so that `$ fend "" ""` will enter the repl.
                 (Repl, arg) if !arg.trim().is_empty() => Eval(String::from(arg)),
