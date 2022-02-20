@@ -130,17 +130,19 @@ pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
 fn get_config_dir() -> Option<path::PathBuf> {
     // first try $FEND_CONFIG_DIR
-    env::var_os("FEND_CONFIG_DIR").map_or_else(
-        || {
-            // if not, then use these paths:
-            // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
-            // macOS: $HOME/Library/Application Support/fend
-            // Windows: {FOLDERID_RoamingAppData}\fend\config
-            directories::ProjectDirs::from("", "", "fend")
-                .map(|proj_dirs| path::PathBuf::from(proj_dirs.config_dir()))
-        },
-        |config_dir| Some(path::PathBuf::from(config_dir)),
-    )
+    if let Some(env_var_config_dir) = env::var_os("FEND_CONFIG_DIR") {
+        return Some(path::PathBuf::from(env_var_config_dir));
+    }
+
+    // if not, then use these paths:
+    // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
+    // macOS: $HOME/Library/Application Support/fend
+    // Windows: {FOLDERID_RoamingAppData}\fend\config
+    if let Some(proj_dirs) = directories::ProjectDirs::from("", "", "fend") {
+        return Some(path::PathBuf::from(proj_dirs.config_dir()));
+    }
+
+    None
 }
 
 pub fn get_config_file_dir() -> Option<path::PathBuf> {
