@@ -73,19 +73,20 @@ fn eval_and_print_res(
 }
 
 fn print_help(explain_quitting: bool) {
-    println!(
-        concat!(
-            "For more information on how to use fend, ",
-            "please take a look at the manual:\n",
-            "https://github.com/printfn/fend/wiki\n\n",
-            "Version: {}{}",
-        ),
-        fend_core::get_version(),
-        config::get_config_file_dir().map_or_else(
-            || "Failed to get config file location".to_string(),
-            |d| format!("\nConfig file: {}", d.to_string_lossy())
-        )
-    );
+    println!("For more information on how to use fend, please take a look at the manual:");
+    println!("https://github.com/printfn/fend/wiki");
+    println!();
+    println!("Version: {}", fend_core::get_version());
+    if let Some(config_path) = config::get_config_file_dir() {
+        println!("Config file: {}", config_path.to_string_lossy());
+    } else {
+        println!("Failed to get config file location");
+    }
+    if let Some(history_path) = config::get_history_file_path() {
+        println!("History file: {}", history_path.to_string_lossy());
+    } else {
+        println!("Failed to get history file location");
+    }
     if explain_quitting {
         println!("\nTo quit, type `quit`.");
     }
