@@ -199,6 +199,8 @@ echo "Zipping artifacts..."
 # so the binary is stored at the top level
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64/fend"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
@@ -223,6 +225,7 @@ gh release --repo printfn/fend \
     create "$NEW_VERSION" --title "Version $NEW_VERSION" \
     --notes "Changes in this version:\n\n$CHANGELOG" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip"
