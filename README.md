@@ -33,8 +33,7 @@ The easiest way to install fend locally is via your package manager.
 On macOS (using Homebrew):
 
 ```bash
-brew tap printfn/fend
-brew install fend
+brew install printfn/fend/fend
 ```
 
 On Arch Linux (using `yay`):
@@ -70,7 +69,8 @@ $ fend
 ### Packages
 
 * [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb)
-* [AUR](https://aur.archlinux.org/packages/fend/)
+* [AUR (built from source)](https://aur.archlinux.org/packages/fend/)
+* [AUR (pre-built binary)](https://aur.archlinux.org/packages/fend-bin/)
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)

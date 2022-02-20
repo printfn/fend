@@ -35,8 +35,7 @@ If you want to install the fend command-line application, you have the following
 fend is available on [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb):
 
 ```bash
-brew tap printfn/fend
-brew install fend
+brew install printfn/fend/fend
 ```
 
 ### Arch Linux
@@ -44,7 +43,13 @@ brew install fend
 fend is available on the [AUR](https://aur.archlinux.org/packages/fend/):
 
 ```bash
-yay -Sy aur/fend
+yay -Syu aur/fend
+```
+
+You can also install a [precompiled version](https://aur.archlinux.org/packages/fend-bin/) from the AUR with:
+
+```bash
+yay -Syu aur/fend-bin
 ```
 
 ### nix package manager
@@ -55,9 +60,22 @@ fend is available in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs
 nix-env -iA nixpkgs.fend
 ```
 
+Or using `nix-shell`:
+
+```bash
+nix-shell -p fend
+```
+
 ### Pre-built binaries
 
-You can download the latest stable binaries for 64-bit Windows, macOS and Linux [here](https://github.com/printfn/fend/releases/latest).
+You can download the latest stable binaries for Windows, macOS and Linux [here](https://github.com/printfn/fend/releases/latest).
+
+Binaries are available for:
+* Windows (64-bit)
+* macOS (64-bit Intel)
+* macOS (Apple Silicon)
+* Linux (x86-64)
+* Linux (armv7-gnueabihf, compatible with Raspberry Pi)
 
 ### Install via crates.io
 
@@ -381,7 +399,8 @@ The location of this file differs based on your operating system:
 * macOS: `$HOME/Library/Application Support/fend`
 * Windows: `{FOLDERID_RoamingAppData}\fend\config`
 
-You can always confirm the path that fend uses by typing `help`.
+You can always confirm the path that fend uses by typing `help`. You can also
+see the default configuration file that fend uses by running `fend --default-config`.
 
 These are the options currently available, along with their default values:
 
