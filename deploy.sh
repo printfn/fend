@@ -93,6 +93,7 @@ cargo fmt -- --check
 
 echo "Making sure the git repository is clean..."
 # from https://stackoverflow.com/a/5143914
+git update-index --refresh &>/dev/null || true
 if ! git diff-index --quiet HEAD --; then
     fail "The local repository has uncommitted changes"
 fi
