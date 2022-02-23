@@ -1,4 +1,4 @@
-use std::{env, path};
+use std::{env, fs, path};
 
 fn get_home_dir() -> Option<path::PathBuf> {
     let home_dir = home::home_dir()?;
@@ -54,6 +54,10 @@ fn get_history_dir() -> Option<path::PathBuf> {
 
 pub fn get_history_file_location() -> Option<path::PathBuf> {
     let mut history_path = get_history_dir()?;
+    match fs::create_dir_all(history_path.as_path()) {
+        Ok(_) => (),
+        Err(_) => return None,
+    }
     history_path.push("history");
     Some(history_path)
 }

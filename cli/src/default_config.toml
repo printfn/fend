@@ -1,5 +1,6 @@
-# Choose whether or not colours should be enabled
-enable-colors = false
+# Choose whether or not colours should be enabled. Possible
+# values are 'never', 'auto' (default) or 'always'.
+enable-colors = 'auto'
 
 # Maximum number of calculations to store in fend's
 # history file

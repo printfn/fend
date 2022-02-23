@@ -118,7 +118,7 @@ fn repl_loop(config: &config::Config) -> i32 {
     let mut context = Context::new(&core_context);
     rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
     let history_path = file_paths::get_history_file_location();
-    if let Some(history_path) = history_path.clone() {
+    if let Some(history_path) = &history_path {
         if rl.load_history(history_path.as_path()).is_err() {
             // No previous history
         }

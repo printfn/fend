@@ -2,7 +2,7 @@
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
 
-The current latest version of fend is `0.1.28`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
+The current latest version of fend is `0.1.29`. You can check your version at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
 
 # Table of Contents
 1. [Installation](#installation)
@@ -405,8 +405,9 @@ see the default configuration file that fend uses by running `fend --default-con
 These are the options currently available, along with their default values:
 
 ```toml
-# Choose whether or not colours should be enabled
-enable-colors = false
+# Choose whether or not colours should be enabled. Possible
+# values are 'never', 'auto' (default) or 'always'.
+enable-colors = 'auto'
 
 # Maximum number of calculations to store in fend's
 # history file
@@ -470,6 +471,25 @@ You can see the debug representation of a value in fend by writing
 ```
 
 ## Changelog
+
+### v0.1.29 (2022-02-23)
+
+* The locations for the config and history files have changed on some operating
+    systems. On Linux and macOS, fend will now look in `~/.config/fend/config.toml`
+    for its configuration file, and store history in `~/.local/state/fend/history`.
+    You can run `fend help` to see which paths fend uses, and override them
+    via the `FEND_CONFIG_DIR` and `FEND_STATE_DIR` environment variables
+    if necessary.
+* Colors in the CLI are now enabled by default. They can be disabled via the
+    `enable-colors` config option, or via the `NO_COLOR` environment variable.
+    `CLICOLOR` and `CLICOLOR_FORCE` environment variables are also respected.
+    See https://bixense.com/clicolors/ and https://no-color.org for more info.
+* Add a `max-history-size` config option to control how many history entries are
+    saved by default.
+* Improve error-checking when reading the config file. Minor errors will now only
+    produce warnings, and no longer cause parsing to fail entirely.
+* There are now Linux ARM builds available, for both `armv7-gnueabihf` and
+    `aarch64` architectures.
 
 ### v0.1.28 (2022-02-12)
 
