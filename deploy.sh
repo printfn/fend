@@ -91,6 +91,9 @@ diff README.md core/README.md
 echo "Running cargo fmt..."
 cargo fmt -- --check
 
+echo "Making sure we are logged in to npm..."
+npm whoami
+
 echo "Making sure the git repository is clean..."
 # from https://stackoverflow.com/a/5143914
 git update-index --refresh &>/dev/null || true
@@ -174,9 +177,7 @@ sleep 30
 echo "cargo publish for fend"
 (cd cli && cargo publish)
 echo "Tag and push tag to GitHub"
-git tag "v$NEW_VERSION" --annotate --message \
-    "# Version $NEW_VERSION\n\nChanges in this version:\n\n$CHANGELOG"
-manualstep "Verify the annotated tag is correct"
+git tag "v$NEW_VERSION"
 git push --tags
 
 echo "Building NPM package fend-wasm"
@@ -223,9 +224,10 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
 
 echo "Creating GitHub release..."
+CHANGELOG2="Changes in this version:\n\n$CHANGELOG"
 gh release --repo printfn/fend \
-    create "$NEW_VERSION" --title "Version $NEW_VERSION" \
-    --notes "Changes in this version:\n\n$CHANGELOG" \
+    create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
+    --notes "CHANGELOG2" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
@@ -292,7 +294,7 @@ mv "fend--$NEW_VERSION.monterey.bottle.1.tar.gz" \
 git -C "$TMPDIR/homebrew-fend" tag "v$NEW_VERSION"
 git -C "$TMPDIR/homebrew-fend" push --tags origin main
 gh release --repo printfn/homebrew-fend \
-    create "$NEW_VERSION" --title "Version $NEW_VERSION" \
+    create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
     --notes "v$NEW_VERSION" \
     "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
 manualstep "Add bottle info to $TMPDIR/homebrew-fend/Formula/fend.rb"
