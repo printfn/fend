@@ -181,6 +181,9 @@ fn use_colors_if_auto() -> bool {
     if cfg!(test) {
         return false;
     }
+    if env::var_os("NO_COLOR").is_some() {
+        return false;
+    }
     if env::var_os("CLICOLOR_FORCE").unwrap_or_else(|| "0".into()) != "0" {
         return true;
     }
