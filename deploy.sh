@@ -131,6 +131,18 @@ mv temp wiki/Home.md
 gitdiff "" 14 14
 
 manualstep "Add changelog to wiki/Home.md"
+
+echo "Extracted changelog:"
+CHANGELOG=$(tr "\n" "\1" <wiki/Home.md \
+    | grep --text -o "### v$NEW_VERSION .*### v$OLD_VERSION" \
+    | tr "\1" "\n" \
+    | tail +3 \
+    | sed "\$d" \
+    | sed "\$d")
+echo "$CHANGELOG"
+
+manualstep "Make sure this is the correct changelog"
+
 echo "Building and running tests..."
 cargo clippy --workspace --all-targets --all-features
 cargo build
@@ -162,7 +174,9 @@ sleep 30
 echo "cargo publish for fend"
 (cd cli && cargo publish)
 echo "Tag and push tag to GitHub"
-git tag "v$NEW_VERSION"
+git tag "v$NEW_VERSION" --annotate --message \
+    "# Version $NEW_VERSION\n\nChanges in this version:\n\n$CHANGELOG"
+manualstep "Verify the annotated tag is correct"
 git push --tags
 
 echo "Building NPM package fend-wasm"
@@ -207,18 +221,6 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
-
-echo "Extracted changelog:"
-CHANGELOG=$(cat wiki/Home.md \
-    | tr "\n" "\1" \
-    | grep --text -o "### v$NEW_VERSION .*### v$OLD_VERSION" \
-    | tr "\1" "\n" \
-    | tail +3 \
-    | sed "\$d" \
-    | sed "\$d")
-echo "$CHANGELOG"
-
-manualstep "Make sure this is the correct changelog"
 
 echo "Creating GitHub release..."
 gh release --repo printfn/fend \
