@@ -1,5 +1,5 @@
 use crate::color;
-use std::{env, fmt, fs, io, path};
+use std::{env, fmt, fs, io};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Config {
@@ -128,32 +128,8 @@ impl Default for Config {
 
 pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
-pub fn get_config_dir() -> Option<path::PathBuf> {
-    // first try $FEND_CONFIG_DIR
-    if let Some(env_var_config_dir) = env::var_os("FEND_CONFIG_DIR") {
-        return Some(path::PathBuf::from(env_var_config_dir));
-    }
-
-    // if not, then use these paths:
-    // Linux: $XDG_CONFIG_HOME/fend or $HOME/.config/fend
-    // macOS: $HOME/Library/Application Support/fend
-    // Windows: {FOLDERID_RoamingAppData}\fend\config
-    if let Some(proj_dirs) = directories::ProjectDirs::from("", "", "fend") {
-        return Some(path::PathBuf::from(proj_dirs.config_dir()));
-    }
-
-    None
-}
-
-pub fn get_config_file_dir() -> Option<path::PathBuf> {
-    get_config_dir().map(|mut dir| {
-        dir.push("config.toml");
-        dir
-    })
-}
-
 fn read_config_file() -> Config {
-    let path = match get_config_file_dir() {
+    let path = match crate::file_paths::get_config_file_location() {
         Some(path) => path,
         None => return Config::default(),
     };

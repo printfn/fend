@@ -8,8 +8,8 @@ use std::{env, path, process};
 mod color;
 mod config;
 mod context;
+mod file_paths;
 mod helper;
-mod history;
 mod interrupt;
 
 use context::Context;
@@ -78,12 +78,12 @@ fn print_help(explain_quitting: bool) {
     println!("https://github.com/printfn/fend/wiki");
     println!();
     println!("Version: {}", fend_core::get_version());
-    if let Some(config_path) = config::get_config_file_dir() {
+    if let Some(config_path) = file_paths::get_config_file_location() {
         println!("Config file: {}", config_path.to_string_lossy());
     } else {
         println!("Failed to get config file location");
     }
-    if let Some(history_path) = history::get_history_file_path() {
+    if let Some(history_path) = file_paths::get_history_file_location() {
         println!("History file: {}", history_path.to_string_lossy());
     } else {
         println!("Failed to get history file location");
@@ -116,7 +116,7 @@ fn repl_loop(config: &config::Config) -> i32 {
     }
     let mut context = Context::new(&core_context);
     rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
-    let history_path = history::get_history_file_path();
+    let history_path = file_paths::get_history_file_location();
     if let Some(history_path) = history_path.clone() {
         if rl.load_history(history_path.as_path()).is_err() {
             // No previous history
