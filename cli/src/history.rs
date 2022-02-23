@@ -1,4 +1,4 @@
-use std::{env, fs, mem, path};
+use std::{env, fs, path};
 
 fn get_history_dir() -> Option<path::PathBuf> {
     // first try $FEND_STATE_DIR
@@ -23,24 +23,6 @@ fn get_history_dir() -> Option<path::PathBuf> {
     Some(res)
 }
 
-fn try_migrate_history(new_history_file: &path::Path) {
-    let mut old_history_path = match crate::config::get_config_dir() {
-        Some(config_dir) => config_dir,
-        None => return,
-    };
-    old_history_path.push(".history");
-    if !old_history_path.is_file() {
-        // if it's not a file (or symlink), or if it doesn't exist at all, stop
-        return;
-    }
-    if new_history_file.exists() {
-        // if a new file already exists, delete the old one
-        mem::drop(fs::remove_file(old_history_path));
-    } else {
-        mem::drop(fs::rename(old_history_path, new_history_file));
-    }
-}
-
 pub fn get_history_file_path() -> Option<path::PathBuf> {
     let mut history_path = get_history_dir()?;
     match fs::create_dir_all(history_path.as_path()) {
@@ -48,6 +30,5 @@ pub fn get_history_file_path() -> Option<path::PathBuf> {
         Err(_) => return None,
     }
     history_path.push("history");
-    try_migrate_history(history_path.as_path());
     Some(history_path)
 }
