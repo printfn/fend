@@ -11,6 +11,7 @@ mod context;
 mod file_paths;
 mod helper;
 mod interrupt;
+mod terminal;
 
 use context::Context;
 
@@ -193,7 +194,7 @@ fn real_main() -> i32 {
             0
         }
         ArgsAction::Eval(expr) => {
-            let config = config::read(false);
+            let config = config::read();
             let core_context = std::cell::RefCell::new(fend_core::Context::new());
             if config.coulomb_and_farad {
                 core_context.borrow_mut().use_coulomb_and_farad();
@@ -209,7 +210,7 @@ fn real_main() -> i32 {
             }
         }
         ArgsAction::Repl => {
-            let config = config::read(true);
+            let config = config::read();
             repl_loop(&config)
         }
     }

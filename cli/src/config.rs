@@ -52,7 +52,17 @@ impl<'de> serde::Deserialize<'de> for Config {
                             if seen_enable_colors {
                                 return Err(serde::de::Error::duplicate_field("enable-colors"));
                             }
-                            result.enable_colors = map.next_value()?;
+                            let enable_colors: toml::Value = map.next_value()?;
+                            if enable_colors == false.into() || enable_colors == "never".into() {
+                                result.enable_colors = false;
+                            } else if enable_colors == true.into() || enable_colors == "auto".into()
+                            {
+                                result.enable_colors = use_colors_if_auto();
+                            } else if enable_colors == "always".into() {
+                                result.enable_colors = true;
+                            } else {
+                                eprintln!("Error: unknown config setting for {key}, expected one of `never`, `auto` or `always`");
+                            }
                             seen_enable_colors = true;
                         }
                         "coulomb-and-farad" => {
@@ -116,7 +126,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             prompt: "> ".to_string(),
-            enable_colors: false,
+            enable_colors: use_colors_if_auto(),
             coulomb_and_farad: false,
             colors: color::OutputColors::default(),
             max_history_size: 1000,
@@ -166,15 +176,24 @@ fn print_warnings_about_unknown_keys(config: &Config) {
     config.colors.print_warnings_about_unknown_keys();
 }
 
-pub fn read(interactive: bool) -> Config {
-    let mut config = read_config_file();
-    if !interactive {
-        config.enable_colors = false;
+// if the enable-colors setting is set to 'auto', should we use colors?
+fn use_colors_if_auto() -> bool {
+    if cfg!(test) {
+        return false;
     }
-    if env::var_os("NO_COLOR").is_some() {
-        config.enable_colors = false;
+    if env::var_os("CLICOLOR_FORCE").unwrap_or_else(|| "0".into()) != "0" {
+        return true;
     }
-    config
+    if env::var_os("CLICOLOR").unwrap_or_else(|| "1".into()) != "0"
+        && crate::terminal::atty_stdout()
+    {
+        return true;
+    }
+    false
+}
+
+pub fn read() -> Config {
+    read_config_file()
 }
 
 #[cfg(test)]
