@@ -1,9 +1,8 @@
 use std::{env, path};
 
 fn get_home_dir() -> Option<path::PathBuf> {
-    let userdirs = directories::UserDirs::new()?;
-    let home_dir = userdirs.home_dir();
-    Some(path::PathBuf::from(home_dir))
+    let home_dir = home::home_dir()?;
+    Some(home_dir)
 }
 
 fn get_config_dir() -> Option<path::PathBuf> {
