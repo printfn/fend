@@ -175,12 +175,9 @@ echo "Publishing npm package"
 echo "Building NPM package fend-wasm-web"
 rm -rfv wasm/pkgweb
 (cd wasm && wasm-pack build --target web --out-dir pkgweb)
-echo "Renaming package to 'fend-wasm-web'"
-sed 's/"name": "fend-wasm"/"name": "fend-wasm-web"/' wasm/pkgweb/package.json >temp
-mv temp wasm/pkgweb/package.json
-echo "Removing 'sideEffects: false'"
-sed 's/"sideEffects": false//' wasm/pkgweb/package.json |
-    sed 's/"types": "fend_wasm.d.ts",/"types": "fend_wasm.d.ts"/' >temp
+echo "Renaming package to 'fend-wasm-web' and removing 'sideEffects: false'..."
+jq "setpath([\"name\"]; \"fend-wasm-web\") | del(.sideEffects)" \
+    wasm/pkgweb/package.json >temp
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
 
