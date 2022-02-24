@@ -29,8 +29,8 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
         None
     }
 
-    fn as_bool(&self) -> Result<bool, String> {
-        Err(format!("expected a bool (found {})", self.type_name()))
+    fn as_bool(&self) -> Result<bool, FendError> {
+        Err(FendError::ExpectedABool(self.type_name()))
     }
 
     fn apply(&self, _arg: Value) -> Option<Result<Value, String>> {
@@ -428,7 +428,7 @@ impl Value {
         Ok(())
     }
 
-    pub(crate) fn get_object_member(self, key: &Ident) -> Result<Self, String> {
+    pub(crate) fn get_object_member(self, key: &Ident) -> Result<Self, FendError> {
         match self {
             Self::Object(kv) => {
                 for (k, v) in kv {
@@ -436,13 +436,13 @@ impl Value {
                         return Ok(*v);
                     }
                 }
-                Err("could not find key in object".to_string())
+                Err(FendError::CouldNotFindKeyInObject)
             }
             Self::Dynamic(d) => match d.get_object_member(key.as_str()) {
                 Some(v) => Ok(v),
-                None => Err(format!("could not find key {}", key.as_str())),
+                None => Err(FendError::CouldNotFindKey(key.to_string())),
             },
-            _ => Err("expected an object".to_string()),
+            _ => Err(FendError::ExpectedAnObject),
         }
     }
 }

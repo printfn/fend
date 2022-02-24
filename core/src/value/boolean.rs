@@ -1,4 +1,5 @@
 use super::ValueTrait;
+use crate::error::FendError;
 
 impl ValueTrait for bool {
     fn type_name(&self) -> &'static str {
@@ -12,7 +13,7 @@ impl ValueTrait for bool {
         });
     }
 
-    fn as_bool(&self) -> Result<bool, String> {
+    fn as_bool(&self) -> Result<bool, FendError> {
         Ok(*self)
     }
 }

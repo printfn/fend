@@ -151,7 +151,7 @@ pub(crate) fn evaluate<I: Interrupt>(
                     context,
                     int,
                 )?,
-                _ => return Err("invalid operands for subtraction".to_string().into()),
+                _ => return Err(FendError::InvalidOperandsForSubtraction),
             }
         }
         Expr::Bop(bop, a, b) => eval!(*a)?.handle_two_nums(
@@ -175,11 +175,7 @@ pub(crate) fn evaluate<I: Interrupt>(
             if should_compute_inverse(&*b) {
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
-                    Value::Fn(_, _, _) => {
-                        return Err("inverses of lambda functions are not currently supported"
-                            .to_string()
-                            .into())
-                    }
+                    Value::Fn(_, _, _) => return Err(FendError::InversesOfLambdasUnsupported),
                     _ => None,
                 };
                 if let Some(res) = result {
@@ -199,10 +195,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::As(a, b) => evaluate_as(*a, *b, scope, context, int)?,
         Expr::Fn(a, b) => Value::Fn(a, b, scope),
-        Expr::Of(a, b) => match eval!(*b)?.get_object_member(&a) {
-            Ok(value) => value,
-            Err(msg) => return Err(msg.into()),
-        },
+        Expr::Of(a, b) => eval!(*b)?.get_object_member(&a)?,
         Expr::Assign(a, b) => {
             let rhs = evaluate(*b, scope, context, int)?;
             context.variables.insert(a.to_string(), rhs.clone());

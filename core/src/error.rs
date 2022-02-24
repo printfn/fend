@@ -28,8 +28,13 @@ pub(crate) enum FendError {
     NumberWithUnitToInt,
     InexactNumberToInt,
     ExpectedANumber,
+    ExpectedABool(&'static str),
     InvalidDiceSyntax,
     InvalidType,
+    InvalidOperandsForSubtraction,
+    InversesOfLambdasUnsupported,
+    CouldNotFindKeyInObject,
+    CouldNotFindKey(String),
     CannotFormatWithZeroSf,
     IsNotAFunction(String),
     IsNotAFunctionOrNumber(String),
@@ -46,6 +51,7 @@ pub(crate) enum FendError {
     UnknownBackslashEscapeSequence(char),
     BackslashXOutOfRange,
     ExpectedALetterOrCode,
+    ExpectedAnObject,
     InvalidUnicodeEscapeSequence,
     FormattingError(fmt::Error),
     // todo remove this
@@ -79,6 +85,13 @@ impl fmt::Display for FendError {
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
+            Self::ExpectedABool(t) => write!(f, "expected a bool (found {t})"),
+            Self::CouldNotFindKeyInObject => write!(f, "could not find key in object"),
+            Self::CouldNotFindKey(k) => write!(f, "could not find key {k}"),
+            Self::InversesOfLambdasUnsupported => write!(
+                f,
+                "inverses of lambda functions are not currently supported"
+            ),
             Self::ExpectedARationalNumber => write!(f, "expected a rational number"),
             Self::CannotConvertToInteger => write!(f, "number cannot be converted to an integer"),
             Self::ComplexToInteger => write!(f, "cannot convert complex number to integer"),
@@ -87,6 +100,7 @@ impl fmt::Display for FendError {
             Self::ExpectedANumber => write!(f, "expected a number"),
             Self::InvalidDiceSyntax => write!(f, "invalid dice syntax, try e.g. `4d6`"),
             Self::InvalidType => write!(f, "invalid type"),
+            Self::InvalidOperandsForSubtraction => write!(f, "invalid operands for subtraction"),
             Self::CannotFormatWithZeroSf => {
                 write!(f, "cannot format a number with zero significant figures")
             }
@@ -120,6 +134,7 @@ impl fmt::Display for FendError {
                     "expected an uppercase letter, or one of @[\\]^_? (e.g. \\^H or \\^@)"
                 )
             }
+            Self::ExpectedAnObject => write!(f, "expected an object"),
             Self::InvalidUnicodeEscapeSequence => {
                 write!(
                     f,
