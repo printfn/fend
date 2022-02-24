@@ -3,6 +3,7 @@ use crate::lexer::{Symbol, Token};
 use crate::value::Value;
 use std::fmt;
 
+#[derive(Debug)]
 pub(crate) enum ParseError {
     ExpectedAToken,
     ExpectedToken(Symbol, Symbol),
@@ -19,6 +20,7 @@ pub(crate) enum ParseError {
     InvalidMixedFraction,
     UnexpectedWhitespace,
 }
+
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
@@ -49,6 +51,12 @@ impl fmt::Display for ParseError {
 }
 
 type ParseResult<'a, T = Expr> = Result<(T, &'a [Token]), ParseError>;
+
+impl From<ParseError> for crate::error::FendError {
+    fn from(e: ParseError) -> Self {
+        Self::ParseError(e)
+    }
+}
 
 fn parse_token(mut input: &[Token], skip_whitespace: bool) -> ParseResult<'_, Token> {
     loop {

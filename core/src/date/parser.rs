@@ -1,16 +1,8 @@
-use crate::date::{Date, Day, Month, Year};
-use std::{convert, error, fmt};
-
-#[derive(Debug)]
-pub(crate) struct ParseDateError<'a>(&'a str);
-
-impl fmt::Display for ParseDateError<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "failed to convert '{}' to a date", self.0)
-    }
-}
-
-impl error::Error for ParseDateError<'_> {}
+use crate::{
+    date::{Date, Day, Month, Year},
+    error::FendError,
+};
+use std::convert;
 
 fn parse_char(s: &str) -> Result<(char, &str), ()> {
     let ch = s.chars().next().ok_or(())?;
@@ -66,17 +58,14 @@ fn parse_yyyymmdd(s: &str) -> Result<(Date, &str), ()> {
     Ok((Date { year, month, day }, s))
 }
 
-pub(crate) fn parse_date(s: &str) -> Result<Date, ParseDateError<'_>> {
+pub(crate) fn parse_date(s: &str) -> Result<Date, FendError> {
     let trimmed = s.trim();
     if let Ok((date, remaining)) = parse_yyyymmdd(trimmed) {
         if remaining.is_empty() {
-            Ok(date)
-        } else {
-            Err(ParseDateError(s))
+            return Ok(date);
         }
-    } else {
-        Err(ParseDateError(s))
     }
+    Err(FendError::ParseDateError(s.to_string()))
 }
 
 #[cfg(test)]

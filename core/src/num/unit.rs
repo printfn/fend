@@ -344,7 +344,7 @@ impl Value {
         int: &I,
     ) -> Result<Self, FendError> {
         if require_unitless && !self.is_unitless() {
-            return Err("expected a unitless number".to_string().into());
+            return Err(FendError::ExpectedAUnitlessNumber);
         }
         let exact = f(self.value.one_point()?, int)?;
         Ok(Self {
@@ -364,7 +364,7 @@ impl Value {
         int: &I,
     ) -> Result<Self, FendError> {
         if require_unitless && !self.is_unitless() {
-            return Err("expected a unitless number".to_string().into());
+            return Err(FendError::ExpectedAUnitlessNumber);
         }
         Ok(Self {
             value: f(self.value.one_point()?, int)?.into(),

@@ -265,11 +265,9 @@ fn evaluate_as<I: Interrupt>(
             "date" => {
                 let a = evaluate(a, scope, context, int)?;
                 return if let Value::String(s) = a {
-                    Ok(crate::date::Date::parse(s.as_ref())
-                        .map_err(|e| e.to_string())?
-                        .into())
+                    Ok(crate::date::Date::parse(s.as_ref())?.into())
                 } else {
-                    Err("expected a string".to_string().into())
+                    Err(FendError::ExpectedAString)
                 };
             }
             "string" => {
@@ -286,18 +284,16 @@ fn evaluate_as<I: Interrupt>(
                         .as_ref()
                         .chars()
                         .next()
-                        .ok_or_else(|| "string cannot be empty".to_string())?;
+                        .ok_or(FendError::StringCannotBeEmpty)?;
                     if s.len() > ch.len_utf8() {
-                        return Err("string cannot be longer than one codepoint"
-                            .to_string()
-                            .into());
+                        return Err(FendError::StringCannotBeLonger);
                     }
                     let value = Value::Num(Box::new(
                         Number::from(u64::from(ch as u32)).with_base(Base::HEX),
                     ));
                     return Ok(value);
                 }
-                return Err("expected a string".to_string().into());
+                return Err(FendError::ExpectedAString);
             }
             _ => (),
         }
@@ -333,16 +329,16 @@ fn evaluate_as<I: Interrupt>(
                 .with_base(base),
         )),
         Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
-            return Err("unable to convert value to a function".to_string().into());
+            return Err(FendError::CannotConvertValueTo("function"));
         }
         Value::Object(_) => {
-            return Err("cannot convert value to object".to_string().into());
+            return Err(FendError::CannotConvertValueTo("object"));
         }
         Value::String(_) => {
-            return Err("cannot convert value to string".to_string().into());
+            return Err(FendError::CannotConvertValueTo("string"));
         }
         Value::Dynamic(d) => {
-            return Err(format!("cannot convert value to {}", d.type_name()).into());
+            return Err(FendError::CannotConvertValueTo(d.type_name()));
         }
     })
 }
@@ -408,12 +404,12 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "dp" => Value::Dp,
         "sf" => Value::Sf,
         "base" => Value::BuiltInFunction(BuiltInFunction::Base),
-        "dec" | "decimal" => Value::Base(Base::from_plain_base(10).map_err(|e| e.to_string())?),
-        "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16).map_err(|e| e.to_string())?),
-        "binary" => Value::Base(Base::from_plain_base(2).map_err(|e| e.to_string())?),
-        "ternary" => Value::Base(Base::from_plain_base(3).map_err(|e| e.to_string())?),
-        "senary" | "seximal" => Value::Base(Base::from_plain_base(6).map_err(|e| e.to_string())?),
-        "oct" | "octal" => Value::Base(Base::from_plain_base(8).map_err(|e| e.to_string())?),
+        "dec" | "decimal" => Value::Base(Base::from_plain_base(10)?),
+        "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),
+        "binary" => Value::Base(Base::from_plain_base(2)?),
+        "ternary" => Value::Base(Base::from_plain_base(3)?),
+        "senary" | "seximal" => Value::Base(Base::from_plain_base(6)?),
+        "oct" | "octal" => Value::Base(Base::from_plain_base(8)?),
         "version" => Value::String(crate::get_version_as_str().into()),
         "square" => evaluate_to_value("x: x^2", scope, context, int)?,
         "cubic" => evaluate_to_value("x: x^3", scope, context, int)?,
@@ -425,17 +421,9 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
             ("mass".into(), eval_box!("5.97237e24 kg")),
             ("volume".into(), eval_box!("1.08321e12 km^3")),
         ]),
-        "today" => crate::date::Date::today(context)
-            .map_err(|e| e.to_string())?
-            .into(),
-        "tomorrow" => crate::date::Date::today(context)
-            .map_err(|e| e.to_string())?
-            .next()
-            .into(),
-        "yesterday" => crate::date::Date::today(context)
-            .map_err(|e| e.to_string())?
-            .prev()
-            .into(),
+        "today" => crate::date::Date::today(context)?.into(),
+        "tomorrow" => crate::date::Date::today(context)?.next().into(),
+        "yesterday" => crate::date::Date::today(context)?.prev().into(),
         _ => return crate::units::query_unit(ident.as_str(), context, int),
     })
 }

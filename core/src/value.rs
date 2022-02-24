@@ -33,7 +33,7 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
         Err(FendError::ExpectedABool(self.type_name()))
     }
 
-    fn apply(&self, _arg: Value) -> Option<Result<Value, String>> {
+    fn apply(&self, _arg: Value) -> Option<Result<Value, FendError>> {
         None
     }
 
@@ -112,7 +112,7 @@ impl BuiltInFunction {
         )
     }
 
-    pub(crate) fn invert(self) -> Result<Value, String> {
+    pub(crate) fn invert(self) -> Result<Value, FendError> {
         Ok(match self {
             Self::Sin => Value::BuiltInFunction(Self::Asin),
             Self::Cos => Value::BuiltInFunction(Self::Acos),
@@ -126,7 +126,7 @@ impl BuiltInFunction {
             Self::Asinh => Value::BuiltInFunction(Self::Sinh),
             Self::Acosh => Value::BuiltInFunction(Self::Cosh),
             Self::Atanh => Value::BuiltInFunction(Self::Tanh),
-            _ => return Err(format!("unable to invert function {}", self)),
+            _ => return Err(FendError::UnableToInvertFunction(self.as_str())),
         })
     }
 
@@ -280,7 +280,7 @@ impl Value {
                 let other = crate::ast::evaluate(other, scope, context, int)?;
                 match d.apply(other) {
                     None => return Err(FendError::IsNotAFunctionOrNumber(stringified_self)),
-                    Some(Err(msg)) => return Err(msg.into()),
+                    Some(Err(msg)) => return Err(msg),
                     Some(Ok(val)) => val,
                 }
             }
@@ -320,9 +320,7 @@ impl Value {
                     .try_as_usize(int)?
                     .try_into()
                     .map_err(|_| FendError::UnableToConvertToBase)?;
-                return Ok(Self::Base(
-                    Base::from_plain_base(n).map_err(|e| e.to_string())?,
-                ));
+                return Ok(Self::Base(Base::from_plain_base(n)?));
             }
             BuiltInFunction::Sample => arg.expect_num()?.sample(context, int)?,
         })))

@@ -30,16 +30,20 @@ pub(crate) enum FendError {
     ExpectedANumber,
     ExpectedABool(&'static str),
     InvalidDiceSyntax,
+    UnableToInvertFunction(&'static str),
     InvalidType,
     InvalidOperandsForSubtraction,
     InversesOfLambdasUnsupported,
     CouldNotFindKeyInObject,
     CouldNotFindKey(String),
     CannotFormatWithZeroSf,
+    UnableToGetCurrentDate,
     IsNotAFunction(String),
     IsNotAFunctionOrNumber(String),
     IdentifierNotFound(crate::ident::Ident),
     ExpectedACharacter,
+    StringCannotBeLonger,
+    StringCannotBeEmpty,
     ExpectedADigit(char),
     ExpectedChar(char, char),
     ExpectedDigitSeparator(char),
@@ -51,9 +55,14 @@ pub(crate) enum FendError {
     UnknownBackslashEscapeSequence(char),
     BackslashXOutOfRange,
     ExpectedALetterOrCode,
+    ExpectedAUnitlessNumber,
     ExpectedAnObject,
     InvalidUnicodeEscapeSequence,
     FormattingError(fmt::Error),
+    ParseDateError(String),
+    ParseError(crate::parser::ParseError),
+    ExpectedAString,
+    CannotConvertValueTo(&'static str),
     // todo remove this
     String(String),
 }
@@ -62,10 +71,12 @@ impl fmt::Display for FendError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Interrupted => write!(f, "interrupted"),
+            Self::ParseError(e) => write!(f, "{e}"),
             Self::InvalidBasePrefix => write!(
                 f,
                 "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
             ),
+            Self::CannotConvertValueTo(ty) => write!(f, "cannot convert value to {ty}"),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
             Self::UnableToConvertToBase => write!(f, "unable to convert number to a valid base"),
@@ -75,6 +86,10 @@ impl fmt::Display for FendError {
             Self::OutOfRange { range, value } => {
                 write!(f, "{} must lie in the interval {}", value, range)
             }
+            Self::ExpectedAUnitlessNumber => write!(f, "expected a unitless number"),
+            Self::StringCannotBeLonger => write!(f, "string cannot be longer than one codepoint"),
+            Self::StringCannotBeEmpty => write!(f, "string cannot be empty"),
+            Self::UnableToGetCurrentDate => write!(f, "unable to get the current date"),
             Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
             Self::ProbabilityDistributionsNotAllowed => {
                 write!(
@@ -82,6 +97,9 @@ impl fmt::Display for FendError {
                     "probability distributions are not allowed (consider using `sample`)"
                 )
             }
+            Self::ParseDateError(s) => write!(f, "failed to convert '{s}' to a date"),
+            Self::ExpectedAString => write!(f, "expected a string"),
+            Self::UnableToInvertFunction(name) => write!(f, "unable to invert function {name}"),
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),

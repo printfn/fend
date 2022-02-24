@@ -23,25 +23,17 @@ pub(crate) struct Date {
     day: Day,
 }
 
-pub(crate) struct TodayError;
-
-impl fmt::Display for TodayError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "unable to get the current date")
-    }
-}
-
 impl Date {
     #[allow(
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss,
         clippy::cast_possible_wrap
     )]
-    pub(crate) fn today(context: &mut crate::Context) -> Result<Self, TodayError> {
+    pub(crate) fn today(context: &mut crate::Context) -> Result<Self, FendError> {
         let current_time_info = if let Some(t) = &context.current_time {
             t
         } else {
-            return Err(TodayError);
+            return Err(FendError::UnableToGetCurrentDate);
         };
         let mut ms_since_epoch = current_time_info.elapsed_unix_time_ms as i64;
         ms_since_epoch -= current_time_info.timezone_offset_secs * 1000;
@@ -138,7 +130,7 @@ impl Date {
         }
     }
 
-    pub(crate) fn parse(s: &str) -> Result<Self, parser::ParseDateError<'_>> {
+    pub(crate) fn parse(s: &str) -> Result<Self, FendError> {
         parser::parse_date(s)
     }
 }

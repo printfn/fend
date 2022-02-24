@@ -26,10 +26,10 @@ impl ValueTrait for Func {
         });
     }
 
-    fn apply<'a>(&self, arg: Value) -> Option<Result<Value, String>> {
+    fn apply<'a>(&self, arg: Value) -> Option<Result<Value, FendError>> {
         let res = match (self.f)(arg) {
             Ok(v) => v,
-            Err(msg) => return Some(Err(msg.to_string())),
+            Err(msg) => return Some(Err(msg)),
         };
         Some(Ok(res))
     }
