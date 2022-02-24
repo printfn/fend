@@ -35,25 +35,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2.4.0
-      - name: Install minimal stable with clippy and rustfmt
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt, clippy
+      - name: Update Rust
+        run: rustup update
 
       - uses: Swatinem/rust-cache@v1
 
-      - name: Clippy
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --workspace --all-targets --all-features -- -D warnings
-
-      - name: rustfmt
+      - name: Clippy, rustfmt
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
+          rustup component add clippy
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
           cargo fmt -- --check
 
       - name: Build, get version
