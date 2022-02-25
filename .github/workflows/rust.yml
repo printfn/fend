@@ -107,7 +107,7 @@ jobs:
           path: target/armv7-unknown-linux-gnueabihf/release/fend
           if-no-files-found: error
 
-      - name: Build (linux-aarch64)
+      - name: Build (linux-aarch64-gnu)
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add aarch64-unknown-linux-gnu
@@ -115,11 +115,11 @@ jobs:
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc
           cargo build --release --package fend --target aarch64-unknown-linux-gnu
 
-      - name: Upload artifacts (linux-aarch64)
+      - name: Upload artifacts (linux-aarch64-gnu)
         uses: actions/upload-artifact@v2.3.1
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         with:
-          name: fend-${{ env.FEND_VERSION }}-linux-aarch64
+          name: fend-${{ env.FEND_VERSION }}-linux-aarch64-gnu
           path: target/aarch64-unknown-linux-gnu/release/fend
           if-no-files-found: error
 
