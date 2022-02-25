@@ -39,7 +39,8 @@ fail() {
 }
 
 checkversion() {
-    echo "$1" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null || fail "Invalid version"
+    echo "$1" | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" >/dev/null \
+        || fail "Invalid version"
 }
 
 confirm() {
@@ -62,12 +63,12 @@ gitdiff() {
     local added_lines
     added_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^+')"
     if [[ "$added_lines" != "$expected_add_count" ]]; then
-        fail "Expected $expected_add_count lines + files to be different"
+        fail "Expected $expected_add_count lines+files to be different"
     fi
     local removed_lines
     removed_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^-')"
     if [[ "$removed_lines" != "$expected_del_count" ]]; then
-        fail "Expected $expected_del_count lines + files to be different"
+        fail "Expected $expected_del_count lines+files to be different"
     fi
 }
 
@@ -78,9 +79,10 @@ if [[ "$current_branch" != "main" ]]; then
     echo "Error: not on main branch"
 fi
 
-OLD_VERSION="$(cargo run -q -- version)"
+OLD_VERSION="$(cargo run --package fend --quiet -- version)"
 
-confirm "Releasing update $OLD_VERSION -> $NEW_VERSION. Update the README file if necessary."
+confirm "Releasing update $OLD_VERSION -> $NEW_VERSION. \
+Update the README file and other documentation if necessary."
 
 echo "Updating Cargo.lock" # also ensures the internet connection works
 cargo update
@@ -105,39 +107,46 @@ fi
 echo "Bumping version numbers..."
 
 # version number in fend-core
-sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" core/Cargo.toml >temp
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
+    core/Cargo.toml >temp
 mv temp core/Cargo.toml
 
 # fend-core docs attr
-sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" core/src/lib.rs >temp
+sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" \
+    core/src/lib.rs >temp
 mv temp core/src/lib.rs
 
 # fend-core get_version_as_str()
-sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" core/src/lib.rs >temp
+sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" \
+    core/src/lib.rs >temp
 mv temp core/src/lib.rs
 
 # fend cli TOML x2
-sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" cli/Cargo.toml >temp
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
+    cli/Cargo.toml >temp
 mv temp cli/Cargo.toml
 
 # wasm TOML
-sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" wasm/Cargo.toml >temp
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
+    wasm/Cargo.toml >temp
 mv temp wasm/Cargo.toml
 
 # fend web initialisation
-sed "s/release: \"fend@$OLD_VERSION\"/release: \"fend@$NEW_VERSION\"/" web/index.html >temp
+sed "s/release: \"fend@$OLD_VERSION\"/release: \"fend@$NEW_VERSION\"/" \
+    web/index.html >temp
 mv temp web/index.html
 
 # wiki
-sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" wiki/Home.md >temp
+sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" \
+    wiki/Home.md >temp
 mv temp wiki/Home.md
 
 gitdiff "" 14 14
 
-manualstep "Add changelog to wiki/Home.md"
+manualstep "Add changelog to CHANGELOG.md"
 
 echo "Extracted changelog:"
-CHANGELOG=$(tr "\n" "\1" <wiki/Home.md \
+CHANGELOG=$(tr "\n" "\1" <CHANGELOG.md \
     | grep --text -o "### v$NEW_VERSION .*### v$OLD_VERSION" \
     | tr "\1" "\n" \
     | tail +3 \
@@ -154,7 +163,8 @@ cargo run -- version
 cargo test --all
 echo "'cargo run -- version'"
 cargo run -q -- version
-cargo run -q -- version | grep "$NEW_VERSION" || fail "cargo run -- version returned the wrong version"
+cargo run -q -- version | grep "$NEW_VERSION" \
+    || fail "cargo run -- version returned the wrong version"
 echo "Committing..."
 git add -A
 git --no-pager diff --cached
@@ -228,7 +238,8 @@ echo "Creating GitHub release..."
 CHANGELOG2="Changes in this version:\n\n$CHANGELOG"
 gh release --repo printfn/fend \
     create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
-    --notes "CHANGELOG2" \
+    --notes "$CHANGELOG2" \
+    --draft \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
@@ -236,7 +247,8 @@ gh release --repo printfn/fend \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip"
 
-manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION and check that it is correct"
+manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION \
+and check that it is correct"
 
 # AUR release
 git clone ssh://aur@aur.archlinux.org/fend.git "$TMPDIR/fend-aur"

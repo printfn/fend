@@ -130,6 +130,11 @@ jobs:
           (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
           rm web/pkg/.gitignore
 
+      - name: Build wiki
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        run: |
+          cat CHANGELOG.md >>wiki/Home.md
+
       - name: Upload Manual to Wiki
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         uses: SwiftDocOrg/github-wiki-publish-action@v1
