@@ -3,7 +3,7 @@
 # means that e.g. `fend 2 * 3` will work as expected (instead of zsh
 # trying to expand `*` into a list of files).
 #
-# You can try out how this works by running `source noglob.sh`, or you
+# You can try out how this works by running `source zsh-helper.zsh`, or you
 # can simply copy-paste this into your ~/.zshrc file.
 #
 # Note that this only works in zsh, not in bash or any other shell.
