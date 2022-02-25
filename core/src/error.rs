@@ -86,6 +86,7 @@ pub(crate) enum FendError {
 }
 
 impl fmt::Display for FendError {
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Interrupted => write!(f, "interrupted"),
