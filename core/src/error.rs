@@ -13,6 +13,7 @@ pub(crate) enum FendError {
     DivideByZero,
     ExponentTooLarge,
     ZeroToThePowerOfZero,
+    FactorialComplex,
     OutOfRange {
         value: Box<dyn crate::format::DisplayDebug>,
         range: Range<Box<dyn crate::format::DisplayDebug>>,
@@ -20,6 +21,7 @@ pub(crate) enum FendError {
     NegativeNumbersNotAllowed,
     ProbabilityDistributionsNotAllowed,
     FractionToInteger,
+    ModuloByZero,
     RandomNumbersNotAvailable,
     MustBeAnInteger(Box<dyn crate::format::DisplayDebug>),
     ExpectedARationalNumber,
@@ -30,6 +32,8 @@ pub(crate) enum FendError {
     ExpectedANumber,
     ExpectedABool(&'static str),
     InvalidDiceSyntax,
+    SpecifyNumDp,
+    SpecifyNumSf,
     UnableToInvertFunction(&'static str),
     InvalidType,
     InvalidOperandsForSubtraction,
@@ -62,9 +66,23 @@ pub(crate) enum FendError {
     ParseDateError(String),
     ParseError(crate::parser::ParseError),
     ExpectedAString,
+    ExpComplex,
+    ExpectedARealNumber,
+    ConversionRhsNumerical,
+    FactorialUnitless,
+    RootsComplex,
+    ModuloForPositiveInts,
+    ExpUnitless,
+    IncompatibleConversion {
+        from: String,
+        to: String,
+        from_base: String,
+        to_base: String,
+    },
+    ModuloUnitless,
+    RootsOfNegativeNumbers,
+    NonIntegerNegRoots,
     CannotConvertValueTo(&'static str),
-    // todo remove this
-    String(String),
 }
 
 impl fmt::Display for FendError {
@@ -72,12 +90,39 @@ impl fmt::Display for FendError {
         match self {
             Self::Interrupted => write!(f, "interrupted"),
             Self::ParseError(e) => write!(f, "{e}"),
+            Self::FactorialUnitless => {
+                write!(f, "factorial is only supported for unitless numbers")
+            }
+            Self::ModuloUnitless => write!(f, "modulo is only supported for unitless numbers"),
+            Self::FactorialComplex => write!(f, "factorial is not supported for complex numbers"),
+            Self::RootsComplex => write!(f, "roots are currently unsupported for complex numbers"),
+            Self::ExpComplex => write!(f, "exponentiation is not supported for complex numbers"),
+            Self::ExpUnitless => write!(f, "exponentiation is only supported for unitless numbers"),
             Self::InvalidBasePrefix => write!(
                 f,
                 "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
             ),
+            Self::IncompatibleConversion {
+                from,
+                to,
+                from_base,
+                to_base,
+            } => {
+                write!(f, "cannot convert from {from} to {to}: units '{from_base}' and '{to_base}' are incompatible")
+            }
+            Self::NonIntegerNegRoots => write!(f, "cannot compute non-integer or negative roots"),
+            Self::RootsOfNegativeNumbers => {
+                write!(f, "roots of negative numbers are not supported")
+            }
+            Self::ModuloForPositiveInts => {
+                write!(f, "modulo is only supported for positive integers")
+            }
             Self::CannotConvertValueTo(ty) => write!(f, "cannot convert value to {ty}"),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
+            Self::ConversionRhsNumerical => write!(
+                f,
+                "right-hand side of unit conversion has a numerical value"
+            ),
             Self::BaseTooLarge => write!(f, "base cannot be larger than 36"),
             Self::UnableToConvertToBase => write!(f, "unable to convert number to a valid base"),
             Self::DivideByZero => write!(f, "division by zero"),
@@ -86,7 +131,17 @@ impl fmt::Display for FendError {
             Self::OutOfRange { range, value } => {
                 write!(f, "{} must lie in the interval {}", value, range)
             }
+            Self::ModuloByZero => write!(f, "modulo by zero"),
+            Self::SpecifyNumDp => write!(
+                f,
+                "you need to specify what number of decimal places to use, e.g. '10 dp'"
+            ),
+            Self::SpecifyNumSf => write!(
+                f,
+                "you need to specify what number of significant figures to use, e.g. '10 sf'"
+            ),
             Self::ExpectedAUnitlessNumber => write!(f, "expected a unitless number"),
+            Self::ExpectedARealNumber => write!(f, "expected a real number"),
             Self::StringCannotBeLonger => write!(f, "string cannot be longer than one codepoint"),
             Self::StringCannotBeEmpty => write!(f, "string cannot be empty"),
             Self::UnableToGetCurrentDate => write!(f, "unable to get the current date"),
@@ -160,7 +215,6 @@ impl fmt::Display for FendError {
                 )
             }
             Self::FormattingError(_) => write!(f, "error during formatting"),
-            Self::String(s) => write!(f, "{}", s),
         }
     }
 }
@@ -171,13 +225,6 @@ impl error::Error for FendError {
             Self::FormattingError(e) => Some(e),
             _ => None,
         }
-    }
-}
-
-// todo remove this impl
-impl From<String> for FendError {
-    fn from(e: String) -> Self {
-        Self::String(e)
     }
 }
 

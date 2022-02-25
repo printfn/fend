@@ -46,9 +46,7 @@ impl Complex {
 
     pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         if self.imag != 0.into() {
-            return Err("factorial is not supported for complex numbers"
-                .to_string()
-                .into());
+            return Err(FendError::FactorialComplex);
         }
         Ok(Self {
             real: self.real.factorial(int)?,
@@ -58,11 +56,7 @@ impl Complex {
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
         if self.imag != 0.into() || rhs.imag != 0.into() {
-            return Err(
-                "exponentiation is currently unsupported for complex numbers"
-                    .to_string()
-                    .into(),
-            );
+            return Err(FendError::ExpComplex);
         }
         let real = self.real.pow(rhs.real, int)?;
         Ok(Exact::new(
@@ -203,9 +197,7 @@ impl Complex {
 
     pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
         if self.imag != 0.into() || n.imag != 0.into() {
-            return Err("roots are currently unsupported for complex numbers"
-                .to_string()
-                .into());
+            return Err(FendError::RootsComplex);
         }
         let real_root = self.real.root_n(&n.real, int)?;
         Ok(Exact::new(
@@ -221,7 +213,7 @@ impl Complex {
         if self.imag.is_zero() {
             Ok(self.real)
         } else {
-            Err("expected a real number".to_string().into())
+            Err(FendError::ExpectedARealNumber)
         }
     }
 

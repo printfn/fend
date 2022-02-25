@@ -263,9 +263,7 @@ impl BigRat {
             return Err(FendError::MustBeAnInteger(Box::new(n)));
         }
         if self.sign == Sign::Negative && self.num != 0.into() {
-            return Err(out_of_range(self.fm(int)?, Range::ZERO_OR_GREATER)
-                .to_string()
-                .into());
+            return Err(out_of_range(self.fm(int)?, Range::ZERO_OR_GREATER));
         }
         Ok(Self {
             sign: Sign::Positive,
@@ -354,7 +352,7 @@ impl BigRat {
         int: &I,
     ) -> Result<Self, FendError> {
         if rhs.num == 0.into() {
-            return Err("modulo by zero".to_string().into());
+            return Err(FendError::ModuloByZero);
         }
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
@@ -363,9 +361,7 @@ impl BigRat {
             || self.den != 1.into()
             || rhs.den != 1.into()
         {
-            return Err("modulo is only supported for positive integers"
-                .to_string()
-                .into());
+            return Err(FendError::ModuloForPositiveInts);
         }
         Ok(Self {
             sign: Sign::Positive,
@@ -814,9 +810,7 @@ impl BigRat {
         self = self.simplify(int)?;
         rhs = rhs.simplify(int)?;
         if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
-            return Err("roots of negative numbers are not supported"
-                .to_string()
-                .into());
+            return Err(FendError::RootsOfNegativeNumbers);
         }
         if rhs.sign == Sign::Negative {
             // a^-b => 1/a^b
@@ -877,15 +871,11 @@ impl BigRat {
     // n must be an integer
     pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
         if self.num != 0.into() && self.sign == Sign::Negative {
-            return Err("cannot compute roots of negative numbers"
-                .to_string()
-                .into());
+            return Err(FendError::RootsOfNegativeNumbers);
         }
         let n = n.clone().simplify(int)?;
         if n.den != 1.into() || n.sign == Sign::Negative {
-            return Err("cannot compute non-integer or negative roots"
-                .to_string()
-                .into());
+            return Err(FendError::NonIntegerNegRoots);
         }
         let n = &n.num;
         if self.num == 0.into() {

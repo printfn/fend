@@ -98,9 +98,7 @@ impl Value {
 
     pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         if !self.is_unitless() {
-            return Err("factorial is only supported for unitless numbers"
-                .to_string()
-                .into());
+            return Err(FendError::FactorialUnitless);
         }
         Ok(Self {
             value: Dist::from(self.value.one_point()?.factorial(int)?),
@@ -144,9 +142,7 @@ impl Value {
 
     pub(crate) fn convert_to<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if rhs.value.one_point()? != 1.into() {
-            return Err("right-hand side of unit conversion has a numerical value"
-                .to_string()
-                .into());
+            return Err(FendError::ConversionRhsNumerical);
         }
         let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
         let new_value = Exact::new(self.value, self.exact)
@@ -201,9 +197,7 @@ impl Value {
 
     fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if !self.is_unitless() || !rhs.is_unitless() {
-            return Err("modulo is only supported for only unitless numbers"
-                .to_string()
-                .into());
+            return Err(FendError::ModuloUnitless);
         }
         Ok(Self {
             value: Dist::from(
@@ -240,9 +234,7 @@ impl Value {
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if !rhs.is_unitless() {
-            return Err("only unitless exponents are currently supported"
-                .to_string()
-                .into());
+            return Err(FendError::ExpUnitless);
         }
         let mut new_components = vec![];
         let mut exact_res = true;
@@ -887,14 +879,12 @@ impl Unit {
                     int,
                 )?
                 .value;
-            Err(format!(
-                "cannot convert from {} to {}: units '{}' and '{}' are incompatible",
-                from_formatted,
-                into_formatted,
-                Self::print_base_units(hash_a, int)?,
-                Self::print_base_units(hash_b, int)?,
-            )
-            .into())
+            Err(FendError::IncompatibleConversion {
+                from: from_formatted,
+                to: into_formatted,
+                from_base: Self::print_base_units(hash_a, int)?,
+                to_base: Self::print_base_units(hash_b, int)?,
+            })
         }
     }
 

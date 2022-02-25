@@ -310,18 +310,10 @@ fn evaluate_as<I: Interrupt>(
                 .with_format(fmt),
         )),
         Value::Dp => {
-            return Err(
-                "you need to specify what number of decimal places to use, e.g. '10 dp'"
-                    .to_string()
-                    .into(),
-            );
+            return Err(FendError::SpecifyNumDp);
         }
         Value::Sf => {
-            return Err(
-                "you need to specify what number of significant figures to use, e.g. '10 sf'"
-                    .to_string()
-                    .into(),
-            );
+            return Err(FendError::SpecifyNumSf);
         }
         Value::Base(base) => Value::Num(Box::new(
             evaluate(a, scope, context, int)?
