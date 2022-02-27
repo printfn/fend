@@ -40,16 +40,16 @@ brew install printfn/fend/fend
 
 ### Arch Linux
 
-fend is available on the [AUR](https://aur.archlinux.org/packages/fend/):
-
-```bash
-yay -Syu aur/fend
-```
-
-You can also install a [precompiled version](https://aur.archlinux.org/packages/fend-bin/) from the AUR with:
+fend is available on the [AUR](https://aur.archlinux.org/packages/fend-bin/):
 
 ```bash
 yay -Syu aur/fend-bin
+```
+
+You can also [build it from source](https://aur.archlinux.org/packages/fend/) with:
+
+```bash
+yay -Syu aur/fend
 ```
 
 ### nix package manager
@@ -71,11 +71,12 @@ nix-shell -p fend
 You can download the latest stable binaries for Windows, macOS and Linux [here](https://github.com/printfn/fend/releases/latest).
 
 Binaries are available for:
-* Windows (64-bit)
+* Linux (aarch64)
+* Linux (x86-64)
+* Linux (armv7-gnueabihf)
 * macOS (64-bit Intel)
 * macOS (Apple Silicon)
-* Linux (x86-64)
-* Linux (armv7-gnueabihf, compatible with Raspberry Pi)
+* Windows (64-bit)
 
 ### Install via crates.io
 

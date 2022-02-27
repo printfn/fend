@@ -4,7 +4,6 @@
 [![codecov](https://codecov.io/gh/printfn/fend/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
-[![docs.rs](https://docs.rs/fend-core/badge.svg)](https://docs.rs/fend-core)
 
 [fend](https://printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
 
@@ -37,6 +36,12 @@ brew install printfn/fend/fend
 ```
 
 On Arch Linux (using `yay`):
+
+```bash
+yay -Syu aur/fend-bin
+```
+
+If you prefer building fend from source, you can run:
 
 ```bash
 yay -Syu aur/fend
