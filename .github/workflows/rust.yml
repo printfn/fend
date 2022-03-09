@@ -91,7 +91,7 @@ jobs:
           path: target/aarch64-apple-darwin/release/fend
           if-no-files-found: error
 
-        # Disable linux-armv7-gnueabihf builds since the Ubuntu package
+        # Disable Linux ARM builds since the Ubuntu packages
         # seems to be broken (as of 2022-03-09)
       - name: Build (linux-armv7-gnueabihf)
         if: false # ${{ matrix.platform == 'ubuntu-latest' }}
@@ -110,7 +110,7 @@ jobs:
           if-no-files-found: error
 
       - name: Build (linux-aarch64-gnu)
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        if: false # ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add aarch64-unknown-linux-gnu
           sudo apt-get install -yq gcc-aarch64-linux-gnu
@@ -119,7 +119,7 @@ jobs:
 
       - name: Upload artifacts (linux-aarch64-gnu)
         uses: actions/upload-artifact@v2.3.1
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        if: false # ${{ matrix.platform == 'ubuntu-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-aarch64-gnu
           path: target/aarch64-unknown-linux-gnu/release/fend
