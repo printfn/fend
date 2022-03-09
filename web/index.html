@@ -4,11 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1">
 <title>fend</title>
-<script
-  src="https://browser.sentry-cdn.com/6.2.0/bundle.tracing.min.js"
-  integrity="sha384-Z4qhO5iPVi3IJ9//F7/h6V6HxmpfDYFY2y7N6cYuCU4QUVfo5CcTB4hM+eNq0sQl"
-  crossorigin="anonymous"
-></script>
 <script src="pkg/fend_wasm.js"></script>
 <style>
 body {
@@ -108,16 +103,6 @@ async function load() {
 
 window.onload = load;
 window.onhashchange = load;
-
-Sentry.init({
-    dsn: "https://5b6e3d3bd2f842789a3d77ed4beeda7d@o491618.ingest.sentry.io/5643953",
-    release: "fend@0.1.29",
-    integrations: [new Sentry.Integrations.BrowserTracing()],
-
-    // We recommend adjusting this value in production, or using tracesSampler
-    // for finer control
-    tracesSampleRate: 1.0,
-});
 
 </script>
 
