@@ -91,8 +91,10 @@ jobs:
           path: target/aarch64-apple-darwin/release/fend
           if-no-files-found: error
 
+        # Disable linux-armv7-gnueabihf builds since the Ubuntu package
+        # seems to be broken (as of 2022-03-09)
       - name: Build (linux-armv7-gnueabihf)
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        if: false # ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add armv7-unknown-linux-gnueabihf
           sudo apt-get install -yq gcc-arm-linux-gnueabihf
@@ -101,7 +103,7 @@ jobs:
 
       - name: Upload artifacts (linux-armv7-gnueabihf)
         uses: actions/upload-artifact@v2.3.1
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        if: false # ${{ matrix.platform == 'ubuntu-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-armv7-gnueabihf
           path: target/armv7-unknown-linux-gnueabihf/release/fend
