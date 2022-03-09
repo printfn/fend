@@ -386,7 +386,10 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     ];
     let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
     let split_on_subsequent_digit = ['$', '£'];
-    if only_valid_by_themselves.contains(&ch) {
+    let always_invalid = ['λ'];
+    if always_invalid.contains(&ch) {
+        false
+    } else if only_valid_by_themselves.contains(&ch) {
         // these are only valid if there was no previous char
         prev.is_none()
     } else if only_valid_by_themselves.contains(&prev.unwrap_or('a')) {
@@ -466,7 +469,7 @@ fn parse_symbol(ch: char, input: &mut &str) -> Result<Token, FendError> {
                 Symbol::Equals
             }
         }
-        '\\' => Symbol::Backslash,
+        '\\' | '\u{3bb}' => Symbol::Backslash, // lambda symbol
         '.' => Symbol::Dot,
         '<' => {
             if test_next('<') {

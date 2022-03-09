@@ -5423,3 +5423,8 @@ fn add_days_to_date() {
         "Thursday, 16 September 2021",
     );
 }
+
+#[test]
+fn fancy_syntax() {
+    test_eval("(\u{3bb}x.x) 5", "5");
+}
