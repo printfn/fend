@@ -174,7 +174,8 @@ echo "Waiting for CI to start..."
 sleep 5
 GH_RUN_ID=$(gh run list -b main --json databaseId,headSha \
     | jq ".[] | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .databaseId")
-gh run watch --exit-status "$GH_RUN_ID"
+
+manualstep "Wait for GitHub CI to pass"
 
 echo "cargo publish for fend-core"
 (cd core && cargo publish)
