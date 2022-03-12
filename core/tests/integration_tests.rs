@@ -5428,3 +5428,18 @@ fn add_days_to_date() {
 fn fancy_syntax() {
     test_eval("(\u{3bb}x.x) 5", "5");
 }
+
+#[test]
+fn kmh() {
+    test_eval("25146 kmh to mph", "15625 mph");
+}
+
+#[test]
+fn km_slash_h() {
+    test_eval("25146 km/h to mph", "15625 mph");
+}
+
+#[test]
+fn planck() {
+    test_eval("planck", "0.000000000000000000000000000000000662607015 J s");
+}
