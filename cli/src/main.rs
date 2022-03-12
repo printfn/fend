@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, path, process};
+use std::{env, io, path, process};
 
 mod color;
 mod config;
@@ -173,8 +173,21 @@ fn repl_loop(config: &config::Config) -> i32 {
     }
 }
 
-fn main() {
-    process::exit(real_main())
+fn eval_expr(expr: &str) -> i32 {
+    let config = config::read();
+    let core_context = std::cell::RefCell::new(fend_core::Context::new());
+    if config.coulomb_and_farad {
+        core_context.borrow_mut().use_coulomb_and_farad();
+    }
+    match eval_and_print_res(
+        expr,
+        &mut Context::new(&core_context),
+        &interrupt::Never::default(),
+        &config,
+    ) {
+        EvalResult::Ok | EvalResult::NoInput => 0,
+        EvalResult::Err => 1,
+    }
 }
 
 fn real_main() -> i32 {
@@ -193,27 +206,28 @@ fn real_main() -> i32 {
             println!("{}", config::DEFAULT_CONFIG_FILE);
             0
         }
-        ArgsAction::Eval(expr) => {
-            let config = config::read();
-            let core_context = std::cell::RefCell::new(fend_core::Context::new());
-            if config.coulomb_and_farad {
-                core_context.borrow_mut().use_coulomb_and_farad();
-            }
-            match eval_and_print_res(
-                expr.as_str(),
-                &mut Context::new(&core_context),
-                &interrupt::Never::default(),
-                &config,
-            ) {
-                EvalResult::Ok | EvalResult::NoInput => 0,
-                EvalResult::Err => 1,
-            }
-        }
+        ArgsAction::Eval(expr) => eval_expr(expr.as_str()),
         ArgsAction::Repl => {
-            let config = config::read();
-            repl_loop(&config)
+            if terminal::atty_stdin() {
+                let config = config::read();
+                repl_loop(&config)
+            } else {
+                let mut input = String::new();
+                match io::Read::read_to_string(&mut io::stdin(), &mut input) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        return 1;
+                    }
+                }
+                eval_expr(input.as_str())
+            }
         }
     }
+}
+
+fn main() {
+    process::exit(real_main())
 }
 
 impl FromIterator<String> for ArgsAction {
