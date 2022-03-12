@@ -326,7 +326,7 @@ Many constants are available, including:
 * `pi`: approx. 3.1415926535
 * `e`: approx. 2.7182818284
 * `c`: 299792458 m/s (speed of light)
-* `h`: 6.62607015e-34 J s (Planck constant)
+* `planck`: 6.62607015e-34 J s (Planck constant)
 * `boltzmann`: 1.380649e-23 J / K (Boltzmann constant)
 * `avogadro`: 6.02214076e23 / mol (Avogadro constant)
 * `electroncharge`, `electronmass`, `protonmass`, etc.
@@ -343,6 +343,8 @@ You can define your own lambda functions using either `\ .`, `:` or `=>`:
 > (x: x to lb to 2 dp) (60 kg)
 132.27 lbs
 ```
+
+The notation `λx.x` is also supported.
 
 Even the [Y Combinator](https://en.wikipedia.org/wiki/Fixed-point_combinator#Fixed-point_combinators_in_lambda_calculus) can be defined as `\f.(\x.f (x x)) \x.f(x x)`.
 
@@ -396,12 +398,15 @@ pi = approx. 3.1415926535
 The CLI version of fend supports a configuration file.
 
 The location of this file differs based on your operating system:
-* Linux: `$XDG_CONFIG_HOME/fend` or `$HOME/.config/fend`
-* macOS: `$HOME/Library/Application Support/fend`
-* Windows: `{FOLDERID_RoamingAppData}\fend\config`
+* Linux: `$XDG_CONFIG_HOME/fend/config.toml` (usually `$HOME/.config/fend/config.toml`)
+* macOS: `$HOME/.config/fend/config.toml`
+* Windows: `\Users\{UserName}\.config\fend\config.toml`
 
 You can always confirm the path that fend uses by typing `help`. You can also
 see the default configuration file that fend uses by running `fend --default-config`.
+
+You can override the config path location using the
+environment variable `FEND_CONFIG_DIR`.
 
 These are the options currently available, along with their default values:
 
@@ -447,6 +452,10 @@ built-in-function = { foreground = 'blue', bold = true }
 date = {}
 other = {}
 ```
+
+fend stores its history file in `$HOME/.local/state/fend/history` by default,
+although this can be overridden with the `FEND_STATE_DIR` environment variable.
+
 
 ## Scripting
 
