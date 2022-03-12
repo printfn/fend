@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.0.0 (2022-03-12)
 
 * Allow `kmh` and `km/h` for kilometers per hour
 * Change Planck's constant from `h` to `planck`
@@ -8,6 +8,8 @@
     lambda notations `\x.x`, `x:x` and `x => x`)
 * Add a ZSH helper script that makes `fend` more convenient on the
     command line
+* Despite the major version bump, this release contains no breaking
+    API changes
 
 ### v0.1.29 (2022-02-23)
 
