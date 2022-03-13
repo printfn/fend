@@ -140,8 +140,8 @@ pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
 fn read_config_file() -> Config {
     let path = match crate::file_paths::get_config_file_location() {
-        Some(path) => path,
-        None => return Config::default(),
+        Ok(path) => path,
+        Err(_) => return Config::default(),
     };
     let mut file = match fs::File::open(&path) {
         Ok(file) => file,

@@ -2,13 +2,14 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, io, process, error};
+use std::{env, error, io, process};
 
 mod color;
 mod config;
 mod context;
 mod file_paths;
 mod helper;
+mod history;
 mod interrupt;
 mod terminal;
 
@@ -78,15 +79,13 @@ fn print_help(explain_quitting: bool) {
     println!("https://github.com/printfn/fend/wiki");
     println!();
     println!("Version: {}", fend_core::get_version());
-    if let Some(config_path) = file_paths::get_config_file_location() {
-        println!("Config file: {}", config_path.to_string_lossy());
-    } else {
-        println!("Failed to get config file location");
+    match file_paths::get_config_file_location() {
+        Ok(config_path) => println!("Config file: {}", config_path.to_string_lossy()),
+        Err(e) => println!("Failed to get config file location: {e}"),
     }
-    if let Some(history_path) = file_paths::get_history_file_location() {
-        println!("History file: {}", history_path.to_string_lossy());
-    } else {
-        println!("Failed to get history file location");
+    match history::History::location() {
+        Ok(history_path) => println!("History file: {}", history_path.to_string_lossy()),
+        Err(e) => println!("Failed to get history file location: {e}"),
     }
     if explain_quitting {
         println!("\nTo quit, type `quit`.");
@@ -111,7 +110,6 @@ fn read_line(
     config: &config::Config,
     interrupt: &interrupt::CtrlC,
 ) -> Result<ReadLineResult, Box<dyn error::Error>> {
-
     let mut stdout = io::stdout();
     io::Write::write(&mut stdout, config.prompt.as_bytes())?;
     io::Write::flush(&mut io::stdout())?;
@@ -125,7 +123,7 @@ fn read_line(
                 if byte_storage[0] == b'\n' {
                     break;
                 }
-            },
+            }
             Ok(0) => {
                 return Ok(ReadLineResult::Eof);
             }
@@ -161,13 +159,7 @@ fn repl_loop(config: &config::Config) -> Result<i32, Box<dyn error::Error>> {
     }
     let mut context = Context::new(&core_context);
     //rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
-    //let history_path = file_paths::get_history_file_location();
-    /*if let Some(history_path) = &history_path {
-        if rl.load_history(history_path.as_path()).is_err() {
-            // No previous history
-        }
-    }*/
-    #[allow(clippy::no_effect_underscore_binding)]
+    let mut history = history::History::load(config.max_history_size)?;
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();
@@ -193,6 +185,7 @@ fn repl_loop(config: &config::Config) -> Result<i32, Box<dyn error::Error>> {
             }
             line => {
                 interrupt.reset();
+                history.add_entry(line);
                 match eval_and_print_res(line, &mut context, &interrupt, config) {
                     EvalResult::Ok => {
                         last_command_success = true;
@@ -207,9 +200,9 @@ fn repl_loop(config: &config::Config) -> Result<i32, Box<dyn error::Error>> {
                 }
             }
         }
-        // save_history(&mut rl, &history_path);
+        history.write()?;
     }
-    //save_history(&mut rl, &history_path);
+    history.write()?;
     Ok(if last_command_success { 0 } else { 1 })
 }
 
