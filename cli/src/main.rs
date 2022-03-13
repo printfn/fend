@@ -112,10 +112,12 @@ fn read_line(
     config: &config::Config,
     interrupt: &interrupt::CtrlC,
 ) -> Result<ReadLineResult, io::Error> {
-    let mut line = String::new();
-    print!("{}", config.prompt.as_str());
+
+    let mut stdout = io::stdout();
+    io::Write::write(&mut stdout, config.prompt.as_bytes())?;
     io::Write::flush(&mut io::stdout())?;
-    line.clear();
+
+    let mut line = String::new();
     io::BufRead::read_line(&mut io::stdin().lock(), &mut line)?;
     if line.ends_with('\n') {
         line.pop();
