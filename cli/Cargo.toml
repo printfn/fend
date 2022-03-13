@@ -21,6 +21,7 @@ serde = { version = "1.0.136", default-features = false }
 nanorand = { version = "0.6.1", default-features = false, features = ["std", "wyrand"] }
 #console = { version = "0.15.0", default-features = false }
 atty = "0.2.14"
+libc = "0.2.119"
 
 [dependencies.fend-core]
 version = "1.0.0"

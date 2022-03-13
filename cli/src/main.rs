@@ -1,4 +1,3 @@
-#![forbid(unsafe_code)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
@@ -172,6 +171,7 @@ fn repl_loop(config: &config::Config) -> Result<i32, Box<dyn error::Error>> {
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();
+    //let _exit_raw_mode = terminal::enable_raw_mode()?;
     loop {
         let line = match read_line(config, &interrupt) {
             Ok(ReadLineResult::Line(line)) => line,

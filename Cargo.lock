@@ -71,6 +71,7 @@ dependencies = [
  "ctrlc",
  "fend-core",
  "home",
+ "libc",
  "nanorand",
  "serde",
  "toml",
