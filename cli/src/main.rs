@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, io, path, process};
+use std::{env, io, process};
 
 mod color;
 mod config;
@@ -94,41 +94,18 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn save_history(rl: &mut rustyline::Editor<helper::Helper<'_>>, path: &Option<path::PathBuf>) {
-    if let Some(history_path) = path {
-        if rl.save_history(history_path.as_path()).is_err() {
-            // Error trying to save history
-        }
-    }
-}
-
 fn repl_loop(config: &config::Config) -> i32 {
-    // `()` can be used when no completer is required
-    let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
-        rustyline::config::Builder::new()
-            .history_ignore_space(true)
-            .auto_add_history(true)
-            .max_history_size(config.max_history_size)
-            .build(),
-    );
     let core_context = std::cell::RefCell::new(fend_core::Context::new());
     if config.coulomb_and_farad {
         core_context.borrow_mut().use_coulomb_and_farad();
     }
     let mut context = Context::new(&core_context);
-    rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
-    let history_path = file_paths::get_history_file_location();
-    if let Some(history_path) = &history_path {
-        if rl.load_history(history_path.as_path()).is_err() {
-            // No previous history
-        }
-    }
+    let mut prompt_state = terminal::init_prompt(config, &context);
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();
     loop {
-        let readline = rl.readline(&config.prompt);
-        match readline {
+        match prompt_state.read_line() {
             Ok(line) => match line.as_str() {
                 "exit" | "exit()" | ".exit" | ":exit" | "quit" | "quit()" | ":quit" | ":q"
                 | ":wq" | ":q!" | ":wq!" | ":qa" | ":wqa" | ":qa!" | ":wqa!" => break,
@@ -151,21 +128,19 @@ fn repl_loop(config: &config::Config) -> i32 {
                     }
                 }
             },
-            Err(rustyline::error::ReadlineError::Interrupted) => {
+            Err(terminal::ReadLineError::Interrupted) => {
                 if initial_run {
                     break;
                 }
                 println!("Use Ctrl-D (i.e. EOF) to exit");
             }
-            Err(rustyline::error::ReadlineError::Eof) => break,
-            Err(err) => {
+            Err(terminal::ReadLineError::Eof) => break,
+            Err(terminal::ReadLineError::Error(err)) => {
                 println!("Error: {err}");
                 break;
             }
         }
-        save_history(&mut rl, &history_path);
     }
-    save_history(&mut rl, &history_path);
     if last_command_success {
         0
     } else {
