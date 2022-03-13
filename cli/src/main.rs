@@ -102,6 +102,35 @@ fn print_help(explain_quitting: bool) {
     }
 }*/
 
+enum ReadLineResult {
+    Line(String),
+    Eof,
+    CtrlC,
+}
+
+fn read_line(
+    config: &config::Config,
+    interrupt: &interrupt::CtrlC,
+) -> Result<ReadLineResult, io::Error> {
+    let mut line = String::new();
+    print!("{}", config.prompt.as_str());
+    io::Write::flush(&mut io::stdout())?;
+    line.clear();
+    io::BufRead::read_line(&mut io::stdin().lock(), &mut line)?;
+    if line.ends_with('\n') {
+        line.pop();
+        if line.ends_with('\r') {
+            line.pop();
+        }
+    } else {
+        return Ok(ReadLineResult::Eof);
+    }
+    if interrupt.interrupted() {
+        return Ok(ReadLineResult::CtrlC);
+    }
+    Ok(ReadLineResult::Line(line))
+}
+
 fn repl_loop(config: &config::Config) -> Result<i32, io::Error> {
     // `()` can be used when no completer is required
     /*let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
@@ -124,24 +153,22 @@ fn repl_loop(config: &config::Config) -> Result<i32, io::Error> {
         }
     }*/
     #[allow(clippy::no_effect_underscore_binding)]
-    let mut _initial_run = true; // set to false after first successful command
+    let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();
-    let mut line = String::new();
     loop {
-        print!("{}", config.prompt.as_str());
-        io::Write::flush(&mut io::stdout())?;
-        line.clear();
-        io::BufRead::read_line(&mut io::stdin().lock(), &mut line)?;
-        if line.ends_with('\n') {
-            line.pop();
-            if line.ends_with('\r') {
-                line.pop();
+        let line = match read_line(config, &interrupt) {
+            Ok(ReadLineResult::Line(line)) => line,
+            Ok(ReadLineResult::Eof) => break,
+            Ok(ReadLineResult::CtrlC) => {
+                if initial_run {
+                    break;
+                }
+                println!("Use Ctrl-D (i.e. EOF) to exit");
+                continue;
             }
-        } else {
-            // we got EOF
-            break;
-        }
+            Err(e) => return Err(e),
+        };
         match line.as_str() {
             "exit" | "exit()" | ".exit" | ":exit" | "quit" | "quit()" | ":quit" | ":q" | ":wq"
             | ":q!" | ":wq!" | ":qa" | ":wqa" | ":qa!" | ":wqa!" => break,
@@ -153,7 +180,7 @@ fn repl_loop(config: &config::Config) -> Result<i32, io::Error> {
                 match eval_and_print_res(line, &mut context, &interrupt, config) {
                     EvalResult::Ok => {
                         last_command_success = true;
-                        _initial_run = false;
+                        initial_run = false;
                     }
                     EvalResult::NoInput => {
                         last_command_success = true;
@@ -164,20 +191,6 @@ fn repl_loop(config: &config::Config) -> Result<i32, io::Error> {
                 }
             }
         }
-        // match readline {
-        //     Ok(line) => ,
-        //     Err(rustyline::error::ReadlineError::Interrupted) => {
-        //         if initial_run {
-        //             break;
-        //         }
-        //         println!("Use Ctrl-D (i.e. EOF) to exit");
-        //     }
-        //     Err(rustyline::error::ReadlineError::Eof) => break,
-        //     Err(err) => {
-        //         println!("Error: {err}");
-        //         break;
-        //     }
-        // }
         // save_history(&mut rl, &history_path);
     }
     //save_history(&mut rl, &history_path);

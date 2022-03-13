@@ -6,12 +6,16 @@ pub struct CtrlC {
 
 impl fend_core::Interrupt for CtrlC {
     fn should_interrupt(&self) -> bool {
-        let running = self.running.load(sync::atomic::Ordering::Relaxed);
-        !running
+        self.interrupted()
     }
 }
 
 impl CtrlC {
+    pub fn interrupted(&self) -> bool {
+        let running = self.running.load(sync::atomic::Ordering::Relaxed);
+        !running
+    }
+
     pub fn reset(&self) {
         self.running.store(true, sync::atomic::Ordering::SeqCst);
     }
