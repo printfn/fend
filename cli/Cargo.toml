@@ -13,7 +13,6 @@ edition = "2021"
 categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
-rustyline = { version =  "9.1.4", default-features = false, package = "rustyline-with-hint-fix" }
 home = "0.5.3"
 ctrlc = "3.2.1"
 ansi_term = "0.12.1"

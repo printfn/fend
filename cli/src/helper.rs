@@ -1,4 +1,4 @@
-use crate::{config, context::Context};
+/*use crate::{config, context::Context};
 use std::time;
 
 pub struct HintInterrupt {
@@ -109,4 +109,4 @@ impl rustyline::completion::Completer for Helper<'_> {
     }
 }
 
-impl rustyline::Helper for Helper<'_> {}
+impl rustyline::Helper for Helper<'_> {}*/

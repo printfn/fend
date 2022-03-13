@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, io, path, process};
+use std::{env, io, process};
 
 mod color;
 mod config;
@@ -94,83 +94,94 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn save_history(rl: &mut rustyline::Editor<helper::Helper<'_>>, path: &Option<path::PathBuf>) {
+/*fn save_history(rl: &mut rustyline::Editor<helper::Helper<'_>>, path: &Option<path::PathBuf>) {
     if let Some(history_path) = path {
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
         }
     }
-}
+}*/
 
-fn repl_loop(config: &config::Config) -> i32 {
+fn repl_loop(config: &config::Config) -> Result<i32, io::Error> {
     // `()` can be used when no completer is required
-    let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
+    /*let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
             .max_history_size(config.max_history_size)
             .build(),
-    );
+    );*/
     let core_context = std::cell::RefCell::new(fend_core::Context::new());
     if config.coulomb_and_farad {
         core_context.borrow_mut().use_coulomb_and_farad();
     }
     let mut context = Context::new(&core_context);
-    rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
-    let history_path = file_paths::get_history_file_location();
-    if let Some(history_path) = &history_path {
+    //rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
+    //let history_path = file_paths::get_history_file_location();
+    /*if let Some(history_path) = &history_path {
         if rl.load_history(history_path.as_path()).is_err() {
             // No previous history
         }
-    }
-    let mut initial_run = true; // set to false after first successful command
+    }*/
+    #[allow(clippy::no_effect_underscore_binding)]
+    let mut _initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();
+    let mut line = String::new();
     loop {
-        let readline = rl.readline(&config.prompt);
-        match readline {
-            Ok(line) => match line.as_str() {
-                "exit" | "exit()" | ".exit" | ":exit" | "quit" | "quit()" | ":quit" | ":q"
-                | ":wq" | ":q!" | ":wq!" | ":qa" | ":wqa" | ":qa!" | ":wqa!" => break,
-                "help" | "?" => {
-                    print_help(true);
-                }
-                line => {
-                    interrupt.reset();
-                    match eval_and_print_res(line, &mut context, &interrupt, config) {
-                        EvalResult::Ok => {
-                            last_command_success = true;
-                            initial_run = false;
-                        }
-                        EvalResult::NoInput => {
-                            last_command_success = true;
-                        }
-                        EvalResult::Err => {
-                            last_command_success = false;
-                        }
+        print!("{}", config.prompt.as_str());
+        io::Write::flush(&mut io::stdout())?;
+        line.clear();
+        io::BufRead::read_line(&mut io::stdin().lock(), &mut line)?;
+        if line.ends_with('\n') {
+            line.pop();
+            if line.ends_with('\r') {
+                line.pop();
+            }
+        } else {
+            // we got EOF
+            break;
+        }
+        match line.as_str() {
+            "exit" | "exit()" | ".exit" | ":exit" | "quit" | "quit()" | ":quit" | ":q" | ":wq"
+            | ":q!" | ":wq!" | ":qa" | ":wqa" | ":qa!" | ":wqa!" => break,
+            "help" | "?" => {
+                print_help(true);
+            }
+            line => {
+                interrupt.reset();
+                match eval_and_print_res(line, &mut context, &interrupt, config) {
+                    EvalResult::Ok => {
+                        last_command_success = true;
+                        _initial_run = false;
+                    }
+                    EvalResult::NoInput => {
+                        last_command_success = true;
+                    }
+                    EvalResult::Err => {
+                        last_command_success = false;
                     }
                 }
-            },
-            Err(rustyline::error::ReadlineError::Interrupted) => {
-                if initial_run {
-                    break;
-                }
-                println!("Use Ctrl-D (i.e. EOF) to exit");
-            }
-            Err(rustyline::error::ReadlineError::Eof) => break,
-            Err(err) => {
-                println!("Error: {err}");
-                break;
             }
         }
-        save_history(&mut rl, &history_path);
+        // match readline {
+        //     Ok(line) => ,
+        //     Err(rustyline::error::ReadlineError::Interrupted) => {
+        //         if initial_run {
+        //             break;
+        //         }
+        //         println!("Use Ctrl-D (i.e. EOF) to exit");
+        //     }
+        //     Err(rustyline::error::ReadlineError::Eof) => break,
+        //     Err(err) => {
+        //         println!("Error: {err}");
+        //         break;
+        //     }
+        // }
+        // save_history(&mut rl, &history_path);
     }
-    save_history(&mut rl, &history_path);
-    if last_command_success {
-        0
-    } else {
-        1
-    }
+    //save_history(&mut rl, &history_path);
+    Ok(if last_command_success { 0 } else { 1 })
 }
 
 fn eval_expr(expr: &str) -> i32 {
@@ -210,7 +221,13 @@ fn real_main() -> i32 {
         ArgsAction::Repl => {
             if terminal::atty_stdin() {
                 let config = config::read();
-                repl_loop(&config)
+                match repl_loop(&config) {
+                    Ok(return_code) => return_code,
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        1
+                    }
+                }
             } else {
                 let mut input = String::new();
                 match io::Read::read_to_string(&mut io::stdin(), &mut input) {
