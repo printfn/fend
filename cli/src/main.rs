@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
-use std::{env, io, process};
+use std::{env, io, process, error};
 
 mod color;
 mod config;
@@ -111,21 +111,35 @@ enum ReadLineResult {
 fn read_line(
     config: &config::Config,
     interrupt: &interrupt::CtrlC,
-) -> Result<ReadLineResult, io::Error> {
+) -> Result<ReadLineResult, Box<dyn error::Error>> {
 
     let mut stdout = io::stdout();
     io::Write::write(&mut stdout, config.prompt.as_bytes())?;
     io::Write::flush(&mut io::stdout())?;
 
-    let mut line = String::new();
-    io::BufRead::read_line(&mut io::stdin().lock(), &mut line)?;
+    let mut line_bytes = vec![];
+    loop {
+        let mut byte_storage = [0];
+        match io::Read::read(&mut io::stdin().lock(), &mut byte_storage[..]) {
+            Ok(1) => {
+                line_bytes.push(byte_storage[0]);
+                if byte_storage[0] == b'\n' {
+                    break;
+                }
+            },
+            Ok(0) => {
+                return Ok(ReadLineResult::Eof);
+            }
+            Ok(_) => unreachable!(),
+            Err(e) => return Err(e.into()),
+        }
+    }
+    let mut line = String::from_utf8(line_bytes)?;
     if line.ends_with('\n') {
         line.pop();
         if line.ends_with('\r') {
             line.pop();
         }
-    } else {
-        return Ok(ReadLineResult::Eof);
     }
     if interrupt.interrupted() {
         return Ok(ReadLineResult::CtrlC);
@@ -133,7 +147,7 @@ fn read_line(
     Ok(ReadLineResult::Line(line))
 }
 
-fn repl_loop(config: &config::Config) -> Result<i32, io::Error> {
+fn repl_loop(config: &config::Config) -> Result<i32, Box<dyn error::Error>> {
     // `()` can be used when no completer is required
     /*let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
         rustyline::config::Builder::new()
