@@ -211,6 +211,8 @@ if [[ ! -d "$TMPDIR" ]]; then
 fi
 echo "Created temporary directory $TMPDIR"
 
+manualstep "Ensure GitHub CI has finished and all artifacts are available"
+
 echo "Downloading Github artifacts..."
 gh run download "$GH_RUN_ID" --dir "$TMPDIR/artifacts"
 
