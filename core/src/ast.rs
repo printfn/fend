@@ -11,6 +11,7 @@ use std::sync::Arc;
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Bop {
     Plus,
+    ImplicitPlus,
     Minus,
     Mul,
     Div,
@@ -22,6 +23,7 @@ impl fmt::Display for Bop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Plus => write!(f, "+"),
+            Self::ImplicitPlus => write!(f, " "),
             Self::Minus => write!(f, "-"),
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
@@ -192,7 +194,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::Bop(bop, a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
-            |a, b| a.bop(bop, b, int),
+            |a, b| a.bop(bop, b, context, int),
             |a| |f| Expr::Bop(bop, f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
             |a| |f| Expr::Bop(bop, Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,

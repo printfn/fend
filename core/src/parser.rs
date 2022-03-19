@@ -315,11 +315,13 @@ fn parse_implicit_addition(input: &[Token]) -> ParseResult<'_> {
     let (res, input) = parse_multiplicative(input)?;
     if let Ok((rhs, remaining)) = parse_implicit_addition(input) {
         // n i n i, n i i n i i, etc. (n: number literal, i: identifier)
-        if let (Expr::ApplyMul(_, _), Expr::ApplyMul(_, _) | Expr::Bop(Bop::Plus, _, _)) =
-            (&res, &rhs)
+        if let (
+            Expr::ApplyMul(_, _),
+            Expr::ApplyMul(_, _) | Expr::Bop(Bop::ImplicitPlus, _, _) | Expr::Literal(_),
+        ) = (&res, &rhs)
         {
             return Ok((
-                Expr::Bop(Bop::Plus, Box::new(res), Box::new(rhs)),
+                Expr::Bop(Bop::ImplicitPlus, Box::new(res), Box::new(rhs)),
                 remaining,
             ));
         };

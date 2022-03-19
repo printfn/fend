@@ -5443,3 +5443,34 @@ fn km_slash_h() {
 fn planck() {
     test_eval("planck", "0.000000000000000000000000000000000662607015 J s");
 }
+
+#[test]
+fn implicit_unit_fudging() {
+    test_eval("5'1 to m to 2dp", "approx. 1.54 m");
+}
+
+#[test]
+fn implicit_unit_fudging_2() {
+    test_eval("0'1 to m to 2dp", "approx. 0.02 m");
+}
+
+#[test]
+fn implicit_unit_fudging_3() {
+    expect_error(
+        "0'1 + 5",
+        Some("cannot convert from unitless to ': units 'unitless' and 'meter' are incompatible"),
+    );
+}
+
+#[test]
+fn implicit_unit_fudging_4() {
+    test_eval("5'1 + 5m", "approx. 21.4875328083'");
+}
+
+#[test]
+fn implicit_unit_fudging_5() {
+    expect_error(
+        "5'1 + 5kg",
+        Some("cannot convert from kg to ': units 'kilogram' and 'meter' are incompatible"),
+    );
+}

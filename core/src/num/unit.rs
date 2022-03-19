@@ -140,6 +140,23 @@ impl Value {
         })
     }
 
+    /// Called for implicit addition to modify the second operand.
+    /// For example, when evaluating `5'0`, this function can change the second
+    /// operand's unit from `unitless` to `"`.
+    fn fudge_implicit_rhs_unit<I: Interrupt>(
+        &self,
+        rhs: Self,
+        context: &mut crate::Context,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        if self.unit.equal_to("'") && rhs.is_unitless() {
+            let inches =
+                ast::resolve_identifier(&Ident::new_str("\""), None, context, int)?.expect_num()?;
+            return rhs.mul(inches, int);
+        }
+        Ok(rhs)
+    }
+
     pub(crate) fn convert_to<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if rhs.value.one_point()? != 1.into() {
             return Err(FendError::ConversionRhsNumerical);
@@ -213,9 +230,19 @@ impl Value {
         })
     }
 
-    pub(crate) fn bop<I: Interrupt>(self, op: Bop, rhs: Self, int: &I) -> Result<Self, FendError> {
+    pub(crate) fn bop<I: Interrupt>(
+        self,
+        op: Bop,
+        rhs: Self,
+        context: &mut crate::Context,
+        int: &I,
+    ) -> Result<Self, FendError> {
         match op {
             Bop::Plus => self.add(rhs, int),
+            Bop::ImplicitPlus => {
+                let rhs = self.fudge_implicit_rhs_unit(rhs, context, int)?;
+                self.add(rhs, int)
+            }
             Bop::Minus => self.sub(rhs, int),
             Bop::Mul => self.mul(rhs, int),
             Bop::Div => self.div(rhs, int),
