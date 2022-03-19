@@ -175,7 +175,7 @@ fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<'_> {
     let (mut result, mut input) = parse_factorial(input)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
         let (rhs, remaining) = parse_power(remaining, true)?;
-        result = Expr::Pow(Box::new(result), Box::new(rhs));
+        result = Expr::Bop(Bop::Pow, Box::new(result), Box::new(rhs));
         input = remaining;
     }
     Ok((result, input))
@@ -195,7 +195,7 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
             }
             (
                 Expr::Literal(Value::Num(_)) | Expr::UnaryMinus(_) | Expr::ApplyMul(_, _),
-                Expr::Pow(a, _),
+                Expr::Bop(Bop::Pow, a, _),
             ) => {
                 if let Expr::Literal(Value::Num(_)) = **a {
                     return Err(ParseError::InvalidApplyOperands);

@@ -15,6 +15,7 @@ pub(crate) enum Bop {
     Mul,
     Div,
     Mod,
+    Pow,
 }
 
 impl fmt::Display for Bop {
@@ -25,6 +26,7 @@ impl fmt::Display for Bop {
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, " mod "),
+            Self::Pow => write!(f, "^"),
         }
     }
 }
@@ -39,7 +41,6 @@ pub(crate) enum Expr {
     UnaryDiv(Box<Expr>),
     Factorial(Box<Expr>),
     Bop(Bop, Box<Expr>, Box<Expr>),
-    Pow(Box<Expr>, Box<Expr>),
     // Call a function or multiply the expressions
     Apply(Box<Expr>, Box<Expr>),
     // Call a function, or throw an error if lhs is not a function
@@ -74,7 +75,6 @@ impl<'a> Expr {
             Self::Bop(op, a, b) => {
                 format!("({}{}{})", a.format(ctx, int)?, op, b.format(ctx, int)?)
             }
-            Self::Pow(a, b) => format!("({}^{})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Apply(a, b) => format!("({} ({}))", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
                 format!("({} {})", a.format(ctx, int)?, b.format(ctx, int)?)
@@ -154,6 +154,42 @@ pub(crate) fn evaluate<I: Interrupt>(
                 _ => return Err(FendError::InvalidOperandsForSubtraction),
             }
         }
+        Expr::Bop(Bop::Pow, a, b) => {
+            let lhs = eval!(*a)?;
+            if should_compute_inverse(&*b) {
+                let result = match &lhs {
+                    Value::BuiltInFunction(f) => Some(f.invert()?),
+                    Value::Fn(_, _, _) => return Err(FendError::InversesOfLambdasUnsupported),
+                    _ => None,
+                };
+                if let Some(res) = result {
+                    return Ok(res);
+                }
+            }
+            lhs.handle_two_nums(
+                eval!(*b)?,
+                |a, b| a.pow(b, int),
+                |a| {
+                    |f| {
+                        Expr::Bop(
+                            Bop::Pow,
+                            f,
+                            Box::new(Expr::Literal(Value::Num(Box::new(a)))),
+                        )
+                    }
+                },
+                |a| {
+                    |f| {
+                        Expr::Bop(
+                            Bop::Pow,
+                            Box::new(Expr::Literal(Value::Num(Box::new(a)))),
+                            f,
+                        )
+                    }
+                },
+                scope,
+            )?
+        }
         Expr::Bop(bop, a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
             |a, b| a.bop(bop, b, int),
@@ -169,26 +205,6 @@ pub(crate) fn evaluate<I: Interrupt>(
                 }
             }
             eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, context, int)?
-        }
-        Expr::Pow(a, b) => {
-            let lhs = eval!(*a)?;
-            if should_compute_inverse(&*b) {
-                let result = match &lhs {
-                    Value::BuiltInFunction(f) => Some(f.invert()?),
-                    Value::Fn(_, _, _) => return Err(FendError::InversesOfLambdasUnsupported),
-                    _ => None,
-                };
-                if let Some(res) = result {
-                    return Ok(res);
-                }
-            }
-            lhs.handle_two_nums(
-                eval!(*b)?,
-                |a, b| a.pow(b, int),
-                |a| |f| Expr::Pow(f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
-                |a| |f| Expr::Pow(Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
-                scope,
-            )?
         }
         Expr::ApplyFunctionCall(a, b) => {
             eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, context, int)?

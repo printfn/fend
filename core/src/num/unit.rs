@@ -220,6 +220,7 @@ impl Value {
             Bop::Mul => self.mul(rhs, int),
             Bop::Div => self.div(rhs, int),
             Bop::Mod => self.modulo(rhs, int),
+            Bop::Pow => self.pow(rhs, int),
         }
     }
 
