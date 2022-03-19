@@ -1,5 +1,13 @@
 ## Changelog
 
+### v1.0.1 (2022-03-19)
+
+* Support omitting inches when writing e.g. `5'1`: fend will now automatically
+    interpret that as `5'1"`
+* Improve reliability when piping data into fend on the command line, e.g.
+    when running `echo "1+1" | fend`
+* Support compiling fend with Rust 1.56 (rather than requiring Rust 1.59)
+
 ### v1.0.0 (2022-03-12)
 
 * Allow `kmh` and `km/h` for kilometers per hour
