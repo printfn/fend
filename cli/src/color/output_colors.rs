@@ -56,7 +56,10 @@ impl OutputColors {
                     | "date"
                     | "other"
             ) {
-                eprintln!("Warning: ignoring unknown configuration setting `colors.{key}`");
+                eprintln!(
+                    "Warning: ignoring unknown configuration setting `colors.{}`",
+                    key
+                );
             }
             style.print_warnings_about_unknown_keys(key);
         }

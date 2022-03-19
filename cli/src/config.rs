@@ -61,7 +61,7 @@ impl<'de> serde::Deserialize<'de> for Config {
                             } else if enable_colors == "always".into() {
                                 result.enable_colors = true;
                             } else {
-                                eprintln!("Error: unknown config setting for {key}, expected one of `never`, `auto` or `always`");
+                                eprintln!("Error: unknown config setting for `{}`, expected one of `'never'`, `'auto'` or `'always'`", key);
                             }
                             seen_enable_colors = true;
                         }
@@ -155,7 +155,7 @@ fn read_config_file() -> Config {
     let config = match toml::de::from_slice(bytes.as_slice()) {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("Error: invalid config file in {path:?}:\n{e}");
+            eprintln!("Error: invalid config file in {:?}:\n{}", path, e);
             eprint!("Using the default config file instead, you can view it ");
             eprintln!("by running `fend --default-config`");
             Config::default()
@@ -171,7 +171,7 @@ fn print_warnings_about_unknown_keys(config: &Config) {
         UnknownSettings::Warn => (),
     }
     for key in &config.unknown_keys {
-        eprintln!("Warning: ignoring unknown configuration setting `{key}`");
+        eprintln!("Warning: ignoring unknown configuration setting `{}`", key);
     }
     config.colors.print_warnings_about_unknown_keys();
 }

@@ -90,7 +90,7 @@ impl fmt::Display for FendError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Interrupted => write!(f, "interrupted"),
-            Self::ParseError(e) => write!(f, "{e}"),
+            Self::ParseError(e) => write!(f, "{}", e),
             Self::FactorialUnitless => {
                 write!(f, "factorial is only supported for unitless numbers")
             }
@@ -109,7 +109,11 @@ impl fmt::Display for FendError {
                 from_base,
                 to_base,
             } => {
-                write!(f, "cannot convert from {from} to {to}: units '{from_base}' and '{to_base}' are incompatible")
+                write!(
+                    f,
+                    "cannot convert from {} to {}: units '{}' and '{}' are incompatible",
+                    from, to, from_base, to_base
+                )
             }
             Self::NonIntegerNegRoots => write!(f, "cannot compute non-integer or negative roots"),
             Self::RootsOfNegativeNumbers => {
@@ -118,7 +122,7 @@ impl fmt::Display for FendError {
             Self::ModuloForPositiveInts => {
                 write!(f, "modulo is only supported for positive integers")
             }
-            Self::CannotConvertValueTo(ty) => write!(f, "cannot convert value to {ty}"),
+            Self::CannotConvertValueTo(ty) => write!(f, "cannot convert value to {}", ty),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::ConversionRhsNumerical => write!(
                 f,
@@ -153,15 +157,15 @@ impl fmt::Display for FendError {
                     "probability distributions are not allowed (consider using `sample`)"
                 )
             }
-            Self::ParseDateError(s) => write!(f, "failed to convert '{s}' to a date"),
+            Self::ParseDateError(s) => write!(f, "failed to convert '{}' to a date", s),
             Self::ExpectedAString => write!(f, "expected a string"),
-            Self::UnableToInvertFunction(name) => write!(f, "unable to invert function {name}"),
+            Self::UnableToInvertFunction(name) => write!(f, "unable to invert function {}", name),
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
             Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
-            Self::ExpectedABool(t) => write!(f, "expected a bool (found {t})"),
+            Self::ExpectedABool(t) => write!(f, "expected a bool (found {})", t),
             Self::CouldNotFindKeyInObject => write!(f, "could not find key in object"),
-            Self::CouldNotFindKey(k) => write!(f, "could not find key {k}"),
+            Self::CouldNotFindKey(k) => write!(f, "could not find key {}", k),
             Self::InversesOfLambdasUnsupported => write!(
                 f,
                 "inverses of lambda functions are not currently supported"
