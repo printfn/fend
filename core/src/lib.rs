@@ -89,7 +89,7 @@ impl FendResult {
     }
 
     /// This retrieves the main result as a list of spans, which is useful
-    /// for coloured output.
+    /// for colored output.
     pub fn get_main_result_spans(&self) -> impl Iterator<Item = SpanRef<'_>> {
         self.span_result.iter().map(|span| SpanRef {
             string: &span.string,

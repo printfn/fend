@@ -32,8 +32,7 @@ impl OutputColors {
     fn get_style(&self, name: &str) -> Color {
         self.styles.get(name).cloned().unwrap_or_else(|| {
             match name {
-                "number" | "date" | "other" => Color::default(),
-                "string" => Color::bold(Base::Yellow),
+                "number" | "date" | "string" | "other" => Color::default(),
                 "identifier" => Color::new(Base::White),
                 "keyword" | "built-in-function" => Color::bold(Base::Blue),
                 _ => {

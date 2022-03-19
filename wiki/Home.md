@@ -411,7 +411,7 @@ environment variable `FEND_CONFIG_DIR`.
 These are the options currently available, along with their default values:
 
 ```toml
-# Choose whether or not colours should be enabled. Possible
+# Choose whether or not colors should be enabled. Possible
 # values are 'never', 'auto' (default) or 'always'.
 enable-colors = 'auto'
 
@@ -439,13 +439,13 @@ unknown-settings = 'warn'
 # turned on for this to work.
 #
 # Color options:
-#   foreground: the foreground colour to use
+#   foreground: the foreground color to use
 #   bold:       whether or not to show text in bold font
 #   underline:  whether or not to underline text
 #
 [colors]
 number = {}
-string = { foreground = 'yellow', bold = true }
+string = {}
 identifier = { foreground = 'white' }
 keyword = { foreground = 'blue', bold = true }
 built-in-function = { foreground = 'blue', bold = true }
