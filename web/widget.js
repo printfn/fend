@@ -1,39 +1,49 @@
+const { initialise, evaluateFendWithTimeout, evaluateFendWithTimeoutMultiple } = wasm_bindgen;
+
+const evaluate_KEY = 13;
+const NAVIGATE_UP_KEY = 38;
+const NAVIGATE_DOWN_KEY = 40;
+
 let output = document.getElementById("output");
-let input_text = document.getElementById("input-text");
-let input_hint = document.getElementById("input-hint");
+let inputText = document.getElementById("input-text");
+let inputHint = document.getElementById("input-hint");
 let wasmInitialised = false;
 let history = [];
+let navigation = 0;
 
 async function evaluateFend(input) {
-    const { initialise, evaluateFendWithTimeout, evaluateFendWithTimeoutMultiple } = wasm_bindgen;
-
     if (!wasmInitialised) {
         await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
 
         initialise();
 
         evaluateFendWithTimeout("1 + 2", 500);
+
         wasmInitialised = true;
     }
 
     return evaluateFendWithTimeoutMultiple(input, 500);
 }
 
-async function submit(event) {
-    if (event.keyCode == 13 && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
-        const { evaluateFendWithTimeoutMultiple } = wasm_bindgen;
-
+// allow multiple lines to be entered if shift, ctrl
+// or meta is held, otherwise evaluate the expression
+async function evaluate(event) {
+    if (evaluate_KEY == event.keyCode && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
 
         let request = document.createElement("p");
         let result = document.createElement("p");
 
-        request.innerText = "> " + input_text.value;
+        request.innerText = "> " + inputText.value;
 
-        history.push(input_text.value);
+        if (!isInputEmpty()) {
+            history.push(inputText.value);
+        }
 
-        input_text.value = "";
-        input_hint.innerText = "";
+        navigateEnd();
+
+        inputText.value = "";
+        inputHint.innerText = "";
 
         let results = evaluateFendWithTimeoutMultiple(history.join('\0'), 500).split('\0');
 
@@ -42,39 +52,99 @@ async function submit(event) {
         output.appendChild(request);
         output.appendChild(result);
 
-        input_hint.scrollIntoView();
+        inputHint.scrollIntoView();
     }
+}
+
+function navigate(event) {
+    if (NAVIGATE_UP_KEY == event.keyCode || NAVIGATE_DOWN_KEY == event.keyCode) {
+        if (navigation > 0) {
+            if (NAVIGATE_UP_KEY == event.keyCode) {
+                event.preventDefault();
+
+                navigateBackwards();
+            }
+
+            else if (NAVIGATE_DOWN_KEY == event.keyCode) {
+                event.preventDefault();
+
+                navigateForwards();
+            }
+
+        } else if (isInputEmpty() && history.length > 0 && NAVIGATE_UP_KEY == event.keyCode) {
+            event.preventDefault();
+
+            navigateBegin();
+        }
+
+        if (navigation > 0) {
+            navigateSet();
+        }
+    }
+}
+
+function navigateBackwards() {
+    navigation += 1;
+
+    if (navigation > history.length) {
+        navigation = history.length;
+    }
+}
+
+function navigateForwards() {
+    navigation -= 1;
+
+    if (navigation < 1) {
+        navigateEnd();
+        navigateClear();
+    }
+}
+
+function navigateBegin() {
+    navigation = 1;
+}
+
+function navigateEnd() {
+    navigation = 0;
+}
+
+function navigateSet() {
+    inputText.value = history[history.length - navigation];
+}
+
+function navigateClear() {
+    inputText.value = "";
 }
 
 function focus() {
     // allow the user to select text for copying and
     // pasting, but if text is deselected (collapsed)
     // refocus the input field
-    if (document.activeElement != input_text && document.getSelection().isCollapsed) {
-        input_text.focus();
+    if (document.activeElement != inputText && document.getSelection().isCollapsed) {
+        inputText.focus();
     }
 }
 
 async function update() {
-    const { evaluateFendWithTimeoutMultiple } = wasm_bindgen;
+    inputText.parentNode.dataset.replicatedValue = inputText.value;
 
-    input_text.parentNode.dataset.replicatedValue = input_text.value;
-
-    let results = evaluateFendWithTimeoutMultiple(history.join('\0') + '\0' + input_text.value, 500).split('\0');
+    let results = evaluateFendWithTimeoutMultiple(history.join('\0') + '\0' + inputText.value, 500).split('\0');
     let result = results[results.length - 1];
 
-    console.log(result);
+    navigateEnd();
 
     if (!result.startsWith('Error: ')) {
-        input_hint.innerText = result;
+        inputHint.innerText = result;
     } else {
-        input_hint.innerText = "";
+        inputHint.innerText = "";
     }
 }
 
-async function load() {
-    const { initialise, evaluateFendWithTimeout } = wasm_bindgen;
+function isInputEmpty() {
+    return inputText.value.length == 0;
+}
 
+async function load() {
     await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
 
     initialise();
@@ -82,8 +152,9 @@ async function load() {
     evaluateFendWithTimeout("1 + 2", 500);
     wasmInitialised = true;
 
-    input_text.addEventListener('input', update);
-    input_text.addEventListener('keypress', submit);
+    inputText.addEventListener('input', update);
+    inputText.addEventListener('keypress', evaluate);
+    inputText.addEventListener('keydown', navigate);
     document.addEventListener('click', focus)
 };
 
