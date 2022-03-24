@@ -56,9 +56,14 @@ function focus() {
 }
 
 async function update() {
+    const { evaluateFendWithTimeoutMultiple } = wasm_bindgen;
+
     input_text.parentNode.dataset.replicatedValue = input_text.value;
 
-    let result = await evaluateFend(input_text.value);
+    let results = evaluateFendWithTimeoutMultiple(history.join('\0') + '\0' + input_text.value, 500).split('\0');
+    let result = results[results.length - 1];
+
+    console.log(result);
 
     if (!result.startsWith('Error: ')) {
         input_hint.innerText = result;
