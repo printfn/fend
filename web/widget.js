@@ -1,3 +1,6 @@
+let output = document.getElementById("output");
+let input_text = document.getElementById("input-text");
+let input_hint = document.getElementById("input-hint");
 let wasmInitialised = false;
 let history = [];
 
@@ -17,23 +20,20 @@ async function evaluateFend(input) {
 }
 
 async function submit(event) {
-    const { evaluateFendWithTimeoutMultiple } = wasm_bindgen;
-    let input = document.getElementById("input-text");
-
     if (event.keyCode == 13 && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        const { evaluateFendWithTimeoutMultiple } = wasm_bindgen;
+
         event.preventDefault();
 
-        let hint = document.getElementById("input-hint");
-        let output = document.getElementById("output");
         let request = document.createElement("p");
         let result = document.createElement("p");
 
-        request.innerText = "> " + input.value;
+        request.innerText = "> " + input_text.value;
 
-        history.push(input.value);
+        history.push(input_text.value);
 
-        input.value = "";
-        hint.innerText = "";
+        input_text.value = "";
+        input_hint.innerText = "";
 
         let results = evaluateFendWithTimeoutMultiple(history.join('\0'), 500).split('\0');
 
@@ -42,22 +42,28 @@ async function submit(event) {
         output.appendChild(request);
         output.appendChild(result);
 
-        hint.scrollIntoView();
+        input_hint.scrollIntoView();
+    }
+}
+
+function focus() {
+    // allow the user to select text for copying and
+    // pasting, but if text is deselected (collapsed)
+    // refocus the input field
+    if (document.activeElement != input_text && document.getSelection().isCollapsed) {
+        input_text.focus();
     }
 }
 
 async function update() {
-    let input = document.getElementById("input-text");
-    let hint = document.getElementById("input-hint");
+    input_text.parentNode.dataset.replicatedValue = input_text.value;
 
-    input.parentNode.dataset.replicatedValue = input.value;
-
-    let result = await evaluateFend(input.value);
+    let result = await evaluateFend(input_text.value);
 
     if (!result.startsWith('Error: ')) {
-        hint.innerText = result;
+        input_hint.innerText = result;
     } else {
-        hint.innerText = "";
+        input_hint.innerText = "";
     }
 }
 
@@ -70,7 +76,10 @@ async function load() {
 
     evaluateFendWithTimeout("1 + 2", 500);
     wasmInitialised = true;
+
+    input_text.addEventListener('input', update);
+    input_text.addEventListener('keypress', submit);
+    document.addEventListener('click', focus)
 };
 
 window.onload = load;
-window.onhashchange = load;

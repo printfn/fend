@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1">
-<title>fend</title>
+<title>fend widget</title>
 <script src="pkg/fend_wasm.js"></script>
-<script src="widget.js"></script>
 <link rel="stylesheet" href="widget.css">
 <main>
     <div id="input">
         <div id="text">
-            <textarea autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" id="input-text" oninput="update()" onkeypress="submit(event)" autofocus></textarea>
+            <textarea autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" id="input-text" autofocus></textarea>
         </div>
         <p id="input-hint"></p>
     </div>
     <div id="output"></div>
 </main>
+<script src="widget.js"></script>

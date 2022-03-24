@@ -3,7 +3,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1">
 <title>fend - an arbitrary-precision unit-aware calculator</title>
 <script src="pkg/fend_wasm.js"></script>
-<script src="widget.js"></script>
 <link rel="stylesheet" href="widget.css">
 <main>
     <h1 id="about">
@@ -11,7 +10,7 @@
     </h1>
     <div id="input">
         <div id="text">
-            <textarea autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" id="input-text" oninput="update()" onkeypress="submit(event)" autofocus></textarea>
+            <textarea autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" id="input-text" autofocus></textarea>
         </div>
         <p id="input-hint"></p>
     </div>
@@ -36,3 +35,4 @@ approx. 0.7071067811 + 0.7071067811i
 approx. 0.3066013937 parsecs&#10;&#10;<b>give it a go:</b>&#10;</p>
     </div>
 </main>
+<script src="widget.js"></script>
