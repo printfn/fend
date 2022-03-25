@@ -46,7 +46,7 @@ impl<'a> Context<'a> {
         let mut ctx_borrow = self.ctx.borrow_mut();
         ctx_borrow.set_output_mode_terminal();
         let int = HintInterrupt::default();
-        fend_core::evaluate_hint_with_interrupt(line, &mut ctx_borrow, &int)
+        fend_core::evaluate_preview_with_interrupt(line, &mut ctx_borrow, &int)
     }
 }
 
