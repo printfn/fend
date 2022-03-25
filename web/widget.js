@@ -4,7 +4,7 @@ const EVALUATE_KEY = 13;
 const NAVIGATE_UP_KEY = 38;
 const NAVIGATE_DOWN_KEY = 40;
 
-const VARIABLE_ASSIGN_EXPR = /^\s*([a-z][a-z0-9]*)\s*=/;
+const VARIABLE_ASSIGN_EXPR = /^\s*(\S+)\s*=/;
 
 let output = document.getElementById("output");
 let inputText = document.getElementById("input-text");
