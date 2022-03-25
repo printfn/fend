@@ -1,7 +1,11 @@
 use std::{borrow::Cow, collections::HashMap, fmt, io};
 
 use super::base_unit::BaseUnit;
-use crate::{error::FendError, num::complex::Complex, serialize::*};
+use crate::{
+    error::FendError,
+    num::complex::Complex,
+    serialize::{deserialize_string, deserialize_usize, serialize_string, serialize_usize},
+};
 
 /// A named unit, like kilogram, megabyte or percent.
 #[derive(Clone, Eq, PartialEq)]

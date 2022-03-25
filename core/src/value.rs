@@ -2,7 +2,10 @@ use crate::ast::Bop;
 use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
-use crate::serialize::*;
+use crate::serialize::{
+    deserialize_bool, deserialize_string, deserialize_u8, deserialize_usize, serialize_bool,
+    serialize_string, serialize_u8, serialize_usize,
+};
 use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;
@@ -177,7 +180,7 @@ impl BuiltInFunction {
         })
     }
 
-    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
         serialize_string(self.as_str(), write)?;
         Ok(())
     }
@@ -263,11 +266,10 @@ impl Value {
             6 => Self::Fn(
                 Ident::deserialize(read)?,
                 Box::new(Expr::deserialize(read)?),
-                {
-                    match deserialize_bool(read)? {
-                        false => None,
-                        true => Some(Arc::new(Scope::deserialize(read)?)),
-                    }
+                if deserialize_bool(read)? {
+                    None
+                } else {
+                    Some(Arc::new(Scope::deserialize(read)?))
                 },
             ),
             7 => Self::Object({
@@ -276,7 +278,7 @@ impl Value {
                 for _ in 0..len {
                     v.push((
                         Cow::Owned(deserialize_string(read)?),
-                        Box::new(Value::deserialize(read)?),
+                        Box::new(Self::deserialize(read)?),
                     ));
                 }
                 v

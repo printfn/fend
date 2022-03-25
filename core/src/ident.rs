@@ -1,6 +1,9 @@
 use std::{borrow::Cow, fmt, io};
 
-use crate::{error::FendError, serialize::*};
+use crate::{
+    error::FendError,
+    serialize::{deserialize_string, serialize_string},
+};
 
 #[derive(Clone, Debug)]
 pub(crate) struct Ident(Cow<'static, str>);

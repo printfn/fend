@@ -1,6 +1,9 @@
 use std::{borrow::Cow, fmt, io};
 
-use crate::{error::FendError, serialize::*};
+use crate::{
+    error::FendError,
+    serialize::{deserialize_string, serialize_string},
+};
 
 /// Represents a base unit, identified solely by its name. The name is not exposed to the user.
 #[derive(Clone, PartialEq, Eq, Hash)]

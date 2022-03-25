@@ -56,7 +56,7 @@ pub(crate) fn deserialize_string(read: &mut impl io::Read) -> Result<String, Fen
     }
     match String::from_utf8(buf) {
         Ok(string) => Ok(string),
-        Err(_) => return Err(FendError::DeserializationError),
+        Err(_) => Err(FendError::DeserializationError),
     }
 }
 

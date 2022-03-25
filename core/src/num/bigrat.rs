@@ -6,7 +6,10 @@ use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use std::{cmp, fmt, hash, io, ops};
 
 mod sign {
-    use crate::{error::FendError, serialize::*};
+    use crate::{
+        error::FendError,
+        serialize::{deserialize_u8, serialize_u8},
+    };
     use std::io;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -34,7 +37,7 @@ mod sign {
             }
         }
 
-        pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
             Ok(serialize_u8(
                 match self {
                     Self::Positive => 1,

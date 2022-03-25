@@ -1,6 +1,6 @@
 use crate::error::FendError;
 use crate::ident::Ident;
-use crate::serialize::*;
+use crate::serialize::{deserialize_bool, serialize_bool};
 use crate::value::Value;
 use crate::{ast::Expr, error::Interrupt};
 use std::io;
@@ -44,9 +44,10 @@ impl ScopeValue {
 
     pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
         Ok(Self::LazyVariable(Expr::deserialize(read)?, {
-            match deserialize_bool(read)? {
-                false => None,
-                true => Some(Arc::new(Scope::deserialize(read)?)),
+            if deserialize_bool(read)? {
+                None
+            } else {
+                Some(Arc::new(Scope::deserialize(read)?))
             }
         }))
     }
@@ -78,9 +79,10 @@ impl Scope {
             ident: Ident::deserialize(read)?,
             value: ScopeValue::deserialize(read)?,
             inner: {
-                match deserialize_bool(read)? {
-                    false => None,
-                    true => Some(Arc::new(Scope::deserialize(read)?)),
+                if deserialize_bool(read)? {
+                    None
+                } else {
+                    Some(Arc::new(Self::deserialize(read)?))
                 }
             },
         })

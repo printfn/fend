@@ -1,6 +1,9 @@
 use std::{fmt, io};
 
-use crate::{error::FendError, serialize::*};
+use crate::{
+    error::FendError,
+    serialize::{deserialize_u8, deserialize_usize, serialize_u8, serialize_usize},
+};
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 #[must_use]

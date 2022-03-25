@@ -4,7 +4,7 @@ use crate::ident::Ident;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
-use crate::serialize::*;
+use crate::serialize::{deserialize_u8, serialize_u8};
 use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
 use std::sync::Arc;
 use std::{fmt, io};
@@ -21,7 +21,7 @@ pub(crate) enum Bop {
 }
 
 impl Bop {
-    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
         match self {
             Bop::Plus => serialize_u8(0, write)?,
             Bop::ImplicitPlus => serialize_u8(1, write)?,
@@ -36,13 +36,13 @@ impl Bop {
 
     pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
         Ok(match deserialize_u8(read)? {
-            0 => Bop::Plus,
-            1 => Bop::ImplicitPlus,
-            2 => Bop::Minus,
-            3 => Bop::Mul,
-            4 => Bop::Div,
-            5 => Bop::Mod,
-            6 => Bop::Pow,
+            0 => Self::Plus,
+            1 => Self::ImplicitPlus,
+            2 => Self::Minus,
+            3 => Self::Mul,
+            4 => Self::Div,
+            5 => Self::Mod,
+            6 => Self::Pow,
             _ => return Err(FendError::DeserializationError),
         })
     }
@@ -173,47 +173,47 @@ impl<'a> Expr {
         Ok(match deserialize_u8(read)? {
             0 => Self::Literal(Value::deserialize(read)?),
             1 => Self::Ident(Ident::deserialize(read)?),
-            2 => Self::Parens(Box::new(Expr::deserialize(read)?)),
-            3 => Self::UnaryMinus(Box::new(Expr::deserialize(read)?)),
-            4 => Self::UnaryPlus(Box::new(Expr::deserialize(read)?)),
-            5 => Self::UnaryDiv(Box::new(Expr::deserialize(read)?)),
-            6 => Self::Factorial(Box::new(Expr::deserialize(read)?)),
+            2 => Self::Parens(Box::new(Self::deserialize(read)?)),
+            3 => Self::UnaryMinus(Box::new(Self::deserialize(read)?)),
+            4 => Self::UnaryPlus(Box::new(Self::deserialize(read)?)),
+            5 => Self::UnaryDiv(Box::new(Self::deserialize(read)?)),
+            6 => Self::Factorial(Box::new(Self::deserialize(read)?)),
             7 => Self::Bop(
                 Bop::deserialize(read)?,
-                Box::new(Expr::deserialize(read)?),
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             8 => Self::Apply(
-                Box::new(Expr::deserialize(read)?),
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             9 => Self::ApplyFunctionCall(
-                Box::new(Expr::deserialize(read)?),
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             10 => Self::ApplyMul(
-                Box::new(Expr::deserialize(read)?),
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             11 => Self::As(
-                Box::new(Expr::deserialize(read)?),
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             12 => Self::Fn(
                 Ident::deserialize(read)?,
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             13 => Self::Of(
                 Ident::deserialize(read)?,
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             14 => Self::Assign(
                 Ident::deserialize(read)?,
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             15 => Self::Statements(
-                Box::new(Expr::deserialize(read)?),
-                Box::new(Expr::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
+                Box::new(Self::deserialize(read)?),
             ),
             _ => return Err(FendError::DeserializationError),
         })

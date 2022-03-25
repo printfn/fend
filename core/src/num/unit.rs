@@ -4,7 +4,7 @@ use crate::num::complex::{Complex, UseParentheses};
 use crate::num::dist::Dist;
 use crate::num::{Base, FormattingStyle};
 use crate::scope::Scope;
-use crate::serialize::*;
+use crate::serialize::{deserialize_bool, deserialize_usize, serialize_bool, serialize_usize};
 use crate::{ast, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;

@@ -27,7 +27,7 @@ use std::{collections::HashMap, io};
 
 use error::FendError;
 pub use interrupt::Interrupt;
-use serialize::*;
+use serialize::{deserialize_string, deserialize_usize, serialize_string, serialize_usize};
 
 /// This contains the result of a computation.
 #[derive(PartialEq, Eq, Debug)]
@@ -223,6 +223,12 @@ impl Context {
         Ok(())
     }
 
+    /// Serializes all variables defined in this context to a stream of bytes.
+    /// Note that the specific format is NOT stable, and can change with any
+    /// minor update. It is also not cross-platform compatible.
+    ///
+    /// # Errors
+    /// This function returns an error if the input cannot be serialized.
     pub fn serialize_variables(&self, write: &mut impl io::Write) -> Result<(), String> {
         match self.serialize_variables_internal(write) {
             Ok(()) => Ok(()),
@@ -244,6 +250,12 @@ impl Context {
         Ok(())
     }
 
+    /// Deserializes the given variables, replacing all prior variables in
+    /// the given context.
+    ///
+    /// # Errors
+    /// Returns an error if the input byte stream is invalid and cannot be
+    /// deserialized.
     pub fn deserialize_variables(&mut self, read: &mut impl io::Read) -> Result<(), String> {
         match self.deserialize_variables_internal(read) {
             Ok(()) => Ok(()),

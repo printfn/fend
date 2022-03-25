@@ -3,7 +3,7 @@ use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
-use crate::serialize::*;
+use crate::serialize::{deserialize_u8, serialize_u8};
 use std::cmp::Ordering;
 use std::ops::Neg;
 use std::{fmt, hash, io};

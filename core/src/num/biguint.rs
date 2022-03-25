@@ -2,7 +2,10 @@ use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
-use crate::serialize::*;
+use crate::serialize::{
+    deserialize_u64, deserialize_u8, deserialize_usize, serialize_u64, serialize_u8,
+    serialize_usize,
+};
 use std::cmp::{max, Ordering};
 use std::{fmt, hash, io};
 

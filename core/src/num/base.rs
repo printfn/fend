@@ -118,7 +118,7 @@ impl Base {
         })
     }
 
-    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
         match self.0 {
             BaseEnum::Binary => serialize_u8(1, write)?,
             BaseEnum::Octal => serialize_u8(2, write)?,
