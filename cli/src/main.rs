@@ -54,7 +54,7 @@ fn eval_and_print_res(
     int: &impl fend_core::Interrupt,
     config: &config::Config,
 ) -> EvalResult {
-    match context.eval(line, true, int) {
+    match context.eval(line, int) {
         Ok(res) => {
             let result: Vec<_> = res.get_main_result_spans().collect();
             if result.is_empty() || res.is_unit_type() {

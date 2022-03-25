@@ -1,25 +1,4 @@
 use crate::{config, context::Context};
-use std::time;
-
-pub struct HintInterrupt {
-    start: time::Instant,
-    duration: time::Duration,
-}
-
-impl fend_core::Interrupt for HintInterrupt {
-    fn should_interrupt(&self) -> bool {
-        time::Instant::now().duration_since(self.start) >= self.duration
-    }
-}
-
-impl Default for HintInterrupt {
-    fn default() -> Self {
-        Self {
-            start: time::Instant::now(),
-            duration: time::Duration::from_millis(20),
-        }
-    }
-}
 
 pub struct Hint(String);
 
@@ -48,28 +27,17 @@ impl rustyline::hint::Hinter for Helper<'_> {
     type Hint = Hint;
 
     fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context<'_>) -> Option<Hint> {
-        let int = HintInterrupt::default();
-        Some(match self.ctx.eval(line, false, &int) {
-            Ok(result) => {
-                let res = result.get_main_result();
-                if res.is_empty()
-                    || result.is_unit_type()
-                    || res.len() > 50
-                    || res.trim() == line.trim()
-                    || res.contains(|c| c < ' ')
-                {
-                    return None;
-                }
-                if self.config.enable_colors {
-                    Hint(format!(
-                        "\n{}",
-                        crate::print_spans(result.get_main_result_spans().collect(), self.config)
-                    ))
-                } else {
-                    Hint(format!("\n{}", res))
-                }
-            }
-            Err(_msg) => return None,
+        let result = self.ctx.eval_hint(line);
+        let s = result.get_main_result();
+        Some(if s.is_empty() {
+            return None;
+        } else if self.config.enable_colors {
+            Hint(format!(
+                "\n{}",
+                crate::print_spans(result.get_main_result_spans().collect(), self.config)
+            ))
+        } else {
+            Hint(format!("\n{}", s))
         })
     }
 }
