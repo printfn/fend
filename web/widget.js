@@ -1,51 +1,53 @@
 const { initialise, evaluateFendWithTimeout, evaluateFendWithTimeoutMultiple } = wasm_bindgen;
 
-const evaluate_KEY = 13;
+const EVALUATE_KEY = 13;
 const NAVIGATE_UP_KEY = 38;
 const NAVIGATE_DOWN_KEY = 40;
+
+const VARIABLE_ASSIGN_EXPR = /^\s*(\S+)\s*=/;
 
 let output = document.getElementById("output");
 let inputText = document.getElementById("input-text");
 let inputHint = document.getElementById("input-hint");
 let wasmInitialised = false;
 let history = [];
+let variables = {};
 let navigation = 0;
-
-async function evaluateFend(input) {
-    if (!wasmInitialised) {
-        await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
-
-        initialise();
-
-        evaluateFendWithTimeout("1 + 2", 500);
-
-        wasmInitialised = true;
-    }
-
-    return evaluateFendWithTimeoutMultiple(input, 500);
-}
 
 // allow multiple lines to be entered if shift, ctrl
 // or meta is held, otherwise evaluate the expression
 async function evaluate(event) {
-    if (evaluate_KEY == event.keyCode && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+    if (EVALUATE_KEY == event.keyCode && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
 
         let request = document.createElement("p");
         let result = document.createElement("p");
+        let isVariable = false;
 
         request.innerText = "> " + inputText.value;
 
-        if (!isInputEmpty()) {
+        if (isInputFilled()) {
             history.push(inputText.value);
+
+            if (isInputVariable()) {
+                isVariable = true;
+
+                delete variables[getInputVariable()];
+            }
         }
 
         navigateEnd();
 
+        let results = evaluateFendWithTimeoutMultiple(getStack(), 500).split('\0');
+
+        if (isVariable) {
+            variables[getInputVariable()] = inputText.value;
+        }
+
         inputText.value = "";
         inputHint.innerText = "";
 
-        let results = evaluateFendWithTimeoutMultiple(history.join('\0'), 500).split('\0');
+        console.log(results);
 
         result.innerText = results[results.length - 1];
 
@@ -54,6 +56,10 @@ async function evaluate(event) {
 
         inputHint.scrollIntoView();
     }
+}
+
+function getStack() {
+    return Object.values(variables).join("\0") + "\0" + inputText.value;
 }
 
 function navigate(event) {
@@ -71,7 +77,7 @@ function navigate(event) {
                 navigateForwards();
             }
 
-        } else if (isInputEmpty() && history.length > 0 && NAVIGATE_UP_KEY == event.keyCode) {
+        } else if (!isInputFilled() && history.length > 0 && NAVIGATE_UP_KEY == event.keyCode) {
             event.preventDefault();
 
             navigateBegin();
@@ -80,6 +86,9 @@ function navigate(event) {
         if (navigation > 0) {
             navigateSet();
         }
+
+        updateReplicatedText();
+        updateHint();
     }
 }
 
@@ -126,12 +135,18 @@ function focus() {
 }
 
 async function update() {
-    inputText.parentNode.dataset.replicatedValue = inputText.value;
-
-    let results = evaluateFendWithTimeoutMultiple(history.join('\0') + '\0' + inputText.value, 500).split('\0');
-    let result = results[results.length - 1];
-
+    updateReplicatedText();
     navigateEnd();
+    updateHint();
+}
+
+function updateReplicatedText() {
+    inputText.parentNode.dataset.replicatedValue = inputText.value;
+}
+
+function updateHint() {
+    let results = evaluateFendWithTimeoutMultiple(getStack(), 500).split('\0');
+    let result = results[results.length - 1];
 
     if (!result.startsWith('Error: ')) {
         inputHint.innerText = result;
@@ -140,8 +155,16 @@ async function update() {
     }
 }
 
-function isInputEmpty() {
-    return inputText.value.length == 0;
+function isInputFilled() {
+    return inputText.value.length > 0;
+}
+
+function isInputVariable() {
+    return isInputFilled() && VARIABLE_ASSIGN_EXPR.test(inputText.value);
+}
+
+function getInputVariable() {
+    return inputText.value.match(VARIABLE_ASSIGN_EXPR)[1];
 }
 
 async function load() {
