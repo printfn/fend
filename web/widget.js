@@ -22,6 +22,7 @@ async function evaluate(event) {
 
         let request = document.createElement("p");
         let result = document.createElement("p");
+        let isVariable = false;
 
         request.innerText = "> " + inputText.value;
 
@@ -29,16 +30,24 @@ async function evaluate(event) {
             history.push(inputText.value);
 
             if (isInputVariable()) {
-                variables[getInputVariable()] = inputText.value;
+                isVariable = true;
+
+                delete variables[getInputVariable()];
             }
         }
 
         navigateEnd();
 
+        let results = evaluateFendWithTimeoutMultiple(Object.values(variables).join("\0") + "\0" + inputText.value, 500).split('\0');
+
+        if (isVariable) {
+            variables[getInputVariable()] = inputText.value;
+        }
+
         inputText.value = "";
         inputHint.innerText = "";
 
-        let results = evaluateFendWithTimeoutMultiple(Object.values(variables).join("\0"), 500).split('\0');
+        console.log(results);
 
         result.innerText = results[results.length - 1];
 
