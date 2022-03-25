@@ -1,4 +1,4 @@
-use std::{error, fmt};
+use std::{error, fmt, io};
 
 use crate::num::Range;
 
@@ -14,6 +14,8 @@ pub(crate) enum FendError {
     ExponentTooLarge,
     ZeroToThePowerOfZero,
     FactorialComplex,
+    DeserializationError,
+    SerializationError,
     OutOfRange {
         value: Box<dyn crate::format::DisplayDebug>,
         range: Range<Box<dyn crate::format::DisplayDebug>>,
@@ -63,6 +65,7 @@ pub(crate) enum FendError {
     ExpectedAnObject,
     InvalidUnicodeEscapeSequence,
     FormattingError(fmt::Error),
+    IoError(io::Error),
     ParseDateError(String),
     ParseError(crate::parser::ParseError),
     ExpectedAString,
@@ -94,11 +97,14 @@ impl fmt::Display for FendError {
             Self::FactorialUnitless => {
                 write!(f, "factorial is only supported for unitless numbers")
             }
+            Self::DeserializationError => write!(f, "failed to deserialize object"),
+            Self::SerializationError => write!(f, "failed to serialize object"),
             Self::ModuloUnitless => write!(f, "modulo is only supported for unitless numbers"),
             Self::FactorialComplex => write!(f, "factorial is not supported for complex numbers"),
             Self::RootsComplex => write!(f, "roots are currently unsupported for complex numbers"),
             Self::ExpComplex => write!(f, "exponentiation is not supported for complex numbers"),
             Self::ExpUnitless => write!(f, "exponentiation is only supported for unitless numbers"),
+            Self::IoError(_) => write!(f, "I/O error"),
             Self::InvalidBasePrefix => write!(
                 f,
                 "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
@@ -228,6 +234,7 @@ impl error::Error for FendError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::FormattingError(e) => Some(e),
+            Self::IoError(e) => Some(e),
             _ => None,
         }
     }
@@ -236,6 +243,12 @@ impl error::Error for FendError {
 impl From<fmt::Error> for FendError {
     fn from(e: fmt::Error) -> Self {
         Self::FormattingError(e)
+    }
+}
+
+impl From<io::Error> for FendError {
+    fn from(e: io::Error) -> Self {
+        Self::IoError(e)
     }
 }
 

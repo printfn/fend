@@ -2,9 +2,11 @@ use crate::ast::Bop;
 use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
+use crate::serialize::*;
 use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;
+use std::io;
 use std::{fmt, sync::Arc};
 
 mod boolean;
@@ -149,6 +151,40 @@ impl BuiltInFunction {
             Self::Sample => "sample",
         }
     }
+
+    fn try_from_str(s: &str) -> Result<Self, FendError> {
+        Ok(match s {
+            "approximately" => Self::Approximately,
+            "abs" => Self::Abs,
+            "sin" => Self::Sin,
+            "cos" => Self::Cos,
+            "tan" => Self::Tan,
+            "asin" => Self::Asin,
+            "acos" => Self::Acos,
+            "atan" => Self::Atan,
+            "sinh" => Self::Sinh,
+            "cosh" => Self::Cosh,
+            "tanh" => Self::Tanh,
+            "asinh" => Self::Asinh,
+            "acosh" => Self::Acosh,
+            "atanh" => Self::Atanh,
+            "ln" => Self::Ln,
+            "log2" => Self::Log2,
+            "log10" => Self::Log10,
+            "base" => Self::Base,
+            "sample" => Self::Sample,
+            _ => return Err(FendError::DeserializationError),
+        })
+    }
+
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_string(self.as_str(), write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Self::try_from_str(deserialize_string(read)?.as_str())
+    }
 }
 
 impl fmt::Display for BuiltInFunction {
@@ -164,6 +200,93 @@ pub(crate) enum ApplyMulHandling {
 }
 
 impl Value {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        match self {
+            Value::Num(n) => {
+                serialize_u8(0, write)?;
+                n.serialize(write)?;
+            }
+            Value::BuiltInFunction(f) => {
+                serialize_u8(1, write)?;
+                f.serialize(write)?;
+            }
+            Value::Format(f) => {
+                serialize_u8(2, write)?;
+                f.serialize(write)?;
+            }
+            Value::Dp => serialize_u8(3, write)?,
+            Value::Sf => serialize_u8(4, write)?,
+            Value::Base(b) => {
+                serialize_u8(5, write)?;
+                b.serialize(write)?;
+            }
+            Value::Fn(i, e, s) => {
+                serialize_u8(6, write)?;
+                i.serialize(write)?;
+                e.serialize(write)?;
+                match s {
+                    None => serialize_bool(false, write)?,
+                    Some(s) => {
+                        serialize_bool(true, write)?;
+                        s.serialize(write)?;
+                    }
+                }
+            }
+            Value::Object(o) => {
+                serialize_u8(7, write)?;
+                serialize_usize(o.len(), write)?;
+                for (k, v) in o {
+                    serialize_string(k.as_ref(), write)?;
+                    v.serialize(write)?;
+                }
+            }
+            Value::String(s) => {
+                serialize_u8(8, write)?;
+                serialize_string(s, write)?;
+            }
+            Value::Dynamic(_) => {
+                // TODO add support for dynamic variables
+                return Err(FendError::SerializationError);
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(match deserialize_u8(read)? {
+            0 => Self::Num(Box::new(Number::deserialize(read)?)),
+            1 => Self::BuiltInFunction(BuiltInFunction::deserialize(read)?),
+            2 => Self::Format(FormattingStyle::deserialize(read)?),
+            3 => Self::Dp,
+            4 => Self::Sf,
+            5 => Self::Base(Base::deserialize(read)?),
+            6 => Self::Fn(
+                Ident::deserialize(read)?,
+                Box::new(Expr::deserialize(read)?),
+                {
+                    match deserialize_bool(read)? {
+                        false => None,
+                        true => Some(Arc::new(Scope::deserialize(read)?)),
+                    }
+                },
+            ),
+            7 => Self::Object({
+                let len = deserialize_usize(read)?;
+                let mut v = Vec::with_capacity(len);
+                for _ in 0..len {
+                    v.push((
+                        Cow::Owned(deserialize_string(read)?),
+                        Box::new(Value::deserialize(read)?),
+                    ));
+                }
+                v
+            }),
+            8 => Self::String(Cow::Owned(deserialize_string(read)?)),
+            // TODO add support for dynamic objects
+            _ => return Err(FendError::DeserializationError),
+        })
+    }
+
     pub(crate) fn expect_num(self) -> Result<Number, FendError> {
         match self {
             Self::Num(bigrat) => Ok(*bigrat),

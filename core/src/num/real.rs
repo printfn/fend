@@ -3,9 +3,10 @@ use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
+use crate::serialize::*;
 use std::cmp::Ordering;
 use std::ops::Neg;
-use std::{fmt, hash};
+use std::{fmt, hash, io};
 
 use super::bigrat;
 
@@ -74,6 +75,30 @@ impl hash::Hash for Real {
 }
 
 impl Real {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        match &self.pattern {
+            Pattern::Simple(s) => {
+                serialize_u8(1, write)?;
+                s.serialize(write)?;
+            }
+            Pattern::Pi(n) => {
+                serialize_u8(2, write)?;
+                n.serialize(write)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self {
+            pattern: match deserialize_u8(read)? {
+                1 => Pattern::Simple(BigRat::deserialize(read)?),
+                2 => Pattern::Pi(BigRat::deserialize(read)?),
+                _ => return Err(FendError::DeserializationError),
+            },
+        })
+    }
+
     fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, FendError> {
         match self.pattern {
             Pattern::Simple(s) => Ok(s),

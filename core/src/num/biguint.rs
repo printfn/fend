@@ -2,8 +2,9 @@ use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
+use crate::serialize::*;
 use std::cmp::{max, Ordering};
-use std::{fmt, hash};
+use std::{fmt, hash, io};
 
 #[derive(Clone)]
 pub(crate) enum BigUint {
@@ -443,6 +444,39 @@ impl BigUint {
             Small(x) => *x == 1,
             Large(_) => false,
         }
+    }
+
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        match self {
+            Small(x) => {
+                serialize_u8(1, write)?;
+                serialize_u64(*x, write)?;
+            }
+            Large(v) => {
+                serialize_u8(2, write)?;
+                serialize_usize(v.len(), write)?;
+                for b in v {
+                    serialize_u64(*b, write)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        let kind = deserialize_u8(read)?;
+        Ok(match kind {
+            1 => Self::Small(deserialize_u64(read)?),
+            2 => {
+                let len = deserialize_usize(read)?;
+                let mut v = Vec::with_capacity(len);
+                for _ in 0..len {
+                    v.push(deserialize_u64(read)?);
+                }
+                Self::Large(v)
+            }
+            _ => return Err(FendError::DeserializationError),
+        })
     }
 }
 

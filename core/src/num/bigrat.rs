@@ -3,9 +3,12 @@ use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
-use std::{cmp, fmt, hash, ops};
+use std::{cmp, fmt, hash, io, ops};
 
 mod sign {
+    use crate::{error::FendError, serialize::*};
+    use std::io;
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub(crate) enum Sign {
         Positive,
@@ -29,6 +32,24 @@ mod sign {
                     Self::Negative
                 }
             }
+        }
+
+        pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+            Ok(serialize_u8(
+                match self {
+                    Self::Positive => 1,
+                    Self::Negative => 2,
+                },
+                write,
+            )?)
+        }
+
+        pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+            Ok(match deserialize_u8(read)? {
+                1 => Self::Positive,
+                2 => Self::Negative,
+                _ => return Err(FendError::DeserializationError),
+            })
         }
     }
 }
@@ -97,6 +118,21 @@ impl hash::Hash for BigRat {
 }
 
 impl BigRat {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        self.sign.serialize(write)?;
+        self.num.serialize(write)?;
+        self.den.serialize(write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self {
+            sign: Sign::deserialize(read)?,
+            num: BigUint::deserialize(read)?,
+            den: BigUint::deserialize(read)?,
+        })
+    }
+
     pub(crate) fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, FendError> {
         if self.sign == Sign::Negative && self.num != 0.into() {
             return Err(FendError::NegativeNumbersNotAllowed);
