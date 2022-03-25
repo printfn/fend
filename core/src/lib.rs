@@ -112,6 +112,14 @@ impl FendResult {
     pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
         std::iter::empty()
     }
+
+    fn empty() -> Self {
+        Self {
+            plain_result: String::new(),
+            span_result: vec![],
+            is_unit: true,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -197,7 +205,7 @@ impl Context {
         self.random_u32 = None;
     }
 
-    /// Change the output mode fixed-width terminal style. This enables ASCII
+    /// Change the output mode to fixed-width terminal style. This enables ASCII
     /// graphs in the output.
     pub fn set_output_mode_terminal(&mut self) {
         self.output_mode = OutputMode::TerminalFixedWidth;
@@ -216,26 +224,14 @@ pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String
     evaluate_with_interrupt(input, context, &interrupt::Never::default())
 }
 
-/// This function evaluates a string using the given context and the provided
-/// Interrupt object.
-///
-/// For example, passing in the string `"1 + 1"` will return a result of `"2"`.
-///
-/// # Errors
-/// It returns an error if the given string is invalid.
-/// This may be due to parser or runtime errors.
-pub fn evaluate_with_interrupt(
+fn evaluate_with_interrupt_internal(
     input: &str,
     context: &mut Context,
     int: &impl Interrupt,
 ) -> Result<FendResult, String> {
     if input.is_empty() {
         // no or blank input: return no output
-        return Ok(FendResult {
-            plain_result: String::new(),
-            span_result: vec![],
-            is_unit: true,
-        });
+        return Ok(FendResult::empty());
     }
     let (result, is_unit) = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
@@ -250,6 +246,57 @@ pub fn evaluate_with_interrupt(
         span_result: result,
         is_unit,
     })
+}
+
+/// This function evaluates a string using the given context and the provided
+/// Interrupt object.
+///
+/// For example, passing in the string `"1 + 1"` will return a result of `"2"`.
+///
+/// # Errors
+/// It returns an error if the given string is invalid.
+/// This may be due to parser or runtime errors.
+pub fn evaluate_with_interrupt(
+    input: &str,
+    context: &mut Context,
+    int: &impl Interrupt,
+) -> Result<FendResult, String> {
+    evaluate_with_interrupt_internal(input, context, int)
+}
+
+/// Evaluate the given string to use as a hint (i.e. live preview of output).
+/// Unlike the normal evaluation functions, `evaluate_hint_with_interrupt`
+/// does not mutate the passed-in context, and only returns results suitable
+/// for displaying as a live preview: overly long output, multi-line output,
+/// unit types etc. are all filtered out. RNG functions (e.g. `roll d6`) are
+/// also disabled.
+pub fn evaluate_hint_with_interrupt(
+    input: &str,
+    context: &mut Context,
+    int: &impl Interrupt,
+) -> FendResult {
+    let empty = FendResult::empty();
+    // unfortunately making a complete copy of the context is necessary
+    // because we want variables to still work in multi-statement inputs
+    // like `a = 2; 5a`.
+    let context_clone = context.clone();
+    context.random_u32 = None;
+    let result = evaluate_with_interrupt_internal(input, context, int);
+    *context = context_clone;
+    let result = match result {
+        Ok(result) => result,
+        Err(_) => return empty,
+    };
+    let s = result.get_main_result();
+    if s.is_empty()
+        || result.is_unit_type()
+        || s.len() > 50
+        || s.trim() == input.trim()
+        || s.contains(|c| c < ' ')
+    {
+        return empty;
+    }
+    result
 }
 
 #[derive(Debug)]
