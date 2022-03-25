@@ -38,7 +38,7 @@ async function evaluate(event) {
 
         navigateEnd();
 
-        let results = evaluateFendWithTimeoutMultiple(Object.values(variables).join("\0") + "\0" + inputText.value, 500).split('\0');
+        let results = evaluateFendWithTimeoutMultiple(getStack(), 500).split('\0');
 
         if (isVariable) {
             variables[getInputVariable()] = inputText.value;
@@ -56,6 +56,10 @@ async function evaluate(event) {
 
         inputHint.scrollIntoView();
     }
+}
+
+function getStack() {
+    return Object.values(variables).join("\0") + "\0" + inputText.value;
 }
 
 function navigate(event) {
@@ -141,7 +145,7 @@ function updateReplicatedText() {
 }
 
 function updateHint() {
-    let results = evaluateFendWithTimeoutMultiple(Object.values(variables).join("\0") + '\0' + inputText.value, 500).split('\0');
+    let results = evaluateFendWithTimeoutMultiple(getStack(), 500).split('\0');
     let result = results[results.length - 1];
 
     if (!result.startsWith('Error: ')) {
