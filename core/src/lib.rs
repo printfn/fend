@@ -264,13 +264,14 @@ pub fn evaluate_with_interrupt(
     evaluate_with_interrupt_internal(input, context, int)
 }
 
-/// Evaluate the given string to use as a hint (i.e. live preview of output).
-/// Unlike the normal evaluation functions, `evaluate_hint_with_interrupt`
+/// Evaluate the given string to use as a live preview.
+///
+/// Unlike the normal evaluation functions, `evaluate_preview_with_interrupt`
 /// does not mutate the passed-in context, and only returns results suitable
 /// for displaying as a live preview: overly long output, multi-line output,
 /// unit types etc. are all filtered out. RNG functions (e.g. `roll d6`) are
 /// also disabled.
-pub fn evaluate_hint_with_interrupt(
+pub fn evaluate_preview_with_interrupt(
     input: &str,
     context: &mut Context,
     int: &impl Interrupt,
