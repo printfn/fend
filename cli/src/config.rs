@@ -181,6 +181,13 @@ fn use_colors_if_auto() -> bool {
     if cfg!(test) {
         return false;
     }
+    if env::consts::OS == "windows" {
+        // Colors are broken in the Windows command prompt, but do work
+        // in the Windows Terminal. Disable them by default until
+        // there's a better way to detect what kind of terminal we're
+        // running in.
+        return false;
+    }
     if env::var_os("NO_COLOR").is_some() {
         return false;
     }
