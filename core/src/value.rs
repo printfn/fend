@@ -247,6 +247,7 @@ impl Value {
                 serialize_u8(8, write)?;
                 serialize_string(s, write)?;
             }
+            Value::Unit => serialize_u8(9, write)?,
             Value::Dynamic(_) => {
                 // TODO add support for dynamic variables
                 return Err(FendError::SerializationError);
@@ -284,6 +285,7 @@ impl Value {
                 v
             }),
             8 => Self::String(Cow::Owned(deserialize_string(read)?)),
+            9 => Self::Unit,
             // TODO add support for dynamic objects
             _ => return Err(FendError::DeserializationError),
         })
