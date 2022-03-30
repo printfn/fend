@@ -345,10 +345,3 @@ const fn get_version_as_str() -> &'static str {
 pub fn get_version() -> String {
     get_version_as_str().to_string()
 }
-
-/// Deprecated: use `get_version()` instead.
-#[must_use]
-#[deprecated = "use `get_version()` instead"]
-pub fn get_extended_version() -> String {
-    get_version()
-}
