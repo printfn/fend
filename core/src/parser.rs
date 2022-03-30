@@ -108,7 +108,7 @@ fn parse_ident(input: &[Token]) -> ParseResult<'_> {
 fn parse_parens(input: &[Token]) -> ParseResult<'_> {
     let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::CloseParens) {
-        return Ok((Expr::Literal(Value::from(())), remaining));
+        return Ok((Expr::Literal(Value::Unit), remaining));
     }
     let (inner, mut input) = parse_expression(input)?;
     // allow omitting closing parentheses at end of input
@@ -395,7 +395,7 @@ fn parse_statements(mut input: &[Token]) -> ParseResult<'_> {
         input = remaining;
     }
     if input.is_empty() {
-        return Ok((Expr::Literal(Value::from(())), &[]));
+        return Ok((Expr::Literal(Value::Unit), &[]));
     }
     let (mut result, mut input) = parse_assignment(input)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {

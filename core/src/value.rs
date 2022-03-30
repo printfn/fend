@@ -9,7 +9,6 @@ use std::{fmt, sync::Arc};
 
 mod boolean;
 pub(crate) mod func;
-mod unit;
 
 pub(crate) trait BoxClone {
     fn box_clone(&self) -> Box<dyn ValueTrait>;
@@ -40,10 +39,6 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
     fn add(&self, _rhs: Value) -> Result<Value, FendError> {
         Err(FendError::ExpectedANumber)
     }
-
-    fn is_unit(&self) -> bool {
-        false
-    }
 }
 
 impl Clone for Box<dyn ValueTrait> {
@@ -71,6 +66,7 @@ pub(crate) enum Value {
     Object(Vec<(Cow<'static, str>, Box<Value>)>),
     String(Cow<'static, str>),
     Dynamic(Box<dyn ValueTrait>),
+    Unit, // unit value `()`
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -183,10 +179,7 @@ impl Value {
     }
 
     pub(crate) fn is_unit(&self) -> bool {
-        match self {
-            Self::Dynamic(d) => d.is_unit(),
-            _ => false,
-        }
+        matches!(self, Value::Unit)
     }
 
     pub(crate) fn add_dyn(self, rhs: Self) -> Result<Self, FendError> {
@@ -419,6 +412,12 @@ impl Value {
                     kind: SpanKind::String,
                 });
             }
+            Self::Unit => {
+                spans.push(crate::Span {
+                    string: "()".to_string(),
+                    kind: crate::SpanKind::Ident,
+                });
+            }
             Self::Dynamic(d) => {
                 d.format(indent, spans);
             }
@@ -469,6 +468,7 @@ impl fmt::Debug for Value {
                 write!(f, "{}", s)
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
+            Self::Unit => write!(f, "()"),
             Self::Dynamic(d) => write!(f, "{:?}", d),
         }
     }

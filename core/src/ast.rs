@@ -347,6 +347,9 @@ fn evaluate_as<I: Interrupt>(
         Value::String(_) => {
             return Err(FendError::CannotConvertValueTo("string"));
         }
+        Value::Unit => {
+            return Err(FendError::CannotConvertValueTo("()"));
+        }
         Value::Dynamic(d) => {
             return Err(FendError::CannotConvertValueTo(d.type_name()));
         }
