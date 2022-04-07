@@ -135,7 +135,7 @@ fn query_unit_case_sensitive<I: Interrupt>(
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value, FendError> {
-    match query_unit_internal(ident, false, case_sensitive, context, int) {
+    match query_unit_internal(ident, false, case_sensitive, true, context, int) {
         Err(FendError::IdentifierNotFound(_)) => (),
         Err(e) => return Err(e),
         Ok(unit) => {
@@ -148,14 +148,14 @@ fn query_unit_case_sensitive<I: Interrupt>(
     while split_idx < ident.len() {
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         split_idx += remaining_ident.chars().next().unwrap().len_utf8();
-        let a = match query_unit_internal(prefix, true, case_sensitive, context, int) {
+        let a = match query_unit_internal(prefix, true, case_sensitive, false, context, int) {
             Err(FendError::IdentifierNotFound(_)) => continue,
             Err(e) => {
                 return Err(e);
             }
             Ok(a) => a,
         };
-        match query_unit_internal(remaining_ident, false, case_sensitive, context, int) {
+        match query_unit_internal(remaining_ident, false, case_sensitive, false, context, int) {
             Err(FendError::IdentifierNotFound(_)) => continue,
             Err(e) => return Err(e),
             Ok(b) => {
@@ -178,21 +178,16 @@ fn query_unit_internal<'a, I: Interrupt>(
     ident: &'a str,
     short_prefixes: bool,
     case_sensitive: bool,
+    whole_unit: bool,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, FendError> {
-    if ident == "C" {
-        return if context.fc_mode == crate::FCMode::CelsiusFahrenheit {
-            expr_unit("C", "C", "=\u{b0}C", context, int)
-        } else {
-            expr_unit("C", "C", "s@coulomb", context, int)
-        };
-    } else if ident == "F" {
-        return if context.fc_mode == crate::FCMode::CelsiusFahrenheit {
-            expr_unit("F", "F", "=\u{b0}F", context, int)
-        } else {
-            expr_unit("F", "F", "s@farad", context, int)
-        };
+    if whole_unit && context.fc_mode == crate::FCMode::CelsiusFahrenheit {
+        if ident == "C" {
+            return expr_unit("C", "C", "=\u{b0}C", context, int);
+        } else if ident == "F" {
+            return expr_unit("F", "F", "=\u{b0}F", context, int);
+        }
     }
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
         expr_unit(s, p, expr, context, int)

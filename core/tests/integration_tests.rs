@@ -5474,3 +5474,13 @@ fn implicit_unit_fudging_5() {
         Some("cannot convert from kg to ': units 'kilogram' and 'meter' are incompatible"),
     );
 }
+
+#[test]
+fn millicoulomb() {
+    test_eval("5 coulomb to mC", "5000 mC");
+}
+
+#[test]
+fn millifarad() {
+    test_eval("5 farad to mF", "5000 mF");
+}
