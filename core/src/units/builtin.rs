@@ -491,6 +491,7 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("bar", "", "l@1e5 Pa", "about 1 atmosphere"),
     ("diopter", "", "l@/m", "reciprocal of focal length"),
     ("sqm", "", "=m^2", ""),
+    ("sqmm", "", "=mm^2", ""),
     // TODO remove these compatibility units
     ("lightyear", "lightyears", "light_year", ""),
     ("light", "", "c", ""),
