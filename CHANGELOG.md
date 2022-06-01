@@ -1,5 +1,13 @@
 ## Changelog
 
+### v1.0.2 (2022-06-01)
+
+* Improve CLI colors
+* Use Coulomb and Farad for prefixed units like `mC` or `µF`
+* Add `sqmm` unit for square millimeters
+* Add `point` unit for typographical points (i.e. 1/72 inch)
+* Improve CLI behavior when pressing Ctrl-C to clear the current line
+
 ### v1.0.1 (2022-03-19)
 
 * Support omitting inches when writing e.g. `5'1`: fend will now automatically
