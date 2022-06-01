@@ -233,7 +233,7 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
 
 echo "Creating GitHub release..."
-CHANGELOG2="Changes in this version:\n\n$CHANGELOG"
+CHANGELOG2=$'Changes in this version:\n\n'"$CHANGELOG"
 gh release --repo printfn/fend \
     create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
     --notes "$CHANGELOG2" \
