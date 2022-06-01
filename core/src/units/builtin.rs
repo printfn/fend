@@ -523,6 +523,7 @@ const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("section", "sections", "mile^2", ""),
     ("township", "townships", "36 sections", ""),
     ("homestead", "homesteads", "160 acres", ""),
+    ("point", "points", "l@1/72 inch", ""),
 ];
 
 const LIQUID_UNITS: &[UnitTuple] = &[

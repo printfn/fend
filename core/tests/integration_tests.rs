@@ -5484,3 +5484,8 @@ fn millicoulomb() {
 fn millifarad() {
     test_eval("5 farad to mF", "5000 mF");
 }
+
+#[test]
+fn point() {
+    test_eval("0.5 points to mm", "approx. 0.1763888888 mm");
+}
