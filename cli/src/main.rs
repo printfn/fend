@@ -95,10 +95,7 @@ fn print_help(explain_quitting: bool) {
 }
 
 fn repl_loop(config: &config::Config) -> i32 {
-    let core_context = std::cell::RefCell::new(fend_core::Context::new());
-    if config.coulomb_and_farad {
-        core_context.borrow_mut().use_coulomb_and_farad();
-    }
+    let core_context = std::cell::RefCell::new(context::InnerContext::new(config));
     let mut context = Context::new(&core_context);
     let mut prompt_state = terminal::init_prompt(config, &context);
     let mut initial_run = true; // set to false after first successful command
@@ -132,7 +129,9 @@ fn repl_loop(config: &config::Config) -> i32 {
                 if initial_run {
                     break;
                 }
-                println!("Use Ctrl-D (i.e. EOF) to exit");
+                if !context.get_input_typed() {
+                    println!("Use Ctrl-D (i.e. EOF) to exit");
+                }
             }
             Err(terminal::ReadLineError::Eof) => break,
             Err(terminal::ReadLineError::Error(err)) => {
@@ -150,10 +149,7 @@ fn repl_loop(config: &config::Config) -> i32 {
 
 fn eval_expr(expr: &str) -> i32 {
     let config = config::read();
-    let core_context = std::cell::RefCell::new(fend_core::Context::new());
-    if config.coulomb_and_farad {
-        core_context.borrow_mut().use_coulomb_and_farad();
-    }
+    let core_context = std::cell::RefCell::new(context::InnerContext::new(&config));
     match eval_and_print_res(
         expr,
         &mut Context::new(&core_context),

@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::time;
 
+use crate::config;
+
 pub struct HintInterrupt {
     start: time::Instant,
     duration: time::Duration,
@@ -21,13 +23,34 @@ impl Default for HintInterrupt {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
+pub struct InnerContext {
+    core_ctx: fend_core::Context,
+
+    // true if the user typed some partial input, false otherwise
+    input_typed: bool,
+}
+
+impl InnerContext {
+    pub fn new(config: &config::Config) -> Self {
+        let mut res = Self {
+            core_ctx: fend_core::Context::new(),
+            input_typed: false,
+        };
+        if config.coulomb_and_farad {
+            res.core_ctx.use_coulomb_and_farad();
+        }
+        res
+    }
+}
+
 #[derive(Clone)]
 pub struct Context<'a> {
-    ctx: &'a RefCell<fend_core::Context>,
+    ctx: &'a RefCell<InnerContext>,
 }
 
 impl<'a> Context<'a> {
-    pub fn new(ctx: &'a RefCell<fend_core::Context>) -> Self {
+    pub fn new(ctx: &'a RefCell<InnerContext>) -> Self {
         Self { ctx }
     }
 
@@ -37,16 +60,22 @@ impl<'a> Context<'a> {
         int: &impl fend_core::Interrupt,
     ) -> Result<fend_core::FendResult, String> {
         let mut ctx_borrow = self.ctx.borrow_mut();
-        ctx_borrow.set_random_u32_fn(random_u32);
-        ctx_borrow.set_output_mode_terminal();
-        fend_core::evaluate_with_interrupt(line, &mut ctx_borrow, int)
+        ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
+        ctx_borrow.core_ctx.set_output_mode_terminal();
+        ctx_borrow.input_typed = false;
+        fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
     }
 
     pub fn eval_hint(&self, line: &str) -> fend_core::FendResult {
         let mut ctx_borrow = self.ctx.borrow_mut();
-        ctx_borrow.set_output_mode_terminal();
+        ctx_borrow.core_ctx.set_output_mode_terminal();
+        ctx_borrow.input_typed = !line.is_empty();
         let int = HintInterrupt::default();
-        fend_core::evaluate_preview_with_interrupt(line, &mut ctx_borrow, &int)
+        fend_core::evaluate_preview_with_interrupt(line, &mut ctx_borrow.core_ctx, &int)
+    }
+
+    pub fn get_input_typed(&self) -> bool {
+        self.ctx.borrow().input_typed
     }
 }
 
