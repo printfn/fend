@@ -179,7 +179,7 @@ impl Value {
     }
 
     pub(crate) fn is_unit(&self) -> bool {
-        matches!(self, Value::Unit)
+        matches!(self, Self::Unit)
     }
 
     pub(crate) fn add_dyn(self, rhs: Self) -> Result<Self, FendError> {
