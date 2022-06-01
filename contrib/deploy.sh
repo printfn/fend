@@ -58,17 +58,17 @@ manualstep() {
 gitdiff() {
     local gitdir="$1"
     local expected_add_count="$2"
-    local expected_del_count="$2"
+    local expected_del_count="$3"
     # checks the expected number of lines + files are different
     local added_lines
     added_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^+')"
     if [[ "$added_lines" != "$expected_add_count" ]]; then
-        fail "Expected $expected_add_count lines+files to be different"
+        fail "Expected $expected_add_count lines+files to be different (+)"
     fi
     local removed_lines
     removed_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^-')"
     if [[ "$removed_lines" != "$expected_del_count" ]]; then
-        fail "Expected $expected_del_count lines+files to be different"
+        fail "Expected $expected_del_count lines+files to be different (-)"
     fi
 }
 
@@ -245,8 +245,8 @@ gh release --repo printfn/fend \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip"
 
-manualstep "Open https://github.com/printfn/fend/releases/tag/$NEW_VERSION \
-and check that it is correct"
+manualstep "Open https://github.com/printfn/fend/releases and check \
+that the new release is correct. If it is, go ahead and publish it."
 
 # AUR release
 git clone ssh://aur@aur.archlinux.org/fend.git "$TMPDIR/fend-aur"
