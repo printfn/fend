@@ -5489,3 +5489,8 @@ fn millifarad() {
 fn point() {
     test_eval("0.5 points to mm", "approx. 0.1763888888 mm");
 }
+
+#[test]
+fn rad_per_sec() {
+    test_eval("10 RPM to rad/s", "approx. 1.0471975511 rad / s")
+}

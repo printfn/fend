@@ -237,6 +237,7 @@ const CONSTANTS: &[UnitTuple] = &[
 
 const ANGLES: &[UnitTuple] = &[
     ("radian", "radians", "l@1", ""),
+    ("rad", "", "radian", ""),
     ("circle", "circles", "l@2 pi radian", ""),
     ("degree", "degrees", "l@1/360 circle", ""),
     ("deg", "degs", "l@degree", ""),
@@ -343,7 +344,7 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
         "absorbed dose of ionising radiation",
     ),
     ("Gy", "", "s@gray", ""),
-    ("rad", "", "l@1/100 Gy", ""),
+    ("rad_radiation", "", "l@1/100 Gy", ""),
     (
         "sievert",
         "sieverts",
