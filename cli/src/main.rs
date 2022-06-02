@@ -126,11 +126,22 @@ fn repl_loop(config: &config::Config) -> i32 {
                 }
             },
             Err(terminal::ReadLineError::Interrupted) => {
-                if initial_run {
-                    break;
-                }
-                if !context.get_input_typed() {
-                    println!("Use Ctrl-D (i.e. EOF) to exit");
+                #[allow(clippy::match_same_arms)]
+                match (initial_run, context.get_input_typed()) {
+                    (true, true) => {
+                        // initial run but input has been typed => do nothing
+                    }
+                    (true, false) => {
+                        // initial run, no input => terminate
+                        break;
+                    }
+                    (false, true) => {
+                        // later run, input has been typed => do nothing
+                    }
+                    (false, false) => {
+                        // later run, no input => show message
+                        println!("Use Ctrl-D (i.e. EOF) to exit");
+                    }
                 }
             }
             Err(terminal::ReadLineError::Eof) => break,
