@@ -7,6 +7,8 @@ use crate::value::Value;
 
 mod builtin;
 
+pub(crate) use builtin::IMPLICIT_UNIT_MAP;
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(crate) enum PrefixRule {
     NoPrefixesAllowed,

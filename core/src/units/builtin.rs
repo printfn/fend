@@ -754,6 +754,9 @@ pub(crate) fn query_unit<'a>(
     None
 }
 
+/// used for implicit unit addition, e.g. 5'5 -> 5'5"
+pub(crate) const IMPLICIT_UNIT_MAP: &[(&str, &str)] = &[("'", "\""), ("foot", "inches")];
+
 #[cfg(test)]
 mod tests {
     use super::*;

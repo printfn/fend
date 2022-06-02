@@ -5494,3 +5494,8 @@ fn point() {
 fn rad_per_sec() {
     test_eval("10 RPM to rad/s", "approx. 1.0471975511 rad / s")
 }
+
+#[test]
+fn fudged_rhs_feet_conv() {
+    test_eval("6 foot 4 in cm", "193.04 cm");
+}

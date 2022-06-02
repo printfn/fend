@@ -149,10 +149,13 @@ impl Value {
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        if self.unit.equal_to("'") && rhs.is_unitless() {
-            let inches =
-                ast::resolve_identifier(&Ident::new_str("\""), None, context, int)?.expect_num()?;
-            return rhs.mul(inches, int);
+        for (lhs_unit, rhs_unit) in crate::units::IMPLICIT_UNIT_MAP {
+            if self.unit.equal_to(lhs_unit) && rhs.is_unitless() {
+                let inches =
+                    ast::resolve_identifier(&Ident::new_str(rhs_unit), None, context, int)?
+                        .expect_num()?;
+                return rhs.mul(inches, int);
+            }
         }
         Ok(rhs)
     }
