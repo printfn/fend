@@ -1,5 +1,5 @@
 use crate::{config, context, file_paths, helper};
-use std::{error, path};
+use std::{error, io, mem, path};
 
 // contains wrapper code for terminal handling, using third-party
 // libraries where necessary
@@ -33,12 +33,14 @@ pub fn init_prompt<'a>(
             .build(),
     );
     rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
-    let history_path = file_paths::get_history_file_location();
-    if let Some(history_path) = &history_path {
-        if rl.load_history(history_path.as_path()).is_err() {
-            // No previous history
+    let history_path = match file_paths::get_history_file_location() {
+        Ok(history_path) => {
+            // ignore error if e.g. no history file exists
+            mem::drop(rl.load_history(history_path.as_path()));
+            Some(history_path)
         }
-    }
+        Err(_) => None,
+    };
     PromptState {
         rl,
         config,
@@ -52,18 +54,24 @@ pub enum ReadLineError {
     Error(Box<dyn error::Error>),
 }
 
-fn save_history(rl: &mut rustyline::Editor<helper::Helper<'_>>, path: &Option<path::PathBuf>) {
+fn save_history(
+    rl: &mut rustyline::Editor<helper::Helper<'_>>,
+    path: &Option<path::PathBuf>,
+) -> io::Result<()> {
     if let Some(history_path) = path {
+        file_paths::create_state_dir()?;
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
         }
     }
+    Ok(())
 }
 
 impl PromptState<'_> {
     pub fn read_line(&mut self) -> Result<String, ReadLineError> {
         let res = self.rl.readline(self.config.prompt.as_str());
-        save_history(&mut self.rl, &self.history_path);
+        // ignore errors when saving history
+        mem::drop(save_history(&mut self.rl, &self.history_path));
         match res {
             Ok(line) => Ok(line),
             Err(rustyline::error::ReadlineError::Interrupted) => Err(ReadLineError::Interrupted),

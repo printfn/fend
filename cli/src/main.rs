@@ -79,12 +79,12 @@ fn print_help(explain_quitting: bool) {
     println!("https://github.com/printfn/fend/wiki");
     println!();
     println!("Version: {}", fend_core::get_version());
-    if let Some(config_path) = file_paths::get_config_file_location() {
+    if let Ok(config_path) = file_paths::get_config_file_location() {
         println!("Config file: {}", config_path.to_string_lossy());
     } else {
         println!("Failed to get config file location");
     }
-    if let Some(history_path) = file_paths::get_history_file_location() {
+    if let Ok(history_path) = file_paths::get_history_file_location() {
         println!("History file: {}", history_path.to_string_lossy());
     } else {
         println!("Failed to get history file location");
