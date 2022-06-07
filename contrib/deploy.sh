@@ -97,6 +97,12 @@ cargo fmt -- --check
 echo "Making sure we are logged in to npm..."
 npm whoami
 
+PATH="$HOME/.cargo/bin:$PATH"
+echo "Ensure that we are using Rustup"
+if [[ ! "$(which rustc)" =~ .cargo/bin/rustc$ ]]; then
+    fail "Using $(which rustc) which does not seem to be from Rustup"
+fi
+
 echo "Making sure the git repository is clean..."
 # from https://stackoverflow.com/a/5143914
 git update-index --refresh &>/dev/null || true
