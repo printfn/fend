@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.0.3 (2022-06-07)
+
+* Support `rad` for `radians` (e.g. `10 RPM to rad/s`)
+* Support implicit inches for `feet` (e.g. `5 foot 5 to cm`)
+* Ensure fend does not exit when pressing Ctrl-C to clear the current line
+
 ### v1.0.2 (2022-06-01)
 
 * Improve CLI colors
