@@ -600,6 +600,7 @@ const NAUTICAL_UNITS: &[UnitTuple] = &[
     ("cable", "cables", "1/10 nautical_mile", ""),
     ("marine_league", "marine_leagues", "3 nautical_mile", ""),
     ("knot", "knots", "nautical_mile / hr", ""),
+    ("kn", "", "=knots", ""),
     ("click", "clicks", "km", ""),
     ("NM", "", "nautical_mile", ""),
 ];
