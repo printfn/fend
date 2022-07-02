@@ -59,7 +59,7 @@ pub(crate) enum Expr {
     Statements(Box<Expr>, Box<Expr>),
 }
 
-impl<'a> Expr {
+impl Expr {
     pub(crate) fn format<I: Interrupt>(
         &self,
         ctx: &crate::Context,

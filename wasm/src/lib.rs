@@ -84,7 +84,10 @@ pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String
                     result.push_str(res.get_main_result());
                 }
             }
-            Err(msg) => result.push_str(&format!("Error: {}", msg)),
+            Err(msg) => {
+                result.push_str("Error: ");
+                result.push_str(&msg);
+            }
         };
     }
     result
