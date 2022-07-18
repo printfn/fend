@@ -34,7 +34,7 @@ These steps are needed to trust fend's certificate:
 3. Select the signature and click on "Details"
 4. In the "General" tab, click on "View Certificate"
 5. In the "General" tab, click on "Install Certificate..."
-6. **IMPORTANT**: Change the store location to "Local Machine", then click "Next"
-7. Choose the option "Place all certificates in the following store", then click on "Browse..." and select the "Trusted People" store. The checkbox "Show physical stores" should be disabled. Then click on "OK" to confirm the store, and click on "Next".
+6. Change the store location to "**Local Machine**", then click "Next"
+7. Choose the option "Place all certificates in the following store", then click on "Browse..." and select the "**Trusted People**" store. The checkbox "Show physical stores" should be disabled. Then click on "OK" to confirm the store, and click on "Next".
 8. Click on "Finish" to import the certificate.
 9. Close the other windows, and proceed to install fend by double-clicking the MSIX file.
