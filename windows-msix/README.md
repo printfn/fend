@@ -11,7 +11,7 @@ for more info.
 This command will create a new self-signed certificate:
 
 ```ps1
-New-SelfSignedCertificate -Type Custom -Subject "CN=printfn, O=printfn" -KeyUsage DigitalSignature -FriendlyName "fend package signing certificate" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+New-SelfSignedCertificate -Type Custom -Subject "CN=printfn, O=printfn" -KeyUsage DigitalSignature -FriendlyName "fend package signing certificate" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}") -NotAfter (Get-Date).AddYears(10)
 ```
 
 Note the returned thumbprint.
@@ -20,7 +20,7 @@ This will export the certificate to a local password-protected file:
 
 ```ps1
 $PFXPass = ConvertTo-SecureString -String "MyPassword" -Force -AsPlainText
-Export-PfxCertificate -Cert cert:\CurrentUser\My\969D30F2816F4552F429511EFF9C6F2979E4B2F5 -Password $PFXPass -FilePath fend-signing-cert.pfx
+Export-PfxCertificate -Cert cert:\CurrentUser\My\96315AAFF3C6464216DFAC29F1319E27096ED71E -Password $PFXPass -FilePath fend-signing-cert.pfx
 ```
 
 ## Installation
