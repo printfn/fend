@@ -97,7 +97,13 @@ fn print_help(explain_quitting: bool) {
 fn repl_loop(config: &config::Config) -> i32 {
     let core_context = std::cell::RefCell::new(context::InnerContext::new(config));
     let mut context = Context::new(&core_context);
-    let mut prompt_state = terminal::init_prompt(config, &context);
+    let mut prompt_state = match terminal::init_prompt(config, &context) {
+        Ok(prompt_state) => prompt_state,
+        Err(err) => {
+            println!("Error: {}", err);
+            return 1;
+        }
+    };
     let mut initial_run = true; // set to false after first successful command
     let mut last_command_success = true;
     let interrupt = interrupt::register_handler();

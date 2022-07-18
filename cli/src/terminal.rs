@@ -24,14 +24,14 @@ pub struct PromptState<'a> {
 pub fn init_prompt<'a>(
     config: &'a config::Config,
     context: &context::Context<'a>,
-) -> PromptState<'a> {
+) -> Result<PromptState<'a>, Box<dyn error::Error>> {
     let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
         rustyline::config::Builder::new()
             .history_ignore_space(true)
             .auto_add_history(true)
             .max_history_size(config.max_history_size)
             .build(),
-    );
+    )?;
     rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
     let history_path = match file_paths::get_history_file_location() {
         Ok(history_path) => {
@@ -41,17 +41,27 @@ pub fn init_prompt<'a>(
         }
         Err(_) => None,
     };
-    PromptState {
+    Ok(PromptState {
         rl,
         config,
         history_path,
-    }
+    })
 }
 
 pub enum ReadLineError {
     Interrupted, // e.g. Ctrl-C
     Eof,
     Error(Box<dyn error::Error>),
+}
+
+impl From<rustyline::error::ReadlineError> for ReadLineError {
+    fn from(err: rustyline::error::ReadlineError) -> Self {
+        match err {
+            rustyline::error::ReadlineError::Interrupted => ReadLineError::Interrupted,
+            rustyline::error::ReadlineError::Eof => ReadLineError::Eof,
+            err => ReadLineError::Error(err.into()),
+        }
+    }
 }
 
 fn save_history(
@@ -72,11 +82,6 @@ impl PromptState<'_> {
         let res = self.rl.readline(self.config.prompt.as_str());
         // ignore errors when saving history
         mem::drop(save_history(&mut self.rl, &self.history_path));
-        match res {
-            Ok(line) => Ok(line),
-            Err(rustyline::error::ReadlineError::Interrupted) => Err(ReadLineError::Interrupted),
-            Err(rustyline::error::ReadlineError::Eof) => Err(ReadLineError::Eof),
-            Err(err) => Err(ReadLineError::Error(err.into())),
-        }
+        Ok(res?)
     }
 }
