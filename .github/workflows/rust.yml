@@ -26,7 +26,7 @@ jobs:
             env-command: ">> $GITHUB_ENV"
           - platform: windows-latest
             artifact-path: target/release/fend.exe
-            artifact-platform-name: windows-x64
+            artifact-platform-name: windows-x64-exe
             env-command: "| Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
 
     runs-on: ${{ matrix.platform }}
@@ -132,6 +132,21 @@ jobs:
           (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
           cp icon/f-icon-128.png web/
           rm web/pkg/.gitignore
+
+      - name: Build MSIX installer
+        if: ${{ matrix.platform == 'windows-latest' }}
+        run: |
+          .\windows-msix\build.ps1
+        env:
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+
+      - name: Upload artifacts (MSIX)
+        uses: actions/upload-artifact@v2.3.1
+        if: ${{ matrix.platform == 'windows-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-windows-x64-msix
+          path: windows-msix/fend.msix
+          if-no-files-found: error
 
       - name: Build wiki
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
