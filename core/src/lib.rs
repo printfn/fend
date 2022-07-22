@@ -6,7 +6,7 @@
 //#![forbid(clippy::cognitive_complexity)]
 #![forbid(unreachable_pub)]
 #![forbid(elided_lifetimes_in_paths)]
-#![doc(html_root_url = "https://docs.rs/fend-core/1.0.3")]
+#![doc(html_root_url = "https://docs.rs/fend-core/1.0.4")]
 
 mod ast;
 mod date;
@@ -337,7 +337,7 @@ pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) 
 }
 
 const fn get_version_as_str() -> &'static str {
-    "1.0.3"
+    "1.0.4"
 }
 
 /// Returns the current version of `fend-core`.

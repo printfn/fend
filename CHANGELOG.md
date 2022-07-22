@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.0.4 (2022-07-22)
+
+* Support `kn` for `knots`
+* Add an installer for Windows
+
 ### v1.0.3 (2022-06-07)
 
 * Support `rad` for `radians` (e.g. `10 RPM to rad/s`)
