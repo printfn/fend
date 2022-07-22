@@ -41,12 +41,6 @@ On Arch Linux (using `yay`):
 yay -Syu aur/fend-bin
 ```
 
-If you prefer building fend from source, you can run:
-
-```bash
-yay -Syu aur/fend
-```
-
 Using the nix package manager:
 
 ```bash
