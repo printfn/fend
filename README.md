@@ -73,6 +73,7 @@ $ fend
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)
+* [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
 
 ## [Manual](https://github.com/printfn/fend/wiki)
 
