@@ -24,16 +24,20 @@ pub fn substitute_inline_fend_expressions(
     let mut result = InlineFendResult { parts: vec![] };
     let mut current_component = String::new();
     let mut inside_fend_expr = false;
+    let mut inside_backticks = false;
     for ch in input.chars() {
         current_component.push(ch);
-        if !inside_fend_expr && current_component.ends_with("[[") {
+        if ch == '`' {
+            inside_backticks = !inside_backticks;
+        }
+        if !inside_fend_expr && !inside_backticks && current_component.ends_with("[[") {
             current_component.truncate(current_component.len() - 2);
             result
                 .parts
                 .push(InlineFendResultComponent::Unprocessed(current_component));
             current_component = String::new();
             inside_fend_expr = true;
-        } else if inside_fend_expr && current_component.ends_with("]]") {
+        } else if inside_fend_expr && !inside_backticks && current_component.ends_with("]]") {
             current_component.truncate(current_component.len() - 2);
             match crate::evaluate_with_interrupt(&current_component, context, int) {
                 Ok(res) => result.parts.push(InlineFendResultComponent::FendOutput(
@@ -70,7 +74,11 @@ mod tests {
                 | InlineFendResultComponent::FendError(s) => result.push_str(&s),
             }
         }
-        assert_eq!(result, expected);
+        if expected == "=" {
+            assert_eq!(result, input);
+        } else {
+            assert_eq!(result, expected);
+        }
     }
 
     #[test]
@@ -81,8 +89,10 @@ mod tests {
 
     #[test]
     fn longer_unprocessed_test() {
-        let input = "auidhwiaudb   \n\naiusdfba!!! `code`\n\n\n```rust\nfn foo() {}\n```";
-        simple_test(input, input);
+        simple_test(
+            "auidhwiaudb   \n\naiusdfba!!! `code`\n\n\n```rust\nfn foo() {}\n```",
+            "=",
+        );
     }
 
     #[test]
@@ -98,5 +108,12 @@ mod tests {
         simple_test("[[]]", "");
         simple_test("[[", "[[");
         simple_test("]]", "]]");
+    }
+
+    #[test]
+    fn escaped_exprs() {
+        simple_test("`[[1+1]]` = [[1+1]]", "`[[1+1]]` = 2");
+        simple_test("`[[1+1]]` = [[1+1\n\n]]", "`[[1+1]]` = 2");
+        simple_test("```\n[[2+2]]\n```", "=");
     }
 }
