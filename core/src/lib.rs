@@ -14,6 +14,7 @@ mod error;
 mod eval;
 mod format;
 mod ident;
+mod inline_substitutions;
 mod interrupt;
 mod lexer;
 mod num;
@@ -335,6 +336,8 @@ pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) 
     }
     (position, res)
 }
+
+pub use inline_substitutions::substitute_inline_fend_expressions;
 
 const fn get_version_as_str() -> &'static str {
     "1.0.4"
