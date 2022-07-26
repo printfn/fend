@@ -1,7 +1,4 @@
 #![allow(unused_unsafe)]
-// Needed until wasm-bindgen updates, see
-// https://github.com/rustwasm/wasm-bindgen/issues/2774#issuecomment-1030747023
-#![allow(clippy::unused_unit)]
 
 use instant::Instant;
 use wasm_bindgen::prelude::*;
