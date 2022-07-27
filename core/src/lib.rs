@@ -16,6 +16,7 @@ mod format;
 mod ident;
 mod inline_substitutions;
 mod interrupt;
+mod json;
 mod lexer;
 mod num;
 mod parser;

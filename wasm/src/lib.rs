@@ -89,3 +89,11 @@ pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String
     }
     result
 }
+
+#[wasm_bindgen]
+pub fn substitute_inline_fend_expressions(input: &str, timeout: u32) -> String {
+    let mut ctx = create_context();
+    let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
+    let res = fend_core::substitute_inline_fend_expressions(input, &mut ctx, &interrupt);
+    res.to_json()
+}

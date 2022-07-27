@@ -6,6 +6,26 @@ pub enum InlineFendResultComponent {
     FendError(String),
 }
 
+impl InlineFendResultComponent {
+    pub fn get_contents(&self) -> &str {
+        match self {
+            Self::Unprocessed(s) | Self::FendOutput(s) | Self::FendError(s) => s.as_str(),
+        }
+    }
+
+    fn to_json(&self, out: &mut String) {
+        out.push_str("{\"type\": ");
+        match self {
+            Self::Unprocessed(_) => out.push_str("\"unprocessed\""),
+            Self::FendOutput(_) => out.push_str("\"fend_output\""),
+            Self::FendError(_) => out.push_str("\"fend_error\""),
+        }
+        out.push_str(", \"contents\": \"");
+        crate::json::escape_string(self.get_contents(), out);
+        out.push_str("\"}");
+    }
+}
+
 pub struct InlineFendResult {
     parts: Vec<InlineFendResultComponent>,
 }
@@ -13,6 +33,19 @@ pub struct InlineFendResult {
 impl InlineFendResult {
     pub fn get_parts(&self) -> &[InlineFendResultComponent] {
         self.parts.as_slice()
+    }
+
+    pub fn to_json(&self) -> String {
+        let mut res = String::new();
+        res.push('[');
+        for (i, part) in self.get_parts().iter().enumerate() {
+            if i > 0 {
+                res.push(',');
+            }
+            part.to_json(&mut res);
+        }
+        res.push(']');
+        res
     }
 }
 
@@ -68,11 +101,7 @@ mod tests {
         let int = crate::interrupt::Never {};
         let mut result = String::new();
         for part in substitute_inline_fend_expressions(input, &mut ctx, &int).parts {
-            match part {
-                InlineFendResultComponent::Unprocessed(s)
-                | InlineFendResultComponent::FendOutput(s)
-                | InlineFendResultComponent::FendError(s) => result.push_str(&s),
-            }
+            result.push_str(part.get_contents());
         }
         if expected == "=" {
             assert_eq!(result, input);
