@@ -32,7 +32,7 @@ pub(crate) fn escape_string(input: &str, out: &mut String) {
             _ => {
                 let mut buf = [0; 2];
                 for &mut code_unit in ch.encode_utf16(&mut buf) {
-                    out.push_str("\\x");
+                    out.push_str("\\u");
                     out.push(to_hex(code_unit / 0x1000));
                     out.push(to_hex(code_unit % 0x1000 / 0x100));
                     out.push(to_hex(code_unit % 0x100 / 0x10));
@@ -58,7 +58,7 @@ mod tests {
     fn json_string_encoding() {
         test_json_str("abc", "abc");
         test_json_str("fancy string\n", "fancy string\\n");
-        test_json_str("\n\t\r\0\\\'\"", "\\n\\t\\r\\x0000\\\\'\\\"");
-        test_json_str("\u{1d54a}", "\\xd835\\xdd4a");
+        test_json_str("\n\t\r\0\\\'\"", "\\n\\t\\r\\u0000\\\\'\\\"");
+        test_json_str("\u{1d54a}", "\\ud835\\udd4a");
     }
 }
