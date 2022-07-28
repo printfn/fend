@@ -69,17 +69,21 @@ const processUpdate = async (update) => {
 };
 
 const pollUpdates = async () => {
-    var highestOffet = 441392434;
-    while (true) {
-        console.log('Polling getUpdates (30s)...')
-        let updates = await postJSON(`https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/getUpdates`, {
-            timeout: 30,
-            offset: highestOffet + 1,
-        });
-        for (let update of updates) {
-            highestOffet = Math.max(highestOffet, update.update_id);
-            await processUpdate(update);
+    try {
+        var highestOffet = 441392434;
+        while (true) {
+            console.log('Polling getUpdates (30s)...')
+            let updates = await postJSON(`https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/getUpdates`, {
+                timeout: 30,
+                offset: highestOffet + 1,
+            });
+            for (let update of updates) {
+                highestOffet = Math.max(highestOffet, update.update_id);
+                await processUpdate(update);
+            }
         }
+    } catch (error) {
+        console.log(error);
     }
 };
 
@@ -122,7 +126,11 @@ if (process.env.AWS_REGION) {
     // we're running in AWS Lambda
     exports.handler = async (event) => {
         let update = JSON.parse(event.body);
-        await processUpdate(update);
+        try {
+            await processUpdate(update);
+        } catch (error) {
+            console.log(error);
+        }
         return { statusCode: 200, body: 'ok' };
     };
 } else {
