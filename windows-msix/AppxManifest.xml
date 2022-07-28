@@ -10,7 +10,7 @@
     <DisplayName>fend</DisplayName>
     <PublisherDisplayName>printfn</PublisherDisplayName>
     <Description>Arbitrary-precision unit-aware calculator</Description>
-    <Logo>f-icon-128.png</Logo>
+    <Logo>fend-icon-150.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
@@ -27,7 +27,7 @@
       EntryPoint="Windows.FullTrustApplication"
       desktop4:Subsystem="console"
       desktop4:SupportsMultipleInstances="true">
-      <uap:VisualElements DisplayName="fend" Description="Arbitrary-precision unit-aware calculator" BackgroundColor="#FFFFFF" Square150x150Logo="f-icon-128.png" Square44x44Logo="f-icon-128.png" />
+      <uap:VisualElements DisplayName="fend" Description="Arbitrary-precision unit-aware calculator" BackgroundColor="#FFFFFF" Square150x150Logo="fend-icon-150.png" Square44x44Logo="fend-icon-44.png" />
       <Extensions>
         <uap5:Extension Category="windows.appExecutionAlias" EntryPoint="Windows.FullTrustApplication" Executable="fend.exe">
           <uap5:AppExecutionAlias desktop4:Subsystem="console">
