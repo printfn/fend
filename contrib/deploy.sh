@@ -121,16 +121,6 @@ sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
     core/Cargo.toml >temp
 mv temp core/Cargo.toml
 
-# fend-core docs attr
-sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" \
-    core/src/lib.rs >temp
-mv temp core/src/lib.rs
-
-# fend-core get_version_as_str()
-sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" \
-    core/src/lib.rs >temp
-mv temp core/src/lib.rs
-
 # fend cli TOML x2
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
     cli/Cargo.toml >temp
@@ -146,7 +136,8 @@ sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/"
     wiki/Home.md >temp
 mv temp wiki/Home.md
 
-gitdiff "" 12 12
+gitdiff "" 9 9
+exit 1
 
 manualstep "Add changelog to CHANGELOG.md"
 
