@@ -74,6 +74,7 @@ $ fend
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)
 * [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
+* [Telegram Bot](https://t.me/fend_calc_bot)
 
 ## [Manual](https://github.com/printfn/fend/wiki)
 
