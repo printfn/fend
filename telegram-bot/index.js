@@ -87,10 +87,6 @@ const pollUpdates = async () => {
     }
 };
 
-let input = "This is a test: `[[1+1]]` = [[1+1]]";
-let out = JSON.parse(fend.substituteInlineFendExpressions(input, 500));
-console.log(out);
-
 const postJSON = (url, jsonBody, method='POST', headers={}) => {
     return new Promise(function(resolve, reject) {
         let postData = Buffer.from(JSON.stringify(jsonBody), 'utf8');
