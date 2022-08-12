@@ -115,6 +115,10 @@ fn repl_loop(config: &config::Config) -> i32 {
                 "help" | "?" => {
                     print_help(true);
                 }
+                "!serialize" => match context.serialize() {
+                    Ok(res) => println!("{:?}", &res),
+                    Err(e) => eprintln!("{}", e),
+                },
                 line => {
                     interrupt.reset();
                     match eval_and_print_res(line, &mut context, &interrupt, config) {

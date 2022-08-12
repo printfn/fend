@@ -74,6 +74,15 @@ impl<'a> Context<'a> {
         fend_core::evaluate_preview_with_interrupt(line, &mut ctx_borrow.core_ctx, &int)
     }
 
+    pub fn serialize(&self) -> Result<Vec<u8>, String> {
+        let mut result = vec![];
+        self.ctx
+            .borrow()
+            .core_ctx
+            .serialize_variables(&mut result)?;
+        Ok(result)
+    }
+
     pub fn get_input_typed(&self) -> bool {
         self.ctx.borrow().input_typed
     }
