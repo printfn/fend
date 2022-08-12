@@ -591,24 +591,86 @@ impl Value {
         })
     }
 
-    pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
-        let components = [self.unit.components, rhs.unit.components].concat();
-        let value =
+    pub(crate) fn mul<I: Interrupt>(
+        self,
+        rhs: Self,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        let (orig_self, orig_rhs) = (self.clone(), rhs.clone());
+        let mut components = Vec::new();
+        let mut implicit_scale: Option<Exact<Complex>> = None;
+        // true if any other units are involved (excluding those that are percentages)
+        let other_units_involved = (!self.is_unitless() && !self.unit.is_percentage())
+            || (!rhs.is_unitless() && !rhs.unit.is_percentage());
+        for (index, unit) in [self.unit, rhs.unit].into_iter().enumerate() {
+            /*
+             * In fend, percentages are units.
+             * Without any special handling, multiplication would
+             * unconditionally combine them.
+             *
+             * This would (and did) lead to unexpected results like `80 kg * 5% = 400 kg %`.
+             *
+             * In practice, percentages are usually used as scalar multipliers,
+             * not as "units" in the traditional sense.
+             *
+             * To avoid this, we have percentages trigger "implicit conversions"
+             * on multiplication.
+             * This happens if:
+             * 1. There are other units involved: `5% * 80kg = 4 kg`
+             * 2. The percentage is on the right side: `100 * 5% = 5`
+             *
+             * This leaves one case where the percentage is *not* converted:
+             * 3. if the percentage is on the left side and there are no other units involved
+             *
+             * Examples of case (3): `5% * 5 = 25%` and `5% * 5% = 0.25%`
+             *
+             * Note the asymmetric handling of left & right sides means
+             * `100 % 5% = 5` but `5% * 100 = 500%`.
+             *
+             * You could argue this makes the operation non-commutative,
+             * but it does not actually affect the mathematical value (500% == 5).
+             * This only affects the UI (and should match the behavior the user expects).
+             *
+             * This fixes issue #164
+             */
+            if unit.is_percentage() && (index == 1 || other_units_involved) {
+                assert!(implicit_scale.is_none());
+                /*
+                 * Need to take into account the percentage "scale"
+                 * (the fact that percentages multiply by .01)
+                 *
+                 * Otherwise omitting the percentage unit would
+                 * change the result
+                 */
+                implicit_scale = Some(unit.to_hashmap_and_scale(int)?.1);
+            } else {
+                components.extend(unit.components);
+            }
+        }
+        let mut value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
-        Ok(Self {
+        // apply implicit scale to the value
+        if let Some(implicit_scale) = implicit_scale {
+            value = value.mul(&implicit_scale.apply(Dist::from), int)?;
+        }
+        
+        let res = Self {
             value: value.value,
             unit: Unit { components },
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
             format: self.format,
             simplifiable: self.simplifiable,
-        })
+        };
+        dbg!("mul", orig_self, orig_rhs, &res);
+        Ok(res)
     }
 
     pub(crate) fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         if !self.simplifiable {
             return Ok(self);
         }
+        let orig_self = self.clone();
 
         let mut res_components: Vec<UnitExponent> = vec![];
         let mut res_exact = self.exact;
@@ -680,7 +742,7 @@ impl Value {
             .filter(|unit_exponent| unit_exponent.exponent != 0.into())
             .collect();
 
-        Ok(Self {
+        let res = Self {
             value: res_value,
             unit: Unit {
                 components: res_components,
@@ -689,7 +751,9 @@ impl Value {
             base: self.base,
             format: self.format,
             simplifiable: self.simplifiable,
-        })
+        };
+        dbg!("simplify", orig_self, &res);
+        Ok(res)
     }
 
     pub(crate) fn unit_equal_to(&self, rhs: &str) -> bool {
@@ -816,6 +880,15 @@ impl Unit {
             cs.push(UnitExponent::deserialize(read)?);
         }
         Ok(Self { components: cs })
+    }
+
+    pub(crate) fn is_percentage(&self) -> bool {
+        if self.components.len() != 1 {
+            return false;
+        }
+        let unit = &self.components[0].unit;
+        let (prefix, name) = unit.prefix_and_name(false);
+        prefix.is_empty() && ["%", "percent"].contains(&name)
     }
 
     pub(crate) fn equal_to(&self, rhs: &str) -> bool {

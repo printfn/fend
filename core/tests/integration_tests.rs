@@ -2114,9 +2114,13 @@ fn one_plus_five_percent() {
 }
 
 #[test]
-#[ignore]
 fn five_percent_times_five_percent() {
     test_eval("5% * 5%", "0.25%");
+}
+
+#[test]
+fn five_percent_times_kg() {
+    test_eval("5% * 8 kg", "0.4 kg");
 }
 
 #[test]
