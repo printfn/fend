@@ -591,94 +591,81 @@ impl Value {
         })
     }
 
-    pub(crate) fn mul<I: Interrupt>(
-        self,
-        rhs: Self,
-        int: &I,
-    ) -> Result<Self, FendError> {
-        let (orig_self, orig_rhs) = (self.clone(), rhs.clone());
-        let mut components = Vec::new();
-        let mut implicit_scale: Option<Exact<Complex>> = None;
-        // true if any other units are involved (excluding those that are percentages)
-        let other_units_involved = (!self.is_unitless() && !self.unit.is_percentage())
-            || (!rhs.is_unitless() && !rhs.unit.is_percentage());
-        for (index, unit) in [self.unit, rhs.unit].into_iter().enumerate() {
-            /*
-             * In fend, percentages are units.
-             * Without any special handling, multiplication would
-             * unconditionally combine them.
-             *
-             * This would (and did) lead to unexpected results like `80 kg * 5% = 400 kg %`.
-             *
-             * In practice, percentages are usually used as scalar multipliers,
-             * not as "units" in the traditional sense.
-             *
-             * To avoid this, we have percentages trigger "implicit conversions"
-             * on multiplication.
-             * This happens if:
-             * 1. There are other units involved: `5% * 80kg = 4 kg`
-             * 2. The percentage is on the right side: `100 * 5% = 5`
-             *
-             * This leaves one case where the percentage is *not* converted:
-             * 3. if the percentage is on the left side and there are no other units involved
-             *
-             * Examples of case (3): `5% * 5 = 25%` and `5% * 5% = 0.25%`
-             *
-             * Note the asymmetric handling of left & right sides means
-             * `100 % 5% = 5` but `5% * 100 = 500%`.
-             *
-             * You could argue this makes the operation non-commutative,
-             * but it does not actually affect the mathematical value (500% == 5).
-             * This only affects the UI (and should match the behavior the user expects).
-             *
-             * This fixes issue #164
-             */
-            if unit.is_percentage() && (index == 1 || other_units_involved) {
-                assert!(implicit_scale.is_none());
-                /*
-                 * Need to take into account the percentage "scale"
-                 * (the fact that percentages multiply by .01)
-                 *
-                 * Otherwise omitting the percentage unit would
-                 * change the result
-                 */
-                implicit_scale = Some(unit.to_hashmap_and_scale(int)?.1);
-            } else {
-                components.extend(unit.components);
-            }
-        }
-        let mut value =
+    pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+        let components = [self.unit.components, rhs.unit.components].concat();
+        let value =
             Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
-        // apply implicit scale to the value
-        if let Some(implicit_scale) = implicit_scale {
-            value = value.mul(&implicit_scale.apply(Dist::from), int)?;
-        }
-        
-        let res = Self {
+        Ok(Self {
             value: value.value,
             unit: Unit { components },
             exact: self.exact && rhs.exact && value.exact,
             base: self.base,
             format: self.format,
             simplifiable: self.simplifiable,
-        };
-        dbg!("mul", orig_self, orig_rhs, &res);
-        Ok(res)
+        })
     }
 
     pub(crate) fn simplify<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
         if !self.simplifiable {
             return Ok(self);
         }
-        let orig_self = self.clone();
 
         let mut res_components: Vec<UnitExponent> = vec![];
         let mut res_exact = self.exact;
         let mut res_value = self.value;
 
+        /*
+         * In fend, percentages are units.
+         * Without any special handling, multiplication would
+         * unconditionally combine them.
+         *
+         * This would (and did) lead to unexpected results,
+         * that fell into two broad categories:
+         * 1. mixing percentages with units: `80 kg * 5% = 400 kg %`.
+         * 2. percenteges squared: "5% * 5% = 25%^2"
+         *
+         * In practice, percentages are usually used as scalar multipliers,
+         * not as "units" in the traditional sense.
+         *
+         * To avoid this, we have the following rules
+         * for simplifying percentages.
+         *
+         * 1. If there are any other units (kg, lbs, etc..),
+         *    then all of the percentages are removed (fixing first problem)
+         * 2. No more than one "percentage unit" is permitted.
+         *
+         * This (mostly) fixes issue #164
+         *
+         * There is still some ambiguity here even after
+         * going through these rules (although this fixes most of it).
+         * See discussion on the "5_percent_times_100" test for more details.
+         */
+        let mut have_percentage_unit = false;
+        let has_nonpercentage_components =
+            self.unit.components.iter().any(|u| !u.is_percentage_unit());
         // combine identical or compatible units by summing their exponents
         // and potentially adjusting the value
         'outer: for comp in self.unit.components {
+            if comp.is_percentage_unit() {
+                if have_percentage_unit || has_nonpercentage_components {
+                    let adjusted_res = Exact {
+                        value: res_value,
+                        exact: res_exact,
+                    }
+                    .mul(
+                        &Exact {
+                            value: comp.unit.scale.clone().into(),
+                            exact: true,
+                        },
+                        int,
+                    )?;
+                    res_value = adjusted_res.value;
+                    res_exact = adjusted_res.exact;
+                    continue 'outer;
+                }
+                // already encountered one (if we see another one, strip it)
+                have_percentage_unit = true;
+            }
             for res_comp in &mut res_components {
                 if comp.unit.has_no_base_units() && comp.unit != res_comp.unit {
                     continue;
@@ -742,7 +729,7 @@ impl Value {
             .filter(|unit_exponent| unit_exponent.exponent != 0.into())
             .collect();
 
-        let res = Self {
+        Ok(Self {
             value: res_value,
             unit: Unit {
                 components: res_components,
@@ -751,9 +738,7 @@ impl Value {
             base: self.base,
             format: self.format,
             simplifiable: self.simplifiable,
-        };
-        dbg!("simplify", orig_self, &res);
-        Ok(res)
+        })
     }
 
     pub(crate) fn unit_equal_to(&self, rhs: &str) -> bool {
@@ -880,15 +865,6 @@ impl Unit {
             cs.push(UnitExponent::deserialize(read)?);
         }
         Ok(Self { components: cs })
-    }
-
-    pub(crate) fn is_percentage(&self) -> bool {
-        if self.components.len() != 1 {
-            return false;
-        }
-        let unit = &self.components[0].unit;
-        let (prefix, name) = unit.prefix_and_name(false);
-        prefix.is_empty() && ["%", "percent"].contains(&name)
     }
 
     pub(crate) fn equal_to(&self, rhs: &str) -> bool {

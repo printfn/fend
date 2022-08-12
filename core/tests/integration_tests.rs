@@ -2124,6 +2124,27 @@ fn five_percent_times_kg() {
 }
 
 #[test]
+fn five_percent_times_100() {
+    /*
+     * as discussed in the "simplify" function,
+     * there are two ways to view this:
+     *
+     * 1. 5% of 100 (giving 5)
+     * 2. 100x 5% (giving 500%)
+     *
+     * Mathematically they are equivalent values.
+     * However, from a UI perspective they are not.
+     *
+     * I (Techcable) suggest overloading the "of" operator for that purpose.
+     * For example "5% of 100 => 5".
+     *
+     * This would work for all values, and would specifically require that the
+     * left side is formatted as a percentage.
+     */
+    test_eval("5% * 100", "500%");
+}
+
+#[test]
 fn units_1() {
     test_eval("0m + 1kph * 1 hr", "1000 m");
 }
