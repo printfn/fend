@@ -48,6 +48,7 @@ fn parse_yyyymmdd(s: &str) -> Result<(Date, &str), ()> {
     let year = Year::new(year);
     let (month, s) = parse_num(s, true)?;
     let s = parse_specific_char(s, '-')?;
+    let month: u8 = month.try_into().map_err(|_| ())?;
     let month: Month = convert::TryInto::try_into(month).map_err(|_| ())?;
     let (day, s) = parse_num(s, true)?;
     if day < 1 || day > i32::from(month.number_of_days(year)) {

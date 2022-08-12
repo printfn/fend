@@ -15,7 +15,6 @@ pub(crate) enum FendError {
     ZeroToThePowerOfZero,
     FactorialComplex,
     DeserializationError,
-    SerializationError,
     OutOfRange {
         value: Box<dyn crate::format::DisplayDebug>,
         range: Range<Box<dyn crate::format::DisplayDebug>>,
@@ -97,7 +96,6 @@ impl fmt::Display for FendError {
                 write!(f, "factorial is only supported for unitless numbers")
             }
             Self::DeserializationError => write!(f, "failed to deserialize object"),
-            Self::SerializationError => write!(f, "failed to serialize object"),
             Self::ModuloUnitless => write!(f, "modulo is only supported for unitless numbers"),
             Self::FactorialComplex => write!(f, "factorial is not supported for complex numbers"),
             Self::RootsComplex => write!(f, "roots are currently unsupported for complex numbers"),

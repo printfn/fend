@@ -1,4 +1,9 @@
-use std::{convert, fmt};
+use std::{convert, fmt, io};
+
+use crate::{
+    error::FendError,
+    serialize::{deserialize_i32, serialize_i32},
+};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Year(i32);
@@ -45,6 +50,15 @@ impl Year {
         } else {
             365
         }
+    }
+
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_i32(self.value(), write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Self::try_from(deserialize_i32(read)?).map_err(|_| FendError::DeserializationError)
     }
 }
 

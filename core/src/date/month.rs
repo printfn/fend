@@ -1,6 +1,7 @@
-use crate::date::Year;
-use crate::value::ValueTrait;
-use std::{convert, fmt};
+use crate::serialize::serialize_u8;
+use crate::FendError;
+use crate::{date::Year, serialize::deserialize_u8};
+use std::{convert, fmt, io};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) enum Month {
@@ -83,6 +84,32 @@ impl Month {
             Self::December => "December",
         }
     }
+
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_u8(self.as_u8(), write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Self::try_from(deserialize_u8(read)?).map_err(|_| FendError::DeserializationError)
+    }
+
+    fn as_u8(self) -> u8 {
+        match self {
+            Self::January => 1,
+            Self::February => 2,
+            Self::March => 3,
+            Self::April => 4,
+            Self::May => 5,
+            Self::June => 6,
+            Self::July => 7,
+            Self::August => 8,
+            Self::September => 9,
+            Self::October => 10,
+            Self::November => 11,
+            Self::December => 12,
+        }
+    }
 }
 
 impl fmt::Debug for Month {
@@ -99,10 +126,10 @@ impl fmt::Display for Month {
 
 pub(crate) struct InvalidMonthError;
 
-impl convert::TryFrom<i32> for Month {
+impl convert::TryFrom<u8> for Month {
     type Error = InvalidMonthError;
 
-    fn try_from(month: i32) -> Result<Self, Self::Error> {
+    fn try_from(month: u8) -> Result<Self, Self::Error> {
         Ok(match month {
             1 => Self::January,
             2 => Self::February,
@@ -118,18 +145,5 @@ impl convert::TryFrom<i32> for Month {
             12 => Self::December,
             _ => return Err(InvalidMonthError),
         })
-    }
-}
-
-impl ValueTrait for Month {
-    fn type_name(&self) -> &'static str {
-        "month"
-    }
-
-    fn format(&self, _indent: usize, spans: &mut Vec<crate::Span>) {
-        spans.push(crate::Span {
-            string: self.to_string(),
-            kind: crate::SpanKind::Date,
-        });
     }
 }

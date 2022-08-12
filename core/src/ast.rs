@@ -422,7 +422,8 @@ fn evaluate_add<I: Interrupt>(
             )),
             scope,
         ),
-        (a, b) => return a.add_dyn(b),
+        (Value::Date(d), b) => d.add(b)?,
+        _ => return Err(FendError::ExpectedANumber),
     })
 }
 
@@ -442,7 +443,7 @@ fn evaluate_as<I: Interrupt>(
             "date" => {
                 let a = evaluate(a, scope, context, int)?;
                 return if let Value::String(s) = a {
-                    Ok(crate::date::Date::parse(s.as_ref())?.into())
+                    Ok(Value::Date(crate::date::Date::parse(s.as_ref())?))
                 } else {
                     Err(FendError::ExpectedAString)
                 };
@@ -581,9 +582,9 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
             ("mass".into(), eval_box!("5.97237e24 kg")),
             ("volume".into(), eval_box!("1.08321e12 km^3")),
         ]),
-        "today" => crate::date::Date::today(context)?.into(),
-        "tomorrow" => crate::date::Date::today(context)?.next().into(),
-        "yesterday" => crate::date::Date::today(context)?.prev().into(),
+        "today" => Value::Date(crate::date::Date::today(context)?),
+        "tomorrow" => Value::Date(crate::date::Date::today(context)?.next()),
+        "yesterday" => Value::Date(crate::date::Date::today(context)?.prev()),
         _ => return crate::units::query_unit(ident.as_str(), context, int),
     })
 }

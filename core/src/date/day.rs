@@ -1,4 +1,8 @@
+use crate::serialize::deserialize_u8;
+use crate::serialize::serialize_u8;
+use crate::FendError;
 use std::fmt;
+use std::io;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Day(u8);
@@ -11,6 +15,19 @@ impl Day {
     pub(crate) fn new(day: u8) -> Self {
         assert!(day != 0 && day < 32, "day value {} is out of range", day);
         Self(day)
+    }
+
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_u8(self.value(), write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        let n = deserialize_u8(read)?;
+        if n == 0 || n >= 32 {
+            return Err(FendError::DeserializationError);
+        }
+        Ok(Self::new(n))
     }
 }
 

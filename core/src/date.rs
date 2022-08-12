@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, io};
 
 mod day;
 mod day_of_week;
@@ -7,14 +7,11 @@ mod parser;
 mod year;
 
 use day::Day;
-use day_of_week::DayOfWeek;
-use month::Month;
+pub(crate) use day_of_week::DayOfWeek;
+pub(crate) use month::Month;
 use year::Year;
 
-use crate::{
-    error::FendError,
-    value::{Value, ValueTrait},
-};
+use crate::{error::FendError, ident::Ident, value::Value};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
@@ -133,6 +130,44 @@ impl Date {
     pub(crate) fn parse(s: &str) -> Result<Self, FendError> {
         parser::parse_date(s)
     }
+
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+        self.year.serialize(write)?;
+        self.month.serialize(write)?;
+        self.day.serialize(write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self {
+            year: Year::deserialize(read)?,
+            month: Month::deserialize(read)?,
+            day: Day::deserialize(read)?,
+        })
+    }
+
+    pub(crate) fn get_object_member(self, key: &Ident) -> Result<crate::value::Value, FendError> {
+        Ok(match key.as_str() {
+            "month" => Value::Month(self.month),
+            "day_of_week" => Value::DayOfWeek(self.day_of_week()),
+            _ => return Err(FendError::CouldNotFindKey(key.to_string())),
+        })
+    }
+
+    pub(crate) fn add(self, rhs: Value) -> Result<Value, FendError> {
+        let rhs = rhs.expect_num()?;
+        let int = &crate::interrupt::Never::default();
+        if rhs.unit_equal_to("day") {
+            let num_days = rhs.try_as_usize_unit(int)?;
+            let mut result = self;
+            for _ in 0..num_days {
+                result = result.next();
+            }
+            Ok(Value::Date(result))
+        } else {
+            Err(FendError::ExpectedANumber)
+        }
+    }
 }
 
 impl fmt::Debug for Date {
@@ -158,41 +193,5 @@ impl fmt::Display for Date {
             self.month,
             self.year
         )
-    }
-}
-
-impl ValueTrait for Date {
-    fn type_name(&self) -> &'static str {
-        "date"
-    }
-
-    fn format(&self, _indent: usize, spans: &mut Vec<crate::Span>) {
-        spans.push(crate::Span {
-            string: self.to_string(),
-            kind: crate::SpanKind::Date,
-        });
-    }
-
-    fn get_object_member(&self, key: &str) -> Option<crate::value::Value> {
-        Some(match key {
-            "month" => self.month.into(),
-            "day_of_week" => self.day_of_week().into(),
-            _ => return None,
-        })
-    }
-
-    fn add(&self, rhs: Value) -> Result<Value, FendError> {
-        let rhs = rhs.expect_num()?;
-        let int = &crate::interrupt::Never::default();
-        if rhs.unit_equal_to("day") {
-            let num_days = rhs.try_as_usize_unit(int)?;
-            let mut result = *self;
-            for _ in 0..num_days {
-                result = result.next();
-            }
-            Ok(result.into())
-        } else {
-            Err(FendError::ExpectedANumber)
-        }
     }
 }

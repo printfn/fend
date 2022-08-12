@@ -1,4 +1,5 @@
 use crate::ast::Bop;
+use crate::date::{Date, DayOfWeek, Month};
 use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
@@ -7,7 +8,7 @@ use crate::serialize::{
     serialize_string, serialize_u8, serialize_usize,
 };
 use crate::{ast::Expr, ident::Ident};
-use crate::{Span, SpanKind};
+use crate::{date, Span, SpanKind};
 use std::borrow::Cow;
 use std::io;
 use std::{
@@ -18,45 +19,6 @@ use std::{
 pub(crate) mod built_in_function;
 
 use built_in_function::BuiltInFunction;
-
-pub(crate) trait BoxClone {
-    fn box_clone(&self) -> Box<dyn ValueTrait>;
-}
-
-impl<T: Clone + ValueTrait> BoxClone for T {
-    fn box_clone(&self) -> Box<dyn ValueTrait> {
-        Box::new(self.clone())
-    }
-}
-
-pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
-    fn type_name(&self) -> &'static str;
-
-    fn format(&self, indent: usize, spans: &mut Vec<Span>);
-    fn get_object_member(&self, _key: &str) -> Option<Value> {
-        None
-    }
-
-    fn apply(&self, _arg: Value) -> Option<Result<Value, FendError>> {
-        None
-    }
-
-    fn add(&self, _rhs: Value) -> Result<Value, FendError> {
-        Err(FendError::ExpectedANumber)
-    }
-}
-
-impl Clone for Box<dyn ValueTrait> {
-    fn clone(&self) -> Self {
-        self.box_clone()
-    }
-}
-
-impl<T: ValueTrait> From<T> for Value {
-    fn from(value: T) -> Self {
-        Self::Dynamic(Box::new(value))
-    }
-}
 
 #[derive(Clone)]
 pub(crate) enum Value {
@@ -70,9 +32,11 @@ pub(crate) enum Value {
     Fn(Ident, Box<Expr>, Option<Arc<Scope>>),
     Object(Vec<(Cow<'static, str>, Box<Value>)>),
     String(Cow<'static, str>),
-    Dynamic(Box<dyn ValueTrait>),
     Bool(bool),
     Unit, // unit value `()`
+    Month(date::Month),
+    DayOfWeek(date::DayOfWeek),
+    Date(date::Date),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -129,11 +93,19 @@ impl Value {
             Self::Unit => serialize_u8(9, write)?,
             Self::Bool(b) => {
                 serialize_u8(10, write)?;
-                serialize_u8(u8::from(*b), write)?;
+                serialize_bool(*b, write)?;
             }
-            Self::Dynamic(_) => {
-                // TODO add support for dynamic variables
-                return Err(FendError::SerializationError);
+            Self::Month(m) => {
+                serialize_u8(11, write)?;
+                m.serialize(write)?;
+            }
+            Self::DayOfWeek(d) => {
+                serialize_u8(12, write)?;
+                d.serialize(write)?;
+            }
+            Self::Date(d) => {
+                serialize_u8(13, write)?;
+                d.serialize(write)?;
             }
         }
         Ok(())
@@ -169,14 +141,10 @@ impl Value {
             }),
             8 => Self::String(Cow::Owned(deserialize_string(read)?)),
             9 => Self::Unit,
-            10 => {
-                let val = deserialize_u8(read)?;
-                Self::Bool(match val {
-                    0 => false,
-                    1 => true,
-                    _ => return Err(FendError::DeserializationError),
-                })
-            }
+            10 => Self::Bool(deserialize_bool(read)?),
+            11 => Self::Month(Month::deserialize(read)?),
+            12 => Self::DayOfWeek(DayOfWeek::deserialize(read)?),
+            13 => Self::Date(Date::deserialize(read)?),
             // TODO add support for dynamic objects
             _ => return Err(FendError::DeserializationError),
         })
@@ -192,9 +160,11 @@ impl Value {
             Self::Base(_) => "base",
             Self::Object(_) => "object",
             Self::String(_) => "string",
-            Self::Dynamic(d) => d.type_name(),
             Self::Bool(_) => "bool",
             Self::Unit => "()",
+            Self::Month(_) => "month",
+            Self::DayOfWeek(_) => "day of week",
+            Self::Date(_) => "date",
         }
     }
 
@@ -215,13 +185,6 @@ impl Value {
 
     pub(crate) fn is_unit(&self) -> bool {
         matches!(self, Self::Unit)
-    }
-
-    pub(crate) fn add_dyn(self, rhs: Self) -> Result<Self, FendError> {
-        match self {
-            Self::Dynamic(d) => d.add(rhs),
-            _ => Err(FendError::ExpectedANumber),
-        }
     }
 
     pub(crate) fn handle_num(
@@ -303,14 +266,6 @@ impl Value {
             Self::Fn(param, expr, custom_scope) => {
                 let new_scope = Scope::with_variable(param, other, scope, custom_scope);
                 return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), context, int);
-            }
-            Self::Dynamic(d) => {
-                let other = crate::ast::evaluate(other, scope, context, int)?;
-                match d.apply(other) {
-                    None => return Err(FendError::IsNotAFunctionOrNumber(stringified_self)),
-                    Some(Err(msg)) => return Err(msg),
-                    Some(Ok(val)) => val,
-                }
             }
             _ => return Err(FendError::IsNotAFunctionOrNumber(stringified_self)),
         })
@@ -459,9 +414,18 @@ impl Value {
                 string: b.to_string(),
                 kind: crate::SpanKind::Boolean,
             }),
-            Self::Dynamic(d) => {
-                d.format(indent, spans);
-            }
+            Self::Month(m) => spans.push(crate::Span {
+                string: m.to_string(),
+                kind: crate::SpanKind::Date,
+            }),
+            Self::DayOfWeek(d) => spans.push(crate::Span {
+                string: d.to_string(),
+                kind: crate::SpanKind::Date,
+            }),
+            Self::Date(d) => spans.push(crate::Span {
+                string: d.to_string(),
+                kind: crate::SpanKind::Date,
+            }),
         }
         Ok(())
     }
@@ -476,10 +440,7 @@ impl Value {
                 }
                 Err(FendError::CouldNotFindKeyInObject)
             }
-            Self::Dynamic(d) => match d.get_object_member(key.as_str()) {
-                Some(v) => Ok(v),
-                None => Err(FendError::CouldNotFindKey(key.to_string())),
-            },
+            Self::Date(d) => d.get_object_member(key),
             _ => Err(FendError::ExpectedAnObject),
         }
     }
@@ -511,7 +472,9 @@ impl fmt::Debug for Value {
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
             Self::Unit => write!(f, "()"),
             Self::Bool(b) => write!(f, "{}", b),
-            Self::Dynamic(d) => write!(f, "{:?}", d),
+            Self::Month(m) => write!(f, "{}", m),
+            Self::DayOfWeek(d) => write!(f, "{}", d),
+            Self::Date(d) => write!(f, "{:?}", d),
         }
     }
 }
