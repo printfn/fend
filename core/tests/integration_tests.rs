@@ -1,12 +1,28 @@
 use fend_core::{evaluate, Context};
 
 #[track_caller]
+fn test_serialization_roundtrip(context: &mut Context) {
+    let mut v = vec![];
+    context.serialize_variables(&mut v).unwrap();
+    let ctx_debug_repr = format!("{:#?}", context);
+    match context.deserialize_variables(&mut v.as_slice()) {
+        Ok(()) => (),
+        Err(s) => {
+            eprintln!("Data: {:?}", &v);
+            eprintln!("Context: {}", ctx_debug_repr);
+            panic!("Failed to deserialize: {}", s);
+        }
+    }
+}
+
+#[track_caller]
 fn test_eval_simple(input: &str, expected: &str) {
     let mut context = Context::new();
     assert_eq!(
         evaluate(input, &mut context).unwrap().get_main_result(),
         expected
     );
+    test_serialization_roundtrip(&mut context);
 }
 
 #[track_caller]
@@ -21,6 +37,7 @@ fn test_eval(input: &str, expected: &str) {
         evaluate(expected, &mut context).unwrap().get_main_result(),
         expected
     );
+    test_serialization_roundtrip(&mut context);
 }
 
 #[track_caller]
@@ -5498,4 +5515,10 @@ fn rad_per_sec() {
 #[test]
 fn fudged_rhs_feet_conv() {
     test_eval("6 foot 4 in cm", "193.04 cm");
+}
+
+#[test]
+fn trivial_fn() {
+    // used for testing fn serialization
+    test_eval_simple("x:()", "\\x.()");
 }

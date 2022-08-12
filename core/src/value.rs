@@ -122,7 +122,7 @@ impl Value {
             6 => Self::Fn(
                 Ident::deserialize(read)?,
                 Box::new(Expr::deserialize(read)?),
-                if deserialize_bool(read)? {
+                if !deserialize_bool(read)? {
                     None
                 } else {
                     Some(Arc::new(Scope::deserialize(read)?))
@@ -145,7 +145,6 @@ impl Value {
             11 => Self::Month(Month::deserialize(read)?),
             12 => Self::DayOfWeek(DayOfWeek::deserialize(read)?),
             13 => Self::Date(Date::deserialize(read)?),
-            // TODO add support for dynamic objects
             _ => return Err(FendError::DeserializationError),
         })
     }
