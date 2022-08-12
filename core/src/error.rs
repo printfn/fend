@@ -37,7 +37,6 @@ pub(crate) enum FendError {
     SpecifyNumDp,
     SpecifyNumSf,
     UnableToInvertFunction(&'static str),
-    InvalidType,
     InvalidOperandsForSubtraction,
     InversesOfLambdasUnsupported,
     CouldNotFindKeyInObject,
@@ -183,7 +182,6 @@ impl fmt::Display for FendError {
             Self::InexactNumberToInt => write!(f, "cannot convert inexact number to integer"),
             Self::ExpectedANumber => write!(f, "expected a number"),
             Self::InvalidDiceSyntax => write!(f, "invalid dice syntax, try e.g. `4d6`"),
-            Self::InvalidType => write!(f, "invalid type"),
             Self::InvalidOperandsForSubtraction => write!(f, "invalid operands for subtraction"),
             Self::CannotFormatWithZeroSf => {
                 write!(f, "cannot format a number with zero significant figures")

@@ -437,7 +437,7 @@ fn evaluate_as<I: Interrupt>(
         match ident.as_str() {
             "bool" | "boolean" => {
                 let num = evaluate(a, scope, context, int)?.expect_num()?;
-                return Ok((!num.is_zero()).into());
+                return Ok(Value::Bool(!num.is_zero()));
             }
             "date" => {
                 let a = evaluate(a, scope, context, int)?;
@@ -497,20 +497,8 @@ fn evaluate_as<I: Interrupt>(
                 .expect_num()?
                 .with_base(base),
         )),
-        Value::BuiltInFunction(_) | Value::Fn(_, _, _) => {
-            return Err(FendError::CannotConvertValueTo("function"));
-        }
-        Value::Object(_) => {
-            return Err(FendError::CannotConvertValueTo("object"));
-        }
-        Value::String(_) => {
-            return Err(FendError::CannotConvertValueTo("string"));
-        }
-        Value::Unit => {
-            return Err(FendError::CannotConvertValueTo("()"));
-        }
-        Value::Dynamic(d) => {
-            return Err(FendError::CannotConvertValueTo(d.type_name()));
+        other => {
+            return Err(FendError::CannotConvertValueTo(other.type_name()));
         }
     })
 }
@@ -542,8 +530,8 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
         "phi" => evaluate_to_value("(1 + sqrt(5))/2", scope, context, int)?,
         "i" => Value::Num(Box::new(Number::i())),
-        "true" => Value::from(true),
-        "false" => Value::from(false),
+        "true" => Value::Bool(true),
+        "false" => Value::Bool(false),
         "sample" | "roll" => Value::BuiltInFunction(BuiltInFunction::Sample),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,

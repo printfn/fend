@@ -15,7 +15,6 @@ use std::{
     sync::Arc,
 };
 
-mod boolean;
 pub(crate) mod func;
 
 pub(crate) trait BoxClone {
@@ -34,10 +33,6 @@ pub(crate) trait ValueTrait: fmt::Debug + BoxClone + 'static {
     fn format(&self, indent: usize, spans: &mut Vec<Span>);
     fn get_object_member(&self, _key: &str) -> Option<Value> {
         None
-    }
-
-    fn as_bool(&self) -> Result<bool, FendError> {
-        Err(FendError::ExpectedABool(self.type_name()))
     }
 
     fn apply(&self, _arg: Value) -> Option<Result<Value, FendError>> {
@@ -74,6 +69,7 @@ pub(crate) enum Value {
     Object(Vec<(Cow<'static, str>, Box<Value>)>),
     String(Cow<'static, str>),
     Dynamic(Box<dyn ValueTrait>),
+    Bool(bool),
     Unit, // unit value `()`
 }
 
@@ -251,6 +247,10 @@ impl Value {
                 serialize_string(s, write)?;
             }
             Self::Unit => serialize_u8(9, write)?,
+            Self::Bool(b) => {
+                serialize_u8(10, write)?;
+                serialize_u8(u8::from(*b), write)?;
+            }
             Self::Dynamic(_) => {
                 // TODO add support for dynamic variables
                 return Err(FendError::SerializationError);
@@ -289,22 +289,47 @@ impl Value {
             }),
             8 => Self::String(Cow::Owned(deserialize_string(read)?)),
             9 => Self::Unit,
+            10 => {
+                let val = deserialize_u8(read)?;
+                Self::Bool(match val {
+                    0 => false,
+                    1 => true,
+                    _ => return Err(FendError::DeserializationError),
+                })
+            }
             // TODO add support for dynamic objects
             _ => return Err(FendError::DeserializationError),
         })
+    }
+
+    pub(crate) fn type_name(&self) -> &'static str {
+        match self {
+            Self::Num(_) => "number",
+            Self::BuiltInFunction(_) | Self::Fn(_, _, _) => "function",
+            Self::Format(_) => "formatting style",
+            Self::Dp => "decimal places",
+            Self::Sf => "significant figures",
+            Self::Base(_) => "base",
+            Self::Object(_) => "object",
+            Self::String(_) => "string",
+            Self::Dynamic(d) => d.type_name(),
+            Self::Bool(_) => "bool",
+            Self::Unit => "()",
+        }
+    }
+
+    fn as_bool(&self) -> Result<bool, FendError> {
+        if let Self::Bool(b) = self {
+            Ok(*b)
+        } else {
+            Err(FendError::ExpectedABool(self.type_name()))
+        }
     }
 
     pub(crate) fn expect_num(self) -> Result<Number, FendError> {
         match self {
             Self::Num(bigrat) => Ok(*bigrat),
             _ => Err(FendError::ExpectedANumber),
-        }
-    }
-
-    pub(crate) fn expect_dyn(self) -> Result<Box<dyn ValueTrait>, FendError> {
-        match self {
-            Self::Dynamic(d) => Ok(d),
-            _ => Err(FendError::InvalidType),
         }
     }
 
@@ -548,6 +573,10 @@ impl Value {
                     kind: crate::SpanKind::Ident,
                 });
             }
+            Self::Bool(b) => spans.push(crate::Span {
+                string: b.to_string(),
+                kind: crate::SpanKind::Boolean,
+            }),
             Self::Dynamic(d) => {
                 d.format(indent, spans);
             }
@@ -599,6 +628,7 @@ impl fmt::Debug for Value {
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
             Self::Unit => write!(f, "()"),
+            Self::Bool(b) => write!(f, "{}", b),
             Self::Dynamic(d) => write!(f, "{:?}", d),
         }
     }

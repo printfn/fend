@@ -37,7 +37,7 @@ impl ValueTrait for Func {
 
 pub(crate) const NOT: Func = Func {
     name: "not",
-    f: |val| Ok((!val.expect_dyn()?.as_bool()?).into()),
+    f: |val| Ok(Value::Bool(!val.as_bool()?)),
 };
 
 pub(crate) const CONJUGATE: Func = Func {
