@@ -10,7 +10,7 @@ use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;
 use std::io;
-use std::{fmt, sync::Arc};
+use std::{fmt::{self, Write}, sync::Arc};
 
 mod boolean;
 pub(crate) mod func;
@@ -588,7 +588,7 @@ impl fmt::Debug for Value {
                 for (k, v) in kv {
                     s.push_str(k);
                     s.push(':');
-                    s.push_str(&format!("{:?}", *v));
+                    write!(s, "{:?}", *v)?;
                     s.push(',');
                 }
                 s.push('}');

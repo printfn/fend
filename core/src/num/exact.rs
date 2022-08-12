@@ -65,7 +65,7 @@ impl<A: fmt::Debug, B: fmt::Debug> Exact<(A, B)> {
     }
 }
 
-impl<T: fmt::Debug + Neg + Neg<Output = T>> Neg for Exact<T> {
+impl<T: fmt::Debug + Neg<Output = T>> Neg for Exact<T> {
     type Output = Self;
     fn neg(self) -> Self {
         Self {

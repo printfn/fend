@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="io.github.printfn.fend" Version="$FEND_VERSION.0" Publisher="CN=printfn, O=printfn" ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>fend</DisplayName>
+    <PublisherDisplayName>printfn</PublisherDisplayName>
+    <Description>Arbitrary-precision unit-aware calculator</Description>
+    <Logo>fend-icon-150.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.22000.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+  <Applications>
+    <Application Id="fend"
+      Executable="fend.exe"
+      EntryPoint="Windows.FullTrustApplication"
+      desktop4:Subsystem="console"
+      desktop4:SupportsMultipleInstances="true">
+      <uap:VisualElements DisplayName="fend" Description="Arbitrary-precision unit-aware calculator" BackgroundColor="#FFFFFF" Square150x150Logo="fend-icon-150.png" Square44x44Logo="fend-icon-44.png" />
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias" EntryPoint="Windows.FullTrustApplication" Executable="fend.exe">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+            <uap5:ExecutionAlias Alias="fend.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

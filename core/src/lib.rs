@@ -3,10 +3,8 @@
 #![deny(clippy::pedantic)]
 #![deny(clippy::use_self)]
 #![forbid(clippy::needless_borrow)]
-//#![forbid(clippy::cognitive_complexity)]
 #![forbid(unreachable_pub)]
 #![forbid(elided_lifetimes_in_paths)]
-#![doc(html_root_url = "https://docs.rs/fend-core/1.0.3")]
 
 mod ast;
 mod date;
@@ -14,7 +12,9 @@ mod error;
 mod eval;
 mod format;
 mod ident;
+mod inline_substitutions;
 mod interrupt;
+mod json;
 mod lexer;
 mod num;
 mod parser;
@@ -388,8 +388,10 @@ pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) 
     (position, res)
 }
 
+pub use inline_substitutions::substitute_inline_fend_expressions;
+
 const fn get_version_as_str() -> &'static str {
-    "1.0.3"
+    env!("CARGO_PKG_VERSION")
 }
 
 /// Returns the current version of `fend-core`.

@@ -41,12 +41,6 @@ On Arch Linux (using `yay`):
 yay -Syu aur/fend-bin
 ```
 
-If you prefer building fend from source, you can run:
-
-```bash
-yay -Syu aur/fend
-```
-
 Using the nix package manager:
 
 ```bash
@@ -79,6 +73,8 @@ $ fend
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)
+* [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
+* [Telegram Bot](https://t.me/fend_calc_bot)
 
 ## [Manual](https://github.com/printfn/fend/wiki)
 

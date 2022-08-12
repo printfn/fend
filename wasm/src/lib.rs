@@ -1,7 +1,4 @@
 #![allow(unused_unsafe)]
-// Needed until wasm-bindgen updates, see
-// https://github.com/rustwasm/wasm-bindgen/issues/2774#issuecomment-1030747023
-#![allow(clippy::unused_unit)]
 
 use instant::Instant;
 use wasm_bindgen::prelude::*;
@@ -84,8 +81,19 @@ pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String
                     result.push_str(res.get_main_result());
                 }
             }
-            Err(msg) => result.push_str(&format!("Error: {}", msg)),
+            Err(msg) => {
+                result.push_str("Error: ");
+                result.push_str(&msg);
+            }
         };
     }
     result
+}
+
+#[wasm_bindgen(js_name = substituteInlineFendExpressions)]
+pub fn substitute_inline_fend_expressions(input: &str, timeout: u32) -> String {
+    let mut ctx = create_context();
+    let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
+    let res = fend_core::substitute_inline_fend_expressions(input, &mut ctx, &interrupt);
+    res.to_json()
 }

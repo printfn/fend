@@ -81,6 +81,10 @@ fi
 
 OLD_VERSION="$(cargo run --package fend --quiet -- version)"
 
+if ! command -v "wasm-pack"; then
+    fail "Please install wasm-pack"
+fi
+
 confirm "Releasing update $OLD_VERSION -> $NEW_VERSION. \
 Update the README file and other documentation if necessary."
 
@@ -117,16 +121,6 @@ sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
     core/Cargo.toml >temp
 mv temp core/Cargo.toml
 
-# fend-core docs attr
-sed "s|https://docs.rs/fend-core/$OLD_VERSION|https://docs.rs/fend-core/$NEW_VERSION|" \
-    core/src/lib.rs >temp
-mv temp core/src/lib.rs
-
-# fend-core get_version_as_str()
-sed "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/" \
-    core/src/lib.rs >temp
-mv temp core/src/lib.rs
-
 # fend cli TOML x2
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
     cli/Cargo.toml >temp
@@ -142,7 +136,8 @@ sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/"
     wiki/Home.md >temp
 mv temp wiki/Home.md
 
-gitdiff "" 12 12
+gitdiff "" 9 9
+exit 1
 
 manualstep "Add changelog to CHANGELOG.md"
 
@@ -210,6 +205,16 @@ jq "setpath([\"name\"]; \"fend-wasm-web\") | del(.sideEffects)" \
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
 
+echo "Building NPM package fend-wasm-nodejs"
+rm -rfv wasm/pkg-nodejs
+(cd wasm && wasm-pack build --target nodejs --out-dir pkg-nodejs)
+echo "Renaming package to 'fend-wasm-nodejs'..."
+jq "setpath([\"name\"]; \"fend-wasm-nodejs\")" wasm/pkg-nodejs/package.json >temp
+mv temp wasm/pkg-nodejs/package.json
+(cd wasm/pkg-nodejs && npm publish --dry-run 2>&1)|grep "total files:"|grep 6
+echo "Publishing npm package"
+(cd wasm/pkg-nodejs && npm publish)
+
 TMPDIR="$(mktemp -d)"
 if [[ ! -d "$TMPDIR" ]]; then
     >&2 echo "Failed to create temp directory"
@@ -235,8 +240,10 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64/fend"
-zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip" \
-    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64/fend.exe"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-exe.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-exe/fend.exe"
+cp "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-msix/fend.msix" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.msix"
 
 echo "Creating GitHub release..."
 CHANGELOG2=$'Changes in this version:\n\n'"$CHANGELOG"
@@ -249,7 +256,8 @@ gh release --repo printfn/fend \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
-    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.zip"
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-exe.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.msix"
 
 manualstep "Open https://github.com/printfn/fend/releases and check \
 that the new release is correct. If it is, go ahead and publish it."
@@ -306,23 +314,23 @@ brew update
 brew install rust
 brew install --build-bottle --verbose printfn/fend/fend
 brew bottle printfn/fend/fend
-mv "fend--$NEW_VERSION.monterey.bottle.1.tar.gz" \
-    "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+mv "fend--$NEW_VERSION.arm64_monterey.bottle.1.tar.gz" \
+    "fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
 git -C "$TMPDIR/homebrew-fend" tag "v$NEW_VERSION"
 git -C "$TMPDIR/homebrew-fend" push --tags origin main
 gh release --repo printfn/homebrew-fend \
     create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
     --notes "v$NEW_VERSION" \
-    "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+    "fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
 manualstep "Add bottle info to $TMPDIR/homebrew-fend/Formula/fend.rb"
 gitdiff "$TMPDIR/homebrew-fend" 2 1
 git -C "$TMPDIR/homebrew-fend" commit -am \
-    "v$NEW_VERSION: Add reference to fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+    "v$NEW_VERSION: Add reference to fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
 git -C "$TMPDIR/homebrew-fend" push origin main
 brew uninstall printfn/fend/fend
 brew update
 brew install printfn/fend/fend
 manualstep "Make sure the bottle was used"
 
-rm "fend-$NEW_VERSION.monterey.bottle.1.tar.gz"
+rm "fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
 rm -rf "$TMPDIR"

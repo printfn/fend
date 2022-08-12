@@ -88,7 +88,7 @@ pub(crate) enum Expr {
     Statements(Box<Expr>, Box<Expr>),
 }
 
-impl<'a> Expr {
+impl Expr {
     pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
         match self {
             Expr::Literal(x) => {
