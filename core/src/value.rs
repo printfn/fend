@@ -15,7 +15,9 @@ use std::{
     sync::Arc,
 };
 
-pub(crate) mod func;
+pub(crate) mod built_in_function;
+
+use built_in_function::BuiltInFunction;
 
 pub(crate) trait BoxClone {
     fn box_clone(&self) -> Box<dyn ValueTrait>;
@@ -71,128 +73,6 @@ pub(crate) enum Value {
     Dynamic(Box<dyn ValueTrait>),
     Bool(bool),
     Unit, // unit value `()`
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub(crate) enum BuiltInFunction {
-    Approximately,
-    Abs,
-    Sin,
-    Cos,
-    Tan,
-    Asin,
-    Acos,
-    Atan,
-    Sinh,
-    Cosh,
-    Tanh,
-    Asinh,
-    Acosh,
-    Atanh,
-    Ln,
-    Log2,
-    Log10,
-    Base,
-    Sample,
-}
-
-impl BuiltInFunction {
-    pub(crate) fn wrap_with_expr(
-        self,
-        lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
-        scope: Option<Arc<Scope>>,
-    ) -> Value {
-        Value::Fn(
-            Ident::new_str("x"),
-            Box::new(lazy_fn(Box::new(Expr::ApplyFunctionCall(
-                Box::new(Expr::Ident(Ident::new_str(self.as_str()))),
-                Box::new(Expr::Ident(Ident::new_str("x"))),
-            )))),
-            scope,
-        )
-    }
-
-    pub(crate) fn invert(self) -> Result<Value, FendError> {
-        Ok(match self {
-            Self::Sin => Value::BuiltInFunction(Self::Asin),
-            Self::Cos => Value::BuiltInFunction(Self::Acos),
-            Self::Tan => Value::BuiltInFunction(Self::Atan),
-            Self::Asin => Value::BuiltInFunction(Self::Sin),
-            Self::Acos => Value::BuiltInFunction(Self::Cos),
-            Self::Atan => Value::BuiltInFunction(Self::Tan),
-            Self::Sinh => Value::BuiltInFunction(Self::Asinh),
-            Self::Cosh => Value::BuiltInFunction(Self::Acosh),
-            Self::Tanh => Value::BuiltInFunction(Self::Atanh),
-            Self::Asinh => Value::BuiltInFunction(Self::Sinh),
-            Self::Acosh => Value::BuiltInFunction(Self::Cosh),
-            Self::Atanh => Value::BuiltInFunction(Self::Tanh),
-            _ => return Err(FendError::UnableToInvertFunction(self.as_str())),
-        })
-    }
-
-    const fn as_str(self) -> &'static str {
-        match self {
-            Self::Approximately => "approximately",
-            Self::Abs => "abs",
-            Self::Sin => "sin",
-            Self::Cos => "cos",
-            Self::Tan => "tan",
-            Self::Asin => "asin",
-            Self::Acos => "acos",
-            Self::Atan => "atan",
-            Self::Sinh => "sinh",
-            Self::Cosh => "cosh",
-            Self::Tanh => "tanh",
-            Self::Asinh => "asinh",
-            Self::Acosh => "acosh",
-            Self::Atanh => "atanh",
-            Self::Ln => "ln",
-            Self::Log2 => "log2",
-            Self::Log10 => "log10",
-            Self::Base => "base",
-            Self::Sample => "sample",
-        }
-    }
-
-    fn try_from_str(s: &str) -> Result<Self, FendError> {
-        Ok(match s {
-            "approximately" => Self::Approximately,
-            "abs" => Self::Abs,
-            "sin" => Self::Sin,
-            "cos" => Self::Cos,
-            "tan" => Self::Tan,
-            "asin" => Self::Asin,
-            "acos" => Self::Acos,
-            "atan" => Self::Atan,
-            "sinh" => Self::Sinh,
-            "cosh" => Self::Cosh,
-            "tanh" => Self::Tanh,
-            "asinh" => Self::Asinh,
-            "acosh" => Self::Acosh,
-            "atanh" => Self::Atanh,
-            "ln" => Self::Ln,
-            "log2" => Self::Log2,
-            "log10" => Self::Log10,
-            "base" => Self::Base,
-            "sample" => Self::Sample,
-            _ => return Err(FendError::DeserializationError),
-        })
-    }
-
-    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-        serialize_string(self.as_str(), write)?;
-        Ok(())
-    }
-
-    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-        Self::try_from_str(deserialize_string(read)?.as_str())
-    }
-}
-
-impl fmt::Display for BuiltInFunction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -471,6 +351,8 @@ impl Value {
                 return Ok(Self::Base(Base::from_plain_base(n)?));
             }
             BuiltInFunction::Sample => arg.expect_num()?.sample(context, int)?,
+            BuiltInFunction::Not => return Ok(Self::Bool(!arg.as_bool()?)),
+            BuiltInFunction::Conjugate => arg.expect_num()?.conjugate()?,
         })))
     }
 

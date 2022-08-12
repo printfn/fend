@@ -5,7 +5,7 @@ use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::serialize::{deserialize_u8, serialize_u8};
-use crate::value::{ApplyMulHandling, BuiltInFunction, Value};
+use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
 use std::sync::Arc;
 use std::{fmt, io};
 
@@ -535,7 +535,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "sample" | "roll" => Value::BuiltInFunction(BuiltInFunction::Sample),
         "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
         "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
-        "conjugate" => crate::value::func::CONJUGATE.into(),
+        "conjugate" => Value::BuiltInFunction(BuiltInFunction::Conjugate),
         "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
         "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
         "cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
@@ -553,7 +553,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
-        "not" => crate::value::func::NOT.into(),
+        "not" => Value::BuiltInFunction(BuiltInFunction::Not),
         "exp" => evaluate_to_value("x: e^x", scope, context, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
