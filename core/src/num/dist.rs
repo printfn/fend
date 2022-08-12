@@ -2,11 +2,12 @@ use crate::error::{FendError, Interrupt};
 use crate::interrupt::test_int;
 use crate::num::bigrat::BigRat;
 use crate::num::complex::{self, Complex};
+use crate::serialize::{deserialize_usize, serialize_usize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::fmt;
 use std::fmt::Write;
 use std::ops::Neg;
+use std::{fmt, io};
 
 use super::{Base, Exact, FormattingStyle};
 
@@ -17,6 +18,26 @@ pub(crate) struct Dist {
 }
 
 impl Dist {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_usize(self.parts.len(), write)?;
+        for (a, b) in &self.parts {
+            a.serialize(write)?;
+            b.serialize(write)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        let len = deserialize_usize(read)?;
+        let mut hashmap = HashMap::with_capacity(len);
+        for _ in 0..len {
+            let k = Complex::deserialize(read)?;
+            let v = BigRat::deserialize(read)?;
+            hashmap.insert(k, v);
+        }
+        Ok(Self { parts: hashmap })
+    }
+
     pub(crate) fn one_point(self) -> Result<Complex, FendError> {
         if self.parts.len() == 1 {
             Ok(self.parts.into_iter().next().unwrap().0)

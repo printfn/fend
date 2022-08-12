@@ -3,8 +3,8 @@ use crate::num::real::{self, Real};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
-use std::fmt;
 use std::ops::Neg;
+use std::{fmt, io};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Complex {
@@ -30,6 +30,19 @@ pub(crate) enum UseParentheses {
 }
 
 impl Complex {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        self.real.serialize(write)?;
+        self.imag.serialize(write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self {
+            real: Real::deserialize(read)?,
+            imag: Real::deserialize(read)?,
+        })
+    }
+
     pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
         if self.imag != 0.into() {
             return Err(FendError::ComplexToInteger);

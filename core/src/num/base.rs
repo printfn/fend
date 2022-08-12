@@ -1,6 +1,9 @@
-use std::fmt;
+use std::{fmt, io};
 
-use crate::error::FendError;
+use crate::{
+    error::FendError,
+    serialize::{deserialize_u8, serialize_u8},
+};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) struct Base(BaseEnum);
@@ -113,6 +116,34 @@ impl Base {
             35 => 'z',
             _ => return None,
         })
+    }
+
+    pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+        match self.0 {
+            BaseEnum::Binary => serialize_u8(1, write)?,
+            BaseEnum::Octal => serialize_u8(2, write)?,
+            BaseEnum::Hex => serialize_u8(3, write)?,
+            BaseEnum::Custom(b) => {
+                serialize_u8(4, write)?;
+                serialize_u8(b, write)?;
+            }
+            BaseEnum::Plain(b) => {
+                serialize_u8(5, write)?;
+                serialize_u8(b, write)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self(match deserialize_u8(read)? {
+            1 => BaseEnum::Binary,
+            2 => BaseEnum::Octal,
+            3 => BaseEnum::Hex,
+            4 => BaseEnum::Custom(deserialize_u8(read)?),
+            5 => BaseEnum::Plain(deserialize_u8(read)?),
+            _ => return Err(FendError::DeserializationError),
+        }))
     }
 }
 

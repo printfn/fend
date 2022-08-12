@@ -4,13 +4,14 @@ use crate::num::complex::{Complex, UseParentheses};
 use crate::num::dist::Dist;
 use crate::num::{Base, FormattingStyle};
 use crate::scope::Scope;
+use crate::serialize::{deserialize_bool, deserialize_usize, serialize_bool, serialize_usize};
 use crate::{ast, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::fmt;
 use std::ops::Neg;
 use std::sync::Arc;
+use std::{fmt, io};
 
 pub(crate) mod base_unit;
 pub(crate) mod named_unit;
@@ -33,6 +34,27 @@ pub(crate) struct Value {
 }
 
 impl Value {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        self.value.serialize(write)?;
+        self.unit.serialize(write)?;
+        serialize_bool(self.exact, write)?;
+        self.base.serialize(write)?;
+        self.format.serialize(write)?;
+        serialize_bool(self.simplifiable, write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self {
+            value: Dist::deserialize(read)?,
+            unit: Unit::deserialize(read)?,
+            exact: deserialize_bool(read)?,
+            base: Base::deserialize(read)?,
+            format: FormattingStyle::deserialize(read)?,
+            simplifiable: deserialize_bool(read)?,
+        })
+    }
+
     pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
         if !self.is_unitless() {
             return Err(FendError::NumberWithUnitToInt);
@@ -779,6 +801,23 @@ struct ScaleFactor {
 }
 
 impl Unit {
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_usize(self.components.len(), write)?;
+        for c in &self.components {
+            c.serialize(write)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        let len = deserialize_usize(read)?;
+        let mut cs = Vec::with_capacity(len);
+        for _ in 0..len {
+            cs.push(UnitExponent::deserialize(read)?);
+        }
+        Ok(Self { components: cs })
+    }
+
     pub(crate) fn equal_to(&self, rhs: &str) -> bool {
         if self.components.len() != 1 {
             return false;

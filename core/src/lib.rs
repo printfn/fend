@@ -19,12 +19,15 @@ mod lexer;
 mod num;
 mod parser;
 mod scope;
+mod serialize;
 mod units;
 mod value;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, io};
 
+use error::FendError;
 pub use interrupt::Interrupt;
+use serialize::{deserialize_string, deserialize_usize, serialize_string, serialize_usize};
 
 /// This contains the result of a computation.
 #[derive(PartialEq, Eq, Debug)]
@@ -209,6 +212,55 @@ impl Context {
     /// graphs in the output.
     pub fn set_output_mode_terminal(&mut self) {
         self.output_mode = OutputMode::TerminalFixedWidth;
+    }
+
+    fn serialize_variables_internal(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_usize(self.variables.len(), write)?;
+        for (k, v) in &self.variables {
+            serialize_string(k.as_str(), write)?;
+            v.serialize(write)?;
+        }
+        Ok(())
+    }
+
+    /// Serializes all variables defined in this context to a stream of bytes.
+    /// Note that the specific format is NOT stable, and can change with any
+    /// minor update. It is also not cross-platform compatible.
+    ///
+    /// # Errors
+    /// This function returns an error if the input cannot be serialized.
+    pub fn serialize_variables(&self, write: &mut impl io::Write) -> Result<(), String> {
+        match self.serialize_variables_internal(write) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+
+    fn deserialize_variables_internal(
+        &mut self,
+        read: &mut impl io::Read,
+    ) -> Result<(), FendError> {
+        let len = deserialize_usize(read)?;
+        self.variables.clear();
+        self.variables.reserve(len);
+        for _ in 0..len {
+            self.variables
+                .insert(deserialize_string(read)?, value::Value::deserialize(read)?);
+        }
+        Ok(())
+    }
+
+    /// Deserializes the given variables, replacing all prior variables in
+    /// the given context.
+    ///
+    /// # Errors
+    /// Returns an error if the input byte stream is invalid and cannot be
+    /// deserialized.
+    pub fn deserialize_variables(&mut self, read: &mut impl io::Read) -> Result<(), String> {
+        match self.deserialize_variables_internal(read) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        }
     }
 }
 

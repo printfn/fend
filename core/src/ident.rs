@@ -1,4 +1,9 @@
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, fmt, io};
+
+use crate::{
+    error::FendError,
+    serialize::{deserialize_string, serialize_string},
+};
 
 #[derive(Clone, Debug)]
 pub(crate) struct Ident(Cow<'static, str>);
@@ -20,6 +25,15 @@ impl Ident {
         // when changing this also make sure to change number output formatting
         // lexer identifier splitting
         self.0 == "$" || self.0 == "\u{a3}"
+    }
+
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        serialize_string(self.0.as_ref(), write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self(Cow::Owned(deserialize_string(read)?)))
     }
 }
 

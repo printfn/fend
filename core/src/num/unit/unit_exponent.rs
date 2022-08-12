@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, fmt, io};
 
 use crate::{
     error::FendError,
@@ -24,6 +24,19 @@ impl UnitExponent {
             unit,
             exponent: exponent.into(),
         }
+    }
+
+    pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+        self.unit.serialize(write)?;
+        self.exponent.serialize(write)?;
+        Ok(())
+    }
+
+    pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+        Ok(Self {
+            unit: NamedUnit::deserialize(read)?,
+            exponent: Complex::deserialize(read)?,
+        })
     }
 
     pub(crate) fn add_to_hashmap<I: Interrupt>(
