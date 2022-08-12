@@ -122,10 +122,10 @@ impl Value {
             6 => Self::Fn(
                 Ident::deserialize(read)?,
                 Box::new(Expr::deserialize(read)?),
-                if !deserialize_bool(read)? {
-                    None
-                } else {
+                if deserialize_bool(read)? {
                     Some(Arc::new(Scope::deserialize(read)?))
+                } else {
+                    None
                 },
             ),
             7 => Self::Object({
