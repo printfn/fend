@@ -10,7 +10,10 @@ use crate::{ast::Expr, ident::Ident};
 use crate::{Span, SpanKind};
 use std::borrow::Cow;
 use std::io;
-use std::{fmt::{self, Write}, sync::Arc};
+use std::{
+    fmt::{self, Write},
+    sync::Arc,
+};
 
 mod boolean;
 pub(crate) mod func;
@@ -205,25 +208,25 @@ pub(crate) enum ApplyMulHandling {
 impl Value {
     pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
         match self {
-            Value::Num(n) => {
+            Self::Num(n) => {
                 serialize_u8(0, write)?;
                 n.serialize(write)?;
             }
-            Value::BuiltInFunction(f) => {
+            Self::BuiltInFunction(f) => {
                 serialize_u8(1, write)?;
                 f.serialize(write)?;
             }
-            Value::Format(f) => {
+            Self::Format(f) => {
                 serialize_u8(2, write)?;
                 f.serialize(write)?;
             }
-            Value::Dp => serialize_u8(3, write)?,
-            Value::Sf => serialize_u8(4, write)?,
-            Value::Base(b) => {
+            Self::Dp => serialize_u8(3, write)?,
+            Self::Sf => serialize_u8(4, write)?,
+            Self::Base(b) => {
                 serialize_u8(5, write)?;
                 b.serialize(write)?;
             }
-            Value::Fn(i, e, s) => {
+            Self::Fn(i, e, s) => {
                 serialize_u8(6, write)?;
                 i.serialize(write)?;
                 e.serialize(write)?;
@@ -235,7 +238,7 @@ impl Value {
                     }
                 }
             }
-            Value::Object(o) => {
+            Self::Object(o) => {
                 serialize_u8(7, write)?;
                 serialize_usize(o.len(), write)?;
                 for (k, v) in o {
@@ -243,12 +246,12 @@ impl Value {
                     v.serialize(write)?;
                 }
             }
-            Value::String(s) => {
+            Self::String(s) => {
                 serialize_u8(8, write)?;
                 serialize_string(s, write)?;
             }
-            Value::Unit => serialize_u8(9, write)?,
-            Value::Dynamic(_) => {
+            Self::Unit => serialize_u8(9, write)?,
+            Self::Dynamic(_) => {
                 // TODO add support for dynamic variables
                 return Err(FendError::SerializationError);
             }

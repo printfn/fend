@@ -23,13 +23,13 @@ pub(crate) enum Bop {
 impl Bop {
     pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
         match self {
-            Bop::Plus => serialize_u8(0, write)?,
-            Bop::ImplicitPlus => serialize_u8(1, write)?,
-            Bop::Minus => serialize_u8(2, write)?,
-            Bop::Mul => serialize_u8(3, write)?,
-            Bop::Div => serialize_u8(4, write)?,
-            Bop::Mod => serialize_u8(5, write)?,
-            Bop::Pow => serialize_u8(6, write)?,
+            Self::Plus => serialize_u8(0, write)?,
+            Self::ImplicitPlus => serialize_u8(1, write)?,
+            Self::Minus => serialize_u8(2, write)?,
+            Self::Mul => serialize_u8(3, write)?,
+            Self::Div => serialize_u8(4, write)?,
+            Self::Mod => serialize_u8(5, write)?,
+            Self::Pow => serialize_u8(6, write)?,
         }
         Ok(())
     }
@@ -91,76 +91,76 @@ pub(crate) enum Expr {
 impl Expr {
     pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
         match self {
-            Expr::Literal(x) => {
+            Self::Literal(x) => {
                 serialize_u8(0, write)?;
                 x.serialize(write)?;
             }
-            Expr::Ident(i) => {
+            Self::Ident(i) => {
                 serialize_u8(1, write)?;
                 i.serialize(write)?;
             }
-            Expr::Parens(e) => {
+            Self::Parens(e) => {
                 serialize_u8(2, write)?;
                 e.serialize(write)?;
             }
-            Expr::UnaryMinus(e) => {
+            Self::UnaryMinus(e) => {
                 serialize_u8(3, write)?;
                 e.serialize(write)?;
             }
-            Expr::UnaryPlus(e) => {
+            Self::UnaryPlus(e) => {
                 serialize_u8(4, write)?;
                 e.serialize(write)?;
             }
-            Expr::UnaryDiv(e) => {
+            Self::UnaryDiv(e) => {
                 serialize_u8(5, write)?;
                 e.serialize(write)?;
             }
-            Expr::Factorial(e) => {
+            Self::Factorial(e) => {
                 serialize_u8(6, write)?;
                 e.serialize(write)?;
             }
-            Expr::Bop(op, a, b) => {
+            Self::Bop(op, a, b) => {
                 serialize_u8(7, write)?;
                 op.serialize(write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::Apply(a, b) => {
+            Self::Apply(a, b) => {
                 serialize_u8(8, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::ApplyFunctionCall(a, b) => {
+            Self::ApplyFunctionCall(a, b) => {
                 serialize_u8(9, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::ApplyMul(a, b) => {
+            Self::ApplyMul(a, b) => {
                 serialize_u8(10, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::As(a, b) => {
+            Self::As(a, b) => {
                 serialize_u8(11, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::Fn(a, b) => {
+            Self::Fn(a, b) => {
                 serialize_u8(12, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::Of(a, b) => {
+            Self::Of(a, b) => {
                 serialize_u8(13, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::Assign(a, b) => {
+            Self::Assign(a, b) => {
                 serialize_u8(14, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
             }
-            Expr::Statements(a, b) => {
+            Self::Statements(a, b) => {
                 serialize_u8(15, write)?;
                 a.serialize(write)?;
                 b.serialize(write)?;
@@ -257,13 +257,13 @@ impl Expr {
 
 /// returns true if rhs is '-1' or '(-1)'
 fn should_compute_inverse(rhs: &Expr) -> bool {
-    if let Expr::UnaryMinus(inner) = &*rhs {
+    if let Expr::UnaryMinus(inner) = rhs {
         if let Expr::Literal(Value::Num(n)) = &**inner {
             if n.is_unitless_one() {
                 return true;
             }
         }
-    } else if let Expr::Parens(inner) = &*rhs {
+    } else if let Expr::Parens(inner) = rhs {
         if let Expr::UnaryMinus(inner2) = &**inner {
             if let Expr::Literal(Value::Num(n)) = &**inner2 {
                 if n.is_unitless_one() {
