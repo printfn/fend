@@ -134,7 +134,7 @@ jobs:
           rm web/pkg/.gitignore
 
       - name: Build MSIX installer
-        if: ${{ matrix.platform == 'windows-latest' }}
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'windows-latest' }}
         run: |
           .\windows-msix\build.ps1
         env:
