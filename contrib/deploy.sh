@@ -313,24 +313,24 @@ brew uninstall printfn/fend/fend
 brew update
 brew install rust
 brew install --build-bottle --verbose printfn/fend/fend
-brew bottle printfn/fend/fend
-mv "fend--$NEW_VERSION.arm64_monterey.bottle.1.tar.gz" \
-    "fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
+brew bottle --no-rebuild printfn/fend/fend
+mv "fend--$NEW_VERSION.arm64_monterey.bottle.tar.gz" \
+    "fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
 git -C "$TMPDIR/homebrew-fend" tag "v$NEW_VERSION"
 git -C "$TMPDIR/homebrew-fend" push --tags origin main
 gh release --repo printfn/homebrew-fend \
     create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
     --notes "v$NEW_VERSION" \
-    "fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
+    "fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
 manualstep "Add bottle info to $TMPDIR/homebrew-fend/Formula/fend.rb"
-gitdiff "$TMPDIR/homebrew-fend" 2 1
+#gitdiff "$TMPDIR/homebrew-fend" 2 1
 git -C "$TMPDIR/homebrew-fend" commit -am \
-    "v$NEW_VERSION: Add reference to fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
+    "v$NEW_VERSION: Add reference to fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
 git -C "$TMPDIR/homebrew-fend" push origin main
 brew uninstall printfn/fend/fend
 brew update
 brew install printfn/fend/fend
 manualstep "Make sure the bottle was used"
 
-rm "fend-$NEW_VERSION.arm64_monterey.bottle.1.tar.gz"
+rm "fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
 rm -rf "$TMPDIR"
