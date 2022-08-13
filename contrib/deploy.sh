@@ -137,7 +137,6 @@ sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/"
 mv temp wiki/Home.md
 
 gitdiff "" 9 9
-exit 1
 
 manualstep "Add changelog to CHANGELOG.md"
 
