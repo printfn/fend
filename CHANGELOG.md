@@ -1,5 +1,12 @@
 ## Changelog
 
+### v1.0.5 (2022-08-14)
+
+* Add a `fend-wasm-nodejs` NPM package
+* Add a [Telegram bot](https://t.me/fend_calc_bot)
+* Improve behaviour of percentages (credit to @Techcable), e.g. `5% * 80kg` is now `4 kg`
+* Add a Markdown-like parsing mode to the WASM API
+
 ### v1.0.4 (2022-07-22)
 
 * Support `kn` for `knots`
