@@ -614,9 +614,58 @@ impl Value {
         let mut res_exact = self.exact;
         let mut res_value = self.value;
 
+        /*
+         * In fend, percentages are units.
+         * Without any special handling, multiplication would
+         * unconditionally combine them.
+         *
+         * This would (and did) lead to unexpected results,
+         * that fell into two broad categories:
+         * 1. mixing percentages with units: `80 kg * 5% = 400 kg %`.
+         * 2. percenteges squared: "5% * 5% = 25%^2"
+         *
+         * In practice, percentages are usually used as scalar multipliers,
+         * not as "units" in the traditional sense.
+         *
+         * To avoid this, we have the following rules
+         * for simplifying percentages.
+         *
+         * 1. If there are any other units (kg, lbs, etc..),
+         *    then all of the percentages are removed (fixing first problem)
+         * 2. No more than one "percentage unit" is permitted.
+         *
+         * This (mostly) fixes issue #164
+         *
+         * There is still some ambiguity here even after
+         * going through these rules (although this fixes most of it).
+         * See discussion on the "5_percent_times_100" test for more details.
+         */
+        let mut have_percentage_unit = false;
+        let has_nonpercentage_components =
+            self.unit.components.iter().any(|u| !u.is_percentage_unit());
         // combine identical or compatible units by summing their exponents
         // and potentially adjusting the value
         'outer: for comp in self.unit.components {
+            if comp.is_percentage_unit() {
+                if have_percentage_unit || has_nonpercentage_components {
+                    let adjusted_res = Exact {
+                        value: res_value,
+                        exact: res_exact,
+                    }
+                    .mul(
+                        &Exact {
+                            value: comp.unit.scale.clone().into(),
+                            exact: true,
+                        },
+                        int,
+                    )?;
+                    res_value = adjusted_res.value;
+                    res_exact = adjusted_res.exact;
+                    continue 'outer;
+                }
+                // already encountered one (if we see another one, strip it)
+                have_percentage_unit = true;
+            }
             for res_comp in &mut res_components {
                 if comp.unit.has_no_base_units() && comp.unit != res_comp.unit {
                     continue;

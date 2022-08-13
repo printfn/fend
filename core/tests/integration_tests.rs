@@ -2114,9 +2114,34 @@ fn one_plus_five_percent() {
 }
 
 #[test]
-#[ignore]
 fn five_percent_times_five_percent() {
     test_eval("5% * 5%", "0.25%");
+}
+
+#[test]
+fn five_percent_times_kg() {
+    test_eval("5% * 8 kg", "0.4 kg");
+}
+
+#[test]
+fn five_percent_times_100() {
+    /*
+     * as discussed in the "simplify" function,
+     * there are two ways to view this:
+     *
+     * 1. 5% of 100 (giving 5)
+     * 2. 100x 5% (giving 500%)
+     *
+     * Mathematically they are equivalent values.
+     * However, from a UI perspective they are not.
+     *
+     * I (Techcable) suggest overloading the "of" operator for that purpose.
+     * For example "5% of 100 => 5".
+     *
+     * This would work for all values, and would specifically require that the
+     * left side is formatted as a percentage.
+     */
+    test_eval("5% * 100", "500%");
 }
 
 #[test]
