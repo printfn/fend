@@ -169,3 +169,18 @@ jobs:
           publish_dir: ./web
           external_repository: printfn/fend-website
           force_orphan: true
+
+      - name: Deploy Telegram Bot
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        run: |
+          # build fend-wasm-nodejs (taken from deploy.sh)
+          (cd wasm && wasm-pack build --target nodejs --out-dir pkg-nodejs)
+          echo "Renaming package to 'fend-wasm-nodejs'..."
+          jq "setpath([\"name\"]; \"fend-wasm-nodejs\")" wasm/pkg-nodejs/package.json >temp
+          mv temp wasm/pkg-nodejs/package.json
+
+          # upload to AWS
+          TELEGRAM_BOT_API_TOKEN=${{ secrets.TELEGRAM_BOT_API_TOKEN }} \
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            ./telegram-bot/deploy.sh
