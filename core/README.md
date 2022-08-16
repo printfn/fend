@@ -27,34 +27,16 @@ fend is available on the web at [printfn.github.io/fend-website](https://printfn
 
 ## Installation
 
-The easiest way to install fend locally is via your package manager.
+The easiest way to install fend locally is via your package manager:
 
-On macOS (using Homebrew):
+| Package Manager  | Command                          |
+| ---------------- | -------------------------------- |
+| Homebrew         | `brew install printfn/fend/fend` |
+| AUR (Arch Linux) | `yay -Syu aur/fend-bin`          |
+| Nix              | `nix-env -iA nixpkgs.fend`       |
+| Cargo            | `cargo install fend`             |
 
-```bash
-brew install printfn/fend/fend
-```
-
-On Arch Linux (using `yay`):
-
-```bash
-yay -Syu aur/fend-bin
-```
-
-Using the nix package manager:
-
-```bash
-nix-env -iA nixpkgs.fend
-```
-
-On systems with Rust:
-
-```bash
-rustup update
-cargo install fend
-```
-
-You can also download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
+Alternatively, you can manually download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
 
 Once fend is installed, run `fend` to start a REPL session:
 
@@ -103,13 +85,8 @@ approx. 0.7071067811 + 0.7071067811i
 ```
 
 ```
-> 100 °C to °F
+> 100 C to F
 210 °F
-```
-
-```
-> 1 lightyear to parsecs
-approx. 0.3066013937 parsecs
 ```
 
 ```
