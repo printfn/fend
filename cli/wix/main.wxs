@@ -119,7 +119,7 @@
             </Directory>
         </Directory>
 
-        <Feature Id='Binaries' Title='Application' Description='Installs all binaries and the license.' Level='1'
+        <Feature Id='Binaries' Title='Application' Description='Installs fend.' Level='1'
             ConfigurableDirectory='APPLICATIONFOLDER' AllowAdvertise='no' Display='expand' Absent='disallow'>
             
             <ComponentRef Id='License' />
