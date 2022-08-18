@@ -10,4 +10,7 @@
 # and checking that the output doesn't contain any MSVCR DLLs
 
 [target.x86_64-pc-windows-msvc]
-rustflags = ["-Ctarget-feature=+crt-static"]
+rustflags = [
+    "-Ctarget-feature=+crt-static",
+    "-Clink-args=../../../icon/resources.res",
+]
