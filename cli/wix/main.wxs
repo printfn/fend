@@ -103,7 +103,7 @@
                             <Environment Id='PATH' Name='PATH' Value='[Bin]' Permanent='no' Part='last' Action='set' System='yes' />
                         </Component>
                         <Component Id='binary0' Guid='*'>
-                            <File Id='exe0' Name='fend.exe' DiskId='1' Source='$(var.CargoTargetBinDir)\fend.exe' KeyPath='yes' />
+                            <File Id='fend.exe' Name='fend.exe' DiskId='1' Source='$(var.CargoTargetBinDir)\fend.exe' KeyPath='yes' />
                         </Component>
                     </Directory>
                 </Directory>

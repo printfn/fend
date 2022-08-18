@@ -152,7 +152,7 @@ jobs:
         if: ${{ matrix.platform == 'windows-latest' }}
         run: |
           cargo install cargo-wix
-          cargo wix -p fend --nocapture --no-build
+          cargo wix -p fend --nocapture --no-build --verbose
 
       - name: Upload artifacts (MSI)
         uses: actions/upload-artifact@v2.3.1
