@@ -152,10 +152,8 @@ jobs:
         if: ${{ matrix.platform == 'windows-latest' }}
         run: |
           cargo install cargo-wix
-          cargo wix -p fend --nocapture --no-build --verbose
+          cargo wix -p fend --nocapture --no-build -vv
           mv target/wix/fend-${{ env.FEND_VERSION }}-x86_64.msi target/wix/fend-windows-x64.msi
-        env:
-          RUST_LOG: debug
 
       - name: Upload artifacts (MSI)
         uses: actions/upload-artifact@v2.3.1
