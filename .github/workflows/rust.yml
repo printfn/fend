@@ -148,6 +148,20 @@ jobs:
           path: windows-msix/fend.msix
           if-no-files-found: error
 
+      - name: Build MSI installer
+        if: ${{ matrix.platform == 'windows-latest' }}
+        run: |
+          cargo install cargo-wix
+          cargo wix -p fend --nocapture --no-build
+
+      - name: Upload artifacts (MSI)
+        uses: actions/upload-artifact@v2.3.1
+        if: ${{ matrix.platform == 'windows-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-windows-x64-msi
+          path: target/wix/fend-${{ env.FEND_VERSION }}-x86_64.msi
+          if-no-files-found: error
+
       - name: Build wiki
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         run: |
