@@ -52,106 +52,112 @@
   cause installation errors.
 -->
 <?if $(sys.BUILDARCH) = x64 or $(sys.BUILDARCH) = arm64 ?>
+    <?define Win64 = "yes" ?>
     <?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
 <?else ?>
+    <?define Win64 = "no" ?>
     <?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
 <?endif ?>
 
-<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-    <Product
-        Id='*'
-        Name='fend'
-        UpgradeCode='2E3C8164-E07C-4B26-82B2-C5613FE8AD8F'
-        Manufacturer='printfn'
-        Language='1033'
-        Codepage='1252'
-        Version='$(var.Version)'>
+    <Product Id='*' Name='fend' UpgradeCode='2E3C8164-E07C-4B26-82B2-C5613FE8AD8F'
+        Manufacturer='printfn' Language='1033' Codepage='1252' Version='$(var.Version)'>
 
-        <Package Id='*'
-            Keywords='Installer'
-            Description='Arbitrary-precision unit-aware calculator'
-            Manufacturer='printfn'
-            InstallerVersion='450'
-            Languages='1033'
-            Compressed='yes'
-            InstallScope='perMachine'
-            SummaryCodepage='1252'
-            />
+        <Package Id='*' Keywords='Installer' Description='Arbitrary-precision unit-aware calculator'
+            Manufacturer='printfn' InstallerVersion='450' Languages='1033' Compressed='yes'
+            InstallScope='perMachine' SummaryCodepage='1252' />
 
         <MajorUpgrade
             Schedule='afterInstallInitialize'
-            DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
+            DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.' />
 
-        <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
-        <Property Id='DiskPrompt' Value='fend Installation'/>
+        <Property Id="APPLICATIONFOLDER" Secure="yes">
+            <RegistrySearch Id="FindInstallLocation" Root="HKCU" Key="Software\Airshipper" Name="InstallationPath" Type="raw" Win64="$(var.Win64)" />
+        </Property>
+
+        <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1' />
+        <Property Id='DiskPrompt' Value='fend Installation' />
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id="ProgramMenuFolder">
+                <!-- Create shortcut to start fend from the taskbar -->
+                <Directory Id="ApplicationProgramsFolder" Name="fend">
+                    <Component Id='ApplicationShortcut' Guid='{15F35903-1FBC-47C0-852D-BFC51D428385}' Win64='$(var.Win64)'>
+                        <Shortcut Id='ApplicationStartMenuShortcut' Name='fend' Description='Arbitrary-precision unit-aware calculator' Target='[!fend.exe]' WorkingDirectory='APPLICATIONFOLDER' />
+                        <RemoveFolder Id='CleanUpShortCut' Directory='ApplicationProgramsFolder' On='uninstall' />
+                        <RegistryValue Root='HKCU' Key='Software\fend' Name='installed' Type='integer' Value='1' KeyPath='yes' />
+                        <!-- make upgrading easier by remembering where it was installed -->
+                        <RegistryValue Root='HKCU' Key='Software\fend' Name='InstallationPath' Type='string' Value='[APPLICATIONFOLDER]' />
+                    </Component>
+                </Directory>
+            </Directory>
+
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
                 <Directory Id='APPLICATIONFOLDER' Name='fend'>
+                    <Component Id='License' Guid='*'>
+                        <File Id='LicenseFile' Name='LICENSE.md' DiskId='1' Source='.\LICENSE.md' KeyPath='yes' />
+                    </Component>
                     <Directory Id='Bin' Name='bin'>
                         <Component Id='Path' Guid='CDEF645B-899B-4FB5-B932-70DDF60C1D24' KeyPath='yes'>
-                            <Environment
-                                Id='PATH'
-                                Name='PATH'
-                                Value='[Bin]'
-                                Permanent='no'
-                                Part='last'
-                                Action='set'
-                                System='yes'/>
+                            <Environment Id='PATH' Name='PATH' Value='[Bin]' Permanent='no' Part='last' Action='set' System='yes' />
                         </Component>
                         <Component Id='binary0' Guid='*'>
-                            <File
-                                Id='exe0'
-                                Name='fend.exe'
-                                DiskId='1'
-                                Source='$(var.CargoTargetBinDir)\fend.exe'
-                                KeyPath='yes'/>
+                            <File Id='fend.exe' Name='fend.exe' DiskId='1' Source='$(var.CargoTargetBinDir)\fend.exe' KeyPath='yes' />
                         </Component>
                     </Directory>
                 </Directory>
             </Directory>
+
+            <Directory Id="DesktopFolder" Name="Desktop">
+                <!-- Create shortcut to start fend from the desktop -->
+                <Component Id="ApplicationShortcutDesktop" Guid="6EC22391-82AE-4394-BD05-6930293265EA">
+                    <Shortcut Id="ApplicationDesktopShortcut" Name="fend" Description="Arbitrary-precision unit-aware calculator" Target="[!fend.exe]" WorkingDirectory='APPLICATIONFOLDER' />
+                    <RemoveFolder Id="CleanUpDesktopShortcut" On="uninstall" />
+                    <RegistryValue Root="HKCU" Key="Software\fend" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+                </Component>
+            </Directory>
         </Directory>
 
-        <Feature
-            Id='Binaries'
-            Title='Application'
-            Description='Installs all binaries and the license.'
-            Level='1'
-            ConfigurableDirectory='APPLICATIONFOLDER'
-            AllowAdvertise='no'
-            Display='expand'
-            Absent='disallow'>
+        <Feature Id='Binaries' Title='Application' Description='Installs fend.' Level='1'
+            ConfigurableDirectory='APPLICATIONFOLDER' AllowAdvertise='no' Display='expand' Absent='disallow'>
             
-            <ComponentRef Id='binary0'/>
+            <ComponentRef Id='License' />
+            <ComponentRef Id='binary0' />
+            <ComponentRef Id='ApplicationShortcut' />
 
-            <Feature
-                Id='Environment'
-                Title='PATH Environment Variable'
+            <Feature Id='Environment' Title='PATH Environment Variable'
                 Description='Add the install location of the [ProductName] executable to the PATH system environment variable. This allows the [ProductName] executable to be called from any location.'
-                Level='1'
-                Absent='allow'>
-                <ComponentRef Id='Path'/>
+                Level='1' Absent='allow'>
+                <ComponentRef Id='Path' />
+            </Feature>
+
+
+            <Feature Id='DesktopShortcut' Title='Add a Desktop shortcut' Description='Creates a shortcut on your desktop for easier access.' Level='1' Absent='allow'>
+                <ComponentRef Id='ApplicationShortcutDesktop' />
             </Feature>
         </Feature>
 
-        <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize'/>
+        <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize' />
 
-        <!--
-          Disabling the custom product icon for the application in the
-          Add/Remove Programs control panel requires commenting out or
-          removing the following `Icon` and `Property` tags.
-        -->
-        <Icon Id='ProductICO' SourceFile='.\icon\fend-icon-256.ico'/>
+        <Icon Id='ProductICO' SourceFile='.\icon\fend-icon.ico' />
         <Property Id='ARPPRODUCTICON' Value='ProductICO' />
-        
-        <Property Id='ARPHELPLINK' Value='https://github.com/printfn/fend'/>
+
+        <Property Id='ARPHELPLINK' Value='https://github.com/printfn/fend' />
+
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch fend" />
         
         <UI>
-            <UIRef Id='WixUI_FeatureTree'/>
+            <UIRef Id='WixUI_FeatureTree' />
             <Publish Dialog='WelcomeDlg' Control='Next' Event='NewDialog' Value='CustomizeDlg' Order='99'>1</Publish>
             <Publish Dialog='CustomizeDlg' Control='Back' Event='NewDialog' Value='WelcomeDlg' Order='99'>1</Publish>
+            <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">
+                WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed
+            </Publish>
         </UI>
+
+        <Property Id="WixShellExecTarget" Value="[#fend.exe]" />
+        <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
         
         <!--
           Uncomment the next `WixVariable` tag to customize the installer's
@@ -161,7 +167,7 @@
 
           The banner BMP dimensions are 493 x 58 pixels.
         -->
-        <!--<WixVariable Id='WixUIBannerBmp' Value='wix\Banner.bmp'/>-->
+        <!--<WixVariable Id='WixUIBannerBmp' Value='wix\Banner.bmp' />-->
 
         
         <!--
@@ -172,7 +178,7 @@
 
           The dialog BMP dimensions are 493 x 312 pixels.
         -->
-        <!--<WixVariable Id='WixUIDialogBmp' Value='wix\Dialog.bmp'/>-->
+        <!--<WixVariable Id='WixUIDialogBmp' Value='wix\Dialog.bmp' />-->
 
     </Product>
 

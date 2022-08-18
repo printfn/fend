@@ -1,2 +1,16 @@
+# Statically link the C Runtime on Windows (MSVCR140.dll or similar).
+# Recommended for portable binaries, see https://github.com/volks73/cargo-wix/issues/115
+# and https://github.com/volks73/cargo-wix/commit/bc06cb856f603a661050d9cc118bb71f973458bb
+
+# After building fend, this can be verified by running:
+# ```
+# cargo install pelite
+# pedump target/release/fend.exe -i
+# ```
+# and checking that the output doesn't contain any MSVCR DLLs
+
 [target.x86_64-pc-windows-msvc]
-rustflags = ["-Ctarget-feature=+crt-static"]
+rustflags = [
+    "-Ctarget-feature=+crt-static",
+    "-Clink-args=../../../icon/resources.res",
+]
