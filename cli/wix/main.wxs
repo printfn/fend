@@ -69,8 +69,8 @@
             InstallScope='perMachine' SummaryCodepage='1252' />
 
         <MajorUpgrade
-            Schedule='afterInstallInitialize'
-            DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.' />
+            Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
+            DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
 
         <Property Id="APPLICATIONFOLDER" Secure="yes">
             <RegistrySearch Id="FindInstallLocation" Root="HKCU" Key="Software\Airshipper" Name="InstallationPath" Type="raw" Win64="$(var.Win64)" />
