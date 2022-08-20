@@ -1,19 +1,3 @@
-# [fend](https://printfn.github.io/fend-website)
+# fend-wasm
 
-[fend](https://printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
-
-Unique features:
-
-* Arbitrary-precision arithmetic using rational numbers
-* Full support for complex numbers
-* Binary, octal, hexadecimal and all other bases between 2 and 36
-* Keep track of units, with support for SI, US and UK customary and many historical units
-* Emacs-style CLI shortcuts
-* Trigonometric functions
-* Lambda calculus
-
-See the [manual](https://github.com/printfn/fend/wiki) for more information.
-
-## License
-
-fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
+This is the WebAssembly port of [fend](https://github.com/printfn/fend).

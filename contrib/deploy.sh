@@ -91,9 +91,6 @@ Update the README file and other documentation if necessary."
 echo "Updating Cargo.lock" # also ensures the internet connection works
 cargo update
 
-echo "Checking if the README files are in sync..."
-diff README.md cli/README.md
-
 echo "Running cargo fmt..."
 cargo fmt -- --check
 
