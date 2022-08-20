@@ -68,6 +68,12 @@
             Manufacturer='printfn' InstallerVersion='450' Languages='1033' Compressed='yes'
             InstallScope='perMachine' SummaryCodepage='1252' />
 
+        <!--
+            Same-version upgrades need to be allowed, otherwise fend will get installed multiple
+                times when installing MSIs with identical version numbers, such as different CI builds.
+            Unfortunately setting that attribute does result in a compiler warning (LGHT1076).
+            See https://wixtoolset.org/documentation/manual/v3/xsd/wix/majorupgrade.html for more info.
+        -->
         <MajorUpgrade
             Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
             DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
@@ -96,14 +102,14 @@
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
                 <Directory Id='APPLICATIONFOLDER' Name='fend'>
                     <Component Id='License' Guid='*'>
-                        <File Id='LicenseFile' Name='LICENSE.md' DiskId='1' Source='.\LICENSE.md' KeyPath='yes' />
+                        <File Id='LicenseFile' Name='LICENSE.md' DiskId='1' Source='$(var.LicenseMdPath)' KeyPath='yes' />
                     </Component>
                     <Directory Id='Bin' Name='bin'>
                         <Component Id='Path' Guid='CDEF645B-899B-4FB5-B932-70DDF60C1D24' KeyPath='yes'>
                             <Environment Id='PATH' Name='PATH' Value='[Bin]' Permanent='no' Part='last' Action='set' System='yes' />
                         </Component>
                         <Component Id='binary0' Guid='*'>
-                            <File Id='fend.exe' Name='fend.exe' DiskId='1' Source='$(var.CargoTargetBinDir)\fend.exe' KeyPath='yes' />
+                            <File Id='fend.exe' Name='fend.exe' DiskId='1' Source='$(var.FendExePath)' KeyPath='yes' />
                         </Component>
                     </Directory>
                 </Directory>
@@ -140,7 +146,7 @@
 
         <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize' />
 
-        <Icon Id='ProductICO' SourceFile='.\icon\fend-icon.ico' />
+        <Icon Id='ProductICO' SourceFile='$(var.IconPath)' />
         <Property Id='ARPPRODUCTICON' Value='ProductICO' />
 
         <Property Id='ARPHELPLINK' Value='https://github.com/printfn/fend' />
