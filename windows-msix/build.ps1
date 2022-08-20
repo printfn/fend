@@ -30,7 +30,17 @@ Copy-Item $PSScriptRoot\..\target\release\fend.exe $PSScriptRoot\build
 Copy-Item $PSScriptRoot\..\icon\fend-icon-44.png $PSScriptRoot\build
 Copy-Item $PSScriptRoot\..\icon\fend-icon-150.png $PSScriptRoot\build
 
-& "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe" pack /d $PSScriptRoot\build /p $PSScriptRoot\fend.msix /verbose
-& "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe" sign /fd SHA256 /a /f $PSScriptRoot\fend-signing-cert.pfx /p $Env:WINDOWS_CERT_PASSWORD $PSScriptRoot\fend.msix
+& "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe" `
+    pack `
+    /d $PSScriptRoot\build `
+    /p $PSScriptRoot\fend.msix `
+    /verbose
 
-mv $PSScriptRoot\fend.msix $PSScriptRoot\fend-windows-x64.msix
+& "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe" `
+    sign `
+    /fd SHA256 /a `
+    /f $PSScriptRoot\fend-signing-cert.pfx `
+    /p $Env:WINDOWS_CERT_PASSWORD `
+    $PSScriptRoot\fend.msix
+
+Move-Item $PSScriptRoot\fend.msix $PSScriptRoot\fend-windows-x64.msix
