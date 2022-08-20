@@ -6,6 +6,20 @@
 #![forbid(unreachable_pub)]
 #![forbid(elided_lifetimes_in_paths)]
 
+//! This library implements most of the features of [fend](https://github.com/printfn/fend).
+//!
+//! ## Example
+//!
+//! ```rust
+//! extern crate fend_core;
+//!
+//! fn main() {
+//!     let mut context = fend_core::Context::new();
+//!     let result = fend_core::evaluate("1 + 1", &mut context).unwrap();
+//!     assert_eq!(result.get_main_result(), "2");
+//! }
+//! ```
+
 mod ast;
 mod date;
 mod error;

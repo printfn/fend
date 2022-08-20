@@ -93,7 +93,6 @@ cargo update
 
 echo "Checking if the README files are in sync..."
 diff README.md cli/README.md
-diff README.md core/README.md
 
 echo "Running cargo fmt..."
 cargo fmt -- --check
