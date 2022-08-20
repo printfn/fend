@@ -29,12 +29,13 @@ fend is available on the web at [printfn.github.io/fend-website](https://printfn
 
 The easiest way to install fend locally is via your package manager:
 
-| Package Manager  | Command                          |
-| ---------------- | -------------------------------- |
-| Homebrew         | `brew install printfn/fend/fend` |
-| AUR (Arch Linux) | `yay -Syu aur/fend-bin`          |
-| Nix              | `nix-env -iA nixpkgs.fend`       |
-| Cargo            | `cargo install fend`             |
+| Package Manager         | Command                          |
+| ----------------------- | -------------------------------- |
+| Homebrew                | `brew install printfn/fend/fend` |
+| AUR (Arch Linux)        | `yay -Syu aur/fend-bin`          |
+| Nix                     | `nix-env -iA nixpkgs.fend`       |
+| Cargo                   | `cargo install fend`             |
+| Windows Package Manager | `winget install fend`            |
 
 Alternatively, you can manually download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
 
@@ -53,6 +54,7 @@ $ fend
 * [AUR (built from source)](https://aur.archlinux.org/packages/fend/)
 * [AUR (pre-built binary)](https://aur.archlinux.org/packages/fend-bin/)
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
+* [Windows Package Manager](https://github.com/microsoft/winget-pkgs/tree/master/manifests/p/printfn/fend)
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)
 * [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
