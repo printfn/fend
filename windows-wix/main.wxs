@@ -79,7 +79,7 @@
             DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
 
         <Property Id="APPLICATIONFOLDER" Secure="yes">
-            <RegistrySearch Id="FindInstallLocation" Root="HKCU" Key="Software\Airshipper" Name="InstallationPath" Type="raw" Win64="$(var.Win64)" />
+            <RegistrySearch Id="FindInstallLocation" Root="HKCU" Key="Software\fend" Name="InstallationPath" Type="raw" Win64="$(var.Win64)" />
         </Property>
 
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1' />
