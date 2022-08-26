@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 env:
   CARGO_TERM_COLOR: always
   RUST_MIN_STACK: 16777212
@@ -138,13 +133,11 @@ jobs:
           cp icon/fend-icon-128.png web/
           rm web/pkg/.gitignore
 
-      - name: Upload artifacts (fend-web)
-        uses: actions/upload-artifact@v2.3.1
+      - name: Upload GitHub Pages artifact
         if: ${{ matrix.platform == 'ubuntu-latest' }}
+        uses: actions/upload-pages-artifact@v1
         with:
-          name: fend-web
           path: web
-          if-no-files-found: error
 
       - name: Build MSIX installer
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'windows-latest' }}
@@ -205,6 +198,10 @@ jobs:
   deploy:
     needs: [build]
 
+    permissions:
+      pages: write
+      id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -212,17 +209,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: fend-web
-          path: web
-      - name: Setup Pages
-        uses: actions/configure-pages@v2
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: web
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
