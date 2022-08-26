@@ -127,12 +127,7 @@ sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
     wasm/Cargo.toml >temp
 mv temp wasm/Cargo.toml
 
-# wiki
-sed "s/version of fend is \`$OLD_VERSION\`/version of fend is \`$NEW_VERSION\`/" \
-    wiki/Home.md >temp
-mv temp wiki/Home.md
-
-gitdiff "" 9 9
+gitdiff "" 7 7
 
 manualstep "Add changelog to CHANGELOG.md"
 
