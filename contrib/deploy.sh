@@ -259,15 +259,15 @@ that the new release is correct. If it is, go ahead and publish it."
 git clone ssh://aur@aur.archlinux.org/fend.git "$TMPDIR/fend-aur"
 git -C "$TMPDIR/fend-aur" config user.name printfn
 git -C "$TMPDIR/fend-aur" config user.email printfn@users.noreply.github.com
-echo test|shasum -a 512 -|grep "^0e3e75234abc68f4378a86b3f4b32" >/dev/null
+echo test|shasum -a 256 -|grep "^f2ca1bb6c7e907d06dafe4687e579" >/dev/null
 HASH=$(curl -L -o - "https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate" \
-    | shasum -a 512 - \
-    | grep -o '[a-f0-9]\{128\}')
+    | shasum -a 256 - \
+    | grep -o '[a-f0-9]\{64\}')
 echo "Hash: $HASH"
 sed "s/$OLD_VERSION/$NEW_VERSION/g" "$TMPDIR/fend-aur/.SRCINFO" \
-    | sed "s/[a-f0-9]\{128\}/$HASH/" >"$TMPDIR/fend-aur/.SRCINFO_NEW"
+    | sed "s/[a-f0-9]\{64\}/$HASH/" >"$TMPDIR/fend-aur/.SRCINFO_NEW"
 sed "s/$OLD_VERSION/$NEW_VERSION/" "$TMPDIR/fend-aur/PKGBUILD" \
-    | sed "s/[a-f0-9]\{128\}/$HASH/" >"$TMPDIR/fend-aur/PKGBUILD_NEW"
+    | sed "s/[a-f0-9]\{64\}/$HASH/" >"$TMPDIR/fend-aur/PKGBUILD_NEW"
 mv "$TMPDIR/fend-aur/.SRCINFO_NEW" "$TMPDIR/fend-aur/.SRCINFO"
 mv "$TMPDIR/fend-aur/PKGBUILD_NEW" "$TMPDIR/fend-aur/PKGBUILD"
 gitdiff "$TMPDIR/fend-aur" 7 7 # 5 lines in 2 files
@@ -281,7 +281,6 @@ git -C "$TMPDIR/fend-aur" push origin master
 git clone git@github.com:printfn/homebrew-fend "$TMPDIR/homebrew-fend"
 git -C "$TMPDIR/homebrew-fend" config user.name printfn
 git -C "$TMPDIR/homebrew-fend" config user.email printfn@users.noreply.github.com
-echo test|shasum -a 256 -|grep "^f2ca1bb6c7e907d06dafe4687e579" >/dev/null
 HASH=$(curl -L -o - "https://github.com/printfn/fend/archive/refs/tags/v$NEW_VERSION.tar.gz" \
     | shasum -a 256 - \
     | grep -o '[a-f0-9]\{64\}')
