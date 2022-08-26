@@ -17,10 +17,6 @@ env:
 
 jobs:
   build:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
@@ -135,12 +131,20 @@ jobs:
           if-no-files-found: error
 
       - name: Build fend-wasm
-        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
           (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
           cp icon/fend-icon-128.png web/
           rm web/pkg/.gitignore
+
+      - name: Upload artifacts (fend-web)
+        uses: actions/upload-artifact@v2.3.1
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        with:
+          name: fend-web
+          path: web
+          if-no-files-found: error
 
       - name: Build MSIX installer
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'windows-latest' }}
@@ -183,19 +187,6 @@ jobs:
         env:
           GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_TOKEN }}
 
-      - name: Setup Pages
-        if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-        uses: actions/configure-pages@v2
-      - name: Upload artifact
-        if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'web'
-      - name: Deploy to GitHub Pages
-        if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-        id: deployment
-        uses: actions/deploy-pages@v1
-
       - name: Deploy Telegram Bot
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         run: |
@@ -210,3 +201,27 @@ jobs:
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             ./telegram-bot/deploy.sh
+
+  deploy:
+    needs: [build]
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: fend-web
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'web'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
