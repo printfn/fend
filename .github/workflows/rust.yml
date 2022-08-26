@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 env:
   CARGO_TERM_COLOR: always
   RUST_MIN_STACK: 16777212
@@ -174,14 +179,18 @@ jobs:
         env:
           GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_TOKEN }}
 
+      - name: Setup Pages
+        if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        uses: actions/configure-pages@v2
+      - name: Upload artifact
+        if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'web'
       - name: Deploy to GitHub Pages
         if: ${{ github.repository == 'printfn/fend' && github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-        uses: peaceiris/actions-gh-pages@v3.8.0
-        with:
-          personal_token: ${{ secrets.MY_TOKEN }}
-          publish_dir: ./web
-          external_repository: printfn/fend-website
-          force_orphan: true
+        id: deployment
+        uses: actions/deploy-pages@v1
 
       - name: Deploy Telegram Bot
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
