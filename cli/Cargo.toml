@@ -2,7 +2,6 @@
 name = "fend"
 # Don't bump version numbers manually, use deploy.sh instead
 version = "1.0.5"
-authors = ["printfn <printfn@users.noreply.github.com>"]
 description = "Arbitrary-precision unit-aware calculator"
 homepage = "https://github.com/printfn/fend"
 repository = "https://github.com/printfn/fend"
