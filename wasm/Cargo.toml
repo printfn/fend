@@ -15,13 +15,10 @@ crate-type = ["cdylib", "rlib"]
 default = []
 
 [dependencies]
-js-sys = "0.3.56"
-wasm-bindgen = "0.2.78"
-
-# std::time is not available on wasm, so this library provides a replacement
-instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
-
 fend-core = { path = "../core" }
+instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
+js-sys = "0.3.59"
+wasm-bindgen = "0.2.82"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]
