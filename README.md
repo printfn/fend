@@ -1,11 +1,11 @@
-# [fend](https://printfn.github.io/fend-website)
+# [fend](https://printfn.github.io/fend)
 
 [![build](https://github.com/printfn/fend/workflows/build/badge.svg)](https://github.com/printfn/fend)
 [![codecov](https://codecov.io/gh/printfn/fend/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
 
-[fend](https://printfn.github.io/fend-website) is an arbitrary-precision unit-aware calculator.
+[fend](https://printfn.github.io/fend) is an arbitrary-precision unit-aware calculator.
 
 Unique features:
 
@@ -21,9 +21,9 @@ Unique features:
 
 See the [manual](https://github.com/printfn/fend/wiki) for more information.
 
-## [Web Interface](https://printfn.github.io/fend-website)
+## [Web Interface](https://printfn.github.io/fend)
 
-fend is available on the web at [printfn.github.io/fend-website](https://printfn.github.io/fend-website).
+fend is available on the web at [printfn.github.io/fend](https://printfn.github.io/fend).
 
 ## Installation
 

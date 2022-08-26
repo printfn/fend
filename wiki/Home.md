@@ -1,6 +1,6 @@
 # Welcome to the fend Manual!
 
-fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
+fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend](https://printfn.github.io/fend) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
 
 You can check your version of fend at any time by typing `version`. If you are using the command-line interface, you can also run `fend -v`.
 
@@ -26,7 +26,7 @@ You can check your version of fend at any time by typing `version`. If you are u
 
 ## Installation
 
-You can use fend without installing by visiting [https://printfn.github.io/fend-website](https://printfn.github.io/fend-website).
+You can use fend without installing by visiting [https://printfn.github.io/fend](https://printfn.github.io/fend).
 
 If you want to install the fend command-line application, you have the following options:
 
