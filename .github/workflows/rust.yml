@@ -17,6 +17,10 @@ env:
 
 jobs:
   build:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
