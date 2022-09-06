@@ -76,7 +76,7 @@ fn eval_and_print_res(
 
 fn print_help(explain_quitting: bool) {
     println!("For more information on how to use fend, please take a look at the manual:");
-    println!("https://github.com/printfn/fend/wiki");
+    println!("https://printfn.github.io/fend/documentation/");
     println!();
     println!("Version: {}", fend_core::get_version());
     if let Ok(config_path) = file_paths::get_config_file_location() {
