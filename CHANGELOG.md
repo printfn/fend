@@ -1,5 +1,11 @@
 ## Changelog
 
+### Unreleased
+
+* Add an MSI installer for Windows
+* Change fend website to [https://printfn.github.io/fend](https://printfn.github.io/fend)
+* Add a fend package to the Windows Package Manager (`winget`)
+
 ### v1.0.5 (2022-08-14)
 
 * Add a `fend-wasm-nodejs` NPM package
