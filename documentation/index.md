@@ -11,9 +11,10 @@ You can check your version of fend at any time by typing `version`. If you are u
 
 # Table of Contents
 1. [Installation](#installation)
+    1. [Windows](#windows)
     1. [macOS](#macos)
     1. [Arch Linux](#arch-linux)
-    1. [nix package manager](#nix-package-manager)
+    1. [NixOS / Nix package manager](#nixos-nix-package-manager)
     1. [Pre-built binaries](#pre-built-binaries)
     1. [Install via crates.io](#install-via-cratesio)
 1. [Numbers](#numbers)
@@ -34,6 +35,18 @@ You can check your version of fend at any time by typing `version`. If you are u
 You can use fend without installing by visiting [https://printfn.github.io/fend](https://printfn.github.io/fend).
 
 If you want to install the fend command-line application, you have the following options:
+
+### Windows
+
+On Windows, you can install fend with a standard Windows installer package,
+which you can download [here](https://github.com/printfn/fend/releases/latest/download/fend-windows-x64.msi).
+
+Alternatively you can install fend via
+[`winget`](https://docs.microsoft.com/en-us/windows/package-manager/winget/):
+
+```ps1
+winget install fend
+```
 
 ### macOS
 
@@ -57,7 +70,7 @@ You can also [build it from source](https://aur.archlinux.org/packages/fend/) wi
 yay -Syu aur/fend
 ```
 
-### nix package manager
+### NixOS / Nix package manager
 
 fend is available in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix):
 
