@@ -128,8 +128,8 @@ jobs:
       - name: Build fend-wasm
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -yq pandoc
+          wget https://github.com/jgm/pandoc/releases/download/2.19.2/pandoc-2.19.2-1-amd64.deb
+          sudo dpkg -i pandoc-2.19.2-1-amd64.deb
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
           (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
           rm web/pkg/.gitignore
