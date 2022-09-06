@@ -1,3 +1,8 @@
+---
+lang: "en"
+linkcolor: "blue"
+pagetitle: "fend Manual"
+---
 # Welcome to the fend Manual!
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend](https://printfn.github.io/fend) to use the online version, or click [here](#installation) to learn how to install fend on your computer.
@@ -71,6 +76,7 @@ nix-shell -p fend
 You can download the latest stable binaries for Windows, macOS and Linux [here](https://github.com/printfn/fend/releases/latest).
 
 Binaries are available for:
+
 * Linux (aarch64)
 * Linux (x86-64)
 * Linux (armv7-gnueabihf)
@@ -378,7 +384,8 @@ fend supports string literals, which can be enclosed in either single or double 
 \v    vertical tab (0x0b)
 \x    ASCII escape sequence, e.g. \x7e for '~'
 \u    Unicode escape sequence, e.g. \u{3c0} for 'π'
-\^    ASCII control character escape sequence, e.g. \^H for backspace (0x08)
+\^    ASCII control character escape sequence,
+          e.g. \^H for backspace (0x08)
 \z    This causes fend to ignore any following whitespace characters
 ```
 

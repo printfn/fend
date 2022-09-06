@@ -128,10 +128,15 @@ jobs:
       - name: Build fend-wasm
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
+          wget https://github.com/jgm/pandoc/releases/download/2.19.2/pandoc-2.19.2-1-amd64.deb
+          sudo dpkg -i pandoc-2.19.2-1-amd64.deb
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
           (cd wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
-          cp icon/fend-icon-128.png web/
           rm web/pkg/.gitignore
+          cp icon/fend-icon-128.png web/
+          ./documentation/build.sh
+          mkdir web/documentation
+          cp documentation/*.html web/documentation/
 
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.platform == 'ubuntu-latest' }}
@@ -166,19 +171,6 @@ jobs:
           name: fend-windows-x64-msi
           path: windows-wix/build/fend-windows-x64.msi
           if-no-files-found: error
-
-      - name: Build wiki
-        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-        run: |
-          cat CHANGELOG.md >>wiki/Home.md
-
-      - name: Upload Manual to Wiki
-        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
-        uses: SwiftDocOrg/github-wiki-publish-action@v1
-        with:
-          path: "wiki"
-        env:
-          GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_TOKEN }}
 
       - name: Deploy Telegram Bot
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}

@@ -19,7 +19,7 @@ Unique features:
 * Trigonometric functions
 * Lambda calculus
 
-See the [manual](https://github.com/printfn/fend/wiki) for more information.
+See the [manual](https://printfn.github.io/fend/documentation/) for more information.
 
 ## [Web Interface](https://printfn.github.io/fend)
 
@@ -60,9 +60,9 @@ $ fend
 * [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
 * [Telegram Bot](https://t.me/fend_calc_bot)
 
-## [Manual](https://github.com/printfn/fend/wiki)
+## [Manual](https://printfn.github.io/fend/documentation/)
 
-You can find the fend manual [here](https://github.com/printfn/fend/wiki).
+You can find the fend manual [here](https://printfn.github.io/fend/documentation/).
 
 ## Examples
 
