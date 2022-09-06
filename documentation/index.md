@@ -427,47 +427,7 @@ environment variable `FEND_CONFIG_DIR`.
 
 These are the options currently available, along with their default values:
 
-```toml
-# Choose whether or not colors should be enabled. Possible
-# values are 'never', 'auto' (default) or 'always'.
-enable-colors = 'auto'
-
-# Maximum number of calculations to store in fend's
-# history file
-max-history-size = 1000
-
-# The characters that are shown as the prompt when
-# using fend interactively
-prompt = '> '
-
-# Change 'C' and 'F' to refer to coulomb and farad
-# instead of degrees celsius and degrees fahrenheit
-coulomb-and-farad = false
-
-# What to do if this configuration file contains unknown
-# settings. These are the possible values:
-#  * 'warn': print a warning on startup if there are any
-#            unknown config settings (default)
-#  * 'ignore': ignore any unknown configuration settings
-unknown-settings = 'warn'
-
-# This section controls the colors that are used by
-# fend. Make sure the `enable-colors` setting is
-# turned on for this to work.
-#
-# Color options:
-#   foreground: the foreground color to use
-#   bold:       whether or not to show text in bold font
-#   underline:  whether or not to underline text
-#
-[colors]
-number = {}
-string = {}
-identifier = { foreground = 'white' }
-keyword = { foreground = 'blue', bold = true }
-built-in-function = { foreground = 'blue', bold = true }
-date = {}
-other = {}
+```{.toml include="../cli/src/default_config.toml"}
 ```
 
 fend stores its history file in `$HOME/.local/state/fend/history` by default,
@@ -495,4 +455,8 @@ You can see the debug representation of a value in fend by writing
 ```
 > !debug 1+1
 2 (unitless) (base 10, auto, simplifiable)
+```
+
+```{.include}
+../CHANGELOG.md
 ```
