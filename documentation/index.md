@@ -1,4 +1,8 @@
 ---
+header-includes: |
+    ```{=html}
+    <link rel="icon" href="https://printfn.github.io/fend/fend-icon-128.png">
+    ```
 lang: "en"
 linkcolor: "blue"
 pagetitle: "fend Manual"
