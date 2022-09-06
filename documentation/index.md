@@ -329,6 +329,7 @@ approx. 1.4142135619
 ```
 
 Many constants are available, including:
+
 * `pi`: approx. 3.1415926535
 * `e`: approx. 2.7182818284
 * `c`: 299792458 m/s (speed of light)
@@ -405,6 +406,7 @@ pi = approx. 3.1415926535
 The CLI version of fend supports a configuration file.
 
 The location of this file differs based on your operating system:
+
 * Linux: `$XDG_CONFIG_HOME/fend/config.toml` (usually `$HOME/.config/fend/config.toml`)
 * macOS: `$HOME/.config/fend/config.toml`
 * Windows: `\Users\{UserName}\.config\fend\config.toml`
