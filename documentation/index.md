@@ -1,12 +1,3 @@
----
-header-includes: |
-    ```{=html}
-    <link rel="icon" href="https://printfn.github.io/fend/fend-icon-128.png">
-    ```
-lang: "en"
-linkcolor: "blue"
-pagetitle: "fend Manual"
----
 # Welcome to the fend Manual!
 
 fend is an arbitrary-precision unit-aware calculator. If you haven't already, head to [https://printfn.github.io/fend](https://printfn.github.io/fend) to use the online version, or click [here](#installation) to learn how to install fend on your computer.

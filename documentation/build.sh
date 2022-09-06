@@ -2,4 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-pandoc index.md ../CHANGELOG.md -s -o index.html
+pandoc --standalone \
+    --output=index.html \
+    --metadata-file=pandoc-metadata.yml \
+    index.md ../CHANGELOG.md
