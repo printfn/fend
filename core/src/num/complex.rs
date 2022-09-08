@@ -312,7 +312,6 @@ impl Complex {
     }
 }
 
-#[allow(clippy::use_self)]
 impl Exact<Complex> {
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         let (self_real, self_imag) = self.apply(|x| (x.real, x.imag)).pair();

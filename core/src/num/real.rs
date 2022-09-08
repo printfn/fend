@@ -358,7 +358,6 @@ impl Real {
     }
 }
 
-#[allow(clippy::use_self)]
 impl Exact<Real> {
     pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
         if self.exact && self.value.is_zero() {

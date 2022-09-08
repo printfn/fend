@@ -201,13 +201,12 @@ impl Dist {
     }
 }
 
-#[allow(clippy::use_self)]
 impl Exact<Dist> {
     pub(crate) fn add<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
         let self_exact = self.exact;
         let rhs_exact = rhs.exact;
         let mut exact = true;
-        Ok(Exact::new(
+        Ok(Self::new(
             self.value.bop(
                 &rhs.value,
                 |a, b, int| {
@@ -226,7 +225,7 @@ impl Exact<Dist> {
         let self_exact = self.exact;
         let rhs_exact = rhs.exact;
         let mut exact = true;
-        Ok(Exact::new(
+        Ok(Self::new(
             self.value.bop(
                 &rhs.value,
                 |a, b, int| {
@@ -245,7 +244,7 @@ impl Exact<Dist> {
         let self_exact = self.exact;
         let rhs_exact = rhs.exact;
         let mut exact = true;
-        Ok(Exact::new(
+        Ok(Self::new(
             self.value.bop(
                 &rhs.value,
                 |a, b, int| {

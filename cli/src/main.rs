@@ -95,7 +95,7 @@ fn print_help(explain_quitting: bool) {
 }
 
 fn repl_loop(config: &config::Config) -> i32 {
-    let core_context = std::cell::RefCell::new(context::InnerContext::new(config));
+    let core_context = std::cell::RefCell::new(context::InnerCtx::new(config));
     let mut context = Context::new(&core_context);
     let mut prompt_state = match terminal::init_prompt(config, &context) {
         Ok(prompt_state) => prompt_state,
@@ -136,17 +136,13 @@ fn repl_loop(config: &config::Config) -> i32 {
                 }
             },
             Err(terminal::ReadLineError::Interrupted) => {
-                #[allow(clippy::match_same_arms)]
                 match (initial_run, context.get_input_typed()) {
-                    (true, true) => {
-                        // initial run but input has been typed => do nothing
+                    (_, true) => {
+                        // input has been typed => do nothing
                     }
                     (true, false) => {
                         // initial run, no input => terminate
                         break;
-                    }
-                    (false, true) => {
-                        // later run, input has been typed => do nothing
                     }
                     (false, false) => {
                         // later run, no input => show message
@@ -170,7 +166,7 @@ fn repl_loop(config: &config::Config) -> i32 {
 
 fn eval_expr(expr: &str) -> i32 {
     let config = config::read();
-    let core_context = std::cell::RefCell::new(context::InnerContext::new(&config));
+    let core_context = std::cell::RefCell::new(context::InnerCtx::new(&config));
     match eval_and_print_res(
         expr,
         &mut Context::new(&core_context),

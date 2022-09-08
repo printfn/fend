@@ -147,7 +147,6 @@ impl BigRat {
         self.num.try_as_usize(int)
     }
 
-    #[allow(clippy::float_arithmetic)]
     pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, FendError> {
         self = self.simplify(int)?;
         let positive_result = self.num.as_f64() / self.den.as_f64();
@@ -159,8 +158,6 @@ impl BigRat {
     }
 
     #[allow(
-        clippy::as_conversions,
-        clippy::float_arithmetic,
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss,
         clippy::cast_precision_loss

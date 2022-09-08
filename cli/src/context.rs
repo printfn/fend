@@ -23,15 +23,14 @@ impl Default for HintInterrupt {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
-pub struct InnerContext {
+pub struct InnerCtx {
     core_ctx: fend_core::Context,
 
     // true if the user typed some partial input, false otherwise
     input_typed: bool,
 }
 
-impl InnerContext {
+impl InnerCtx {
     pub fn new(config: &config::Config) -> Self {
         let mut res = Self {
             core_ctx: fend_core::Context::new(),
@@ -46,11 +45,11 @@ impl InnerContext {
 
 #[derive(Clone)]
 pub struct Context<'a> {
-    ctx: &'a RefCell<InnerContext>,
+    ctx: &'a RefCell<InnerCtx>,
 }
 
 impl<'a> Context<'a> {
-    pub fn new(ctx: &'a RefCell<InnerContext>) -> Self {
+    pub fn new(ctx: &'a RefCell<InnerCtx>) -> Self {
         Self { ctx }
     }
 

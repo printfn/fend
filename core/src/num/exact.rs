@@ -21,7 +21,6 @@ impl<T: fmt::Debug> fmt::Debug for Exact<T> {
     }
 }
 
-#[allow(clippy::use_self)]
 impl<T: fmt::Debug> Exact<T> {
     pub(crate) fn new(value: T, exact: bool) -> Self {
         Self { value, exact }
@@ -49,7 +48,6 @@ impl<T: fmt::Debug> Exact<T> {
     }
 }
 
-#[allow(clippy::use_self)]
 impl<A: fmt::Debug, B: fmt::Debug> Exact<(A, B)> {
     pub(crate) fn pair(self) -> (Exact<A>, Exact<B>) {
         (

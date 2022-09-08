@@ -21,18 +21,13 @@ pub(crate) struct Date {
 }
 
 impl Date {
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::cast_sign_loss,
-        clippy::cast_possible_wrap
-    )]
     pub(crate) fn today(context: &mut crate::Context) -> Result<Self, FendError> {
         let current_time_info = if let Some(t) = &context.current_time {
             t
         } else {
             return Err(FendError::UnableToGetCurrentDate);
         };
-        let mut ms_since_epoch = current_time_info.elapsed_unix_time_ms as i64;
+        let mut ms_since_epoch: i64 = current_time_info.elapsed_unix_time_ms.try_into().unwrap();
         ms_since_epoch -= current_time_info.timezone_offset_secs * 1000;
         let mut days = ms_since_epoch / 86_400_000; // no leap seconds
         let mut year = Year::new(1970);
@@ -48,7 +43,7 @@ impl Date {
         Ok(Self {
             year,
             month,
-            day: Day::new(days as u8),
+            day: Day::new(days.try_into().unwrap()),
         })
     }
 

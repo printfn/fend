@@ -31,7 +31,7 @@ impl hash::Hash for BigUint {
 
 use BigUint::{Large, Small};
 
-#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+#[allow(clippy::cast_possible_truncation)]
 const fn truncate(n: u128) -> u64 {
     n as u64
 }
@@ -104,11 +104,7 @@ impl BigUint {
         })
     }
 
-    #[allow(
-        clippy::as_conversions,
-        clippy::cast_precision_loss,
-        clippy::float_arithmetic
-    )]
+    #[allow(clippy::cast_precision_loss)]
     pub(crate) fn as_f64(&self) -> f64 {
         match self {
             Small(n) => *n as f64,

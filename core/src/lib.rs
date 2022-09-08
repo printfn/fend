@@ -121,15 +121,6 @@ impl FendResult {
         self.is_unit
     }
 
-    /// This used to retrieve a list of other results of the computation,
-    /// but now returns an empty iterator. This method is deprecated and
-    /// may be removed in a future release.
-    #[deprecated]
-    #[allow(clippy::unused_self)]
-    pub fn get_other_info(&self) -> impl Iterator<Item = &str> {
-        std::iter::empty()
-    }
-
     fn empty() -> Self {
         Self {
             plain_result: String::new(),

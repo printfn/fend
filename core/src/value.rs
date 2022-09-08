@@ -222,7 +222,6 @@ impl Value {
         })
     }
 
-    #[allow(clippy::map_err_ignore)]
     pub(crate) fn apply<I: Interrupt>(
         self,
         other: Expr,
