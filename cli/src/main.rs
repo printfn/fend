@@ -3,6 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
 
+use std::fmt::Write;
 use std::{env, io, process};
 
 mod color;
@@ -40,12 +41,17 @@ enum ArgsAction {
 }
 
 fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> String {
-    let mut strings = vec![];
+    let mut result = String::new();
     for span in spans {
         let style = config.colors.get_color(span.kind());
-        strings.push(style.paint(span.string()));
+        write!(
+            result,
+            "{}",
+            style.force_styling(true).apply_to(span.string())
+        )
+        .unwrap();
     }
-    ansi_term::ANSIStrings(strings.as_slice()).to_string()
+    result
 }
 
 fn eval_and_print_res(

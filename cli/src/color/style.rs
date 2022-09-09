@@ -83,13 +83,13 @@ impl Color {
         }
     }
 
-    pub fn to_ansi(&self) -> ansi_term::Style {
-        let mut style = ansi_term::Style::default();
+    pub fn to_ansi(&self) -> console::Style {
+        let mut style = console::Style::default();
         if let Some(foreground) = &self.foreground {
             style = style.fg(foreground.as_ansi());
         }
         if self.underline {
-            style = style.underline();
+            style = style.underlined();
         }
         if self.bold {
             style = style.bold();

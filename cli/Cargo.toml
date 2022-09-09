@@ -12,8 +12,8 @@ edition = "2021"
 categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
-ansi_term = "0.12.1"
 atty = "0.2.14"
+console = { version = "0.15.1", default-features = false }
 ctrlc = "3.2.3"
 fend-core = { version = "1.0.5", path = "../core" }
 home = "0.5.3"

@@ -7,7 +7,7 @@ pub enum Base {
     Green,
     Yellow,
     Blue,
-    Purple,
+    Magenta,
     Cyan,
     White,
     Unknown(String),
@@ -30,7 +30,7 @@ impl<'de> serde::de::Visitor<'de> for BaseVisitor {
             "green" => Base::Green,
             "yellow" => Base::Yellow,
             "blue" => Base::Blue,
-            "purple" => Base::Purple,
+            "purple" => Base::Magenta,
             "cyan" => Base::Cyan,
             "white" => Base::White,
             unknown_color_name => Base::Unknown(unknown_color_name.to_string()),
@@ -45,16 +45,16 @@ impl<'de> serde::Deserialize<'de> for Base {
 }
 
 impl Base {
-    pub fn as_ansi(&self) -> ansi_term::Color {
+    pub fn as_ansi(&self) -> console::Color {
         match self {
-            Self::Black => ansi_term::Color::Black,
-            Self::Red => ansi_term::Color::Red,
-            Self::Green => ansi_term::Color::Green,
-            Self::Yellow => ansi_term::Color::Yellow,
-            Self::Blue => ansi_term::Color::Blue,
-            Self::Purple => ansi_term::Color::Purple,
-            Self::Cyan => ansi_term::Color::Cyan,
-            Self::White | Self::Unknown(_) => ansi_term::Color::White,
+            Self::Black => console::Color::Black,
+            Self::Red => console::Color::Red,
+            Self::Green => console::Color::Green,
+            Self::Yellow => console::Color::Yellow,
+            Self::Blue => console::Color::Blue,
+            Self::Magenta => console::Color::Magenta,
+            Self::Cyan => console::Color::Cyan,
+            Self::White | Self::Unknown(_) => console::Color::White,
         }
     }
 

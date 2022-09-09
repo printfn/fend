@@ -64,7 +64,7 @@ impl OutputColors {
         }
     }
 
-    pub fn get_color(&self, kind: fend_core::SpanKind) -> ansi_term::Style {
+    pub fn get_color(&self, kind: fend_core::SpanKind) -> console::Style {
         use fend_core::SpanKind;
 
         match kind {
