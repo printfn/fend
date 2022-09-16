@@ -28,6 +28,7 @@ fn test_eval_simple(input: &str, expected: &str) {
 #[track_caller]
 fn test_eval(input: &str, expected: &str) {
     let mut context = Context::new();
+    context.set_exchange_rate_handler_v1(fend_core::test_utils::dummy_currency_handler);
     assert_eq!(
         evaluate(input, &mut context).unwrap().get_main_result(),
         expected
