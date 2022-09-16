@@ -774,7 +774,7 @@ mod tests {
     fn currencies_sorted() {
         let currencies = CURRENCY_IDENTIFIERS.to_vec();
         let mut sorted = currencies.clone();
-        sorted.sort();
+        sorted.sort_unstable();
         assert_eq!(currencies, sorted, "currencies are not sorted");
     }
 }
