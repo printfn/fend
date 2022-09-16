@@ -192,7 +192,27 @@ fn query_unit_internal<'a, I: Interrupt>(
         }
     }
     if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
-        expr_unit(s, p, expr, context, int)
+        if expr == "$CURRENCY" {
+            // we have a non-USD currency we need to convert
+            let exchange_rate_fn = match context.get_exchange_rate {
+                Some(f) => f,
+                None => return Err(FendError::NoExchangeRatesAvailable),
+            };
+            let one_usd_in_currency = exchange_rate_fn(s)?;
+            Ok(UnitDef {
+                singular: s,
+                plural: p,
+                prefix_rule: PrefixRule::LongPrefixAllowed,
+                value: evaluate_to_value(
+                    format!("(1/{one_usd_in_currency}) USD").as_str(),
+                    None,
+                    context,
+                    int,
+                )?,
+            })
+        } else {
+            expr_unit(s, p, expr, context, int)
+        }
     } else {
         Err(FendError::IdentifierNotFound(ident.to_string().into()))
     }

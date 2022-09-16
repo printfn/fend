@@ -37,7 +37,7 @@ mod serialize;
 mod units;
 mod value;
 
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, fmt, io};
 
 use error::FendError;
 pub use interrupt::Interrupt;
@@ -148,15 +148,30 @@ enum OutputMode {
     TerminalFixedWidth,
 }
 
+type ExchangeRateFn = fn(&str) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>;
+
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Context {
     current_time: Option<CurrentTimeInfo>,
     variables: HashMap<String, value::Value>,
     fc_mode: FCMode,
     random_u32: Option<fn() -> u32>,
     output_mode: OutputMode,
+    get_exchange_rate: Option<ExchangeRateFn>,
+}
+
+impl fmt::Debug for Context {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Context")
+            .field("current_time", &self.current_time)
+            .field("variables", &self.variables)
+            .field("fc_mode", &self.fc_mode)
+            .field("random_u32", &self.random_u32)
+            .field("output_mode", &self.output_mode)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Default for Context {
@@ -176,6 +191,7 @@ impl Context {
             fc_mode: FCMode::CelsiusFahrenheit,
             random_u32: None,
             output_mode: OutputMode::SimpleText,
+            get_exchange_rate: None,
         }
     }
 
@@ -266,6 +282,10 @@ impl Context {
             Ok(()) => Ok(()),
             Err(e) => Err(e.to_string()),
         }
+    }
+
+    pub fn set_exchange_rate_handler_v1(&mut self, get_exchange_rate_1_usd: ExchangeRateFn) {
+        self.get_exchange_rate = Some(get_exchange_rate_1_usd);
     }
 }
 

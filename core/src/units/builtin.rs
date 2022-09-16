@@ -616,8 +616,24 @@ const CURRENCIES: &[UnitTuple] = &[
     ("AU$", "AU$", "AUD", ""),
     ("HK$", "HK$", "HKD", ""),
     ("NZ$", "NZ$", "NZD", ""),
-    ("_EUR", "_EUR", "!", ""),
-    ("EUR", "EUR", "_EUR", ""),
+];
+
+// from https://en.wikipedia.org/wiki/ISO_4217
+const CURRENCY_IDENTIFIERS: &[&str] = &[
+    "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT",
+    "BGN", "BHD", "BIF", "BMD", "BND", "BOB", "BOV", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD",
+    "CAD", "CDF", "CHE", "CHF", "CHW", "CLF", "CLP", "CNY", "COP", "COU", "CRC", "CUC", "CUP",
+    "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP", "ERN", "ETB", "EUR", "FJD", "FKP", "GBP",
+    "GEL", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD", "HNL", "HRK", "HTG", "HUF", "IDR",
+    "ILS", "INR", "IQD", "IRR", "ISK", "JMD", "JOD", "JPY", "KES", "KGS", "KHR", "KMF", "KPW",
+    "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD", "LSL", "LYD", "MAD", "MDL", "MGA",
+    "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN", "MXV", "MYR", "MZN", "NAD",
+    "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR", "PLN", "PYG",
+    "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLE",
+    "SLL", "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP",
+    "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "USN", "UYI", "UYU", "UYW", "UZS", "VED",
+    "VES", "VND", "VUV", "WST", "XAF", "XAG", "XAU", "XBA", "XBB", "XBC", "XBD", "XCD", "XDR",
+    "XOF", "XPD", "XPF", "XPT", "XSU", "XTS", "XUA", "XXX", "YER", "ZAR", "ZMW", "ZWL",
 ];
 
 const EXCHANGE_RATES: &[UnitTuple] = &[
@@ -729,6 +745,13 @@ pub(crate) fn query_unit<'a>(
             }
         }
     }
+    if ident == "USD" {
+        return Some(("USD", "USD", "!"));
+    }
+    if let Ok(idx) = CURRENCY_IDENTIFIERS.binary_search(&ident) {
+        let name = CURRENCY_IDENTIFIERS[idx];
+        return Some((name, name, "$CURRENCY"));
+    }
     let mut candidates = vec![];
     for group in ALL_UNIT_DEFS {
         for def in *group {
@@ -782,5 +805,13 @@ mod tests {
         for &group in ALL_UNIT_DEFS {
             test_group(group);
         }
+    }
+
+    #[test]
+    fn currencies_sorted() {
+        let currencies = CURRENCY_IDENTIFIERS.to_vec();
+        let mut sorted = currencies.clone();
+        sorted.sort();
+        assert_eq!(currencies, sorted, "currencies are not sorted");
     }
 }

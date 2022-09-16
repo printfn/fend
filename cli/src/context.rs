@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::time;
+use std::{error, time};
 
 use crate::config;
 
@@ -61,6 +61,9 @@ impl<'a> Context<'a> {
         let mut ctx_borrow = self.ctx.borrow_mut();
         ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
         ctx_borrow.core_ctx.set_output_mode_terminal();
+        ctx_borrow
+            .core_ctx
+            .set_exchange_rate_handler_v1(exchange_rate);
         ctx_borrow.input_typed = false;
         fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
     }
@@ -90,4 +93,11 @@ impl<'a> Context<'a> {
 fn random_u32() -> u32 {
     let mut rng = nanorand::WyRand::new();
     nanorand::Rng::generate(&mut rng)
+}
+
+fn exchange_rate(currency: &str) -> Result<f64, Box<dyn error::Error + Send + Sync + 'static>> {
+    if currency == "NZD" {
+        return Ok(1.5);
+    }
+    Err("")?
 }
