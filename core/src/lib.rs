@@ -347,7 +347,7 @@ pub fn evaluate_with_interrupt(
 /// does not mutate the passed-in context, and only returns results suitable
 /// for displaying as a live preview: overly long output, multi-line output,
 /// unit types etc. are all filtered out. RNG functions (e.g. `roll d6`) are
-/// also disabled.
+/// also disabled. Currency conversions (exchange rates) are disabled.
 pub fn evaluate_preview_with_interrupt(
     input: &str,
     context: &mut Context,
@@ -359,6 +359,7 @@ pub fn evaluate_preview_with_interrupt(
     // like `a = 2; 5a`.
     let context_clone = context.clone();
     context.random_u32 = None;
+    context.get_exchange_rate = None;
     let result = evaluate_with_interrupt_internal(input, context, int);
     *context = context_clone;
     let result = match result {
