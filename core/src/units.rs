@@ -199,16 +199,25 @@ fn query_unit_internal<'a, I: Interrupt>(
                 None => return Err(FendError::NoExchangeRatesAvailable),
             };
             let one_usd_in_currency = exchange_rate_fn(s)?;
+            let value = evaluate_to_value(
+                format!("(1/{one_usd_in_currency}) USD").as_str(),
+                None,
+                context,
+                int,
+            )?
+            .expect_num()?;
+            let value = Number::create_unit_value_from_value(
+                &value,
+                Cow::Borrowed(""),
+                Cow::Owned(s.to_string()),
+                Cow::Owned(p.to_string()),
+                int,
+            )?;
             Ok(UnitDef {
                 singular: s,
                 plural: p,
                 prefix_rule: PrefixRule::LongPrefixAllowed,
-                value: evaluate_to_value(
-                    format!("(1/{one_usd_in_currency}) USD").as_str(),
-                    None,
-                    context,
-                    int,
-                )?,
+                value: Value::Num(Box::new(value)),
             })
         } else {
             expr_unit(s, p, expr, context, int)
