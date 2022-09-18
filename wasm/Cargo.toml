@@ -5,6 +5,7 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/printfn/fend"
 description = "Arbitrary-precision unit-aware calculator"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
