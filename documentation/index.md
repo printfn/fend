@@ -433,6 +433,9 @@ These are the options currently available, along with their default values:
 fend stores its history file in `$HOME/.local/state/fend/history` by default,
 although this can be overridden with the `FEND_STATE_DIR` environment variable.
 
+Cache data is stored in `$HOME/.cache/fend` by default. This can be overridden
+with the `FEND_CACHE_DIR` environment variable.
+
 
 ## Scripting
 

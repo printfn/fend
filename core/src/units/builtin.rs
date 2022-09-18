@@ -616,44 +616,24 @@ const CURRENCIES: &[UnitTuple] = &[
     ("AU$", "AU$", "AUD", ""),
     ("HK$", "HK$", "HKD", ""),
     ("NZ$", "NZ$", "NZD", ""),
-    ("_EUR", "_EUR", "!", ""),
-    ("EUR", "EUR", "_EUR", ""),
 ];
 
-const EXCHANGE_RATES: &[UnitTuple] = &[
-    // retrieved from https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml
-    // exchange rates from 2022-08-12
-    ("USD", "USD", "(1/1.0285) _EUR", ""),
-    ("JPY", "JPY", "(1/137.47) _EUR", ""),
-    ("BGN", "BGN", "(1/1.9558) _EUR", ""),
-    ("CZK", "CZK", "(1/24.380) _EUR", ""),
-    ("DKK", "DKK", "(1/7.4395) _EUR", ""),
-    ("GBP", "GBP", "(1/0.84715) _EUR", ""),
-    ("HUF", "HUF", "(1/392.30) _EUR", ""),
-    ("PLN", "PLN", "(1/4.6773) _EUR", ""),
-    ("RON", "RON", "(1/4.8915) _EUR", ""),
-    ("SEK", "SEK", "(1/10.4515) _EUR", ""),
-    ("CHF", "CHF", "(1/0.9689) _EUR", ""),
-    ("ISK", "ISK", "(1/140.30) _EUR", ""),
-    ("NOK", "NOK", "(1/9.8130) _EUR", ""),
-    ("HRK", "HRK", "(1/7.5138) _EUR", ""),
-    ("TRY", "TRY", "(1/18.4733) _EUR", ""),
-    ("AUD", "AUD", "(1/1.4496) _EUR", ""),
-    ("BRL", "BRL", "(1/5.3007) _EUR", ""),
-    ("CAD", "CAD", "(1/1.3148) _EUR", ""),
-    ("CNY", "CNY", "(1/6.9352) _EUR", ""),
-    ("HKD", "HKD", "(1/8.0600) _EUR", ""),
-    ("IDR", "IDR", "(1/15104.20) _EUR", ""),
-    ("ILS", "ILS", "(1/3.3450) _EUR", ""),
-    ("INR", "INR", "(1/81.9935) _EUR", ""),
-    ("KRW", "KRW", "(1/1342.59) _EUR", ""),
-    ("MXN", "MXN", "(1/20.4925) _EUR", ""),
-    ("MYR", "MYR", "(1/4.5709) _EUR", ""),
-    ("NZD", "NZD", "(1/1.5985) _EUR", ""),
-    ("PHP", "PHP", "(1/57.246) _EUR", ""),
-    ("SGD", "SGD", "(1/1.4106) _EUR", ""),
-    ("THB", "THB", "(1/36.393) _EUR", ""),
-    ("ZAR", "ZAR", "(1/16.7318) _EUR", ""),
+// from https://en.wikipedia.org/wiki/ISO_4217
+const CURRENCY_IDENTIFIERS: &[&str] = &[
+    "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT",
+    "BGN", "BHD", "BIF", "BMD", "BND", "BOB", "BOV", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD",
+    "CAD", "CDF", "CHE", "CHF", "CHW", "CLF", "CLP", "CNY", "COP", "COU", "CRC", "CUC", "CUP",
+    "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP", "ERN", "ETB", "EUR", "FJD", "FKP", "GBP",
+    "GEL", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD", "HNL", "HRK", "HTG", "HUF", "IDR",
+    "ILS", "INR", "IQD", "IRR", "ISK", "JMD", "JOD", "JPY", "KES", "KGS", "KHR", "KMF", "KPW",
+    "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD", "LSL", "LYD", "MAD", "MDL", "MGA",
+    "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN", "MXV", "MYR", "MZN", "NAD",
+    "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR", "PLN", "PYG",
+    "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLE",
+    "SLL", "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP",
+    "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "USN", "UYI", "UYU", "UYW", "UZS", "VED",
+    "VES", "VND", "VUV", "WST", "XAF", "XAG", "XAU", "XBA", "XBB", "XBC", "XBD", "XCD", "XDR",
+    "XOF", "XPD", "XPF", "XPT", "XSU", "XTS", "XUA", "XXX", "YER", "ZAR", "ZMW", "ZWL",
 ];
 
 pub(crate) const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
@@ -680,7 +660,6 @@ pub(crate) const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
     IMPERIAL_ABBREVIATIONS,
     NAUTICAL_UNITS,
     CURRENCIES,
-    EXCHANGE_RATES,
 ];
 
 const SHORT_PREFIXES: &[(&str, &str)] = &[
@@ -729,6 +708,13 @@ pub(crate) fn query_unit<'a>(
             }
         }
     }
+    if ident == "USD" {
+        return Some(("USD", "USD", "!"));
+    }
+    if let Ok(idx) = CURRENCY_IDENTIFIERS.binary_search(&ident) {
+        let name = CURRENCY_IDENTIFIERS[idx];
+        return Some((name, name, "$CURRENCY"));
+    }
     let mut candidates = vec![];
     for group in ALL_UNIT_DEFS {
         for def in *group {
@@ -771,6 +757,7 @@ mod tests {
 
     fn test_group(group: &[UnitTuple]) {
         let mut ctx = crate::Context::new();
+        ctx.set_exchange_rate_handler_v1(crate::test_utils::dummy_currency_handler);
         for (s, p, _, _) in group {
             test_str(s, &mut ctx);
             test_str(p, &mut ctx);
@@ -782,5 +769,13 @@ mod tests {
         for &group in ALL_UNIT_DEFS {
             test_group(group);
         }
+    }
+
+    #[test]
+    fn currencies_sorted() {
+        let currencies = CURRENCY_IDENTIFIERS.to_vec();
+        let mut sorted = currencies.clone();
+        sorted.sort_unstable();
+        assert_eq!(currencies, sorted, "currencies are not sorted");
     }
 }

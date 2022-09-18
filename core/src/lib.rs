@@ -37,7 +37,7 @@ mod serialize;
 mod units;
 mod value;
 
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, fmt, io};
 
 use error::FendError;
 pub use interrupt::Interrupt;
@@ -148,15 +148,30 @@ enum OutputMode {
     TerminalFixedWidth,
 }
 
+type ExchangeRateFn = fn(&str) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>;
+
 /// This struct contains context used for `fend`. It should only be created once
 /// at startup.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Context {
     current_time: Option<CurrentTimeInfo>,
     variables: HashMap<String, value::Value>,
     fc_mode: FCMode,
     random_u32: Option<fn() -> u32>,
     output_mode: OutputMode,
+    get_exchange_rate: Option<ExchangeRateFn>,
+}
+
+impl fmt::Debug for Context {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Context")
+            .field("current_time", &self.current_time)
+            .field("variables", &self.variables)
+            .field("fc_mode", &self.fc_mode)
+            .field("random_u32", &self.random_u32)
+            .field("output_mode", &self.output_mode)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Default for Context {
@@ -176,6 +191,7 @@ impl Context {
             fc_mode: FCMode::CelsiusFahrenheit,
             random_u32: None,
             output_mode: OutputMode::SimpleText,
+            get_exchange_rate: None,
         }
     }
 
@@ -267,6 +283,10 @@ impl Context {
             Err(e) => Err(e.to_string()),
         }
     }
+
+    pub fn set_exchange_rate_handler_v1(&mut self, get_exchange_rate_1_usd: ExchangeRateFn) {
+        self.get_exchange_rate = Some(get_exchange_rate_1_usd);
+    }
 }
 
 /// This function evaluates a string using the given context. Any evaluation using this
@@ -327,7 +347,7 @@ pub fn evaluate_with_interrupt(
 /// does not mutate the passed-in context, and only returns results suitable
 /// for displaying as a live preview: overly long output, multi-line output,
 /// unit types etc. are all filtered out. RNG functions (e.g. `roll d6`) are
-/// also disabled.
+/// also disabled. Currency conversions (exchange rates) are disabled.
 pub fn evaluate_preview_with_interrupt(
     input: &str,
     context: &mut Context,
@@ -339,6 +359,7 @@ pub fn evaluate_preview_with_interrupt(
     // like `a = 2; 5a`.
     let context_clone = context.clone();
     context.random_u32 = None;
+    context.get_exchange_rate = None;
     let result = evaluate_with_interrupt_internal(input, context, int);
     *context = context_clone;
     let result = match result {
@@ -403,4 +424,28 @@ const fn get_version_as_str() -> &'static str {
 #[must_use]
 pub fn get_version() -> String {
     get_version_as_str().to_string()
+}
+
+/// Used by unit and integration tests
+pub mod test_utils {
+    /// A simple currency handler used in unit and integration tests. Not intended
+    /// to be used outside of `fend_core`.
+    ///
+    /// # Panics
+    /// Panics on unknown currencies
+    ///
+    /// # Errors
+    /// Panics on error, so it never needs to return Err(_)
+    pub fn dummy_currency_handler(
+        currency: &str,
+    ) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>> {
+        Ok(match currency {
+            "GBP" => 0.9,
+            "NZD" => 1.5,
+            "EUR" => 1.0,
+            "HKD" => 8.0,
+            "AUD" => 1.3,
+            _ => panic!("unknown currency {currency}"),
+        })
+    }
 }

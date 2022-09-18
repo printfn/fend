@@ -15,6 +15,8 @@ pub(crate) enum FendError {
     ZeroToThePowerOfZero,
     FactorialComplex,
     DeserializationError,
+    Wrap(Box<dyn error::Error + Send + Sync + 'static>),
+    NoExchangeRatesAvailable,
     OutOfRange {
         value: Box<dyn crate::format::DisplayDebug>,
         range: Range<Box<dyn crate::format::DisplayDebug>>,
@@ -106,6 +108,7 @@ impl fmt::Display for FendError {
                 f,
                 "unable to parse a valid base prefix, expected 0b, 0o, or 0x"
             ),
+            Self::NoExchangeRatesAvailable => write!(f, "exchange rates are not available"),
             Self::IncompatibleConversion {
                 from,
                 to,
@@ -222,6 +225,7 @@ impl fmt::Display for FendError {
                 )
             }
             Self::FormattingError(_) => write!(f, "error during formatting"),
+            Self::Wrap(e) => write!(f, "{e}"),
         }
     }
 }
@@ -231,6 +235,7 @@ impl error::Error for FendError {
         match self {
             Self::FormattingError(e) => Some(e),
             Self::IoError(e) => Some(e),
+            Self::Wrap(e) => Some(e.as_ref()),
             _ => None,
         }
     }
@@ -245,6 +250,12 @@ impl From<fmt::Error> for FendError {
 impl From<io::Error> for FendError {
     fn from(e: io::Error) -> Self {
         Self::IoError(e)
+    }
+}
+
+impl From<Box<dyn error::Error + Send + Sync + 'static>> for FendError {
+    fn from(e: Box<dyn error::Error + Send + Sync + 'static>) -> Self {
+        Self::Wrap(e)
     }
 }
 

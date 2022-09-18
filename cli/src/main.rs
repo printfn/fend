@@ -1,4 +1,4 @@
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
@@ -9,6 +9,7 @@ use std::{env, io, process};
 mod color;
 mod config;
 mod context;
+mod exchange_rates;
 mod file_paths;
 mod helper;
 mod interrupt;
@@ -90,10 +91,16 @@ fn print_help(explain_quitting: bool) {
     } else {
         println!("Failed to get config file location");
     }
-    if let Ok(history_path) = file_paths::get_history_file_location() {
+    if let Ok(history_path) = file_paths::get_history_file_location(file_paths::DirMode::DontCreate)
+    {
         println!("History file: {}", history_path.to_string_lossy());
     } else {
         println!("Failed to get history file location");
+    }
+    if let Ok(cache_path) = file_paths::get_cache_dir(file_paths::DirMode::DontCreate) {
+        println!("Cache directory: {}", cache_path.to_string_lossy());
+    } else {
+        println!("Failed to get cache directory location");
     }
     if explain_quitting {
         println!("\nTo quit, type `quit`.");
