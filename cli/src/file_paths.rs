@@ -60,6 +60,7 @@ fn get_state_dir() -> Result<path::PathBuf, HomeDirError> {
     // otherwise try $XDG_STATE_HOME/fend/
     if let Some(env_var_xdg_state_dir) = env::var_os("XDG_STATE_HOME") {
         let mut res = path::PathBuf::from(env_var_xdg_state_dir);
+        mark_dir_as_hidden(&res);
         res.push("fend");
         return Ok(res);
     }
@@ -67,6 +68,7 @@ fn get_state_dir() -> Result<path::PathBuf, HomeDirError> {
     // otherwise use $HOME/.local/state/fend/
     let mut res = get_home_dir()?;
     res.push(".local");
+    mark_dir_as_hidden(&res);
     res.push("state");
     res.push("fend");
     Ok(res)
@@ -122,6 +124,12 @@ fn mark_dir_as_hidden(path: &path::Path) {
         return;
     }
 
+    let path = {
+        let mut p = ffi::OsString::from("\\\\?\\");
+        p.push(path.as_os_str());
+        p
+    };
+
     match mark_dir_as_hidden_impl(path.as_os_str()) {
         Ok(()) => (),
         Err(e) => {
@@ -138,7 +146,7 @@ fn mark_dir_as_hidden_impl(path: &ffi::OsStr) -> Result<(), u32> {
         errhandlingapi::GetLastError, fileapi::SetFileAttributesW, winnt::FILE_ATTRIBUTE_HIDDEN,
     };
 
-    let path = path.encode_wide().collect::<Vec<u16>>();
+    let path = path.encode_wide().chain(Some(0)).collect::<Vec<u16>>();
 
     unsafe {
         // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileattributesw
