@@ -1,4 +1,4 @@
-use std::{env, error, fmt, fs, io, path};
+use std::{env, error, ffi, fmt, fs, io, path};
 
 #[derive(Debug)]
 pub struct HomeDirError;
@@ -93,6 +93,7 @@ pub fn get_cache_dir() -> Result<path::PathBuf, HomeDirError> {
     // otherwise try $XDG_CACHE_HOME/fend/
     if let Some(env_var_xdg_cache_dir) = env::var_os("XDG_CACHE_HOME") {
         let mut res = path::PathBuf::from(env_var_xdg_cache_dir);
+        mark_dir_as_hidden(&res);
         res.push("fend");
         return Ok(res);
     }
@@ -100,6 +101,7 @@ pub fn get_cache_dir() -> Result<path::PathBuf, HomeDirError> {
     // otherwise use $HOME/.cache/fend/
     let mut res = get_home_dir()?;
     res.push(".cache");
+    mark_dir_as_hidden(&res);
     res.push("fend");
     Ok(res)
 }
@@ -108,4 +110,48 @@ pub fn create_cache_dir() -> io::Result<path::PathBuf> {
     let cache_dir = get_cache_dir()?;
     fs::create_dir_all(&cache_dir)?;
     Ok(cache_dir)
+}
+
+fn mark_dir_as_hidden(path: &path::Path) {
+    let metadata = match fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(_) => return,
+    };
+
+    if !metadata.is_dir() {
+        return;
+    }
+
+    match mark_dir_as_hidden_impl(path.as_os_str()) {
+        Ok(()) => (),
+        Err(e) => {
+            eprintln!("error code: {e}");
+        }
+    }
+}
+
+#[cfg(windows)]
+#[allow(unsafe_code)]
+fn mark_dir_as_hidden_impl(path: &ffi::OsStr) -> Result<(), u32> {
+    use std::os::windows::prelude::*;
+    use winapi::um::{
+        errhandlingapi::GetLastError, fileapi::SetFileAttributesW, winnt::FILE_ATTRIBUTE_HIDDEN,
+    };
+
+    let path = path.encode_wide().collect::<Vec<u16>>();
+
+    unsafe {
+        // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileattributesw
+        let return_code = SetFileAttributesW(path.as_slice().as_ptr(), FILE_ATTRIBUTE_HIDDEN);
+        if return_code == 0 {
+            return Err(GetLastError());
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+#[allow(clippy::unnecessary_wraps)]
+fn mark_dir_as_hidden_impl(_path: &ffi::OsStr) -> Result<(), u32> {
+    Ok(())
 }

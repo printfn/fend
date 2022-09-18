@@ -1,4 +1,4 @@
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(elided_lifetimes_in_paths)]
