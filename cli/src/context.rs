@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::{error, fmt, time};
+use std::{cell::RefCell, time};
 
 use crate::config;
 
@@ -63,7 +62,7 @@ impl<'a> Context<'a> {
         ctx_borrow.core_ctx.set_output_mode_terminal();
         ctx_borrow
             .core_ctx
-            .set_exchange_rate_handler_v1(exchange_rate);
+            .set_exchange_rate_handler_v1(crate::exchange_rates::exchange_rate_handler);
         ctx_borrow.input_typed = false;
         fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
     }
@@ -93,57 +92,4 @@ impl<'a> Context<'a> {
 fn random_u32() -> u32 {
     let mut rng = nanorand::WyRand::new();
     nanorand::Rng::generate(&mut rng)
-}
-
-type Error = Box<dyn error::Error + Send + Sync + 'static>;
-
-fn download_exchange_rates() -> Result<Vec<(String, f64)>, Error> {
-    let exchange_rates = ureq::get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
-        .call()?
-        .into_string()?;
-    let err = "failed to load exchange rates";
-    let mut result = vec![("EUR".to_string(), 1.0)];
-    let mut one_eur_in_usd = None;
-    for l in exchange_rates.lines() {
-        let l = l.trim();
-        if !l.starts_with("<Cube currency=") {
-            continue;
-        }
-        let l = l.strip_prefix("<Cube currency='").ok_or(err)?;
-        let (currency, l) = l.split_at(3);
-        let l = l.trim_start_matches("' rate='");
-        let exchange_rate_eur = l.split_at(l.find('\'').ok_or(err)?).0;
-        let exchange_rate_eur = exchange_rate_eur.parse::<f64>()?;
-        result.push((currency.to_string(), exchange_rate_eur));
-        if currency == "USD" {
-            one_eur_in_usd = Some(exchange_rate_eur);
-        }
-    }
-    let one_eur_in_usd = one_eur_in_usd.ok_or(err)?;
-    for (_, exchange_rate) in &mut result {
-        // exchange rate currently represents 1 EUR, but we want it to be 1 USD instead
-        *exchange_rate /= one_eur_in_usd;
-    }
-    Ok(result)
-}
-
-#[derive(Debug, Clone)]
-struct UnknownExchangeRate(String);
-
-impl fmt::Display for UnknownExchangeRate {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "currency exchange rate for {} is unknown", self.0)
-    }
-}
-
-impl error::Error for UnknownExchangeRate {}
-
-fn exchange_rate(currency: &str) -> Result<f64, Error> {
-    let exchange_rates = download_exchange_rates()?;
-    for (c, rate) in exchange_rates {
-        if currency == c {
-            return Ok(rate);
-        }
-    }
-    Err(UnknownExchangeRate(currency.to_string()))?
 }

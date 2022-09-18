@@ -9,6 +9,7 @@ use std::{env, io, process};
 mod color;
 mod config;
 mod context;
+mod exchange_rates;
 mod file_paths;
 mod helper;
 mod interrupt;

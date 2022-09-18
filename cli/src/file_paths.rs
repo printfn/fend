@@ -104,8 +104,8 @@ pub fn get_cache_dir() -> Result<path::PathBuf, HomeDirError> {
     Ok(res)
 }
 
-pub fn _create_cache_dir() -> io::Result<()> {
+pub fn create_cache_dir() -> io::Result<path::PathBuf> {
     let cache_dir = get_cache_dir()?;
-    fs::create_dir_all(cache_dir)?;
-    Ok(())
+    fs::create_dir_all(&cache_dir)?;
+    Ok(cache_dir)
 }
