@@ -10,7 +10,7 @@ mkdir $PSScriptRoot\build
     -arch x64 -ext WixUtilExtension `
     -dVersion="$Env:FEND_VERSION" `
     -dFendExePath="$PSScriptRoot\..\target\release\fend.exe" `
-    -dLicenseMdPath="$PSScriptRoot\..\cli\LICENSE.md" `
+    -dLicenseMdPath="$PSScriptRoot\..\LICENSE.md" `
     -dIconPath="$PSScriptRoot\..\icon\fend-icon.ico" `
     -o "$PSScriptRoot\build\" "$PSScriptRoot\main.wxs"
 
