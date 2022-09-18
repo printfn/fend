@@ -91,12 +91,13 @@ fn print_help(explain_quitting: bool) {
     } else {
         println!("Failed to get config file location");
     }
-    if let Ok(history_path) = file_paths::get_history_file_location() {
+    if let Ok(history_path) = file_paths::get_history_file_location(file_paths::DirMode::DontCreate)
+    {
         println!("History file: {}", history_path.to_string_lossy());
     } else {
         println!("Failed to get history file location");
     }
-    if let Ok(cache_path) = file_paths::get_cache_dir() {
+    if let Ok(cache_path) = file_paths::get_cache_dir(file_paths::DirMode::DontCreate) {
         println!("Cache directory: {}", cache_path.to_string_lossy());
     } else {
         println!("Failed to get cache directory location");

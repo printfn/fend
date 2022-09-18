@@ -1,3 +1,4 @@
+use crate::file_paths;
 use std::{error, fmt, fs, io::Write, time};
 
 type Error = Box<dyn error::Error + Send + Sync + 'static>;
@@ -11,7 +12,7 @@ fn get_current_timestamp() -> Result<u64, Error> {
 }
 
 fn load_cached_data() -> Result<String, Error> {
-    let mut cache_file = crate::file_paths::get_cache_dir()?;
+    let mut cache_file = file_paths::get_cache_dir(file_paths::DirMode::DontCreate)?;
     cache_file.push("eurofxref-daily.xml.cache");
     let cache_contents = fs::read_to_string(cache_file)?;
     let (timestamp, cache_xml) =
@@ -28,7 +29,7 @@ fn load_cached_data() -> Result<String, Error> {
 }
 
 fn store_cached_data(xml: &str) -> Result<(), Error> {
-    let mut cache_file = crate::file_paths::create_cache_dir()?;
+    let mut cache_file = file_paths::get_cache_dir(file_paths::DirMode::Create)?;
     cache_file.push("eurofxref-daily.xml.cache");
     let mut file = fs::File::create(cache_file)?;
     write!(file, "{};{xml}", get_current_timestamp()?)?;

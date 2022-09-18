@@ -33,7 +33,8 @@ pub fn init_prompt<'a>(
             .build(),
     )?;
     rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
-    let history_path = match file_paths::get_history_file_location() {
+    let history_path = match file_paths::get_history_file_location(file_paths::DirMode::DontCreate)
+    {
         Ok(history_path) => {
             // ignore error if e.g. no history file exists
             mem::drop(rl.load_history(history_path.as_path()));
@@ -69,7 +70,7 @@ fn save_history(
     path: &Option<path::PathBuf>,
 ) -> io::Result<()> {
     if let Some(history_path) = path {
-        file_paths::create_state_dir()?;
+        file_paths::get_state_dir(file_paths::DirMode::Create)?;
         if rl.save_history(history_path.as_path()).is_err() {
             // Error trying to save history
         }

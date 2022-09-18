@@ -1,5 +1,11 @@
 use std::{env, error, ffi, fmt, fs, io, path};
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum DirMode {
+    Create,
+    DontCreate,
+}
+
 #[derive(Debug)]
 pub struct HomeDirError;
 
@@ -51,67 +57,87 @@ pub fn get_config_file_location() -> Result<path::PathBuf, HomeDirError> {
     Ok(config_path)
 }
 
-fn get_state_dir() -> Result<path::PathBuf, HomeDirError> {
+pub fn get_state_dir(mode: DirMode) -> Result<path::PathBuf, io::Error> {
     // first try $FEND_STATE_DIR
     if let Some(env_var_history_dir) = env::var_os("FEND_STATE_DIR") {
-        return Ok(path::PathBuf::from(env_var_history_dir));
+        let res = path::PathBuf::from(env_var_history_dir);
+        if mode == DirMode::Create {
+            fs::create_dir_all(&res)?;
+        }
+        return Ok(res);
     }
 
     // otherwise try $XDG_STATE_HOME/fend/
     if let Some(env_var_xdg_state_dir) = env::var_os("XDG_STATE_HOME") {
         let mut res = path::PathBuf::from(env_var_xdg_state_dir);
-        mark_dir_as_hidden(&res);
+        if mode == DirMode::Create {
+            fs::create_dir_all(&res)?;
+            mark_dir_as_hidden(&res);
+        }
         res.push("fend");
+        if mode == DirMode::Create {
+            fs::create_dir(&res)?;
+        }
         return Ok(res);
     }
 
     // otherwise use $HOME/.local/state/fend/
     let mut res = get_home_dir()?;
     res.push(".local");
-    mark_dir_as_hidden(&res);
+    if mode == DirMode::Create {
+        fs::create_dir_all(&res)?;
+        mark_dir_as_hidden(&res);
+    }
     res.push("state");
     res.push("fend");
+    if mode == DirMode::Create {
+        fs::create_dir_all(&res)?;
+    }
     Ok(res)
 }
 
-pub fn create_state_dir() -> io::Result<()> {
-    let state_dir = get_state_dir()?;
-    fs::create_dir_all(state_dir)?;
-    Ok(())
-}
-
-pub fn get_history_file_location() -> Result<path::PathBuf, HomeDirError> {
-    let mut history_path = get_state_dir()?;
+pub fn get_history_file_location(mode: DirMode) -> Result<path::PathBuf, io::Error> {
+    let mut history_path = get_state_dir(mode)?;
     history_path.push("history");
     Ok(history_path)
 }
 
-pub fn get_cache_dir() -> Result<path::PathBuf, HomeDirError> {
+pub fn get_cache_dir(mode: DirMode) -> Result<path::PathBuf, io::Error> {
     // first try $FEND_CACHE_DIR
     if let Some(env_var_cache_dir) = env::var_os("FEND_CACHE_DIR") {
-        return Ok(path::PathBuf::from(env_var_cache_dir));
+        let res = path::PathBuf::from(env_var_cache_dir);
+        if mode == DirMode::Create {
+            fs::create_dir_all(&res)?;
+        }
+        return Ok(res);
     }
 
     // otherwise try $XDG_CACHE_HOME/fend/
     if let Some(env_var_xdg_cache_dir) = env::var_os("XDG_CACHE_HOME") {
         let mut res = path::PathBuf::from(env_var_xdg_cache_dir);
-        mark_dir_as_hidden(&res);
+        if mode == DirMode::Create {
+            fs::create_dir_all(&res)?;
+            mark_dir_as_hidden(&res);
+        }
         res.push("fend");
+        if mode == DirMode::Create {
+            fs::create_dir(&res)?;
+        }
         return Ok(res);
     }
 
     // otherwise use $HOME/.cache/fend/
     let mut res = get_home_dir()?;
     res.push(".cache");
-    mark_dir_as_hidden(&res);
+    if mode == DirMode::Create {
+        fs::create_dir_all(&res)?;
+        mark_dir_as_hidden(&res);
+    }
     res.push("fend");
+    if mode == DirMode::Create {
+        fs::create_dir(&res)?;
+    }
     Ok(res)
-}
-
-pub fn create_cache_dir() -> io::Result<path::PathBuf> {
-    let cache_dir = get_cache_dir()?;
-    fs::create_dir_all(&cache_dir)?;
-    Ok(cache_dir)
 }
 
 fn mark_dir_as_hidden(path: &path::Path) {
