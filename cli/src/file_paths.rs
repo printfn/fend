@@ -83,3 +83,29 @@ pub fn get_history_file_location() -> Result<path::PathBuf, HomeDirError> {
     history_path.push("history");
     Ok(history_path)
 }
+
+pub fn get_cache_dir() -> Result<path::PathBuf, HomeDirError> {
+    // first try $FEND_CACHE_DIR
+    if let Some(env_var_cache_dir) = env::var_os("FEND_CACHE_DIR") {
+        return Ok(path::PathBuf::from(env_var_cache_dir));
+    }
+
+    // otherwise try $XDG_CACHE_HOME/fend/
+    if let Some(env_var_xdg_cache_dir) = env::var_os("XDG_CACHE_HOME") {
+        let mut res = path::PathBuf::from(env_var_xdg_cache_dir);
+        res.push("fend");
+        return Ok(res);
+    }
+
+    // otherwise use $HOME/.cache/fend/
+    let mut res = get_home_dir()?;
+    res.push(".cache");
+    res.push("fend");
+    Ok(res)
+}
+
+pub fn _create_cache_dir() -> io::Result<()> {
+    let cache_dir = get_cache_dir()?;
+    fs::create_dir_all(cache_dir)?;
+    Ok(())
+}

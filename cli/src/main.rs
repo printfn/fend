@@ -95,6 +95,11 @@ fn print_help(explain_quitting: bool) {
     } else {
         println!("Failed to get history file location");
     }
+    if let Ok(cache_path) = file_paths::get_cache_dir() {
+        println!("Cache directory: {}", cache_path.to_string_lossy());
+    } else {
+        println!("Failed to get cache directory location");
+    }
     if explain_quitting {
         println!("\nTo quit, type `quit`.");
     }
