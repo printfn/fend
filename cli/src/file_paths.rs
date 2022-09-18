@@ -159,7 +159,7 @@ fn mark_dir_as_hidden(path: &path::Path) {
     match mark_dir_as_hidden_impl(path.as_os_str()) {
         Ok(()) => (),
         Err(e) => {
-            eprintln!("error code: {e}");
+            eprintln!("failed to set cache directory as hidden: error code: {e}");
         }
     }
 }
