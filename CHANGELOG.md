@@ -2,8 +2,12 @@
 
 ### Unreleased
 
+* Automatically download up-to-date currency exchange rates,
+    e.g. when calculating `10 EUR to USD`
 * Add an MSI installer for Windows
 * Change fend website to [https://printfn.github.io/fend](https://printfn.github.io/fend)
+* Move fend documentation to
+    [https://printfn.github.io/fend/documentation](https://printfn.github.io/fend/documentation)
 * Add a fend package to the Windows Package Manager (`winget`)
 
 ### v1.0.5 (2022-08-14)
