@@ -1,5 +1,5 @@
 use crate::file_paths;
-use std::{error, fmt, fs, io::Write, time, mem};
+use std::{error, fmt, fs, io::Write, mem, time};
 
 type Error = Box<dyn error::Error + Send + Sync + 'static>;
 
