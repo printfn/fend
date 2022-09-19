@@ -1,5 +1,5 @@
 use crate::file_paths;
-use std::{error, fmt, fs, io::Write, mem, time};
+use std::{error, fmt, fs, io::Write, time};
 
 type Error = Box<dyn error::Error + Send + Sync + 'static>;
 
@@ -43,18 +43,9 @@ fn load_exchange_rate_xml() -> Result<(String, bool), Error> {
             //eprintln!("failed to load cached data: {_e}");
         }
     }
-    let mut easy = curl::easy::Easy::new();
-    easy.url("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")?;
-    let mut xml = vec![];
-    let mut transfer = easy.transfer();
-    transfer.write_function(|data| {
-        xml.extend_from_slice(data);
-        Ok(data.len())
-    })?;
-    transfer.perform()?;
-    mem::drop(transfer);
-
-    let xml = String::from_utf8(xml)?;
+    let xml = ureq::get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
+        .call()?
+        .into_string()?;
     Ok((xml, false))
 }
 
