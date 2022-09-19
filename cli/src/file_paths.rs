@@ -76,7 +76,7 @@ pub fn get_state_dir(mode: DirMode) -> Result<path::PathBuf, io::Error> {
         }
         res.push("fend");
         if mode == DirMode::Create {
-            fs::create_dir(&res)?;
+            fs::create_dir_all(&res)?;
         }
         return Ok(res);
     }
@@ -121,7 +121,7 @@ pub fn get_cache_dir(mode: DirMode) -> Result<path::PathBuf, io::Error> {
         }
         res.push("fend");
         if mode == DirMode::Create {
-            fs::create_dir(&res)?;
+            fs::create_dir_all(&res)?;
         }
         return Ok(res);
     }
@@ -135,7 +135,7 @@ pub fn get_cache_dir(mode: DirMode) -> Result<path::PathBuf, io::Error> {
     }
     res.push("fend");
     if mode == DirMode::Create {
-        fs::create_dir(&res)?;
+        fs::create_dir_all(&res)?;
     }
     Ok(res)
 }

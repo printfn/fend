@@ -1,5 +1,5 @@
 use crate::file_paths;
-use std::{error, fmt, fs, io::Write, time};
+use std::{error, fmt, fs, io::Write, time, mem};
 
 type Error = Box<dyn error::Error + Send + Sync + 'static>;
 
@@ -36,22 +36,29 @@ fn store_cached_data(xml: &str) -> Result<(), Error> {
     Ok(())
 }
 
-fn load_exchange_rate_xml() -> Result<String, Error> {
+fn load_exchange_rate_xml() -> Result<(String, bool), Error> {
     match load_cached_data() {
-        Ok(xml) => return Ok(xml),
+        Ok(xml) => return Ok((xml, true)),
         Err(_e) => {
-            //eprintln!("failed to load cached data: {e}");
+            //eprintln!("failed to load cached data: {_e}");
         }
     }
-    let xml = ureq::get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
-        .call()?
-        .into_string()?;
-    store_cached_data(&xml)?;
-    Ok(xml)
+    let mut easy = curl::easy::Easy::new();
+    easy.url("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")?;
+    let mut xml = vec![];
+    let mut transfer = easy.transfer();
+    transfer.write_function(|data| {
+        xml.extend_from_slice(data);
+        Ok(data.len())
+    })?;
+    transfer.perform()?;
+    mem::drop(transfer);
+
+    let xml = String::from_utf8(xml)?;
+    Ok((xml, false))
 }
 
-fn get_exchange_rates() -> Result<Vec<(String, f64)>, Error> {
-    let exchange_rates = load_exchange_rate_xml()?;
+fn parse_exchange_rates(exchange_rates: &str) -> Result<Vec<(String, f64)>, Error> {
     let err = "failed to load exchange rates";
     let mut result = vec![("EUR".to_string(), 1.0)];
     let mut one_eur_in_usd = None;
@@ -65,10 +72,16 @@ fn get_exchange_rates() -> Result<Vec<(String, f64)>, Error> {
         let l = l.trim_start_matches("' rate='");
         let exchange_rate_eur = l.split_at(l.find('\'').ok_or(err)?).0;
         let exchange_rate_eur = exchange_rate_eur.parse::<f64>()?;
+        if !exchange_rate_eur.is_normal() {
+            return Err(err.into());
+        }
         result.push((currency.to_string(), exchange_rate_eur));
         if currency == "USD" {
             one_eur_in_usd = Some(exchange_rate_eur);
         }
+    }
+    if result.len() < 10 {
+        return Err(err.into());
     }
     let one_eur_in_usd = one_eur_in_usd.ok_or(err)?;
     for (_, exchange_rate) in &mut result {
@@ -76,6 +89,15 @@ fn get_exchange_rates() -> Result<Vec<(String, f64)>, Error> {
         *exchange_rate /= one_eur_in_usd;
     }
     Ok(result)
+}
+
+fn get_exchange_rates() -> Result<Vec<(String, f64)>, Error> {
+    let (xml, cached) = load_exchange_rate_xml()?;
+    let parsed_data = parse_exchange_rates(&xml)?;
+    if !cached {
+        store_cached_data(&xml)?;
+    }
+    Ok(parsed_data)
 }
 
 #[derive(Debug, Clone)]
