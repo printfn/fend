@@ -4,7 +4,10 @@
 #![deny(elided_lifetimes_in_paths)]
 
 use std::fmt::Write;
-use std::{env, io, process};
+use std::{
+    env, io,
+    process::{self, ExitCode},
+};
 
 mod color;
 mod config;
@@ -103,14 +106,14 @@ fn print_help(explain_quitting: bool) {
     }
 }
 
-fn repl_loop(config: &config::Config) -> i32 {
+fn repl_loop(config: &config::Config) -> ExitCode {
     let core_context = std::cell::RefCell::new(context::InnerCtx::new(config));
     let mut context = Context::new(&core_context);
     let mut prompt_state = match terminal::init_prompt(config, &context) {
         Ok(prompt_state) => prompt_state,
         Err(err) => {
             println!("Error: {err}");
-            return 1;
+            return ExitCode::FAILURE;
         }
     };
     let mut initial_run = true; // set to false after first successful command
@@ -167,13 +170,13 @@ fn repl_loop(config: &config::Config) -> i32 {
         }
     }
     if last_command_success {
-        0
+        ExitCode::SUCCESS
     } else {
-        1
+        ExitCode::FAILURE
     }
 }
 
-fn eval_expr(expr: &str) -> i32 {
+fn eval_expr(expr: &str) -> ExitCode {
     let config = config::read();
     let core_context = std::cell::RefCell::new(context::InnerCtx::new(&config));
     match eval_and_print_res(
@@ -182,49 +185,48 @@ fn eval_expr(expr: &str) -> i32 {
         &interrupt::Never::default(),
         &config,
     ) {
-        EvalResult::Ok | EvalResult::NoInput => 0,
-        EvalResult::Err => 1,
+        EvalResult::Ok | EvalResult::NoInput => ExitCode::SUCCESS,
+        EvalResult::Err => ExitCode::FAILURE,
     }
 }
 
-fn real_main() -> i32 {
+fn real_main() -> ExitCode {
     // Assemble the action from all but the first argument.
     let action: ArgsAction = env::args().skip(1).collect();
     match action {
         ArgsAction::Help => {
             print_help(false);
-            0
         }
         ArgsAction::Version => {
             println!("{}", fend_core::get_version());
-            0
         }
         ArgsAction::DefaultConfig => {
             println!("{}", config::DEFAULT_CONFIG_FILE);
-            0
         }
-        ArgsAction::Eval(expr) => eval_expr(expr.as_str()),
+        ArgsAction::Eval(expr) => {
+            return eval_expr(expr.as_str());
+        }
         ArgsAction::Repl => {
             if terminal::atty_stdin() {
                 let config = config::read();
-                repl_loop(&config)
-            } else {
-                let mut input = String::new();
-                match io::Read::read_to_string(&mut io::stdin(), &mut input) {
-                    Ok(_) => (),
-                    Err(e) => {
-                        eprintln!("Error: {e}");
-                        return 1;
-                    }
-                }
-                eval_expr(input.as_str())
+                return repl_loop(&config);
             }
+            let mut input = String::new();
+            match io::Read::read_to_string(&mut io::stdin(), &mut input) {
+                Ok(_) => (),
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    return ExitCode::FAILURE;
+                }
+            }
+            return eval_expr(input.as_str());
         }
     }
+    ExitCode::SUCCESS
 }
 
-fn main() {
-    process::exit(real_main())
+fn main() -> process::ExitCode {
+    real_main()
 }
 
 impl FromIterator<String> for ArgsAction {
