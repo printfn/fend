@@ -61,13 +61,13 @@ impl<T: fmt::Display> fmt::Display for Range<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match &self.start {
             RangeBound::None => write!(f, "(-\u{221e}, ")?, // infinity symbol
-            RangeBound::Open(v) => write!(f, "({}, ", v)?,
-            RangeBound::Closed(v) => write!(f, "[{}, ", v)?,
+            RangeBound::Open(v) => write!(f, "({v}, ")?,
+            RangeBound::Closed(v) => write!(f, "[{v}, ")?,
         }
         match &self.end {
             RangeBound::None => write!(f, "\u{221e})")?,
-            RangeBound::Open(v) => write!(f, "{})", v)?,
-            RangeBound::Closed(v) => write!(f, "{}]", v)?,
+            RangeBound::Open(v) => write!(f, "{v})")?,
+            RangeBound::Closed(v) => write!(f, "{v}]")?,
         }
         Ok(())
     }

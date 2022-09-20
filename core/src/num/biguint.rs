@@ -523,7 +523,7 @@ impl From<u64> for BigUint {
 impl fmt::Debug for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Small(n) => write!(f, "{}", n)?,
+            Small(n) => write!(f, "{n}")?,
             Large(value) => {
                 write!(f, "[")?;
                 let mut first = true;
@@ -531,7 +531,7 @@ impl fmt::Debug for BigUint {
                     if !first {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", v)?;
+                    write!(f, "{v}")?;
                     first = false;
                 }
                 write!(f, "]")?;
@@ -663,13 +663,13 @@ impl fmt::Display for FormattedBigUint {
         }
         match &self.ty {
             FormattedBigUintType::Zero => write!(f, "0")?,
-            FormattedBigUintType::Simple(i) => write!(f, "{}", i)?,
+            FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
             FormattedBigUintType::Complex(s, sf_limit) => {
                 for (i, ch) in s.chars().rev().enumerate() {
                     if sf_limit.is_some() && &Some(i) >= sf_limit {
                         write!(f, "0")?;
                     } else {
-                        write!(f, "{}", ch)?;
+                        write!(f, "{ch}")?;
                     }
                 }
             }

@@ -152,6 +152,7 @@ impl Dist {
                     .format(exact, style, base, use_parentheses, int)?
                     .value
                     .to_string();
+                let prob_percentage = prob_f64 * 100.0;
                 if ctx.output_mode == crate::OutputMode::TerminalFixedWidth {
                     if !first {
                         writeln!(out)?;
@@ -160,12 +161,12 @@ impl Dist {
                     for _ in 0..(prob_f64 / max_prob * 30.0).min(30.0) as u32 {
                         bar.push('#');
                     }
-                    write!(out, "{:>3}: {:>5.2}%  {}", num, prob_f64 * 100.0, bar)?;
+                    write!(out, "{num:>3}: {prob_percentage:>5.2}%  {bar}")?;
                 } else {
                     if !first {
                         write!(out, ", ")?;
                     }
-                    write!(out, "{}: {:.2}%", num, prob_f64 * 100.0)?;
+                    write!(out, "{num}: {prob_percentage:.2}%")?;
                 }
                 if first {
                     first = false;

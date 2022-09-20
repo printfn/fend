@@ -45,12 +45,8 @@ fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> S
     let mut result = String::new();
     for span in spans {
         let style = config.colors.get_color(span.kind());
-        write!(
-            result,
-            "{}",
-            style.force_styling(true).apply_to(span.string())
-        )
-        .unwrap();
+        let styled_str = style.force_styling(true).apply_to(span.string());
+        write!(result, "{styled_str}").unwrap();
     }
     result
 }
@@ -75,7 +71,7 @@ fn eval_and_print_res(
             EvalResult::Ok
         }
         Err(msg) => {
-            eprintln!("Error: {}", msg);
+            eprintln!("Error: {msg}");
             EvalResult::Err
         }
     }
@@ -113,7 +109,7 @@ fn repl_loop(config: &config::Config) -> i32 {
     let mut prompt_state = match terminal::init_prompt(config, &context) {
         Ok(prompt_state) => prompt_state,
         Err(err) => {
-            println!("Error: {}", err);
+            println!("Error: {err}");
             return 1;
         }
     };
@@ -129,8 +125,8 @@ fn repl_loop(config: &config::Config) -> i32 {
                     print_help(true);
                 }
                 "!serialize" => match context.serialize() {
-                    Ok(res) => println!("{:?}", &res),
-                    Err(e) => eprintln!("{}", e),
+                    Ok(res) => println!("{res:?}"),
+                    Err(e) => eprintln!("{e}"),
                 },
                 line => {
                     interrupt.reset();
@@ -165,7 +161,7 @@ fn repl_loop(config: &config::Config) -> i32 {
             }
             Err(terminal::ReadLineError::Eof) => break,
             Err(terminal::ReadLineError::Error(err)) => {
-                println!("Error: {}", err);
+                println!("Error: {err}");
                 break;
             }
         }
@@ -217,7 +213,7 @@ fn real_main() -> i32 {
                 match io::Read::read_to_string(&mut io::stdin(), &mut input) {
                     Ok(_) => (),
                     Err(e) => {
-                        eprintln!("Error: {}", e);
+                        eprintln!("Error: {e}");
                         return 1;
                     }
                 }

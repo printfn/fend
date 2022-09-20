@@ -37,7 +37,7 @@ impl rustyline::hint::Hinter for Helper<'_> {
                 crate::print_spans(result.get_main_result_spans().collect(), self.config)
             ))
         } else {
-            Hint(format!("\n{}", s))
+            Hint(format!("\n{s}"))
         })
     }
 }

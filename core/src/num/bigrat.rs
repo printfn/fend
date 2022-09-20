@@ -1147,12 +1147,12 @@ impl fmt::Display for FormattedBigRat {
                     write!(f, "(")?;
                 }
                 if let Some(int) = int {
-                    write!(f, "{}", int)?;
+                    write!(f, "{int}")?;
                 }
                 if *space {
                     write!(f, " ")?;
                 }
-                write!(f, "{}", isuf)?;
+                write!(f, "{isuf}")?;
                 if *use_parens {
                     write!(f, ")")?;
                 }
@@ -1162,29 +1162,29 @@ impl fmt::Display for FormattedBigRat {
                     write!(f, "(")?;
                 }
                 if let Some(integer) = integer {
-                    write!(f, "{} ", integer)?;
+                    write!(f, "{integer} ")?;
                 }
                 if let Some(num) = num {
-                    write!(f, "{}", num)?;
+                    write!(f, "{num}")?;
                 }
                 if *space && !isuf.is_empty() {
                     write!(f, " ")?;
                 }
-                write!(f, "{}/{}", isuf, den)?;
+                write!(f, "{isuf}/{den}")?;
                 if *space && !isuf2.is_empty() {
                     write!(f, " ")?;
                 }
-                write!(f, "{}", isuf2)?;
+                write!(f, "{isuf2}")?;
                 if *use_parens {
                     write!(f, ")")?;
                 }
             }
             FormattedBigRatType::Decimal(s, space, term) => {
-                write!(f, "{}", s)?;
+                write!(f, "{s}")?;
                 if *space {
                     write!(f, " ")?;
                 }
-                write!(f, "{}", term)?;
+                write!(f, "{term}")?;
             }
         }
         Ok(())

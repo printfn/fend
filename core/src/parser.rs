@@ -25,9 +25,9 @@ impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::ExpectedAToken => write!(f, "expected a token"),
-            Self::ExpectedToken(fnd, ex) => write!(f, "found '{}' while expecting '{}'", fnd, ex),
+            Self::ExpectedToken(fnd, ex) => write!(f, "found '{fnd}' while expecting '{ex}'"),
             Self::FoundInvalidTokenWhileExpecting(sym) => {
-                write!(f, "found an invalid token while expecting '{}'", sym)
+                write!(f, "found an invalid token while expecting '{sym}'")
             }
             Self::ExpectedANumber => write!(f, "expected a number"),
             Self::ExpectedIdentifier
@@ -36,7 +36,7 @@ impl fmt::Display for ParseError {
                 write!(f, "expected an identifier")
             }
             Self::UnexpectedSymbol(s) => {
-                write!(f, "expected a value, instead found '{}'", s)
+                write!(f, "expected a value, instead found '{s}'")
             }
             // TODO improve this message or remove this error type
             Self::InvalidApplyOperands => write!(f, "error"),

@@ -66,7 +66,7 @@ impl Base {
             BaseEnum::Binary => write!(f, "0b")?,
             BaseEnum::Octal => write!(f, "0o")?,
             BaseEnum::Hex => write!(f, "0x")?,
-            BaseEnum::Custom(b) => write!(f, "{}#", b)?,
+            BaseEnum::Custom(b) => write!(f, "{b}#")?,
             BaseEnum::Plain(_) => (),
         }
         Ok(())
@@ -159,8 +159,8 @@ impl fmt::Debug for Base {
             BaseEnum::Binary => write!(f, "binary"),
             BaseEnum::Octal => write!(f, "octal"),
             BaseEnum::Hex => write!(f, "hex"),
-            BaseEnum::Custom(b) => write!(f, "base {} (with prefix)", b),
-            BaseEnum::Plain(b) => write!(f, "base {}", b),
+            BaseEnum::Custom(b) => write!(f, "base {b} (with prefix)"),
+            BaseEnum::Plain(b) => write!(f, "base {b}"),
         }
     }
 }

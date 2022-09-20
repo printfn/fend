@@ -137,7 +137,7 @@ impl<'a> fmt::Display for FormattedExponent<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.prefix, self.name.replace('_', " "))?;
         if let Some(number) = &self.number {
-            write!(f, "^{}", number)?;
+            write!(f, "^{number}")?;
         }
         Ok(())
     }

@@ -61,7 +61,7 @@ pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
             }
             res.get_main_result().to_string()
         }
-        Err(msg) => format!("Error: {}", msg),
+        Err(msg) => format!("Error: {msg}"),
     }
 }
 

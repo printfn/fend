@@ -93,7 +93,7 @@ impl fmt::Display for FendError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Interrupted => write!(f, "interrupted"),
-            Self::ParseError(e) => write!(f, "{}", e),
+            Self::ParseError(e) => write!(f, "{e}"),
             Self::FactorialUnitless => {
                 write!(f, "factorial is only supported for unitless numbers")
             }
@@ -117,8 +117,7 @@ impl fmt::Display for FendError {
             } => {
                 write!(
                     f,
-                    "cannot convert from {} to {}: units '{}' and '{}' are incompatible",
-                    from, to, from_base, to_base
+                    "cannot convert from {from} to {to}: units '{from_base}' and '{to_base}' are incompatible"
                 )
             }
             Self::NonIntegerNegRoots => write!(f, "cannot compute non-integer or negative roots"),
@@ -128,7 +127,7 @@ impl fmt::Display for FendError {
             Self::ModuloForPositiveInts => {
                 write!(f, "modulo is only supported for positive integers")
             }
-            Self::CannotConvertValueTo(ty) => write!(f, "cannot convert value to {}", ty),
+            Self::CannotConvertValueTo(ty) => write!(f, "cannot convert value to {ty}"),
             Self::BaseTooSmall => write!(f, "base must be at least 2"),
             Self::ConversionRhsNumerical => write!(
                 f,
@@ -140,7 +139,7 @@ impl fmt::Display for FendError {
             Self::ExponentTooLarge => write!(f, "exponent too large"),
             Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
             Self::OutOfRange { range, value } => {
-                write!(f, "{} must lie in the interval {}", value, range)
+                write!(f, "{value} must lie in the interval {range}")
             }
             Self::ModuloByZero => write!(f, "modulo by zero"),
             Self::SpecifyNumDp => write!(
@@ -163,15 +162,15 @@ impl fmt::Display for FendError {
                     "probability distributions are not allowed (consider using `sample`)"
                 )
             }
-            Self::ParseDateError(s) => write!(f, "failed to convert '{}' to a date", s),
+            Self::ParseDateError(s) => write!(f, "failed to convert '{s}' to a date"),
             Self::ExpectedAString => write!(f, "expected a string"),
-            Self::UnableToInvertFunction(name) => write!(f, "unable to invert function {}", name),
+            Self::UnableToInvertFunction(name) => write!(f, "unable to invert function {name}"),
             Self::FractionToInteger => write!(f, "cannot convert fraction to integer"),
             Self::RandomNumbersNotAvailable => write!(f, "random numbers are not available"),
-            Self::MustBeAnInteger(x) => write!(f, "{} is not an integer", x),
-            Self::ExpectedABool(t) => write!(f, "expected a bool (found {})", t),
+            Self::MustBeAnInteger(x) => write!(f, "{x} is not an integer"),
+            Self::ExpectedABool(t) => write!(f, "expected a bool (found {t})"),
             Self::CouldNotFindKeyInObject => write!(f, "could not find key in object"),
-            Self::CouldNotFindKey(k) => write!(f, "could not find key {}", k),
+            Self::CouldNotFindKey(k) => write!(f, "could not find key {k}"),
             Self::InversesOfLambdasUnsupported => write!(
                 f,
                 "inverses of lambda functions are not currently supported"
@@ -187,26 +186,26 @@ impl fmt::Display for FendError {
             Self::CannotFormatWithZeroSf => {
                 write!(f, "cannot format a number with zero significant figures")
             }
-            Self::IsNotAFunction(s) => write!(f, "'{}' is not a function", s),
-            Self::IsNotAFunctionOrNumber(s) => write!(f, "'{}' is not a function or number", s),
-            Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{}'", s),
+            Self::IsNotAFunction(s) => write!(f, "'{s}' is not a function"),
+            Self::IsNotAFunctionOrNumber(s) => write!(f, "'{s}' is not a function or number"),
+            Self::IdentifierNotFound(s) => write!(f, "unknown identifier '{s}'"),
             Self::ExpectedACharacter => write!(f, "expected a character"),
-            Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{}'", ch),
-            Self::ExpectedChar(ex, fnd) => write!(f, "expected '{}', found '{}'", ex, fnd),
+            Self::ExpectedADigit(ch) => write!(f, "expected a digit, found '{ch}'"),
+            Self::ExpectedChar(ex, fnd) => write!(f, "expected '{ex}', found '{fnd}'"),
             Self::ExpectedDigitSeparator(ch) => {
-                write!(f, "expected a digit separator, found {}", ch)
+                write!(f, "expected a digit separator, found {ch}")
             }
             Self::DigitSeparatorsNotAllowed => write!(f, "digit separators are not allowed"),
             Self::DigitSeparatorsOnlyBetweenDigits => {
                 write!(f, "digit separators can only occur between digits")
             }
             Self::InvalidCharAtBeginningOfIdent(ch) => {
-                write!(f, "'{}' is not valid at the beginning of an identifier", ch)
+                write!(f, "'{ch}' is not valid at the beginning of an identifier")
             }
-            Self::UnexpectedChar(ch) => write!(f, "unexpected character '{}'", ch),
+            Self::UnexpectedChar(ch) => write!(f, "unexpected character '{ch}'"),
             Self::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
             Self::UnknownBackslashEscapeSequence(ch) => {
-                write!(f, "unknown escape sequence: \\{}", ch)
+                write!(f, "unknown escape sequence: \\{ch}")
             }
             Self::BackslashXOutOfRange => {
                 write!(f, "expected an escape sequence between \\x00 and \\x7f")

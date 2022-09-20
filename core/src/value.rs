@@ -372,9 +372,9 @@ impl Value {
             Self::Fn(name, expr, _scope) => {
                 let expr_str = (&**expr).format(ctx, int)?;
                 let res = if name.as_str().contains('.') {
-                    format!("{}:{}", name, expr_str)
+                    format!("{name}:{expr_str}")
                 } else {
-                    format!("\\{}.{}", name, expr_str)
+                    format!("\\{name}.{expr_str}")
                 };
                 spans.push(Span {
                     string: res,
@@ -391,7 +391,7 @@ impl Value {
                     for _ in 0..(indent + 4) {
                         spans.push(Span::from_string(" ".to_string()));
                     }
-                    spans.push(Span::from_string(format!("{}: ", k)));
+                    spans.push(Span::from_string(format!("{k}: ")));
                     v.format(indent + 4, spans, ctx, int)?;
                 }
                 spans.push(Span::from_string("\n}".to_string()));
@@ -454,7 +454,7 @@ impl fmt::Debug for Value {
             Self::Sf => write!(f, "sf"),
             Self::Base(b) => write!(f, "base: {:?}", b),
             Self::Fn(name, expr, scope) => {
-                write!(f, "fn: {} => {:?} (scope: {:?})", name, expr, scope)
+                write!(f, "fn: {name} => {expr:?} (scope: {scope:?})")
             }
             Self::Object(kv) => {
                 let mut s = "{".to_string();
@@ -465,14 +465,14 @@ impl fmt::Debug for Value {
                     s.push(',');
                 }
                 s.push('}');
-                write!(f, "{}", s)
+                write!(f, "{s}")
             }
             Self::String(s) => write!(f, r#""{}""#, s.as_ref()),
             Self::Unit => write!(f, "()"),
-            Self::Bool(b) => write!(f, "{}", b),
-            Self::Month(m) => write!(f, "{}", m),
-            Self::DayOfWeek(d) => write!(f, "{}", d),
-            Self::Date(d) => write!(f, "{:?}", d),
+            Self::Bool(b) => write!(f, "{b}"),
+            Self::Month(m) => write!(f, "{m}"),
+            Self::DayOfWeek(d) => write!(f, "{d}"),
+            Self::Date(d) => write!(f, "{d:?}"),
         }
     }
 }

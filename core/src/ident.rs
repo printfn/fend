@@ -56,7 +56,7 @@ impl fmt::Display for Ident {
             if use_spaces && ch == '_' {
                 write!(f, " ")?;
             } else {
-                write!(f, "{}", ch)?;
+                write!(f, "{ch}")?;
             }
         }
         Ok(())

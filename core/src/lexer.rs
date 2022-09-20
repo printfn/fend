@@ -56,7 +56,7 @@ impl fmt::Display for Symbol {
             Self::Semicolon => ";",
             Self::Equals => "=",
         };
-        write!(f, "{}", s)?;
+        write!(f, "{s}")?;
         Ok(())
     }
 }

@@ -35,8 +35,8 @@ impl fmt::Display for FormattingStyle {
             Self::MixedFraction => write!(f, "mixed_fraction"),
             Self::ExactFloat => write!(f, "float"),
             Self::Exact => write!(f, "exact"),
-            Self::DecimalPlaces(d) => write!(f, "{} dp", d),
-            Self::SignificantFigures(s) => write!(f, "{} sf", s),
+            Self::DecimalPlaces(d) => write!(f, "{d} dp"),
+            Self::SignificantFigures(s) => write!(f, "{s} sf"),
             Self::Auto => write!(f, "auto"),
         }
     }
@@ -49,8 +49,8 @@ impl fmt::Debug for FormattingStyle {
             Self::MixedFraction => write!(f, "mixed fraction"),
             Self::ExactFloat => write!(f, "exact float"),
             Self::Exact => write!(f, "exact"),
-            Self::DecimalPlaces(d) => write!(f, "{} dp", d),
-            Self::SignificantFigures(s) => write!(f, "{} sf", s),
+            Self::DecimalPlaces(d) => write!(f, "{d} dp"),
+            Self::SignificantFigures(s) => write!(f, "{s} sf"),
             Self::Auto => write!(f, "auto"),
         }
     }

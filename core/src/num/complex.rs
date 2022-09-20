@@ -455,7 +455,7 @@ impl fmt::Display for Formatted {
         }
         write!(f, "{}{}", self.first_component, self.separator)?;
         if let Some(second_component) = &self.second_component {
-            write!(f, "{}", second_component)?;
+            write!(f, "{second_component}")?;
         }
         if self.use_parentheses {
             write!(f, ")")?;

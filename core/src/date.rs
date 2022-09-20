@@ -180,13 +180,6 @@ impl fmt::Debug for Date {
 
 impl fmt::Display for Date {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}, {} {} {}",
-            self.day_of_week(),
-            self.day,
-            self.month,
-            self.year
-        )
+        write!(f, "{self:?}")
     }
 }

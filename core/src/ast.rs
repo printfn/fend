@@ -234,7 +234,7 @@ impl Expr {
             Self::UnaryDiv(x) => format!("(/{})", x.format(ctx, int)?),
             Self::Factorial(x) => format!("{}!", x.format(ctx, int)?),
             Self::Bop(op, a, b) => {
-                format!("({}{}{})", a.format(ctx, int)?, op, b.format(ctx, int)?)
+                format!("({}{op}{})", a.format(ctx, int)?, b.format(ctx, int)?)
             }
             Self::Apply(a, b) => format!("({} ({}))", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
@@ -243,13 +243,13 @@ impl Expr {
             Self::As(a, b) => format!("({} as {})", a.format(ctx, int)?, b.format(ctx, int)?),
             Self::Fn(a, b) => {
                 if a.as_str().contains('.') {
-                    format!("({}:{})", a, b.format(ctx, int)?)
+                    format!("({a}:{})", b.format(ctx, int)?)
                 } else {
-                    format!("\\{}.{}", a, b.format(ctx, int)?)
+                    format!("\\{a}.{}", b.format(ctx, int)?)
                 }
             }
-            Self::Of(a, b) => format!("{} of {}", a, b.format(ctx, int)?),
-            Self::Assign(a, b) => format!("{} = {}", a, b.format(ctx, int)?),
+            Self::Of(a, b) => format!("{a} of {}", b.format(ctx, int)?),
+            Self::Assign(a, b) => format!("{a} = {}", b.format(ctx, int)?),
             Self::Statements(a, b) => format!("{}; {}", a.format(ctx, int)?, b.format(ctx, int)?),
         })
     }
@@ -360,7 +360,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         )?,
         Expr::Apply(a, b) | Expr::ApplyMul(a, b) => {
             if let (Expr::Ident(a), Expr::Ident(b)) = (&*a, &*b) {
-                let ident = format!("{}_{}", a, b);
+                let ident = format!("{a}_{b}");
                 if let Ok(val) = crate::units::query_unit_static(&ident, context, int) {
                     return Ok(val);
                 }

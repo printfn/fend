@@ -781,8 +781,8 @@ impl fmt::Debug for Value {
         let simplifiable = if self.simplifiable { "" } else { "not " };
         write!(
             f,
-            "{:?} {:?} ({:?}, {:?}, {}simplifiable)",
-            self.value, self.unit, self.base, self.format, simplifiable
+            "{:?} {:?} ({:?}, {:?}, {simplifiable}simplifiable)",
+            self.value, self.unit, self.base, self.format
         )?;
         Ok(())
     }

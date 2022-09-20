@@ -13,7 +13,7 @@ impl Day {
     }
 
     pub(crate) fn new(day: u8) -> Self {
-        assert!(day != 0 && day < 32, "day value {} is out of range", day);
+        assert!(day != 0 && day < 32, "day value {day} is out of range");
         Self(day)
     }
 

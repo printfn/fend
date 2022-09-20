@@ -100,8 +100,7 @@ impl Color {
     pub fn print_warnings_about_unknown_keys(&self, style_assignment: &str) {
         for key in &self.unknown_keys {
             eprintln!(
-                "Warning: ignoring unknown configuration setting `colors.{}.{}`",
-                style_assignment, key
+                "Warning: ignoring unknown configuration setting `colors.{style_assignment}.{key}`"
             );
         }
         if let Some(base) = &self.foreground {

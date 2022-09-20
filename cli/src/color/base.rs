@@ -60,7 +60,7 @@ impl Base {
 
     pub fn warn_about_unknown_colors(&self) {
         if let Self::Unknown(name) = self {
-            eprintln!("Warning: ignoring unknown color `{}`", name);
+            eprintln!("Warning: ignoring unknown color `{name}`");
         }
     }
 }

@@ -9,8 +9,8 @@ fn test_serialization_roundtrip(context: &mut Context) {
         Ok(()) => (),
         Err(s) => {
             eprintln!("Data: {:?}", &v);
-            eprintln!("Context: {}", ctx_debug_repr);
-            panic!("Failed to deserialize: {}", s);
+            eprintln!("Context: {ctx_debug_repr}");
+            panic!("Failed to deserialize: {s}");
         }
     }
 }
@@ -5265,7 +5265,7 @@ fn sqft() {
 fn modulo() {
     for a in 0..30 {
         for b in 1..30 {
-            let input = format!("{} mod {}", a, b);
+            let input = format!("{a} mod {b}");
             let output = (a % b).to_string();
             test_eval(&input, &output);
         }

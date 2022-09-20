@@ -26,7 +26,7 @@ impl fmt::Debug for DayOfWeek {
             Self::Friday => "Friday",
             Self::Saturday => "Saturday",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
