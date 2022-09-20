@@ -5,7 +5,7 @@ use crate::{
     serialize::{deserialize_u8, deserialize_usize, serialize_u8, serialize_usize},
 };
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Default)]
 #[must_use]
 pub(crate) enum FormattingStyle {
     /// Print value as an improper fraction
@@ -21,16 +21,11 @@ pub(crate) enum FormattingStyle {
     SignificantFigures(usize),
     /// If exact and no recurring digits: ExactFloat, if complex/imag: MixedFraction,
     /// otherwise: DecimalPlaces(10)
+    #[default]
     Auto,
     /// If not exact: DecimalPlaces(10). If no recurring digits: ExactFloat.
     /// Other numbers: MixedFraction, albeit possibly including fractions of pi
     Exact,
-}
-
-impl Default for FormattingStyle {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 impl fmt::Display for FormattingStyle {
