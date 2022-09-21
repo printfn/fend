@@ -7,7 +7,12 @@
 * fend can now read directly from files, e.g. `fend calculation.txt` will
     read and evaluate the contents of `calculation.txt`. Multiple files can be
     specified, as well as combinations of files and expressions.
+* Shebangs (e.g. `#!/usr/bin/env fend`) are now ignored
+* You can now use `--` to force fend to interpret arguments literally,
+    e.g. `fend -- -V` is interpreted as `-1 volts` instead of showing the version number
+* Fix bug where trailing whitespace or comments would result in a parse error
 * Add an MSI installer for Windows
+* Remove MSIX installer, which was difficult to use due to it being unsigned
 * Change fend website to [https://printfn.github.io/fend](https://printfn.github.io/fend)
 * Move fend documentation to
     [https://printfn.github.io/fend/documentation](https://printfn.github.io/fend/documentation)

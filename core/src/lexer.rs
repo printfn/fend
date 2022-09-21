@@ -649,7 +649,7 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
     fn next_token(&mut self) -> Result<Option<Token>, FendError> {
         while let Some(ch) = self.input.chars().next() {
-            if self.input.starts_with("# ") {
+            if self.input.starts_with("# ") || self.input.starts_with("#!") {
                 let (_, remaining) = self.input.split_at(2);
                 self.input = remaining;
                 if let Some(idx) = self.input.find('\n') {

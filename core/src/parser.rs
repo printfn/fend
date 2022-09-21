@@ -411,7 +411,11 @@ fn parse_statements(mut input: &[Token]) -> ParseResult<'_> {
 }
 
 pub(crate) fn parse_expression(input: &[Token]) -> ParseResult<'_> {
-    parse_statements(input)
+    let (res, mut remaining) = parse_statements(input)?;
+    while !remaining.is_empty() && matches!(remaining[0], Token::Whitespace) {
+        remaining = &remaining[1..];
+    }
+    Ok((res, remaining))
 }
 
 pub(crate) fn parse_tokens(input: &[Token]) -> Result<Expr, ParseError> {
