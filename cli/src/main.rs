@@ -5,7 +5,7 @@
 
 use std::fmt::Write;
 use std::{
-    env, io,
+    io,
     process::{self, ExitCode},
 };
 
@@ -41,6 +41,7 @@ fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> S
 fn eval_and_print_res(
     line: &str,
     context: &mut Context<'_>,
+    print_res: bool,
     int: &impl fend_core::Interrupt,
     config: &config::Config,
 ) -> EvalResult {
@@ -50,10 +51,12 @@ fn eval_and_print_res(
             if result.is_empty() || res.is_unit_type() {
                 return EvalResult::NoInput;
             }
-            if config.enable_colors {
-                println!("{}", print_spans(result, config));
-            } else {
-                println!("{}", res.get_main_result());
+            if print_res {
+                if config.enable_colors {
+                    println!("{}", print_spans(result, config));
+                } else {
+                    println!("{}", res.get_main_result());
+                }
             }
             EvalResult::Ok
         }
@@ -117,7 +120,7 @@ fn repl_loop(config: &config::Config) -> ExitCode {
                 },
                 line => {
                     interrupt.reset();
-                    match eval_and_print_res(line, &mut context, &interrupt, config) {
+                    match eval_and_print_res(line, &mut context, true, &interrupt, config) {
                         EvalResult::Ok => {
                             last_command_success = true;
                             initial_run = false;
@@ -160,23 +163,28 @@ fn repl_loop(config: &config::Config) -> ExitCode {
     }
 }
 
-fn eval_expr(expr: &str) -> ExitCode {
+fn eval_exprs(exprs: &[String]) -> ExitCode {
     let config = config::read();
     let core_context = std::cell::RefCell::new(context::InnerCtx::new(&config));
-    match eval_and_print_res(
-        expr,
-        &mut Context::new(&core_context),
-        &interrupt::Never::default(),
-        &config,
-    ) {
-        EvalResult::Ok | EvalResult::NoInput => ExitCode::SUCCESS,
-        EvalResult::Err => ExitCode::FAILURE,
+    for (i, expr) in exprs.iter().enumerate() {
+        let print_res = i == exprs.len() - 1;
+        match eval_and_print_res(
+            expr.as_str(),
+            &mut Context::new(&core_context),
+            print_res,
+            &interrupt::Never::default(),
+            &config,
+        ) {
+            EvalResult::Ok | EvalResult::NoInput => (),
+            EvalResult::Err => return ExitCode::FAILURE,
+        }
     }
+    ExitCode::SUCCESS
 }
 
 fn real_main() -> ExitCode {
     // Assemble the action from all but the first argument.
-    let action: ArgsAction = env::args().skip(1).collect();
+    let action = ArgsAction::get();
     match action {
         ArgsAction::Help => {
             print_help(false);
@@ -187,8 +195,8 @@ fn real_main() -> ExitCode {
         ArgsAction::DefaultConfig => {
             println!("{}", config::DEFAULT_CONFIG_FILE);
         }
-        ArgsAction::Eval(expr) => {
-            return eval_expr(expr.as_str());
+        ArgsAction::Eval { exprs } => {
+            return eval_exprs(&exprs);
         }
         ArgsAction::Repl => {
             if terminal::atty_stdin() {
@@ -203,7 +211,7 @@ fn real_main() -> ExitCode {
                     return ExitCode::FAILURE;
                 }
             }
-            return eval_expr(input.as_str());
+            return eval_exprs(&[input]);
         }
     }
     ExitCode::SUCCESS

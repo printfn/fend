@@ -4,6 +4,9 @@
 
 * Automatically download up-to-date currency exchange rates,
     e.g. when calculating `10 EUR to USD`
+* fend can now read directly from files, e.g. `fend calculation.txt` will
+    read and evaluate the contents of `calculation.txt`. Multiple files can be
+    specified, as well as combinations of files and expressions.
 * Add an MSI installer for Windows
 * Change fend website to [https://printfn.github.io/fend](https://printfn.github.io/fend)
 * Move fend documentation to
