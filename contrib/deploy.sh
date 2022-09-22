@@ -118,8 +118,9 @@ sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
 mv temp core/Cargo.toml
 
 # fend cli TOML x2
-sed "s/version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
-    cli/Cargo.toml >temp
+sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
+    cli/Cargo.toml | \
+    sed "s/^fend-core = { version = \"$OLD_VERSION\"/fend-core = { version = \"$NEW_VERSION\"/" >temp
 mv temp cli/Cargo.toml
 
 # wasm TOML
