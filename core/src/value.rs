@@ -370,7 +370,7 @@ impl Value {
                 });
             }
             Self::Fn(name, expr, _scope) => {
-                let expr_str = (&**expr).format(ctx, int)?;
+                let expr_str = expr.format(ctx, int)?;
                 let res = if name.as_str().contains('.') {
                     format!("{name}:{expr_str}")
                 } else {

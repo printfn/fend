@@ -731,10 +731,7 @@ impl Value {
         }
 
         // remove units with exponent == 0
-        res_components = res_components
-            .into_iter()
-            .filter(|unit_exponent| unit_exponent.exponent != 0.into())
-            .collect();
+        res_components.retain(|unit_exponent| unit_exponent.exponent != 0.into());
 
         Ok(Self {
             value: res_value,
