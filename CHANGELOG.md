@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.1.0 (2022-09-22)
 
 * Automatically download up-to-date currency exchange rates,
     e.g. when calculating `10 EUR to USD`
