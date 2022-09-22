@@ -5552,3 +5552,8 @@ fn trivial_fn() {
 fn unknown_argument_error_msg() {
     expect_error("sqrt(aiusbdla)", Some("unknown identifier 'aiusbdla'"));
 }
+
+#[test]
+fn log10_cancelled_units() {
+    test_eval("log10 (1m / (1m", "approx. 0");
+}

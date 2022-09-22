@@ -256,23 +256,23 @@ impl Expr {
 }
 
 /// returns true if rhs is '-1' or '(-1)'
-fn should_compute_inverse(rhs: &Expr) -> bool {
+fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> Result<bool, FendError> {
     if let Expr::UnaryMinus(inner) = rhs {
         if let Expr::Literal(Value::Num(n)) = &**inner {
-            if n.is_unitless_one() {
-                return true;
+            if n.is_unitless_one(int)? {
+                return Ok(true);
             }
         }
     } else if let Expr::Parens(inner) = rhs {
         if let Expr::UnaryMinus(inner2) = &**inner {
             if let Expr::Literal(Value::Num(n)) = &**inner2 {
-                if n.is_unitless_one() {
-                    return true;
+                if n.is_unitless_one(int)? {
+                    return Ok(true);
                 }
             }
         }
     }
-    false
+    Ok(false)
 }
 
 #[allow(clippy::too_many_lines)]
@@ -317,7 +317,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::Bop(Bop::Pow, a, b) => {
             let lhs = eval!(*a)?;
-            if should_compute_inverse(&*b) {
+            if should_compute_inverse(&*b, int)? {
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => return Err(FendError::InversesOfLambdasUnsupported),

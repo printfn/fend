@@ -56,7 +56,7 @@ impl Value {
     }
 
     pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
-        if !self.is_unitless() {
+        if !self.is_unitless(int)? {
             return Err(FendError::NumberWithUnitToInt);
         }
         self.try_as_usize_unit(int)
@@ -119,7 +119,7 @@ impl Value {
     }
 
     pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-        if !self.is_unitless() {
+        if !self.is_unitless(int)? {
             return Err(FendError::FactorialUnitless);
         }
         Ok(Self {
@@ -172,7 +172,7 @@ impl Value {
         int: &I,
     ) -> Result<Self, FendError> {
         for (lhs_unit, rhs_unit) in crate::units::IMPLICIT_UNIT_MAP {
-            if self.unit.equal_to(lhs_unit) && rhs.is_unitless() {
+            if self.unit.equal_to(lhs_unit) && rhs.is_unitless(int)? {
                 let inches =
                     ast::resolve_identifier(&Ident::new_str(rhs_unit), None, context, int)?
                         .expect_num()?;
@@ -238,7 +238,7 @@ impl Value {
     }
 
     fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
-        if !self.is_unitless() || !rhs.is_unitless() {
+        if !self.is_unitless(int)? || !rhs.is_unitless(int)? {
             return Err(FendError::ModuloUnitless);
         }
         Ok(Self {
@@ -276,17 +276,24 @@ impl Value {
         }
     }
 
-    fn is_unitless(&self) -> bool {
+    fn is_unitless<I: Interrupt>(&self, int: &I) -> Result<bool, FendError> {
         // todo this is broken for unitless components
-        self.unit.components.is_empty()
+        if self.unit.components.is_empty() {
+            return Ok(true);
+        }
+        let (hashmap, _scale) = self.unit.to_hashmap_and_scale(int)?;
+        if hashmap.is_empty() {
+            return Ok(true);
+        }
+        Ok(false)
     }
 
-    pub(crate) fn is_unitless_one(&self) -> bool {
-        self.is_unitless() && self.exact && self.value.equals_int(1)
+    pub(crate) fn is_unitless_one<I: Interrupt>(&self, int: &I) -> Result<bool, FendError> {
+        Ok(self.exact && self.value.equals_int(1) && self.is_unitless(int)?)
     }
 
     pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
-        if !rhs.is_unitless() {
+        if !rhs.is_unitless(int)? {
             return Err(FendError::ExpUnitless);
         }
         let mut new_components = vec![];
@@ -388,7 +395,7 @@ impl Value {
         require_unitless: bool,
         int: &I,
     ) -> Result<Self, FendError> {
-        if require_unitless && !self.is_unitless() {
+        if require_unitless && !self.is_unitless(int)? {
             return Err(FendError::ExpectedAUnitlessNumber);
         }
         let exact = f(self.value.one_point()?, int)?;
@@ -408,7 +415,7 @@ impl Value {
         require_unitless: bool,
         int: &I,
     ) -> Result<Self, FendError> {
-        if require_unitless && !self.is_unitless() {
+        if require_unitless && !self.is_unitless(int)? {
             return Err(FendError::ExpectedAUnitlessNumber);
         }
         Ok(Self {
@@ -879,6 +886,7 @@ impl Unit {
         prefix.is_empty() && name == rhs
     }
 
+    /// guarantees that base units with an cancelled exponents do not appear in the hashmap
     fn to_hashmap_and_scale<I: Interrupt>(&self, int: &I) -> Result<HashmapScale, FendError> {
         let mut hashmap = HashMap::<BaseUnit, Complex>::new();
         let mut scale = Complex::from(1);
