@@ -1,6 +1,19 @@
 [workspace]
 members = ["cli", "core", "wasm"]
 
+[workspace.package]
+version = "1.1.0"
+description = "Arbitrary-precision unit-aware calculator"
+edition = "2021"
+homepage = "https://github.com/printfn/fend"
+repository = "https://github.com/printfn/fend"
+keywords = ["calculator", "cli", "conversion", "math", "tool"]
+categories = ["command-line-utilities", "mathematics", "science"]
+license = "MIT"
+
+[workspace.dependencies]
+fend-core = { version = "1.1.0", path = "core" }
+
 [profile.release]
 lto = true
 opt-level = "z" # small code size

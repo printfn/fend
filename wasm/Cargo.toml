@@ -1,10 +1,13 @@
 [package]
 name = "fend-wasm"
-version = "1.1.0"
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/printfn/fend"
-description = "Arbitrary-precision unit-aware calculator"
+version.workspace = true
+description.workspace = true
+edition.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+license.workspace = true
 publish = false
 
 [lib]
@@ -15,7 +18,7 @@ crate-type = ["cdylib", "rlib"]
 default = []
 
 [dependencies]
-fend-core = { path = "../core" }
+fend-core.workspace = true
 instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
 js-sys = "0.3.60"
 wasm-bindgen = "0.2.83"
