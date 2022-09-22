@@ -5126,7 +5126,6 @@ fn single_line_comment() {
 }
 
 #[test]
-#[ignore]
 fn single_line_comment_and_linebreak() {
     test_eval("30.48cm to \' # converting cm to feet\n", "1'");
 }
