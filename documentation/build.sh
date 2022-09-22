@@ -11,4 +11,6 @@ pandoc --standalone \
 
 pandoc --standalone \
     --output=fend.1 \
+    --lua-filter=include-code-files.lua \
+    --lua-filter=include-files.lua \
     manpage.md
