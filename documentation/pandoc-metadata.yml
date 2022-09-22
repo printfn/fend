@@ -1,6 +1,22 @@
 header-includes: |
     ```{=html}
     <link rel="icon" href="https://printfn.github.io/fend/fend-icon-128.png">
+    <style>
+        @media (prefers-color-scheme: dark) {
+            a, a:visited {
+                color: hsl(90, 70%, 70%);
+            }
+
+            b {
+                color: hsl(30, 25%, 70%);
+            }
+
+            html {
+                background: hsl(30, 25%, 10%);
+                color: hsl(30, 15%, 90%);
+            }
+        }
+    </style>
     ```
 lang: "en"
 linkcolor: "blue"
