@@ -468,7 +468,7 @@ options:
 
 For example:
 
-```bash
+```
 $ cat calculation.txt
 16^2
 $ fend calculation.txt
@@ -481,7 +481,7 @@ Error: unknown identifier 'calculation.txt'
 
 Or:
 
-```bash
+```
 $ fend 1+1
 2
 $ fend -f 1+1
