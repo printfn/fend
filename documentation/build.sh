@@ -8,3 +8,7 @@ pandoc --standalone \
     --lua-filter=include-code-files.lua \
     --lua-filter=include-files.lua \
     index.md
+
+pandoc --standalone \
+    --output=fend.1 \
+    manpage.md
