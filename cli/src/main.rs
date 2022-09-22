@@ -4,10 +4,7 @@
 #![deny(elided_lifetimes_in_paths)]
 
 use std::fmt::Write;
-use std::{
-    io,
-    process::{self, ExitCode},
-};
+use std::{error, io, process};
 
 mod args;
 mod color;
@@ -21,6 +18,9 @@ mod terminal;
 
 use args::Action as ArgsAction;
 use context::Context;
+use process::ExitCode;
+
+type Error = Box<dyn error::Error + Send + Sync + 'static>;
 
 enum EvalResult {
     Ok,
@@ -184,7 +184,13 @@ fn eval_exprs(exprs: &[String]) -> ExitCode {
 
 fn real_main() -> ExitCode {
     // Assemble the action from all but the first argument.
-    let action = ArgsAction::get();
+    let action = match ArgsAction::get() {
+        Ok(action) => action,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
     match action {
         ArgsAction::Help => {
             print_help(false);

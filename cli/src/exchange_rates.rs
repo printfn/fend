@@ -1,7 +1,6 @@
 use crate::file_paths;
+use crate::Error;
 use std::{error, fmt, fs, io::Write, time};
-
-type Error = Box<dyn error::Error + Send + Sync + 'static>;
 
 const MAX_AGE: u64 = 86400 * 3;
 

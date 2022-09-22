@@ -1,3 +1,4 @@
+use crate::Error;
 use std::{env, fs};
 
 /// Which action should be executed?
@@ -19,22 +20,44 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn from_args<T: IntoIterator<Item = String>>(iter: T) -> Self {
+    pub fn from_args(args: &[String]) -> Result<Self, Error> {
         let mut print_help = false;
         let mut print_version = false;
         let mut print_default_config = false;
         let mut before_double_dash = true;
         let mut exprs = vec![];
         let mut expr = String::new();
+        let mut idx = 0;
 
-        for arg in iter {
+        while idx < args.len() {
+            let arg = &args[idx];
             match (before_double_dash, arg.as_str()) {
                 (true, "help" | "--help" | "-h") => print_help = true,
                 // NOTE: 'version' is already handled by fend itself
                 (true, "--version" | "-v" | "-V") => print_version = true,
                 (true, "--default-config") => print_default_config = true,
+                (true, "-f" | "--file") => {
+                    idx += 1;
+                    let filename = args.get(idx).ok_or("expected a filename")?;
+                    let contents = fs::read_to_string(filename)?;
+                    if !expr.is_empty() {
+                        exprs.push(expr);
+                        expr = String::new();
+                    }
+                    exprs.push(contents);
+                }
+                (true, "-e" | "--eval") => {
+                    idx += 1;
+                    let e = args.get(idx).ok_or("expected an expression")?;
+                    if !expr.is_empty() {
+                        exprs.push(expr);
+                        expr = String::new();
+                    }
+                    exprs.push(e.to_string());
+                }
                 (true, "--") => before_double_dash = false,
                 (_, arg) => {
+                    let mut read_file = false;
                     if before_double_dash {
                         if let Ok(contents) = fs::read_to_string(arg) {
                             if !expr.is_empty() {
@@ -42,21 +65,21 @@ impl Action {
                                 expr = String::new();
                             }
                             exprs.push(contents);
-                            continue;
+                            read_file = true;
                         }
                     }
-                    if arg.trim().is_empty() {
-                        continue;
+                    if !read_file && !arg.trim().is_empty() {
+                        if !expr.is_empty() {
+                            expr.push(' ');
+                        }
+                        expr.push_str(arg);
                     }
-                    if !expr.is_empty() {
-                        expr.push(' ');
-                    }
-                    expr.push_str(arg);
                 }
             }
+            idx += 1;
         }
 
-        if print_help {
+        Ok(if print_help {
             // If any argument is shouting for help, print help!
             Self::Help
         } else if print_version {
@@ -72,11 +95,12 @@ impl Action {
                 exprs.push(expr);
             }
             Self::Eval { exprs }
-        }
+        })
     }
 
-    pub fn get() -> Self {
-        Self::from_args(env::args().skip(1))
+    pub fn get() -> Result<Self, Error> {
+        let args: Vec<_> = env::args().skip(1).collect();
+        Self::from_args(args.as_slice())
     }
 }
 
@@ -86,7 +110,7 @@ mod tests {
 
     macro_rules! action {
         ($( $arg:literal ),*) => {
-            Action::from_args(vec![ $( $arg.to_string() ),* ])
+            Action::from_args(&[ $( $arg.to_string() ),* ]).unwrap()
         }
     }
 
