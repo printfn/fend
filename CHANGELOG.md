@@ -11,6 +11,7 @@
 * You can now use `--` to force fend to interpret arguments literally,
     e.g. `fend -- -V` is interpreted as `-1 volts` instead of showing the version number
 * Fix bug where trailing whitespace or comments would result in a parse error
+* Add a man page
 * Add an MSI installer for Windows
 * Remove MSIX installer, which was difficult to use due to it being unsigned
 * Change fend website to [https://printfn.github.io/fend](https://printfn.github.io/fend)
