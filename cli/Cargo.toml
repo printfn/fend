@@ -1,21 +1,20 @@
 [package]
 name = "fend"
-# Don't bump version numbers manually, use deploy.sh instead
-version = "1.1.1"
-description = "Arbitrary-precision unit-aware calculator"
-homepage = "https://github.com/printfn/fend"
-repository = "https://github.com/printfn/fend"
+version.workspace = true
+description.workspace = true
+edition.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+license.workspace = true
 readme = "../README.md"
-license = "MIT"
-keywords = ["calculator", "cli", "conversion", "math", "tool"]
-edition = "2021"
-categories = ["command-line-utilities", "mathematics", "science"]
 
 [dependencies]
 atty = "0.2.14"
 console = { version = "0.15.1", default-features = false }
 ctrlc = "3.2.3"
-fend-core = { version = "1.1.1", path = "../core" }
+fend-core.workspace = true
 home = "0.5.3"
 nanorand = { version = "0.6.1", default-features = false, features = ["std", "wyrand"] }
 rustyline = { version =  "10.0.2", default-features = false, package = "rustyline-with-hint-fix" }

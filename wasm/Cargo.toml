@@ -1,10 +1,15 @@
 [package]
 name = "fend-wasm"
-version = "1.1.1"
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/printfn/fend"
+version.workspace = true
+# `description`, `homepage`, `repository` and `license` can't be
+# from the workspace root due to wasm-pack bug #1180
 description = "Arbitrary-precision unit-aware calculator"
+edition.workspace = true
+homepage = "https://github.com/printfn/fend"
+repository = "https://github.com/printfn/fend"
+keywords.workspace = true
+categories.workspace = true
+license = "MIT"
 publish = false
 
 [lib]
@@ -15,7 +20,7 @@ crate-type = ["cdylib", "rlib"]
 default = []
 
 [dependencies]
-fend-core = { path = "../core" }
+fend-core.workspace = true
 instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
 js-sys = "0.3.60"
 wasm-bindgen = "0.2.83"
