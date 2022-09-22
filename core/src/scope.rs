@@ -110,15 +110,14 @@ impl Scope {
         ident: &Ident,
         context: &mut crate::Context,
         int: &I,
-    ) -> Result<Value, FendError> {
+    ) -> Result<Option<Value>, FendError> {
         if self.ident.as_str() == ident.as_str() {
             let value = self.value.eval(context, int)?;
-            Ok(value)
+            Ok(Some(value))
         } else {
-            self.inner.as_ref().map_or_else(
-                || Err(FendError::IdentifierNotFound(ident.clone())),
-                |inner| inner.get(ident, context, int),
-            )
+            self.inner
+                .as_ref()
+                .map_or_else(|| Ok(None), |inner| inner.get(ident, context, int))
         }
     }
 }

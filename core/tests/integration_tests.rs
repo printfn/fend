@@ -5548,3 +5548,8 @@ fn trivial_fn() {
     // used for testing fn serialization
     test_eval_simple("x:()", "\\x.()");
 }
+
+#[test]
+fn unknown_argument_error_msg() {
+    expect_error("sqrt(aiusbdla)", Some("unknown identifier 'aiusbdla'"));
+}

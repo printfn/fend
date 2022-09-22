@@ -516,10 +516,9 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         };
     }
     if let Some(scope) = scope.clone() {
-        match scope.get(ident, context, int) {
-            Ok(val) => return Ok(val),
-            Err(FendError::IdentifierNotFound(_)) => (),
-            Err(err) => return Err(err),
+        match scope.get(ident, context, int)? {
+            Some(val) => return Ok(val),
+            None => (),
         }
     }
     if let Some(val) = context.variables.get(ident.as_str()) {
