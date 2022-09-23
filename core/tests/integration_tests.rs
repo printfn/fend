@@ -5603,6 +5603,11 @@ fn bitwise_or_3() {
 }
 
 #[test]
+fn bitwise_or_4() {
+    test_eval("0b0011 | 0b0101", "0b111");
+}
+
+#[test]
 fn bitwise_xor_1() {
     test_eval("0 xor 0", "0");
     test_eval("0 xor 1", "1");

@@ -96,7 +96,10 @@ You can use `=` to declare variables:
 16 kg
 ```
 
-`&` can be used to perform a bitwise AND operation:
+Bitwise operators are also supported. `&` is used for bitwise AND, `|`
+for bitwise OR, and `xor` for bitwise XOR, since `^` is already used
+for exponentiation. `&` has the highest operator precedence, followed by
+`^`, and `|` has the lowest precedence (i.e. the same precedence as in C).
 
 ```
 > 1 & 1
@@ -105,6 +108,10 @@ You can use `=` to declare variables:
 0x0
 > 0xff & 0xcb
 0xcb
+> 0b0011 | 0b0101
+0b111
+> 0b0011 xor 0b0101
+0b110
 ```
 
 These are all the supported operators:
@@ -119,6 +126,8 @@ These are all the supported operators:
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
 | `+`, `-`, `to`, `as`, `in` | | left |
 | `&` | | left |
+| `^` | | left |
+| `|` | | left |
 | `\ .`, `:`, `=>` | | left |
 | `=` | | left |
 | `;` | lowest | left |
