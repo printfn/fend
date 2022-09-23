@@ -312,12 +312,24 @@ impl BigRat {
         Ok(self.apply_uint_op(BigUint::factorial, int)?.into())
     }
 
-    pub(crate) fn bitwise_and<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+    pub(crate) fn bitwise<I: Interrupt>(
+        self,
+        rhs: Self,
+        op: crate::ast::BitwiseBop,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        use crate::ast::BitwiseBop;
+
         Ok(self
             .apply_uint_op(
                 |lhs, int| {
                     let rhs = rhs.apply_uint_op(|rhs, _int| Ok(rhs), int)?;
-                    Ok(lhs.bitwise_and(&rhs))
+                    let result = match op {
+                        BitwiseBop::And => lhs.bitwise_and(&rhs),
+                        BitwiseBop::Or => lhs.bitwise_or(&rhs),
+                        BitwiseBop::Xor => lhs.bitwise_xor(&rhs),
+                    };
+                    Ok(result)
                 },
                 int,
             )?

@@ -9,6 +9,13 @@ use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
 use std::sync::Arc;
 use std::{fmt, io};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum BitwiseBop {
+    And,
+    Or,
+    Xor,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Bop {
     Plus,
@@ -18,7 +25,7 @@ pub(crate) enum Bop {
     Div,
     Mod,
     Pow,
-    BitwiseAnd,
+    Bitwise(BitwiseBop),
 }
 
 impl Bop {
@@ -31,7 +38,9 @@ impl Bop {
             Self::Div => serialize_u8(4, write)?,
             Self::Mod => serialize_u8(5, write)?,
             Self::Pow => serialize_u8(6, write)?,
-            Self::BitwiseAnd => serialize_u8(7, write)?,
+            Self::Bitwise(BitwiseBop::And) => serialize_u8(7, write)?,
+            Self::Bitwise(BitwiseBop::Or) => serialize_u8(8, write)?,
+            Self::Bitwise(BitwiseBop::Xor) => serialize_u8(9, write)?,
         }
         Ok(())
     }
@@ -45,7 +54,9 @@ impl Bop {
             4 => Self::Div,
             5 => Self::Mod,
             6 => Self::Pow,
-            7 => Self::BitwiseAnd,
+            7 => Self::Bitwise(BitwiseBop::And),
+            8 => Self::Bitwise(BitwiseBop::Or),
+            9 => Self::Bitwise(BitwiseBop::Xor),
             _ => return Err(FendError::DeserializationError),
         })
     }
@@ -61,7 +72,9 @@ impl fmt::Display for Bop {
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, " mod "),
             Self::Pow => write!(f, "^"),
-            Self::BitwiseAnd => write!(f, "&"),
+            Self::Bitwise(BitwiseBop::And) => write!(f, "&"),
+            Self::Bitwise(BitwiseBop::Or) => write!(f, "|"),
+            Self::Bitwise(BitwiseBop::Xor) => write!(f, " xor "),
         }
     }
 }

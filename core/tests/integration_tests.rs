@@ -5583,3 +5583,38 @@ fn bitwise_and_3() {
         "207742386994266479278471200397877100888076",
     );
 }
+
+#[test]
+fn bitwise_or_1() {
+    test_eval("0 | 0", "0");
+    test_eval("0 | 1", "1");
+    test_eval("1 | 0", "1");
+    test_eval("1 | 1", "1");
+}
+
+#[test]
+fn bitwise_or_2() {
+    test_eval("3 | 4", "7");
+}
+
+#[test]
+fn bitwise_or_3() {
+    test_eval("255 | 34", "255");
+}
+
+#[test]
+fn bitwise_xor_1() {
+    test_eval("0 xor 0", "0");
+    test_eval("0 xor 1", "1");
+    test_eval("1 xor 0", "1");
+    test_eval("1 xor 1", "0");
+}
+
+#[test]
+fn bitwise_xor_2() {
+    test_eval(
+        "019278364182374698123476928376459726354982 xor
+        387294658347659283475689347659823745692837465",
+        "387286275339643142048939049610868709852535935",
+    );
+}

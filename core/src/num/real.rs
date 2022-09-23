@@ -357,11 +357,17 @@ impl Real {
         ))
     }
 
-    pub(crate) fn bitwise_and<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
-        Ok(Self::from(
-            self.expect_rational()?
-                .bitwise_and(rhs.expect_rational()?, int)?,
-        ))
+    pub(crate) fn bitwise<I: Interrupt>(
+        self,
+        rhs: Self,
+        op: crate::ast::BitwiseBop,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        Ok(Self::from(self.expect_rational()?.bitwise(
+            rhs.expect_rational()?,
+            op,
+            int,
+        )?))
     }
 }
 

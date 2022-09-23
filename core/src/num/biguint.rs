@@ -492,6 +492,54 @@ impl BigUint {
             }
         }
     }
+
+    pub(crate) fn bitwise_or(self, rhs: &Self) -> Self {
+        match (self, rhs) {
+            (Small(a), Small(b)) => Small(a | *b),
+            (Large(mut a), Small(b)) => {
+                a[0] |= b;
+                Large(a)
+            }
+            (Small(a), Large(b)) => {
+                let mut result = b.clone();
+                result[0] |= a;
+                Large(result)
+            }
+            (Large(mut a), Large(b)) => {
+                while a.len() < b.len() {
+                    a.push(0);
+                }
+                for i in 0..b.len() {
+                    a[i] |= b[i];
+                }
+                Large(a)
+            }
+        }
+    }
+
+    pub(crate) fn bitwise_xor(self, rhs: &Self) -> Self {
+        match (self, rhs) {
+            (Small(a), Small(b)) => Small(a ^ *b),
+            (Large(mut a), Small(b)) => {
+                a[0] ^= b;
+                Large(a)
+            }
+            (Small(a), Large(b)) => {
+                let mut result = b.clone();
+                result[0] ^= a;
+                Large(result)
+            }
+            (Large(mut a), Large(b)) => {
+                while a.len() < b.len() {
+                    a.push(0);
+                }
+                for i in 0..b.len() {
+                    a[i] ^= b[i];
+                }
+                Large(a)
+            }
+        }
+    }
 }
 
 impl Ord for BigUint {

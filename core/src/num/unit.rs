@@ -1,4 +1,4 @@
-use crate::ast::Bop;
+use crate::ast::{BitwiseBop, Bop};
 use crate::error::{FendError, Interrupt};
 use crate::num::complex::{Complex, UseParentheses};
 use crate::num::dist::Dist;
@@ -255,7 +255,7 @@ impl Value {
         })
     }
 
-    fn bitwise_and<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+    fn bitwise<I: Interrupt>(self, rhs: Self, op: BitwiseBop, int: &I) -> Result<Self, FendError> {
         if !self.is_unitless(int)? || !rhs.is_unitless(int)? {
             return Err(FendError::ExpectedAUnitlessNumber);
         }
@@ -263,7 +263,7 @@ impl Value {
             value: Dist::from(
                 self.value
                     .one_point()?
-                    .bitwise_and(rhs.value.one_point()?, int)?,
+                    .bitwise(rhs.value.one_point()?, op, int)?,
             ),
             unit: self.unit,
             exact: self.exact && rhs.exact,
@@ -291,7 +291,7 @@ impl Value {
             Bop::Div => self.div(rhs, int),
             Bop::Mod => self.modulo(rhs, int),
             Bop::Pow => self.pow(rhs, int),
-            Bop::BitwiseAnd => self.bitwise_and(rhs, int),
+            Bop::Bitwise(bitwise_bop) => self.bitwise(rhs, bitwise_bop, int),
         }
     }
 

@@ -22,6 +22,8 @@ pub(crate) enum Symbol {
     Mod,
     Pow,
     BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
     UnitConversion,
     Factorial,
     Fn,
@@ -46,6 +48,8 @@ impl fmt::Display for Symbol {
             Self::Mod => "mod",
             Self::Pow => "^",
             Self::BitwiseAnd => "&",
+            Self::BitwiseOr => "|",
+            Self::BitwiseXor => " xor ",
             Self::UnitConversion => "to",
             Self::Factorial => "!",
             Self::Fn => ":",
@@ -430,6 +434,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError
             "per" => Token::Symbol(Symbol::Div),
             "of" => Token::Symbol(Symbol::Of),
             "mod" => Token::Symbol(Symbol::Mod),
+            "xor" | "XOR" => Token::Symbol(Symbol::BitwiseXor),
             _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,
@@ -463,6 +468,7 @@ fn parse_symbol(ch: char, input: &mut &str) -> Result<Token, FendError> {
         '/' | '\u{f7}' | '\u{2215}' => Symbol::Div, // unicode division symbol and slash
         '^' => Symbol::Pow,
         '&' => Symbol::BitwiseAnd,
+        '|' => Symbol::BitwiseOr,
         ':' => Symbol::Fn,
         '=' => {
             if test_next('>') {
