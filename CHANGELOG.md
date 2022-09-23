@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.1.1 (2022-09-23)
 
 * Add bitwise operators:
     * `&`: bitwise AND

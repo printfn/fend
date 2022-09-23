@@ -1,6 +1,6 @@
 [package]
 name = "fend-core"
-version = "1.1.0"
+version = "1.1.1"
 description = "Arbitrary-precision unit-aware calculator"
 homepage = "https://github.com/printfn/fend"
 repository = "https://github.com/printfn/fend"
