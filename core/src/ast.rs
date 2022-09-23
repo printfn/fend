@@ -9,6 +9,15 @@ use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
 use std::sync::Arc;
 use std::{fmt, io};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum BitwiseBop {
+    And,
+    Or,
+    Xor,
+    LeftShift,
+    RightShift,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Bop {
     Plus,
@@ -18,19 +27,26 @@ pub(crate) enum Bop {
     Div,
     Mod,
     Pow,
+    Bitwise(BitwiseBop),
 }
 
 impl Bop {
     pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-        match self {
-            Self::Plus => serialize_u8(0, write)?,
-            Self::ImplicitPlus => serialize_u8(1, write)?,
-            Self::Minus => serialize_u8(2, write)?,
-            Self::Mul => serialize_u8(3, write)?,
-            Self::Div => serialize_u8(4, write)?,
-            Self::Mod => serialize_u8(5, write)?,
-            Self::Pow => serialize_u8(6, write)?,
-        }
+        let n = match self {
+            Self::Plus => 0,
+            Self::ImplicitPlus => 1,
+            Self::Minus => 2,
+            Self::Mul => 3,
+            Self::Div => 4,
+            Self::Mod => 5,
+            Self::Pow => 6,
+            Self::Bitwise(BitwiseBop::And) => 7,
+            Self::Bitwise(BitwiseBop::Or) => 8,
+            Self::Bitwise(BitwiseBop::Xor) => 9,
+            Self::Bitwise(BitwiseBop::LeftShift) => 10,
+            Self::Bitwise(BitwiseBop::RightShift) => 11,
+        };
+        serialize_u8(n, write)?;
         Ok(())
     }
 
@@ -43,6 +59,11 @@ impl Bop {
             4 => Self::Div,
             5 => Self::Mod,
             6 => Self::Pow,
+            7 => Self::Bitwise(BitwiseBop::And),
+            8 => Self::Bitwise(BitwiseBop::Or),
+            9 => Self::Bitwise(BitwiseBop::Xor),
+            10 => Self::Bitwise(BitwiseBop::LeftShift),
+            11 => Self::Bitwise(BitwiseBop::RightShift),
             _ => return Err(FendError::DeserializationError),
         })
     }
@@ -50,15 +71,21 @@ impl Bop {
 
 impl fmt::Display for Bop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Plus => write!(f, "+"),
-            Self::ImplicitPlus => write!(f, " "),
-            Self::Minus => write!(f, "-"),
-            Self::Mul => write!(f, "*"),
-            Self::Div => write!(f, "/"),
-            Self::Mod => write!(f, " mod "),
-            Self::Pow => write!(f, "^"),
-        }
+        let s = match self {
+            Self::Plus => "+",
+            Self::ImplicitPlus => " ",
+            Self::Minus => "-",
+            Self::Mul => "*",
+            Self::Div => "/",
+            Self::Mod => " mod ",
+            Self::Pow => "^",
+            Self::Bitwise(BitwiseBop::And) => "&",
+            Self::Bitwise(BitwiseBop::Or) => "|",
+            Self::Bitwise(BitwiseBop::Xor) => " xor ",
+            Self::Bitwise(BitwiseBop::LeftShift) => "<<",
+            Self::Bitwise(BitwiseBop::RightShift) => ">>",
+        };
+        write!(f, "{s}")
     }
 }
 

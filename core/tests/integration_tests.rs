@@ -5559,5 +5559,88 @@ fn log10_cancelled_units() {
 
 #[test]
 fn shebang() {
-    test_eval("#!/usr/bin/env fend\n1 + 1", "2")
+    test_eval("#!/usr/bin/env fend\n1 + 1", "2");
+}
+
+#[test]
+fn bitwise_and_1() {
+    test_eval("0 & 0", "0");
+    test_eval("0 & 1", "0");
+    test_eval("1 & 0", "0");
+    test_eval("1 & 1", "1");
+}
+
+#[test]
+fn bitwise_and_2() {
+    test_eval("0 & 91802367489176234987162938461829374691238641", "0");
+}
+
+#[test]
+fn bitwise_and_3() {
+    test_eval(
+        "912834710927364108273648927346788234682764 & 
+        98123740918263740896274873648273642342534252",
+        "207742386994266479278471200397877100888076",
+    );
+}
+
+#[test]
+fn bitwise_or_1() {
+    test_eval("0 | 0", "0");
+    test_eval("0 | 1", "1");
+    test_eval("1 | 0", "1");
+    test_eval("1 | 1", "1");
+}
+
+#[test]
+fn bitwise_or_2() {
+    test_eval("3 | 4", "7");
+}
+
+#[test]
+fn bitwise_or_3() {
+    test_eval("255 | 34", "255");
+}
+
+#[test]
+fn bitwise_or_4() {
+    test_eval("0b0011 | 0b0101", "0b111");
+}
+
+#[test]
+fn bitwise_xor_1() {
+    test_eval("0 xor 0", "0");
+    test_eval("0 xor 1", "1");
+    test_eval("1 xor 0", "1");
+    test_eval("1 xor 1", "0");
+}
+
+#[test]
+fn bitwise_xor_2() {
+    test_eval(
+        "019278364182374698123476928376459726354982 xor
+        387294658347659283475689347659823745692837465",
+        "387286275339643142048939049610868709852535935",
+    );
+}
+
+#[test]
+fn lshift() {
+    test_eval("0 << 10", "0");
+    test_eval("54 << 1", "108");
+    test_eval("54 << 2", "216");
+    test_eval("54 << 3", "432");
+}
+
+#[test]
+fn rshift() {
+    test_eval("54 >> 12", "0");
+    test_eval("54 >> 1", "27");
+    test_eval("54 >> 2", "13");
+    test_eval("54 >> 3", "6");
+}
+
+#[test]
+fn shift_and_and() {
+    test_eval("54 << 1 & 54 >> 1", "8");
 }

@@ -477,6 +477,100 @@ impl BigUint {
             _ => return Err(FendError::DeserializationError),
         })
     }
+
+    pub(crate) fn bitwise_and(self, rhs: &Self) -> Self {
+        match (self, rhs) {
+            (Small(a), Small(b)) => Small(a & *b),
+            (Large(a), Small(b)) => Small(a[0] & *b),
+            (Small(a), Large(b)) => Small(a & b[0]),
+            (Large(a), Large(b)) => {
+                let mut result = b.clone();
+                for (i, res_i) in result.iter_mut().enumerate() {
+                    *res_i &= a.get(i).unwrap_or(&0);
+                }
+                Large(result)
+            }
+        }
+    }
+
+    pub(crate) fn bitwise_or(self, rhs: &Self) -> Self {
+        match (self, rhs) {
+            (Small(a), Small(b)) => Small(a | *b),
+            (Large(mut a), Small(b)) => {
+                a[0] |= b;
+                Large(a)
+            }
+            (Small(a), Large(b)) => {
+                let mut result = b.clone();
+                result[0] |= a;
+                Large(result)
+            }
+            (Large(mut a), Large(b)) => {
+                while a.len() < b.len() {
+                    a.push(0);
+                }
+                for i in 0..b.len() {
+                    a[i] |= b[i];
+                }
+                Large(a)
+            }
+        }
+    }
+
+    pub(crate) fn bitwise_xor(self, rhs: &Self) -> Self {
+        match (self, rhs) {
+            (Small(a), Small(b)) => Small(a ^ *b),
+            (Large(mut a), Small(b)) => {
+                a[0] ^= b;
+                Large(a)
+            }
+            (Small(a), Large(b)) => {
+                let mut result = b.clone();
+                result[0] ^= a;
+                Large(result)
+            }
+            (Large(mut a), Large(b)) => {
+                while a.len() < b.len() {
+                    a.push(0);
+                }
+                for i in 0..b.len() {
+                    a[i] ^= b[i];
+                }
+                Large(a)
+            }
+        }
+    }
+
+    pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let mut rhs = rhs.try_as_usize(int)?;
+        if rhs > 64 {
+            self.make_large();
+            match &mut self {
+                Large(v) => {
+                    while rhs >= 64 {
+                        v.insert(0, 0);
+                        rhs -= 64;
+                    }
+                }
+                Small(_) => unreachable!(),
+            }
+        }
+        for _ in 0..rhs {
+            self.lshift(int)?;
+        }
+        Ok(self)
+    }
+
+    pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let rhs = rhs.try_as_usize(int)?;
+        for _ in 0..rhs {
+            if self.is_zero() {
+                break;
+            }
+            self.rshift(int)?;
+        }
+        Ok(self)
+    }
 }
 
 impl Ord for BigUint {

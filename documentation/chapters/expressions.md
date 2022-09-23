@@ -96,6 +96,32 @@ You can use `=` to declare variables:
 16 kg
 ```
 
+Bitwise operators are also supported. `&` is used for bitwise AND, `|`
+for bitwise OR, and `xor` for bitwise XOR, since `^` is already used
+for exponentiation. Left and right bitshifts can be done with `<<` and
+`>>`.
+
+The operator precedence for these is the same as in C, with bitshifts
+having the highest precedence, followed by `&`, then `xor`, and finally
+`|` which has the lowest precedence.
+
+```
+> 1 & 1
+1
+> 0xff & 0x100
+0x0
+> 0xff & 0xcb
+0xcb
+> 0b0011 | 0b0101
+0b111
+> 0b0011 xor 0b0101
+0b110
+> 1 << 2
+4
+> 7 >> 1
+3
+```
+
 These are all the supported operators:
 
 | Operators | Precedence | Associativity |
@@ -107,6 +133,10 @@ These are all the supported operators:
 | `*`, `/`, `per`, function application (e.g. `sin 2`), `mod` | | left |
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
 | `+`, `-`, `to`, `as`, `in` | | left |
+| `<<`, `>>` | | left |
+| `&` | | left |
+| `^` | | left |
+| `|` | | left |
 | `\ .`, `:`, `=>` | | left |
 | `=` | | left |
 | `;` | lowest | left |

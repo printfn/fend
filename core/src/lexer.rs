@@ -21,6 +21,9 @@ pub(crate) enum Symbol {
     Div,
     Mod,
     Pow,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
     UnitConversion,
     Factorial,
     Fn,
@@ -44,6 +47,9 @@ impl fmt::Display for Symbol {
             Self::Div => "/",
             Self::Mod => "mod",
             Self::Pow => "^",
+            Self::BitwiseAnd => "&",
+            Self::BitwiseOr => "|",
+            Self::BitwiseXor => " xor ",
             Self::UnitConversion => "to",
             Self::Factorial => "!",
             Self::Fn => ":",
@@ -373,15 +379,15 @@ fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> Result<(Number, &'
 
 fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
     let allowed_chars = [
-        ',', '&', '_', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞', '⅙', '⅓', '⅔', '⅚', '⅕', '⅖', '⅗', '⅘',
-        '°', '$', '℃', '℉', '℧', '℈', '℥', '℔', '¢', '£', '¥', '€', '₩', '₪', '₤', '₨', '฿', '₡',
-        '₣', '₦', '₧', '₫', '₭', '₮', '₯', '₱', '﷼', '﹩', '￠', '￡', '￥', '￦', '㍱', '㍲',
-        '㍳', '㍴', '㍶', '㎀', '㎁', '㎂', '㎃', '㎄', '㎅', '㎆', '㎇', '㎈', '㎉', '㎊', '㎋',
-        '㎌', '㎍', '㎎', '㎏', '㎐', '㎑', '㎒', '㎓', '㎔', '㎕', '㎖', '㎗', '㎘', '㎙', '㎚',
-        '㎛', '㎜', '㎝', '㎞', '㎟', '㎠', '㎡', '㎢', '㎣', '㎤', '㎥', '㎦', '㎧', '㎨', '㎩',
-        '㎪', '㎫', '㎬', '㎭', '㎮', '㎯', '㎰', '㎱', '㎲', '㎳', '㎴', '㎵', '㎶', '㎷', '㎸',
-        '㎹', '㎺', '㎻', '㎼', '㎽', '㎾', '㎿', '㏀', '㏁', '㏃', '㏄', '㏅', '㏆', '㏈', '㏉',
-        '㏊', '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
+        ',', '_', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞', '⅙', '⅓', '⅔', '⅚', '⅕', '⅖', '⅗', '⅘', '°',
+        '$', '℃', '℉', '℧', '℈', '℥', '℔', '¢', '£', '¥', '€', '₩', '₪', '₤', '₨', '฿', '₡', '₣',
+        '₦', '₧', '₫', '₭', '₮', '₯', '₱', '﷼', '﹩', '￠', '￡', '￥', '￦', '㍱', '㍲', '㍳',
+        '㍴', '㍶', '㎀', '㎁', '㎂', '㎃', '㎄', '㎅', '㎆', '㎇', '㎈', '㎉', '㎊', '㎋', '㎌',
+        '㎍', '㎎', '㎏', '㎐', '㎑', '㎒', '㎓', '㎔', '㎕', '㎖', '㎗', '㎘', '㎙', '㎚', '㎛',
+        '㎜', '㎝', '㎞', '㎟', '㎠', '㎡', '㎢', '㎣', '㎤', '㎥', '㎦', '㎧', '㎨', '㎩', '㎪',
+        '㎫', '㎬', '㎭', '㎮', '㎯', '㎰', '㎱', '㎲', '㎳', '㎴', '㎵', '㎶', '㎷', '㎸', '㎹',
+        '㎺', '㎻', '㎼', '㎽', '㎾', '㎿', '㏀', '㏁', '㏃', '㏄', '㏅', '㏆', '㏈', '㏉', '㏊',
+        '㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
     ];
     let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
     let split_on_subsequent_digit = ['$', '£'];
@@ -428,6 +434,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError
             "per" => Token::Symbol(Symbol::Div),
             "of" => Token::Symbol(Symbol::Of),
             "mod" => Token::Symbol(Symbol::Mod),
+            "xor" | "XOR" => Token::Symbol(Symbol::BitwiseXor),
             _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,
@@ -460,6 +467,8 @@ fn parse_symbol(ch: char, input: &mut &str) -> Result<Token, FendError> {
         }
         '/' | '\u{f7}' | '\u{2215}' => Symbol::Div, // unicode division symbol and slash
         '^' => Symbol::Pow,
+        '&' => Symbol::BitwiseAnd,
+        '|' => Symbol::BitwiseOr,
         ':' => Symbol::Fn,
         '=' => {
             if test_next('>') {

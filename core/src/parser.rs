@@ -357,8 +357,76 @@ fn parse_additive(input: &[Token]) -> ParseResult<'_> {
     Ok((res, input))
 }
 
+fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_additive(input)?;
+    loop {
+        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::ShiftLeft) {
+            let (rhs, remaining) = parse_additive(remaining)?;
+            result = Expr::Bop(
+                Bop::Bitwise(crate::ast::BitwiseBop::LeftShift),
+                Box::new(result),
+                Box::new(rhs),
+            );
+            input = remaining;
+        } else if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::ShiftRight) {
+            let (rhs, remaining) = parse_additive(remaining)?;
+            result = Expr::Bop(
+                Bop::Bitwise(crate::ast::BitwiseBop::RightShift),
+                Box::new(result),
+                Box::new(rhs),
+            );
+            input = remaining;
+        } else {
+            break;
+        }
+    }
+    Ok((result, input))
+}
+
+fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_bitshifts(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseAnd) {
+        let (rhs, remaining) = parse_bitshifts(remaining)?;
+        result = Expr::Bop(
+            Bop::Bitwise(crate::ast::BitwiseBop::And),
+            Box::new(result),
+            Box::new(rhs),
+        );
+        input = remaining;
+    }
+    Ok((result, input))
+}
+
+fn parse_bitwise_xor(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_bitwise_and(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseXor) {
+        let (rhs, remaining) = parse_bitwise_and(remaining)?;
+        result = Expr::Bop(
+            Bop::Bitwise(crate::ast::BitwiseBop::Xor),
+            Box::new(result),
+            Box::new(rhs),
+        );
+        input = remaining;
+    }
+    Ok((result, input))
+}
+
+fn parse_bitwise_or(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_bitwise_xor(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseOr) {
+        let (rhs, remaining) = parse_bitwise_xor(remaining)?;
+        result = Expr::Bop(
+            Bop::Bitwise(crate::ast::BitwiseBop::Or),
+            Box::new(result),
+            Box::new(rhs),
+        );
+        input = remaining;
+    }
+    Ok((result, input))
+}
+
 fn parse_function(input: &[Token]) -> ParseResult<'_> {
-    let (lhs, input) = parse_additive(input)?;
+    let (lhs, input) = parse_bitwise_or(input)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining)?;

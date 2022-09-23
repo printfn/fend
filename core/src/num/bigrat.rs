@@ -292,7 +292,11 @@ impl BigRat {
         Self::from_f64(f64::log10(self.into_f64(int)?), int)
     }
 
-    pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, FendError> {
+    fn apply_uint_op<I: Interrupt, R>(
+        mut self,
+        f: impl FnOnce(BigUint, &I) -> Result<R, FendError>,
+        int: &I,
+    ) -> Result<R, FendError> {
         self = self.simplify(int)?;
         if self.den != 1.into() {
             let n = self.fm(int)?;
@@ -301,11 +305,37 @@ impl BigRat {
         if self.sign == Sign::Negative && self.num != 0.into() {
             return Err(out_of_range(self.fm(int)?, Range::ZERO_OR_GREATER));
         }
-        Ok(Self {
-            sign: Sign::Positive,
-            num: self.num.factorial(int)?,
-            den: self.den,
-        })
+        f(self.num, int)
+    }
+
+    pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
+        Ok(self.apply_uint_op(BigUint::factorial, int)?.into())
+    }
+
+    pub(crate) fn bitwise<I: Interrupt>(
+        self,
+        rhs: Self,
+        op: crate::ast::BitwiseBop,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        use crate::ast::BitwiseBop;
+
+        Ok(self
+            .apply_uint_op(
+                |lhs, int| {
+                    let rhs = rhs.apply_uint_op(|rhs, _int| Ok(rhs), int)?;
+                    let result = match op {
+                        BitwiseBop::And => lhs.bitwise_and(&rhs),
+                        BitwiseBop::Or => lhs.bitwise_or(&rhs),
+                        BitwiseBop::Xor => lhs.bitwise_xor(&rhs),
+                        BitwiseBop::LeftShift => lhs.lshift_n(&rhs, int)?,
+                        BitwiseBop::RightShift => lhs.rshift_n(&rhs, int)?,
+                    };
+                    Ok(result)
+                },
+                int,
+            )?
+            .into())
     }
 
     /// compute a + b

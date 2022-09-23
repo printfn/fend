@@ -310,6 +310,19 @@ impl Complex {
             self.expect_real()?.modulo(rhs.expect_real()?, int)?,
         ))
     }
+
+    pub(crate) fn bitwise<I: Interrupt>(
+        self,
+        rhs: Self,
+        op: crate::ast::BitwiseBop,
+        int: &I,
+    ) -> Result<Self, FendError> {
+        Ok(Self::from(self.expect_real()?.bitwise(
+            rhs.expect_real()?,
+            op,
+            int,
+        )?))
+    }
 }
 
 impl Exact<Complex> {
