@@ -5559,5 +5559,27 @@ fn log10_cancelled_units() {
 
 #[test]
 fn shebang() {
-    test_eval("#!/usr/bin/env fend\n1 + 1", "2")
+    test_eval("#!/usr/bin/env fend\n1 + 1", "2");
+}
+
+#[test]
+fn bitwise_and_1() {
+    test_eval("0 & 0", "0");
+    test_eval("0 & 1", "0");
+    test_eval("1 & 0", "0");
+    test_eval("1 & 1", "1");
+}
+
+#[test]
+fn bitwise_and_2() {
+    test_eval("0 & 91802367489176234987162938461829374691238641", "0");
+}
+
+#[test]
+fn bitwise_and_3() {
+    test_eval(
+        "912834710927364108273648927346788234682764 & 
+        98123740918263740896274873648273642342534252",
+        "207742386994266479278471200397877100888076",
+    );
 }

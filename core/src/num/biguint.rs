@@ -477,6 +477,21 @@ impl BigUint {
             _ => return Err(FendError::DeserializationError),
         })
     }
+
+    pub(crate) fn bitwise_and(self, rhs: &Self) -> Self {
+        match (self, rhs) {
+            (Small(a), Small(b)) => Small(a & *b),
+            (Large(a), Small(b)) => Small(a[0] & *b),
+            (Small(a), Large(b)) => Small(a & b[0]),
+            (Large(a), Large(b)) => {
+                let mut result = b.clone();
+                for (i, res_i) in result.iter_mut().enumerate() {
+                    *res_i &= a.get(i).unwrap_or(&0);
+                }
+                Large(result)
+            }
+        }
+    }
 }
 
 impl Ord for BigUint {

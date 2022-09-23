@@ -18,6 +18,7 @@ pub(crate) enum Bop {
     Div,
     Mod,
     Pow,
+    BitwiseAnd,
 }
 
 impl Bop {
@@ -30,6 +31,7 @@ impl Bop {
             Self::Div => serialize_u8(4, write)?,
             Self::Mod => serialize_u8(5, write)?,
             Self::Pow => serialize_u8(6, write)?,
+            Self::BitwiseAnd => serialize_u8(7, write)?,
         }
         Ok(())
     }
@@ -43,6 +45,7 @@ impl Bop {
             4 => Self::Div,
             5 => Self::Mod,
             6 => Self::Pow,
+            7 => Self::BitwiseAnd,
             _ => return Err(FendError::DeserializationError),
         })
     }
@@ -58,6 +61,7 @@ impl fmt::Display for Bop {
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, " mod "),
             Self::Pow => write!(f, "^"),
+            Self::BitwiseAnd => write!(f, "&"),
         }
     }
 }

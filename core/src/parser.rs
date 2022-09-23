@@ -357,8 +357,18 @@ fn parse_additive(input: &[Token]) -> ParseResult<'_> {
     Ok((res, input))
 }
 
+fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_additive(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseAnd) {
+        let (rhs, remaining) = parse_function(remaining)?;
+        result = Expr::Bop(Bop::BitwiseAnd, Box::new(result), Box::new(rhs));
+        input = remaining;
+    }
+    Ok((result, input))
+}
+
 fn parse_function(input: &[Token]) -> ParseResult<'_> {
-    let (lhs, input) = parse_additive(input)?;
+    let (lhs, input) = parse_bitwise_and(input)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining)?;

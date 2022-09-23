@@ -356,6 +356,13 @@ impl Real {
                 .modulo(rhs.expect_rational()?, int)?,
         ))
     }
+
+    pub(crate) fn bitwise_and<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+        Ok(Self::from(
+            self.expect_rational()?
+                .bitwise_and(rhs.expect_rational()?, int)?,
+        ))
+    }
 }
 
 impl Exact<Real> {

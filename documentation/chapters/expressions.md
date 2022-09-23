@@ -96,6 +96,17 @@ You can use `=` to declare variables:
 16 kg
 ```
 
+`&` can be used to perform a bitwise AND operation:
+
+```
+> 1 & 1
+1
+> 0xff & 0x100
+0x0
+> 0xff & 0xcb
+0xcb
+```
+
 These are all the supported operators:
 
 | Operators | Precedence | Associativity |
@@ -107,6 +118,7 @@ These are all the supported operators:
 | `*`, `/`, `per`, function application (e.g. `sin 2`), `mod` | | left |
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
 | `+`, `-`, `to`, `as`, `in` | | left |
+| `&` | | left |
 | `\ .`, `:`, `=>` | | left |
 | `=` | | left |
 | `;` | lowest | left |
