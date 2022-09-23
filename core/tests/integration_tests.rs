@@ -5136,9 +5136,8 @@ fn single_line_comment_and_linebreak_2() {
 }
 
 #[test]
-#[ignore]
 fn single_line_comment_and_linebreak_3() {
-    test_eval("30.48cm to \' # converting cm\n ' # to feet", "1'");
+    test_eval("30.48cm to # converting cm\n ' # to feet", "1'");
 }
 
 #[test]
@@ -5556,4 +5555,9 @@ fn unknown_argument_error_msg() {
 #[test]
 fn log10_cancelled_units() {
     test_eval("log10 (1m / (1m", "approx. 0");
+}
+
+#[test]
+fn shebang() {
+    test_eval("#!/usr/bin/env fend\n1 + 1", "2")
 }

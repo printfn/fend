@@ -18,7 +18,6 @@ pub(crate) enum ParseError {
     ExpectedIdentifierInAssignment,
     ExpectedDotInLambda(Box<ParseError>),
     InvalidMixedFraction,
-    UnexpectedWhitespace,
 }
 
 impl fmt::Display for ParseError {
@@ -45,7 +44,6 @@ impl fmt::Display for ParseError {
                 write!(f, "missing '.' in lambda (expected e.g. \\x.x)")
             }
             Self::InvalidMixedFraction => write!(f, "invalid mixed fraction"),
-            Self::UnexpectedWhitespace => write!(f, "unexpected whitespace"),
         }
     }
 }
@@ -58,21 +56,15 @@ impl From<ParseError> for crate::error::FendError {
     }
 }
 
-fn parse_token(mut input: &[Token], skip_whitespace: bool) -> ParseResult<'_, Token> {
-    loop {
-        if input.is_empty() {
-            return Err(ParseError::ExpectedAToken);
-        }
-        if skip_whitespace && matches!(input[0], Token::Whitespace) {
-            input = &input[1..];
-            continue;
-        }
-        return Ok((input[0].clone(), &input[1..]));
+fn parse_token(input: &[Token]) -> ParseResult<'_, Token> {
+    if input.is_empty() {
+        return Err(ParseError::ExpectedAToken);
     }
+    Ok((input[0].clone(), &input[1..]))
 }
 
 fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<'_, ()> {
-    let (token, remaining) = parse_token(input, true)?;
+    let (token, remaining) = parse_token(input)?;
     if let Token::Symbol(sym) = token {
         if sym == symbol {
             Ok(((), remaining))
@@ -85,14 +77,14 @@ fn parse_fixed_symbol(input: &[Token], symbol: Symbol) -> ParseResult<'_, ()> {
 }
 
 fn parse_number(input: &[Token]) -> ParseResult<'_> {
-    match parse_token(input, true)? {
+    match parse_token(input)? {
         (Token::Num(num), remaining) => Ok((Expr::Literal(Value::Num(Box::new(num))), remaining)),
         _ => Err(ParseError::ExpectedANumber),
     }
 }
 
 fn parse_ident(input: &[Token]) -> ParseResult<'_> {
-    match parse_token(input, true)? {
+    match parse_token(input)? {
         (Token::Ident(ident), remaining) => {
             if let Ok(((), remaining2)) = parse_fixed_symbol(remaining, Symbol::Of) {
                 let (inner, remaining3) = parse_parens_or_literal(remaining2)?;
@@ -133,7 +125,7 @@ fn parse_backslash_lambda(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_parens_or_literal(input: &[Token]) -> ParseResult<'_> {
-    let (token, remaining) = parse_token(input, true)?;
+    let (token, remaining) = parse_token(input)?;
 
     match token {
         Token::Num(_) => parse_number(input),
@@ -142,7 +134,6 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<'_> {
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
         Token::Symbol(s) => Err(ParseError::UnexpectedSymbol(s)),
-        Token::Whitespace => Err(ParseError::UnexpectedWhitespace),
     }
 }
 
@@ -411,11 +402,7 @@ fn parse_statements(mut input: &[Token]) -> ParseResult<'_> {
 }
 
 pub(crate) fn parse_expression(input: &[Token]) -> ParseResult<'_> {
-    let (res, mut remaining) = parse_statements(input)?;
-    while !remaining.is_empty() && matches!(remaining[0], Token::Whitespace) {
-        remaining = &remaining[1..];
-    }
-    Ok((res, remaining))
+    parse_statements(input)
 }
 
 pub(crate) fn parse_tokens(input: &[Token]) -> Result<Expr, ParseError> {

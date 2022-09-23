@@ -8,7 +8,6 @@ pub(crate) enum Token {
     Num(Number),
     Ident(Ident),
     Symbol(Symbol),
-    Whitespace,
     StringLiteral(borrow::Cow<'static, str>),
 }
 
@@ -646,25 +645,30 @@ pub(crate) struct Lexer<'a, 'b, I: Interrupt> {
     int: &'b I,
 }
 
+fn skip_whitespace_and_comments(input: &mut &str) {
+    while !input.is_empty() {
+        if input.starts_with("# ") || input.starts_with("#!") {
+            if let Some(idx) = input.find('\n') {
+                let (_, remaining) = input.split_at(idx);
+                *input = remaining;
+                continue;
+            }
+            *input = "";
+            return;
+        } else if let Some(ch) = input.chars().next() {
+            if ch.is_whitespace() {
+                let (_, remaining) = input.split_at(ch.len_utf8());
+                *input = remaining;
+                continue;
+            }
+        }
+        break;
+    }
+}
+
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
     fn next_token(&mut self) -> Result<Option<Token>, FendError> {
-        while let Some(ch) = self.input.chars().next() {
-            if self.input.starts_with("# ") || self.input.starts_with("#!") {
-                let (_, remaining) = self.input.split_at(2);
-                self.input = remaining;
-                if let Some(idx) = self.input.find('\n') {
-                    let (_, remaining2) = self.input.split_at(idx);
-                    self.input = remaining2;
-                } else {
-                    return Ok(None);
-                }
-            }
-            if !ch.is_whitespace() {
-                break;
-            }
-            let (_, remaining) = self.input.split_at(ch.len_utf8());
-            self.input = remaining;
-        }
+        skip_whitespace_and_comments(&mut self.input);
         let (ch, following) = {
             let mut chars = self.input.chars();
             let ch = chars.next();
@@ -673,9 +677,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
         };
         Ok(Some(match ch {
             Some(ch) => {
-                if ch.is_whitespace() {
-                    Token::Whitespace
-                } else if ch.is_ascii_digit()
+                if ch.is_ascii_digit()
                     || (ch == '.' && self.after_backslash_state == 0)
                     || (ch == 'd' && following.is_some() && following.unwrap().is_ascii_digit())
                 {
