@@ -1,5 +1,14 @@
 ## Changelog
 
+### Unreleased
+
+* Add bitwise operators:
+    * `&`: bitwise AND
+    * `|`: bitwise OR
+    * `xor`: bitwise XOR (`^` is already used for exponentiation)
+    * `<<`: left shift
+    * `>>`: right shift
+
 ### v1.1.0 (2022-09-22)
 
 * Automatically download up-to-date currency exchange rates,
