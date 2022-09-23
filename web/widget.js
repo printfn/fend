@@ -20,6 +20,13 @@ async function evaluate(event) {
     if (EVALUATE_KEY == event.keyCode && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
 
+        if (inputText.value == "clear") {
+            output.innerHTML = "";
+            inputText.value = "";
+            inputHint.innerText = "";
+            return;
+        }
+
         let request = document.createElement("p");
         let result = document.createElement("p");
         let isVariable = false;
