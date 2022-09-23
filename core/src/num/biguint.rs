@@ -540,6 +540,37 @@ impl BigUint {
             }
         }
     }
+
+    pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let mut rhs = rhs.try_as_usize(int)?;
+        if rhs > 64 {
+            self.make_large();
+            match &mut self {
+                Large(v) => {
+                    while rhs >= 64 {
+                        v.insert(0, 0);
+                        rhs -= 64;
+                    }
+                }
+                Small(_) => unreachable!(),
+            }
+        }
+        for _ in 0..rhs {
+            self.lshift(int)?;
+        }
+        Ok(self)
+    }
+
+    pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+        let rhs = rhs.try_as_usize(int)?;
+        for _ in 0..rhs {
+            if self.is_zero() {
+                break;
+            }
+            self.rshift(int)?;
+        }
+        Ok(self)
+    }
 }
 
 impl Ord for BigUint {

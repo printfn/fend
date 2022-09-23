@@ -5623,3 +5623,24 @@ fn bitwise_xor_2() {
         "387286275339643142048939049610868709852535935",
     );
 }
+
+#[test]
+fn lshift() {
+    test_eval("0 << 10", "0");
+    test_eval("54 << 1", "108");
+    test_eval("54 << 2", "216");
+    test_eval("54 << 3", "432");
+}
+
+#[test]
+fn rshift() {
+    test_eval("54 >> 12", "0");
+    test_eval("54 >> 1", "27");
+    test_eval("54 >> 2", "13");
+    test_eval("54 >> 3", "6");
+}
+
+#[test]
+fn shift_and_and() {
+    test_eval("54 << 1 & 54 >> 1", "8");
+}

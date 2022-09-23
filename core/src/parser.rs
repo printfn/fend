@@ -357,10 +357,36 @@ fn parse_additive(input: &[Token]) -> ParseResult<'_> {
     Ok((res, input))
 }
 
-fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
+fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
     let (mut result, mut input) = parse_additive(input)?;
+    loop {
+        if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::ShiftLeft) {
+            let (rhs, remaining) = parse_additive(remaining)?;
+            result = Expr::Bop(
+                Bop::Bitwise(crate::ast::BitwiseBop::LeftShift),
+                Box::new(result),
+                Box::new(rhs),
+            );
+            input = remaining;
+        } else if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::ShiftRight) {
+            let (rhs, remaining) = parse_additive(remaining)?;
+            result = Expr::Bop(
+                Bop::Bitwise(crate::ast::BitwiseBop::RightShift),
+                Box::new(result),
+                Box::new(rhs),
+            );
+            input = remaining;
+        } else {
+            break;
+        }
+    }
+    Ok((result, input))
+}
+
+fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_bitshifts(input)?;
     while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseAnd) {
-        let (rhs, remaining) = parse_additive(remaining)?;
+        let (rhs, remaining) = parse_bitshifts(remaining)?;
         result = Expr::Bop(
             Bop::Bitwise(crate::ast::BitwiseBop::And),
             Box::new(result),

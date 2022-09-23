@@ -328,6 +328,8 @@ impl BigRat {
                         BitwiseBop::And => lhs.bitwise_and(&rhs),
                         BitwiseBop::Or => lhs.bitwise_or(&rhs),
                         BitwiseBop::Xor => lhs.bitwise_xor(&rhs),
+                        BitwiseBop::LeftShift => lhs.lshift_n(&rhs, int)?,
+                        BitwiseBop::RightShift => lhs.rshift_n(&rhs, int)?,
                     };
                     Ok(result)
                 },
