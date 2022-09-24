@@ -134,9 +134,9 @@ These are all the supported operators:
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
 | `+`, `-`, `to`, `as`, `in` | | left |
 | `<<`, `>>` | | left |
-| `&` | | left |
-| `^` | | left |
-| `|` | | left |
+| `&`, `and` | | left |
+| `xor` | | left |
+| `|`, `or` | | left |
 | `\ .`, `:`, `=>` | | left |
 | `=` | | left |
 | `;` | lowest | left |

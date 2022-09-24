@@ -435,6 +435,8 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError
             "of" => Token::Symbol(Symbol::Of),
             "mod" => Token::Symbol(Symbol::Mod),
             "xor" | "XOR" => Token::Symbol(Symbol::BitwiseXor),
+            "and" | "AND" => Token::Symbol(Symbol::BitwiseAnd),
+            "or" | "OR" => Token::Symbol(Symbol::BitwiseOr),
             _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,
