@@ -137,6 +137,14 @@ jobs:
           mkdir web/documentation
           cp documentation/*.html web/documentation/
 
+      - name: Upload man page
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: man-page
+          path: documentation/fend.1
+          if-no-files-found: error
+
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v1
