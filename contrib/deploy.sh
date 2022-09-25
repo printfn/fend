@@ -183,7 +183,7 @@ echo "Building NPM package fend-wasm"
 rm -rfv wasm/pkg
 (cd wasm && wasm-pack build)
 grep 'fend_wasm_bg.js' wasm/pkg/package.json
-(cd wasm/pkg && npm publish --dry-run 2>&1)|grep "total files:"|grep 7
+(cd wasm/pkg && npm publish --dry-run 2>&1)|grep "total files:"|grep 6
 echo "Publishing npm package"
 (cd wasm/pkg && npm publish)
 
@@ -202,7 +202,7 @@ rm -rfv wasm/pkg-nodejs
 echo "Renaming package to 'fend-wasm-nodejs'..."
 jq "setpath([\"name\"]; \"fend-wasm-nodejs\")" wasm/pkg-nodejs/package.json >temp
 mv temp wasm/pkg-nodejs/package.json
-(cd wasm/pkg-nodejs && npm publish --dry-run 2>&1)|grep "total files:"|grep 6
+(cd wasm/pkg-nodejs && npm publish --dry-run 2>&1)|grep "total files:"|grep 5
 echo "Publishing npm package"
 (cd wasm/pkg-nodejs && npm publish)
 
