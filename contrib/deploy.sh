@@ -256,15 +256,14 @@ gh release --repo printfn/fend \
 manualstep "Open https://github.com/printfn/fend/releases and check \
 that the new release is correct. If it is, go ahead and publish it."
 
+HASH=$(curl -L -o - "https://github.com/printfn/fend/archive/refs/tags/v$NEW_VERSION.tar.gz" \
+    | shasum -a 256 - \
+    | grep -o '[a-f0-9]\{64\}')
+
 # AUR release
 git clone ssh://aur@aur.archlinux.org/fend.git "$TMPDIR/fend-aur"
 git -C "$TMPDIR/fend-aur" config user.name printfn
 git -C "$TMPDIR/fend-aur" config user.email printfn@users.noreply.github.com
-echo test|shasum -a 256 -|grep "^f2ca1bb6c7e907d06dafe4687e579" >/dev/null
-HASH=$(curl -L -o - "https://static.crates.io/crates/fend/fend-$NEW_VERSION.crate" \
-    | shasum -a 256 - \
-    | grep -o '[a-f0-9]\{64\}')
-echo "Hash: $HASH"
 sed "s/$OLD_VERSION/$NEW_VERSION/g" "$TMPDIR/fend-aur/.SRCINFO" \
     | sed "s/[a-f0-9]\{64\}/$HASH/" >"$TMPDIR/fend-aur/.SRCINFO_NEW"
 sed "s/$OLD_VERSION/$NEW_VERSION/" "$TMPDIR/fend-aur/PKGBUILD" \
@@ -282,9 +281,6 @@ git -C "$TMPDIR/fend-aur" push origin master
 git clone git@github.com:printfn/homebrew-fend "$TMPDIR/homebrew-fend"
 git -C "$TMPDIR/homebrew-fend" config user.name printfn
 git -C "$TMPDIR/homebrew-fend" config user.email printfn@users.noreply.github.com
-HASH=$(curl -L -o - "https://github.com/printfn/fend/archive/refs/tags/v$NEW_VERSION.tar.gz" \
-    | shasum -a 256 - \
-    | grep -o '[a-f0-9]\{64\}')
 URL_START="https://github.com/printfn/fend/archive/refs/tags"
 URL2_START="https://github.com/printfn/homebrew-fend/releases/download"
 sed "s%${URL_START}/v$OLD_VERSION.tar.gz%${URL_START}/v$NEW_VERSION.tar.gz%" \
