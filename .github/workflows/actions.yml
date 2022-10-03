@@ -125,6 +125,11 @@ jobs:
           path: target/aarch64-unknown-linux-gnu/release/fend
           if-no-files-found: error
 
+      - name: Set up Homebrew
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
       - name: Build fend-wasm
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
