@@ -43,6 +43,12 @@ Alternatively you can install fend via
 winget install fend
 ```
 
+Or using [Chocolatey](https://chocolatey.org/):
+
+```ps1
+choco install fend
+```
+
 ### macOS
 
 fend is available on [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb):
