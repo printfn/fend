@@ -36,6 +36,7 @@ The easiest way to install fend locally is via your package manager:
 | Nix                     | `nix-env -iA nixpkgs.fend`       |
 | Cargo                   | `cargo install fend`             |
 | Windows Package Manager | `winget install fend`            |
+| Chocolatey              | `choco install fend`             |
 
 Alternatively, you can manually download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
 
@@ -55,6 +56,7 @@ $ fend
 * [AUR (pre-built binary)](https://aur.archlinux.org/packages/fend-bin/)
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 * [Windows Package Manager](https://github.com/microsoft/winget-pkgs/tree/master/manifests/p/printfn/fend)
+* [Chocolatey](https://community.chocolatey.org/packages/fend)
 * [NPM fend-wasm package](https://www.npmjs.com/package/fend-wasm)
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)
 * [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
