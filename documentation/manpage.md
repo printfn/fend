@@ -20,7 +20,7 @@ _fend_ **[OPTION | FILE | EXPRESSION]...** **[\--]** **[EXPRESSION]...**
 **-v**, **-V**, **\--version**
 : Show the current version number
 
-**\--print-default-config**
+**\--default-config**
 : Print the default configuration file
 
 **-e**, **\--eval** **\<expr>**
