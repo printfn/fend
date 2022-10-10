@@ -29,14 +29,14 @@ fend is available on the web at [printfn.github.io/fend](https://printfn.github.
 
 The easiest way to install fend locally is via your package manager:
 
-| Package Manager         | Command                          |
-| ----------------------- | -------------------------------- |
-| Homebrew                | `brew install printfn/fend/fend` |
-| AUR (Arch Linux)        | `yay -Syu aur/fend-bin`          |
-| Nix                     | `nix-env -iA nixpkgs.fend`       |
-| Cargo                   | `cargo install fend`             |
-| Windows Package Manager | `winget install fend`            |
-| Chocolatey              | `choco install fend`             |
+| Package Manager         | Command                    |
+| ----------------------- | -------------------------- |
+| Homebrew                | `brew install fend`        |
+| AUR (Arch Linux)        | `yay -Syu aur/fend-bin`    |
+| Nix                     | `nix-env -iA nixpkgs.fend` |
+| Cargo                   | `cargo install fend`       |
+| Windows Package Manager | `winget install fend`      |
+| Chocolatey              | `choco install fend`       |
 
 Alternatively, you can manually download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
 
@@ -51,7 +51,7 @@ $ fend
 
 ### Packages
 
-* [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb)
+* [Homebrew](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/fend.rb)
 * [AUR (built from source)](https://aur.archlinux.org/packages/fend/)
 * [AUR (pre-built binary)](https://aur.archlinux.org/packages/fend-bin/)
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)

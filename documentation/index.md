@@ -51,10 +51,10 @@ choco install fend
 
 ### macOS
 
-fend is available on [Homebrew](https://github.com/printfn/homebrew-fend/blob/main/Formula/fend.rb):
+fend is available on [Homebrew](https://brew.sh):
 
 ```bash
-brew install printfn/fend/fend
+brew install fend
 ```
 
 ### Arch Linux

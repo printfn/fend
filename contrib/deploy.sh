@@ -278,48 +278,4 @@ git -C "$TMPDIR/fend-aur" --no-pager log --pretty=full HEAD~.. \
     | grep '^Commit: printfn <printfn@users.noreply.github.com>$'
 git -C "$TMPDIR/fend-aur" push origin master
 
-git clone git@github.com:printfn/homebrew-fend "$TMPDIR/homebrew-fend"
-git -C "$TMPDIR/homebrew-fend" config user.name printfn
-git -C "$TMPDIR/homebrew-fend" config user.email printfn@users.noreply.github.com
-URL_START="https://github.com/printfn/fend/archive/refs/tags"
-URL2_START="https://github.com/printfn/homebrew-fend/releases/download"
-sed "s%${URL_START}/v$OLD_VERSION.tar.gz%${URL_START}/v$NEW_VERSION.tar.gz%" \
-    "$TMPDIR/homebrew-fend/Formula/fend.rb" \
-    | sed "s/^  sha256 \"[0-9a-f]\{64\}\"/  sha256 \"$HASH\"/" \
-    | sed "s%root_url \"$URL2_START/v$OLD_VERSION\"%root_url \"$URL2_START/v$NEW_VERSION\"%" \
-    | grep -v "sha256 cellar:" \
-    | grep -v "^    rebuild " \
-    >"$TMPDIR/homebrew-fend/Formula/fend-new.rb"
-mv "$TMPDIR/homebrew-fend/Formula/fend-new.rb" "$TMPDIR/homebrew-fend/Formula/fend.rb"
-gitdiff "$TMPDIR/homebrew-fend" 4 6
-git -C "$TMPDIR/homebrew-fend" commit -am "fend $OLD_VERSION -> $NEW_VERSION"
-git -C "$TMPDIR/homebrew-fend" --no-pager log --pretty=full HEAD~.. \
-    | grep '^Author: printfn <printfn@users.noreply.github.com>$'
-git -C "$TMPDIR/homebrew-fend" --no-pager log --pretty=full HEAD~.. \
-    | grep '^Commit: printfn <printfn@users.noreply.github.com>$'
-git -C "$TMPDIR/homebrew-fend" push origin main
-brew uninstall printfn/fend/fend
-brew update
-brew install rust
-brew install --build-bottle --verbose printfn/fend/fend
-brew bottle --no-rebuild printfn/fend/fend
-mv "fend--$NEW_VERSION.arm64_monterey.bottle.tar.gz" \
-    "fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
-git -C "$TMPDIR/homebrew-fend" tag "v$NEW_VERSION"
-git -C "$TMPDIR/homebrew-fend" push --tags origin main
-gh release --repo printfn/homebrew-fend \
-    create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
-    --notes "v$NEW_VERSION" \
-    "fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
-manualstep "Add bottle info to $TMPDIR/homebrew-fend/Formula/fend.rb"
-#gitdiff "$TMPDIR/homebrew-fend" 2 1
-git -C "$TMPDIR/homebrew-fend" commit -am \
-    "v$NEW_VERSION: Add reference to fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
-git -C "$TMPDIR/homebrew-fend" push origin main
-brew uninstall printfn/fend/fend
-brew update
-brew install printfn/fend/fend
-manualstep "Make sure the bottle was used"
-
-rm "fend-$NEW_VERSION.arm64_monterey.bottle.tar.gz"
 rm -rf "$TMPDIR"
