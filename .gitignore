@@ -1,5 +1,17 @@
 /documentation/fend.1
+
 /target/
+
+/telegram-bot/lambda_package.zip
+/telegram-bot/node_modules/
+/telegram-bot/package-lock.json
+/telegram-bot/telegram_api_token.js
+
 /web/documentation/
 /web/fend-icon-128.png
 /web/pkg/
+
+/windows-msix/build/
+/windows-msix/fend-windows-x64.msix
+
+/windows-wix/build/
