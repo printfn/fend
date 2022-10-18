@@ -1,6 +1,7 @@
 #![allow(unused_unsafe)]
 
 use instant::Instant;
+use std::fmt::Write;
 use wasm_bindgen::prelude::*;
 
 struct TimeoutInterrupt {
@@ -88,6 +89,55 @@ pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String
         };
     }
     result
+}
+
+fn decode_hex(s: &str) -> Result<Vec<u8>, String> {
+    (0..s.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+        .collect::<Result<Vec<u8>, std::num::ParseIntError>>()
+        .map_err(|e| e.to_string())
+}
+
+#[wasm_bindgen(js_name = evaluateFendWithVariablesJson)]
+pub fn evaluate_fend_with_variables_json(input: &str, timeout: u32, variables: &str) -> String {
+    let mut ctx = create_context();
+    if !variables.is_empty() {
+        let variables = decode_hex(variables).unwrap();
+        ctx.deserialize_variables(&mut variables.as_slice())
+            .unwrap();
+    }
+    let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
+    match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
+        Ok(res) => {
+            let escaped_result = {
+                let mut escaped_result = String::new();
+                if !res.is_unit_type() {
+                    fend_core::json::escape_string(res.get_main_result(), &mut escaped_result);
+                }
+                escaped_result
+            };
+            let variables = {
+                let mut vars_vec = vec![];
+                // if we can't serialize variables just ignore it and return an empty string
+                let _ = ctx.serialize_variables(&mut vars_vec);
+                let mut hex = String::new();
+                for b in &vars_vec {
+                    write!(hex, "{:02x}", b).unwrap();
+                }
+                hex
+            };
+            format!(
+                r#"{{"ok":true,"result":"{}","variables":"{}"}}"#,
+                escaped_result, variables
+            )
+        }
+        Err(msg) => {
+            let mut escaped = String::new();
+            fend_core::json::escape_string(&msg, &mut escaped);
+            format!(r#"{{"ok":false,"message":"{}"}}"#, escaped)
+        }
+    }
 }
 
 #[wasm_bindgen(js_name = substituteInlineFendExpressions)]

@@ -28,7 +28,8 @@ mod format;
 mod ident;
 mod inline_substitutions;
 mod interrupt;
-mod json;
+/// This module is not meant to be used by other crates. It may change or be removed at any point.
+pub mod json;
 mod lexer;
 mod num;
 mod parser;

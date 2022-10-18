@@ -1,4 +1,7 @@
-pub(crate) fn escape_string(input: &str, out: &mut String) {
+/// The method is not meant to be used by other crates! It may change
+/// or be removed in the future, with no regard for backwards compatibility.
+#[allow(clippy::missing_panics_doc)]
+pub fn escape_string(input: &str, out: &mut String) {
     for ch in input.chars() {
         match ch {
             '\\' => out.push_str("\\\\"),
