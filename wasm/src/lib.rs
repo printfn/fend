@@ -103,9 +103,9 @@ fn decode_hex(s: &str) -> Result<Vec<u8>, String> {
 pub fn evaluate_fend_with_variables_json(input: &str, timeout: u32, variables: &str) -> String {
     let mut ctx = create_context();
     if !variables.is_empty() {
-        let variables = decode_hex(variables).unwrap();
-        ctx.deserialize_variables(&mut variables.as_slice())
-            .unwrap();
+        if let Ok(variables) = decode_hex(variables) {
+            let _ = ctx.deserialize_variables(&mut variables.as_slice());
+        }
     }
     let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
     match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
