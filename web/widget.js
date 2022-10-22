@@ -12,77 +12,80 @@ let history = [];
 let variables = "";
 let navigation = 0;
 
-// allow multiple lines to be entered if shift, ctrl
-// or meta is held, otherwise evaluate the expression
 async function evaluate(event) {
-    if (EVALUATE_KEY == event.keyCode && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
-        event.preventDefault();
+    // allow multiple lines to be entered if shift, ctrl
+    // or meta is held, otherwise evaluate the expression
+    if (!(event.keyCode == EVALUATE_KEY && !event.shiftKey && !event.ctrlKey && !event.metaKey)) {
+        return;
+    }
 
-        if (inputText.value == "clear") {
-            output.innerHTML = "";
-            inputText.value = "";
-            inputHint.innerText = "";
-            return;
-        }
+    event.preventDefault();
 
-        let request = document.createElement("p");
-        let result = document.createElement("p");
-
-        request.innerText = "> " + inputText.value;
-
-        if (isInputFilled()) {
-            history.push(inputText.value);
-        }
-
-        navigateEnd();
-
-        const fendResult = JSON.parse(evaluateFendWithVariablesJson(inputText.value, 500, variables));
-
+    if (inputText.value == "clear") {
+        output.innerHTML = "";
         inputText.value = "";
         inputHint.innerText = "";
-
-        console.log(result);
-
-        result.innerText = fendResult.ok ? fendResult.result : fendResult.message;
-        if (fendResult.ok && fendResult.variables.length > 0) {
-            variables = fendResult.variables;
-        }
-
-        output.appendChild(request);
-        output.appendChild(result);
-
-        inputHint.scrollIntoView();
+        return;
     }
+
+    let request = document.createElement("p");
+    let result = document.createElement("p");
+
+    request.innerText = "> " + inputText.value;
+
+    if (isInputFilled()) {
+        history.push(inputText.value);
+    }
+
+    navigateEnd();
+
+    const fendResult = JSON.parse(evaluateFendWithVariablesJson(inputText.value, 500, variables));
+
+    inputText.value = "";
+    inputHint.innerText = "";
+
+    console.log(fendResult);
+
+    result.innerText = fendResult.ok ? fendResult.result : fendResult.message;
+    if (fendResult.ok && fendResult.variables.length > 0) {
+        variables = fendResult.variables;
+    }
+
+    output.appendChild(request);
+    output.appendChild(result);
+
+    inputHint.scrollIntoView();
 }
 
 function navigate(event) {
-    if (NAVIGATE_UP_KEY == event.keyCode || NAVIGATE_DOWN_KEY == event.keyCode) {
-        if (navigation > 0) {
-            if (NAVIGATE_UP_KEY == event.keyCode) {
-                event.preventDefault();
-
-                navigateBackwards();
-            }
-
-            else if (NAVIGATE_DOWN_KEY == event.keyCode) {
-                event.preventDefault();
-
-                navigateForwards();
-            }
-
-        } else if (!isInputFilled() && history.length > 0 && NAVIGATE_UP_KEY == event.keyCode) {
+    if (![NAVIGATE_UP_KEY, NAVIGATE_DOWN_KEY].includes(event.keyCode)) {
+        return;
+    }
+    if (navigation > 0) {
+        if (NAVIGATE_UP_KEY == event.keyCode) {
             event.preventDefault();
 
-            navigateBegin();
+            navigateBackwards();
         }
 
-        if (navigation > 0) {
-            navigateSet();
+        else if (NAVIGATE_DOWN_KEY == event.keyCode) {
+            event.preventDefault();
+
+            navigateForwards();
         }
 
-        updateReplicatedText();
-        updateHint();
+    } else if (!isInputFilled() && history.length > 0 && NAVIGATE_UP_KEY == event.keyCode) {
+        event.preventDefault();
+
+        navigateBegin();
     }
+
+    if (navigation > 0) {
+        navigateSet();
+    }
+
+    updateReplicatedText();
+    updateHint();
 }
 
 function navigateBackwards() {
