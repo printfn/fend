@@ -2,15 +2,28 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-npm install
+a() {
+    aws --no-cli-pager --region ap-southeast-2 "$@"
+}
 
-echo "exports.TELEGRAM_API_TOKEN = '$TELEGRAM_BOT_API_TOKEN'" >telegram_api_token.js
+echo "Updating function configuration..."
 
-rm -f lambda_package.zip
-zip -r lambda_package.zip \
-    node_modules/ index.js telegram_api_token.js \
-    package.json package-lock.json
+# # Warning:
+#
+# The `update-function-configuration` and `update-function-code` commands
+# print all environment variables, including the Telegram Bot API token,
+# so we redirect the output to /dev/null.
 
-aws --no-cli-pager --region ap-southeast-2 lambda update-function-code \
+a lambda update-function-configuration \
     --function-name fend-telegram-bot \
-    --zip-file fileb://lambda_package.zip
+    --environment "Variables={TELEGRAM_BOT_API_TOKEN=$TELEGRAM_BOT_API_TOKEN}" >/dev/null
+
+a lambda wait function-updated-v2 --function-name fend-telegram-bot
+
+echo "Updating function code..."
+
+a lambda update-function-code \
+    --function-name fend-telegram-bot \
+    --zip-file fileb://lambda_package.zip >/dev/null
+
+a lambda wait function-updated-v2 --function-name fend-telegram-bot

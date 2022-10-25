@@ -5,7 +5,6 @@
 /telegram-bot/lambda_package.zip
 /telegram-bot/node_modules/
 /telegram-bot/package-lock.json
-/telegram-bot/telegram_api_token.js
 
 /web/documentation/
 /web/fend-icon-128.png

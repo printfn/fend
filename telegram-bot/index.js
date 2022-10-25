@@ -1,14 +1,15 @@
 const fend = require('fend-wasm-nodejs');
-const TELEGRAM_API_TOKEN = require('./telegram_api_token.js').TELEGRAM_API_TOKEN;
 const https = require("https");
+
+const TELEGRAM_BOT_API_TOKEN = process.env.TELEGRAM_BOT_API_TOKEN;
 
 fend.initialise();
 
 /*
 Setting a webhook:
-TELEGRAM_API_TOKEN="..."
+TELEGRAM_BOT_API_TOKEN="..."
 LAMBDA_URL="..."
-curl "https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/setWebhook" --form-string "url=${LAMBDA_URL}"
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/setWebhook" --form-string "url=${LAMBDA_URL}"
 */
 
 const processInput = (input, chatType) => {
@@ -39,7 +40,7 @@ const processMessage = async (message) => {
     let text = message.text;
     let result = processInput(text, message.chat.type);
     if (result != null && result != '') {
-        await postJSON(`https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/sendMessage`, {
+        await postJSON(`https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/sendMessage`, {
             chat_id: message.chat.id,
             text: result,
             disable_web_page_preview: true,
@@ -61,7 +62,7 @@ const processUpdate = async (update) => {
         if (result != null && result != '') {
             results.push({type: 'article', title: result, id: '1', input_message_content: {message_text: result}});
         }
-        await postJSON(`https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/answerInlineQuery`, {
+        await postJSON(`https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/answerInlineQuery`, {
             inline_query_id: update.inline_query.id,
             results,
         });
@@ -73,7 +74,7 @@ const pollUpdates = async () => {
         var highestOffet = 441392434;
         while (true) {
             console.log('Polling getUpdates (30s)...')
-            let updates = await postJSON(`https://api.telegram.org/bot${TELEGRAM_API_TOKEN}/getUpdates`, {
+            let updates = await postJSON(`https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/getUpdates`, {
                 timeout: 30,
                 offset: highestOffet + 1,
             });
