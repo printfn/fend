@@ -112,23 +112,13 @@ fi
 
 echo "Bumping version numbers..."
 
-# version number in fend-core
+# fend workspace Cargo.toml x2
 sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
-    core/Cargo.toml >temp
-mv temp core/Cargo.toml
-
-# fend cli TOML x2
-sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
-    cli/Cargo.toml | \
+    Cargo.toml | \
     sed "s/^fend-core = { version = \"$OLD_VERSION\"/fend-core = { version = \"$NEW_VERSION\"/" >temp
-mv temp cli/Cargo.toml
+mv temp Cargo.toml
 
-# wasm TOML
-sed "s/^version = \"$OLD_VERSION\"$/version = \"$NEW_VERSION\"/" \
-    wasm/Cargo.toml >temp
-mv temp wasm/Cargo.toml
-
-gitdiff "" 7 7
+gitdiff "" 3 3
 
 manualstep "Add changelog to CHANGELOG.md"
 
