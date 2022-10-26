@@ -711,7 +711,14 @@ pub(crate) fn query_unit<'a>(
     if ident == "USD" {
         return Some(("USD", "USD", "!"));
     }
-    if let Ok(idx) = CURRENCY_IDENTIFIERS.binary_search(&ident) {
+    if let Ok(idx) = CURRENCY_IDENTIFIERS.binary_search(
+        &if case_sensitive {
+            ident.to_string()
+        } else {
+            ident.to_uppercase()
+        }
+        .as_str(),
+    ) {
         let name = CURRENCY_IDENTIFIERS[idx];
         return Some((name, name, "$CURRENCY"));
     }
@@ -777,5 +784,12 @@ mod tests {
         let mut sorted = currencies.clone();
         sorted.sort_unstable();
         assert_eq!(currencies, sorted, "currencies are not sorted");
+    }
+
+    #[test]
+    fn lowercase_currency() {
+        assert!(query_unit("usd", true, true).is_none());
+        assert!(query_unit("usd", true, false).is_some());
+        assert!(query_unit("USD", true, false).is_some());
     }
 }
