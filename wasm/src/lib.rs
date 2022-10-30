@@ -1,8 +1,13 @@
 #![allow(unused_unsafe)]
 
 use instant::Instant;
+use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::fmt::Write;
+use std::{error, fmt};
 use wasm_bindgen::prelude::*;
+
+thread_local!(static CURRENCY_DATA: RefCell<BTreeMap<String, f64>> = RefCell::new(BTreeMap::new()));
 
 struct TimeoutInterrupt {
     start: Instant,
@@ -27,6 +32,18 @@ impl fend_core::Interrupt for TimeoutInterrupt {
 #[wasm_bindgen]
 pub fn initialise() {}
 
+#[wasm_bindgen(js_name = initialiseWithHandlers)]
+pub fn initialise_with_handlers(currency_data: js_sys::Map) {
+    initialise();
+    CURRENCY_DATA.with(|cell| {
+        assert!(cell.borrow().is_empty());
+        let mut rust_data = cell.borrow_mut();
+        currency_data.for_each(&mut |value, key| {
+            rust_data.insert(key.as_string().unwrap(), value.as_f64().unwrap());
+        });
+    });
+}
+
 // These two functions should be merged at some point, but that would be a breaking
 // API change.
 
@@ -40,6 +57,31 @@ fn random_u32() -> u32 {
     (random_f64 * f64::from(u32::MAX)) as u32
 }
 
+#[derive(Debug, Clone)]
+struct UnknownExchangeRate(String);
+
+impl fmt::Display for UnknownExchangeRate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "currency exchange rate for {} is unknown", self.0)
+    }
+}
+
+impl error::Error for UnknownExchangeRate {}
+
+impl From<UnknownExchangeRate> for JsValue {
+    fn from(err: UnknownExchangeRate) -> Self {
+        JsValue::from(format!("{}", err))
+    }
+}
+
+fn currency_handler(currency: &str) -> Result<f64, Box<dyn error::Error + Send + Sync + 'static>> {
+    CURRENCY_DATA.with(|currency_data| match currency_data.borrow().get(currency) {
+        None => Err(Box::new(UnknownExchangeRate(currency.to_string()))
+            as Box<dyn error::Error + Send + Sync>),
+        Some(rate) => Ok(*rate),
+    })
+}
+
 fn create_context() -> fend_core::Context {
     let mut ctx = fend_core::Context::new();
     let date = js_sys::Date::new_0();
@@ -48,6 +90,11 @@ fn create_context() -> fend_core::Context {
         date.get_timezone_offset() as i64 * 60,
     );
     ctx.set_random_u32_fn(random_u32);
+    CURRENCY_DATA.with(|currency_data| {
+        if !currency_data.borrow().is_empty() {
+            ctx.set_exchange_rate_handler_v1(currency_handler);
+        }
+    });
     ctx
 }
 
