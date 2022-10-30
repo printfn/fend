@@ -34,6 +34,7 @@ pub fn initialise() {}
 
 #[wasm_bindgen(js_name = initialiseWithHandlers)]
 pub fn initialise_with_handlers(currency_data: js_sys::Map) {
+    initialise();
     CURRENCY_DATA.with(|cell| {
         assert!(cell.borrow().is_empty());
         let mut rust_data = cell.borrow_mut();
