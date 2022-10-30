@@ -1,11 +1,11 @@
 #![allow(unused_unsafe)]
 
 use instant::Instant;
-use std::fmt::Write;
-use wasm_bindgen::prelude::*;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::fmt::Write;
 use std::{error, fmt};
+use wasm_bindgen::prelude::*;
 
 thread_local!(static CURRENCY_DATA: RefCell<BTreeMap<String, f64>> = RefCell::new(BTreeMap::new()));
 
@@ -38,7 +38,7 @@ pub fn initialise_with_handlers(currency_data: js_sys::Map) {
         assert!(cell.borrow().is_empty());
         let mut rust_data = cell.borrow_mut();
         currency_data.for_each(&mut |value, key| {
-           rust_data.insert(key.as_string().unwrap(), value.as_f64().unwrap());
+            rust_data.insert(key.as_string().unwrap(), value.as_f64().unwrap());
         });
     });
 }
@@ -74,11 +74,10 @@ impl From<UnknownExchangeRate> for JsValue {
 }
 
 fn currency_handler(currency: &str) -> Result<f64, Box<dyn error::Error + Send + Sync + 'static>> {
-    CURRENCY_DATA.with(|currency_data| {
-        match currency_data.borrow().get(currency) {
-            None => Err(Box::new(UnknownExchangeRate(currency.to_string())) as Box<dyn error::Error + Send + Sync>),
-            Some(rate) => Ok(*rate)
-        }
+    CURRENCY_DATA.with(|currency_data| match currency_data.borrow().get(currency) {
+        None => Err(Box::new(UnknownExchangeRate(currency.to_string()))
+            as Box<dyn error::Error + Send + Sync>),
+        Some(rate) => Ok(*rate),
     })
 }
 
