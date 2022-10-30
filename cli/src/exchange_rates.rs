@@ -65,9 +65,10 @@ fn parse_exchange_rates(exchange_rates: &str) -> Result<Vec<(String, f64)>, Erro
         if !exchange_rate_eur.is_normal() {
             return Err(err.into());
         }
-        result.push((currency.to_string(), exchange_rate_eur));
         if currency == "USD" {
             one_eur_in_usd = Some(exchange_rate_eur);
+        } else {
+            result.push((currency.to_string(), exchange_rate_eur));
         }
     }
     if result.len() < 10 {
