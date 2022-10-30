@@ -708,9 +708,6 @@ pub(crate) fn query_unit<'a>(
             }
         }
     }
-    if ident == "USD" {
-        return Some(("USD", "USD", "!"));
-    }
     if let Ok(idx) = CURRENCY_IDENTIFIERS.binary_search(
         &if case_sensitive {
             ident.to_string()
@@ -720,6 +717,9 @@ pub(crate) fn query_unit<'a>(
         .as_str(),
     ) {
         let name = CURRENCY_IDENTIFIERS[idx];
+        if name == "USD" {
+            return Some(("USD", "USD", "!"));
+        }
         return Some((name, name, "$CURRENCY"));
     }
     let mut candidates = vec![];

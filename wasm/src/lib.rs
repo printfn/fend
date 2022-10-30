@@ -39,7 +39,11 @@ pub fn initialise_with_handlers(currency_data: js_sys::Map) {
         assert!(cell.borrow().is_empty());
         let mut rust_data = cell.borrow_mut();
         currency_data.for_each(&mut |value, key| {
-            rust_data.insert(key.as_string().unwrap(), value.as_f64().unwrap());
+            let key = key.as_string().unwrap();
+            if key == "USD" {
+                panic!("Cannot set a value for the base currency USD");
+            }
+            rust_data.insert(key, value.as_f64().unwrap());
         });
     });
 }

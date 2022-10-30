@@ -103,6 +103,9 @@ impl fmt::Display for UnknownExchangeRate {
 impl error::Error for UnknownExchangeRate {}
 
 pub fn exchange_rate_handler(currency: &str) -> Result<f64, Error> {
+    if currency == "USD" {
+        panic!();
+    }
     let exchange_rates = get_exchange_rates()?;
     for (c, rate) in exchange_rates {
         if currency == c {
