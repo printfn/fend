@@ -606,6 +606,7 @@ const NAUTICAL_UNITS: &[UnitTuple] = &[
 ];
 
 const CURRENCIES: &[UnitTuple] = &[
+    ("BASE_CURRENCY", "BASE_CURRENCY", "!", ""),
     ("dollar", "dollars", "USD", ""),
     ("cent", "cents", "0.01 USD", ""),
     ("US$", "US$", "USD", ""),
@@ -717,9 +718,6 @@ pub(crate) fn query_unit<'a>(
         .as_str(),
     ) {
         let name = CURRENCY_IDENTIFIERS[idx];
-        if name == "USD" {
-            return Some(("USD", "USD", "!"));
-        }
         return Some((name, name, "$CURRENCY"));
     }
     let mut candidates = vec![];

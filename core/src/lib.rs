@@ -285,10 +285,9 @@ impl Context {
         }
     }
 
-    /// Set a handler function for loading exchange rates. All exchange rates must be relative to
-    /// 1 USD. Note: the handler function will never be called for the currency "USD".
-    pub fn set_exchange_rate_handler_v1(&mut self, get_exchange_rate_1_usd: ExchangeRateFn) {
-        self.get_exchange_rate = Some(get_exchange_rate_1_usd);
+    /// Set a handler function for loading exchange rates.
+    pub fn set_exchange_rate_handler_v1(&mut self, get_exchange_rate: ExchangeRateFn) {
+        self.get_exchange_rate = Some(get_exchange_rate);
     }
 }
 
@@ -443,6 +442,7 @@ pub mod test_utils {
         currency: &str,
     ) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>> {
         Ok(match currency {
+            "USD" => 1.0,
             "GBP" => 0.9,
             "NZD" => 1.5,
             "EUR" => 1.0,

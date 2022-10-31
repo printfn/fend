@@ -51,7 +51,6 @@ fn load_exchange_rate_xml() -> Result<(String, bool), Error> {
 fn parse_exchange_rates(exchange_rates: &str) -> Result<Vec<(String, f64)>, Error> {
     let err = "failed to load exchange rates";
     let mut result = vec![("EUR".to_string(), 1.0)];
-    let mut one_eur_in_usd = None;
     for l in exchange_rates.lines() {
         let l = l.trim();
         if !l.starts_with("<Cube currency=") {
@@ -65,19 +64,10 @@ fn parse_exchange_rates(exchange_rates: &str) -> Result<Vec<(String, f64)>, Erro
         if !exchange_rate_eur.is_normal() {
             return Err(err.into());
         }
-        if currency == "USD" {
-            one_eur_in_usd = Some(exchange_rate_eur);
-        } else {
-            result.push((currency.to_string(), exchange_rate_eur));
-        }
+        result.push((currency.to_string(), exchange_rate_eur));
     }
     if result.len() < 10 {
         return Err(err.into());
-    }
-    let one_eur_in_usd = one_eur_in_usd.ok_or(err)?;
-    for (_, exchange_rate) in &mut result {
-        // exchange rate currently represents 1 EUR, but we want it to be 1 USD instead
-        *exchange_rate /= one_eur_in_usd;
     }
     Ok(result)
 }
@@ -103,9 +93,6 @@ impl fmt::Display for UnknownExchangeRate {
 impl error::Error for UnknownExchangeRate {}
 
 pub fn exchange_rate_handler(currency: &str) -> Result<f64, Error> {
-    if currency == "USD" {
-        panic!();
-    }
     let exchange_rates = get_exchange_rates()?;
     for (c, rate) in exchange_rates {
         if currency == c {
