@@ -442,10 +442,9 @@ pub mod test_utils {
         currency: &str,
     ) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>> {
         Ok(match currency {
-            "USD" => 1.0,
+            "EUR" | "USD" => 1.0,
             "GBP" => 0.9,
             "NZD" => 1.5,
-            "EUR" => 1.0,
             "HKD" => 8.0,
             "AUD" => 1.3,
             _ => panic!("unknown currency {currency}"),

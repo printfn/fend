@@ -1,5 +1,17 @@
 ## Changelog
 
+### Unreleased
+
+* Add `and` and `or` keywords as alternatives to the `&` and `|` bitwise operators
+* Add Homebrew package (by [@rhysmdnz](https://github.com/rhysmdnz))
+* Add Chocolatey package (by [@dgalbraith](https://github.com/dgalbraith))
+* Fix incorrect description of command-line arguments in
+    man page (by [@mcint](https://github.com/mcint))
+* Improve performance of fend-web by serializing/storing variables properly
+* Support case-insensitive currencies
+* Support currency exchange rates in fend-wasm (by [@NickGeek](https://github.com/NickGeek))
+* Support using any base currency for exchange rate calculations, not just USD
+
 ### v1.1.1 (2022-09-23)
 
 * Add bitwise operators:
