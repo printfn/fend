@@ -7,7 +7,8 @@
 * Add Chocolatey package (by [@dgalbraith](https://github.com/dgalbraith))
 * Fix incorrect description of command-line arguments in
     man page (by [@mcint](https://github.com/mcint))
-* Improve performance of fend-web by serializing/storing variables properly
+* Support `_` in fend-web (stores the previous answer)
+* Improve fend-web performance by serializing/storing variables properly
 * Support case-insensitive currencies
 * Support currency exchange rates in fend-wasm (by [@NickGeek](https://github.com/NickGeek))
 * Support using any base currency for exchange rate calculations, not just USD
