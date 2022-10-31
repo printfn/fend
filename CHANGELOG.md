@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.1.2 (2022-10-31)
 
 * Add `and` and `or` keywords as alternatives to the `&` and `|` bitwise operators
 * Add Homebrew package (by [@rhysmdnz](https://github.com/rhysmdnz))
