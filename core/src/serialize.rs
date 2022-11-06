@@ -71,7 +71,7 @@ pub(crate) fn deserialize_string(read: &mut impl io::Read) -> Result<String, Fen
 }
 
 pub(crate) fn serialize_bool(value: bool, write: &mut impl io::Write) -> io::Result<()> {
-    write.write_all(&[if value { 1 } else { 0 }])
+    write.write_all(&[u8::from(value)])
 }
 
 pub(crate) fn deserialize_bool(read: &mut impl io::Read) -> Result<bool, FendError> {

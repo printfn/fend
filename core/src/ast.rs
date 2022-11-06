@@ -344,7 +344,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::Bop(Bop::Pow, a, b) => {
             let lhs = eval!(*a)?;
-            if should_compute_inverse(&*b, int)? {
+            if should_compute_inverse(&b, int)? {
                 let result = match &lhs {
                     Value::BuiltInFunction(f) => Some(f.invert()?),
                     Value::Fn(_, _, _) => return Err(FendError::InversesOfLambdasUnsupported),
