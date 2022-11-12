@@ -137,7 +137,7 @@ impl Real {
                     return Ok(-Self::sin(-s, int)?);
                 }
                 if let Ok(integer) = n.clone().mul(&6.into(), int)?.try_as_usize(int) {
-                    // values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
+                    // values from https://en.wikipedia.org/wiki/Exact_trigonometric_values
                     if integer % 6 == 0 {
                         return Ok(Exact::new(Self::from(0), true));
                     } else if integer % 12 == 3 {

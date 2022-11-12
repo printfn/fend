@@ -2794,7 +2794,7 @@ fn builtin_function_name_base() {
     test_eval("base", "base");
 }
 
-// values from https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals#Table_of_some_common_angles
+// values from https://en.wikipedia.org/wiki/Exact_trigonometric_values
 #[test]
 fn sin_0() {
     test_eval("sin 0", "0");
@@ -5408,7 +5408,11 @@ fn test_d6() {
 
 #[test]
 fn test_2d6() {
-    test_eval_simple("2d6", "{ 2: 2.78%, 3: 5.56%, 4: 8.33%, 5: 11.11%, 6: 13.89%, 7: 16.67%, 8: 13.89%, 9: 11.11%, 10: 8.33%, 11: 5.56%, 12: 2.78% }")
+    test_eval_simple(
+        "2d6",
+        "{ 2: 2.78%, 3: 5.56%, 4: 8.33%, 5: 11.11%, \
+        6: 13.89%, 7: 16.67%, 8: 13.89%, 9: 11.11%, 10: 8.33%, 11: 5.56%, 12: 2.78% }",
+    )
 }
 
 #[test]

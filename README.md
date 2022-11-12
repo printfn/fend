@@ -38,7 +38,8 @@ The easiest way to install fend locally is via your package manager:
 | Windows Package Manager | `winget install fend`      |
 | Chocolatey              | `choco install fend`       |
 
-Alternatively, you can manually download the latest stable binaries [here](https://github.com/printfn/fend/releases/latest).
+Alternatively, you can manually download the latest stable binaries
+[here](https://github.com/printfn/fend/releases/latest).
 
 Once fend is installed, run `fend` to start a REPL session:
 
