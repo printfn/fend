@@ -10,6 +10,7 @@ pub enum Base {
     Magenta,
     Cyan,
     White,
+    Color256(u8),
     Unknown(String),
 }
 
@@ -19,11 +20,18 @@ impl<'de> serde::de::Visitor<'de> for BaseVisitor {
     type Value = Base;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter
-            .write_str("`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan` or `white`")
+        formatter.write_str(
+            "`black`, `red`, `green`, `yellow`, `blue`, `magenta`, \
+                `cyan`, `white` or `256:n` (e.g. `256:42`)",
+        )
     }
 
     fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
+        if let Some(color_n) = v.strip_prefix("256:") {
+            if let Ok(n) = color_n.parse::<u8>() {
+                return Ok(Base::Color256(n));
+            }
+        }
         Ok(match v {
             "black" => Base::Black,
             "red" => Base::Red,
@@ -55,6 +63,7 @@ impl Base {
             Self::Magenta => console::Color::Magenta,
             Self::Cyan => console::Color::Cyan,
             Self::White | Self::Unknown(_) => console::Color::White,
+            Self::Color256(n) => console::Color::Color256(*n),
         }
     }
 

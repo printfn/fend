@@ -30,8 +30,10 @@ unknown-settings = 'warn'
 #   bold:       whether or not to show text in bold font
 #   underline:  whether or not to underline text
 #
-# Valid colors are black, red, green, yellow, blue,
-#   magenta, cyan and white.
+# Valid colors are:
+#   * 'black', 'red', 'green', 'yellow', 'blue',
+#       'magenta', 'cyan' or 'white'
+#   * '256:n' (where `n` is a number between 0 and 255).
 #
 [colors]
 number = {}
