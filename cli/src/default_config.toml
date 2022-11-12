@@ -1,5 +1,5 @@
 # Choose whether or not colors should be enabled. Possible
-# values are 'never', 'auto' (default) or 'always'.
+# values are 'never', 'auto' (default) or 'always'
 enable-colors = 'auto'
 
 # Maximum number of calculations to store in fend's
@@ -29,6 +29,9 @@ unknown-settings = 'warn'
 #   foreground: the foreground color to use
 #   bold:       whether or not to show text in bold font
 #   underline:  whether or not to underline text
+#
+# Valid colors are black, red, green, yellow, blue,
+#   magenta, cyan and white.
 #
 [colors]
 number = {}

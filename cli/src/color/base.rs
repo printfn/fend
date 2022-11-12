@@ -20,7 +20,7 @@ impl<'de> serde::de::Visitor<'de> for BaseVisitor {
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
-            .write_str("`black`, `red`, `green`, `yellow`, `blue`, `purple`, `cyan` or `white`")
+            .write_str("`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan` or `white`")
     }
 
     fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
@@ -30,7 +30,7 @@ impl<'de> serde::de::Visitor<'de> for BaseVisitor {
             "green" => Base::Green,
             "yellow" => Base::Yellow,
             "blue" => Base::Blue,
-            "purple" => Base::Magenta,
+            "magenta" | "purple" => Base::Magenta,
             "cyan" => Base::Cyan,
             "white" => Base::White,
             unknown_color_name => Base::Unknown(unknown_color_name.to_string()),
