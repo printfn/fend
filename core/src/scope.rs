@@ -2,6 +2,7 @@ use crate::error::FendError;
 use crate::ident::Ident;
 use crate::serialize::{deserialize_bool, serialize_bool};
 use crate::value::Value;
+use crate::Attrs;
 use crate::{ast::Expr, error::Interrupt};
 use std::io;
 use std::sync::Arc;
@@ -15,12 +16,13 @@ enum ScopeValue {
 impl ScopeValue {
     fn eval<I: Interrupt>(
         &self,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Value, FendError> {
         match self {
             Self::LazyVariable(expr, scope) => {
-                let value = crate::ast::evaluate(expr.clone(), scope.clone(), context, int)?;
+                let value = crate::ast::evaluate(expr.clone(), scope.clone(), attrs, context, int)?;
                 Ok(value)
             }
         }
@@ -108,16 +110,17 @@ impl Scope {
     pub(crate) fn get<I: Interrupt>(
         &self,
         ident: &Ident,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Option<Value>, FendError> {
         if self.ident.as_str() == ident.as_str() {
-            let value = self.value.eval(context, int)?;
+            let value = self.value.eval(attrs, context, int)?;
             Ok(Some(value))
         } else {
             self.inner
                 .as_ref()
-                .map_or_else(|| Ok(None), |inner| inner.get(ident, context, int))
+                .map_or_else(|| Ok(None), |inner| inner.get(ident, attrs, context, int))
         }
     }
 }

@@ -6,6 +6,7 @@ use crate::num::{Base, FormattingStyle, Number};
 use crate::scope::Scope;
 use crate::serialize::{deserialize_u8, serialize_u8};
 use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
+use crate::Attrs;
 use std::sync::Arc;
 use std::{fmt, io};
 
@@ -248,36 +249,57 @@ impl Expr {
 
     pub(crate) fn format<I: Interrupt>(
         &self,
+        attrs: Attrs,
         ctx: &crate::Context,
         int: &I,
     ) -> Result<String, FendError> {
         Ok(match self {
             Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
-            Self::Literal(v) => v.format_to_plain_string(0, ctx, int)?,
+            Self::Literal(v) => v.format_to_plain_string(0, attrs, ctx, int)?,
             Self::Ident(ident) => ident.to_string(),
-            Self::Parens(x) => format!("({})", x.format(ctx, int)?),
-            Self::UnaryMinus(x) => format!("(-{})", x.format(ctx, int)?),
-            Self::UnaryPlus(x) => format!("(+{})", x.format(ctx, int)?),
-            Self::UnaryDiv(x) => format!("(/{})", x.format(ctx, int)?),
-            Self::Factorial(x) => format!("{}!", x.format(ctx, int)?),
+            Self::Parens(x) => format!("({})", x.format(attrs, ctx, int)?),
+            Self::UnaryMinus(x) => format!("(-{})", x.format(attrs, ctx, int)?),
+            Self::UnaryPlus(x) => format!("(+{})", x.format(attrs, ctx, int)?),
+            Self::UnaryDiv(x) => format!("(/{})", x.format(attrs, ctx, int)?),
+            Self::Factorial(x) => format!("{}!", x.format(attrs, ctx, int)?),
             Self::Bop(op, a, b) => {
-                format!("({}{op}{})", a.format(ctx, int)?, b.format(ctx, int)?)
+                format!(
+                    "({}{op}{})",
+                    a.format(attrs, ctx, int)?,
+                    b.format(attrs, ctx, int)?
+                )
             }
-            Self::Apply(a, b) => format!("({} ({}))", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Apply(a, b) => format!(
+                "({} ({}))",
+                a.format(attrs, ctx, int)?,
+                b.format(attrs, ctx, int)?
+            ),
             Self::ApplyFunctionCall(a, b) | Self::ApplyMul(a, b) => {
-                format!("({} {})", a.format(ctx, int)?, b.format(ctx, int)?)
+                format!(
+                    "({} {})",
+                    a.format(attrs, ctx, int)?,
+                    b.format(attrs, ctx, int)?
+                )
             }
-            Self::As(a, b) => format!("({} as {})", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::As(a, b) => format!(
+                "({} as {})",
+                a.format(attrs, ctx, int)?,
+                b.format(attrs, ctx, int)?
+            ),
             Self::Fn(a, b) => {
                 if a.as_str().contains('.') {
-                    format!("({a}:{})", b.format(ctx, int)?)
+                    format!("({a}:{})", b.format(attrs, ctx, int)?)
                 } else {
-                    format!("\\{a}.{}", b.format(ctx, int)?)
+                    format!("\\{a}.{}", b.format(attrs, ctx, int)?)
                 }
             }
-            Self::Of(a, b) => format!("{a} of {}", b.format(ctx, int)?),
-            Self::Assign(a, b) => format!("{a} = {}", b.format(ctx, int)?),
-            Self::Statements(a, b) => format!("{}; {}", a.format(ctx, int)?, b.format(ctx, int)?),
+            Self::Of(a, b) => format!("{a} of {}", b.format(attrs, ctx, int)?),
+            Self::Assign(a, b) => format!("{a} = {}", b.format(attrs, ctx, int)?),
+            Self::Statements(a, b) => format!(
+                "{}; {}",
+                a.format(attrs, ctx, int)?,
+                b.format(attrs, ctx, int)?
+            ),
         })
     }
 }
@@ -306,18 +328,19 @@ fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> Result<bool, Fen
 pub(crate) fn evaluate<I: Interrupt>(
     expr: Expr,
     scope: Option<Arc<Scope>>,
+    attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value, FendError> {
     macro_rules! eval {
         ($e:expr) => {
-            evaluate($e, scope.clone(), context, int)
+            evaluate($e, scope.clone(), attrs, context, int)
         };
     }
     test_int(int)?;
     Ok(match expr {
         Expr::Literal(v) => v,
-        Expr::Ident(ident) => resolve_identifier(&ident, scope, context, int)?,
+        Expr::Ident(ident) => resolve_identifier(&ident, scope, attrs, context, int)?,
         Expr::Parens(x) => eval!(*x)?,
         Expr::UnaryMinus(x) => eval!(*x)?.handle_num(|x| Ok(-x), Expr::UnaryMinus, scope)?,
         Expr::UnaryPlus(x) => eval!(*x)?.handle_num(Ok, Expr::UnaryPlus, scope)?,
@@ -336,6 +359,7 @@ pub(crate) fn evaluate<I: Interrupt>(
                     Expr::UnaryMinus(b),
                     ApplyMulHandling::OnlyApply,
                     scope,
+                    attrs,
                     context,
                     int,
                 )?,
@@ -380,7 +404,7 @@ pub(crate) fn evaluate<I: Interrupt>(
         }
         Expr::Bop(bop, a, b) => eval!(*a)?.handle_two_nums(
             eval!(*b)?,
-            |a, b| a.bop(bop, b, context, int),
+            |a, b| a.bop(bop, b, attrs, context, int),
             |a| |f| Expr::Bop(bop, f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
             |a| |f| Expr::Bop(bop, Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
             scope,
@@ -388,26 +412,26 @@ pub(crate) fn evaluate<I: Interrupt>(
         Expr::Apply(a, b) | Expr::ApplyMul(a, b) => {
             if let (Expr::Ident(a), Expr::Ident(b)) = (&*a, &*b) {
                 let ident = format!("{a}_{b}");
-                if let Ok(val) = crate::units::query_unit_static(&ident, context, int) {
+                if let Ok(val) = crate::units::query_unit_static(&ident, attrs, context, int) {
                     return Ok(val);
                 }
             }
-            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, context, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, attrs, context, int)?
         }
         Expr::ApplyFunctionCall(a, b) => {
-            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, context, int)?
+            eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, attrs, context, int)?
         }
-        Expr::As(a, b) => evaluate_as(*a, *b, scope, context, int)?,
+        Expr::As(a, b) => evaluate_as(*a, *b, scope, attrs, context, int)?,
         Expr::Fn(a, b) => Value::Fn(a, b, scope),
         Expr::Of(a, b) => eval!(*b)?.get_object_member(&a)?,
         Expr::Assign(a, b) => {
-            let rhs = evaluate(*b, scope, context, int)?;
+            let rhs = evaluate(*b, scope, attrs, context, int)?;
             context.variables.insert(a.to_string(), rhs.clone());
             rhs
         }
         Expr::Statements(a, b) => {
-            let _lhs = evaluate(*a, scope.clone(), context, int)?;
-            evaluate(*b, scope, context, int)?
+            let _lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
+            evaluate(*b, scope, attrs, context, int)?
         }
     })
 }
@@ -458,17 +482,18 @@ fn evaluate_as<I: Interrupt>(
     a: Expr,
     b: Expr,
     scope: Option<Arc<Scope>>,
+    attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value, FendError> {
     if let Expr::Ident(ident) = &b {
         match ident.as_str() {
             "bool" | "boolean" => {
-                let num = evaluate(a, scope, context, int)?.expect_num()?;
+                let num = evaluate(a, scope, attrs, context, int)?.expect_num()?;
                 return Ok(Value::Bool(!num.is_zero()));
             }
             "date" => {
-                let a = evaluate(a, scope, context, int)?;
+                let a = evaluate(a, scope, attrs, context, int)?;
                 return if let Value::String(s) = a {
                     Ok(Value::Date(crate::date::Date::parse(s.as_ref())?))
                 } else {
@@ -477,13 +502,13 @@ fn evaluate_as<I: Interrupt>(
             }
             "string" => {
                 return Ok(Value::String(
-                    evaluate(a, scope, context, int)?
-                        .format_to_plain_string(0, context, int)?
+                    evaluate(a, scope, attrs, context, int)?
+                        .format_to_plain_string(0, attrs, context, int)?
                         .into(),
                 ));
             }
             "codepoint" => {
-                let a = evaluate(a, scope, context, int)?;
+                let a = evaluate(a, scope, attrs, context, int)?;
                 if let Value::String(s) = a {
                     let ch = s
                         .as_ref()
@@ -503,14 +528,14 @@ fn evaluate_as<I: Interrupt>(
             _ => (),
         }
     }
-    Ok(match evaluate(b, scope.clone(), context, int)? {
+    Ok(match evaluate(b, scope.clone(), attrs, context, int)? {
         Value::Num(b) => Value::Num(Box::new(
-            evaluate(a, scope, context, int)?
+            evaluate(a, scope, attrs, context, int)?
                 .expect_num()?
                 .convert_to(*b, int)?,
         )),
         Value::Format(fmt) => Value::Num(Box::new(
-            evaluate(a, scope, context, int)?
+            evaluate(a, scope, attrs, context, int)?
                 .expect_num()?
                 .with_format(fmt),
         )),
@@ -521,7 +546,7 @@ fn evaluate_as<I: Interrupt>(
             return Err(FendError::SpecifyNumSf);
         }
         Value::Base(base) => Value::Num(Box::new(
-            evaluate(a, scope, context, int)?
+            evaluate(a, scope, attrs, context, int)?
                 .expect_num()?
                 .with_base(base),
         )),
@@ -534,16 +559,23 @@ fn evaluate_as<I: Interrupt>(
 pub(crate) fn resolve_identifier<I: Interrupt>(
     ident: &Ident,
     scope: Option<Arc<Scope>>,
+    attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value, FendError> {
     macro_rules! eval_box {
         ($input:expr) => {
-            Box::new(evaluate_to_value($input, scope.clone(), context, int)?)
+            Box::new(evaluate_to_value(
+                $input,
+                scope.clone(),
+                attrs,
+                context,
+                int,
+            )?)
         };
     }
     if let Some(scope) = scope.clone() {
-        if let Some(val) = scope.get(ident, context, int)? {
+        if let Some(val) = scope.get(ident, attrs, context, int)? {
             return Ok(val);
         }
     }
@@ -553,14 +585,14 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
     Ok(match ident.as_str() {
         "pi" | "\u{3c0}" => Value::Num(Box::new(Number::pi())),
         "tau" | "\u{3c4}" => Value::Num(Box::new(Number::pi().mul(2.into(), int)?)),
-        "e" => evaluate_to_value("approx. 2.718281828459045235", scope, context, int)?,
-        "phi" => evaluate_to_value("(1 + sqrt(5))/2", scope, context, int)?,
+        "e" => evaluate_to_value("approx. 2.718281828459045235", scope, attrs, context, int)?,
+        "phi" => evaluate_to_value("(1 + sqrt(5))/2", scope, attrs, context, int)?,
         "i" => Value::Num(Box::new(Number::i())),
         "true" => Value::Bool(true),
         "false" => Value::Bool(false),
         "sample" | "roll" => Value::BuiltInFunction(BuiltInFunction::Sample),
-        "sqrt" => evaluate_to_value("x: x^(1/2)", scope, context, int)?,
-        "cbrt" => evaluate_to_value("x: x^(1/3)", scope, context, int)?,
+        "sqrt" => evaluate_to_value("x: x^(1/2)", scope, attrs, context, int)?,
+        "cbrt" => evaluate_to_value("x: x^(1/3)", scope, attrs, context, int)?,
         "conjugate" => Value::BuiltInFunction(BuiltInFunction::Conjugate),
         "abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
         "sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
@@ -575,12 +607,18 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "asinh" => Value::BuiltInFunction(BuiltInFunction::Asinh),
         "acosh" => Value::BuiltInFunction(BuiltInFunction::Acosh),
         "atanh" => Value::BuiltInFunction(BuiltInFunction::Atanh),
-        "cis" => evaluate_to_value("theta => cos theta + i * sin theta", scope, context, int)?,
+        "cis" => evaluate_to_value(
+            "theta => cos theta + i * sin theta",
+            scope,
+            attrs,
+            context,
+            int,
+        )?,
         "ln" => Value::BuiltInFunction(BuiltInFunction::Ln),
         "log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
         "log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
         "not" => Value::BuiltInFunction(BuiltInFunction::Not),
-        "exp" => evaluate_to_value("x: e^x", scope, context, int)?,
+        "exp" => evaluate_to_value("x: e^x", scope, attrs, context, int)?,
         "approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
         "auto" => Value::Format(FormattingStyle::Auto),
         "exact" => Value::Format(FormattingStyle::Exact),
@@ -597,8 +635,8 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "senary" | "seximal" => Value::Base(Base::from_plain_base(6)?),
         "oct" | "octal" => Value::Base(Base::from_plain_base(8)?),
         "version" => Value::String(crate::get_version_as_str().into()),
-        "square" => evaluate_to_value("x: x^2", scope, context, int)?,
-        "cubic" => evaluate_to_value("x: x^3", scope, context, int)?,
+        "square" => evaluate_to_value("x: x^2", scope, attrs, context, int)?,
+        "cubic" => evaluate_to_value("x: x^3", scope, attrs, context, int)?,
         "earth" => Value::Object(vec![
             ("axial_tilt".into(), eval_box!("23.4392811 degrees")),
             ("eccentricity".into(), eval_box!("0.0167086")),
@@ -610,6 +648,6 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "today" => Value::Date(crate::date::Date::today(context)?),
         "tomorrow" => Value::Date(crate::date::Date::today(context)?.next()),
         "yesterday" => Value::Date(crate::date::Date::today(context)?.prev()),
-        _ => return crate::units::query_unit(ident.as_str(), context, int),
+        _ => return crate::units::query_unit(ident.as_str(), attrs, context, int),
     })
 }

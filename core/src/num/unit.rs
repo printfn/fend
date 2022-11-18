@@ -6,7 +6,7 @@ use crate::num::{Base, FormattingStyle};
 use crate::scope::Scope;
 use crate::serialize::{deserialize_bool, deserialize_usize, serialize_bool, serialize_usize};
 use crate::{ast, ident::Ident};
-use crate::{Span, SpanKind};
+use crate::{Attrs, Span, SpanKind};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Neg;
@@ -168,13 +168,14 @@ impl Value {
     fn fudge_implicit_rhs_unit<I: Interrupt>(
         &self,
         rhs: Self,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
         for (lhs_unit, rhs_unit) in crate::units::IMPLICIT_UNIT_MAP {
             if self.unit.equal_to(lhs_unit) && rhs.is_unitless(int)? {
                 let inches =
-                    ast::resolve_identifier(&Ident::new_str(rhs_unit), None, context, int)?
+                    ast::resolve_identifier(&Ident::new_str(rhs_unit), None, attrs, context, int)?
                         .expect_num()?;
                 return rhs.mul(inches, int);
             }
@@ -277,13 +278,14 @@ impl Value {
         self,
         op: Bop,
         rhs: Self,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
         match op {
             Bop::Plus => self.add(rhs, int),
             Bop::ImplicitPlus => {
-                let rhs = self.fudge_implicit_rhs_unit(rhs, context, int)?;
+                let rhs = self.fudge_implicit_rhs_unit(rhs, attrs, context, int)?;
                 self.add(rhs, int)
             }
             Bop::Minus => self.sub(rhs, int),
@@ -461,11 +463,13 @@ impl Value {
     fn convert_angle_to_rad<I: Interrupt>(
         self,
         scope: Option<Arc<Scope>>,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        let radians = ast::resolve_identifier(&Ident::new_str("radians"), scope, context, int)?
-            .expect_num()?;
+        let radians =
+            ast::resolve_identifier(&Ident::new_str("radians"), scope, attrs, context, int)?
+                .expect_num()?;
         self.convert_to(radians, int)
     }
 
@@ -490,10 +494,14 @@ impl Value {
     pub(crate) fn sin<I: Interrupt>(
         self,
         scope: Option<Arc<Scope>>,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
+        if let Ok(rad) = self
+            .clone()
+            .convert_angle_to_rad(scope, attrs, context, int)
+        {
             Ok(rad
                 .apply_fn_exact(Complex::sin, false, int)?
                 .convert_to(Self::unitless(), int)?)
@@ -505,10 +513,14 @@ impl Value {
     pub(crate) fn cos<I: Interrupt>(
         self,
         scope: Option<Arc<Scope>>,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
+        if let Ok(rad) = self
+            .clone()
+            .convert_angle_to_rad(scope, attrs, context, int)
+        {
             rad.apply_fn_exact(Complex::cos, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {
@@ -519,10 +531,14 @@ impl Value {
     pub(crate) fn tan<I: Interrupt>(
         self,
         scope: Option<Arc<Scope>>,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        if let Ok(rad) = self.clone().convert_angle_to_rad(scope, context, int) {
+        if let Ok(rad) = self
+            .clone()
+            .convert_angle_to_rad(scope, attrs, context, int)
+        {
             rad.apply_fn_exact(Complex::tan, false, int)?
                 .convert_to(Self::unitless(), int)
         } else {
@@ -819,8 +835,8 @@ pub(crate) struct FormattedValue {
 }
 
 impl FormattedValue {
-    pub(crate) fn spans(self, spans: &mut Vec<Span>) {
-        if !self.exact {
+    pub(crate) fn spans(self, spans: &mut Vec<Span>, attrs: Attrs) {
+        if !self.exact && attrs.show_approx {
             spans.push(Span {
                 string: "approx. ".to_string(),
                 kind: SpanKind::Ident,

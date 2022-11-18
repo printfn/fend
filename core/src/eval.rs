@@ -6,12 +6,13 @@ use crate::{
     lexer, parser,
     scope::Scope,
     value::Value,
-    Span,
+    Attrs, Span,
 };
 
 pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     input: &'a str,
     scope: Option<Arc<Scope>>,
+    attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value, FendError> {
@@ -29,7 +30,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
         tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
     }
     let parsed = parser::parse_tokens(&tokens)?;
-    let result = ast::evaluate(parsed, scope, context, int)?;
+    let result = ast::evaluate(parsed, scope, attrs, context, int)?;
     Ok(result)
 }
 
@@ -44,7 +45,12 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
         input = remaining;
         true
     });
-    let value = evaluate_to_value(input, scope, context, int)?;
+    let show_approx = input.strip_prefix("!noapprox ").map_or(true, |remaining| {
+        input = remaining;
+        false
+    });
+    let attrs = Attrs { show_approx };
+    let value = evaluate_to_value(input, scope, attrs, context, int)?;
     context.variables.insert("_".to_string(), value.clone());
     context.variables.insert("ans".to_string(), value.clone());
     Ok((
@@ -52,7 +58,7 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
             vec![Span::from_string(format!("{:?}", value))]
         } else {
             let mut spans = vec![];
-            value.format(0, &mut spans, context, int)?;
+            value.format(0, &mut spans, attrs, context, int)?;
             spans
         },
         value.is_unit(),

@@ -99,6 +99,11 @@ impl<'a> SpanRef<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+struct Attrs {
+    show_approx: bool,
+}
+
 impl FendResult {
     /// This retrieves the main result of the computation.
     #[must_use]

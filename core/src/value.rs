@@ -8,7 +8,7 @@ use crate::serialize::{
     serialize_string, serialize_u8, serialize_usize,
 };
 use crate::{ast::Expr, ident::Ident};
-use crate::{date, Span, SpanKind};
+use crate::{date, Attrs, Span, SpanKind};
 use std::borrow::Cow;
 use std::io;
 use std::{
@@ -227,13 +227,14 @@ impl Value {
         other: Expr,
         apply_mul_handling: ApplyMulHandling,
         scope: Option<Arc<Scope>>,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        let stringified_self = self.format_to_plain_string(0, context, int)?;
+        let stringified_self = self.format_to_plain_string(0, attrs, context, int)?;
         Ok(match self {
             Self::Num(n) => {
-                let other = crate::ast::evaluate(other, scope.clone(), context, int)?;
+                let other = crate::ast::evaluate(other, scope.clone(), attrs, context, int)?;
                 if let Self::Dp = other {
                     let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
                     return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
@@ -248,7 +249,7 @@ impl Value {
                 if apply_mul_handling == ApplyMulHandling::OnlyApply {
                     let self_ = Self::Num(n);
                     return Err(FendError::IsNotAFunction(
-                        self_.format_to_plain_string(0, context, int)?,
+                        self_.format_to_plain_string(0, attrs, context, int)?,
                     ));
                 }
                 let n2 = n.clone();
@@ -259,11 +260,11 @@ impl Value {
                 )?
             }
             Self::BuiltInFunction(func) => {
-                Self::apply_built_in_function(func, other, scope, context, int)?
+                Self::apply_built_in_function(func, other, scope, attrs, context, int)?
             }
             Self::Fn(param, expr, custom_scope) => {
                 let new_scope = Scope::with_variable(param, other, scope, custom_scope);
-                return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), context, int);
+                return crate::ast::evaluate(*expr, Some(Arc::new(new_scope)), attrs, context, int);
             }
             _ => return Err(FendError::IsNotAFunctionOrNumber(stringified_self)),
         })
@@ -273,16 +274,17 @@ impl Value {
         func: BuiltInFunction,
         arg: Expr,
         scope: Option<Arc<Scope>>,
+        attrs: Attrs,
         context: &mut crate::Context,
         int: &I,
     ) -> Result<Self, FendError> {
-        let arg = crate::ast::evaluate(arg, scope.clone(), context, int)?;
+        let arg = crate::ast::evaluate(arg, scope.clone(), attrs, context, int)?;
         Ok(Self::Num(Box::new(match func {
             BuiltInFunction::Approximately => arg.expect_num()?.make_approximate(),
             BuiltInFunction::Abs => arg.expect_num()?.abs(int)?,
-            BuiltInFunction::Sin => arg.expect_num()?.sin(scope, context, int)?,
-            BuiltInFunction::Cos => arg.expect_num()?.cos(scope, context, int)?,
-            BuiltInFunction::Tan => arg.expect_num()?.tan(scope, context, int)?,
+            BuiltInFunction::Sin => arg.expect_num()?.sin(scope, attrs, context, int)?,
+            BuiltInFunction::Cos => arg.expect_num()?.cos(scope, attrs, context, int)?,
+            BuiltInFunction::Tan => arg.expect_num()?.tan(scope, attrs, context, int)?,
             BuiltInFunction::Asin => arg.expect_num()?.asin(int)?,
             BuiltInFunction::Acos => arg.expect_num()?.acos(int)?,
             BuiltInFunction::Atan => arg.expect_num()?.atan(int)?,
@@ -312,11 +314,12 @@ impl Value {
     pub(crate) fn format_to_plain_string<I: Interrupt>(
         &self,
         indent: usize,
+        attrs: Attrs,
         ctx: &crate::Context,
         int: &I,
     ) -> Result<String, FendError> {
         let mut spans = vec![];
-        self.format(indent, &mut spans, ctx, int)?;
+        self.format(indent, &mut spans, attrs, ctx, int)?;
         let mut res = String::new();
         for span in spans {
             res.push_str(&span.string);
@@ -328,12 +331,16 @@ impl Value {
         &self,
         indent: usize,
         spans: &mut Vec<Span>,
+        attrs: Attrs,
         ctx: &crate::Context,
         int: &I,
     ) -> Result<(), FendError> {
         match self {
             Self::Num(n) => {
-                n.clone().simplify(int)?.format(ctx, int)?.spans(spans);
+                n.clone()
+                    .simplify(int)?
+                    .format(ctx, int)?
+                    .spans(spans, attrs);
             }
             Self::BuiltInFunction(name) => {
                 spans.push(Span {
@@ -370,7 +377,7 @@ impl Value {
                 });
             }
             Self::Fn(name, expr, _scope) => {
-                let expr_str = expr.format(ctx, int)?;
+                let expr_str = expr.format(attrs, ctx, int)?;
                 let res = if name.as_str().contains('.') {
                     format!("{name}:{expr_str}")
                 } else {
@@ -392,7 +399,7 @@ impl Value {
                         spans.push(Span::from_string(" ".to_string()));
                     }
                     spans.push(Span::from_string(format!("{k}: ")));
-                    v.format(indent + 4, spans, ctx, int)?;
+                    v.format(indent + 4, spans, attrs, ctx, int)?;
                 }
                 spans.push(Span::from_string("\n}".to_string()));
             }
