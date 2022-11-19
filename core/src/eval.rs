@@ -6,7 +6,7 @@ use crate::{
     lexer, parser,
     scope::Scope,
     value::Value,
-    Attrs, Span,
+    Span,
 };
 
 pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
@@ -34,27 +34,42 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     Ok(result)
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct Attrs {
+    pub(crate) debug: bool,
+    pub(crate) show_approx: bool,
+}
+
+fn parse_attrs(mut input: &str) -> (Attrs, &str) {
+    let mut attrs = Attrs {
+        debug: false,
+        show_approx: true,
+    };
+    while input.starts_with('@') {
+        if let Some(remaining) = input.strip_prefix("@debug ") {
+            attrs.debug = true;
+            input = remaining;
+        } else if let Some(remaining) = input.strip_prefix("@noapprox ") {
+            attrs.show_approx = false;
+            input = remaining;
+        }
+    }
+    (attrs, input)
+}
+
 /// This also saves the calculation result in a variable `_` and `ans`
 pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
-    mut input: &'a str,
+    input: &'a str,
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<(Vec<Span>, bool), FendError> {
-    let debug = input.strip_prefix("!debug ").map_or(false, |remaining| {
-        input = remaining;
-        true
-    });
-    let show_approx = input.strip_prefix("!noapprox ").map_or(true, |remaining| {
-        input = remaining;
-        false
-    });
-    let attrs = Attrs { show_approx };
+    let (attrs, input) = parse_attrs(input);
     let value = evaluate_to_value(input, scope, attrs, context, int)?;
     context.variables.insert("_".to_string(), value.clone());
     context.variables.insert("ans".to_string(), value.clone());
     Ok((
-        if debug {
+        if attrs.debug {
             vec![Span::from_string(format!("{:?}", value))]
         } else {
             let mut spans = vec![];

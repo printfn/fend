@@ -328,9 +328,9 @@ pi = approx. 3.1415926535
 ## Debug Representation
 
 You can see the debug representation of a value in fend by writing
-`!debug` at the start of your calculation. For example, you can type:
+`@debug` at the start of your calculation. For example, you can type:
 
 ```
-> !debug 1+1
+> @debug 1+1
 2 (unitless) (base 10, auto, simplifiable)
 ```

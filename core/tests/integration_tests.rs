@@ -4405,7 +4405,7 @@ fn kwh_conversion() {
 #[test]
 fn debug_pi_n() {
     test_eval_simple(
-        "!debug pi N",
+        "@debug pi N",
         "pi N (= 1000/1000 kilogram meter second^-2) (base 10, auto, simplifiable)",
     );
 }
@@ -4721,12 +4721,12 @@ fn double_quote_in_raw_string() {
 
 #[test]
 fn raw_string_debug_representation() {
-    test_eval_simple("!debug #\"hi\"#", "\"hi\"");
+    test_eval_simple("@debug #\"hi\"#", "\"hi\"");
 }
 
 #[test]
 fn string_debug_representation() {
-    test_eval_simple("!debug \"hi\"", "\"hi\"");
+    test_eval_simple("@debug \"hi\"", "\"hi\"");
 }
 
 #[test]
