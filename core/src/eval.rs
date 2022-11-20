@@ -38,12 +38,14 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
 pub(crate) struct Attrs {
     pub(crate) debug: bool,
     pub(crate) show_approx: bool,
+    pub(crate) plain_number: bool,
 }
 
 fn parse_attrs(mut input: &str) -> (Attrs, &str) {
     let mut attrs = Attrs {
         debug: false,
         show_approx: true,
+        plain_number: false,
     };
     while input.starts_with('@') {
         if let Some(remaining) = input.strip_prefix("@debug ") {
@@ -52,6 +54,11 @@ fn parse_attrs(mut input: &str) -> (Attrs, &str) {
         } else if let Some(remaining) = input.strip_prefix("@noapprox ") {
             attrs.show_approx = false;
             input = remaining;
+        } else if let Some(remaining) = input.strip_prefix("@plain_number ") {
+            attrs.plain_number = true;
+            input = remaining;
+        } else {
+            break;
         }
     }
     (attrs, input)

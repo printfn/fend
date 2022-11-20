@@ -836,13 +836,13 @@ pub(crate) struct FormattedValue {
 
 impl FormattedValue {
     pub(crate) fn spans(self, spans: &mut Vec<Span>, attrs: Attrs) {
-        if !self.exact && attrs.show_approx {
+        if !self.exact && attrs.show_approx && !attrs.plain_number {
             spans.push(Span {
                 string: "approx. ".to_string(),
                 kind: SpanKind::Ident,
             });
         }
-        if self.unit_str == "$" || self.unit_str == "\u{a3}" {
+        if self.unit_str == "$" || self.unit_str == "\u{a3}" && !attrs.plain_number {
             spans.push(Span {
                 string: self.unit_str,
                 kind: SpanKind::Ident,
@@ -857,10 +857,12 @@ impl FormattedValue {
             string: self.number.to_string(),
             kind: SpanKind::Number,
         });
-        spans.push(Span {
-            string: self.unit_str,
-            kind: SpanKind::Ident,
-        });
+        if !attrs.plain_number {
+            spans.push(Span {
+                string: self.unit_str,
+                kind: SpanKind::Ident,
+            });
+        }
     }
 }
 
