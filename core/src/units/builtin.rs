@@ -57,6 +57,8 @@ const BITS_AND_BYTES: &[UnitTuple] = &[
 ];
 
 const STANDARD_PREFIXES: &[UnitTuple] = &[
+    ("quecca", "", "lp@1e30", ""),
+    ("ronna", "", "lp@1e27", ""),
     ("yotta", "", "lp@1e24", ""),
     ("zetta", "", "lp@1e21", ""),
     ("exa", "", "lp@1e18", ""),
@@ -79,6 +81,8 @@ const STANDARD_PREFIXES: &[UnitTuple] = &[
     ("atto", "", "lp@1e-18", ""),
     ("zepto", "", "lp@1e-21", ""),
     ("yocto", "", "lp@1e-24", ""),
+    ("ronto", "", "lp@1e-27", ""),
+    ("quecto", "", "lp@1e-30", ""),
     ("k", "", "=1000", ""),
     ("M", "", "=1,000,000", ""),
     ("G", "", "=1,000,000,000", ""),
