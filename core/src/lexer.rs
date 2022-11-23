@@ -34,6 +34,7 @@ pub(crate) enum Symbol {
     ShiftRight,
     Semicolon,
     Equals, // used for assignment
+    Combination,
 }
 
 impl fmt::Display for Symbol {
@@ -60,6 +61,7 @@ impl fmt::Display for Symbol {
             Self::ShiftRight => ">>",
             Self::Semicolon => ";",
             Self::Equals => "=",
+            Self::Combination => "nCr",
         };
         write!(f, "{s}")?;
         Ok(())
@@ -437,6 +439,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError
             "xor" | "XOR" => Token::Symbol(Symbol::BitwiseXor),
             "and" | "AND" => Token::Symbol(Symbol::BitwiseAnd),
             "or" | "OR" => Token::Symbol(Symbol::BitwiseOr),
+            "nCr" | "choose" => Token::Symbol(Symbol::Combination),
             _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,

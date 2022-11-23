@@ -274,6 +274,24 @@ impl Value {
         })
     }
 
+    pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+        if !self.is_unitless(int)? || !rhs.is_unitless(int)? {
+            return Err(FendError::ExpectedAUnitlessNumber);
+        }
+        Ok(Self {
+            value: Dist::from(
+                self.value
+                    .one_point()?
+                    .combination(rhs.value.one_point()?, int)?,
+            ),
+            unit: self.unit,
+            exact: self.exact && rhs.exact,
+            base: self.base,
+            format: self.format,
+            simplifiable: self.simplifiable,
+        })
+    }
+
     pub(crate) fn bop<I: Interrupt>(
         self,
         op: Bop,
@@ -294,6 +312,7 @@ impl Value {
             Bop::Mod => self.modulo(rhs, int),
             Bop::Pow => self.pow(rhs, int),
             Bop::Bitwise(bitwise_bop) => self.bitwise(rhs, bitwise_bop, int),
+            Bop::Combination => self.combination(rhs, int),
         }
     }
 

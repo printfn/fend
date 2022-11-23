@@ -5649,3 +5649,11 @@ fn rshift() {
 fn shift_and_and() {
     test_eval("54 << 1 & 54 >> 1", "8");
 }
+
+#[test]
+fn combination_test() {
+    test_eval("5 nCr 2", "10");
+    test_eval("5 choose 2", "10");
+    test_eval("10 nCr 3", "120");
+    test_eval("10 choose 3", "120");
+}

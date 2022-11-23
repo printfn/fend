@@ -29,6 +29,7 @@ pub(crate) enum Bop {
     Mod,
     Pow,
     Bitwise(BitwiseBop),
+    Combination,
 }
 
 impl Bop {
@@ -46,6 +47,7 @@ impl Bop {
             Self::Bitwise(BitwiseBop::Xor) => 9,
             Self::Bitwise(BitwiseBop::LeftShift) => 10,
             Self::Bitwise(BitwiseBop::RightShift) => 11,
+            Self::Combination => 12,
         };
         serialize_u8(n, write)?;
         Ok(())
@@ -65,6 +67,7 @@ impl Bop {
             9 => Self::Bitwise(BitwiseBop::Xor),
             10 => Self::Bitwise(BitwiseBop::LeftShift),
             11 => Self::Bitwise(BitwiseBop::RightShift),
+            12 => Self::Combination,
             _ => return Err(FendError::DeserializationError),
         })
     }
@@ -85,6 +88,7 @@ impl fmt::Display for Bop {
             Self::Bitwise(BitwiseBop::Xor) => " xor ",
             Self::Bitwise(BitwiseBop::LeftShift) => "<<",
             Self::Bitwise(BitwiseBop::RightShift) => ">>",
+            Self::Combination => "nCr",
         };
         write!(f, "{s}")
     }
