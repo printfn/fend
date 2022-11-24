@@ -425,8 +425,18 @@ fn parse_bitwise_or(input: &[Token]) -> ParseResult<'_> {
     Ok((result, input))
 }
 
+fn parse_combination(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_bitwise_or(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Combination) {
+        let (rhs, remaining) = parse_bitwise_or(remaining)?;
+        result = Expr::Bop(Bop::Combination, Box::new(result), Box::new(rhs));
+        input = remaining;
+    }
+    Ok((result, input))
+}
+
 fn parse_function(input: &[Token]) -> ParseResult<'_> {
-    let (lhs, input) = parse_bitwise_or(input)?;
+    let (lhs, input) = parse_combination(input)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining)?;
