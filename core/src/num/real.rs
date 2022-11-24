@@ -376,6 +376,13 @@ impl Real {
                 .combination(rhs.expect_rational()?, int)?,
         ))
     }
+
+    pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+        Ok(Self::from(
+            self.expect_rational()?
+                .permutation(rhs.expect_rational()?, int)?,
+        ))
+    }
 }
 
 impl Exact<Real> {

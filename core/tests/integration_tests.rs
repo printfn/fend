@@ -5657,3 +5657,11 @@ fn combination_test() {
     test_eval("10 nCr 3", "120");
     test_eval("10 choose 3", "120");
 }
+
+#[test]
+fn permutation_test() {
+    test_eval("5 nPr 2", "20");
+    test_eval("5 permute 2", "20");
+    test_eval("10 nPr 3", "720");
+    test_eval("10 permute 3", "720");
+}

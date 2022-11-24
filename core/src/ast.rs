@@ -30,6 +30,7 @@ pub(crate) enum Bop {
     Pow,
     Bitwise(BitwiseBop),
     Combination,
+    Permutation,
 }
 
 impl Bop {
@@ -48,6 +49,7 @@ impl Bop {
             Self::Bitwise(BitwiseBop::LeftShift) => 10,
             Self::Bitwise(BitwiseBop::RightShift) => 11,
             Self::Combination => 12,
+            Self::Permutation => 13,
         };
         serialize_u8(n, write)?;
         Ok(())
@@ -68,6 +70,7 @@ impl Bop {
             10 => Self::Bitwise(BitwiseBop::LeftShift),
             11 => Self::Bitwise(BitwiseBop::RightShift),
             12 => Self::Combination,
+            13 => Self::Permutation,
             _ => return Err(FendError::DeserializationError),
         })
     }
@@ -89,6 +92,7 @@ impl fmt::Display for Bop {
             Self::Bitwise(BitwiseBop::LeftShift) => "<<",
             Self::Bitwise(BitwiseBop::RightShift) => ">>",
             Self::Combination => "nCr",
+            Self::Permutation => "nPr",
         };
         write!(f, "{s}")
     }

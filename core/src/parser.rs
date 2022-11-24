@@ -435,8 +435,18 @@ fn parse_combination(input: &[Token]) -> ParseResult<'_> {
     Ok((result, input))
 }
 
+fn parse_permutation(input: &[Token]) -> ParseResult<'_> {
+    let (mut result, mut input) = parse_combination(input)?;
+    while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Permutation) {
+        let (rhs, remaining) = parse_combination(remaining)?;
+        result = Expr::Bop(Bop::Permutation, Box::new(result), Box::new(rhs));
+        input = remaining;
+    }
+    Ok((result, input))
+}
+
 fn parse_function(input: &[Token]) -> ParseResult<'_> {
-    let (lhs, input) = parse_combination(input)?;
+    let (lhs, input) = parse_permutation(input)?;
     if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
         if let Expr::Ident(s) = lhs {
             let (rhs, remaining) = parse_function(remaining)?;
