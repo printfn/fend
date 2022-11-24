@@ -40,6 +40,10 @@ const processMessage = async (message) => {
     let text = message.text;
     let result = processInput(text, message.chat.type);
     if (result != null && result != '') {
+        await postJSON(`https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/sendChatAction`, {
+            chat_id: message.chat.id,
+            action: 'typing',
+        });
         await postJSON(`https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/sendMessage`, {
             chat_id: message.chat.id,
             text: result,
