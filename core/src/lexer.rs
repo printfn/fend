@@ -35,6 +35,7 @@ pub(crate) enum Symbol {
     Semicolon,
     Equals, // used for assignment
     Combination,
+    Permutation,
 }
 
 impl fmt::Display for Symbol {
@@ -62,6 +63,7 @@ impl fmt::Display for Symbol {
             Self::Semicolon => ";",
             Self::Equals => "=",
             Self::Combination => "nCr",
+            Self::Permutation => "nPr",
         };
         write!(f, "{s}")?;
         Ok(())
@@ -440,6 +442,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> Result<(Token, &str), FendError
             "and" | "AND" => Token::Symbol(Symbol::BitwiseAnd),
             "or" | "OR" => Token::Symbol(Symbol::BitwiseOr),
             "nCr" | "choose" => Token::Symbol(Symbol::Combination),
+            "nPr" | "permute" => Token::Symbol(Symbol::Permutation),
             _ => Token::Ident(Ident::new_string(ident.to_string())),
         },
         input,

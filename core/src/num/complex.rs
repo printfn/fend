@@ -329,6 +329,12 @@ impl Complex {
             self.expect_real()?.combination(rhs.expect_real()?, int)?,
         ))
     }
+
+    pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+        Ok(Self::from(
+            self.expect_real()?.permutation(rhs.expect_real()?, int)?,
+        ))
+    }
 }
 
 impl Exact<Complex> {
