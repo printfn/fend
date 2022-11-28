@@ -1,5 +1,30 @@
 ## Changelog
 
+### v1.1.3 (2022-11-28)
+
+* Add operators for permutations and combinations (by [@frectonz](https://github.com/frectonz))
+    * `n permute k` or `n nPr k`: compute the number of `k`-permutations of `n`
+    * `n choose k` or `n nCr k`: number of `k`-combinations of `n`
+* Add `@noapprox` attribute to hide the `approx.` annotation in the output:
+    ```
+    > pi
+    approx. 3.1415926535
+    > @noapprox pi
+    3.1415926535
+    ```
+* Add `@plain_number` attribute, to remove `approx.` and any units. This is especially useful in automated scripts.
+    ```
+    > 5 m / (3 s)
+    approx. 1.6666666666 m / s
+    > @plain_number 5 m / (3 s)
+    1.6666666666
+    ```
+* Add a new date literal syntax, e.g. `@2000-01-01`
+* Improve visual feedback when using the Telegram bot (by [@miki-tebe](https://github.com/miki-tebe))
+* Add new SI prefixes quecca, ronna, ronto and quecto (by [@frectonz](https://github.com/frectonz))
+* Add support for 256 (8-bit) colors in the CLI configuration
+* Change `!debug` to `@debug` for consistency and improved shell script interoperability
+
 ### v1.1.2 (2022-10-31)
 
 * Add `and` and `or` keywords as alternatives to the `&` and `|` bitwise operators
