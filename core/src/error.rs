@@ -86,6 +86,7 @@ pub(crate) enum FendError {
     RootsOfNegativeNumbers,
     NonIntegerNegRoots,
     CannotConvertValueTo(&'static str),
+    ExpectedADateLiteral,
 }
 
 impl fmt::Display for FendError {
@@ -225,6 +226,7 @@ impl fmt::Display for FendError {
             }
             Self::FormattingError(_) => write!(f, "error during formatting"),
             Self::Wrap(e) => write!(f, "{e}"),
+            Self::ExpectedADateLiteral => write!(f, "Expected a date literal, e.g. @1970-01-01"),
         }
     }
 }

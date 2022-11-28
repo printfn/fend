@@ -5665,3 +5665,8 @@ fn permutation_test() {
     test_eval("10 nPr 3", "720");
     test_eval("10 permute 3", "720");
 }
+
+#[test]
+fn date_literals() {
+    test_eval_simple("@1970-01-01", "Thursday, 1 January 1970");
+}

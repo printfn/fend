@@ -134,6 +134,7 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<'_> {
         Token::Symbol(Symbol::OpenParens) => parse_parens(input),
         Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
         Token::Symbol(s) => Err(ParseError::UnexpectedSymbol(s)),
+        Token::Date(d) => Ok((Expr::Literal(Value::Date(d)), remaining)),
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::date::Date;
 use crate::error::{FendError, Interrupt};
 use crate::ident::Ident;
 use crate::num::{Base, Number};
@@ -9,6 +10,7 @@ pub(crate) enum Token {
     Ident(Ident),
     Symbol(Symbol),
     StringLiteral(borrow::Cow<'static, str>),
+    Date(Date),
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -683,6 +685,36 @@ fn skip_whitespace_and_comments(input: &mut &str) {
     }
 }
 
+fn parse_date(input: &str) -> Result<(Date, &str), FendError> {
+    let (_, input) = input.split_at(1); // skip '@' symbol
+    let mut input2 = input;
+    let mut split_idx = 0;
+    for i in 0..3 {
+        let mut n = 0;
+        while matches!(input2.chars().next(), Some('0'..='9')) {
+            let (_, remaining) = input2.split_at(1);
+            input2 = remaining;
+            n += 1;
+            split_idx += 1;
+        }
+        if n == 0 {
+            return Err(FendError::ExpectedADateLiteral);
+        }
+        if i == 2 {
+            break;
+        }
+        if !input2.starts_with('-') {
+            return Err(FendError::ExpectedADateLiteral);
+        }
+        let (_, remaining) = input2.split_at(1);
+        input2 = remaining;
+        split_idx += 1;
+    }
+    let (date_str, result_remaining) = input.split_at(split_idx);
+    let res = Date::parse(date_str)?;
+    Ok((res, result_remaining))
+}
+
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
     fn next_token(&mut self) -> Result<Option<Token>, FendError> {
         skip_whitespace_and_comments(&mut self.input);
@@ -712,6 +744,11 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
                         self.input = remaining;
                         token
                     }
+                } else if ch == '@' {
+                    // date literal, e.g. @1970-01-01
+                    let (date, remaining) = parse_date(self.input)?;
+                    self.input = remaining;
+                    Token::Date(date)
                 } else if self.input.starts_with("#\"") {
                     // raw string literal
                     let (_, remaining) = self.input.split_at(2);
