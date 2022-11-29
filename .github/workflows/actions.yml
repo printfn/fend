@@ -62,10 +62,12 @@ jobs:
 
       - name: Run cargo-tarpaulin
         if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          version: "latest"
-          args: "--workspace"
+        run: |
+          BIN_URL="$(curl -L https://api.github.com/repos/xd009642/tarpaulin/releases/latest \
+            | jq -r '.assets[] | select(.content_type = "application/gzip") | .browser_download_url')"
+          curl -Lo cargo-tarpaulin.tar.gz "$BIN_URL"
+          tar xf cargo-tarpaulin.tar.gz
+          ./cargo-tarpaulin tarpaulin --workspace --out xml
 
       - name: Upload to codecov.io
         if: ${{ matrix.platform == 'ubuntu-latest' }}
