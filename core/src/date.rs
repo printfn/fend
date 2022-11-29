@@ -166,47 +166,62 @@ impl Date {
 
     pub(crate) fn sub(self, rhs: Value) -> Result<Value, FendError> {
         let int = &crate::interrupt::Never::default();
-        match rhs {
-            Value::Num(rhs) => {
-                if rhs.unit_equal_to("day") {
-                    let num_days = rhs.try_as_usize_unit(int)?;
-                    let mut result = self;
-                    for _ in 0..num_days {
-                        result = result.prev();
-                    }
-                    Ok(Value::Date(result))
-                } else if rhs.unit_equal_to("week") {
-                    let num_weeks = rhs.try_as_usize_unit(int)?;
-                    let mut result = self;
-                    for _ in 0..num_weeks {
-                        for _ in 0..7 {
-                            result = result.prev();
-                        }
-                    }
-                    Ok(Value::Date(result))
-                } else if rhs.unit_equal_to("month") {
-                    let num_months = rhs.try_as_usize_unit(int)?;
-                    let mut result = self;
-                    for _ in 0..num_months {
-                        for _ in 0..Month::number_of_days(result.month, result.year) {
-                            result = result.prev();
-                        }
-                    }
-                    Ok(Value::Date(result))
-                } else if rhs.unit_equal_to("year") {
-                    let num_years = rhs.try_as_usize_unit(int)?;
-                    let mut result = self;
-                    for _ in 0..num_years {
-                        for _ in 0..result.year.number_of_days() {
-                            result = result.prev();
-                        }
-                    }
-                    Ok(Value::Date(result))
-                } else {
-                    Err(FendError::ExpectedANumber)
+        let rhs = rhs.expect_num()?;
+
+        if rhs.unit_equal_to("day") {
+            let num_days = rhs.try_as_usize_unit(int)?;
+            let mut result = self;
+            for _ in 0..num_days {
+                result = result.prev();
+            }
+            Ok(Value::Date(result))
+        } else if rhs.unit_equal_to("week") {
+            let num_weeks = rhs.try_as_usize_unit(int)?;
+            let mut result = self;
+            for _ in 0..num_weeks {
+                for _ in 0..7 {
+                    result = result.prev();
                 }
             }
-            _ => Err(FendError::ExpectedANumber),
+            Ok(Value::Date(result))
+        } else if rhs.unit_equal_to("month") {
+            let num_months = rhs.try_as_usize_unit(int)?;
+            let mut result = self;
+            for _ in 0..num_months {
+                let days = Month::number_of_days(result.month.prev(), result.year);
+                for _ in 0..days {
+                    result = result.prev();
+                }
+            }
+
+            Ok(Value::Date(result))
+        } else if rhs.unit_equal_to("year") {
+            let num_years = rhs.try_as_usize_unit(int)?;
+
+            let mut result = self;
+            for _ in 0..num_years {
+                for _ in 0..365 {
+                    result = result.prev();
+                }
+            }
+
+            if self.month == Month::February && self.day.value() == 29 {
+                result = result.prev();
+            }
+
+            if self.day.value() == result.day.value() {
+                Ok(Value::Date(result))
+            } else {
+                Err(FendError::NonExistentDate {
+                    year: result.year.value(),
+                    month: result.month,
+                    expected_day: self.day.value(),
+                    found_day: result.day.value(),
+                    found_day_of_week: result.day_of_week(),
+                })
+            }
+        } else {
+            Err(FendError::ExpectedANumber)
         }
     }
 }

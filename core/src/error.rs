@@ -1,6 +1,6 @@
 use std::{error, fmt, io};
 
-use crate::num::Range;
+use crate::{date, num::Range};
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -87,6 +87,13 @@ pub(crate) enum FendError {
     NonIntegerNegRoots,
     CannotConvertValueTo(&'static str),
     ExpectedADateLiteral,
+    NonExistentDate {
+        year: i32,
+        month: date::Month,
+        expected_day: u8,
+        found_day: u8,
+        found_day_of_week: date::DayOfWeek,
+    },
 }
 
 impl fmt::Display for FendError {
@@ -227,6 +234,18 @@ impl fmt::Display for FendError {
             Self::FormattingError(_) => write!(f, "error during formatting"),
             Self::Wrap(e) => write!(f, "{e}"),
             Self::ExpectedADateLiteral => write!(f, "Expected a date literal, e.g. @1970-01-01"),
+            Self::NonExistentDate {
+                year,
+                month,
+                expected_day,
+                found_day,
+                found_day_of_week,
+            } => {
+                write!(
+                    f,
+                    "{month} {expected_day}, {year} does not exist but {found_day_of_week}, {found_day} {month} {year} does",
+                )
+            }
         }
     }
 }
