@@ -5670,3 +5670,23 @@ fn permutation_test() {
 fn date_literals() {
     test_eval_simple("@1970-01-01", "Thursday, 1 January 1970");
 }
+
+#[test]
+fn date_literal_subtraction() {
+    test_eval_simple("@2022-11-29 - 2 days", "Sunday, 27 November 2022");
+    test_eval_simple("@2022-11-29 - 2 weeks", "Tuesday, 15 November 2022");
+    test_eval_simple("@2022-11-29 - 2 months", "Thursday, 29 September 2022");
+    test_eval_simple("@2022-11-29 - 2 years", "Sunday, 29 November 2020");
+
+    test_eval_simple("@2022-03-01 - 1 month", "Tuesday, 1 February 2022");
+    test_eval_simple("@2020-02-28 - 1 year", "Thursday, 28 February 2019");
+    expect_error(
+        "@2020-02-29 - 1 year",
+        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+    );
+    expect_error(
+        "@2020-02-29 - 12 month", 
+        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+    );
+    test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
+}

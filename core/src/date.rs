@@ -122,6 +122,56 @@ impl Date {
         }
     }
 
+    pub(crate) fn diff_months(self, mut months: i64) -> Result<Self, FendError> {
+        let mut result = self;
+        while months >= 12 {
+            result.year = result.year.next();
+            months -= 12;
+        }
+        while months <= -12 {
+            result.year = result.year.prev();
+            months += 12;
+        }
+        while months > 0 {
+            if result.month == Month::December {
+                result.month = Month::January;
+                result.year = result.year.next();
+            } else {
+                result.month = result.month.next();
+            }
+            months -= 1;
+        }
+        while months < 0 {
+            if result.month == Month::January {
+                result.month = Month::December;
+                result.year = result.year.prev();
+            } else {
+                result.month = result.month.prev();
+            }
+            months += 1;
+        }
+        if result.day.value() > Month::number_of_days(result.month, result.year) {
+            let mut before = result;
+            before.day = Day::new(Month::number_of_days(before.month, before.year));
+            let mut after = result;
+            if after.month == Month::December {
+                after.month = Month::January;
+                after.year = after.year.next();
+            } else {
+                after.month = after.month.next();
+            }
+            after.day = Day::new(1);
+            return Err(FendError::NonExistentDate {
+                year: result.year.value(),
+                month: result.month,
+                expected_day: result.day.value(),
+                before,
+                after,
+            });
+        }
+        Ok(result)
+    }
+
     pub(crate) fn parse(s: &str) -> Result<Self, FendError> {
         parser::parse_date(s)
     }
@@ -158,6 +208,42 @@ impl Date {
             for _ in 0..num_days {
                 result = result.next();
             }
+            Ok(Value::Date(result))
+        } else {
+            Err(FendError::ExpectedANumber)
+        }
+    }
+
+    pub(crate) fn sub(self, rhs: Value) -> Result<Value, FendError> {
+        let int = &crate::interrupt::Never::default();
+        let rhs = rhs.expect_num()?;
+
+        if rhs.unit_equal_to("day") {
+            let num_days = rhs.try_as_usize_unit(int)?;
+            let mut result = self;
+            for _ in 0..num_days {
+                result = result.prev();
+            }
+            Ok(Value::Date(result))
+        } else if rhs.unit_equal_to("week") {
+            let num_weeks = rhs.try_as_usize_unit(int)?;
+            let mut result = self;
+            for _ in 0..num_weeks {
+                for _ in 0..7 {
+                    result = result.prev();
+                }
+            }
+            Ok(Value::Date(result))
+        } else if rhs.unit_equal_to("month") {
+            let num_months = rhs.try_as_usize_unit(int)?;
+            let result = self
+                .diff_months(-i64::try_from(num_months).map_err(|_| FendError::ValueTooLarge)?)?;
+            Ok(Value::Date(result))
+        } else if rhs.unit_equal_to("year") {
+            let num_years = rhs.try_as_usize_unit(int)?;
+            let num_months = num_years * 12;
+            let result = self
+                .diff_months(-i64::try_from(num_months).map_err(|_| FendError::ValueTooLarge)?)?;
             Ok(Value::Date(result))
         } else {
             Err(FendError::ExpectedANumber)
