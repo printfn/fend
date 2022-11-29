@@ -363,6 +363,7 @@ pub(crate) fn evaluate<I: Interrupt>(
             let a = eval!(*a)?;
             match a {
                 Value::Num(a) => Value::Num(Box::new(a.sub(eval!(*b)?.expect_num()?, int)?)),
+                Value::Date(a) => a.sub(eval!(*b)?)?,
                 f @ (Value::BuiltInFunction(_) | Value::Fn(_, _, _)) => f.apply(
                     Expr::UnaryMinus(b),
                     ApplyMulHandling::OnlyApply,

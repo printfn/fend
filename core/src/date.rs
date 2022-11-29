@@ -163,6 +163,52 @@ impl Date {
             Err(FendError::ExpectedANumber)
         }
     }
+
+    pub(crate) fn sub(&self, rhs: Value) -> Result<Value, FendError> {
+        let int = &crate::interrupt::Never::default();
+        match rhs {
+            Value::Num(rhs) => {
+                if rhs.unit_equal_to("day") {
+                    let num_days = rhs.try_as_usize_unit(int)?;
+                    let mut result = *self;
+                    for _ in 0..num_days {
+                        result = result.prev();
+                    }
+                    Ok(Value::Date(result))
+                } else if rhs.unit_equal_to("week") {
+                    let num_weeks = rhs.try_as_usize_unit(int)?;
+                    let mut result = *self;
+                    for _ in 0..num_weeks {
+                        for _ in 0..7 {
+                            result = result.prev();
+                        }
+                    }
+                    Ok(Value::Date(result))
+                } else if rhs.unit_equal_to("month") {
+                    let num_months = rhs.try_as_usize_unit(int)?;
+                    let mut result = *self;
+                    for _ in 0..num_months {
+                        for _ in 0..Month::number_of_days(result.month, result.year) {
+                            result = result.prev();
+                        }
+                    }
+                    Ok(Value::Date(result))
+                } else if rhs.unit_equal_to("year") {
+                    let num_years = rhs.try_as_usize_unit(int)?;
+                    let mut result = *self;
+                    for _ in 0..num_years {
+                        for _ in 0..result.year.number_of_days() {
+                            result = result.prev();
+                        }
+                    }
+                    Ok(Value::Date(result))
+                } else {
+                    Err(FendError::ExpectedANumber)
+                }
+            }
+            _ => Err(FendError::ExpectedANumber),
+        }
+    }
 }
 
 impl fmt::Debug for Date {
