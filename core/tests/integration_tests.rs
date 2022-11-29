@@ -5682,6 +5682,11 @@ fn date_literal_subtraction() {
     test_eval_simple("@2020-02-28 - 1 year", "Thursday, 28 February 2019");
     expect_error(
         "@2020-02-29 - 1 year",
-        "February 29, 2019 does not exist but Thursday, 28 February 2019 does".into(),
+        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
     );
+    expect_error(
+        "@2020-02-29 - 12 month", 
+        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+    );
+    test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
 }

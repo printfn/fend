@@ -12,6 +12,7 @@ pub(crate) enum FendError {
     UnableToConvertToBase,
     DivideByZero,
     ExponentTooLarge,
+    ValueTooLarge,
     ZeroToThePowerOfZero,
     FactorialComplex,
     DeserializationError,
@@ -91,8 +92,8 @@ pub(crate) enum FendError {
         year: i32,
         month: date::Month,
         expected_day: u8,
-        found_day: u8,
-        found_day_of_week: date::DayOfWeek,
+        before: date::Date,
+        after: date::Date,
     },
 }
 
@@ -145,6 +146,7 @@ impl fmt::Display for FendError {
             Self::UnableToConvertToBase => write!(f, "unable to convert number to a valid base"),
             Self::DivideByZero => write!(f, "division by zero"),
             Self::ExponentTooLarge => write!(f, "exponent too large"),
+            Self::ValueTooLarge => write!(f, "value is too large"),
             Self::ZeroToThePowerOfZero => write!(f, "zero to the power of zero is undefined"),
             Self::OutOfRange { range, value } => {
                 write!(f, "{value} must lie in the interval {range}")
@@ -238,12 +240,12 @@ impl fmt::Display for FendError {
                 year,
                 month,
                 expected_day,
-                found_day,
-                found_day_of_week,
+                before,
+                after,
             } => {
                 write!(
                     f,
-                    "{month} {expected_day}, {year} does not exist but {found_day_of_week}, {found_day} {month} {year} does",
+                    "{month} {expected_day}, {year} does not exist, did you mean {before} or {after}?",
                 )
             }
         }
