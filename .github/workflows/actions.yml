@@ -130,8 +130,7 @@ jobs:
 
       - name: Set up Homebrew
         if: ${{ matrix.platform == 'ubuntu-latest' }}
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        run: echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
 
       - name: Build fend-wasm
         if: ${{ matrix.platform == 'ubuntu-latest' }}
