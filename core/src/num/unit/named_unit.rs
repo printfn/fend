@@ -147,9 +147,9 @@ impl fmt::Debug for NamedUnit {
         let mut it = self.base_units.iter().collect::<Vec<_>>();
         it.sort_by_key(|(k, _v)| k.name());
         for (base_unit, exponent) in &it {
-            write!(f, " {:?}", base_unit)?;
+            write!(f, " {base_unit:?}")?;
             if !exponent.is_definitely_one() {
-                write!(f, "^{:?}", exponent)?;
+                write!(f, "^{exponent:?}")?;
             }
         }
         write!(f, ")")?;

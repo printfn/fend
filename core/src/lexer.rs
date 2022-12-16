@@ -597,7 +597,7 @@ fn parse_string_literal(input: &str, terminator: char) -> Result<(Token, &str), 
                         hex2.to_digit(16).ok_or(FendError::BackslashXOutOfRange)?,
                     )
                     .unwrap();
-                    Some((hex1 * 16 + hex2) as u8 as char)
+                    Some((hex1 * 16 + hex2) as char)
                 }
                 'u' => Some(parse_unicode_escape(&mut chars_iter)?),
                 'z' => {

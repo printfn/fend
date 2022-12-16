@@ -77,7 +77,7 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
     context.variables.insert("ans".to_string(), value.clone());
     Ok((
         if attrs.debug {
-            vec![Span::from_string(format!("{:?}", value))]
+            vec![Span::from_string(format!("{value:?}"))]
         } else {
             let mut spans = vec![];
             value.format(0, &mut spans, attrs, context, int)?;

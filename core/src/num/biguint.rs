@@ -309,7 +309,7 @@ impl BigUint {
             test_int(int)?;
             for j in (0..64).rev() {
                 r.lshift(int)?;
-                let bit_of_self = if (self.get(i) & (1 << j)) == 0 { 0 } else { 1 };
+                let bit_of_self = u64::from((self.get(i) & (1 << j)) != 0);
                 r.set(0, r.get(0) | bit_of_self);
                 if &r >= other {
                     r = r.sub(other);

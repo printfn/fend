@@ -1167,7 +1167,7 @@ impl fmt::Debug for Unit {
             if !first {
                 write!(f, " * ")?;
             }
-            write!(f, "{:?}", component)?;
+            write!(f, "{component:?}")?;
             first = false;
         }
         Ok(())

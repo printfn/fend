@@ -454,12 +454,12 @@ impl Value {
 impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Num(n) => write!(f, "{:?}", n),
+            Self::Num(n) => write!(f, "{n:?}"),
             Self::BuiltInFunction(name) => write!(f, "built-in function: {}", name.as_str()),
-            Self::Format(fmt) => write!(f, "format: {:?}", fmt),
+            Self::Format(fmt) => write!(f, "format: {fmt:?}"),
             Self::Dp => write!(f, "dp"),
             Self::Sf => write!(f, "sf"),
-            Self::Base(b) => write!(f, "base: {:?}", b),
+            Self::Base(b) => write!(f, "base: {b:?}"),
             Self::Fn(name, expr, scope) => {
                 write!(f, "fn: {name} => {expr:?} (scope: {scope:?})")
             }

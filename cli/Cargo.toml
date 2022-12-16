@@ -13,13 +13,13 @@ readme = "../README.md"
 [dependencies]
 atty = "0.2.14"
 console = { version = "0.15.1", default-features = false }
-ctrlc = "3.2.3"
+ctrlc = "3.2.4"
 fend-core.workspace = true
 home = "0.5.3"
 nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
-rustyline = { version =  "10.0.3", default-features = false, package = "rustyline-with-hint-fix" }
-serde = { version = "1.0.144", default-features = false }
-toml = "0.5.9"
+rustyline = { version =  "10.0.4", default-features = false, package = "rustyline-with-hint-fix" }
+serde = { version = "1.0.150", default-features = false }
+toml = "0.5.10"
 ureq = { version = "2.5.0", default-features = false, features = ["tls"] }
 
 [target.'cfg(windows)'.dependencies]

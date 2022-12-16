@@ -18,12 +18,12 @@ pub(crate) struct Real {
 impl fmt::Debug for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.pattern {
-            Pattern::Simple(x) => write!(f, "{:?}", x),
+            Pattern::Simple(x) => write!(f, "{x:?}"),
             Pattern::Pi(x) => {
                 if x.is_definitely_one() {
                     write!(f, "pi")
                 } else {
-                    write!(f, "{:?} * pi", x)
+                    write!(f, "{x:?} * pi")
                 }
             }
         }
