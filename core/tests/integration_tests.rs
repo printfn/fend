@@ -2806,8 +2806,13 @@ fn sin_1() {
 }
 
 #[test]
-fn sin_1m() {
-    test_eval("sin (1m)", "approx. 0.8414709848 m");
+fn sin_1_percent() {
+    test_eval("sin (1%)", "approx. 0.0099998333");
+}
+
+#[test]
+fn atan_1_percent() {
+    test_eval("atan (1%)", "approx. 0.0099996666");
 }
 
 #[test]
@@ -3068,11 +3073,6 @@ fn greek_tau_symbol() {
 #[test]
 fn tan_0() {
     test_eval("tan 0", "0");
-}
-
-#[test]
-fn tan_1m() {
-    test_eval("tan (1meter)", "approx. 1.5574077246 meters");
 }
 
 #[test]
@@ -5689,4 +5689,10 @@ fn date_literal_subtraction() {
         "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
     );
     test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
+}
+
+#[test]
+fn atan_meter() {
+    test_eval("atan((30 centi meter) / (2 meter))", "approx. 0.1488899476");
+    test_eval("atan((30 centimeter) / (2 meter))", "approx. 0.1488899476");
 }

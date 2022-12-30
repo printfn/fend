@@ -448,12 +448,17 @@ impl Value {
         Ok(Self::new(Dist::new_die(count, faces, int)?, vec![]))
     }
 
+    fn remove_unit_scaling<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
+        self.convert_to(Self::unitless(), int)
+    }
+
     fn apply_fn_exact<I: Interrupt>(
-        self,
+        mut self,
         f: impl FnOnce(Complex, &I) -> Result<Exact<Complex>, FendError>,
         require_unitless: bool,
         int: &I,
     ) -> Result<Self, FendError> {
+        self = self.remove_unit_scaling(int)?;
         if require_unitless && !self.is_unitless(int)? {
             return Err(FendError::ExpectedAUnitlessNumber);
         }
@@ -469,11 +474,12 @@ impl Value {
     }
 
     fn apply_fn<I: Interrupt>(
-        self,
+        mut self,
         f: impl FnOnce(Complex, &I) -> Result<Complex, FendError>,
         require_unitless: bool,
         int: &I,
     ) -> Result<Self, FendError> {
+        self = self.remove_unit_scaling(int)?;
         if require_unitless && !self.is_unitless(int)? {
             return Err(FendError::ExpectedAUnitlessNumber);
         }
