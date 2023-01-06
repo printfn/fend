@@ -28,14 +28,41 @@ pub(crate) struct UnitDef {
 }
 
 fn expr_unit<I: Interrupt>(
-    singular: &'static str,
-    plural: &'static str,
-    definition: &'static str,
+    unit_def: (&'static str, &'static str, &'static str),
     attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
 ) -> Result<UnitDef, FendError> {
+    let (singular, plural, definition) = unit_def;
     let mut definition = definition.trim();
+    if definition == "$CURRENCY" {
+        let exchange_rate_fn = match context.get_exchange_rate {
+            Some(f) => f,
+            None => return Err(FendError::NoExchangeRatesAvailable),
+        };
+        let one_usd_in_currency = exchange_rate_fn(singular)?;
+        let value = evaluate_to_value(
+            format!("(1/{one_usd_in_currency}) BASE_CURRENCY").as_str(),
+            None,
+            attrs,
+            context,
+            int,
+        )?
+        .expect_num()?;
+        let value = Number::create_unit_value_from_value(
+            &value,
+            Cow::Borrowed(""),
+            Cow::Owned(singular.to_string()),
+            Cow::Owned(plural.to_string()),
+            int,
+        )?;
+        return Ok(UnitDef {
+            singular,
+            plural,
+            prefix_rule: PrefixRule::LongPrefixAllowed,
+            value: Value::Num(Box::new(value)),
+        });
+    }
     let mut rule = PrefixRule::NoPrefixesAllowed;
     if let Some(remaining) = definition.strip_prefix("l@") {
         definition = remaining;
@@ -142,39 +169,34 @@ fn query_unit_case_sensitive<I: Interrupt>(
     context: &mut crate::Context,
     int: &I,
 ) -> Result<Value, FendError> {
-    match query_unit_internal(ident, false, case_sensitive, true, attrs, context, int) {
+    match query_unit_internal(ident, false, case_sensitive, true, context) {
         Err(FendError::IdentifierNotFound(_)) => (),
         Err(e) => return Err(e),
-        Ok(unit) => {
+        Ok(unit_def) => {
             // Return value without prefix. Note that lone short prefixes
             // won't be returned here.
-            return Ok(unit.value);
+            return Ok(expr_unit(unit_def, attrs, context, int)?.value);
         }
     }
     let mut split_idx = ident.chars().next().unwrap().len_utf8();
     while split_idx < ident.len() {
         let (prefix, remaining_ident) = ident.split_at(split_idx);
         split_idx += remaining_ident.chars().next().unwrap().len_utf8();
-        let a = match query_unit_internal(prefix, true, case_sensitive, false, attrs, context, int)
-        {
+        let a = match query_unit_internal(prefix, true, case_sensitive, false, context) {
             Err(FendError::IdentifierNotFound(_)) => continue,
             Err(e) => {
                 return Err(e);
             }
             Ok(a) => a,
         };
-        match query_unit_internal(
-            remaining_ident,
-            false,
-            case_sensitive,
-            false,
-            attrs,
-            context,
-            int,
-        ) {
+        match query_unit_internal(remaining_ident, false, case_sensitive, false, context) {
             Err(FendError::IdentifierNotFound(_)) => continue,
             Err(e) => return Err(e),
             Ok(b) => {
+                let (a, b) = (
+                    expr_unit(a, attrs, context, int)?,
+                    expr_unit(b, attrs, context, int)?,
+                );
                 if (a.prefix_rule == PrefixRule::LongPrefix
                     && b.prefix_rule == PrefixRule::LongPrefixAllowed)
                     || (a.prefix_rule == PrefixRule::ShortPrefix
@@ -190,53 +212,22 @@ fn query_unit_case_sensitive<I: Interrupt>(
     Err(FendError::IdentifierNotFound(ident.to_string().into()))
 }
 
-fn query_unit_internal<'a, I: Interrupt>(
+fn query_unit_internal<'a>(
     ident: &'a str,
     short_prefixes: bool,
     case_sensitive: bool,
     whole_unit: bool,
-    attrs: Attrs,
     context: &mut crate::Context,
-    int: &I,
-) -> Result<UnitDef, FendError> {
+) -> Result<(&'static str, &'static str, &'static str), FendError> {
     if whole_unit && context.fc_mode == crate::FCMode::CelsiusFahrenheit {
         if ident == "C" {
-            return expr_unit("C", "C", "=\u{b0}C", attrs, context, int);
+            return Ok(("C", "C", "=\u{b0}C"));
         } else if ident == "F" {
-            return expr_unit("F", "F", "=\u{b0}F", attrs, context, int);
+            return Ok(("F", "F", "=\u{b0}F"));
         }
     }
-    if let Some((s, p, expr)) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
-        if expr == "$CURRENCY" {
-            let exchange_rate_fn = match context.get_exchange_rate {
-                Some(f) => f,
-                None => return Err(FendError::NoExchangeRatesAvailable),
-            };
-            let one_usd_in_currency = exchange_rate_fn(s)?;
-            let value = evaluate_to_value(
-                format!("(1/{one_usd_in_currency}) BASE_CURRENCY").as_str(),
-                None,
-                attrs,
-                context,
-                int,
-            )?
-            .expect_num()?;
-            let value = Number::create_unit_value_from_value(
-                &value,
-                Cow::Borrowed(""),
-                Cow::Owned(s.to_string()),
-                Cow::Owned(p.to_string()),
-                int,
-            )?;
-            Ok(UnitDef {
-                singular: s,
-                plural: p,
-                prefix_rule: PrefixRule::LongPrefixAllowed,
-                value: Value::Num(Box::new(value)),
-            })
-        } else {
-            expr_unit(s, p, expr, attrs, context, int)
-        }
+    if let Some(unit_def) = builtin::query_unit(ident, short_prefixes, case_sensitive) {
+        Ok(unit_def)
     } else {
         Err(FendError::IdentifierNotFound(ident.to_string().into()))
     }

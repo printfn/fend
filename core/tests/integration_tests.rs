@@ -5696,3 +5696,14 @@ fn atan_meter() {
     test_eval("atan((30 centi meter) / (2 meter))", "approx. 0.1488899476");
     test_eval("atan((30 centimeter) / (2 meter))", "approx. 0.1488899476");
 }
+
+#[test]
+fn centimeter_no_currencies() {
+    let mut context = Context::new();
+    assert_eq!(
+        evaluate("1 centimeter", &mut context)
+            .unwrap()
+            .get_main_result(),
+        "1 centimeter"
+    );
+}
