@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.1.4 (2022-01-08)
+
+* Add support for subtracting from dates (e.g. `@2023-01-08 - 5 days`)
+* Fix some trigonometric functions behaving incorrectly when passing in values with units
+
 ### v1.1.3 (2022-11-28)
 
 * Add operators for permutations and combinations (by [@frectonz](https://github.com/frectonz))
