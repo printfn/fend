@@ -64,7 +64,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           BIN_URL="$(curl -L https://api.github.com/repos/xd009642/tarpaulin/releases/latest \
-            | jq -r '.assets[] | select(.content_type = "application/gzip") | .browser_download_url')"
+            | jq -r '.assets[] | select(.name == "cargo-tarpaulin-x86_64-unknown-linux-gnu.tar.gz") | .browser_download_url')"
           curl -Lo cargo-tarpaulin.tar.gz "$BIN_URL"
           tar xf cargo-tarpaulin.tar.gz
           ./cargo-tarpaulin tarpaulin --workspace --out xml
