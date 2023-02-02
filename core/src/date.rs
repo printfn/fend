@@ -22,9 +22,7 @@ pub(crate) struct Date {
 
 impl Date {
     pub(crate) fn today(context: &mut crate::Context) -> Result<Self, FendError> {
-        let current_time_info = if let Some(t) = &context.current_time {
-            t
-        } else {
+        let Some(current_time_info) = &context.current_time else {
             return Err(FendError::UnableToGetCurrentDate);
         };
         let mut ms_since_epoch: i64 = current_time_info.elapsed_unix_time_ms.try_into().unwrap();

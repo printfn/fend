@@ -70,7 +70,7 @@ impl error::Error for UnknownExchangeRate {}
 
 impl From<UnknownExchangeRate> for JsValue {
     fn from(err: UnknownExchangeRate) -> Self {
-        JsValue::from(format!("{}", err))
+        JsValue::from(format!("{err}"))
     }
 }
 
@@ -170,19 +170,16 @@ pub fn evaluate_fend_with_variables_json(input: &str, timeout: u32, variables: &
                 let _ = ctx.serialize_variables(&mut vars_vec);
                 let mut hex = String::new();
                 for b in &vars_vec {
-                    write!(hex, "{:02x}", b).unwrap();
+                    write!(hex, "{b:02x}").unwrap();
                 }
                 hex
             };
-            format!(
-                r#"{{"ok":true,"result":"{}","variables":"{}"}}"#,
-                escaped_result, variables
-            )
+            format!(r#"{{"ok":true,"result":"{escaped_result}","variables":"{variables}"}}"#)
         }
         Err(msg) => {
             let mut escaped = String::new();
             fend_core::json::escape_string(&msg, &mut escaped);
-            format!(r#"{{"ok":false,"message":"{}"}}"#, escaped)
+            format!(r#"{{"ok":false,"message":"{escaped}"}}"#)
         }
     }
 }

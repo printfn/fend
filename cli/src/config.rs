@@ -139,19 +139,16 @@ impl Default for Config {
 pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
 fn read_config_file() -> Config {
-    let path = match crate::file_paths::get_config_file_location() {
-        Ok(path) => path,
-        Err(_) => return Config::default(),
+    let Ok(path) = crate::file_paths::get_config_file_location() else {
+        return Config::default();
     };
-    let mut file = match fs::File::open(&path) {
-        Ok(file) => file,
-        Err(_) => return Config::default(),
+    let Ok(mut file) = fs::File::open(&path) else {
+        return Config::default();
     };
     let mut bytes = vec![];
-    match <fs::File as io::Read>::read_to_end(&mut file, &mut bytes) {
-        Ok(_) => (),
-        Err(_) => return Config::default(),
-    }
+    let Ok(_) = <fs::File as io::Read>::read_to_end(&mut file, &mut bytes) else {
+        return Config::default();
+    };
     let config = match toml::de::from_slice(bytes.as_slice()) {
         Ok(config) => config,
         Err(e) => {

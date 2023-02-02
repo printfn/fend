@@ -36,9 +36,8 @@ fn expr_unit<I: Interrupt>(
     let (singular, plural, definition) = unit_def;
     let mut definition = definition.trim();
     if definition == "$CURRENCY" {
-        let exchange_rate_fn = match context.get_exchange_rate {
-            Some(f) => f,
-            None => return Err(FendError::NoExchangeRatesAvailable),
+        let Some(exchange_rate_fn) = context.get_exchange_rate else {
+            return Err(FendError::NoExchangeRatesAvailable);
         };
         let one_usd_in_currency = exchange_rate_fn(singular)?;
         let value = evaluate_to_value(
@@ -129,8 +128,8 @@ fn construct_prefixed_unit<I: Interrupt>(
     Ok(Value::Num(Box::new(unit)))
 }
 
-pub(crate) fn query_unit<'a, I: Interrupt>(
-    ident: &'a str,
+pub(crate) fn query_unit<I: Interrupt>(
+    ident: &str,
     attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
@@ -146,8 +145,8 @@ pub(crate) fn query_unit<'a, I: Interrupt>(
     query_unit_static(ident, attrs, context, int)
 }
 
-pub(crate) fn query_unit_static<'a, I: Interrupt>(
-    ident: &'a str,
+pub(crate) fn query_unit_static<I: Interrupt>(
+    ident: &str,
     attrs: Attrs,
     context: &mut crate::Context,
     int: &I,
@@ -212,8 +211,8 @@ fn query_unit_case_sensitive<I: Interrupt>(
     Err(FendError::IdentifierNotFound(ident.to_string().into()))
 }
 
-fn query_unit_internal<'a>(
-    ident: &'a str,
+fn query_unit_internal(
+    ident: &str,
     short_prefixes: bool,
     case_sensitive: bool,
     whole_unit: bool,

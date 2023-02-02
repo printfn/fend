@@ -9,8 +9,8 @@ use crate::{
     Span,
 };
 
-pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
-    input: &'a str,
+pub(crate) fn evaluate_to_value<I: Interrupt>(
+    input: &str,
     scope: Option<Arc<Scope>>,
     attrs: Attrs,
     context: &mut crate::Context,
@@ -35,6 +35,7 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct Attrs {
     pub(crate) debug: bool,
     pub(crate) show_approx: bool,
@@ -76,8 +77,8 @@ fn parse_attrs(mut input: &str) -> (Attrs, &str) {
 }
 
 /// This also saves the calculation result in a variable `_` and `ans`
-pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
-    input: &'a str,
+pub(crate) fn evaluate_to_spans<I: Interrupt>(
+    input: &str,
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,

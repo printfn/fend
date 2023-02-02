@@ -136,6 +136,7 @@ impl FendResult {
     /// Returns whether or not the result should be outputted with a
     /// trailing newline. This is controlled by the `@no_trailing_newline`
     /// attribute.
+    #[must_use]
     pub fn has_trailing_newline(&self) -> bool {
         self.attrs.trailing_newline
     }
@@ -375,9 +376,8 @@ pub fn evaluate_preview_with_interrupt(
     context.get_exchange_rate = None;
     let result = evaluate_with_interrupt_internal(input, context, int);
     *context = context_clone;
-    let result = match result {
-        Ok(result) => result,
-        Err(_) => return empty,
+    let Ok(result) = result else {
+        return empty;
     };
     let s = result.get_main_result();
     if s.is_empty()

@@ -4,7 +4,7 @@ use fend_core::{evaluate, Context};
 fn test_serialization_roundtrip(context: &mut Context) {
     let mut v = vec![];
     context.serialize_variables(&mut v).unwrap();
-    let ctx_debug_repr = format!("{:#?}", context);
+    let ctx_debug_repr = format!("{context:#?}");
     match context.deserialize_variables(&mut v.as_slice()) {
         Ok(()) => (),
         Err(s) => {

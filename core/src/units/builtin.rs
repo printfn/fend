@@ -701,8 +701,8 @@ const SHORT_PREFIXES: &[(&str, &str)] = &[
 ];
 
 #[allow(clippy::too_many_lines)]
-pub(crate) fn query_unit<'a>(
-    ident: &'a str,
+pub(crate) fn query_unit(
+    ident: &str,
     short_prefixes: bool,
     case_sensitive: bool,
 ) -> Option<(&'static str, &'static str, &'static str)> {
