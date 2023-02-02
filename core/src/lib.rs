@@ -51,6 +51,7 @@ pub struct FendResult {
     plain_result: String,
     span_result: Vec<Span>,
     is_unit: bool, // is this the () type
+    attrs: eval::Attrs,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -128,7 +129,15 @@ impl FendResult {
             plain_result: String::new(),
             span_result: vec![],
             is_unit: true,
+            attrs: Attrs::default(),
         }
+    }
+
+    /// Returns whether or not the result should be outputted with a
+    /// trailing newline. This is controlled by the `@no_trailing_newline`
+    /// attribute.
+    pub fn has_trailing_newline(&self) -> bool {
+        self.attrs.trailing_newline
     }
 }
 
@@ -313,7 +322,7 @@ fn evaluate_with_interrupt_internal(
         // no or blank input: return no output
         return Ok(FendResult::empty());
     }
-    let (result, is_unit) = match eval::evaluate_to_spans(input, None, context, int) {
+    let (result, is_unit, attrs) = match eval::evaluate_to_spans(input, None, context, int) {
         Ok(value) => value,
         Err(e) => return Err(e.to_string()),
     };
@@ -325,6 +334,7 @@ fn evaluate_with_interrupt_internal(
         plain_result,
         span_result: result,
         is_unit,
+        attrs,
     })
 }
 

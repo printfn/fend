@@ -57,3 +57,11 @@ expressions can be used by later expressions:
 $ fend -e "a = 5" -e "2a"
 10
 ```
+
+Trailing newlines can be omitted by prefixing the calculation with
+`@no_trailing_newline`, like so:
+
+```bash
+$ fend @no_trailing_newline 5+5
+10
+```

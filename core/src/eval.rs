@@ -34,19 +34,27 @@ pub(crate) fn evaluate_to_value<'a, I: Interrupt>(
     Ok(result)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub(crate) struct Attrs {
     pub(crate) debug: bool,
     pub(crate) show_approx: bool,
     pub(crate) plain_number: bool,
+    pub(crate) trailing_newline: bool,
+}
+
+impl Default for Attrs {
+    fn default() -> Self {
+        Self {
+            debug: false,
+            show_approx: true,
+            plain_number: false,
+            trailing_newline: true,
+        }
+    }
 }
 
 fn parse_attrs(mut input: &str) -> (Attrs, &str) {
-    let mut attrs = Attrs {
-        debug: false,
-        show_approx: true,
-        plain_number: false,
-    };
+    let mut attrs = Attrs::default();
     while input.starts_with('@') {
         if let Some(remaining) = input.strip_prefix("@debug ") {
             attrs.debug = true;
@@ -56,6 +64,9 @@ fn parse_attrs(mut input: &str) -> (Attrs, &str) {
             input = remaining;
         } else if let Some(remaining) = input.strip_prefix("@plain_number ") {
             attrs.plain_number = true;
+            input = remaining;
+        } else if let Some(remaining) = input.strip_prefix("@no_trailing_newline ") {
+            attrs.trailing_newline = false;
             input = remaining;
         } else {
             break;
@@ -70,7 +81,7 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
     scope: Option<Arc<Scope>>,
     context: &mut crate::Context,
     int: &I,
-) -> Result<(Vec<Span>, bool), FendError> {
+) -> Result<(Vec<Span>, bool, Attrs), FendError> {
     let (attrs, input) = parse_attrs(input);
     let value = evaluate_to_value(input, scope, attrs, context, int)?;
     context.variables.insert("_".to_string(), value.clone());
@@ -84,5 +95,6 @@ pub(crate) fn evaluate_to_spans<'a, I: Interrupt>(
             spans
         },
         value.is_unit(),
+        attrs,
     ))
 }

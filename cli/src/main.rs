@@ -52,10 +52,15 @@ fn eval_and_print_res(
                 return EvalResult::NoInput;
             }
             if print_res {
-                if config.enable_colors {
-                    println!("{}", print_spans(result, config));
+                let string_result = if config.enable_colors {
+                    print_spans(result, config)
                 } else {
-                    println!("{}", res.get_main_result());
+                    res.get_main_result().to_string()
+                };
+                if res.has_trailing_newline() {
+                    println!("{string_result}");
+                } else {
+                    print!("{string_result}");
                 }
             }
             EvalResult::Ok
