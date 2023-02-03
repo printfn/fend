@@ -1,6 +1,6 @@
 ## Changelog
 
-### v1.1.4 (2022-01-08)
+### v1.1.4 (2023-01-08)
 
 * Add support for subtracting from dates (e.g. `@2023-01-08 - 5 days`)
 * Fix some trigonometric functions behaving incorrectly when passing in values with units
