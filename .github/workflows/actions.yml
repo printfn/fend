@@ -60,14 +60,48 @@ jobs:
         run: |
           cargo test --workspace -- --nocapture --quiet
 
-      - name: Run cargo-tarpaulin
+      - name: Generate code coverage
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
-          BIN_URL="$(curl -L https://api.github.com/repos/xd009642/tarpaulin/releases/latest \
-            | jq -r '.assets[] | select(.name == "cargo-tarpaulin-x86_64-unknown-linux-gnu.tar.gz") | .browser_download_url')"
-          curl -Lo cargo-tarpaulin.tar.gz "$BIN_URL"
-          tar xf cargo-tarpaulin.tar.gz
-          ./cargo-tarpaulin tarpaulin --workspace --out xml
+          RUSTFLAGS="-C instrument-coverage" \
+            cargo test --workspace -- --quiet
+          sudo apt update
+          sudo apt install llvm
+          llvm-profdata merge -sparse */*.profraw -o fend.profdata
+          llvm-cov report \
+            --use-color \
+            --ignore-filename-regex='/.cargo/registry' \
+            --ignore-filename-regex='/rustc' \
+            --instr-profile=fend.profdata \
+            $( \
+              for file in \
+                $( \
+                  RUSTFLAGS="-C instrument-coverage" \
+                    cargo test --workspace --no-run --message-format=json \
+                      | jq -r "select(.profile.test == true) | .filenames[]" \
+                      | grep -v dSYM - \
+                ); \
+              do \
+                printf "%s %s " -object $file; \
+              done \
+            )
+          llvm-cov export \
+            --ignore-filename-regex='/.cargo/registry' \
+            --ignore-filename-regex='/rustc' \
+            --format='lcov' \
+            --instr-profile=fend.profdata \
+            $( \
+              for file in \
+                $( \
+                  RUSTFLAGS="-C instrument-coverage" \
+                    cargo test --workspace --no-run --message-format=json \
+                      | jq -r "select(.profile.test == true) | .filenames[]" \
+                      | grep -v dSYM - \
+                ); \
+              do \
+                printf "%s %s " -object $file; \
+              done \
+            ) >coverage.txt
 
       - name: Upload to codecov.io
         if: ${{ matrix.platform == 'ubuntu-latest' }}
@@ -98,8 +132,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add armv7-unknown-linux-gnueabihf
-          sudo apt-get update
-          sudo apt-get install -yq gcc-arm-linux-gnueabihf
+          sudo apt install -yq gcc-arm-linux-gnueabihf
           export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc
           cargo build --release --package fend --target armv7-unknown-linux-gnueabihf
 
@@ -115,8 +148,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add aarch64-unknown-linux-gnu
-          sudo apt-get update
-          sudo apt-get install -yq gcc-aarch64-linux-gnu
+          sudo apt install -yq gcc-aarch64-linux-gnu
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc
           cargo build --release --package fend --target aarch64-unknown-linux-gnu
 
