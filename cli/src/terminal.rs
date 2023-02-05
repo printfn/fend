@@ -16,7 +16,7 @@ pub fn atty_stdin() -> bool {
 }
 
 pub struct PromptState<'a> {
-    rl: rustyline::Editor<helper::Helper<'a>>,
+    rl: rustyline::Editor<helper::Helper<'a>, rustyline::history::DefaultHistory>,
     config: &'a config::Config,
     history_path: Option<path::PathBuf>,
 }
@@ -25,13 +25,14 @@ pub fn init_prompt<'a>(
     config: &'a config::Config,
     context: &context::Context<'a>,
 ) -> Result<PromptState<'a>, Box<dyn error::Error>> {
-    let mut rl = rustyline::Editor::<helper::Helper<'_>>::with_config(
-        rustyline::config::Builder::new()
-            .history_ignore_space(true)
-            .auto_add_history(true)
-            .max_history_size(config.max_history_size)
-            .build(),
-    )?;
+    let mut rl =
+        rustyline::Editor::<helper::Helper<'_>, rustyline::history::MemHistory>::with_config(
+            rustyline::config::Builder::new()
+                .history_ignore_space(true)
+                .auto_add_history(true)
+                .max_history_size(config.max_history_size)?
+                .build(),
+        )?;
     rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
     let history_path = match file_paths::get_history_file_location(file_paths::DirMode::DontCreate)
     {
@@ -66,7 +67,7 @@ impl From<rustyline::error::ReadlineError> for ReadLineError {
 }
 
 fn save_history(
-    rl: &mut rustyline::Editor<helper::Helper<'_>>,
+    rl: &mut rustyline::Editor<helper::Helper<'_>, rustyline::history::DefaultHistory>,
     path: &Option<path::PathBuf>,
 ) -> io::Result<()> {
     if let Some(history_path) = path {

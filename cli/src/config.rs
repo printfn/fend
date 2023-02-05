@@ -39,13 +39,13 @@ impl<'de> serde::Deserialize<'de> for Config {
                 let mut seen_coulomb_farad = false;
                 let mut seen_colors = false;
                 let mut seen_max_hist_size = false;
-                while let Some(key) = map.next_key()? {
-                    match key {
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
                         "prompt" => {
                             if seen_prompt {
                                 return Err(serde::de::Error::duplicate_field("prompt"));
                             }
-                            result.prompt = map.next_value()?;
+                            result.prompt = map.next_value::<String>()?;
                             seen_prompt = true;
                         }
                         "enable-colors" | "color" => {
@@ -87,8 +87,8 @@ impl<'de> serde::Deserialize<'de> for Config {
                             seen_max_hist_size = true;
                         }
                         "unknown-settings" => {
-                            let unknown_settings: &str = map.next_value()?;
-                            result.unknown_settings = match unknown_settings {
+                            let unknown_settings: String = map.next_value()?;
+                            result.unknown_settings = match unknown_settings.as_str() {
                                 "ignore" => UnknownSettings::Ignore,
                                 "warn" => UnknownSettings::Warn,
                                 v => {
@@ -149,7 +149,11 @@ fn read_config_file() -> Config {
     let Ok(_) = <fs::File as io::Read>::read_to_end(&mut file, &mut bytes) else {
         return Config::default();
     };
-    let config = match toml::de::from_slice(bytes.as_slice()) {
+    let Ok(config_string) = String::from_utf8(bytes) else {
+        eprintln!("Error: config file is not UTF-8 encoded");
+        return Config::default();
+    };
+    let config = match toml::from_str(&config_string) {
         Ok(config) => config,
         Err(e) => {
             eprintln!("Error: invalid config file in {path:?}:\n{e}");
@@ -209,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_default_config_file() {
-        let deserialized: Config = toml::de::from_str(DEFAULT_CONFIG_FILE).unwrap();
+        let deserialized: Config = toml::from_str(DEFAULT_CONFIG_FILE).unwrap();
         assert_eq!(deserialized, Config::default());
     }
 }

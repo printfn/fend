@@ -28,8 +28,8 @@ impl<'de> serde::Deserialize<'de> for Color {
                 let mut seen_foreground = false;
                 let mut seen_underline = false;
                 let mut seen_bold = false;
-                while let Some(key) = map.next_key()? {
-                    match key {
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
                         "foreground" => {
                             if seen_foreground {
                                 return Err(serde::de::Error::duplicate_field("foreground"));
