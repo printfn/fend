@@ -19,7 +19,7 @@ home = "0.5.4"
 nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
 rustyline = { version =  "10.1.0", default-features = false, package = "rustyline-with-hint-fix" }
 serde = { version = "1.0.152", default-features = false }
-toml = "0.7.1"
+toml = { version = "0.7.1", default-features = false, features = ["parse"] }
 ureq = { version = "2.6.2", default-features = false, features = ["tls"] }
 
 [target.'cfg(windows)'.dependencies]
