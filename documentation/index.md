@@ -118,13 +118,13 @@ $ fend
 >
 ```
 
-```{.include}
+```{.include format=commonmark+attributes}
 chapters/expressions.md
 ```
 
 ## Configuration
 
-```{.include}
+```{.include format=commonmark+attributes}
 chapters/configuration.md
 ```
 
@@ -133,10 +133,10 @@ chapters/configuration.md
 
 ## Scripting
 
-```{.include}
+```{.include format=commonmark+attributes}
 chapters/scripting.md
 ```
 
-```{.include}
+```{.include format=commonmark+attributes}
 ../CHANGELOG.md
 ```
