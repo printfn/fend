@@ -1,5 +1,14 @@
 ## Changelog
 
+### v1.1.5 (2023-02-06)
+
+* Add `@no_trailing_newline` attribute, which causes fend to not print a trailing
+    newline after the calculation.
+    ```
+    $ fend @no_trailing_newline 5+5
+    10
+    ```
+
 ### v1.1.4 (2023-01-08)
 
 * Add support for subtracting from dates (e.g. `@2023-01-08 - 5 days`)
