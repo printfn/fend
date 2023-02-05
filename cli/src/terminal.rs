@@ -16,7 +16,7 @@ pub fn atty_stdin() -> bool {
 }
 
 pub struct PromptState<'a> {
-    rl: rustyline::Editor<helper::Helper<'a>, rustyline::history::DefaultHistory>,
+    rl: rustyline::Editor<helper::Helper<'a>, rustyline::history::FileHistory>,
     config: &'a config::Config,
     history_path: Option<path::PathBuf>,
 }
@@ -26,7 +26,7 @@ pub fn init_prompt<'a>(
     context: &context::Context<'a>,
 ) -> Result<PromptState<'a>, Box<dyn error::Error>> {
     let mut rl =
-        rustyline::Editor::<helper::Helper<'_>, rustyline::history::MemHistory>::with_config(
+        rustyline::Editor::<helper::Helper<'_>, rustyline::history::FileHistory>::with_config(
             rustyline::config::Builder::new()
                 .history_ignore_space(true)
                 .auto_add_history(true)
@@ -67,7 +67,7 @@ impl From<rustyline::error::ReadlineError> for ReadLineError {
 }
 
 fn save_history(
-    rl: &mut rustyline::Editor<helper::Helper<'_>, rustyline::history::DefaultHistory>,
+    rl: &mut rustyline::Editor<helper::Helper<'_>, rustyline::history::FileHistory>,
     path: &Option<path::PathBuf>,
 ) -> io::Result<()> {
     if let Some(history_path) = path {
