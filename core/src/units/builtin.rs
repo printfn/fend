@@ -536,12 +536,17 @@ const LIQUID_UNITS: &[UnitTuple] = &[
     ("gal", "", "gallon", ""),
     ("quart", "quarts", "1/4 gallon", ""),
     ("pint", "pints", "1/2 quart", ""),
+    ("cup", "cups", "1/2 pint", ""),
     ("gill", "", "1/4 pint", ""),
     ("fluid_ounce", "", "1/16 pint", ""),
+    ("tablespoon", "tablespoons", "1/2 floz", ""),
+    ("teaspoon", "teaspoons", "1/3 tablespoon", ""),
     ("fluid_dram", "", "1/8 floz", ""),
     ("qt", "", "quart", ""),
     ("pt", "", "pint", ""),
     ("floz", "", "fluid_ounce", ""),
+    ("tbsp", "", "tablespoon", ""),
+    ("tsp", "", "teaspoon", ""),
 ];
 
 const AVOIRDUPOIS_WEIGHT: &[UnitTuple] = &[
