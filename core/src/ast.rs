@@ -639,7 +639,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
         "base" => Value::BuiltInFunction(BuiltInFunction::Base),
         "dec" | "decimal" => Value::Base(Base::from_plain_base(10)?),
         "hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),
-        "binary" => Value::Base(Base::from_plain_base(2)?),
+        "bin" | "binary" => Value::Base(Base::from_plain_base(2)?),
         "ternary" => Value::Base(Base::from_plain_base(3)?),
         "senary" | "seximal" => Value::Base(Base::from_plain_base(6)?),
         "oct" | "octal" => Value::Base(Base::from_plain_base(8)?),
