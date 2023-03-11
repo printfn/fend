@@ -162,8 +162,14 @@ enum OutputMode {
 
 type ExchangeRateFn = fn(&str) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>;
 
-/// This struct contains context used for `fend`. It should only be created once
-/// at startup.
+/// This struct contains fend's current context, including some settings
+/// as well as stored variables.
+///
+/// If you're writing an interpreter it's recommended to only
+/// instantiate this struct once so that variables and settings are
+/// preserved, but you can also manually serialise all variables
+/// and recreate the context for every calculation, depending on
+/// which is easier.
 #[derive(Clone)]
 pub struct Context {
     current_time: Option<CurrentTimeInfo>,
@@ -193,8 +199,7 @@ impl Default for Context {
 }
 
 impl Context {
-    /// Create a new context instance. This can be fairly slow, and should
-    /// only be done once if possible.
+    /// Create a new context instance.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -258,7 +263,8 @@ impl Context {
 
     /// Serializes all variables defined in this context to a stream of bytes.
     /// Note that the specific format is NOT stable, and can change with any
-    /// minor update. It is also not cross-platform compatible.
+    /// minor update. It is also not compatible between 32-bit and
+    /// 64-bit architectures.
     ///
     /// # Errors
     /// This function returns an error if the input cannot be serialized.
