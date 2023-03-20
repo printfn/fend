@@ -1,15 +1,13 @@
 [package]
 name = "fend-wasm"
 version.workspace = true
-# `description`, `homepage`, `repository` and `license` can't be
-# from the workspace root due to wasm-pack bug #1180
-description = "Arbitrary-precision unit-aware calculator"
+description.workspace = true
 edition.workspace = true
-homepage = "https://github.com/printfn/fend"
-repository = "https://github.com/printfn/fend"
+homepage.workspace = true
+repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
-license = "MIT"
+license.workspace = true
 publish = false
 
 [lib]
