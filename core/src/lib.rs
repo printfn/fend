@@ -38,6 +38,7 @@ mod serialize;
 mod units;
 mod value;
 
+use std::sync::Arc;
 use std::{collections::HashMap, fmt, io};
 
 use error::FendError;
@@ -160,7 +161,30 @@ enum OutputMode {
     TerminalFixedWidth,
 }
 
-type ExchangeRateFn = fn(&str) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>;
+/// An exchange rate handler.
+pub trait ExchangeRateFn {
+    /// Returns the value of a currency relative to the base currency.
+    /// The base currency depends on your implementation; the core does not depend on your decision at all, as long as its consistent.
+    ///
+    /// # Errors
+    /// This function errors out if the currency was not found or the conversion is impossible for any reason (HTTP request failed, etc.)
+    fn relative_to_base_currency(
+        &self,
+        currency: &str,
+    ) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>;
+}
+
+impl<T> ExchangeRateFn for T
+where
+    T: Fn(&str) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>,
+{
+    fn relative_to_base_currency(
+        &self,
+        currency: &str,
+    ) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>> {
+        self(currency)
+    }
+}
 
 /// This struct contains fend's current context, including some settings
 /// as well as stored variables.
@@ -177,7 +201,7 @@ pub struct Context {
     fc_mode: FCMode,
     random_u32: Option<fn() -> u32>,
     output_mode: OutputMode,
-    get_exchange_rate: Option<ExchangeRateFn>,
+    get_exchange_rate: Option<Arc<dyn ExchangeRateFn + Send + Sync>>,
 }
 
 impl fmt::Debug for Context {
@@ -303,8 +327,11 @@ impl Context {
     }
 
     /// Set a handler function for loading exchange rates.
-    pub fn set_exchange_rate_handler_v1(&mut self, get_exchange_rate: ExchangeRateFn) {
-        self.get_exchange_rate = Some(get_exchange_rate);
+    pub fn set_exchange_rate_handler_v1<T: ExchangeRateFn + 'static + Send + Sync>(
+        &mut self,
+        get_exchange_rate: T,
+    ) {
+        self.get_exchange_rate = Some(Arc::new(get_exchange_rate));
     }
 }
 
