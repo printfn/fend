@@ -108,6 +108,15 @@ approx. 0.7071067811 + 0.7071067811i
 17
 ```
 
+## Projects using fend
+
+These are some projects making use of fend:
+
+* [MicroPad](https://getmicropad.com)
+* [Fendesk](https://github.com/SekoiaTree/fendesk)
+
+Feel free to make a pull request to add your own!
+
 ## License
 
 fend is MIT-licensed. See [LICENSE.md](LICENSE.md) for more information.
