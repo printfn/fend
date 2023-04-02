@@ -5432,18 +5432,13 @@ fn test_invalid_dice_syntax_3() {
 
 #[test]
 fn test_invalid_dice_syntax_4() {
-    expect_error(
-        "d30000000000000000",
-        Some("invalid dice syntax, try e.g. `4d6`"),
-    );
+    expect_error("d30000000000000000", None);
 }
 
 #[test]
 fn test_invalid_dice_syntax_5() {
-    expect_error(
-        "30000000000000000d2",
-        Some("invalid dice syntax, try e.g. `4d6`"),
-    );
+    // this produces different error messages on 32-bit vs 64-bit platforms
+    expect_error("30000000000000000d2", None);
 }
 
 #[test]
