@@ -1,5 +1,12 @@
 ## Changelog
 
+### v1.1.6 (2023-04-03)
+
+* Add cup, tablespoon and teaspoon units (by [@elcste](https://github.com/elcste))
+* Add `bin` alias for binary (by [@xfnw](https://github.com/xfnw))
+* Change the internal implementation of exchange rate handlers (by [@SekoiaTree](https://github.com/SekoiaTree))
+* Fix unit test failures on 32-bit systems
+
 ### v1.1.5 (2023-02-06)
 
 * Add `@no_trailing_newline` attribute, which causes fend to not print a trailing
