@@ -713,7 +713,7 @@ pub(crate) fn query_unit(
 ) -> Option<(&'static str, &'static str, &'static str)> {
     if short_prefixes {
         for (name, def) in SHORT_PREFIXES {
-            if *name == ident {
+            if *name == ident || (!case_sensitive && name.eq_ignore_ascii_case(ident)) {
                 return Some((name, name, def));
             }
         }

@@ -3,6 +3,13 @@
 ### Unreleased
 
 * Variable names with underscores can now be correctly referenced
+* Combined abbreviated units are now parsed case-insensitively:
+    ```
+    > 100 kwh
+    100 kWh
+    > 64 KB
+    64 kB
+    ```
 
 ### v1.1.6 (2023-04-03)
 

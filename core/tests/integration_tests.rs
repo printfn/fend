@@ -5727,3 +5727,23 @@ fn light_year_3() {
 fn light_year_4() {
     test_eval("light day / light to days", "1 day");
 }
+
+#[test]
+fn mixed_case_abbreviations_1() {
+    test_eval("5 KB", "5 kB");
+}
+
+#[test]
+fn mixed_case_abbreviations_2() {
+    test_eval("5 Kb", "5 kb");
+}
+
+#[test]
+fn mixed_case_abbreviations_3() {
+    test_eval("5 gb", "5 Gb");
+}
+
+#[test]
+fn mixed_case_abbreviations_4() {
+    test_eval("5 kiwh", "5 KiWh");
+}
