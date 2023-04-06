@@ -546,6 +546,7 @@ const LIQUID_UNITS: &[UnitTuple] = &[
     ("pt", "", "pint", ""),
     ("floz", "", "fluid_ounce", ""),
     ("tbsp", "", "tablespoon", ""),
+    ("tbs", "", "tablespoon", ""),
     ("tsp", "", "teaspoon", ""),
 ];
 
