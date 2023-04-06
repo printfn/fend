@@ -5702,3 +5702,28 @@ fn centimeter_no_currencies() {
         "1 centimeter"
     );
 }
+
+#[test]
+fn underscore_variables() {
+    test_eval("test_a = 5; test_a", "5");
+}
+
+#[test]
+fn light_year_1() {
+    test_eval("light_year / light to days", "365.25 days");
+}
+
+#[test]
+fn light_year_2() {
+    test_eval("light year / light to days", "365.25 days");
+}
+
+#[test]
+fn light_year_3() {
+    test_eval("lightyear / light to days", "365.25 days");
+}
+
+#[test]
+fn light_year_4() {
+    test_eval("light day / light to days", "1 day");
+}

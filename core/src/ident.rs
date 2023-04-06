@@ -51,14 +51,6 @@ impl From<&'static str> for Ident {
 
 impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let use_spaces = !self.0.starts_with('_');
-        for ch in self.0.chars() {
-            if use_spaces && ch == '_' {
-                write!(f, " ")?;
-            } else {
-                write!(f, "{ch}")?;
-            }
-        }
-        Ok(())
+        write!(f, "{}", self.0)
     }
 }

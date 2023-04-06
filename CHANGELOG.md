@@ -1,5 +1,9 @@
 ## Changelog
 
+### Unreleased
+
+* Variable names with underscores can now be correctly referenced
+
 ### v1.1.6 (2023-04-03)
 
 * Add cup, tablespoon and teaspoon units (by [@elcste](https://github.com/elcste))
