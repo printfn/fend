@@ -524,6 +524,7 @@ const IMPERIAL_UNITS: &[UnitTuple] = &[
     ("chain", "chains", "66 feet", ""),
     ("link", "links", "1/100 chain", ""),
     ("ch", "", "chain", ""),
+    ("thou", "", "1/1000 inch", "thousandth of an inch"),
     ("acre", "acres", "10 chain^2", ""),
     ("section", "sections", "mile^2", ""),
     ("township", "townships", "36 sections", ""),

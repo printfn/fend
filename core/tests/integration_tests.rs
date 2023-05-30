@@ -5747,3 +5747,8 @@ fn mixed_case_abbreviations_3() {
 fn mixed_case_abbreviations_4() {
     test_eval("5 kiwh", "5 KiWh");
 }
+
+#[test]
+fn thou() {
+    test_eval("2 thou to mm", "0.0508 mm");
+}
