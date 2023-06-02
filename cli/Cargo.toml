@@ -13,7 +13,7 @@ readme = "../README.md"
 [dependencies]
 atty = "0.2.14"
 console = { version = "0.15.7", default-features = false }
-ctrlc = "3.3.1"
+ctrlc = "3.4.0"
 fend-core.workspace = true
 home = "0.5.5"
 nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
