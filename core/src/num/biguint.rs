@@ -190,7 +190,8 @@ impl BigUint {
         a.pow_internal(b.get(0), int)
     }
 
-    // computes the exact square root if possible, otherwise the next lower integer
+    // computes the exact `n`-th root if possible, otherwise the next lower integer
+    #[allow(clippy::redundant_clone)]
     pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
         if self == 0.into() || self == 1.into() || n == &Self::from(1) {
             return Ok(Exact::new(self, true));
