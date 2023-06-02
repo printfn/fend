@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.2.0 (2023-06-02)
 
 * Variable names with underscores can now be correctly referenced
 * Combined abbreviated units are now parsed case-insensitively:

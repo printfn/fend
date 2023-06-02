@@ -138,7 +138,7 @@ dependencies = [
 
 [[package]]
 name = "fend"
-version = "1.1.6"
+version = "1.2.0"
 dependencies = [
  "atty",
  "console",
@@ -155,11 +155,11 @@ dependencies = [
 
 [[package]]
 name = "fend-core"
-version = "1.1.6"
+version = "1.2.0"
 
 [[package]]
 name = "fend-wasm"
-version = "1.1.6"
+version = "1.2.0"
 dependencies = [
  "fend-core",
  "instant",
