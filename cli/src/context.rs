@@ -1,6 +1,6 @@
 use std::{cell::RefCell, time};
 
-use crate::config;
+use crate::{config, exchange_rates};
 
 pub struct HintInterrupt {
     start: time::Instant,
@@ -56,13 +56,19 @@ impl<'a> Context<'a> {
         &self,
         line: &str,
         int: &impl fend_core::Interrupt,
+        config: &config::Config,
     ) -> Result<fend_core::FendResult, String> {
         let mut ctx_borrow = self.ctx.borrow_mut();
         ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
         ctx_borrow.core_ctx.set_output_mode_terminal();
+        let exchange_rate_handler = if config.enable_internet_access {
+            exchange_rates::exchange_rate_handler
+        } else {
+            |_: &str| Err(exchange_rates::InternetAccessDisabledError.into())
+        };
         ctx_borrow
             .core_ctx
-            .set_exchange_rate_handler_v1(crate::exchange_rates::exchange_rate_handler);
+            .set_exchange_rate_handler_v1(exchange_rate_handler);
         ctx_borrow.input_typed = false;
         fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
     }

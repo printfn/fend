@@ -10,6 +10,9 @@
     > 64 KB
     64 kB
     ```
+* Add a new configuration option `enable-internet-access` (defaults to `true`)
+* Add `tbs` unit as an abbreviation for tablespoons
+* Add `thou` unit, representing a thousandth of an inch
 
 ### v1.1.6 (2023-04-03)
 

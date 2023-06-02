@@ -21,6 +21,12 @@ coulomb-and-farad = false
 #  * 'ignore': ignore any unknown configuration settings
 unknown-settings = 'warn'
 
+# Whether to enable internet access. This is required for
+# currency conversions, where fend makes a request to
+# the European Central Bank website to download the latest
+# exchange rates.
+enable-internet-access = true
+
 # This section controls the colors that are used by
 # fend. Make sure the `enable-colors` setting is
 # turned on for this to work.

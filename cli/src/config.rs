@@ -8,6 +8,7 @@ pub struct Config {
     pub coulomb_and_farad: bool,
     pub colors: color::OutputColors,
     pub max_history_size: usize,
+    pub enable_internet_access: bool,
     unknown_settings: UnknownSettings,
     unknown_keys: Vec<String>,
 }
@@ -18,98 +19,102 @@ enum UnknownSettings {
     Warn,
 }
 
-impl<'de> serde::Deserialize<'de> for Config {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct ConfigVisitor;
+struct ConfigVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
-            type Value = Config;
+impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
+    type Value = Config;
 
-            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                formatter.write_str("a fend configuration struct")
-            }
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a fend configuration struct")
+    }
 
-            fn visit_map<V: serde::de::MapAccess<'de>>(
-                self,
-                mut map: V,
-            ) -> Result<Config, V::Error> {
-                let mut result = Config::default();
-                let mut seen_prompt = false;
-                let mut seen_enable_colors = false;
-                let mut seen_coulomb_farad = false;
-                let mut seen_colors = false;
-                let mut seen_max_hist_size = false;
-                while let Some(key) = map.next_key::<String>()? {
-                    match key.as_str() {
-                        "prompt" => {
-                            if seen_prompt {
-                                return Err(serde::de::Error::duplicate_field("prompt"));
-                            }
-                            result.prompt = map.next_value::<String>()?;
-                            seen_prompt = true;
-                        }
-                        "enable-colors" | "color" => {
-                            if seen_enable_colors {
-                                return Err(serde::de::Error::duplicate_field("enable-colors"));
-                            }
-                            let enable_colors: toml::Value = map.next_value()?;
-                            if enable_colors == false.into() || enable_colors == "never".into() {
-                                result.enable_colors = false;
-                            } else if enable_colors == true.into() || enable_colors == "auto".into()
-                            {
-                                result.enable_colors = use_colors_if_auto();
-                            } else if enable_colors == "always".into() {
-                                result.enable_colors = true;
-                            } else {
-                                eprintln!("Error: unknown config setting for `{key}`, expected one of `'never'`, `'auto'` or `'always'`");
-                            }
-                            seen_enable_colors = true;
-                        }
-                        "coulomb-and-farad" => {
-                            if seen_coulomb_farad {
-                                return Err(serde::de::Error::duplicate_field("coulomb-and-farad"));
-                            }
-                            result.coulomb_and_farad = map.next_value()?;
-                            seen_coulomb_farad = true;
-                        }
-                        "colors" => {
-                            if seen_colors {
-                                return Err(serde::de::Error::duplicate_field("colors"));
-                            }
-                            result.colors = map.next_value()?;
-                            seen_colors = true;
-                        }
-                        "max-history-size" => {
-                            if seen_max_hist_size {
-                                return Err(serde::de::Error::duplicate_field("max-history-size"));
-                            }
-                            result.max_history_size = map.next_value()?;
-                            seen_max_hist_size = true;
-                        }
-                        "unknown-settings" => {
-                            let unknown_settings: String = map.next_value()?;
-                            result.unknown_settings = match unknown_settings.as_str() {
-                                "ignore" => UnknownSettings::Ignore,
-                                "warn" => UnknownSettings::Warn,
-                                v => {
-                                    return Err(serde::de::Error::invalid_value(
-                                        serde::de::Unexpected::Str(v),
-                                        &"`ignore` or `warn`",
-                                    ))
-                                }
-                            };
-                        }
-                        unknown_key => {
-                            // this may occur if the user has multiple fend versions installed
-                            map.next_value::<toml::Value>()?;
-                            result.unknown_keys.push(unknown_key.to_string());
-                        }
+    fn visit_map<V: serde::de::MapAccess<'de>>(self, mut map: V) -> Result<Config, V::Error> {
+        let mut result = Config::default();
+        let mut seen_prompt = false;
+        let mut seen_enable_colors = false;
+        let mut seen_coulomb_farad = false;
+        let mut seen_colors = false;
+        let mut seen_max_hist_size = false;
+        let mut seen_enable_internet_access = false;
+        while let Some(key) = map.next_key::<String>()? {
+            match key.as_str() {
+                "prompt" => {
+                    if seen_prompt {
+                        return Err(serde::de::Error::duplicate_field("prompt"));
                     }
+                    result.prompt = map.next_value::<String>()?;
+                    seen_prompt = true;
                 }
-                Ok(result)
+                "enable-colors" | "color" => {
+                    if seen_enable_colors {
+                        return Err(serde::de::Error::duplicate_field("enable-colors"));
+                    }
+                    let enable_colors: toml::Value = map.next_value()?;
+                    if enable_colors == false.into() || enable_colors == "never".into() {
+                        result.enable_colors = false;
+                    } else if enable_colors == true.into() || enable_colors == "auto".into() {
+                        result.enable_colors = use_colors_if_auto();
+                    } else if enable_colors == "always".into() {
+                        result.enable_colors = true;
+                    } else {
+                        eprintln!("Error: unknown config setting for `{key}`, expected one of `'never'`, `'auto'` or `'always'`");
+                    }
+                    seen_enable_colors = true;
+                }
+                "coulomb-and-farad" => {
+                    if seen_coulomb_farad {
+                        return Err(serde::de::Error::duplicate_field("coulomb-and-farad"));
+                    }
+                    result.coulomb_and_farad = map.next_value()?;
+                    seen_coulomb_farad = true;
+                }
+                "colors" => {
+                    if seen_colors {
+                        return Err(serde::de::Error::duplicate_field("colors"));
+                    }
+                    result.colors = map.next_value()?;
+                    seen_colors = true;
+                }
+                "max-history-size" => {
+                    if seen_max_hist_size {
+                        return Err(serde::de::Error::duplicate_field("max-history-size"));
+                    }
+                    result.max_history_size = map.next_value()?;
+                    seen_max_hist_size = true;
+                }
+                "enable-internet-access" => {
+                    if seen_enable_internet_access {
+                        return Err(serde::de::Error::duplicate_field("enable-internet-access"));
+                    }
+                    result.enable_internet_access = map.next_value()?;
+                    seen_enable_internet_access = true;
+                }
+                "unknown-settings" => {
+                    let unknown_settings: String = map.next_value()?;
+                    result.unknown_settings = match unknown_settings.as_str() {
+                        "ignore" => UnknownSettings::Ignore,
+                        "warn" => UnknownSettings::Warn,
+                        v => {
+                            return Err(serde::de::Error::invalid_value(
+                                serde::de::Unexpected::Str(v),
+                                &"`ignore` or `warn`",
+                            ))
+                        }
+                    };
+                }
+                unknown_key => {
+                    // this may occur if the user has multiple fend versions installed
+                    map.next_value::<toml::Value>()?;
+                    result.unknown_keys.push(unknown_key.to_string());
+                }
             }
         }
+        Ok(result)
+    }
+}
 
+impl<'de> serde::Deserialize<'de> for Config {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         const FIELDS: &[&str] = &[
             "prompt",
             "enable-colors",
@@ -117,6 +122,7 @@ impl<'de> serde::Deserialize<'de> for Config {
             "colors",
             "max-history-size",
             "unknown-settings",
+            "enable-internet-access",
         ];
         deserializer.deserialize_struct("Config", FIELDS, ConfigVisitor)
     }
@@ -130,6 +136,7 @@ impl Default for Config {
             coulomb_and_farad: false,
             colors: color::OutputColors::default(),
             max_history_size: 1000,
+            enable_internet_access: true,
             unknown_settings: UnknownSettings::Warn,
             unknown_keys: vec![],
         }

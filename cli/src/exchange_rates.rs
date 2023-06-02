@@ -92,6 +92,16 @@ impl fmt::Display for UnknownExchangeRate {
 
 impl error::Error for UnknownExchangeRate {}
 
+#[derive(Copy, Clone, Debug)]
+pub struct InternetAccessDisabledError;
+impl fmt::Display for InternetAccessDisabledError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "internet access is disabled by fend configuration")
+    }
+}
+
+impl error::Error for InternetAccessDisabledError {}
+
 pub fn exchange_rate_handler(currency: &str) -> Result<f64, Error> {
     let exchange_rates = get_exchange_rates()?;
     for (c, rate) in exchange_rates {
