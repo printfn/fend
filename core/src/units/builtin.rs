@@ -25,6 +25,8 @@ const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
     ("metre", "metres", "l@meter", ""),
     ("m", "", "s@meter", ""),
     ("gram", "grams", "l@1/1000 kilogram", ""),
+    ("jin", "jin", "l@1/2 kilogram", ""),
+    ("gongjin", "gongjin", "l@1 kilogram", ""),
     ("g", "", "s@gram", ""),
     ("K", "", "s@kelvin", ""),
     ("\u{b0}K", "", "=K", ""),
