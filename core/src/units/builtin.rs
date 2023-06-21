@@ -25,6 +25,7 @@ const BASE_UNIT_ABBREVIATIONS: &[UnitTuple] = &[
     ("metre", "metres", "l@meter", ""),
     ("m", "", "s@meter", ""),
     ("gram", "grams", "l@1/1000 kilogram", ""),
+    ("jin", "jin", "l@1/2 kilogram", ""),
     ("g", "", "s@gram", ""),
     ("K", "", "s@kelvin", ""),
     ("\u{b0}K", "", "=K", ""),
@@ -497,6 +498,7 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
     ("diopter", "", "l@/m", "reciprocal of focal length"),
     ("sqm", "", "=m^2", ""),
     ("sqmm", "", "=mm^2", ""),
+    ("gongjin", "", "l@1 kilogram", ""),
     // TODO remove these compatibility units
     ("lightyear", "lightyears", "light_year", ""),
     ("light", "", "c", ""),
