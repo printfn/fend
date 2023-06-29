@@ -33,6 +33,7 @@ The easiest way to install fend locally is via your package manager:
 | ----------------------- | -------------------------- |
 | Homebrew                | `brew install fend`        |
 | AUR (Arch Linux)        | `yay -Syu aur/fend-bin`    |
+| Xbps (Void Linux)       | `xbps-install fend`        |
 | Nix                     | `nix-env -iA nixpkgs.fend` |
 | Cargo                   | `cargo install fend`       |
 | Windows Package Manager | `winget install fend`      |
@@ -56,6 +57,7 @@ $ fend
 * [Homebrew](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/fend.rb)
 * [AUR (built from source)](https://aur.archlinux.org/packages/fend/)
 * [AUR (pre-built binary)](https://aur.archlinux.org/packages/fend-bin/)
+* [xbps](https://github.com/void-linux/void-packages/tree/master/srcpkgs/fend)
 * [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix)
 * [Windows Package Manager](https://github.com/microsoft/winget-pkgs/tree/master/manifests/p/printfn/fend)
 * [Chocolatey](https://community.chocolatey.org/packages/fend)
