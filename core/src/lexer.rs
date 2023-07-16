@@ -786,14 +786,10 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
 			Ok(None) => None,
 			Ok(Some(t)) => Some(Ok(t)),
 		};
-		if matches!(
+		self.after_number_or_to = matches!(
 			res,
 			Some(Ok(Token::Num(_) | Token::Symbol(Symbol::UnitConversion)))
-		) {
-			self.after_number_or_to = true;
-		} else {
-			self.after_number_or_to = false;
-		}
+		);
 		if let Some(Ok(Token::Symbol(Symbol::Backslash))) = res {
 			self.after_backslash_state = 1;
 		} else if self.after_backslash_state == 1 {
