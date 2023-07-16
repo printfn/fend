@@ -58,6 +58,12 @@ fend is available on [Homebrew](https://brew.sh):
 brew install fend
 ```
 
+fend can also be installed via [MacPorts](https://www.macports.org):
+
+```bash
+sudo port install fend
+```
+
 ### Arch Linux
 
 fend is available on the [AUR](https://aur.archlinux.org/packages/fend-bin/):
