@@ -17,10 +17,10 @@ ctrlc = "3.4.0"
 fend-core.workspace = true
 home = "0.5.5"
 nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
-rustyline = { version =  "11.0.0", default-features = false, features = ["with-file-history"], package = "rustyline-with-hint-fix" }
-serde = { version = "1.0.163", default-features = false }
-toml = { version = "0.7.4", default-features = false, features = ["parse"] }
-ureq = { version = "2.6.2", default-features = false, features = ["tls"] }
+rustyline = { version =  "12.0.0", default-features = false, features = ["with-file-history"], package = "rustyline-with-hint-fix" }
+serde = { version = "1.0.174", default-features = false }
+toml = { version = "0.7.6", default-features = false, features = ["parse"] }
+ureq = { version = "2.7.1", default-features = false, features = ["tls"] }
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = ["fileapi", "winnt", "errhandlingapi"] }
