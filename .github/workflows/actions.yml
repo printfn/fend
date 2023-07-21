@@ -10,6 +10,8 @@ env:
   CARGO_TERM_COLOR: always
   RUST_MIN_STACK: 16777212
 
+permissions: {}
+
 jobs:
   build:
     strategy:
@@ -29,6 +31,9 @@ jobs:
             artifact-platform-name: windows-x64-exe
             env-command: "| Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
 
+    permissions:
+      contents: read
+
     runs-on: ${{ matrix.platform }}
 
     timeout-minutes: 20
@@ -39,7 +44,7 @@ jobs:
       - name: Update Rust
         run: rustup update
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@v2
 
       - name: Clippy, rustfmt
         if: ${{ matrix.platform == 'ubuntu-latest' }}
@@ -65,8 +70,8 @@ jobs:
         run: |
           RUSTFLAGS="-C instrument-coverage" \
             cargo test --workspace -- --quiet
-          sudo apt update
-          sudo apt install llvm
+          sudo apt-get update -y
+          sudo apt-get install -yq llvm
           llvm-profdata merge -sparse */*.profraw -o fend.profdata
           llvm-cov report \
             --use-color \
@@ -132,7 +137,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add armv7-unknown-linux-gnueabihf
-          sudo apt install -yq gcc-arm-linux-gnueabihf
+          sudo apt-get install -yq gcc-arm-linux-gnueabihf
           export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc
           cargo build --release --package fend --target armv7-unknown-linux-gnueabihf
 
@@ -148,7 +153,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           rustup target add aarch64-unknown-linux-gnu
-          sudo apt install -yq gcc-aarch64-linux-gnu
+          sudo apt-get install -yq gcc-aarch64-linux-gnu
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc
           cargo build --release --package fend --target aarch64-unknown-linux-gnu
 
@@ -240,7 +245,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
