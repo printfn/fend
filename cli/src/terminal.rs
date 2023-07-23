@@ -4,15 +4,15 @@ use std::{error, io, mem, path};
 // contains wrapper code for terminal handling, using third-party
 // libraries where necessary
 
-pub fn atty_stdout() -> bool {
+pub fn is_terminal_stdout() -> bool {
 	// check if stdout is a tty (which affects whether to show colors)
-	atty::is(atty::Stream::Stdout)
+	std::io::IsTerminal::is_terminal(&std::io::stdout())
 }
 
-pub fn atty_stdin() -> bool {
+pub fn is_terminal_stdin() -> bool {
 	// check if stdin is a tty (used for whether to show an
 	// interactive prompt)
-	atty::is(atty::Stream::Stdin)
+	std::io::IsTerminal::is_terminal(&std::io::stdin())
 }
 
 pub struct PromptState<'a> {

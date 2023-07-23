@@ -210,7 +210,7 @@ fn real_main() -> ExitCode {
 			return eval_exprs(&exprs);
 		}
 		ArgsAction::Repl => {
-			if terminal::atty_stdin() {
+			if terminal::is_terminal_stdin() {
 				let config = config::read();
 				return repl_loop(&config);
 			}

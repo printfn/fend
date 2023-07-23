@@ -203,7 +203,7 @@ fn use_colors_if_auto() -> bool {
 		return true;
 	}
 	if env::var_os("CLICOLOR").unwrap_or_else(|| "1".into()) != "0"
-		&& crate::terminal::atty_stdout()
+		&& crate::terminal::is_terminal_stdout()
 	{
 		return true;
 	}
