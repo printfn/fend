@@ -37,8 +37,8 @@ fn expr_unit<I: Interrupt>(
 	let mut definition = definition.trim();
 	if definition == "$CURRENCY" {
 		let Some(exchange_rate_fn) = &context.get_exchange_rate else {
-            return Err(FendError::NoExchangeRatesAvailable);
-        };
+			return Err(FendError::NoExchangeRatesAvailable);
+		};
 		let one_base_in_currency = exchange_rate_fn.relative_to_base_currency(singular)?;
 		let value = evaluate_to_value(
 			format!("(1/{one_base_in_currency}) BASE_CURRENCY").as_str(),

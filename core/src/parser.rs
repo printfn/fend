@@ -114,8 +114,8 @@ fn parse_parens(input: &[Token]) -> ParseResult<'_> {
 fn parse_backslash_lambda(input: &[Token]) -> ParseResult<'_> {
 	let (_, input) = parse_fixed_symbol(input, Symbol::Backslash)?;
 	let (Expr::Ident(ident), input) = parse_ident(input)? else {
-        return Err(ParseError::ExpectedIdentifier);
-    };
+		return Err(ParseError::ExpectedIdentifier);
+	};
 	let (_, input) = parse_fixed_symbol(input, Symbol::Dot)
 		.map_err(|e| ParseError::ExpectedDotInLambda(Box::new(e)))?;
 	let (rhs, input) = parse_function(input)?;

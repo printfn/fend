@@ -410,8 +410,8 @@ pub fn evaluate_preview_with_interrupt(
 	let result = evaluate_with_interrupt_internal(input, context, int);
 	*context = context_clone;
 	let Ok(result) = result else {
-        return empty;
-    };
+		return empty;
+	};
 	let s = result.get_main_result();
 	if s.is_empty()
 		|| result.is_unit_type()

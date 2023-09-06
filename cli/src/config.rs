@@ -147,19 +147,19 @@ pub static DEFAULT_CONFIG_FILE: &str = include_str!("default_config.toml");
 
 fn read_config_file() -> Config {
 	let Ok(path) = crate::file_paths::get_config_file_location() else {
-        return Config::default();
-    };
+		return Config::default();
+	};
 	let Ok(mut file) = fs::File::open(&path) else {
-        return Config::default();
-    };
+		return Config::default();
+	};
 	let mut bytes = vec![];
 	let Ok(_) = <fs::File as io::Read>::read_to_end(&mut file, &mut bytes) else {
-        return Config::default();
-    };
+		return Config::default();
+	};
 	let Ok(config_string) = String::from_utf8(bytes) else {
-        eprintln!("Error: config file is not UTF-8 encoded");
-        return Config::default();
-    };
+		eprintln!("Error: config file is not UTF-8 encoded");
+		return Config::default();
+	};
 	let config = match toml::from_str(&config_string) {
 		Ok(config) => config,
 		Err(e) => {

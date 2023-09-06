@@ -25,8 +25,8 @@ impl From<HomeDirError> for io::Error {
 
 fn get_home_dir() -> Result<path::PathBuf, HomeDirError> {
 	let Some(home_dir) = home::home_dir() else {
-        return Err(HomeDirError);
-    };
+		return Err(HomeDirError);
+	};
 	Ok(home_dir)
 }
 
@@ -141,8 +141,8 @@ pub fn get_cache_dir(mode: DirMode) -> Result<path::PathBuf, io::Error> {
 
 fn mark_dir_as_hidden(path: &path::Path) {
 	let Ok(metadata) = fs::metadata(path) else {
-        return;
-    };
+		return;
+	};
 
 	if !metadata.is_dir() {
 		return;
