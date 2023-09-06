@@ -154,8 +154,8 @@ git push origin main
 
 echo "Waiting for CI to start..."
 sleep 5
-GH_RUN_ID=$(gh run list -b main --json databaseId,headSha \
-    | jq ".[] | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .databaseId")
+GH_RUN_ID=$(gh run list --json databaseId,headSha --jq ".[] \
+    | select(.headSha == \"$RELEASE_COMMIT_HASH\") | .databaseId")
 
 manualstep "Wait for GitHub CI to pass"
 
