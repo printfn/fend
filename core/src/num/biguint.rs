@@ -41,7 +41,7 @@ impl BigUint {
 		match self {
 			Small(n) => *n == 0,
 			Large(value) => {
-				for v in value.iter() {
+				for v in value {
 					if *v != 0 {
 						return false;
 					}
