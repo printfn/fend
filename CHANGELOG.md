@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.2.1 (2023-09-06)
+
+* Add Chinese units `jin` and `gongjin` (by [@eatradish](https://github.com/eatradish))
+* Add Xbps (Void Linux) package (by [@tranzystorek-io](https://github.com/tranzystorek-io))
+* Add MacPorts package (by [@herbygillot](https://github.com/herbygillot))
+
 ### v1.2.0 (2023-06-02)
 
 * Variable names with underscores can now be correctly referenced
