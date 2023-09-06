@@ -12,12 +12,12 @@ readme = "../README.md"
 
 [dependencies]
 console = { version = "0.15.7", default-features = false }
-ctrlc = "3.4.0"
+ctrlc = "3.4.1"
 fend-core.workspace = true
 home = "0.5.5"
 nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
-rustyline = { version =  "12.0.0", default-features = false, features = ["with-file-history"], package = "rustyline-with-hint-fix" }
-serde = { version = "1.0.180", default-features = false }
+rustyline = { version =  "12.0.1", default-features = false, features = ["with-file-history"], package = "rustyline-with-hint-fix" }
+serde = { version = "1.0.188", default-features = false }
 toml = { version = "0.7.6", default-features = false, features = ["parse"] }
 ureq = { version = "2.7.1", default-features = false, features = ["tls"] }
 
