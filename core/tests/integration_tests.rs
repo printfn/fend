@@ -3367,7 +3367,17 @@ fn cbrt_minus_two_i() {
 
 #[test]
 fn sin_i() {
-	expect_error("sin i", None);
+	test_eval("sin i", "approx. 1.1752011936i");
+}
+
+#[test]
+fn cos_i() {
+	test_eval("cos i", "approx. 1.5430806348");
+}
+
+#[test]
+fn tan_i() {
+	test_eval("tan i", "approx. 0.7615941559i");
 }
 
 #[test]
@@ -5579,7 +5589,7 @@ fn bitwise_and_2() {
 fn bitwise_and_3() {
 	test_eval(
 		"912834710927364108273648927346788234682764 &
-		98123740918263740896274873648273642342534252",
+        98123740918263740896274873648273642342534252",
 		"207742386994266479278471200397877100888076",
 	);
 }
@@ -5680,9 +5690,9 @@ fn date_literal_subtraction() {
 		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
 	);
 	expect_error(
-		"@2020-02-29 - 12 month",
-		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
-	);
+        "@2020-02-29 - 12 month",
+        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+    );
 	test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
 }
 
