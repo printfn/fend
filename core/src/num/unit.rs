@@ -405,7 +405,7 @@ impl Value {
 	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		let value = self.value.one_point()?.abs(int)?;
 		Ok(Self {
-			value: value.value.into(),
+			value: Complex::from(value.value).into(),
 			unit: self.unit,
 			exact: self.exact && value.exact,
 			base: self.base,

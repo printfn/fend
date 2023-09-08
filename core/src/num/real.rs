@@ -172,6 +172,12 @@ impl Real {
 		Ok(Self::from(self.approximate(int)?.atan(int)?))
 	}
 
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+		Ok(Self::from(
+			self.approximate(int)?.atan2(rhs.approximate(int)?, int)?,
+		))
+	}
+
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		Ok(Self::from(self.approximate(int)?.sinh(int)?))
 	}

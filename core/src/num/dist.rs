@@ -9,6 +9,7 @@ use std::fmt::Write;
 use std::ops::Neg;
 use std::{fmt, io};
 
+use super::real::Real;
 use super::{Base, Exact, FormattingStyle};
 
 #[derive(Clone)]
@@ -266,6 +267,12 @@ impl From<Complex> for Dist {
 		let mut parts = HashMap::new();
 		parts.insert(v, BigRat::from(1));
 		Self { parts }
+	}
+}
+
+impl From<Real> for Dist {
+	fn from(v: Real) -> Self {
+		Self::from(Complex::from(v))
 	}
 }
 

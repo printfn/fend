@@ -95,48 +95,34 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Real>, FendError> {
 		Ok(if self.imag.is_zero() {
 			if self.real < 0.into() {
-				Exact::new(
-					Self {
-						real: -self.real,
-						imag: 0.into(),
-					},
-					true,
-				)
+				Exact::new(-self.real, true)
 			} else {
-				Exact::new(self, true)
+				Exact::new(self.real, true)
 			}
 		} else if self.real.is_zero() {
 			if self.imag < 0.into() {
-				Exact::new(
-					Self {
-						real: -self.imag,
-						imag: 0.into(),
-					},
-					true,
-				)
+				Exact::new(-self.imag, true)
 			} else {
-				Exact::new(
-					Self {
-						real: self.imag,
-						imag: 0.into(),
-					},
-					true,
-				)
+				Exact::new(self.imag, true)
 			}
 		} else {
 			let power = self.real.pow(2.into(), int)?;
 			let power2 = self.imag.pow(2.into(), int)?;
 			let real = power.add(power2, int)?;
-			let res_squared = Self {
-				real: real.value,
-				imag: 0.into(),
-			};
-			let result = res_squared.root_n(&Self::from(2), int)?;
+			let result = real.value.root_n(&Real::from(2), int)?;
 			result.combine(real.exact)
 		})
+	}
+
+	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> Result<Exact<Real>, FendError> {
+		if self.imag.is_zero() {
+			Ok(Exact::new(Real::from(0), true))
+		} else {
+			Ok(Exact::new(self.imag.atan2(self.real, int)?, false))
+		}
 	}
 
 	pub(crate) fn format<I: Interrupt>(
@@ -339,15 +325,39 @@ impl Complex {
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.ln(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.ln(int)?))
+		} else {
+			// ln(z) = ln(|z|) + i * arg(z)
+			let abs = self.clone().abs(int)?;
+			let arg = self.arg(int)?;
+			Ok(Self {
+				real: abs.value.ln(int)?,
+				imag: arg.value,
+			})
+		}
+	}
+
+	pub(crate) fn log<I: Interrupt>(self, base: Self, int: &I) -> Result<Self, FendError> {
+		// log_n(z) = ln(z) / ln(n)
+		let ln = Exact::new(self.ln(int)?, false);
+		let ln2 = Exact::new(base.ln(int)?, false);
+		Ok(ln.div(ln2, int)?.value)
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.log2(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.log2(int)?))
+		} else {
+			self.log(Self::from(2), int)
+		}
 	}
-
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.log10(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.log10(int)?))
+		} else {
+			self.log(Self::from(10), int)
+		}
 	}
 
 	pub(crate) fn is_definitely_one(&self) -> bool {

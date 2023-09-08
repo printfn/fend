@@ -213,6 +213,10 @@ impl BigRat {
 		Self::from_f64(f64::atan(self.into_f64(int)?), int)
 	}
 
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+		Self::from_f64(f64::atan2(self.into_f64(int)?, rhs.into_f64(int)?), int)
+	}
+
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		Self::from_f64(f64::sinh(self.into_f64(int)?), int)
 	}

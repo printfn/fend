@@ -3381,6 +3381,21 @@ fn tan_i() {
 }
 
 #[test]
+fn ln_i() {
+	test_eval("ln i", "approx. 1.5707963267i");
+}
+
+#[test]
+fn log2_i() {
+	test_eval("log2 i", "approx. 2.2661800709i");
+}
+
+#[test]
+fn log10_i() {
+	test_eval("log10 i", "approx. 0.6821881769i");
+}
+
+#[test]
 fn dp_1() {
 	expect_error("dp 1", None);
 }
