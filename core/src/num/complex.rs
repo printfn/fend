@@ -86,6 +86,25 @@ impl Complex {
 		))
 	}
 
+	fn pow_n<I: Interrupt>(self, n: usize, int: &I) -> Result<Exact<Self>, FendError> {
+		if n == 0 {
+			return Ok(Exact::new(Self::from(1), true));
+		}
+
+		let mut result = Exact::new(Self::from(1), true);
+		let mut base = Exact::new(self, true);
+		let mut exp = n;
+		while exp > 0 {
+			if exp & 1 == 1 {
+				result = result.mul(&base, int)?;
+			}
+			base = base.clone().mul(&base, int)?;
+			exp >>= 1;
+		}
+
+		Ok(result)
+	}
+
 	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
 		if self.imag.is_zero() && rhs.imag.is_zero() {
 			let real = self.real.pow(rhs.real, int)?;
@@ -132,6 +151,11 @@ impl Complex {
 
 				return Ok(result);
 			}
+
+			if let Ok(n) = rhs.real.clone().try_as_usize(int) {
+				return self.pow_n(n, int);
+			}
+
 			// z^w = e^(w * ln(z))
 			let exp = Exact::new(self.ln(int)?, false).mul(&Exact::new(rhs, true), int)?;
 			Ok(exp.value.exp(int)?.combine(exp.exact))
@@ -263,7 +287,11 @@ impl Complex {
 					root.exact,
 				))
 			} else {
-				// root_n(z)=z^1/n
+				// root_w(z)=z^1/w
+				if let Ok(n) = n.real.clone().try_as_usize(int) {
+					let base = Exact::new(Self::from(1), true).div(Exact::new(self, true), int)?;
+					return Ok(base.value.pow_n(n, int)?.combine(base.exact));
+				}
 				self.pow(
 					Exact::new(Self::from(1), true)
 						.div(Exact::new(n, true), int)?
