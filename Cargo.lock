@@ -135,7 +135,7 @@ dependencies = [
  "serde",
  "toml",
  "ureq",
- "winapi",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
