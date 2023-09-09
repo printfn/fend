@@ -3,7 +3,7 @@
 [![build](https://github.com/printfn/fend/workflows/build/badge.svg)](https://github.com/printfn/fend)
 [![codecov](https://codecov.io/gh/printfn/fend/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
-[![downloads](https://img.shields.io/crates/d/fend)](https://crates.io/crates/fend)
+[![downloads](https://img.shields.io/crates/d/fend-core)](https://crates.io/crates/fend)
 
 [fend](https://printfn.github.io/fend) is an arbitrary-precision unit-aware calculator.
 
