@@ -937,6 +937,16 @@ impl BigRat {
 		low_bound.add(high_bound, int)?.div(&2.into(), int)
 	}
 
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		if self.num == 0.into() {
+			return Ok(Exact::new(Self::from(1), true));
+		}
+		Ok(Exact::new(
+			Self::from_f64(self.into_f64(int)?.exp(), int)?,
+			false,
+		))
+	}
+
 	// the boolean indicates whether or not the result is exact
 	// n must be an integer
 	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {

@@ -276,6 +276,10 @@ impl Real {
 		))
 	}
 
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		Ok(self.approximate(int)?.exp(int)?.apply(Self::from))
+	}
+
 	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
 		// x^1 == x
 		if let Pattern::Simple(n) = &rhs.pattern {
