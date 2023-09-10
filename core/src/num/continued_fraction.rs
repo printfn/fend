@@ -1,3 +1,5 @@
+use crate::Interrupt;
+use crate::error::FendError;
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use std::sync::Arc;
@@ -9,6 +11,8 @@ pub(crate) struct ContinuedFraction {
 	integer: BigUint,
 	fraction: Arc<dyn Fn(usize) -> BigUint>, // returning zero indicates the end of the fraction
 }
+
+const MAX_ITERATIONS: usize = 50;
 
 impl ContinuedFraction {
 	fn actual_integer_sign(&self) -> Sign {
@@ -22,6 +26,16 @@ impl ContinuedFraction {
 				}
 			}
 		}
+	}
+
+	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> Result<usize, FendError> {
+		if self.actual_integer_sign() == Sign::Negative {
+			return Err(FendError::NegativeNumbersNotAllowed);
+		}
+		if (self.fraction)(0) != 0.into() {
+			return Err(FendError::FractionToInteger);
+		}
+		self.integer.try_as_usize(int)
 	}
 }
 
@@ -107,7 +121,7 @@ impl Ord for ContinuedFraction {
 		let mut reversed = true;
 		let iter1 = self.into_iter().map(Some).chain(iter::repeat(None));
 		let iter2 = other.into_iter().map(Some).chain(iter::repeat(None));
-		for (a, b) in iter1.zip(iter2).take(50) {
+		for (a, b) in iter1.zip(iter2).take(MAX_ITERATIONS) {
 			if a.is_none() && b.is_none() {
 				break;
 			}
