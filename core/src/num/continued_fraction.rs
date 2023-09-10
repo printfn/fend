@@ -1,7 +1,7 @@
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use std::sync::Arc;
-use std::{cmp, fmt};
+use std::{cmp, fmt, iter};
 
 #[derive(Clone)]
 pub(crate) struct ContinuedFraction {
@@ -25,6 +25,37 @@ impl ContinuedFraction {
 	}
 }
 
+pub(crate) struct CFIterator<'a> {
+	cf: &'a ContinuedFraction,
+	i: usize,
+}
+
+impl Iterator for CFIterator<'_> {
+	type Item = BigUint;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		let result = (self.cf.fraction)(self.i);
+		if result == 0.into() {
+			None
+		} else {
+			self.i += 1;
+			Some(result)
+		}
+	}
+}
+
+impl iter::FusedIterator for CFIterator<'_> {}
+
+impl<'a> IntoIterator for &'a ContinuedFraction {
+	type Item = BigUint;
+
+	type IntoIter = CFIterator<'a>;
+
+	fn into_iter(self) -> Self::IntoIter {
+		CFIterator { cf: self, i: 0 }
+	}
+}
+
 impl fmt::Debug for ContinuedFraction {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "[")?;
@@ -32,14 +63,10 @@ impl fmt::Debug for ContinuedFraction {
 			write!(f, "-")?;
 		}
 		write!(f, "{:?}", self.integer)?;
-		let first_term = (self.fraction)(0);
-		if first_term != 0.into() {
-			write!(f, "; {first_term:?}")?;
-			for i in 1.. {
-				let term = (self.fraction)(i);
-				if term == 0.into() {
-					break;
-				};
+		for (i, term) in self.into_iter().enumerate() {
+			if i == 0 {
+				write!(f, "; {term:?}")?;
+			} else {
 				write!(f, ", {term:?}")?;
 			}
 		}
@@ -78,9 +105,12 @@ impl Ord for ContinuedFraction {
 			return cmp::Ordering::Equal;
 		}
 		let mut reversed = true;
-		for i in 0..50 {
-			let a = (self.fraction)(i);
-			let b = (other.fraction)(i);
+		let iter1 = self.into_iter().map(Some).chain(iter::repeat(None));
+		let iter2 = other.into_iter().map(Some).chain(iter::repeat(None));
+		for (a, b) in iter1.zip(iter2).take(50) {
+			if a.is_none() && b.is_none() {
+				break;
+			}
 			let s = a.cmp(&b);
 			if s != cmp::Ordering::Equal {
 				return if reversed { s.reverse() } else { s };
