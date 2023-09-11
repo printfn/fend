@@ -1,7 +1,7 @@
-use crate::Interrupt;
 use crate::error::FendError;
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
+use crate::Interrupt;
 use std::sync::Arc;
 use std::{cmp, fmt, iter};
 
@@ -36,6 +36,49 @@ impl ContinuedFraction {
 			return Err(FendError::FractionToInteger);
 		}
 		self.integer.try_as_usize(int)
+	}
+
+	pub(crate) fn as_f64(&self) -> f64 {
+		let mut result = self.integer.as_f64();
+		if self.integer_sign == Sign::Negative {
+			result = -result;
+		}
+		let mut denominator = 1.0;
+		for term in self.into_iter().take(MAX_ITERATIONS) {
+			denominator = 1.0 / (denominator + term.as_f64());
+			result = result * denominator + term.as_f64();
+		}
+		result
+	}
+
+	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+	pub(crate) fn from_f64(value: f64) -> Self {
+		let integer = value.floor();
+		let (sign, bigint) = if integer >= 0.0 {
+			(Sign::Positive, BigUint::from(value as u64))
+		} else {
+			(Sign::Negative, BigUint::from((-value) as u64))
+		};
+		let mut parts: Vec<BigUint> = vec![];
+		let mut f = value - integer;
+		while f != 0.0 {
+			let recip = f.recip();
+			let term = recip.floor();
+			parts.push((term as u64).into());
+			f = recip - term;
+		}
+
+		Self {
+			integer_sign: sign,
+			integer: bigint,
+			fraction: Arc::new(move |i| {
+				if i >= parts.len() {
+					0.into()
+				} else {
+					parts[i].clone()
+				}
+			}),
+		}
 	}
 }
 
