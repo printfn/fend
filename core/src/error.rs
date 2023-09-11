@@ -5,6 +5,7 @@ use crate::{date, num::Range};
 #[derive(Debug)]
 #[non_exhaustive]
 pub(crate) enum FendError {
+	Unknown,
 	Interrupted,
 	InvalidBasePrefix,
 	BaseTooSmall,
@@ -101,6 +102,7 @@ impl fmt::Display for FendError {
 	#[allow(clippy::too_many_lines)]
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
+			Self::Unknown => write!(f, "an unknown error occurred"),
 			Self::Interrupted => write!(f, "interrupted"),
 			Self::ParseError(e) => write!(f, "{e}"),
 			Self::FactorialUnitless => {

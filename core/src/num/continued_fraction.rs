@@ -2,8 +2,9 @@ use crate::error::FendError;
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use crate::Interrupt;
+use std::hash::Hash;
 use std::sync::Arc;
-use std::{cmp, fmt, iter};
+use std::{cmp, fmt, iter, ops};
 
 #[derive(Clone)]
 pub(crate) struct ContinuedFraction {
@@ -65,6 +66,9 @@ impl ContinuedFraction {
 			let recip = f.recip();
 			let term = recip.floor();
 			parts.push((term as u64).into());
+			if parts.len() >= MAX_ITERATIONS {
+				break;
+			}
 			f = recip - term;
 		}
 
@@ -79,6 +83,39 @@ impl ContinuedFraction {
 				}
 			}),
 		}
+	}
+
+	pub(crate) fn is_zero(&self) -> bool {
+		self.integer == 0.into() && (self.fraction)(0) == 0.into()
+	}
+
+	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+		Ok(Self::from_f64(self.as_f64() + other.as_f64()))
+	}
+
+	pub(crate) fn mul<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+		Ok(Self::from_f64(self.as_f64() * other.as_f64()))
+	}
+
+	pub(crate) fn div<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+		if other.is_zero() {
+			return Err(FendError::DivideByZero);
+		}
+		Ok(Self::from_f64(self.as_f64() / other.as_f64()))
+	}
+
+	pub(crate) fn modulo<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+		if other.is_zero() {
+			return Err(FendError::ModuloByZero);
+		}
+		if self.actual_integer_sign() != Sign::Positive
+			|| (self.fraction)(0) != 0.into()
+			|| other.actual_integer_sign() != Sign::Positive
+			|| (other.fraction)(0) != 0.into()
+		{
+			return Err(FendError::ModuloForPositiveInts);
+		}
+		Ok(Self::from(self.integer.divmod(&other.integer, int)?.1))
 	}
 }
 
@@ -98,6 +135,14 @@ impl Iterator for CFIterator<'_> {
 			self.i += 1;
 			Some(result)
 		}
+	}
+}
+
+impl ops::Neg for ContinuedFraction {
+	type Output = Self;
+
+	fn neg(self) -> Self::Output {
+		Self::from_f64(self.as_f64().neg())
 	}
 }
 
@@ -137,6 +182,16 @@ impl From<BigUint> for ContinuedFraction {
 		Self {
 			integer_sign: Sign::Positive,
 			integer: value,
+			fraction: Arc::new(|_| 0.into()),
+		}
+	}
+}
+
+impl From<u64> for ContinuedFraction {
+	fn from(value: u64) -> Self {
+		Self {
+			integer_sign: Sign::Positive,
+			integer: value.into(),
 			fraction: Arc::new(|_| 0.into()),
 		}
 	}
@@ -185,3 +240,10 @@ impl PartialEq for ContinuedFraction {
 }
 
 impl Eq for ContinuedFraction {}
+
+impl Hash for ContinuedFraction {
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.actual_integer_sign().hash(state);
+		self.integer.hash(state);
+	}
+}

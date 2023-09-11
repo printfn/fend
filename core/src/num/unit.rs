@@ -77,11 +77,9 @@ impl Value {
 		int: &I,
 	) -> Result<Self, FendError> {
 		let (hashmap, scale) = value.unit.to_hashmap_and_scale(int)?;
-		let scale = scale.mul(&Exact::new(value.value.one_point_ref()?.clone(), true), int)?;
-		let resulting_unit =
-			NamedUnit::new(prefix, singular_name, plural_name, hashmap, scale.value);
+		let scale = scale.mul(&value.value.one_point_ref()?.clone(), int)?;
+		let resulting_unit = NamedUnit::new(prefix, singular_name, plural_name, hashmap, scale);
 		let mut result = Self::new(1, vec![UnitExponent::new(resulting_unit, 1)]);
-		result.exact = result.exact && value.exact && scale.exact;
 		Ok(result)
 	}
 
@@ -147,15 +145,15 @@ impl Value {
 
 	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
 		let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
-		let scaled = Exact::new(rhs.value, rhs.exact)
-			.mul(&scale_factor.scale_1.apply(Dist::from), int)?
-			.div(&scale_factor.scale_2.apply(Dist::from), int)?;
-		let value =
-			Exact::new(self.value, self.exact).add(&Exact::new(scaled.value, scaled.exact), int)?;
+		let scaled = rhs
+			.value
+			.mul(&Dist::from(scale_factor.scale_1), int)?
+			.div(&Dist::from(scale_factor.scale_2), int)?;
+		let value = self.value.add(&scaled, int)?;
 		Ok(Self {
-			value: value.value,
+			value: value,
 			unit: self.unit,
-			exact: self.exact && rhs.exact && value.exact,
+			exact: self.exact && rhs.exact,
 			base: self.base,
 			format: self.format,
 			simplifiable: self.simplifiable,
@@ -188,14 +186,15 @@ impl Value {
 			return Err(FendError::ConversionRhsNumerical);
 		}
 		let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
-		let new_value = Exact::new(self.value, self.exact)
-			.mul(&scale_factor.scale_1.apply(Dist::from), int)?
-			.add(&scale_factor.offset.apply(Dist::from), int)?
-			.div(&scale_factor.scale_2.apply(Dist::from), int)?;
+		let new_value = self
+			.value
+			.mul(&Dist::from(scale_factor.scale_1), int)?
+			.add(&Dist::from(scale_factor.offset), int)?
+			.div(&Dist::from(scale_factor.scale_2), int)?;
 		Ok(Self {
-			value: new_value.value,
+			value: new_value,
 			unit: rhs.unit,
-			exact: self.exact && rhs.exact && new_value.exact,
+			exact: self.exact && rhs.exact,
 			base: self.base,
 			format: self.format,
 			simplifiable: false,
@@ -204,14 +203,15 @@ impl Value {
 
 	pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
 		let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
-		let scaled = Exact::new(rhs.value, rhs.exact)
-			.mul(&scale_factor.scale_1.apply(Dist::from), int)?
-			.div(&scale_factor.scale_2.apply(Dist::from), int)?;
-		let value = Exact::new(self.value, self.exact).add(&-scaled, int)?;
+		let scaled = rhs
+			.value
+			.mul(&Dist::from(scale_factor.scale_1), int)?
+			.div(&Dist::from(scale_factor.scale_2), int)?;
+		let value = self.value.add(&-scaled, int)?;
 		Ok(Self {
-			value: value.value,
+			value: value,
 			unit: self.unit,
-			exact: self.exact && rhs.exact && value.exact,
+			exact: self.exact && rhs.exact,
 			base: self.base,
 			format: self.format,
 			simplifiable: self.simplifiable,
@@ -226,12 +226,11 @@ impl Value {
 				-rhs_component.exponent,
 			));
 		}
-		let value =
-			Exact::new(self.value, self.exact).div(&Exact::new(rhs.value, rhs.exact), int)?;
+		let value = self.value.div(&rhs.value, int)?;
 		Ok(Self {
-			value: value.value,
+			value: value,
 			unit: Unit { components },
-			exact: value.exact && self.exact && rhs.exact,
+			exact: self.exact && rhs.exact,
 			base: self.base,
 			format: self.format,
 			simplifiable: self.simplifiable,
@@ -356,14 +355,13 @@ impl Value {
 			return Err(FendError::ExpUnitless);
 		}
 		let mut new_components = vec![];
-		let mut exact_res = true;
 		for unit_exp in self.unit.components {
-			let exponent = Exact::new(unit_exp.exponent, self.exact)
-				.mul(&Exact::new(rhs.value.clone().one_point()?, rhs.exact), int)?;
-			exact_res = exact_res && exponent.exact;
+			let exponent = unit_exp
+				.exponent
+				.mul(&rhs.value.clone().one_point()?, int)?;
 			new_components.push(UnitExponent {
 				unit: unit_exp.unit,
-				exponent: exponent.value,
+				exponent,
 			});
 		}
 		let new_unit = Unit {
@@ -371,9 +369,9 @@ impl Value {
 		};
 		let value = self.value.one_point()?.pow(rhs.value.one_point()?, int)?;
 		Ok(Self {
-			value: value.value.into(),
+			value: value.into(),
 			unit: new_unit,
-			exact: self.exact && rhs.exact && exact_res && value.exact,
+			exact: self.exact && rhs.exact,
 			base: self.base,
 			format: self.format,
 			simplifiable: self.simplifiable,
@@ -565,10 +563,10 @@ impl Value {
 			.clone()
 			.convert_angle_to_rad(scope, attrs, context, int)
 		{
-			rad.apply_fn_exact(Complex::cos, false, int)?
+			rad.apply_fn(Complex::cos, false, int)?
 				.convert_to(Self::unitless(), int)
 		} else {
-			self.apply_fn_exact(Complex::cos, false, int)
+			self.apply_fn(Complex::cos, false, int)
 		}
 	}
 
@@ -679,12 +677,11 @@ impl Value {
 
 	pub(crate) fn mul<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
 		let components = [self.unit.components, rhs.unit.components].concat();
-		let value =
-			Exact::new(self.value, self.exact).mul(&Exact::new(rhs.value, rhs.exact), int)?;
+		let value = self.value.mul(&rhs.value, int)?;
 		Ok(Self {
-			value: value.value,
+			value: value,
 			unit: Unit { components },
-			exact: self.exact && rhs.exact && value.exact,
+			exact: self.exact && rhs.exact,
 			base: self.base,
 			format: self.format,
 			simplifiable: self.simplifiable,
@@ -734,19 +731,7 @@ impl Value {
 		'outer: for comp in self.unit.components {
 			if comp.is_percentage_unit() {
 				if have_percentage_unit || has_nonpercentage_components {
-					let adjusted_res = Exact {
-						value: res_value,
-						exact: res_exact,
-					}
-					.mul(
-						&Exact {
-							value: comp.unit.scale.clone().into(),
-							exact: true,
-						},
-						int,
-					)?;
-					res_value = adjusted_res.value;
-					res_exact = adjusted_res.exact;
+					res_value = res_value.mul(&comp.unit.scale.clone().into(), int)?;
 					continue 'outer;
 				}
 				// already encountered one (if we see another one, strip it)
@@ -773,32 +758,20 @@ impl Value {
 				);
 				match conversion {
 					Ok(scale_factor) => {
-						if scale_factor.offset.value != 0.into() {
+						if scale_factor.offset != 0.into() {
 							// don't merge units that have offsets
 							break;
 						}
 						let scale = scale_factor.scale_1.div(scale_factor.scale_2, int)?;
 
-						let lhs = Exact {
-							value: res_comp.exponent.clone(),
-							exact: res_exact,
-						};
-						let rhs = Exact {
-							value: comp.exponent.clone(),
-							exact: res_exact,
-						};
+						let lhs = res_comp.exponent.clone();
+						let rhs = comp.exponent.clone();
 						let sum = lhs.add(rhs, int)?;
-						res_comp.exponent = sum.value;
-						res_exact = res_exact && sum.exact && scale.exact;
+						res_comp.exponent = sum;
 
-						let scale = scale.value.pow(comp.exponent, int)?;
-						let adjusted_value = Exact {
-							value: res_value.one_point()?,
-							exact: res_exact,
-						}
-						.mul(&scale, int)?;
-						res_value = Dist::from(adjusted_value.value);
-						res_exact = res_exact && adjusted_value.exact;
+						let scale = scale.pow(comp.exponent, int)?;
+						let adjusted_value = res_value.one_point()?.mul(&scale, int)?;
+						res_value = Dist::from(adjusted_value);
 
 						continue 'outer;
 					}
@@ -925,13 +898,13 @@ struct Unit {
 	components: Vec<UnitExponent>,
 }
 
-type HashmapScale = (HashMap<BaseUnit, Complex>, Exact<Complex>);
-type HashmapScaleOffset = (HashMap<BaseUnit, Complex>, Exact<Complex>, Exact<Complex>);
+type HashmapScale = (HashMap<BaseUnit, Complex>, Complex);
+type HashmapScaleOffset = (HashMap<BaseUnit, Complex>, Complex, Complex);
 
 struct ScaleFactor {
-	scale_1: Exact<Complex>,
-	offset: Exact<Complex>,
-	scale_2: Exact<Complex>,
+	scale_1: Complex,
+	offset: Complex,
+	scale_2: Complex,
 }
 
 impl Unit {
@@ -972,7 +945,7 @@ impl Unit {
 		for named_unit_exp in &self.components {
 			named_unit_exp.add_to_hashmap(&mut hashmap, &mut scale, &mut exact, int)?;
 		}
-		Ok((hashmap, Exact::new(scale, exact)))
+		Ok((hashmap, scale))
 	}
 
 	fn reduce_hashmap<I: Interrupt>(
@@ -986,9 +959,8 @@ impl Unit {
 			result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
 			return Ok((
 				result_hashmap,
-				Exact::new(1.into(), true),
-				Exact::new(Complex::from(27315), true)
-					.div(Exact::new(Complex::from(100), true), int)?,
+				1.into(),
+				Complex::from(27315).div(Complex::from(100), int)?,
 			));
 		}
 		if hashmap.len() == 1
@@ -998,12 +970,11 @@ impl Unit {
 			result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
 			return Ok((
 				result_hashmap,
-				Exact::new(Complex::from(5), true).div(Exact::new(Complex::from(9), true), int)?,
-				Exact::new(Complex::from(45967), true)
-					.div(Exact::new(Complex::from(180), true), int)?,
+				Complex::from(5).div(Complex::from(9), int)?,
+				Complex::from(45967).div(Complex::from(180), int)?,
 			));
 		}
-		let mut scale_adjustment = Exact::new(Complex::from(1), true);
+		let mut scale_adjustment = Complex::from(1);
 		let mut result_hashmap = HashMap::new();
 		for (mut base_unit, exponent) in hashmap {
 			if base_unit.name() == "celsius" {
@@ -1011,16 +982,15 @@ impl Unit {
 			} else if base_unit.name() == "fahrenheit" {
 				base_unit = BaseUnit::new_static("kelvin");
 				scale_adjustment = scale_adjustment.mul(
-					&Exact::new(Complex::from(5), true)
-						.div(Exact::new(Complex::from(9), true), int)?
-						.value
+					&Complex::from(5)
+						.div(Complex::from(9), int)?
 						.pow(exponent.clone(), int)?,
 					int,
 				)?;
 			}
 			result_hashmap.insert(base_unit.clone(), exponent.clone());
 		}
-		Ok((result_hashmap, scale_adjustment, Exact::new(0.into(), true)))
+		Ok((result_hashmap, scale_adjustment, 0.into()))
 	}
 
 	fn print_base_units<I: Interrupt>(
@@ -1214,10 +1184,7 @@ mod tests {
 			Cow::Borrowed("g"),
 			Cow::Borrowed("g"),
 			hashmap,
-			Exact::new(Complex::from(1), true)
-				.div(Exact::new(1000.into(), true), int)
-				.unwrap()
-				.value,
+			Complex::from(1).div(1000.into(), int).unwrap(),
 		);
 		let one_kg = Value::new(1, vec![UnitExponent::new(kg, 1)]);
 		let twelve_g = Value::new(12, vec![UnitExponent::new(g, 1)]);

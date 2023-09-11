@@ -65,9 +65,7 @@ impl Dist {
 			let mut result = Self::new_die(1, faces, int)?;
 			for _ in 1..count {
 				test_int(int)?;
-				result = Exact::new(result, true)
-					.add(&Exact::new(Self::new_die(1, faces, int)?, true), int)?
-					.value;
+				result = result.add(&Self::new_die(1, faces, int)?, int)?;
 			}
 			return Ok(result);
 		}
@@ -200,64 +198,17 @@ impl Dist {
 		}
 		Ok(Self { parts: result })
 	}
-}
 
-impl Exact<Dist> {
 	pub(crate) fn add<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
-		let self_exact = self.exact;
-		let rhs_exact = rhs.exact;
-		let mut exact = true;
-		Ok(Self::new(
-			self.value.bop(
-				&rhs.value,
-				|a, b, int| {
-					let sum = Exact::new(a.clone(), self_exact)
-						.add(Exact::new(b.clone(), rhs_exact), int)?;
-					exact &= sum.exact;
-					Ok(sum.value)
-				},
-				int,
-			)?,
-			exact,
-		))
+		Ok(self.bop(&rhs, |a, b, int| a.clone().add(b.clone(), int), int)?)
 	}
 
 	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
-		let self_exact = self.exact;
-		let rhs_exact = rhs.exact;
-		let mut exact = true;
-		Ok(Self::new(
-			self.value.bop(
-				&rhs.value,
-				|a, b, int| {
-					let sum = Exact::new(a.clone(), self_exact)
-						.mul(&Exact::new(b.clone(), rhs_exact), int)?;
-					exact &= sum.exact;
-					Ok(sum.value)
-				},
-				int,
-			)?,
-			exact,
-		))
+		Ok(self.bop(&rhs, |a, b, int| a.clone().mul(&b, int), int)?)
 	}
 
 	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> Result<Self, FendError> {
-		let self_exact = self.exact;
-		let rhs_exact = rhs.exact;
-		let mut exact = true;
-		Ok(Self::new(
-			self.value.bop(
-				&rhs.value,
-				|a, b, int| {
-					let sum = Exact::new(a.clone(), self_exact)
-						.div(Exact::new(b.clone(), rhs_exact), int)?;
-					exact &= sum.exact;
-					Ok(sum.value)
-				},
-				int,
-			)?,
-			exact,
-		))
+		Ok(self.bop(&rhs, |a, b, int| a.clone().div(b.clone(), int), int)?)
 	}
 }
 

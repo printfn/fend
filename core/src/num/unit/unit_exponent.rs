@@ -52,35 +52,27 @@ impl UnitExponent {
 		int: &I,
 	) -> Result<(), FendError> {
 		test_int(int)?;
-		let overall_exp = &Exact::new(self.exponent.clone(), true);
+		let overall_exp = &self.exponent.clone();
 		for (base_unit, base_exp) in &self.unit.base_units {
 			test_int(int)?;
-			let base_exp = Exact::new(base_exp.clone(), true);
+			let base_exp = base_exp.clone();
 			let product = overall_exp.clone().mul(&base_exp, int)?;
 			if let Some(exp) = hashmap.get_mut(base_unit) {
-				let new_exp = Exact::new(exp.clone(), true).add(product, int)?;
-				*exact = *exact && new_exp.exact;
-				if new_exp.value == 0.into() {
+				let new_exp = exp.clone().add(product, int)?;
+				if new_exp == 0.into() {
 					hashmap.remove(base_unit);
 				} else {
-					*exp = new_exp.value;
+					*exp = new_exp;
 				}
 			} else {
-				*exact = *exact && product.exact;
-				if product.value != 0.into() {
+				if product != 0.into() {
 					let adj_exp = overall_exp.clone().mul(&base_exp, int)?;
-					hashmap.insert(base_unit.clone(), adj_exp.value);
-					*exact = *exact && adj_exp.exact;
+					hashmap.insert(base_unit.clone(), adj_exp);
 				}
 			}
 		}
-		let pow_result = self
-			.unit
-			.scale
-			.clone()
-			.pow(overall_exp.value.clone(), int)?;
-		*scale = Exact::new(scale.clone(), true).mul(&pow_result, int)?.value;
-		*exact = *exact && pow_result.exact;
+		let pow_result = self.unit.scale.clone().pow(overall_exp.clone(), int)?;
+		*scale = scale.clone().mul(&pow_result, int)?;
 		Ok(())
 	}
 
