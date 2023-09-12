@@ -491,6 +491,7 @@ pub mod test_utils {
 			"NZD" => 1.5,
 			"HKD" => 8.0,
 			"AUD" => 1.3,
+			"PLN" => 0.2,
 			_ => panic!("unknown currency {currency}"),
 		})
 	}
