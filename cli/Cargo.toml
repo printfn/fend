@@ -19,7 +19,12 @@ nanorand = { version = "0.7.0", default-features = false, features = ["std", "wy
 rustyline = { version =  "12.0.1", default-features = false, features = ["with-file-history"], package = "rustyline-with-hint-fix" }
 serde = { version = "1.0.188", default-features = false }
 toml = { version = "0.7.6", default-features = false, features = ["parse"] }
-ureq = { version = "2.7.1", default-features = false, features = ["tls"] }
+ureq = { version = "2.7.1", default-features = false, optional = true }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.48.0", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+
+[features]
+native-tls = [ "ureq/native-tls" ]
+rustls = [ "ureq/tls" ]
+default = [ "rustls" ]
