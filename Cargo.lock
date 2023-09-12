@@ -159,6 +159,7 @@ dependencies = [
  "fend-core",
  "home",
  "nanorand",
+ "native-tls",
  "rustyline-with-hint-fix",
  "serde",
  "toml",
