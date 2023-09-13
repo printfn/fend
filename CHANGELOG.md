@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.2.2 (2023-09-14)
 
 * Add crate features to control the TLS implementation: enabling `native-tls`
     will cause fend to use the operating system's built-in TLS implementation.
