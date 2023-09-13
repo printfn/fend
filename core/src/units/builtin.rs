@@ -631,6 +631,7 @@ const CURRENCIES: &[UnitTuple] = &[
 	("HK$", "HK$", "HKD", ""),
 	("NZ$", "NZ$", "NZD", ""),
 	("zł", "zł", "PLN", ""), // the local abbreviation for PLN, see https://en.wikipedia.org/wiki/Polish_z%C5%82oty
+	("zl", "zl", "PLN", ""),
 ];
 
 // from https://en.wikipedia.org/wiki/ISO_4217
