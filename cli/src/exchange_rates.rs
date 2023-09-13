@@ -35,6 +35,23 @@ fn store_cached_data(xml: &str) -> Result<(), Error> {
 	Ok(())
 }
 
+#[cfg(feature = "native-tls")]
+fn ureq_get(url: &str) -> Result<String, Error> {
+	let tls_connector = std::sync::Arc::new(native_tls::TlsConnector::new()?);
+	let agent = ureq::builder().tls_connector(tls_connector).build();
+	Ok(agent.get(url).call()?.into_string()?)
+}
+
+#[cfg(all(feature = "rustls", not(feature = "native-tls")))]
+fn ureq_get(url: &str) -> Result<String, Error> {
+	Ok(ureq::get(url).call()?.into_string()?)
+}
+
+#[cfg(all(not(feature = "rustls"), not(feature = "native-tls")))]
+fn ureq_get(_url: &str) -> Result<String, Error> {
+	Err("internet access has been disabled in this build of fend".into())
+}
+
 fn load_exchange_rate_xml() -> Result<(String, bool), Error> {
 	match load_cached_data() {
 		Ok(xml) => return Ok((xml, true)),
@@ -42,9 +59,7 @@ fn load_exchange_rate_xml() -> Result<(String, bool), Error> {
 			//eprintln!("failed to load cached data: {_e}");
 		}
 	}
-	let xml = ureq::get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
-		.call()?
-		.into_string()?;
+	let xml = ureq_get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")?;
 	Ok((xml, false))
 }
 
