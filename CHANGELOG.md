@@ -7,7 +7,7 @@
     The `rustls` feature, which is enabled by default, will keep the existing
     native Rust implementation. When both features are disabled, such as when
     compiling with `--no-default-features`, network connectivity will not be
-    available and currency conversions will not be available.
+    available and currency conversions will not work.
     (by [@eatradish](https://github.com/eatradish))
 * Add "zł" as an alias for Polish złoty (PLN) (by [@twolodzko](https://github.com/twolodzko))
 * Add AOSC OS package and installation instructions (by [@eatradish](https://github.com/eatradish))
