@@ -84,11 +84,6 @@ fn currency_handler(currency: &str) -> Result<f64, Box<dyn error::Error + Send +
 
 fn create_context() -> fend_core::Context {
 	let mut ctx = fend_core::Context::new();
-	let date = js_sys::Date::new_0();
-	ctx.set_current_time_v1(
-		date.get_time() as u64,
-		date.get_timezone_offset() as i64 * 60,
-	);
 	ctx.set_random_u32_fn(random_u32);
 	CURRENCY_DATA.with(|currency_data| {
 		if !currency_data.borrow().is_empty() {

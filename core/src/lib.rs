@@ -143,12 +143,6 @@ impl FendResult {
 	}
 }
 
-#[derive(Clone, Debug)]
-struct CurrentTimeInfo {
-	elapsed_unix_time_ms: u64,
-	timezone_offset_secs: i64,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum FCMode {
 	CelsiusFahrenheit,
@@ -196,7 +190,6 @@ where
 /// which is easier.
 #[derive(Clone)]
 pub struct Context {
-	current_time: Option<CurrentTimeInfo>,
 	variables: HashMap<String, value::Value>,
 	fc_mode: FCMode,
 	random_u32: Option<fn() -> u32>,
@@ -207,7 +200,6 @@ pub struct Context {
 impl fmt::Debug for Context {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("Context")
-			.field("current_time", &self.current_time)
 			.field("variables", &self.variables)
 			.field("fc_mode", &self.fc_mode)
 			.field("random_u32", &self.random_u32)
@@ -227,31 +219,12 @@ impl Context {
 	#[must_use]
 	pub fn new() -> Self {
 		Self {
-			current_time: None,
 			variables: HashMap::new(),
 			fc_mode: FCMode::CelsiusFahrenheit,
 			random_u32: None,
 			output_mode: OutputMode::SimpleText,
 			get_exchange_rate: None,
 		}
-	}
-
-	/// This method currently has no effect!
-	///
-	/// Set the current time. This API will likely change in the future!
-	///
-	/// The first argument (`ms_since_1970`) must be the number of elapsed milliseconds
-	/// since January 1, 1970 at midnight UTC, ignoring leap seconds in the same way
-	/// as unix time.
-	///
-	/// The second argument (`tz_offset_secs`) is the current time zone
-	/// offset to UTC, in seconds.
-	pub fn set_current_time_v1(&mut self, _ms_since_1970: u64, _tz_offset_secs: i64) {
-		// self.current_time = Some(CurrentTimeInfo {
-		//     elapsed_unix_time_ms: ms_since_1970,
-		//     timezone_offset_secs: tz_offset_secs,
-		// });
-		self.current_time = None;
 	}
 
 	/// Define the units `C` and `F` as coulomb and farad instead of degrees

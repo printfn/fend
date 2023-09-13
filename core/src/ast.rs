@@ -654,9 +654,9 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 			("mass".into(), eval_box!("5.97237e24 kg")),
 			("volume".into(), eval_box!("1.08321e12 km^3")),
 		]),
-		"today" => Value::Date(crate::date::Date::today(context)?),
-		"tomorrow" => Value::Date(crate::date::Date::today(context)?.next()),
-		"yesterday" => Value::Date(crate::date::Date::today(context)?.prev()),
+		"today" => Value::Date(crate::date::Date::today()),
+		"tomorrow" => Value::Date(crate::date::Date::today().next()),
+		"yesterday" => Value::Date(crate::date::Date::today().prev()),
 		_ => return crate::units::query_unit(ident.as_str(), attrs, context, int),
 	})
 }

@@ -34,8 +34,8 @@ pub(crate) enum Value {
 	String(Cow<'static, str>),
 	Bool(bool),
 	Unit, // unit value `()`
-	Month(date::Month),
-	DayOfWeek(date::DayOfWeek),
+	Month(Month),
+	DayOfWeek(DayOfWeek),
 	Date(date::Date),
 }
 
@@ -108,6 +108,7 @@ impl Value {
 				d.serialize(write)?;
 			}
 		}
+
 		Ok(())
 	}
 
@@ -479,7 +480,7 @@ impl fmt::Debug for Value {
 			Self::Bool(b) => write!(f, "{b}"),
 			Self::Month(m) => write!(f, "{m}"),
 			Self::DayOfWeek(d) => write!(f, "{d}"),
-			Self::Date(d) => write!(f, "{d:?}"),
+			Self::Date(d) => write!(f, "{d}"),
 		}
 	}
 }

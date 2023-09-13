@@ -30,6 +30,16 @@ pub(crate) fn deserialize_i32(read: &mut impl io::Read) -> io::Result<i32> {
 	Ok(i32::from_be_bytes(buf))
 }
 
+pub(crate) fn serialize_u32(value: u32, write: &mut impl io::Write) -> io::Result<()> {
+	write.write_all(&value.to_be_bytes())
+}
+
+pub(crate) fn deserialize_u32(read: &mut impl io::Read) -> io::Result<u32> {
+	let mut buf = [0; 4];
+	read.read_exact(&mut buf[..])?;
+	Ok(u32::from_be_bytes(buf))
+}
+
 pub(crate) fn serialize_u64(value: u64, write: &mut impl io::Write) -> io::Result<()> {
 	write.write_all(&value.to_be_bytes())
 }

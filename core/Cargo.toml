@@ -11,3 +11,5 @@ license.workspace = true
 readme = "README.md"
 
 [dependencies]
+chrono = "0.4.30"
+num-traits = "0.2.16"
