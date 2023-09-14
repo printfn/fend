@@ -125,9 +125,9 @@ impl fmt::Display for FendError {
 				to_base,
 			} => {
 				write!(
-                    f,
-                    "cannot convert from {from} to {to}: units '{from_base}' and '{to_base}' are incompatible"
-                )
+					f,
+					"cannot convert from {from} to {to}: units '{from_base}' and '{to_base}' are incompatible"
+				)
 			}
 			Self::NonIntegerNegRoots => write!(f, "cannot compute non-integer or negative roots"),
 			Self::RootsOfNegativeNumbers => {
@@ -244,9 +244,9 @@ impl fmt::Display for FendError {
 				after,
 			} => {
 				write!(
-                    f,
-                    "{month} {expected_day}, {year} does not exist, did you mean {before} or {after}?",
-                )
+					f,
+					"{month} {expected_day}, {year} does not exist, did you mean {before} or {after}?",
+				)
 			}
 		}
 	}

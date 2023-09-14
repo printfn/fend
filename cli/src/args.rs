@@ -109,10 +109,10 @@ mod tests {
 	use super::Action;
 
 	macro_rules! action {
-        ($( $arg:literal ),*) => {
-            Action::from_args(&[ $( $arg.to_string() ),* ]).unwrap()
-        }
-    }
+		($( $arg:literal ),*) => {
+			Action::from_args(&[ $( $arg.to_string() ),* ]).unwrap()
+		}
+	}
 
 	fn eval(expr: &str) -> Action {
 		Action::Eval {
