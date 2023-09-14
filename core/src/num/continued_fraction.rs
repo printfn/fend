@@ -3,6 +3,7 @@ use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use crate::Interrupt;
 use std::hash::Hash;
+use std::ops::ControlFlow;
 use std::sync::Arc;
 use std::{cmp, fmt, iter, ops};
 
@@ -213,23 +214,26 @@ impl Ord for ContinuedFraction {
 		if s != cmp::Ordering::Equal {
 			return s;
 		}
-		if std::sync::Arc::ptr_eq(&self.fraction, &other.fraction) {
+		if Arc::ptr_eq(&self.fraction, &other.fraction) {
 			return cmp::Ordering::Equal;
 		}
-		let mut reversed = true;
-		let iter1 = self.into_iter().map(Some).chain(iter::repeat(None));
-		let iter2 = other.into_iter().map(Some).chain(iter::repeat(None));
-		for (a, b) in iter1.zip(iter2).take(MAX_ITERATIONS) {
-			if a.is_none() && b.is_none() {
-				break;
-			}
-			let s = a.cmp(&b);
-			if s != cmp::Ordering::Equal {
-				return if reversed { s.reverse() } else { s };
-			}
-			reversed = !reversed;
-		}
-		cmp::Ordering::Equal
+		let iter1 = self.into_iter().map(Ok).chain(iter::repeat(Err(())));
+		let iter2 = other.into_iter().map(Ok).chain(iter::repeat(Err(())));
+		iter1
+			.zip(iter2)
+			.take_while(|x| x != &(Err(()), Err(())))
+			.enumerate()
+			.map(|(i, (a, b))| if i % 2 == 0 { (b, a) } else { (a, b) })
+			.map(|(a, b)| a.cmp(&b))
+			.take(MAX_ITERATIONS)
+			.try_for_each(|x| {
+				if x == cmp::Ordering::Equal {
+					return Ok(());
+				}
+				Err(x)
+			})
+			.err()
+			.unwrap_or(cmp::Ordering::Equal)
 	}
 }
 
@@ -245,5 +249,49 @@ impl Hash for ContinuedFraction {
 	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
 		self.actual_integer_sign().hash(state);
 		self.integer.hash(state);
+		Arc::as_ptr(&self.fraction).hash(state);
+	}
+}
+
+macro_rules! cf {
+	($a:literal) => {
+		{
+			$crate::num::continued_fraction::ContinuedFraction {
+				integer_sign: $crate::num::continued_fraction::Sign::Positive,
+				integer: $a.into(),
+				fraction: ::std::sync::Arc::new(|_| 0.into()),
+			}
+		}
+	};
+	($a:literal; $($b:literal),+) => {
+		{
+			let parts: Vec<$crate::num::continued_fraction::BigUint> = vec![ $($b.into(),)? ];
+			$crate::num::continued_fraction::ContinuedFraction {
+				integer_sign: $crate::num::continued_fraction::Sign::Positive,
+				integer: $a.into(),
+				fraction: ::std::sync::Arc::new(move |i| {
+					if i >= parts.len() {
+						0.into()
+					} else {
+						parts[i].clone()
+					}
+				}),
+			}
+		}
+	};
+}
+
+#[cfg(test)]
+mod tests {
+	#[test]
+	fn comparisons() {
+		assert_eq!(cf!(3; 1), cf!(3; 1));
+		assert!(cf!(3; 1) > cf!(3; 2));
+		assert!(cf!(4) > cf!(3; 2));
+		assert!(cf!(3; 2, 1) < cf!(3; 2));
+		assert!(cf!(3; 2, 1) < cf!(3; 2, 2));
+		assert!(cf!(3; 2, 1) < cf!(3; 2, 20000));
+		assert!(cf!(3) < cf!(3; 2, 20000));
+		assert!(cf!(3) < cf!(4));
 	}
 }
