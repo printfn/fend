@@ -89,6 +89,25 @@ impl ContinuedFraction {
 		self.integer == 0.into() && (self.fraction)(0) == 0.into()
 	}
 
+	pub(crate) fn invert(self) -> Result<Self, FendError> {
+		if self.actual_integer_sign() == Sign::Negative {
+			return Err(FendError::NegativeNumbersNotAllowed);
+		}
+		if self.integer == 0.into() {
+			Ok(Self {
+				integer: (self.fraction)(0),
+				integer_sign: self.integer_sign,
+				fraction: Arc::new(move |i| (self.fraction)(i + 1)),
+			})
+		} else {
+			Ok(Self {
+				integer: 0.into(),
+				integer_sign: self.integer_sign,
+				fraction: Arc::new(move |i| if i == 0 { self.integer.clone() } else { (self.fraction)(i - 1) })
+			})
+		}
+	}
+
 	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
 		Ok(Self::from_f64(self.as_f64() + other.as_f64()))
 	}
@@ -294,5 +313,11 @@ mod tests {
 		assert!(cf!(-3) > cf!(-4));
 		assert_eq!(cf!(-3), cf!(-3));
 		assert!(cf!(-3; 2, 1) < cf!(-3; 2));
+	}
+
+	#[test]
+	fn invert() {
+		assert_eq!(cf!(3; 2, 6, 4).invert().unwrap(), cf!(0; 3, 2, 6, 4));
+		assert_eq!(cf!(0; 3, 2, 6, 4).invert().unwrap(), cf!(3; 2, 6, 4));
 	}
 }
