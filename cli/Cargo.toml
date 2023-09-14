@@ -17,7 +17,7 @@ fend-core.workspace = true
 home = "0.5.5"
 nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
 native-tls = { version = "0.2.11", optional = true }
-rustyline = { version =  "12.0.1", default-features = false, features = ["with-file-history"], package = "rustyline-with-hint-fix" }
+rustyline = { version =  "12.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
 serde = { version = "1.0.188", default-features = false }
 toml = { version = "0.8.0", default-features = false, features = ["parse"] }
 ureq = { version = "2.7.1", default-features = false, optional = true }

@@ -25,15 +25,22 @@ pub fn init_prompt<'a>(
 	config: &'a config::Config,
 	context: &context::Context<'a>,
 ) -> Result<PromptState<'a>, Box<dyn error::Error>> {
-	let mut rl =
-		rustyline::Editor::<helper::Helper<'_>, rustyline::history::FileHistory>::with_config(
-			rustyline::config::Builder::new()
-				.history_ignore_space(true)
-				.auto_add_history(true)
-				.max_history_size(config.max_history_size)?
-				.build(),
-		)?;
+	use rustyline::{
+		config::Builder, history::FileHistory, Cmd, Editor, KeyCode, KeyEvent, Modifiers, Movement,
+	};
+
+	let mut rl = Editor::<helper::Helper<'_>, FileHistory>::with_config(
+		Builder::new()
+			.history_ignore_space(true)
+			.auto_add_history(true)
+			.max_history_size(config.max_history_size)?
+			.build(),
+	)?;
 	rl.set_helper(Some(helper::Helper::new(context.clone(), config)));
+	rl.bind_sequence(
+		KeyEvent(KeyCode::Right, Modifiers::NONE),
+		Cmd::Move(Movement::ForwardChar(1)),
+	);
 	let history_path = match file_paths::get_history_file_location(file_paths::DirMode::DontCreate)
 	{
 		Ok(history_path) => {
