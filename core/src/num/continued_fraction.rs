@@ -3,7 +3,6 @@ use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use crate::Interrupt;
 use std::hash::Hash;
-use std::ops::ControlFlow;
 use std::sync::Arc;
 use std::{cmp, fmt, iter, ops};
 
@@ -210,7 +209,11 @@ impl Ord for ContinuedFraction {
 		if s != cmp::Ordering::Equal {
 			return s;
 		}
-		let s = self.integer.cmp(&other.integer);
+		let (i1, i2) = match self.integer_sign {
+			Sign::Positive => (&self.integer, &other.integer),
+			Sign::Negative => (&other.integer, &self.integer),
+		};
+		let s = i1.cmp(&i2);
 		if s != cmp::Ordering::Equal {
 			return s;
 		}
@@ -226,11 +229,9 @@ impl Ord for ContinuedFraction {
 			.map(|(i, (a, b))| if i % 2 == 0 { (b, a) } else { (a, b) })
 			.map(|(a, b)| a.cmp(&b))
 			.take(MAX_ITERATIONS)
-			.try_for_each(|x| {
-				if x == cmp::Ordering::Equal {
-					return Ok(());
-				}
-				Err(x)
+			.try_for_each(|o| match o {
+				cmp::Ordering::Equal => Ok(()),
+				_ => Err(o),
 			})
 			.err()
 			.unwrap_or(cmp::Ordering::Equal)
@@ -254,21 +255,17 @@ impl Hash for ContinuedFraction {
 }
 
 macro_rules! cf {
-	($a:literal) => {
+	($a:literal $( ; $( $b:literal ),+ )? ) => {
 		{
+			let i: i32 = $a.into();
+			let parts: Vec<$crate::num::continued_fraction::BigUint> = vec![ $( $( $b.into() ),+ )? ];
 			$crate::num::continued_fraction::ContinuedFraction {
-				integer_sign: $crate::num::continued_fraction::Sign::Positive,
-				integer: $a.into(),
-				fraction: ::std::sync::Arc::new(|_| 0.into()),
-			}
-		}
-	};
-	($a:literal; $($b:literal),+) => {
-		{
-			let parts: Vec<$crate::num::continued_fraction::BigUint> = vec![ $($b.into(),)? ];
-			$crate::num::continued_fraction::ContinuedFraction {
-				integer_sign: $crate::num::continued_fraction::Sign::Positive,
-				integer: $a.into(),
+				integer_sign: if i >= 0 {
+					$crate::num::continued_fraction::Sign::Positive
+				} else {
+					$crate::num::continued_fraction::Sign::Negative
+				},
+				integer: (i.abs() as u64).into(),
 				fraction: ::std::sync::Arc::new(move |i| {
 					if i >= parts.len() {
 						0.into()
@@ -293,5 +290,9 @@ mod tests {
 		assert!(cf!(3; 2, 1) < cf!(3; 2, 20000));
 		assert!(cf!(3) < cf!(3; 2, 20000));
 		assert!(cf!(3) < cf!(4));
+		assert!(cf!(-3) < cf!(4));
+		assert!(cf!(-3) > cf!(-4));
+		assert_eq!(cf!(-3), cf!(-3));
+		assert!(cf!(-3; 2, 1) < cf!(-3; 2));
 	}
 }
