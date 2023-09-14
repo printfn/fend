@@ -10,6 +10,7 @@ You can check your version of fend at any time by typing `version`. If you are u
     1. [macOS](#macos)
     1. [Arch Linux](#arch-linux)
     1. [Void Linux](#void-linux)
+    1. [AOSC OS](#aosc-os)
     1. [NixOS / Nix package manager](#nixos-nix-package-manager)
     1. [Pre-built binaries](#pre-built-binaries)
     1. [Install via crates.io](#install-via-crates.io)
@@ -84,6 +85,14 @@ fend is available in the official Void Linux package repository:
 
 ```bash
 xbps-install fend
+```
+
+### AOSC OS
+
+fend is available in the official AOSC OS package repository:
+
+```bash
+oma install fend
 ```
 
 ### NixOS / Nix package manager

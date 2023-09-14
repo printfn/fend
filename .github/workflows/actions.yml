@@ -65,12 +65,20 @@ jobs:
         run: |
           cargo test --workspace -- --nocapture --quiet
 
+      - name: Test (Linux i686)
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -yq gcc-i686-linux-gnu
+          rustup target add i686-unknown-linux-gnu
+          export CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/i686-linux-gnu-gcc
+          LD_LIBRARY_PATH=/usr/i686-linux-gnu/lib/ cargo test --target i686-unknown-linux-gnu --workspace -- --nocapture --quiet
+
       - name: Generate code coverage
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
           RUSTFLAGS="-C instrument-coverage" \
             cargo test --workspace -- --quiet
-          sudo apt-get update -y
           sudo apt-get install -yq llvm
           llvm-profdata merge -sparse */*.profraw -o fend.profdata
           llvm-cov report \

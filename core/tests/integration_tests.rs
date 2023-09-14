@@ -5411,7 +5411,7 @@ fn test_2d6() {
 	test_eval_simple(
 		"2d6",
 		"{ 2: 2.78%, 3: 5.56%, 4: 8.33%, 5: 11.11%, \
-        6: 13.89%, 7: 16.67%, 8: 13.89%, 9: 11.11%, 10: 8.33%, 11: 5.56%, 12: 2.78% }",
+		6: 13.89%, 7: 16.67%, 8: 13.89%, 9: 11.11%, 10: 8.33%, 11: 5.56%, 12: 2.78% }",
 	)
 }
 
@@ -5578,8 +5578,8 @@ fn bitwise_and_2() {
 #[test]
 fn bitwise_and_3() {
 	test_eval(
-		"912834710927364108273648927346788234682764 & 
-        98123740918263740896274873648273642342534252",
+		"912834710927364108273648927346788234682764 &
+		98123740918263740896274873648273642342534252",
 		"207742386994266479278471200397877100888076",
 	);
 }
@@ -5619,7 +5619,7 @@ fn bitwise_xor_1() {
 fn bitwise_xor_2() {
 	test_eval(
 		"019278364182374698123476928376459726354982 xor
-        387294658347659283475689347659823745692837465",
+		387294658347659283475689347659823745692837465",
 		"387286275339643142048939049610868709852535935",
 	);
 }
@@ -5676,13 +5676,13 @@ fn date_literal_subtraction() {
 	test_eval_simple("@2022-03-01 - 1 month", "Tuesday, 1 February 2022");
 	test_eval_simple("@2020-02-28 - 1 year", "Thursday, 28 February 2019");
 	expect_error(
-        "@2020-02-29 - 1 year",
-        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
-    );
+		"@2020-02-29 - 1 year",
+		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+	);
 	expect_error(
-        "@2020-02-29 - 12 month", 
-        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
-    );
+		"@2020-02-29 - 12 month",
+		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+	);
 	test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
 }
 

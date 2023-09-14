@@ -1,5 +1,18 @@
 ## Changelog
 
+### v1.2.2 (2023-09-14)
+
+* Add crate features to control the TLS implementation: enabling `native-tls`
+    will cause fend to use the operating system's built-in TLS implementation.
+    The `rustls` feature, which is enabled by default, will keep the existing
+    native Rust implementation. When both features are disabled, such as when
+    compiling with `--no-default-features`, network connectivity will not be
+    available and currency conversions will not work.
+    (by [@eatradish](https://github.com/eatradish))
+* Add "zł" as an alias for Polish złoty (PLN) (by [@twolodzko](https://github.com/twolodzko))
+* Add AOSC OS package and installation instructions (by [@eatradish](https://github.com/eatradish))
+* Use `windows-sys` instead of `winapi`
+
 ### v1.2.1 (2023-09-06)
 
 * Add Chinese units `jin` and `gongjin` (by [@eatradish](https://github.com/eatradish))

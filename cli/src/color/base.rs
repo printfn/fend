@@ -22,7 +22,7 @@ impl<'de> serde::de::Visitor<'de> for BaseVisitor {
 	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
 		formatter.write_str(
 			"`black`, `red`, `green`, `yellow`, `blue`, `magenta`, \
-                `cyan`, `white` or `256:n` (e.g. `256:42`)",
+				`cyan`, `white` or `256:n` (e.g. `256:42`)",
 		)
 	}
 
