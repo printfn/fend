@@ -197,18 +197,18 @@ impl ContinuedFraction {
 	}
 
 	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from_f64(self.as_f64() + other.as_f64()))
+		Self::bihomographic(self.clone(), other.clone(), [0, 1, 1, 0, 0, 0, 0, 1])
 	}
 
 	pub(crate) fn mul<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from_f64(self.as_f64() * other.as_f64()))
+		Self::bihomographic(self.clone(), other.clone(), [1, 0, 0, 0, 0, 0, 0, 1])
 	}
 
 	pub(crate) fn div<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
 		if other.is_zero() {
 			return Err(FendError::DivideByZero);
 		}
-		Ok(Self::from_f64(self.as_f64() / other.as_f64()))
+		Ok(self.clone().invert()?.mul(&other.clone().invert()?, int)?)
 	}
 
 	pub(crate) fn modulo<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
