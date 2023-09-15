@@ -112,6 +112,7 @@ impl ContinuedFraction {
 	pub(crate) fn homographic<I: Interrupt>(
 		self,
 		args: [impl Into<BigUint>; 4],
+		f: fn() -> Option<BigUint>,
 		int: &I,
 	) -> Result<Self, FendError> {
 		if self.actual_integer_sign() == Sign::Negative {
@@ -124,6 +125,7 @@ impl ContinuedFraction {
 		let mut result_iterator = HomographicIterator {
 			iter: Box::new(iter::once(self.integer.clone()).chain((self.fraction)())),
 			args: args.clone(),
+			f,
 			state: HomographicState::Initial,
 		};
 		let Some(integer) = result_iterator.next() else {
@@ -136,6 +138,7 @@ impl ContinuedFraction {
 				Box::new(
 					HomographicIterator {
 						iter: Box::new(iter::once(self.integer.clone()).chain((self.fraction)())),
+						f,
 						args: args.clone(),
 						state: HomographicState::Initial,
 					}
@@ -227,13 +230,14 @@ enum HomographicState {
 	Terminated,
 }
 
-struct HomographicIterator {
+struct HomographicIterator<F: Fn() -> Option<BigUint>> {
+	f: F,
 	args: [BigUint; 4],
 	iter: Box<dyn Iterator<Item = BigUint>>,
 	state: HomographicState,
 }
 
-impl Iterator for HomographicIterator {
+impl<F: Fn() -> Option<BigUint>> Iterator for HomographicIterator<F> {
 	type Item = BigUint;
 
 	fn next(&mut self) -> Option<Self::Item> {
@@ -247,8 +251,15 @@ impl Iterator for HomographicIterator {
 					let (q1, r1) = self.args[0].divmod(&self.args[1], &Never).unwrap();
 					let (q2, r2) = self.args[2].divmod(&self.args[3], &Never).unwrap();
 					if q1 == q2 {
-						self.args[0] = mem::replace(&mut self.args[1], r1);
-						self.args[2] = mem::replace(&mut self.args[3], r2);
+						if let Some(base) = (self.f)() {
+							self.args[0] = r1;
+							self.args[2] = r2;
+							self.args[0] = self.args[0].clone().mul(&base, &Never).unwrap();
+							self.args[2] = self.args[2].clone().mul(&base, &Never).unwrap();
+						} else {
+							self.args[0] = mem::replace(&mut self.args[1], r1);
+							self.args[2] = mem::replace(&mut self.args[3], r2);
+						}
 						self.state = HomographicState::Initial;
 						return Some(q1);
 					}
@@ -540,6 +551,11 @@ mod tests {
 		}
 	}
 
+	fn pi() -> ContinuedFraction {
+		// TODO implement properly
+		cf!(3; 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, 2, 2, 2, 2, 1, 84, 2, 1, 1, 15, 3, 13, 1, 4, 2, 6, 6, 99, 1, 2, 2, 6, 3, 5, 1, 1, 6, 8, 1, 7, 1, 2, 3, 7, 1, 2, 1, 1, 1)
+	}
+
 	#[test]
 	fn comparisons() {
 		assert_eq!(cf!(3; 1), cf!(3; 1));
@@ -564,7 +580,7 @@ mod tests {
 
 	#[test]
 	fn homographic() {
-		let res = sqrt_2().homographic([2, 3, 5, 1], &Never).unwrap();
+		let res = sqrt_2().homographic([2, 3, 5, 1], || None, &Never).unwrap();
 		assert_eq!(res.integer, 0.into());
 		assert_eq!(
 			(res.fraction)()
@@ -576,6 +592,21 @@ mod tests {
 				.chain([2, 1, 1, 2, 36].into_iter().cycle())
 				.take(1000)
 				.collect::<Vec<_>>(),
+		);
+	}
+
+	#[test]
+	fn decimal() {
+		let res = pi()
+			.homographic([1, 0, 0, 1], || Some(10.into()), &Never)
+			.unwrap();
+		assert_eq!(res.integer, 3.into());
+		assert_eq!(
+			(res.fraction)()
+				.take(20)
+				.map(|b| b.try_as_usize(&Never).unwrap())
+				.collect::<Vec<_>>(),
+			vec![1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8, 4, 6],
 		);
 	}
 
