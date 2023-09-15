@@ -344,7 +344,7 @@ impl Context {
 /// It returns an error if the given string is invalid.
 /// This may be due to parser or runtime errors.
 pub fn evaluate(input: &str, context: &mut Context) -> Result<FendResult, String> {
-	evaluate_with_interrupt(input, context, &interrupt::Never::default())
+	evaluate_with_interrupt(input, context, &interrupt::Never)
 }
 
 fn evaluate_with_interrupt_internal(

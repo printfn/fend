@@ -797,7 +797,7 @@ mod tests {
 	#[test]
 	fn test_sqrt() -> Res {
 		let two = &BigUint::from(2);
-		let int = crate::interrupt::Never::default();
+		let int = crate::interrupt::Never;
 		let test_sqrt_inner = |n, expected_root, exact| -> Res {
 			let actual = BigUint::from(n).root_n(two, &int)?;
 			assert_eq!(actual.value, BigUint::from(expected_root));
@@ -860,7 +860,7 @@ mod tests {
 
 	#[test]
 	fn test_multiplication() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		assert_eq!(
 			BigUint::from(20).mul(&BigUint::from(3), int)?,
 			BigUint::from(60)
@@ -870,7 +870,7 @@ mod tests {
 
 	#[test]
 	fn test_small_division_by_two() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let two = BigUint::from(2);
 		assert_eq!(BigUint::from(0).div(&two, int)?, BigUint::from(0));
 		assert_eq!(BigUint::from(1).div(&two, int)?, BigUint::from(0));
@@ -886,7 +886,7 @@ mod tests {
 
 	#[test]
 	fn test_rem() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let three = BigUint::from(3);
 		assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));
 		assert_eq!(BigUint::from(21).rem(&three, int)?, BigUint::from(0));
@@ -898,7 +898,7 @@ mod tests {
 
 	#[test]
 	fn test_lshift() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let mut n = BigUint::from(1);
 		for _ in 0..100 {
 			n.lshift(int)?;
@@ -909,7 +909,7 @@ mod tests {
 
 	#[test]
 	fn test_gcd() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		assert_eq!(BigUint::gcd(2.into(), 4.into(), int)?, 2.into());
 		assert_eq!(BigUint::gcd(4.into(), 2.into(), int)?, 2.into());
 		assert_eq!(BigUint::gcd(37.into(), 43.into(), int)?, 1.into());
@@ -929,7 +929,7 @@ mod tests {
 
 	#[test]
 	fn test_large_lshift() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let mut a = BigUint::from(9_223_372_036_854_775_808);
 		a.lshift(int)?;
 		assert!(!a.is_zero());
@@ -938,7 +938,7 @@ mod tests {
 
 	#[test]
 	fn test_big_multiplication() -> Res {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		assert_eq!(
 			BigUint::from(1).mul(&BigUint::Large(vec![0, 1]), int)?,
 			BigUint::Large(vec![0, 1])

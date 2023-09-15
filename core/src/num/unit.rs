@@ -1186,7 +1186,7 @@ mod tests {
 	use crate::interrupt::Never;
 
 	fn to_string(n: &Value) -> String {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		n.format(&crate::Context::new(), int).unwrap().to_string()
 	}
 
@@ -1198,13 +1198,13 @@ mod tests {
 		let kg = NamedUnit::new("k".into(), "g".into(), "g".into(), hashmap, 1);
 		let one_kg = Value::new(1, vec![UnitExponent::new(kg.clone(), 1)]);
 		let two_kg = Value::new(2, vec![UnitExponent::new(kg, 1)]);
-		let sum = one_kg.add(two_kg, &Never::default()).unwrap();
+		let sum = one_kg.add(two_kg, &Never).unwrap();
 		assert_eq!(to_string(&sum), "3 kg");
 	}
 
 	#[test]
 	fn test_basic_kg_and_g() {
-		let int = &Never::default();
+		let int = &Never;
 		let base_kg = BaseUnit::new("kilogram".into());
 		let mut hashmap = HashMap::new();
 		hashmap.insert(base_kg, 1.into());

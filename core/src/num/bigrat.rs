@@ -83,7 +83,7 @@ impl fmt::Debug for BigRat {
 
 impl Ord for BigRat {
 	fn cmp(&self, other: &Self) -> cmp::Ordering {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let diff = self.clone().add(-other.clone(), int).unwrap();
 		if diff.num == 0.into() {
 			cmp::Ordering::Equal
@@ -111,7 +111,7 @@ impl Eq for BigRat {}
 
 impl hash::Hash for BigRat {
 	fn hash<H: hash::Hasher>(&self, state: &mut H) {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		if let Ok(res) = self.clone().simplify(int) {
 			// don't hash the sign
 			res.num.hash(state);
@@ -1253,7 +1253,7 @@ mod tests {
 
 	#[test]
 	fn test_addition() -> Result<(), FendError> {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let two = BigRat::from(2);
 		assert_eq!(two.clone().add(two, int)?, BigRat::from(4));
 		Ok(())

@@ -199,7 +199,7 @@ impl Date {
 
 	pub(crate) fn add(self, rhs: Value) -> Result<Value, FendError> {
 		let rhs = rhs.expect_num()?;
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		if rhs.unit_equal_to("day") {
 			let num_days = rhs.try_as_usize_unit(int)?;
 			let mut result = self;
@@ -213,7 +213,7 @@ impl Date {
 	}
 
 	pub(crate) fn sub(self, rhs: Value) -> Result<Value, FendError> {
-		let int = &crate::interrupt::Never::default();
+		let int = &crate::interrupt::Never;
 		let rhs = rhs.expect_num()?;
 
 		if rhs.unit_equal_to("day") {

@@ -43,7 +43,7 @@ impl Ord for Real {
 		match (&self.pattern, &other.pattern) {
 			(Pattern::Simple(a), Pattern::Simple(b)) | (Pattern::Pi(a), Pattern::Pi(b)) => a.cmp(b),
 			_ => {
-				let int = &crate::interrupt::Never::default();
+				let int = &crate::interrupt::Never;
 				let a = self.clone().approximate(int).unwrap();
 				let b = other.clone().approximate(int).unwrap();
 				a.cmp(&b)
