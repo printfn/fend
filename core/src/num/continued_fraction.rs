@@ -4,13 +4,13 @@ use crate::num::biguint::BigUint;
 use crate::Interrupt;
 use std::hash::Hash;
 use std::sync::Arc;
-use std::{cmp, fmt, iter, ops};
+use std::{cmp, fmt, iter, mem, ops};
 
 #[derive(Clone)]
 pub(crate) struct ContinuedFraction {
 	integer_sign: Sign,
 	integer: BigUint,
-	fraction: Arc<dyn Fn(usize) -> BigUint>, // returning zero indicates the end of the fraction
+	fraction: Arc<dyn Fn() -> Box<dyn Iterator<Item = BigUint>>>, // must never return a zero
 }
 
 const MAX_ITERATIONS: usize = 50;
@@ -33,7 +33,7 @@ impl ContinuedFraction {
 		if self.actual_integer_sign() == Sign::Negative {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
-		if (self.fraction)(0) != 0.into() {
+		if (self.fraction)().next().is_some() {
 			return Err(FendError::FractionToInteger);
 		}
 		self.integer.try_as_usize(int)
@@ -75,18 +75,12 @@ impl ContinuedFraction {
 		Self {
 			integer_sign: sign,
 			integer: bigint,
-			fraction: Arc::new(move |i| {
-				if i >= parts.len() {
-					0.into()
-				} else {
-					parts[i].clone()
-				}
-			}),
+			fraction: Arc::new(move || Box::new(parts.clone().into_iter())),
 		}
 	}
 
 	pub(crate) fn is_zero(&self) -> bool {
-		self.integer == 0.into() && (self.fraction)(0) == 0.into()
+		self.integer == 0.into() && (self.fraction)().next().is_none()
 	}
 
 	pub(crate) fn invert(self) -> Result<Self, FendError> {
@@ -94,18 +88,75 @@ impl ContinuedFraction {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
 		if self.integer == 0.into() {
+			let Some(integer) = (self.fraction)().next() else {
+				return Err(FendError::DivideByZero);
+			};
 			Ok(Self {
-				integer: (self.fraction)(0),
+				integer,
 				integer_sign: self.integer_sign,
-				fraction: Arc::new(move |i| (self.fraction)(i + 1)),
+				fraction: Arc::new(move || Box::new((self.fraction)().skip(1))),
 			})
 		} else {
 			Ok(Self {
 				integer: 0.into(),
 				integer_sign: self.integer_sign,
-				fraction: Arc::new(move |i| if i == 0 { self.integer.clone() } else { (self.fraction)(i - 1) })
+				fraction: Arc::new(move || {
+					Box::new(iter::once(self.integer.clone()).chain((self.fraction)()))
+				}),
 			})
 		}
+	}
+
+	// (ax+b)/(cx+d)
+	pub(crate) fn homographic<I: Interrupt>(
+		self,
+		mut a: BigUint,
+		mut b: BigUint,
+		mut c: BigUint,
+		mut d: BigUint,
+		int: &I,
+	) -> Result<Self, FendError> {
+		if self.actual_integer_sign() == Sign::Negative {
+			return Err(FendError::NegativeNumbersNotAllowed);
+		}
+		mem::swap(&mut a, &mut b);
+		mem::swap(&mut c, &mut d);
+		let mut heading = &self.integer;
+		let mut m = b.clone().mul(heading, int)?.add(&a);
+		let mut n = d.clone().mul(heading, int)?.add(&c);
+		let mut fraction_iter = (self.fraction)();
+		let mut result = vec![];
+		loop {
+			// check if b/d and m/n floor to the same value
+			let (q1, r1) = b.divmod(&d, int)?;
+			let (q2, r2) = m.divmod(&n, int)?;
+			if q1 == q2 {
+				// same value!
+				// we can now yield that value
+				result.push(q1);
+				if result.len() >= MAX_ITERATIONS {
+					break;
+				}
+				// now take reciprocals and subtract remainders
+				(b, d) = (d, r1);
+				(m, n) = (n, r2);
+			}
+			let Some(f) = fraction_iter.next() else {
+				break;
+			};
+			heading = &f;
+			a = b;
+			c = d;
+			b = m;
+			d = n;
+			m = b.clone().mul(heading, int)?.add(&a);
+			n = d.clone().mul(heading, int)?.add(&c);
+		}
+		Ok(Self {
+			integer_sign: Sign::Positive,
+			integer: result[0].clone(),
+			fraction: Arc::new(move || Box::new(result.clone().into_iter().skip(1))),
+		})
 	}
 
 	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
@@ -128,32 +179,13 @@ impl ContinuedFraction {
 			return Err(FendError::ModuloByZero);
 		}
 		if self.actual_integer_sign() != Sign::Positive
-			|| (self.fraction)(0) != 0.into()
+			|| (self.fraction)().next().is_some()
 			|| other.actual_integer_sign() != Sign::Positive
-			|| (other.fraction)(0) != 0.into()
+			|| (other.fraction)().next().is_some()
 		{
 			return Err(FendError::ModuloForPositiveInts);
 		}
 		Ok(Self::from(self.integer.divmod(&other.integer, int)?.1))
-	}
-}
-
-pub(crate) struct CFIterator<'a> {
-	cf: &'a ContinuedFraction,
-	i: usize,
-}
-
-impl Iterator for CFIterator<'_> {
-	type Item = BigUint;
-
-	fn next(&mut self) -> Option<Self::Item> {
-		let result = (self.cf.fraction)(self.i);
-		if result == 0.into() {
-			None
-		} else {
-			self.i += 1;
-			Some(result)
-		}
 	}
 }
 
@@ -165,15 +197,13 @@ impl ops::Neg for ContinuedFraction {
 	}
 }
 
-impl iter::FusedIterator for CFIterator<'_> {}
-
 impl<'a> IntoIterator for &'a ContinuedFraction {
 	type Item = BigUint;
 
-	type IntoIter = CFIterator<'a>;
+	type IntoIter = Box<dyn Iterator<Item = Self::Item>>;
 
 	fn into_iter(self) -> Self::IntoIter {
-		CFIterator { cf: self, i: 0 }
+		(self.fraction)()
 	}
 }
 
@@ -201,7 +231,7 @@ impl From<BigUint> for ContinuedFraction {
 		Self {
 			integer_sign: Sign::Positive,
 			integer: value,
-			fraction: Arc::new(|_| 0.into()),
+			fraction: Arc::new(|| Box::new(iter::empty())),
 		}
 	}
 }
@@ -211,7 +241,7 @@ impl From<u64> for ContinuedFraction {
 		Self {
 			integer_sign: Sign::Positive,
 			integer: value.into(),
-			fraction: Arc::new(|_| 0.into()),
+			fraction: Arc::new(|| Box::new(iter::empty())),
 		}
 	}
 }
@@ -285,12 +315,8 @@ macro_rules! cf {
 					$crate::num::continued_fraction::Sign::Negative
 				},
 				integer: (i.abs() as u64).into(),
-				fraction: ::std::sync::Arc::new(move |i| {
-					if i >= parts.len() {
-						0.into()
-					} else {
-						parts[i].clone()
-					}
+				fraction: ::std::sync::Arc::new(move || {
+					Box::new(parts.clone().into_iter())
 				}),
 			}
 		}
@@ -299,6 +325,18 @@ macro_rules! cf {
 
 #[cfg(test)]
 mod tests {
+	use crate::interrupt::Never;
+
+	use super::*;
+
+	fn sqrt_2() -> ContinuedFraction {
+		ContinuedFraction {
+			integer_sign: Sign::Positive,
+			integer: 1.into(),
+			fraction: Arc::new(|| Box::new(iter::repeat_with(|| 2.into()))),
+		}
+	}
+
 	#[test]
 	fn comparisons() {
 		assert_eq!(cf!(3; 1), cf!(3; 1));
@@ -319,5 +357,20 @@ mod tests {
 	fn invert() {
 		assert_eq!(cf!(3; 2, 6, 4).invert().unwrap(), cf!(0; 3, 2, 6, 4));
 		assert_eq!(cf!(0; 3, 2, 6, 4).invert().unwrap(), cf!(3; 2, 6, 4));
+	}
+
+	#[test]
+	fn homographic() {
+		let res = sqrt_2()
+			.homographic(2.into(), 3.into(), 5.into(), 1.into(), &Never {})
+			.unwrap();
+		assert_eq!(res.integer, 0.into());
+		assert_eq!(
+			(res.fraction)()
+				.take(21)
+				.map(|b| b.try_as_usize(&Never {}).unwrap())
+				.collect::<Vec<_>>(),
+			vec![1, 2, 1, 1, 2, 36, 2, 1, 1, 2, 36, 2, 1, 1, 2, 36, 2, 1, 1, 2, 36]
+		);
 	}
 }
