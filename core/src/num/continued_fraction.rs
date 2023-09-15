@@ -111,24 +111,20 @@ impl ContinuedFraction {
 	// (ax+b)/(cx+d)
 	pub(crate) fn homographic<I: Interrupt>(
 		self,
-		mut a: BigUint,
-		mut b: BigUint,
-		mut c: BigUint,
-		mut d: BigUint,
+		args: [impl Into<BigUint>; 4],
 		int: &I,
 	) -> Result<Self, FendError> {
 		if self.actual_integer_sign() == Sign::Negative {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
-		mem::swap(&mut a, &mut b);
-		mem::swap(&mut c, &mut d);
+		let args = {
+			let [a, b, c, d] = args;
+			[b.into(), a.into(), d.into(), c.into()]
+		};
 		let mut result_iterator = HomographicIterator {
 			heading: self.integer.clone(),
 			fraction_iter: (self.fraction)(),
-			a,
-			b,
-			c,
-			d,
+			args: args.clone(),
 			state: HomographicState::Initial,
 		};
 		let Some(integer) = result_iterator.next() else {
@@ -138,15 +134,15 @@ impl ContinuedFraction {
 			integer_sign: Sign::Positive,
 			integer,
 			fraction: Arc::new(move || {
-				Box::new(HomographicIterator {
-					heading: result_iterator.heading.clone(),
-					a: result_iterator.a.clone(),
-					b: result_iterator.b.clone(),
-					c: result_iterator.c.clone(),
-					d: result_iterator.d.clone(),
-					state: result_iterator.state.clone(),
-					fraction_iter: Box::new((self.fraction)().skip(1)),
-				})
+				Box::new(
+					HomographicIterator {
+						heading: self.integer.clone(),
+						fraction_iter: (self.fraction)(),
+						args: args.clone(),
+						state: HomographicState::Initial,
+					}
+					.skip(1),
+				)
 			}),
 		})
 	}
@@ -243,10 +239,7 @@ enum HomographicState {
 
 struct HomographicIterator {
 	heading: BigUint,
-	a: BigUint,
-	b: BigUint,
-	c: BigUint,
-	d: BigUint,
+	args: [BigUint; 4],
 	fraction_iter: Box<dyn Iterator<Item = BigUint>>,
 	state: HomographicState,
 }
@@ -258,20 +251,18 @@ impl Iterator for HomographicIterator {
 		loop {
 			match mem::replace(&mut self.state, HomographicState::Initial) {
 				HomographicState::Initial => {
-					let m = self
-						.b
+					let m = self.args[1]
 						.clone()
 						.mul(&self.heading, &Never)
 						.unwrap()
-						.add(&self.a);
-					let n = self
-						.d
+						.add(&self.args[0]);
+					let n = self.args[3]
 						.clone()
 						.mul(&self.heading, &Never)
 						.unwrap()
-						.add(&self.c);
+						.add(&self.args[2]);
 					// check if b/d and m/n floor to the same value
-					let (q1, r1) = self.b.divmod(&self.d, &Never).unwrap();
+					let (q1, r1) = self.args[1].divmod(&self.args[3], &Never).unwrap();
 					let (q2, r2) = m.divmod(&n, &Never).unwrap();
 					if q1 == q2 {
 						// same value!
@@ -284,7 +275,7 @@ impl Iterator for HomographicIterator {
 				}
 				HomographicState::Yielded { r1, r2, n } => {
 					// now take reciprocals and subtract remainders
-					self.b = mem::replace(&mut self.d, r1);
+					self.args[1] = mem::replace(&mut self.args[3], r1);
 					self.state = HomographicState::A { m: n, n: r2 };
 				}
 				HomographicState::A { m, n } => {
@@ -293,8 +284,8 @@ impl Iterator for HomographicIterator {
 						return None;
 					};
 					self.heading = f;
-					self.a = mem::replace(&mut self.b, m);
-					self.c = mem::replace(&mut self.d, n);
+					self.args[0] = mem::replace(&mut self.args[1], m);
+					self.args[2] = mem::replace(&mut self.args[3], n);
 					self.state = HomographicState::Initial;
 				}
 				HomographicState::Terminated => {
@@ -595,9 +586,7 @@ mod tests {
 
 	#[test]
 	fn homographic() {
-		let res = sqrt_2()
-			.homographic(2.into(), 3.into(), 5.into(), 1.into(), &Never)
-			.unwrap();
+		let res = sqrt_2().homographic([2, 3, 5, 1], &Never).unwrap();
 		assert_eq!(res.integer, 0.into());
 		assert_eq!(
 			(res.fraction)()
