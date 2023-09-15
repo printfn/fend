@@ -1,10 +1,11 @@
 use crate::error::FendError;
+use crate::interrupt::Never;
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use crate::Interrupt;
 use std::hash::Hash;
 use std::sync::Arc;
-use std::{cmp, fmt, iter, mem, ops};
+use std::{cmp, fmt, iter, mem, ops, result};
 
 #[derive(Clone)]
 pub(crate) struct ContinuedFraction {
@@ -121,41 +122,32 @@ impl ContinuedFraction {
 		}
 		mem::swap(&mut a, &mut b);
 		mem::swap(&mut c, &mut d);
-		let mut fraction_iter = (self.fraction)();
-		let mut heading = &self.integer;
-		let mut result = vec![];
-		let (mut m, mut n, mut f);
-		loop {
-			m = b.clone().mul(heading, int)?.add(&a);
-			n = d.clone().mul(heading, int)?.add(&c);
-			// check if b/d and m/n floor to the same value
-			let (q1, r1) = b.divmod(&d, int)?;
-			let (q2, r2) = m.divmod(&n, int)?;
-			if q1 == q2 {
-				// same value!
-				// we can now yield that value
-				result.push(q1);
-				if result.len() >= MAX_ITERATIONS {
-					break;
-				}
-				// now take reciprocals and subtract remainders
-				(b, d) = (d, r1);
-				(m, n) = (n, r2);
-			}
-			match fraction_iter.next() {
-				None => break,
-				Some(x) => f = x,
-			}
-			heading = &f;
-			a = b;
-			c = d;
-			b = m;
-			d = n;
-		}
+		let mut result_iterator = HomographicIterator {
+			heading: self.integer.clone(),
+			fraction_iter: (self.fraction)(),
+			a,
+			b,
+			c,
+			d,
+			state: HomographicState::Initial,
+		};
+		let Some(integer) = result_iterator.next() else {
+			return Err(FendError::Unknown);
+		};
 		Ok(Self {
 			integer_sign: Sign::Positive,
-			integer: result[0].clone(),
-			fraction: Arc::new(move || Box::new(result.clone().into_iter().skip(1))),
+			integer,
+			fraction: Arc::new(move || {
+				Box::new(HomographicIterator {
+					heading: result_iterator.heading.clone(),
+					a: result_iterator.a.clone(),
+					b: result_iterator.b.clone(),
+					c: result_iterator.c.clone(),
+					d: result_iterator.d.clone(),
+					state: result_iterator.state.clone(),
+					fraction_iter: Box::new((self.fraction)().skip(1)),
+				})
+			}),
 		})
 	}
 
@@ -186,6 +178,86 @@ impl ContinuedFraction {
 			return Err(FendError::ModuloForPositiveInts);
 		}
 		Ok(Self::from(self.integer.divmod(&other.integer, int)?.1))
+	}
+}
+
+#[derive(Clone)]
+enum HomographicState {
+	Initial,
+	Yielded {
+		r1: BigUint,
+		r2: BigUint,
+		n: BigUint,
+	},
+	A {
+		m: BigUint,
+		n: BigUint,
+	},
+	Terminated,
+}
+
+struct HomographicIterator {
+	heading: BigUint,
+	a: BigUint,
+	b: BigUint,
+	c: BigUint,
+	d: BigUint,
+	fraction_iter: Box<dyn Iterator<Item = BigUint>>,
+	state: HomographicState,
+}
+
+impl Iterator for HomographicIterator {
+	type Item = BigUint;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		loop {
+			match mem::replace(&mut self.state, HomographicState::Initial) {
+				HomographicState::Initial => {
+					let m = self
+						.b
+						.clone()
+						.mul(&self.heading, &Never {})
+						.unwrap()
+						.add(&self.a);
+					let n = self
+						.d
+						.clone()
+						.mul(&self.heading, &Never {})
+						.unwrap()
+						.add(&self.c);
+					// check if b/d and m/n floor to the same value
+					let (q1, r1) = self.b.divmod(&self.d, &Never {}).unwrap();
+					let (q2, r2) = m.divmod(&n, &Never {}).unwrap();
+					if q1 == q2 {
+						// same value!
+						// we can now yield that value
+						self.state = HomographicState::Yielded { r1, r2, n };
+						return Some(q1);
+					} else {
+						self.state = HomographicState::A { m, n };
+					}
+				}
+				HomographicState::Yielded { r1, r2, n } => {
+					// now take reciprocals and subtract remainders
+					self.b = mem::replace(&mut self.d, r1);
+					self.state = HomographicState::A { m: n, n: r2 };
+				}
+				HomographicState::A { m, n } => {
+					let Some(f) = self.fraction_iter.next() else {
+						self.state = HomographicState::Terminated;
+						return None;
+					};
+					self.heading = f;
+					self.a = mem::replace(&mut self.b, m);
+					self.c = mem::replace(&mut self.d, n);
+					self.state = HomographicState::Initial;
+				}
+				HomographicState::Terminated => {
+					self.state = HomographicState::Terminated;
+					return None;
+				}
+			};
+		}
 	}
 }
 
@@ -367,10 +439,14 @@ mod tests {
 		assert_eq!(res.integer, 0.into());
 		assert_eq!(
 			(res.fraction)()
-				.take(21)
+				.take(1000)
 				.map(|b| b.try_as_usize(&Never {}).unwrap())
 				.collect::<Vec<_>>(),
-			vec![1, 2, 1, 1, 2, 36, 2, 1, 1, 2, 36, 2, 1, 1, 2, 36, 2, 1, 1, 2, 36]
+			Some(1)
+				.into_iter()
+				.chain([2, 1, 1, 2, 36].into_iter().cycle())
+				.take(1000)
+				.collect::<Vec<_>>(),
 		);
 	}
 }
