@@ -121,12 +121,13 @@ impl ContinuedFraction {
 		}
 		mem::swap(&mut a, &mut b);
 		mem::swap(&mut c, &mut d);
-		let mut heading = &self.integer;
-		let mut m = b.clone().mul(heading, int)?.add(&a);
-		let mut n = d.clone().mul(heading, int)?.add(&c);
 		let mut fraction_iter = (self.fraction)();
+		let mut heading = &self.integer;
 		let mut result = vec![];
+		let (mut m, mut n, mut f);
 		loop {
+			m = b.clone().mul(heading, int)?.add(&a);
+			n = d.clone().mul(heading, int)?.add(&c);
 			// check if b/d and m/n floor to the same value
 			let (q1, r1) = b.divmod(&d, int)?;
 			let (q2, r2) = m.divmod(&n, int)?;
@@ -141,16 +142,15 @@ impl ContinuedFraction {
 				(b, d) = (d, r1);
 				(m, n) = (n, r2);
 			}
-			let Some(f) = fraction_iter.next() else {
-				break;
-			};
+			match fraction_iter.next() {
+				None => break,
+				Some(x) => f = x,
+			}
 			heading = &f;
 			a = b;
 			c = d;
 			b = m;
 			d = n;
-			m = b.clone().mul(heading, int)?.add(&a);
-			n = d.clone().mul(heading, int)?.add(&c);
 		}
 		Ok(Self {
 			integer_sign: Sign::Positive,
