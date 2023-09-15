@@ -98,7 +98,7 @@ mod tests {
 	#[track_caller]
 	fn simple_test(input: &str, expected: &str) {
 		let mut ctx = crate::Context::new();
-		let int = crate::interrupt::Never {};
+		let int = crate::interrupt::Never;
 		let mut result = String::new();
 		for part in substitute_inline_fend_expressions(input, &mut ctx, &int).parts {
 			result.push_str(part.get_contents());

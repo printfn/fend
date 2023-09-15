@@ -216,18 +216,18 @@ impl Iterator for HomographicIterator {
 					let m = self
 						.b
 						.clone()
-						.mul(&self.heading, &Never {})
+						.mul(&self.heading, &Never)
 						.unwrap()
 						.add(&self.a);
 					let n = self
 						.d
 						.clone()
-						.mul(&self.heading, &Never {})
+						.mul(&self.heading, &Never)
 						.unwrap()
 						.add(&self.c);
 					// check if b/d and m/n floor to the same value
-					let (q1, r1) = self.b.divmod(&self.d, &Never {}).unwrap();
-					let (q2, r2) = m.divmod(&n, &Never {}).unwrap();
+					let (q1, r1) = self.b.divmod(&self.d, &Never).unwrap();
+					let (q2, r2) = m.divmod(&n, &Never).unwrap();
 					if q1 == q2 {
 						// same value!
 						// we can now yield that value
@@ -434,13 +434,13 @@ mod tests {
 	#[test]
 	fn homographic() {
 		let res = sqrt_2()
-			.homographic(2.into(), 3.into(), 5.into(), 1.into(), &Never {})
+			.homographic(2.into(), 3.into(), 5.into(), 1.into(), &Never)
 			.unwrap();
 		assert_eq!(res.integer, 0.into());
 		assert_eq!(
 			(res.fraction)()
 				.take(1000)
-				.map(|b| b.try_as_usize(&Never {}).unwrap())
+				.map(|b| b.try_as_usize(&Never).unwrap())
 				.collect::<Vec<_>>(),
 			Some(1)
 				.into_iter()
