@@ -13,7 +13,7 @@ pub(crate) fn test_int<I: crate::error::Interrupt>(int: &I) -> Result<(), FendEr
 }
 
 #[derive(Default)]
-pub(crate) struct Never {}
+pub(crate) struct Never;
 impl Interrupt for Never {
 	fn should_interrupt(&self) -> bool {
 		false
