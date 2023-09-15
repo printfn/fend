@@ -151,6 +151,51 @@ impl ContinuedFraction {
 		})
 	}
 
+	// (axy + bx + cy + d) / (exy + fx + gy + h)
+	pub(crate) fn bihomographic(
+		x: Self,
+		y: Self,
+		args: [impl Into<BigUint>; 8],
+	) -> Result<Self, FendError> {
+		let args = {
+			let [g, c, e, a, h, d, f, b] = args;
+			[
+				a.into(),
+				b.into(),
+				c.into(),
+				d.into(),
+				e.into(),
+				f.into(),
+				g.into(),
+				h.into(),
+			]
+		};
+		let mut result_iterator = BihomographicIterator {
+			args: args.clone(),
+			x_iter: Box::new(iter::once(x.integer.clone()).chain((x.fraction)())),
+			y_iter: Box::new(iter::once(y.integer.clone()).chain((y.fraction)())),
+			state: BihomographicState::Initial,
+		};
+		let Some(integer) = result_iterator.next() else {
+			return Err(FendError::Unknown);
+		};
+		Ok(Self {
+			integer_sign: Sign::Positive,
+			integer,
+			fraction: Arc::new(move || {
+				Box::new(
+					BihomographicIterator {
+						args: args.clone(),
+						x_iter: Box::new(iter::once(x.integer.clone()).chain((x.fraction)())),
+						y_iter: Box::new(iter::once(y.integer.clone()).chain((y.fraction)())),
+						state: BihomographicState::Initial,
+					}
+					.skip(1),
+				)
+			}),
+		})
+	}
+
 	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
 		Ok(Self::from_f64(self.as_f64() + other.as_f64()))
 	}
@@ -257,6 +302,101 @@ impl Iterator for HomographicIterator {
 					return None;
 				}
 			};
+		}
+	}
+}
+
+#[derive(Clone)]
+enum BihomographicState {
+	Initial,
+	ShiftDown,
+	ShiftRight,
+	Terminated,
+}
+
+struct BihomographicIterator {
+	args: [BigUint; 8],
+	state: BihomographicState,
+	x_iter: Box<dyn Iterator<Item = BigUint>>,
+	y_iter: Box<dyn Iterator<Item = BigUint>>,
+}
+
+impl Iterator for BihomographicIterator {
+	type Item = BigUint;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		loop {
+			match mem::replace(&mut self.state, BihomographicState::Initial) {
+				BihomographicState::Initial => {
+					if self.args[1] == 0.into()
+						|| self.args[3] == 0.into()
+						|| self.args[5] == 0.into()
+						|| self.args[7] == 0.into()
+					{
+						if self.args[3] == 0.into() {
+							self.state = BihomographicState::ShiftDown;
+						} else {
+							self.state = BihomographicState::ShiftRight;
+						}
+						continue;
+					}
+					let (q1, r1) = self.args[0].divmod(&self.args[1], &Never).unwrap();
+					let (q2, r2) = self.args[2].divmod(&self.args[3], &Never).unwrap();
+					let (q3, r3) = self.args[4].divmod(&self.args[5], &Never).unwrap();
+					let (q4, r4) = self.args[6].divmod(&self.args[7], &Never).unwrap();
+					if q1 == q2 && q1 == q3 && q1 == q4 {
+						// all quotients equal, yield a value
+						self.args[0] = mem::replace(&mut self.args[1], r1);
+						self.args[2] = mem::replace(&mut self.args[3], r2);
+						self.args[4] = mem::replace(&mut self.args[5], r3);
+						self.args[6] = mem::replace(&mut self.args[7], r4);
+						self.state = BihomographicState::Initial;
+						return Some(q1);
+					} else {
+						if q2 == q4 {
+							self.state = BihomographicState::ShiftRight;
+						} else {
+							self.state = BihomographicState::ShiftDown;
+						}
+					}
+				}
+				#[rustfmt::skip]
+				BihomographicState::ShiftRight => {
+					if let Some(x_next) = self.x_iter.next() {
+						let n1 = self.args[2].clone().mul(&x_next, &Never).unwrap().add(&self.args[0]);
+						let n2 = self.args[3].clone().mul(&x_next, &Never).unwrap().add(&self.args[1]);
+						let n3 = self.args[6].clone().mul(&x_next, &Never).unwrap().add(&self.args[4]);
+						let n4 = self.args[7].clone().mul(&x_next, &Never).unwrap().add(&self.args[5]);
+						self.args[0] = mem::replace(&mut self.args[2], n1);
+						self.args[1] = mem::replace(&mut self.args[3], n2);
+						self.args[4] = mem::replace(&mut self.args[6], n3);
+						self.args[5] = mem::replace(&mut self.args[7], n4);
+						self.state = BihomographicState::Initial;
+					} else {
+						self.state = BihomographicState::Terminated;
+					}
+				},
+				#[rustfmt::skip]
+				BihomographicState::ShiftDown => {
+					if let Some(y_next) = self.y_iter.next() {
+						let n1 = self.args[4].clone().mul(&y_next, &Never).unwrap().add(&self.args[0]);
+						let n2 = self.args[5].clone().mul(&y_next, &Never).unwrap().add(&self.args[1]);
+						let n3 = self.args[6].clone().mul(&y_next, &Never).unwrap().add(&self.args[2]);
+						let n4 = self.args[7].clone().mul(&y_next, &Never).unwrap().add(&self.args[3]);
+						self.args[0] = mem::replace(&mut self.args[4], n1);
+						self.args[1] = mem::replace(&mut self.args[5], n2);
+						self.args[2] = mem::replace(&mut self.args[6], n3);
+						self.args[3] = mem::replace(&mut self.args[7], n4);
+						self.state = BihomographicState::Initial;
+					} else {
+						self.state = BihomographicState::Terminated;
+					}
+				},
+				BihomographicState::Terminated => {
+					self.state = BihomographicState::Terminated;
+					return None;
+				}
+			}
 		}
 	}
 }
@@ -409,6 +549,28 @@ mod tests {
 		}
 	}
 
+	fn coth_1() -> ContinuedFraction {
+		ContinuedFraction {
+			integer_sign: Sign::Positive,
+			integer: 1.into(),
+			fraction: Arc::new(|| {
+				let mut current = 1;
+				Box::new(iter::repeat_with(move || {
+					current += 2;
+					current.into()
+				}))
+			}),
+		}
+	}
+
+	fn sqrt_6() -> ContinuedFraction {
+		ContinuedFraction {
+			integer_sign: Sign::Positive,
+			integer: 2.into(),
+			fraction: Arc::new(|| Box::new([2, 4].into_iter().map(BigUint::from).cycle())),
+		}
+	}
+
 	#[test]
 	fn comparisons() {
 		assert_eq!(cf!(3; 1), cf!(3; 1));
@@ -447,6 +609,21 @@ mod tests {
 				.chain([2, 1, 1, 2, 36].into_iter().cycle())
 				.take(1000)
 				.collect::<Vec<_>>(),
+		);
+	}
+
+	#[test]
+	fn bihomographic() {
+		let res =
+			ContinuedFraction::bihomographic(coth_1(), sqrt_6(), [2, 1, 0, 0, 1, 0, 1, 0]).unwrap();
+		assert_eq!(res.integer, 1.into());
+		let v = (res.fraction)()
+			.take(880)
+			.map(|b| b.try_as_usize(&Never).unwrap())
+			.collect::<Vec<_>>();
+		assert_eq!(
+			format!("{v:?}"),
+			"[2, 1, 2, 1, 1, 1, 2, 39, 1, 7, 4, 1, 65, 6, 2, 2, 4, 5, 2, 1, 1, 1, 2, 7, 3, 1, 1, 3, 3, 3, 2, 47, 2, 1, 1, 1, 1, 1, 9, 2, 42, 2, 4, 1, 92, 1, 2, 1, 4, 1, 41, 1, 1, 2, 1, 16, 3, 3, 117, 1, 1, 1, 1, 1044, 1, 2, 5, 2, 1, 1, 18, 1, 1, 1, 2, 43, 1, 14, 2, 1, 6, 4, 1, 13, 3, 10, 1, 29, 1, 1, 10, 2, 1, 1, 1, 5, 3, 1, 14, 8, 3, 1, 2, 1, 8, 1, 15, 1, 14, 34, 2, 1, 4, 1, 1, 4, 1, 3, 4, 1, 4, 1, 1, 1, 4, 1, 2, 6, 1, 108, 1, 34, 2, 5, 17, 6, 1, 1, 1, 5, 2, 1, 1, 42, 6, 5, 8, 1, 8, 1, 1, 1, 5, 3, 58, 1, 14, 4, 1, 14, 5, 1, 1, 15, 2, 3, 2, 1, 10, 2, 1, 1, 1, 1, 1, 22, 1, 1, 2, 1, 1, 2, 3, 24, 5, 1, 1, 1, 1, 1, 6, 20, 1, 13, 1, 9, 3, 2, 2, 2, 1, 4, 2, 3, 3, 5, 52, 1, 1, 11, 1, 2, 2, 2, 1, 6, 540, 20, 2, 3, 4, 46, 3, 18, 1, 1, 2, 2, 1, 1, 10, 1, 1, 6, 4, 2, 1, 1, 8, 1, 1, 1, 3, 1, 14, 1, 4, 1, 14, 3, 4, 12, 5, 1, 2, 1, 3, 1, 1, 1, 3, 1, 1, 1, 2, 6, 1, 6, 32, 1, 21, 2, 1, 2, 4, 1, 4, 4, 1, 1, 14, 2, 1, 4, 5, 38, 1, 23, 2, 10, 1, 20, 15, 4, 1, 12, 1, 3, 1, 8, 5, 4, 1, 3, 4, 6, 2, 8, 1, 1, 4, 3, 1, 1, 2, 13, 4, 1, 2, 1, 1, 2, 1, 2, 3, 1, 1, 5, 2, 7, 1, 7, 2, 3, 3, 1, 1, 1, 1, 3, 1, 1, 1, 8, 4, 1, 1, 4, 2, 3, 1, 1, 2, 1, 1, 1, 2, 1, 2, 7, 1, 1, 2, 3, 2, 1, 7, 1, 2, 2, 3, 1, 10, 1, 3, 1, 2, 8, 1, 16, 1, 9, 1, 3, 5, 1, 1, 1, 1, 1, 6, 2, 3, 1, 1, 3, 1, 2, 1, 14, 1, 41, 1, 1, 2, 1, 22, 1, 1, 2, 1, 1, 1, 1, 1, 1, 83, 2, 4, 1, 4, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 16, 1, 1, 4, 1, 2, 4, 3, 1, 1, 1, 2, 10, 2, 4, 2, 4, 1, 1, 1, 4, 2, 5, 1, 38, 1, 1, 4, 3, 3, 1, 1, 1, 3, 5, 1, 3, 11, 1, 2, 1, 2, 1, 1, 7, 1, 1, 62, 1, 1, 1, 2, 11, 6, 73, 1, 13, 1, 1, 1, 1, 7, 1, 5, 2, 1, 28, 1, 2, 3, 1, 1, 2, 1, 4, 11, 1, 2, 1, 15, 1, 3, 2, 1, 3, 1, 1, 2, 4, 1, 12, 4, 1, 1, 4, 1, 1, 3, 3, 1, 10, 12, 2, 6, 2, 1, 1, 1, 3, 3, 2, 1, 1, 5, 2, 1, 1, 3, 9, 21, 14, 1, 1, 1, 1, 1, 15, 3, 1, 2, 17, 12, 1, 1, 6, 3, 1, 2, 1, 4, 2, 3, 1, 3, 532, 6, 1, 11, 1, 1, 98, 1, 2, 3, 1, 1, 1, 1, 1, 1, 3, 3, 8, 1, 3, 16, 1, 6, 11, 1, 181, 43, 1, 1, 34, 11, 1, 1, 7, 1, 9, 4, 2, 3, 1, 1, 1, 42, 1, 5, 17, 2, 302, 1, 2, 1, 2, 2, 2, 11, 51, 2, 7, 1, 2, 1, 1, 27, 7, 3, 24, 9, 1, 3, 1, 12, 1, 2, 2, 2, 1, 25, 1, 1, 1, 104, 1, 1, 17, 1, 2, 9, 1, 53, 3, 1, 33, 2, 4, 3, 1, 4, 2, 3, 2, 83, 4, 1, 4, 14, 1, 8, 1, 1, 2, 1, 5, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 3, 2, 1, 1, 4, 21, 3, 6, 2, 9, 1, 2, 4, 1, 3, 1, 1, 1, 1, 1, 9, 1, 14, 1, 3, 5, 3, 1, 4, 2, 1, 1, 1, 1, 1, 27, 2, 74, 42, 10, 1, 1, 1, 2, 2, 2, 1, 15, 1, 2, 3, 2, 16, 1, 4, 2, 2, 2, 4, 1, 2, 3, 2, 5, 6, 6, 14, 2, 4, 1, 1, 5, 1, 1, 4, 22, 3, 2, 33, 1, 2, 3, 17, 3, 2, 426, 10, 3, 8, 1, 4, 1, 1, 2, 8, 32, 2, 2, 2, 1, 1, 1, 23, 2, 3, 4, 1, 402, 1, 7, 10, 1, 7, 3, 2, 1, 1, 1, 2, 1, 1, 1, 6, 7, 1, 1, 1, 2, 4, 2, 2, 1, 2, 46, 8, 1, 1034, 1, 1, 1, 1, 13, 4, 5, 1, 5, 7, 9, 3, 7, 1, 1, 13, 1, 3, 43, 2, 2, 1, 1, 2, 1, 371, 1, 6, 1, 1, 53, 1, 5, 1, 1, 2, 2, 1, 1]",
 		);
 	}
 }
