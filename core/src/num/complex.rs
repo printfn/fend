@@ -1,4 +1,5 @@
 use crate::error::{FendError, Interrupt};
+use crate::format::Format;
 use crate::num::continued_fraction::ContinuedFraction;
 use crate::num::real::{self};
 use crate::num::Exact;
@@ -6,6 +7,8 @@ use crate::num::{Base, FormattingStyle};
 use std::cmp::Ordering;
 use std::ops::Neg;
 use std::{fmt, io};
+
+use super::continued_fraction::{FormatOptions, FormattedContinuedFraction};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Complex {
@@ -32,18 +35,16 @@ pub(crate) enum UseParentheses {
 
 impl Complex {
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
-		Err(FendError::Unknown)
-		// self.real.serialize(write)?;
-		// self.imag.serialize(write)?;
-		// Ok(())
+		self.real.serialize(write)?;
+		self.imag.serialize(write)?;
+		Ok(())
 	}
 
 	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Err(FendError::Unknown)
-		// Ok(Self {
-		// 	real: Real::deserialize(read)?,
-		// 	imag: Real::deserialize(read)?,
-		// })
+		Ok(Self {
+			real: ContinuedFraction::deserialize(read)?,
+			imag: ContinuedFraction::deserialize(read)?,
+		})
 	}
 
 	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
@@ -149,66 +150,90 @@ impl Complex {
 		use_parentheses: UseParentheses,
 		int: &I,
 	) -> Result<Exact<Formatted>, FendError> {
-		Err(FendError::Unknown)
-		// let style = if !exact && style == FormattingStyle::Auto {
-		// 	FormattingStyle::DecimalPlaces(10)
-		// } else if self.imag != 0.into() && style == FormattingStyle::Auto {
-		// 	FormattingStyle::Exact
-		// } else {
-		// 	style
-		// };
+		let style = if !exact && style == FormattingStyle::Auto {
+			FormattingStyle::DecimalPlaces(10)
+		} else if self.imag != 0.into() && style == FormattingStyle::Auto {
+			FormattingStyle::Exact
+		} else {
+			style
+		};
 
-		// if self.imag.is_zero() {
-		// 	let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
-		// 	let x = self.real.format(base, style, false, use_parens, int)?;
-		// 	return Ok(Exact::new(
-		// 		Formatted {
-		// 			first_component: x.value,
-		// 			separator: "",
-		// 			second_component: None,
-		// 			use_parentheses: false,
-		// 		},
-		// 		exact && x.exact,
-		// 	));
-		// }
+		if self.imag.is_zero() {
+			let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
+			let x = self.real.format(&FormatOptions {
+				base,
+				style,
+				use_parens_if_fraction: use_parens,
+				term: "",
+			}, int)?;
+			return Ok(Exact::new(
+				Formatted {
+					first_component: x.value,
+					separator: "",
+					second_component: None,
+					use_parentheses: false,
+				},
+				exact && x.exact,
+			));
+		}
 
-		// Ok(if self.real.is_zero() {
-		// 	let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
-		// 	let x = self.imag.format(base, style, true, use_parens, int)?;
-		// 	Exact::new(
-		// 		Formatted {
-		// 			first_component: x.value,
-		// 			separator: "",
-		// 			second_component: None,
-		// 			use_parentheses: false,
-		// 		},
-		// 		exact && x.exact,
-		// 	)
-		// } else {
-		// 	let mut exact = exact;
-		// 	let real_part = self.real.format(base, style, false, false, int)?;
-		// 	exact = exact && real_part.exact;
-		// 	let (positive, imag_part) = if self.imag > 0.into() {
-		// 		(true, self.imag.format(base, style, true, false, int)?)
-		// 	} else {
-		// 		(
-		// 			false,
-		// 			(-self.imag.clone()).format(base, style, true, false, int)?,
-		// 		)
-		// 	};
-		// 	exact = exact && imag_part.exact;
-		// 	let separator = if positive { " + " } else { " - " };
-		// 	Exact::new(
-		// 		Formatted {
-		// 			first_component: real_part.value,
-		// 			separator,
-		// 			second_component: Some(imag_part.value),
-		// 			use_parentheses: use_parentheses == UseParentheses::IfComplex
-		// 				|| use_parentheses == UseParentheses::IfComplexOrFraction,
-		// 		},
-		// 		exact,
-		// 	)
-		// })
+		Ok(if self.real.is_zero() {
+			let use_parens = use_parentheses == UseParentheses::IfComplexOrFraction;
+			let x = self.imag.format(&FormatOptions {
+				base,
+				style,
+				use_parens_if_fraction: use_parens,
+				term: "i",
+			}, int)?;
+			Exact::new(
+				Formatted {
+					first_component: x.value,
+					separator: "",
+					second_component: None,
+					use_parentheses: false,
+				},
+				exact && x.exact,
+			)
+		} else {
+			let mut exact = exact;
+			let real_part = self.real.format(&FormatOptions {
+				base,
+				style,
+				use_parens_if_fraction: false,
+				term: "",
+			}, int)?;
+			exact = exact && real_part.exact;
+			let (positive, imag_part) = if self.imag > 0.into() {
+				(true, self.imag.format(&FormatOptions {
+					base,
+					style,
+					use_parens_if_fraction: true,
+					term: "",
+				}, int)?)
+			} else {
+				(
+					false,
+					(-self.imag.clone()).format(&FormatOptions {
+						base,
+						style,
+						use_parens_if_fraction: true,
+						term: "",
+					}, int)?,
+				)
+			};
+			exact = exact && imag_part.exact;
+			let separator = if positive { " + " } else { " - " };
+			Exact::new(
+				Formatted {
+					first_component: real_part.value,
+					separator,
+					second_component: Some(imag_part.value),
+					use_parentheses: use_parentheses == UseParentheses::IfComplex
+						|| use_parentheses == UseParentheses::IfComplexOrFraction,
+				},
+				exact,
+			)
+		})
 	}
 
 	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
@@ -468,9 +493,9 @@ impl From<ContinuedFraction> for Complex {
 
 #[derive(Debug)]
 pub(crate) struct Formatted {
-	first_component: real::Formatted,
+	first_component: FormattedContinuedFraction,
 	separator: &'static str,
-	second_component: Option<real::Formatted>,
+	second_component: Option<FormattedContinuedFraction>,
 	use_parentheses: bool,
 }
 

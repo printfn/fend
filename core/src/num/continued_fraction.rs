@@ -1,11 +1,16 @@
 use crate::error::FendError;
+use crate::format::Format;
 use crate::interrupt::Never;
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
 use crate::Interrupt;
 use std::hash::Hash;
 use std::sync::Arc;
-use std::{cmp, fmt, iter, mem, ops, result};
+use std::{cmp, fmt, io, iter, mem, ops, result};
+
+use super::base::Base;
+use super::biguint::{self, FormattedBigUint};
+use super::{Exact, FormattingStyle};
 
 #[derive(Clone)]
 pub(crate) struct ContinuedFraction {
@@ -221,6 +226,22 @@ impl ContinuedFraction {
 		}
 		Ok(Self::from(self.integer.divmod(&other.integer, int)?.1))
 	}
+
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+		self.integer_sign.serialize(write)?;
+		self.integer.serialize(write)?;
+		// TODO serialize fraction
+		Ok(())
+	}
+
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+		Ok(Self {
+			integer_sign: Sign::deserialize(read)?,
+			integer: BigUint::deserialize(read)?,
+			// TODO deserialize fraction
+			fraction: Arc::new(|| Box::new(iter::empty())),
+		})
+	}
 }
 
 #[derive(Clone)]
@@ -289,8 +310,7 @@ impl<F: Fn() -> Option<BigUint>> Iterator for HomographicIterator<F> {
 #[derive(Clone)]
 enum BihomographicState {
 	Initial,
-	ShiftDown,
-	ShiftRight,
+	Shift { right_first: bool },
 	Terminated,
 }
 
@@ -299,6 +319,43 @@ struct BihomographicIterator {
 	state: BihomographicState,
 	x_iter: Box<dyn Iterator<Item = BigUint>>,
 	y_iter: Box<dyn Iterator<Item = BigUint>>,
+}
+
+impl BihomographicIterator {
+	#[rustfmt::skip]
+	fn shift_right(&mut self) -> Result<(), ()> {
+		if let Some(x_next) = self.x_iter.next() {
+			let n1 = self.args[2].clone().mul(&x_next, &Never).unwrap().add(&self.args[0]);
+			let n2 = self.args[3].clone().mul(&x_next, &Never).unwrap().add(&self.args[1]);
+			let n3 = self.args[6].clone().mul(&x_next, &Never).unwrap().add(&self.args[4]);
+			let n4 = self.args[7].clone().mul(&x_next, &Never).unwrap().add(&self.args[5]);
+			self.args[0] = mem::replace(&mut self.args[2], n1);
+			self.args[1] = mem::replace(&mut self.args[3], n2);
+			self.args[4] = mem::replace(&mut self.args[6], n3);
+			self.args[5] = mem::replace(&mut self.args[7], n4);
+			self.state = BihomographicState::Initial;
+			Ok(())
+		} else {
+			Err(())
+		}
+	}
+	#[rustfmt::skip]
+	fn shift_down(&mut self) -> Result<(), ()> {
+		if let Some(y_next) = self.y_iter.next() {
+			let n1 = self.args[4].clone().mul(&y_next, &Never).unwrap().add(&self.args[0]);
+			let n2 = self.args[5].clone().mul(&y_next, &Never).unwrap().add(&self.args[1]);
+			let n3 = self.args[6].clone().mul(&y_next, &Never).unwrap().add(&self.args[2]);
+			let n4 = self.args[7].clone().mul(&y_next, &Never).unwrap().add(&self.args[3]);
+			self.args[0] = mem::replace(&mut self.args[4], n1);
+			self.args[1] = mem::replace(&mut self.args[5], n2);
+			self.args[2] = mem::replace(&mut self.args[6], n3);
+			self.args[3] = mem::replace(&mut self.args[7], n4);
+			self.state = BihomographicState::Initial;
+			Ok(())
+		} else {
+			Err(())
+		}
+	}
 }
 
 impl Iterator for BihomographicIterator {
@@ -314,9 +371,9 @@ impl Iterator for BihomographicIterator {
 						|| self.args[7] == 0.into()
 					{
 						if self.args[3] == 0.into() {
-							self.state = BihomographicState::ShiftDown;
+							self.state = BihomographicState::Shift { right_first: false };
 						} else {
-							self.state = BihomographicState::ShiftRight;
+							self.state = BihomographicState::Shift { right_first: true };
 						}
 						continue;
 					}
@@ -334,44 +391,32 @@ impl Iterator for BihomographicIterator {
 						return Some(q1);
 					} else {
 						if q2 == q4 {
-							self.state = BihomographicState::ShiftRight;
+							self.state = BihomographicState::Shift { right_first: true };
 						} else {
-							self.state = BihomographicState::ShiftDown;
+							self.state = BihomographicState::Shift { right_first: false };
 						}
 					}
 				}
-				#[rustfmt::skip]
-				BihomographicState::ShiftRight => {
-					if let Some(x_next) = self.x_iter.next() {
-						let n1 = self.args[2].clone().mul(&x_next, &Never).unwrap().add(&self.args[0]);
-						let n2 = self.args[3].clone().mul(&x_next, &Never).unwrap().add(&self.args[1]);
-						let n3 = self.args[6].clone().mul(&x_next, &Never).unwrap().add(&self.args[4]);
-						let n4 = self.args[7].clone().mul(&x_next, &Never).unwrap().add(&self.args[5]);
-						self.args[0] = mem::replace(&mut self.args[2], n1);
-						self.args[1] = mem::replace(&mut self.args[3], n2);
-						self.args[4] = mem::replace(&mut self.args[6], n3);
-						self.args[5] = mem::replace(&mut self.args[7], n4);
-						self.state = BihomographicState::Initial;
+				BihomographicState::Shift { right_first } => {
+					if right_first {
+						if let Ok(()) = self.shift_right() {
+							self.state = BihomographicState::Initial;
+							continue;
+						} else if let Ok(()) = self.shift_down() {
+							self.state = BihomographicState::Initial;
+							continue;
+						}
 					} else {
-						self.state = BihomographicState::Terminated;
+						if let Ok(()) = self.shift_down() {
+							self.state = BihomographicState::Initial;
+							continue;
+						} else if let Ok(()) = self.shift_right() {
+							self.state = BihomographicState::Initial;
+							continue;
+						}
 					}
-				},
-				#[rustfmt::skip]
-				BihomographicState::ShiftDown => {
-					if let Some(y_next) = self.y_iter.next() {
-						let n1 = self.args[4].clone().mul(&y_next, &Never).unwrap().add(&self.args[0]);
-						let n2 = self.args[5].clone().mul(&y_next, &Never).unwrap().add(&self.args[1]);
-						let n3 = self.args[6].clone().mul(&y_next, &Never).unwrap().add(&self.args[2]);
-						let n4 = self.args[7].clone().mul(&y_next, &Never).unwrap().add(&self.args[3]);
-						self.args[0] = mem::replace(&mut self.args[4], n1);
-						self.args[1] = mem::replace(&mut self.args[5], n2);
-						self.args[2] = mem::replace(&mut self.args[6], n3);
-						self.args[3] = mem::replace(&mut self.args[7], n4);
-						self.state = BihomographicState::Initial;
-					} else {
-						self.state = BihomographicState::Terminated;
-					}
-				},
+					self.state = BihomographicState::Terminated;
+				}
 				BihomographicState::Terminated => {
 					self.state = BihomographicState::Terminated;
 					return None;
@@ -492,6 +537,182 @@ impl Hash for ContinuedFraction {
 		self.actual_integer_sign().hash(state);
 		self.integer.hash(state);
 		Arc::as_ptr(&self.fraction).hash(state);
+	}
+}
+
+#[derive(Default)]
+pub(crate) struct FormatOptions {
+	pub(crate) base: Base,
+	pub(crate) style: FormattingStyle,
+	pub(crate) term: &'static str,
+	pub(crate) use_parens_if_fraction: bool,
+}
+
+#[derive(Debug)]
+enum FormattedContinuedFractionType {
+	// optional int,
+	// bool whether to add a space before the string
+	// followed by a string (empty, "i" or "pi"),
+	// followed by whether to wrap the number in parentheses
+	Integer(Option<FormattedBigUint>, bool, &'static str, bool),
+	// optional int (for mixed fractions)
+	// optional int (numerator)
+	// space
+	// string (empty, "i", "pi", etc.)
+	// '/'
+	// int (denominator)
+	// string (empty, "i", "pi", etc.) (used for mixed fractions, e.g. 1 2/3 i)
+	// bool (whether or not to wrap the fraction in parentheses)
+	Fraction(
+		Option<FormattedBigUint>,
+		Option<FormattedBigUint>,
+		bool,
+		&'static str,
+		FormattedBigUint,
+		&'static str,
+		bool,
+	),
+	// string representation of decimal number (may or may not contain recurring digits)
+	// space
+	// string (empty, "i", "pi", etc.)
+	Decimal(String, bool, &'static str),
+}
+
+#[derive(Debug)]
+pub(crate) struct FormattedContinuedFraction {
+	sign: Sign,
+	ty: FormattedContinuedFractionType,
+}
+
+impl fmt::Display for FormattedContinuedFraction {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		if self.sign == Sign::Negative {
+			write!(f, "-")?;
+		}
+		match &self.ty {
+			FormattedContinuedFractionType::Integer(int, space, isuf, use_parens) => {
+				if *use_parens {
+					write!(f, "(")?;
+				}
+				if let Some(int) = int {
+					write!(f, "{int}")?;
+				}
+				if *space {
+					write!(f, " ")?;
+				}
+				write!(f, "{isuf}")?;
+				if *use_parens {
+					write!(f, ")")?;
+				}
+			}
+			FormattedContinuedFractionType::Fraction(
+				integer,
+				num,
+				space,
+				isuf,
+				den,
+				isuf2,
+				use_parens,
+			) => {
+				if *use_parens {
+					write!(f, "(")?;
+				}
+				if let Some(integer) = integer {
+					write!(f, "{integer} ")?;
+				}
+				if let Some(num) = num {
+					write!(f, "{num}")?;
+				}
+				if *space && !isuf.is_empty() {
+					write!(f, " ")?;
+				}
+				write!(f, "{isuf}/{den}")?;
+				if *space && !isuf2.is_empty() {
+					write!(f, " ")?;
+				}
+				write!(f, "{isuf2}")?;
+				if *use_parens {
+					write!(f, ")")?;
+				}
+			}
+			FormattedContinuedFractionType::Decimal(s, space, term) => {
+				write!(f, "{s}")?;
+				if *space {
+					write!(f, " ")?;
+				}
+				write!(f, "{term}")?;
+			}
+		}
+		Ok(())
+	}
+}
+
+fn format_as_integer<I: Interrupt>(
+	num: &BigUint,
+	base: Base,
+	sign: Sign,
+	term: &'static str,
+	use_parens_if_product: bool,
+	sf_limit: Option<usize>,
+	int: &I,
+) -> Result<Exact<FormattedContinuedFraction>, FendError> {
+	let (ty, exact) = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
+		(
+			FormattedContinuedFractionType::Integer(None, false, term, false),
+			true,
+		)
+	} else {
+		let formatted_int = num.format(
+			&biguint::FormatOptions {
+				base,
+				write_base_prefix: true,
+				sf_limit,
+			},
+			int,
+		)?;
+		(
+			FormattedContinuedFractionType::Integer(
+				Some(formatted_int.value),
+				!term.is_empty() && base.base_as_u8() > 10,
+				term,
+				// print surrounding parentheses if the number is imaginary
+				use_parens_if_product && !term.is_empty(),
+			),
+			formatted_int.exact,
+		)
+	};
+	Ok(Exact::new(FormattedContinuedFraction { sign, ty }, exact))
+}
+
+impl Format for ContinuedFraction {
+	type Params = FormatOptions;
+	type Out = FormattedContinuedFraction;
+
+	fn format<I: Interrupt>(
+		&self,
+		params: &Self::Params,
+		int: &I,
+	) -> Result<Exact<Self::Out>, FendError> {
+		let sign = self.actual_integer_sign();
+
+		// try as integer if possible
+		if (self.fraction)().next().is_none() {
+			let sf_limit = if let FormattingStyle::SignificantFigures(sf) = params.style {
+				Some(sf)
+			} else {
+				None
+			};
+			return format_as_integer(
+				&self.integer,
+				params.base,
+				sign,
+				params.term,
+				params.use_parens_if_fraction,
+				sf_limit,
+				int,
+			);
+		}
+		panic!()
 	}
 }
 
@@ -623,5 +844,13 @@ mod tests {
 			format!("{v:?}"),
 			"[2, 1, 2, 1, 1, 1, 2, 39, 1, 7, 4, 1, 65, 6, 2, 2, 4, 5, 2, 1, 1, 1, 2, 7, 3, 1, 1, 3, 3, 3, 2, 47, 2, 1, 1, 1, 1, 1, 9, 2, 42, 2, 4, 1, 92, 1, 2, 1, 4, 1, 41, 1, 1, 2, 1, 16, 3, 3, 117, 1, 1, 1, 1, 1044, 1, 2, 5, 2, 1, 1, 18, 1, 1, 1, 2, 43, 1, 14, 2, 1, 6, 4, 1, 13, 3, 10, 1, 29, 1, 1, 10, 2, 1, 1, 1, 5, 3, 1, 14, 8, 3, 1, 2, 1, 8, 1, 15, 1, 14, 34, 2, 1, 4, 1, 1, 4, 1, 3, 4, 1, 4, 1, 1, 1, 4, 1, 2, 6, 1, 108, 1, 34, 2, 5, 17, 6, 1, 1, 1, 5, 2, 1, 1, 42, 6, 5, 8, 1, 8, 1, 1, 1, 5, 3, 58, 1, 14, 4, 1, 14, 5, 1, 1, 15, 2, 3, 2, 1, 10, 2, 1, 1, 1, 1, 1, 22, 1, 1, 2, 1, 1, 2, 3, 24, 5, 1, 1, 1, 1, 1, 6, 20, 1, 13, 1, 9, 3, 2, 2, 2, 1, 4, 2, 3, 3, 5, 52, 1, 1, 11, 1, 2, 2, 2, 1, 6, 540, 20, 2, 3, 4, 46, 3, 18, 1, 1, 2, 2, 1, 1, 10, 1, 1, 6, 4, 2, 1, 1, 8, 1, 1, 1, 3, 1, 14, 1, 4, 1, 14, 3, 4, 12, 5, 1, 2, 1, 3, 1, 1, 1, 3, 1, 1, 1, 2, 6, 1, 6, 32, 1, 21, 2, 1, 2, 4, 1, 4, 4, 1, 1, 14, 2, 1, 4, 5, 38, 1, 23, 2, 10, 1, 20, 15, 4, 1, 12, 1, 3, 1, 8, 5, 4, 1, 3, 4, 6, 2, 8, 1, 1, 4, 3, 1, 1, 2, 13, 4, 1, 2, 1, 1, 2, 1, 2, 3, 1, 1, 5, 2, 7, 1, 7, 2, 3, 3, 1, 1, 1, 1, 3, 1, 1, 1, 8, 4, 1, 1, 4, 2, 3, 1, 1, 2, 1, 1, 1, 2, 1, 2, 7, 1, 1, 2, 3, 2, 1, 7, 1, 2, 2, 3, 1, 10, 1, 3, 1, 2, 8, 1, 16, 1, 9, 1, 3, 5, 1, 1, 1, 1, 1, 6, 2, 3, 1, 1, 3, 1, 2, 1, 14, 1, 41, 1, 1, 2, 1, 22, 1, 1, 2, 1, 1, 1, 1, 1, 1, 83, 2, 4, 1, 4, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 16, 1, 1, 4, 1, 2, 4, 3, 1, 1, 1, 2, 10, 2, 4, 2, 4, 1, 1, 1, 4, 2, 5, 1, 38, 1, 1, 4, 3, 3, 1, 1, 1, 3, 5, 1, 3, 11, 1, 2, 1, 2, 1, 1, 7, 1, 1, 62, 1, 1, 1, 2, 11, 6, 73, 1, 13, 1, 1, 1, 1, 7, 1, 5, 2, 1, 28, 1, 2, 3, 1, 1, 2, 1, 4, 11, 1, 2, 1, 15, 1, 3, 2, 1, 3, 1, 1, 2, 4, 1, 12, 4, 1, 1, 4, 1, 1, 3, 3, 1, 10, 12, 2, 6, 2, 1, 1, 1, 3, 3, 2, 1, 1, 5, 2, 1, 1, 3, 9, 21, 14, 1, 1, 1, 1, 1, 15, 3, 1, 2, 17, 12, 1, 1, 6, 3, 1, 2, 1, 4, 2, 3, 1, 3, 532, 6, 1, 11, 1, 1, 98, 1, 2, 3, 1, 1, 1, 1, 1, 1, 3, 3, 8, 1, 3, 16, 1, 6, 11, 1, 181, 43, 1, 1, 34, 11, 1, 1, 7, 1, 9, 4, 2, 3, 1, 1, 1, 42, 1, 5, 17, 2, 302, 1, 2, 1, 2, 2, 2, 11, 51, 2, 7, 1, 2, 1, 1, 27, 7, 3, 24, 9, 1, 3, 1, 12, 1, 2, 2, 2, 1, 25, 1, 1, 1, 104, 1, 1, 17, 1, 2, 9, 1, 53, 3, 1, 33, 2, 4, 3, 1, 4, 2, 3, 2, 83, 4, 1, 4, 14, 1, 8, 1, 1, 2, 1, 5, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 3, 2, 1, 1, 4, 21, 3, 6, 2, 9, 1, 2, 4, 1, 3, 1, 1, 1, 1, 1, 9, 1, 14, 1, 3, 5, 3, 1, 4, 2, 1, 1, 1, 1, 1, 27, 2, 74, 42, 10, 1, 1, 1, 2, 2, 2, 1, 15, 1, 2, 3, 2, 16, 1, 4, 2, 2, 2, 4, 1, 2, 3, 2, 5, 6, 6, 14, 2, 4, 1, 1, 5, 1, 1, 4, 22, 3, 2, 33, 1, 2, 3, 17, 3, 2, 426, 10, 3, 8, 1, 4, 1, 1, 2, 8, 32, 2, 2, 2, 1, 1, 1, 23, 2, 3, 4, 1, 402, 1, 7, 10, 1, 7, 3, 2, 1, 1, 1, 2, 1, 1, 1, 6, 7, 1, 1, 1, 2, 4, 2, 2, 1, 2, 46, 8, 1, 1034, 1, 1, 1, 1, 13, 4, 5, 1, 5, 7, 9, 3, 7, 1, 1, 13, 1, 3, 43, 2, 2, 1, 1, 2, 1, 371, 1, 6, 1, 1, 53, 1, 5, 1, 1, 2, 2, 1, 1]",
 		);
+	}
+
+	#[test]
+	fn addition() {
+		let a = cf!(4);
+		let b = cf!(3);
+		let c = a.add(&b, &Never).unwrap();
+		assert_eq!(c, cf!(7));
 	}
 }
