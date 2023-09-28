@@ -627,7 +627,7 @@ impl Value {
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		self.apply_fn(Complex::ln, true, int)
+		self.apply_fn_exact(Complex::ln, true, int)
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {

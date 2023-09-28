@@ -136,6 +136,10 @@ impl BigRat {
 		})
 	}
 
+	pub(crate) fn is_integer(&self) -> bool {
+		self.den == 1.into()
+	}
+
 	pub(crate) fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, FendError> {
 		if self.sign == Sign::Negative && self.num != 0.into() {
 			return Err(FendError::NegativeNumbersNotAllowed);
@@ -257,7 +261,7 @@ impl BigRat {
 	}
 
 	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
 		if self <= 0.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -267,7 +271,13 @@ impl BigRat {
 				},
 			));
 		}
-		Self::from_f64(f64::ln(self.into_f64(int)?), int)
+		if self == 1.into() {
+			return Ok(Exact::new(0.into(), true));
+		}
+		Ok(Exact::new(
+			Self::from_f64(f64::ln(self.into_f64(int)?), int)?,
+			false,
+		))
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {

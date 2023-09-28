@@ -1245,18 +1245,20 @@ fn exponent_too_large() {
 }
 
 #[test]
-fn i_cubed() {
-	expect_error("i^3", None);
+fn i_powers() {
+	for (i, result) in (0..=100).zip(["1", "i", "-1", "-i"].iter().cycle()) {
+		test_eval(&format!("i^{}", i), result);
+	}
 }
 
 #[test]
 fn four_to_the_power_of_i() {
-	expect_error("4^i", None);
+	test_eval("4^i", "approx. 0.1834569747 + 0.9830277404i");
 }
 
 #[test]
 fn i_to_the_power_of_i() {
-	expect_error("i^i", None);
+	test_eval("i^i", "approx. 0.2078795763");
 }
 
 #[test]
@@ -3277,7 +3279,7 @@ fn log2_minus_1() {
 
 #[test]
 fn sqrt_minus_two() {
-	expect_error("sqrt (-2)", None);
+	test_eval("sqrt(-2)", "approx. 1.4142135623i");
 }
 
 #[test]
@@ -3347,22 +3349,22 @@ fn auto() {
 
 #[test]
 fn sqrt_i() {
-	expect_error("sqrt i", None);
+	test_eval("sqrt i", "approx. 0.7071067811 + 0.7071067811i");
 }
 
 #[test]
 fn sqrt_minus_two_i() {
-	expect_error("sqrt (-2i)", None);
+	test_eval("sqrt (-2i)", "1 - i");
 }
 
 #[test]
 fn cbrt_i() {
-	expect_error("cbrt i", None);
+	test_eval("cbrt i", "0.8660 + 0.5i");
 }
 
 #[test]
 fn cbrt_minus_two_i() {
-	expect_error("cbrt (-2i)", None);
+	test_eval("cbrt (-2i)", "approx. 1.0911236359 - 0.6299605249i");
 }
 
 #[test]

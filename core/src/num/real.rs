@@ -99,6 +99,13 @@ impl Real {
 		})
 	}
 
+	pub(crate) fn is_integer(&self) -> bool {
+		match &self.pattern {
+			Pattern::Simple(s) => s.is_integer(),
+			Pattern::Pi(_) => false,
+		}
+	}
+
 	fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, FendError> {
 		match self.pattern {
 			Pattern::Simple(s) => Ok(s),
@@ -203,8 +210,8 @@ impl Real {
 	}
 
 	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.approximate(int)?.ln(int)?))
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		Ok(self.approximate(int)?.ln(int)?.apply(Self::from))
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
