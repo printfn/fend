@@ -152,12 +152,15 @@ impl BigRat {
 	}
 
 	pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, FendError> {
+		if self.is_definitely_zero() {
+			return Ok(0.0);
+		}
 		self = self.simplify(int)?;
 		let positive_result = self.num.as_f64() / self.den.as_f64();
-		if self.sign == Sign::Positive {
-			Ok(positive_result)
-		} else {
+		if self.sign == Sign::Negative {
 			Ok(-positive_result)
+		} else {
+			Ok(positive_result)
 		}
 	}
 
