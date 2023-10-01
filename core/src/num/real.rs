@@ -167,6 +167,12 @@ impl Real {
 		})
 	}
 
+	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		// cos(x) = sin(x + pi/2)
+		let half_pi = Exact::new(Self::pi(), true).div(&Exact::new(Self::from(2), true), int)?;
+		Exact::new(self, true).add(half_pi, int)?.value.sin(int)
+	}
+
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		Ok(Self::from(self.approximate(int)?.asin(int)?))
 	}

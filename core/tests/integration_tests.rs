@@ -3094,22 +3094,22 @@ fn asin_1() {
 
 #[test]
 fn asin_3() {
-	expect_error("asin 3", None);
+	test_eval("asin 3", "approx. 1.5707963267 - 1.762747174i");
 }
 
 #[test]
 fn asin_minus_3() {
-	expect_error("asin (-3)", None);
+	test_eval("asin (-3)", "approx. -1.5707963267 + 1.762747174i");
 }
 
 #[test]
 fn asin_one_point_zero_one() {
-	expect_error("asin 1.01", None);
+	test_eval("asin 1.01", "approx. 1.5707963267 - 0.1413037694i");
 }
 
 #[test]
 fn asin_minus_one_point_zero_one() {
-	expect_error("asin (-1.01)", None);
+	test_eval("asin (-1.01)", "approx. -1.5707963267 + 0.1413037694i");
 }
 
 #[test]
@@ -3119,22 +3119,22 @@ fn acos_0() {
 
 #[test]
 fn acos_3() {
-	expect_error("acos 3", None);
+	test_eval_simple("acos 3", "approx. 0 + 1.762747174i");
 }
 
 #[test]
 fn acos_minus_3() {
-	expect_error("acos (-3)", None);
+	test_eval_simple("acos (-3)", "approx. 3.1415926535 - 1.762747174i");
 }
 
 #[test]
 fn acos_one_point_zero_one() {
-	expect_error("acos 1.01", None);
+	test_eval_simple("acos 1.01", "approx. 0 + 0.1413037694i");
 }
 
 #[test]
 fn acos_minus_one_point_zero_one() {
-	expect_error("acos (-1.01)", None);
+	test_eval_simple("acos (-1.01)", "approx. 3.1415926535 - 0.1413037694i");
 }
 
 #[test]
@@ -3269,17 +3269,17 @@ fn log2_65536() {
 
 #[test]
 fn log10_minus_1() {
-	expect_error("log10 (-1)", None);
+	test_eval("log10 (-1)", "approx. 1.3643763538i");
 }
 
 #[test]
 fn log2_minus_1() {
-	expect_error("log2 (-1)", None);
+	test_eval("log2 (-1)", "approx. 4.5323601418i");
 }
 
 #[test]
 fn sqrt_minus_two() {
-	test_eval("sqrt(-2)", "approx. 1.4142135623i");
+	test_eval_simple("sqrt(-2)", "approx. 0 + 1.4142135623i");
 }
 
 #[test]
@@ -5205,8 +5205,8 @@ fn mixed_case_meter() {
 }
 
 #[test]
-fn asin_minus_1() {
-	expect_error("asin -1.1", Some("-1.1 must lie in the interval (-1, 1)"));
+fn asin_minus_1_1() {
+	test_eval("asin -1.1", "approx. -1.5707963267 + 0.4435682543i");
 }
 
 #[test]

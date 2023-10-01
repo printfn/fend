@@ -69,17 +69,12 @@ impl Complex {
 
 	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
 		// e^(a + bi) = e^a * e^(bi) = e^a * (cos(b) + i * sin(b))
-		let half_pi = Exact::new(Real::pi(), true).div(&Exact::new(2.into(), true), int)?;
 		let r = self.real.exp(int)?;
 		let exact = r.exact;
-		let cos = Exact::new(self.imag.clone(), true)
-			.add(half_pi, int)?
-			.value
-			.sin(int)?;
 
 		Ok(Exact::new(
 			Self {
-				real: r.clone().mul(cos.re(), int)?.value,
+				real: r.clone().mul(self.imag.clone().cos(int)?.re(), int)?.value,
 				imag: r.mul(self.imag.sin(int)?.re(), int)?.value,
 			},
 			exact,
@@ -276,7 +271,6 @@ impl Complex {
 		if self.imag.is_zero() && n.imag.is_zero() && self.real >= 0.into() {
 			Ok(self.real.pow(n.real, int)?.apply(Self::from))
 		} else {
-			// z^w = e^(w * ln(z))
 			let exponent = self.ln(int)?.mul(&Exact::new(n, true), int)?;
 			Ok(exponent.value.exp(int)?.combine(exponent.exact))
 		}
@@ -290,22 +284,16 @@ impl Complex {
 		}
 	}
 
-	fn cos_real<I: Interrupt>(real: Real, int: &I) -> Result<Exact<Real>, FendError> {
-		// cos(x) = sin(x + pi/2)
-		let half_pi = Exact::new(Real::pi(), true).div(&Exact::new(Real::from(2), true), int)?;
-		Exact::new(real, true).add(half_pi, int)?.value.sin(int)
-	}
-
 	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
 		// sin(a + bi) = sin(a) * cosh(b) + i * cos(a) * sinh(b)
 		if self.imag.is_zero() {
-			Ok(self.expect_real()?.sin(int)?.apply(Self::from))
+			Ok(self.real.sin(int)?.apply(Self::from))
 		} else {
 			let cosh = Exact::new(self.imag.clone().cosh(int)?, false);
 			let sinh = Exact::new(self.imag.sinh(int)?, false);
 
 			let real = self.real.clone().sin(int)?.mul(cosh.re(), int)?;
-			let imag = Self::cos_real(self.real, int)?.mul(sinh.re(), int)?;
+			let imag = self.real.cos(int)?.mul(sinh.re(), int)?;
 
 			Ok(Exact::new(
 				Self {
@@ -320,13 +308,13 @@ impl Complex {
 	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
 		// cos(a + bi) = cos(a) * cosh(b) - i * sin(a) * sinh(b)
 		if self.imag.is_zero() {
-			Ok(Self::cos_real(self.real, int)?.apply(Self::from))
+			Ok(self.real.cos(int)?.apply(Self::from))
 		} else {
 			let cosh = Exact::new(self.imag.clone().cosh(int)?, false);
 			let sinh = Exact::new(self.imag.sinh(int)?, false);
 			let exact_real = Exact::new(self.real, true);
 
-			let real = Self::cos_real(exact_real.value.clone(), int)?.mul(cosh.re(), int)?;
+			let real = exact_real.value.clone().cos(int)?.mul(cosh.re(), int)?;
 			let imag = exact_real.value.sin(int)?.mul(sinh.re(), int)?.neg();
 			Ok(Exact::new(
 				Self {
@@ -344,21 +332,74 @@ impl Complex {
 		num.div(den, int)
 	}
 
+	/// Calculates ln(i * z + sqrt(1 - z^2))
+	/// This is used to implement asin and acos for all complex numbers
+	fn asin_ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+		let exact = Exact::new(self, true);
+		let i = Exact::new(Self::i(), true);
+
+		let sqrt = Exact::new(Self::from(1), true)
+			.add(exact.clone().mul(&exact, int)?.neg(), int)?
+			.try_and_then(|x| x.frac_pow(half.value, int))?;
+		i.clone()
+			.mul(&exact, int)?
+			.add(sqrt, int)?
+			.try_and_then(|x| x.ln(int))
+	}
+
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		if self.imag.is_zero() {
+		// Real asin is defined for -1 <= x <= 1
+		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
 			Ok(Self::from(self.expect_real()?.asin(int)?))
 		} else {
 			// asin(z) = -i * ln(i * z + sqrt(1 - z^2))
-			todo!("asin of complex numbers (implement ln and sqrt first)")
+			Ok(self
+				.asin_ln(int)?
+				.mul(&Exact::new(Self::i(), true), int)?
+				.neg()
+				.value)
 		}
 	}
 
 	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.acos(int)?))
+		// Real acos is defined for -1 <= x <= 1
+		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
+			Ok(Self::from(self.expect_real()?.acos(int)?))
+		} else {
+			// acos(z) = pi/2 + i * ln(i * z + sqrt(1 - z^2))
+			let half_pi = Exact::new(Self::pi(), true).div(Exact::new(Self::from(2), true), int)?;
+			Ok(half_pi
+				.add(
+					self.asin_ln(int)?.mul(&Exact::new(Self::i(), true), int)?,
+					int,
+				)?
+				.value)
+		}
 	}
 
 	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.atan(int)?))
+		// Real atan is defined for all real numbers
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.atan(int)?))
+		} else {
+			// i/2 * (ln(-iz+1) - ln(iz+1))
+			let half_i = Exact::new(Self::i(), true).div(Exact::new(Self::from(2), true), int)?;
+			let z1 = Exact::new(self.clone(), true)
+				.mul(&Exact::new(Self::i().neg(), true), int)?
+				.add(Exact::new(Self::from(1), true), int)?;
+			let z2 = Exact::new(self, true)
+				.mul(&Exact::new(Self::i(), true), int)?
+				.add(Exact::new(Self::from(1), true), int)?;
+
+			Ok(half_i
+				.mul(
+					&z1.try_and_then(|z| z.ln(int))?
+						.add(z2.try_and_then(|z| z.ln(int))?.neg(), int)?,
+					int,
+				)?
+				.value)
+		}
 	}
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
@@ -412,14 +453,14 @@ impl Complex {
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		if self.imag.is_zero() {
+		if self.imag.is_zero() && self.real > 0.into() {
 			Ok(Self::from(self.expect_real()?.log2(int)?))
 		} else {
 			self.log(Self::from(2), int)
 		}
 	}
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		if self.imag.is_zero() {
+		if self.imag.is_zero() && self.real > 0.into() {
 			Ok(Self::from(self.expect_real()?.log10(int)?))
 		} else {
 			self.log(Self::from(10), int)
