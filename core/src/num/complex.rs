@@ -403,15 +403,48 @@ impl Complex {
 	}
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.sinh(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.sinh(int)?))
+		} else {
+			// sinh(a+bi)=sinh(a)cos(b)+icosh(a)sin(b)
+			let sinh = Exact::new(self.real.clone().sinh(int)?, false);
+			let cos = self.imag.clone().cos(int)?;
+			let cosh = Exact::new(self.real.cosh(int)?, false);
+			let sin = self.imag.sin(int)?;
+
+			Ok(Self {
+				real: sinh.mul(cos.re(), int)?.value,
+				imag: cosh.mul(sin.re(), int)?.value,
+			})
+		}
 	}
 
 	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.cosh(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.cosh(int)?))
+		} else {
+			// cosh(a+bi)=cosh(a)cos(b)+isinh(a)sin(b)
+			let cosh = Exact::new(self.real.clone().cosh(int)?, false);
+			let cos = self.imag.clone().cos(int)?;
+			let sinh = Exact::new(self.real.sinh(int)?, false);
+			let sin = self.imag.sin(int)?;
+
+			Ok(Self {
+				real: cosh.mul(cos.re(), int)?.value,
+				imag: sinh.mul(sin.re(), int)?.value,
+			})
+		}
 	}
 
 	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.tanh(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.tanh(int)?))
+		} else {
+			// tanh(a+bi)=sinh(a+bi)/cosh(a+bi)
+			Exact::new(self.clone().sinh(int)?, false)
+				.div(Exact::new(self.cosh(int)?, false), int)
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
