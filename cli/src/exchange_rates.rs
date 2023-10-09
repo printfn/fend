@@ -59,31 +59,49 @@ fn load_exchange_rate_xml() -> Result<(String, bool), Error> {
 			//eprintln!("failed to load cached data: {_e}");
 		}
 	}
-	let xml = ureq_get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")?;
+	let xml = ureq_get("https://treasury.un.org/operationalrates/xsql2XML.php")?;
 	Ok((xml, false))
 }
 
 fn parse_exchange_rates(exchange_rates: &str) -> Result<Vec<(String, f64)>, Error> {
+	const F_CURR_LEN: usize = "<f_curr_code>".len();
+	const RATE_LEN: usize = "<rate>".len();
+
 	let err = "failed to load exchange rates";
-	let mut result = vec![("EUR".to_string(), 1.0)];
-	for l in exchange_rates.lines() {
-		let l = l.trim();
-		if !l.starts_with("<Cube currency=") {
-			continue;
-		}
-		let l = l.strip_prefix("<Cube currency='").ok_or(err)?;
-		let (currency, l) = l.split_at(3);
-		let l = l.trim_start_matches("' rate='");
-		let exchange_rate_eur = l.split_at(l.find('\'').ok_or(err)?).0;
-		let exchange_rate_eur = exchange_rate_eur.parse::<f64>()?;
-		if !exchange_rate_eur.is_normal() {
+	let mut result = vec![("USD".to_string(), 1.0)];
+	let mut exchange_rates = &exchange_rates[exchange_rates
+		.find("<UN_OPERATIONAL_RATES>")
+		.ok_or("op rates")?..];
+
+	while !exchange_rates.is_empty() {
+		let start = match exchange_rates.find("<f_curr_code>") {
+			Some(s) => s,
+			None if exchange_rates
+				== "\r\n\t</UN_OPERATIONAL_RATES>\r\n</UN_OPERATIONAL_RATES_DATASET>" =>
+			{
+				break
+			}
+			None => return Err(err.into()),
+		};
+		exchange_rates = &exchange_rates[start + F_CURR_LEN..];
+		let end = exchange_rates.find("</f_curr_code>").ok_or(err)?;
+		let currency = &exchange_rates[..end];
+		exchange_rates = &exchange_rates[end + F_CURR_LEN + 1..];
+
+		let start = exchange_rates.find("<rate>").ok_or(err)?;
+		exchange_rates = &exchange_rates[start + RATE_LEN..];
+		let end = exchange_rates.find("</rate>").ok_or(err)?;
+		let exchange_rate_usd = &exchange_rates[..end];
+		let exchange_rate_usd = exchange_rate_usd.parse::<f64>()?;
+		exchange_rates = &exchange_rates[end + RATE_LEN + 1..];
+
+		if !exchange_rate_usd.is_normal() {
 			return Err(err.into());
 		}
-		result.push((currency.to_string(), exchange_rate_eur));
+
+		result.push((currency.to_string(), exchange_rate_usd));
 	}
-	if result.len() < 10 {
-		return Err(err.into());
-	}
+
 	Ok(result)
 }
 
