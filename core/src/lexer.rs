@@ -122,7 +122,7 @@ fn parse_integer<'a, E: From<FendError>>(
 	process_digit(digit)?;
 	let mut parsed_digit_separator;
 	loop {
-		if let Ok((_, remaining)) = parse_digit_separator(input) {
+		if let Ok(((), remaining)) = parse_digit_separator(input) {
 			input = remaining;
 			parsed_digit_separator = true;
 			if !allow_digit_separator {
@@ -153,12 +153,12 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), FendError> {
 	// 0b -> 2
 	// base# -> base (where 2 <= base <= 36)
 	// case-sensitive, no whitespace allowed
-	if let Ok((_, input)) = parse_fixed_char(input, '0') {
+	if let Ok(((), input)) = parse_fixed_char(input, '0') {
 		let (ch, input) = parse_char(input)?;
 		Ok((Base::from_zero_based_prefix_char(ch)?, input))
 	} else {
 		let mut custom_base: u8 = 0;
-		let (_, input) = parse_integer(input, false, Base::default(), &mut |digit| -> Result<
+		let ((), input) = parse_integer(input, false, Base::default(), &mut |digit| -> Result<
 			(),
 			FendError,
 		> {
@@ -175,7 +175,7 @@ fn parse_base_prefix(input: &str) -> Result<(Base, &str), FendError> {
 		if custom_base < 2 {
 			return Err(FendError::BaseTooSmall);
 		}
-		let (_, input) = parse_fixed_char(input, '#')?;
+		let ((), input) = parse_fixed_char(input, '#')?;
 		Ok((Base::from_custom_base(custom_base)?, input))
 	}
 }
@@ -197,7 +197,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
 	if parse_fixed_char(input, '(').is_err() {
 		return Ok(((), original_input));
 	}
-	let (_, input) = parse_fixed_char(input, '(')?;
+	let ((), input) = parse_fixed_char(input, '(')?;
 	if parse_ascii_digit(input, base).is_err() {
 		// return Ok if there were no digits
 		return Ok(((), original_input));
@@ -205,7 +205,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
 	let mut recurring_number_num = Number::from(0);
 	let mut recurring_number_den = Number::from(1);
 	let base_as_u64 = u64::from(base.base_as_u8());
-	let (_, input) = parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
+	let ((), input) = parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
 		let digit_as_u64 = u64::from(digit);
 		recurring_number_num = recurring_number_num
 			.clone()
@@ -222,7 +222,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
 		.clone()
 		.add(recurring_number_num.div(recurring_number_den, int)?, int)?;
 	// return an error if there are any other characters before the closing parentheses
-	let (_, input) = parse_fixed_char(input, ')')?;
+	let ((), input) = parse_fixed_char(input, ')')?;
 	Ok(((), input))
 }
 
@@ -248,7 +248,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 	let mut is_integer = true;
 
 	if parse_fixed_char(input, '.').is_err() && !is_dice_with_no_count {
-		let (_, remaining) =
+		let ((), remaining) =
 			parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
 				res = res
 					.clone()
@@ -260,13 +260,13 @@ fn parse_basic_number<'a, I: Interrupt>(
 	}
 
 	// parse decimal point and at least one digit
-	if let Ok((_, remaining)) = parse_fixed_char(input, '.') {
+	if let Ok(((), remaining)) = parse_fixed_char(input, '.') {
 		is_integer = false;
 		let mut num_nonrec_digits = 0;
 		let mut numerator = Number::zero_with_base(base);
 		let mut denominator = Number::zero_with_base(base).add(1.into(), int)?;
 		if parse_fixed_char(remaining, '(').is_err() {
-			let (_, remaining) = parse_integer(remaining, true, base, &mut |digit| -> Result<
+			let ((), remaining) = parse_integer(remaining, true, base, &mut |digit| -> Result<
 				(),
 				FendError,
 			> {
@@ -285,13 +285,14 @@ fn parse_basic_number<'a, I: Interrupt>(
 		res = res.add(numerator.div(denominator, int)?, int)?;
 
 		// try parsing recurring decimals
-		let (_, remaining) = parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
+		let ((), remaining) =
+			parse_recurring_digits(input, &mut res, num_nonrec_digits, base, int)?;
 		input = remaining;
 	}
 
 	// parse dice syntax
 	if is_integer && base.base_as_u8() <= 10 {
-		if let Ok((_, remaining)) = parse_fixed_char(input, 'd') {
+		if let Ok(((), remaining)) = parse_fixed_char(input, 'd') {
 			// peek to see if there's a digit immediately after the `d`:
 			if parse_ascii_digit(remaining, base).is_ok() {
 				let dice_count: u32 = if is_dice_with_no_count {
@@ -301,7 +302,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 						.map_err(|_| FendError::InvalidDiceSyntax)?
 				};
 				let mut face_count = 0_u32;
-				let (_, remaining2) = parse_integer(
+				let ((), remaining2) = parse_integer(
 					remaining,
 					false,
 					base,
@@ -326,10 +327,10 @@ fn parse_basic_number<'a, I: Interrupt>(
 
 	// parse optional exponent, but only for base 10 and below
 	if base.base_as_u8() <= 10 {
-		let (parsed_exponent, remaining) = if let Ok((_, remaining)) = parse_fixed_char(input, 'e')
+		let (parsed_exponent, remaining) = if let Ok(((), remaining)) = parse_fixed_char(input, 'e')
 		{
 			(true, remaining)
-		} else if let Ok((_, remaining)) = parse_fixed_char(input, 'E') {
+		} else if let Ok(((), remaining)) = parse_fixed_char(input, 'E') {
 			(true, remaining)
 		} else {
 			(false, "")
@@ -350,15 +351,15 @@ fn parse_basic_number<'a, I: Interrupt>(
 			if !abort {
 				input = remaining;
 				let mut negative_exponent = false;
-				if let Ok((_, remaining)) = parse_fixed_char(input, '-') {
+				if let Ok(((), remaining)) = parse_fixed_char(input, '-') {
 					negative_exponent = true;
 					input = remaining;
-				} else if let Ok((_, remaining)) = parse_fixed_char(input, '+') {
+				} else if let Ok(((), remaining)) = parse_fixed_char(input, '+') {
 					input = remaining;
 				}
 				let mut exp = Number::zero_with_base(base);
 				let base_num = Number::from(u64::from(base.base_as_u8()));
-				let (_, remaining2) =
+				let ((), remaining2) =
 					parse_integer(input, true, base, &mut |digit| -> Result<(), FendError> {
 						exp = (exp.clone().mul(base_num.clone(), int)?)
 							.add(u64::from(digit).into(), int)?;
