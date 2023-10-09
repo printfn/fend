@@ -448,15 +448,62 @@ impl Complex {
 	}
 
 	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.asinh(int)?))
+		// Real asinh is defined for all real numbers
+		if self.imag.is_zero() {
+			Ok(Self::from(self.expect_real()?.asinh(int)?))
+		} else {
+			// asinh(z)=ln(z+sqrt(z^2+1))
+			let exact = Exact::new(self, true);
+			let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+			let sqrt = exact
+				.clone()
+				.mul(&exact, int)?
+				.add(Exact::new(Self::from(1), true), int)?
+				.try_and_then(|x| x.frac_pow(half.value, int))?;
+			sqrt.add(exact, int)?
+				.try_and_then(|x| x.ln(int))
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.acosh(int)?))
+		// Real acosh is defined for x >= 1
+		if self.imag.is_zero() && self.real >= 1.into() {
+			Ok(Self::from(self.expect_real()?.acosh(int)?))
+		} else {
+			// acosh(z)=ln(z+sqrt(z^2-1))
+			let exact = Exact::new(self, true);
+			let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+			let sqrt = exact
+				.clone()
+				.mul(&exact, int)?
+				.add(Exact::new(Self::from(1), true).neg(), int)?
+				.try_and_then(|x| x.frac_pow(half.value, int))?;
+			sqrt.add(exact, int)?
+				.try_and_then(|x| x.ln(int))
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.atanh(int)?))
+		// Real atanh is defined for -1 <= x <= 1
+		if self.imag.is_zero() && Real::from(1).neg() <= self.real && self.real <= 1.into() {
+			Ok(Self::from(self.expect_real()?.atanh(int)?))
+		} else {
+			// atanh(z)=ln(sqrt(-(z-1)/(z-1)))
+			let exact = Exact::new(self, true);
+			let one = Exact::new(Self::from(1), true);
+			let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+
+			exact
+				.clone()
+				.add(one.clone(), int)?
+				.neg()
+				.div(exact.add(one.neg(), int)?, int)?
+				.try_and_then(|x| x.frac_pow(half.value, int))?
+				.try_and_then(|z| z.ln(int))
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
