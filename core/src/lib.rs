@@ -164,10 +164,12 @@ enum OutputMode {
 /// An exchange rate handler.
 pub trait ExchangeRateFn {
 	/// Returns the value of a currency relative to the base currency.
-	/// The base currency depends on your implementation; the core does not depend on your decision at all, as long as its consistent.
+	/// The base currency depends on your implementation. fend-core can work
+	/// with any base currency as long as it is consistent.
 	///
 	/// # Errors
-	/// This function errors out if the currency was not found or the conversion is impossible for any reason (HTTP request failed, etc.)
+	/// This function errors out if the currency was not found or the
+	/// conversion is impossible for any reason (HTTP request failed, etc.)
 	fn relative_to_base_currency(
 		&self,
 		currency: &str,

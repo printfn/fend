@@ -27,6 +27,15 @@ unknown-settings = 'warn'
 # exchange rates.
 enable-internet-access = true
 
+# Data source for currency exchange rates. fend supports
+# the following options:
+#   * `UN` retrieves data from the UN treasury
+#     (endpoint: https://treasury.un.org/operationalrates/xsql2XML.php)
+#   * `EU` retrieves data from the EU central bank
+#     (endpoint: https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
+#   * 'disabled' will disable loading of exchange rate data
+exchange-rate-source = "UN"
+
 # This section controls the colors that are used by
 # fend. Make sure the `enable-colors` setting is
 # turned on for this to work.

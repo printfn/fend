@@ -9,8 +9,46 @@ pub struct Config {
 	pub colors: color::OutputColors,
 	pub max_history_size: usize,
 	pub enable_internet_access: bool,
+	pub exchange_rate_source: ExchangeRateSource,
 	unknown_settings: UnknownSettings,
 	unknown_keys: Vec<String>,
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum ExchangeRateSource {
+	Disabled,
+	EuropeanUnion,
+	UnitedNations,
+}
+
+struct ExchangeRateSourceVisitor;
+
+impl<'de> serde::de::Visitor<'de> for ExchangeRateSourceVisitor {
+	type Value = ExchangeRateSource;
+
+	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+		formatter.write_str("`EU`, `UN`, or `disabled`")
+	}
+
+	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
+		Ok(match v {
+			"EU" => ExchangeRateSource::EuropeanUnion,
+			"UN" => ExchangeRateSource::UnitedNations,
+			"disabled" => ExchangeRateSource::Disabled,
+			_ => {
+				return Err(serde::de::Error::unknown_variant(
+					v,
+					&["EU", "UN", "disabled"],
+				))
+			}
+		})
+	}
+}
+
+impl<'de> serde::Deserialize<'de> for ExchangeRateSource {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		deserializer.deserialize_str(ExchangeRateSourceVisitor)
+	}
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,6 +74,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 		let mut seen_colors = false;
 		let mut seen_max_hist_size = false;
 		let mut seen_enable_internet_access = false;
+		let mut seen_exchange_rate_source = false;
 		while let Some(key) = map.next_key::<String>()? {
 			match key.as_str() {
 				"prompt" => {
@@ -67,6 +106,13 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 					}
 					result.coulomb_and_farad = map.next_value()?;
 					seen_coulomb_farad = true;
+				}
+				"exchange-rate-source" => {
+					if seen_exchange_rate_source {
+						return Err(serde::de::Error::duplicate_field("exchange-rate-source"));
+					}
+					result.exchange_rate_source = map.next_value()?;
+					seen_exchange_rate_source = true;
 				}
 				"colors" => {
 					if seen_colors {
@@ -139,6 +185,7 @@ impl Default for Config {
 			enable_internet_access: true,
 			unknown_settings: UnknownSettings::Warn,
 			unknown_keys: vec![],
+			exchange_rate_source: ExchangeRateSource::UnitedNations,
 		}
 	}
 }
