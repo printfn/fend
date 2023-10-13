@@ -61,10 +61,9 @@ impl<'a> Context<'a> {
 		let mut ctx_borrow = self.ctx.borrow_mut();
 		ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
 		ctx_borrow.core_ctx.set_output_mode_terminal();
-		let exchange_rate_handler = if config.enable_internet_access {
-			exchange_rates::exchange_rate_handler
-		} else {
-			|_: &str| Err(exchange_rates::InternetAccessDisabledError.into())
+		let exchange_rate_handler = exchange_rates::ExchangeRateHandler {
+			enable_internet_access: config.enable_internet_access,
+			source: config.exchange_rate_source,
 		};
 		ctx_borrow
 			.core_ctx
