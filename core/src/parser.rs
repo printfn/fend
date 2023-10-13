@@ -98,25 +98,25 @@ fn parse_ident(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_parens(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
-	if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::CloseParens) {
+	let ((), input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
+	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::CloseParens) {
 		return Ok((Expr::Literal(Value::Unit), remaining));
 	}
 	let (inner, mut input) = parse_expression(input)?;
 	// allow omitting closing parentheses at end of input
 	if !input.is_empty() {
-		let (_, remaining) = parse_fixed_symbol(input, Symbol::CloseParens)?;
+		let ((), remaining) = parse_fixed_symbol(input, Symbol::CloseParens)?;
 		input = remaining;
 	}
 	Ok((Expr::Parens(Box::new(inner)), input))
 }
 
 fn parse_backslash_lambda(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::Backslash)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Backslash)?;
 	let (Expr::Ident(ident), input) = parse_ident(input)? else {
 		return Err(ParseError::ExpectedIdentifier);
 	};
-	let (_, input) = parse_fixed_symbol(input, Symbol::Dot)
+	let ((), input) = parse_fixed_symbol(input, Symbol::Dot)
 		.map_err(|e| ParseError::ExpectedDotInLambda(Box::new(e)))?;
 	let (rhs, input) = parse_function(input)?;
 	Ok((Expr::Fn(ident, Box::new(rhs)), input))
@@ -138,7 +138,7 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_factorial(input: &[Token]) -> ParseResult<'_> {
 	let (mut res, mut input) = parse_parens_or_literal(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
 		res = Expr::Factorial(Box::new(res));
 		input = remaining;
 	}
@@ -147,23 +147,23 @@ fn parse_factorial(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<'_> {
 	if allow_unary {
-		if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
+		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
 			let (result, remaining) = parse_power(remaining, true)?;
 			return Ok((Expr::UnaryMinus(Box::new(result)), remaining));
 		}
-		if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Add) {
+		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Add) {
 			let (result, remaining) = parse_power(remaining, true)?;
 			return Ok((Expr::UnaryPlus(Box::new(result)), remaining));
 		}
 		// The precedence of unary division relative to exponentiation
 		// is not important because /a^b -> (1/a)^b == 1/(a^b)
-		if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Div) {
+		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Div) {
 			let (result, remaining) = parse_power(remaining, true)?;
 			return Ok((Expr::UnaryDiv(Box::new(result)), remaining));
 		}
 	}
 	let (mut result, mut input) = parse_factorial(input)?;
-	if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
+	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
 		let (rhs, remaining) = parse_power(remaining, true)?;
 		result = Expr::Bop(Bop::Pow, Box::new(result), Box::new(rhs));
 		input = remaining;
@@ -236,7 +236,7 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 	} else {
 		return Err(ParseError::InvalidMixedFraction);
 	}
-	let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Div)?;
 	let (rhs_bottom, input) = parse_power(input, false)?;
 	if let Expr::Literal(Value::Num(_)) = rhs_bottom {
 	} else {
@@ -259,19 +259,19 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 }
 
 fn parse_multiplication_cont(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::Mul)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Mul)?;
 	let (b, input) = parse_power(input, true)?;
 	Ok((b, input))
 }
 
 fn parse_division_cont(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::Div)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Div)?;
 	let (b, input) = parse_power(input, true)?;
 	Ok((b, input))
 }
 
 fn parse_modulo_cont(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::Mod)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Mod)?;
 	let (b, input) = parse_power(input, true)?;
 	Ok((b, input))
 }
@@ -320,19 +320,19 @@ fn parse_implicit_addition(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_addition_cont(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::Add)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Add)?;
 	let (b, input) = parse_implicit_addition(input)?;
 	Ok((b, input))
 }
 
 fn parse_subtraction_cont(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::Sub)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::Sub)?;
 	let (b, input) = parse_implicit_addition(input)?;
 	Ok((b, input))
 }
 
 fn parse_to_cont(input: &[Token]) -> ParseResult<'_> {
-	let (_, input) = parse_fixed_symbol(input, Symbol::UnitConversion)?;
+	let ((), input) = parse_fixed_symbol(input, Symbol::UnitConversion)?;
 	let (b, input) = parse_implicit_addition(input)?;
 	Ok((b, input))
 }
@@ -359,7 +359,7 @@ fn parse_additive(input: &[Token]) -> ParseResult<'_> {
 fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
 	let (mut result, mut input) = parse_additive(input)?;
 	loop {
-		if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::ShiftLeft) {
+		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::ShiftLeft) {
 			let (rhs, remaining) = parse_additive(remaining)?;
 			result = Expr::Bop(
 				Bop::Bitwise(crate::ast::BitwiseBop::LeftShift),
@@ -367,7 +367,7 @@ fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
 				Box::new(rhs),
 			);
 			input = remaining;
-		} else if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::ShiftRight) {
+		} else if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::ShiftRight) {
 			let (rhs, remaining) = parse_additive(remaining)?;
 			result = Expr::Bop(
 				Bop::Bitwise(crate::ast::BitwiseBop::RightShift),
@@ -384,7 +384,7 @@ fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
 	let (mut result, mut input) = parse_bitshifts(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseAnd) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::BitwiseAnd) {
 		let (rhs, remaining) = parse_bitshifts(remaining)?;
 		result = Expr::Bop(
 			Bop::Bitwise(crate::ast::BitwiseBop::And),
@@ -398,7 +398,7 @@ fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_bitwise_xor(input: &[Token]) -> ParseResult<'_> {
 	let (mut result, mut input) = parse_bitwise_and(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseXor) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::BitwiseXor) {
 		let (rhs, remaining) = parse_bitwise_and(remaining)?;
 		result = Expr::Bop(
 			Bop::Bitwise(crate::ast::BitwiseBop::Xor),
@@ -412,7 +412,7 @@ fn parse_bitwise_xor(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_bitwise_or(input: &[Token]) -> ParseResult<'_> {
 	let (mut result, mut input) = parse_bitwise_xor(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::BitwiseOr) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::BitwiseOr) {
 		let (rhs, remaining) = parse_bitwise_xor(remaining)?;
 		result = Expr::Bop(
 			Bop::Bitwise(crate::ast::BitwiseBop::Or),
@@ -426,7 +426,7 @@ fn parse_bitwise_or(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_combination(input: &[Token]) -> ParseResult<'_> {
 	let (mut result, mut input) = parse_bitwise_or(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Combination) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Combination) {
 		let (rhs, remaining) = parse_bitwise_or(remaining)?;
 		result = Expr::Bop(Bop::Combination, Box::new(result), Box::new(rhs));
 		input = remaining;
@@ -436,7 +436,7 @@ fn parse_combination(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_permutation(input: &[Token]) -> ParseResult<'_> {
 	let (mut result, mut input) = parse_combination(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Permutation) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Permutation) {
 		let (rhs, remaining) = parse_combination(remaining)?;
 		result = Expr::Bop(Bop::Permutation, Box::new(result), Box::new(rhs));
 		input = remaining;
@@ -446,7 +446,7 @@ fn parse_permutation(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_function(input: &[Token]) -> ParseResult<'_> {
 	let (lhs, input) = parse_permutation(input)?;
-	if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
+	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
 		if let Expr::Ident(s) = lhs {
 			let (rhs, remaining) = parse_function(remaining)?;
 			return Ok((Expr::Fn(s, Box::new(rhs)), remaining));
@@ -458,7 +458,7 @@ fn parse_function(input: &[Token]) -> ParseResult<'_> {
 
 fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
 	let (lhs, input) = parse_function(input)?;
-	if let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Equals) {
+	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Equals) {
 		if let Expr::Ident(s) = lhs {
 			let (rhs, remaining) = parse_assignment(remaining)?;
 			return Ok((Expr::Assign(s, Box::new(rhs)), remaining));
@@ -469,14 +469,14 @@ fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_statements(mut input: &[Token]) -> ParseResult<'_> {
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
 		input = remaining;
 	}
 	if input.is_empty() {
 		return Ok((Expr::Literal(Value::Unit), &[]));
 	}
 	let (mut result, mut input) = parse_assignment(input)?;
-	while let Ok((_, remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
+	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
 		if remaining.is_empty() || matches!(remaining[0], Token::Symbol(Symbol::Semicolon)) {
 			input = remaining;
 			continue;
