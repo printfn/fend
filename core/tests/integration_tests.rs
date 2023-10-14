@@ -5752,3 +5752,11 @@ fn mixed_case_abbreviations_4() {
 fn thou() {
 	test_eval("2 thou to mm", "0.0508 mm");
 }
+
+#[test]
+fn hubble_constant() {
+	test_eval_simple(
+		"70 km s^-1 Mpc^-1 to 25dp",
+		"approx. 0.0000000000000000022685455 s^-1",
+	);
+}
