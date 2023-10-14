@@ -13,4 +13,5 @@ mkdir -p documentation
     --metadata-file=pandoc-metadata.yml \
     --lua-filter=include-code-files.lua \
     --lua-filter=include-files.lua \
+    --lua-filter=add-header-ids.lua \
     index.md)
