@@ -194,6 +194,32 @@ async function getExchangeRates() {
   return map;
 }
 
+async function getExchangeRates() {
+    const map = new Map();
+
+    try {
+        const res = await fetch(
+            `https://corsproxy.io/?${encodeURIComponent(
+                "https://treasury.un.org/operationalrates/xsql2XML.php",
+            )
+            }`,
+        );
+        const xml = await res.text();
+        const dom = new DOMParser().parseFromString(xml, "text/xml");
+
+        dom.querySelectorAll("UN_OPERATIONAL_RATES").forEach((node) => {
+            const currency = node.querySelector("f_curr_code").textContent;
+            const rate = parseFloat(node.querySelector("rate").textContent);
+
+            if (!Number.isNaN(rate) && Number.isFinite(rate)) {
+                map.set(currency, rate);
+            }
+        });
+    } catch (_) { }
+
+    return map;
+}
+
 async function load() {
   await wasm_bindgen("./pkg/fend_wasm_bg.wasm");
   initialiseWithHandlers(await getExchangeRates());
