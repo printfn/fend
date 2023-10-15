@@ -50,6 +50,16 @@ impl Complex {
 		self.real.try_as_usize(int)
 	}
 
+	#[inline]
+	pub(crate) fn real(&self) -> Real {
+		self.real.clone()
+	}
+
+	#[inline]
+	pub(crate) fn imag(&self) -> Real {
+		self.imag.clone()
+	}
+
 	pub(crate) fn conjugate(self) -> Self {
 		Self {
 			real: self.real,

@@ -251,6 +251,7 @@ fend has a number of predefined functions:
 * Absolute value: `abs`
 * Logarithms: `ln`, `log` (or `log10`), `log2`
 * Exponential function (i.e. `e^x`): `exp`
+* Complex analysis: `real`, `imag`, `arg`
 
 Here are some examples of these functions:
 

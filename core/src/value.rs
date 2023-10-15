@@ -308,6 +308,9 @@ impl Value {
 			BuiltInFunction::Sample => arg.expect_num()?.sample(context, int)?,
 			BuiltInFunction::Not => return Ok(Self::Bool(!arg.as_bool()?)),
 			BuiltInFunction::Conjugate => arg.expect_num()?.conjugate()?,
+			BuiltInFunction::Real => arg.expect_num()?.real()?,
+			BuiltInFunction::Imag => arg.expect_num()?.imag()?,
+			BuiltInFunction::Arg => arg.expect_num()?.arg(int)?,
 		})))
 	}
 

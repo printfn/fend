@@ -33,6 +33,9 @@ pub(crate) enum BuiltInFunction {
 	Sample,
 	Not,
 	Conjugate,
+	Real,
+	Imag,
+	Arg,
 }
 
 impl BuiltInFunction {
@@ -92,6 +95,9 @@ impl BuiltInFunction {
 			Self::Sample => "sample",
 			Self::Not => "not",
 			Self::Conjugate => "conjugate",
+			Self::Real => "real",
+			Self::Imag => "imag",
+			Self::Arg => "arg",
 		}
 	}
 
@@ -118,6 +124,8 @@ impl BuiltInFunction {
 			"sample" => Self::Sample,
 			"not" => Self::Not,
 			"conjugate" => Self::Conjugate,
+			"real" => Self::Real,
+			"imag" => Self::Imag,
 			_ => return Err(FendError::DeserializationError),
 		})
 	}

@@ -528,6 +528,28 @@ impl Value {
 		}
 	}
 
+	pub(crate) fn real(self) -> Result<Self, FendError> {
+		Ok(Self {
+			value: Complex::from(self.value.one_point()?.real()).into(),
+			..self
+		})
+	}
+
+	pub(crate) fn imag(self) -> Result<Self, FendError> {
+		Ok(Self {
+			value: Complex::from(self.value.one_point()?.imag()).into(),
+			..self
+		})
+	}
+
+	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
+		self.apply_fn_exact(
+			|c, int| c.arg(int).map(|c| c.apply(Complex::from)),
+			false,
+			int,
+		)
+	}
+
 	pub(crate) fn conjugate(self) -> Result<Self, FendError> {
 		Ok(Self {
 			value: self.value.one_point()?.conjugate().into(),
