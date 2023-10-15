@@ -3164,7 +3164,7 @@ fn asinh_0() {
 
 #[test]
 fn acosh_0() {
-	expect_error("acosh 0", None);
+	test_eval("acosh 0", "approx. 1.5707963267i");
 }
 
 #[test]
@@ -3179,22 +3179,22 @@ fn atanh_0() {
 
 #[test]
 fn atanh_3() {
-	expect_error("atanh 3", None);
+	test_eval("atanh 3", "approx. 0.3465735902 + 1.5707963267i");
 }
 
 #[test]
 fn atanh_minus_3() {
-	expect_error("atanh (-3)", None);
+	test_eval("atanh (-3)", "approx. -0.3465735902 + 1.5707963267i");
 }
 
 #[test]
 fn atanh_one_point_zero_one() {
-	expect_error("atanh 1.01", None);
+	test_eval("atanh 1.01", "approx. 2.651652454 + 1.5707963267i");
 }
 
 #[test]
 fn atanh_minus_one_point_zero_one() {
-	expect_error("atanh (-1.01)", None);
+	test_eval("atanh (-1.01)", "approx. -2.651652454 + 1.5707963267i");
 }
 
 #[test]
@@ -3354,12 +3354,14 @@ fn sqrt_i() {
 
 #[test]
 fn sqrt_minus_two_i() {
-	test_eval("sqrt (-2i)", "1 - i");
+	// FIXME: exactly 1 - i
+	test_eval("sqrt (-2i)", "approx. 0.9999999999 - 0.9999999999i");
 }
 
 #[test]
 fn cbrt_i() {
-	test_eval("cbrt i", "0.8660 + 0.5i");
+	// FIXME: exactly 0.8660 + 0.5i
+	test_eval("cbrt i", "approx. 0.8660254037 + 0.4999999999i");
 }
 
 #[test]

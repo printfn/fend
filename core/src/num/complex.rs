@@ -361,7 +361,7 @@ impl Complex {
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		// Real asin is defined for -1 <= x <= 1
 		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
-			Ok(Self::from(self.expect_real()?.asin(int)?))
+			Ok(Self::from(self.real.asin(int)?))
 		} else {
 			// asin(z) = -i * ln(i * z + sqrt(1 - z^2))
 			Ok(self
@@ -375,7 +375,7 @@ impl Complex {
 	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		// Real acos is defined for -1 <= x <= 1
 		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
-			Ok(Self::from(self.expect_real()?.acos(int)?))
+			Ok(Self::from(self.real.acos(int)?))
 		} else {
 			// acos(z) = pi/2 + i * ln(i * z + sqrt(1 - z^2))
 			let half_pi = Exact::new(Self::pi(), true).div(Exact::new(Self::from(2), true), int)?;
@@ -391,7 +391,7 @@ impl Complex {
 	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		// Real atan is defined for all real numbers
 		if self.imag.is_zero() {
-			Ok(Self::from(self.expect_real()?.atan(int)?))
+			Ok(Self::from(self.real.atan(int)?))
 		} else {
 			// i/2 * (ln(-iz+1) - ln(iz+1))
 			let half_i = Exact::new(Self::i(), true).div(Exact::new(Self::from(2), true), int)?;
@@ -414,7 +414,7 @@ impl Complex {
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		if self.imag.is_zero() {
-			Ok(Self::from(self.expect_real()?.sinh(int)?))
+			Ok(Self::from(self.real.sinh(int)?))
 		} else {
 			// sinh(a+bi)=sinh(a)cos(b)+icosh(a)sin(b)
 			let sinh = Exact::new(self.real.clone().sinh(int)?, false);
@@ -431,7 +431,7 @@ impl Complex {
 
 	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		if self.imag.is_zero() {
-			Ok(Self::from(self.expect_real()?.cosh(int)?))
+			Ok(Self::from(self.real.cosh(int)?))
 		} else {
 			// cosh(a+bi)=cosh(a)cos(b)+isinh(a)sin(b)
 			let cosh = Exact::new(self.real.clone().cosh(int)?, false);
@@ -448,7 +448,7 @@ impl Complex {
 
 	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		if self.imag.is_zero() {
-			Ok(Self::from(self.expect_real()?.tanh(int)?))
+			Ok(Self::from(self.real.tanh(int)?))
 		} else {
 			// tanh(a+bi)=sinh(a+bi)/cosh(a+bi)
 			Exact::new(self.clone().sinh(int)?, false)
@@ -460,7 +460,7 @@ impl Complex {
 	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		// Real asinh is defined for all real numbers
 		if self.imag.is_zero() {
-			Ok(Self::from(self.expect_real()?.asinh(int)?))
+			Ok(Self::from(self.real.asinh(int)?))
 		} else {
 			// asinh(z)=ln(z+sqrt(z^2+1))
 			let exact = Exact::new(self, true);
@@ -479,7 +479,7 @@ impl Complex {
 	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		// Real acosh is defined for x >= 1
 		if self.imag.is_zero() && self.real >= 1.into() {
-			Ok(Self::from(self.expect_real()?.acosh(int)?))
+			Ok(Self::from(self.real.acosh(int)?))
 		} else {
 			// acosh(z)=ln(z+sqrt(z^2-1))
 			let exact = Exact::new(self, true);
@@ -496,9 +496,10 @@ impl Complex {
 	}
 
 	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		// Real atanh is defined for -1 <= x <= 1
+		// Real atanh is defined for -1 < x < 1
+		// Undefined for x = 1, -1
 		if self.imag.is_zero() && Real::from(1).neg() <= self.real && self.real <= 1.into() {
-			Ok(Self::from(self.expect_real()?.atanh(int)?))
+			Ok(Self::from(self.real.atanh(int)?))
 		} else {
 			// atanh(z)=ln(sqrt(-(z-1)/(z-1)))
 			let exact = Exact::new(self, true);
@@ -518,7 +519,7 @@ impl Complex {
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
 		if self.imag.is_zero() && self.real > 0.into() {
-			Ok(self.expect_real()?.ln(int)?.apply(Self::from))
+			Ok(self.real.ln(int)?.apply(Self::from))
 		} else {
 			// ln(z) = ln(|z|) + i * arg(z)
 			let abs = self.clone().abs(int)?;
@@ -544,14 +545,14 @@ impl Complex {
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		if self.imag.is_zero() && self.real > 0.into() {
-			Ok(Self::from(self.expect_real()?.log2(int)?))
+			Ok(Self::from(self.real.log2(int)?))
 		} else {
 			self.log(Self::from(2), int)
 		}
 	}
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		if self.imag.is_zero() && self.real > 0.into() {
-			Ok(Self::from(self.expect_real()?.log10(int)?))
+			Ok(Self::from(self.real.log10(int)?))
 		} else {
 			self.log(Self::from(10), int)
 		}
