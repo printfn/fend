@@ -33,6 +33,17 @@ impl<T: fmt::Debug> Exact<T> {
 		}
 	}
 
+	pub(crate) fn try_and_then<
+		R: fmt::Debug,
+		E: fmt::Debug,
+		F: FnOnce(T) -> Result<Exact<R>, E>,
+	>(
+		self,
+		f: F,
+	) -> Result<Exact<R>, E> {
+		Ok(f(self.value)?.combine(self.exact))
+	}
+
 	pub(crate) fn combine(self, x: bool) -> Self {
 		Self {
 			value: self.value,

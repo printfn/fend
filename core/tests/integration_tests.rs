@@ -1245,18 +1245,20 @@ fn exponent_too_large() {
 }
 
 #[test]
-fn i_cubed() {
-	expect_error("i^3", None);
+fn i_powers() {
+	for (i, result) in (0..=100).zip(["1", "i", "-1", "-i"].iter().cycle()) {
+		test_eval(&format!("i^{}", i), result);
+	}
 }
 
 #[test]
 fn four_to_the_power_of_i() {
-	expect_error("4^i", None);
+	test_eval("4^i", "approx. 0.1834569747 + 0.9830277404i");
 }
 
 #[test]
 fn i_to_the_power_of_i() {
-	expect_error("i^i", None);
+	test_eval("i^i", "approx. 0.2078795763");
 }
 
 #[test]
@@ -3092,22 +3094,22 @@ fn asin_1() {
 
 #[test]
 fn asin_3() {
-	expect_error("asin 3", None);
+	test_eval("asin 3", "approx. 1.5707963267 - 1.762747174i");
 }
 
 #[test]
 fn asin_minus_3() {
-	expect_error("asin (-3)", None);
+	test_eval("asin (-3)", "approx. -1.5707963267 + 1.762747174i");
 }
 
 #[test]
 fn asin_one_point_zero_one() {
-	expect_error("asin 1.01", None);
+	test_eval("asin 1.01", "approx. 1.5707963267 - 0.1413037694i");
 }
 
 #[test]
 fn asin_minus_one_point_zero_one() {
-	expect_error("asin (-1.01)", None);
+	test_eval("asin (-1.01)", "approx. -1.5707963267 + 0.1413037694i");
 }
 
 #[test]
@@ -3117,22 +3119,22 @@ fn acos_0() {
 
 #[test]
 fn acos_3() {
-	expect_error("acos 3", None);
+	test_eval_simple("acos 3", "approx. 0 + 1.762747174i");
 }
 
 #[test]
 fn acos_minus_3() {
-	expect_error("acos (-3)", None);
+	test_eval_simple("acos (-3)", "approx. 3.1415926535 - 1.762747174i");
 }
 
 #[test]
 fn acos_one_point_zero_one() {
-	expect_error("acos 1.01", None);
+	test_eval_simple("acos 1.01", "approx. 0 + 0.1413037694i");
 }
 
 #[test]
 fn acos_minus_one_point_zero_one() {
-	expect_error("acos (-1.01)", None);
+	test_eval_simple("acos (-1.01)", "approx. 3.1415926535 - 0.1413037694i");
 }
 
 #[test]
@@ -3162,7 +3164,7 @@ fn asinh_0() {
 
 #[test]
 fn acosh_0() {
-	expect_error("acosh 0", None);
+	test_eval("acosh 0", "approx. 1.5707963267i");
 }
 
 #[test]
@@ -3177,22 +3179,22 @@ fn atanh_0() {
 
 #[test]
 fn atanh_3() {
-	expect_error("atanh 3", None);
+	test_eval("atanh 3", "approx. 0.3465735902 + 1.5707963267i");
 }
 
 #[test]
 fn atanh_minus_3() {
-	expect_error("atanh (-3)", None);
+	test_eval("atanh (-3)", "approx. -0.3465735902 + 1.5707963267i");
 }
 
 #[test]
 fn atanh_one_point_zero_one() {
-	expect_error("atanh 1.01", None);
+	test_eval("atanh 1.01", "approx. 2.651652454 + 1.5707963267i");
 }
 
 #[test]
 fn atanh_minus_one_point_zero_one() {
-	expect_error("atanh (-1.01)", None);
+	test_eval("atanh (-1.01)", "approx. -2.651652454 + 1.5707963267i");
 }
 
 #[test]
@@ -3267,17 +3269,17 @@ fn log2_65536() {
 
 #[test]
 fn log10_minus_1() {
-	expect_error("log10 (-1)", None);
+	test_eval("log10 (-1)", "approx. 1.3643763538i");
 }
 
 #[test]
 fn log2_minus_1() {
-	expect_error("log2 (-1)", None);
+	test_eval("log2 (-1)", "approx. 4.5323601418i");
 }
 
 #[test]
 fn sqrt_minus_two() {
-	expect_error("sqrt (-2)", None);
+	test_eval_simple("sqrt(-2)", "approx. 0 + 1.4142135623i");
 }
 
 #[test]
@@ -3347,27 +3349,54 @@ fn auto() {
 
 #[test]
 fn sqrt_i() {
-	expect_error("sqrt i", None);
+	test_eval("sqrt i", "approx. 0.7071067811 + 0.7071067811i");
 }
 
 #[test]
 fn sqrt_minus_two_i() {
-	expect_error("sqrt (-2i)", None);
+	// FIXME: exactly 1 - i
+	test_eval("sqrt (-2i)", "approx. 0.9999999999 - 0.9999999999i");
 }
 
 #[test]
 fn cbrt_i() {
-	expect_error("cbrt i", None);
+	// FIXME: exactly 0.8660 + 0.5i
+	test_eval("cbrt i", "approx. 0.8660254037 + 0.4999999999i");
 }
 
 #[test]
 fn cbrt_minus_two_i() {
-	expect_error("cbrt (-2i)", None);
+	test_eval("cbrt (-2i)", "approx. 1.0911236359 - 0.6299605249i");
 }
 
 #[test]
 fn sin_i() {
-	expect_error("sin i", None);
+	test_eval("sin i", "approx. 1.1752011936i");
+}
+
+#[test]
+fn cos_i() {
+	test_eval("cos i", "approx. 1.5430806348");
+}
+
+#[test]
+fn tan_i() {
+	test_eval("tan i", "approx. 0.7615941559i");
+}
+
+#[test]
+fn ln_i() {
+	test_eval("ln i", "approx. 1.5707963267i");
+}
+
+#[test]
+fn log2_i() {
+	test_eval("log2 i", "approx. 2.2661800709i");
+}
+
+#[test]
+fn log10_i() {
+	test_eval("log10 i", "approx. 0.6821881769i");
 }
 
 #[test]
@@ -5178,8 +5207,8 @@ fn mixed_case_meter() {
 }
 
 #[test]
-fn asin_minus_1() {
-	expect_error("asin -1.1", Some("-1.1 must lie in the interval (-1, 1)"));
+fn asin_minus_1_1() {
+	test_eval("asin -1.1", "approx. -1.5707963267 + 0.4435682543i");
 }
 
 #[test]
@@ -5579,7 +5608,7 @@ fn bitwise_and_2() {
 fn bitwise_and_3() {
 	test_eval(
 		"912834710927364108273648927346788234682764 &
-		98123740918263740896274873648273642342534252",
+        98123740918263740896274873648273642342534252",
 		"207742386994266479278471200397877100888076",
 	);
 }
@@ -5680,9 +5709,9 @@ fn date_literal_subtraction() {
 		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
 	);
 	expect_error(
-		"@2020-02-29 - 12 month",
-		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
-	);
+        "@2020-02-29 - 12 month",
+        "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
+    );
 	test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
 }
 

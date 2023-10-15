@@ -70,11 +70,9 @@ pub(crate) enum FendError {
 	ParseDateError(String),
 	ParseError(crate::parser::ParseError),
 	ExpectedAString,
-	ExpComplex,
 	ExpectedARealNumber,
 	ConversionRhsNumerical,
 	FactorialUnitless,
-	RootsComplex,
 	ModuloForPositiveInts,
 	ExpUnitless,
 	IncompatibleConversion {
@@ -109,8 +107,6 @@ impl fmt::Display for FendError {
 			Self::DeserializationError => write!(f, "failed to deserialize object"),
 			Self::ModuloUnitless => write!(f, "modulo is only supported for unitless numbers"),
 			Self::FactorialComplex => write!(f, "factorial is not supported for complex numbers"),
-			Self::RootsComplex => write!(f, "roots are currently unsupported for complex numbers"),
-			Self::ExpComplex => write!(f, "exponentiation is not supported for complex numbers"),
 			Self::ExpUnitless => write!(f, "exponentiation is only supported for unitless numbers"),
 			Self::IoError(_) => write!(f, "I/O error"),
 			Self::InvalidBasePrefix => write!(

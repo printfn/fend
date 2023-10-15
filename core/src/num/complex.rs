@@ -50,6 +50,16 @@ impl Complex {
 		self.real.try_as_usize(int)
 	}
 
+	#[inline]
+	pub(crate) fn real(&self) -> Real {
+		self.real.clone()
+	}
+
+	#[inline]
+	pub(crate) fn imag(&self) -> Real {
+		self.imag.clone()
+	}
+
 	pub(crate) fn conjugate(self) -> Self {
 		Self {
 			real: self.real,
@@ -67,18 +77,96 @@ impl Complex {
 		})
 	}
 
-	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
-		if self.imag != 0.into() || rhs.imag != 0.into() {
-			return Err(FendError::ExpComplex);
-		}
-		let real = self.real.pow(rhs.real, int)?;
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		// e^(a + bi) = e^a * e^(bi) = e^a * (cos(b) + i * sin(b))
+		let r = self.real.exp(int)?;
+		let exact = r.exact;
+
 		Ok(Exact::new(
 			Self {
-				real: real.value,
-				imag: 0.into(),
+				real: r.clone().mul(self.imag.clone().cos(int)?.re(), int)?.value,
+				imag: r.mul(self.imag.sin(int)?.re(), int)?.value,
 			},
-			real.exact,
+			exact,
 		))
+	}
+
+	fn pow_n<I: Interrupt>(self, n: usize, int: &I) -> Result<Exact<Self>, FendError> {
+		if n == 0 {
+			return Ok(Exact::new(Self::from(1), true));
+		}
+
+		let mut result = Exact::new(Self::from(1), true);
+		let mut base = Exact::new(self, true);
+		let mut exp = n;
+		while exp > 0 {
+			if exp & 1 == 1 {
+				result = result.mul(&base, int)?;
+			}
+			base = base.clone().mul(&base, int)?;
+			exp >>= 1;
+		}
+
+		Ok(result)
+	}
+
+	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
+		if !rhs.real.is_integer() || !rhs.imag.is_integer() {
+			return self.frac_pow(rhs, int);
+		}
+
+		if self.imag.is_zero() && rhs.imag.is_zero() {
+			let real = self.real.pow(rhs.real, int)?;
+			Ok(Exact::new(
+				Self {
+					real: real.value,
+					imag: 0.into(),
+				},
+				real.exact,
+			))
+		} else {
+			let rem = rhs.clone().real.modulo(4.into(), int);
+			// Reduced case: (ix)^y = x^y * i^y
+			if self.real.is_zero() && rhs.imag.is_zero() {
+				if let Ok(n) = rhs.real.clone().try_as_usize(int) {
+					return self.pow_n(n, int);
+				}
+
+				let mut result = Exact::new(
+					match rem.and_then(|rem| rem.try_as_usize(int)) {
+						Ok(0) => 1.into(),
+						Ok(1) => Self {
+							real: 0.into(),
+							imag: 1.into(),
+						},
+						Ok(2) => Self {
+							real: Real::from(1).neg(),
+							imag: 0.into(),
+						},
+						Ok(3) => Self {
+							real: 0.into(),
+							imag: Real::from(1).neg(),
+						},
+						Ok(_) | Err(_) => unreachable!("modulo 4 should always be 0, 1, 2, or 3"),
+					},
+					true,
+				);
+
+				if !self.imag.is_definitely_one() {
+					result = self
+						.imag
+						.pow(2.into(), int)?
+						.apply(Self::from)
+						.mul(&result, int)?;
+				}
+
+				return Ok(result);
+			}
+
+			// z^w = e^(w * ln(z))
+			let exp = self.ln(int)?.mul(&Exact::new(rhs, true), int)?;
+			Ok(exp.value.exp(int)?.combine(exp.exact))
+		}
 	}
 
 	pub(crate) fn i() -> Self {
@@ -95,48 +183,30 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Exact<Real>, FendError> {
 		Ok(if self.imag.is_zero() {
 			if self.real < 0.into() {
-				Exact::new(
-					Self {
-						real: -self.real,
-						imag: 0.into(),
-					},
-					true,
-				)
+				Exact::new(-self.real, true)
 			} else {
-				Exact::new(self, true)
+				Exact::new(self.real, true)
 			}
 		} else if self.real.is_zero() {
 			if self.imag < 0.into() {
-				Exact::new(
-					Self {
-						real: -self.imag,
-						imag: 0.into(),
-					},
-					true,
-				)
+				Exact::new(-self.imag, true)
 			} else {
-				Exact::new(
-					Self {
-						real: self.imag,
-						imag: 0.into(),
-					},
-					true,
-				)
+				Exact::new(self.imag, true)
 			}
 		} else {
 			let power = self.real.pow(2.into(), int)?;
 			let power2 = self.imag.pow(2.into(), int)?;
 			let real = power.add(power2, int)?;
-			let res_squared = Self {
-				real: real.value,
-				imag: 0.into(),
-			};
-			let result = res_squared.root_n(&Self::from(2), int)?;
+			let result = real.value.root_n(&Real::from(2), int)?;
 			result.combine(real.exact)
 		})
+	}
+
+	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> Result<Exact<Real>, FendError> {
+		Ok(Exact::new(self.imag.atan2(self.real, int)?, false))
 	}
 
 	pub(crate) fn format<I: Interrupt>(
@@ -207,19 +277,13 @@ impl Complex {
 			)
 		})
 	}
-
-	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
-		if self.imag != 0.into() || n.imag != 0.into() {
-			return Err(FendError::RootsComplex);
+	pub(crate) fn frac_pow<I: Interrupt>(self, n: Self, int: &I) -> Result<Exact<Self>, FendError> {
+		if self.imag.is_zero() && n.imag.is_zero() && self.real >= 0.into() {
+			Ok(self.real.pow(n.real, int)?.apply(Self::from))
+		} else {
+			let exponent = self.ln(int)?.mul(&Exact::new(n, true), int)?;
+			Ok(exponent.value.exp(int)?.combine(exponent.exact))
 		}
-		let real_root = self.real.root_n(&n.real, int)?;
-		Ok(Exact::new(
-			Self {
-				real: real_root.value,
-				imag: 0.into(),
-			},
-			real_root.exact,
-		))
 	}
 
 	fn expect_real(self) -> Result<Real, FendError> {
@@ -231,20 +295,45 @@ impl Complex {
 	}
 
 	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
-		Ok(self.expect_real()?.sin(int)?.apply(Self::from))
+		// sin(a + bi) = sin(a) * cosh(b) + i * cos(a) * sinh(b)
+		if self.imag.is_zero() {
+			Ok(self.real.sin(int)?.apply(Self::from))
+		} else {
+			let cosh = Exact::new(self.imag.clone().cosh(int)?, false);
+			let sinh = Exact::new(self.imag.sinh(int)?, false);
+
+			let real = self.real.clone().sin(int)?.mul(cosh.re(), int)?;
+			let imag = self.real.cos(int)?.mul(sinh.re(), int)?;
+
+			Ok(Exact::new(
+				Self {
+					real: real.value,
+					imag: imag.value,
+				},
+				real.exact && imag.exact,
+			))
+		}
 	}
 
 	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
-		// cos(self) == sin(pi/2 - self)
-		let pi = Exact::new(Self::pi(), true);
-		let half_pi = pi.div(Exact::new(2.into(), true), int)?;
-		let sin_arg = half_pi.add(-Exact::new(self, true), int)?;
-		Ok(sin_arg
-			.value
-			.expect_real()?
-			.sin(int)?
-			.combine(sin_arg.exact)
-			.apply(Self::from))
+		// cos(a + bi) = cos(a) * cosh(b) - i * sin(a) * sinh(b)
+		if self.imag.is_zero() {
+			Ok(self.real.cos(int)?.apply(Self::from))
+		} else {
+			let cosh = Exact::new(self.imag.clone().cosh(int)?, false);
+			let sinh = Exact::new(self.imag.sinh(int)?, false);
+			let exact_real = Exact::new(self.real, true);
+
+			let real = exact_real.value.clone().cos(int)?.mul(cosh.re(), int)?;
+			let imag = exact_real.value.sin(int)?.mul(sinh.re(), int)?.neg();
+			Ok(Exact::new(
+				Self {
+					real: real.value,
+					imag: imag.value,
+				},
+				real.exact && imag.exact,
+			))
+		}
 	}
 
 	pub(crate) fn tan<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
@@ -253,52 +342,220 @@ impl Complex {
 		num.div(den, int)
 	}
 
+	/// Calculates ln(i * z + sqrt(1 - z^2))
+	/// This is used to implement asin and acos for all complex numbers
+	fn asin_ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+		let exact = Exact::new(self, true);
+		let i = Exact::new(Self::i(), true);
+
+		let sqrt = Exact::new(Self::from(1), true)
+			.add(exact.clone().mul(&exact, int)?.neg(), int)?
+			.try_and_then(|x| x.frac_pow(half.value, int))?;
+		i.clone()
+			.mul(&exact, int)?
+			.add(sqrt, int)?
+			.try_and_then(|x| x.ln(int))
+	}
+
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.asin(int)?))
+		// Real asin is defined for -1 <= x <= 1
+		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
+			Ok(Self::from(self.real.asin(int)?))
+		} else {
+			// asin(z) = -i * ln(i * z + sqrt(1 - z^2))
+			Ok(self
+				.asin_ln(int)?
+				.mul(&Exact::new(Self::i(), true), int)?
+				.neg()
+				.value)
+		}
 	}
 
 	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.acos(int)?))
+		// Real acos is defined for -1 <= x <= 1
+		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
+			Ok(Self::from(self.real.acos(int)?))
+		} else {
+			// acos(z) = pi/2 + i * ln(i * z + sqrt(1 - z^2))
+			let half_pi = Exact::new(Self::pi(), true).div(Exact::new(Self::from(2), true), int)?;
+			Ok(half_pi
+				.add(
+					self.asin_ln(int)?.mul(&Exact::new(Self::i(), true), int)?,
+					int,
+				)?
+				.value)
+		}
 	}
 
 	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.atan(int)?))
+		// Real atan is defined for all real numbers
+		if self.imag.is_zero() {
+			Ok(Self::from(self.real.atan(int)?))
+		} else {
+			// i/2 * (ln(-iz+1) - ln(iz+1))
+			let half_i = Exact::new(Self::i(), true).div(Exact::new(Self::from(2), true), int)?;
+			let z1 = Exact::new(self.clone(), true)
+				.mul(&Exact::new(Self::i().neg(), true), int)?
+				.add(Exact::new(Self::from(1), true), int)?;
+			let z2 = Exact::new(self, true)
+				.mul(&Exact::new(Self::i(), true), int)?
+				.add(Exact::new(Self::from(1), true), int)?;
+
+			Ok(half_i
+				.mul(
+					&z1.try_and_then(|z| z.ln(int))?
+						.add(z2.try_and_then(|z| z.ln(int))?.neg(), int)?,
+					int,
+				)?
+				.value)
+		}
 	}
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.sinh(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.real.sinh(int)?))
+		} else {
+			// sinh(a+bi)=sinh(a)cos(b)+icosh(a)sin(b)
+			let sinh = Exact::new(self.real.clone().sinh(int)?, false);
+			let cos = self.imag.clone().cos(int)?;
+			let cosh = Exact::new(self.real.cosh(int)?, false);
+			let sin = self.imag.sin(int)?;
+
+			Ok(Self {
+				real: sinh.mul(cos.re(), int)?.value,
+				imag: cosh.mul(sin.re(), int)?.value,
+			})
+		}
 	}
 
 	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.cosh(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.real.cosh(int)?))
+		} else {
+			// cosh(a+bi)=cosh(a)cos(b)+isinh(a)sin(b)
+			let cosh = Exact::new(self.real.clone().cosh(int)?, false);
+			let cos = self.imag.clone().cos(int)?;
+			let sinh = Exact::new(self.real.sinh(int)?, false);
+			let sin = self.imag.sin(int)?;
+
+			Ok(Self {
+				real: cosh.mul(cos.re(), int)?.value,
+				imag: sinh.mul(sin.re(), int)?.value,
+			})
+		}
 	}
 
 	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.tanh(int)?))
+		if self.imag.is_zero() {
+			Ok(Self::from(self.real.tanh(int)?))
+		} else {
+			// tanh(a+bi)=sinh(a+bi)/cosh(a+bi)
+			Exact::new(self.clone().sinh(int)?, false)
+				.div(Exact::new(self.cosh(int)?, false), int)
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.asinh(int)?))
+		// Real asinh is defined for all real numbers
+		if self.imag.is_zero() {
+			Ok(Self::from(self.real.asinh(int)?))
+		} else {
+			// asinh(z)=ln(z+sqrt(z^2+1))
+			let exact = Exact::new(self, true);
+			let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+			let sqrt = exact
+				.clone()
+				.mul(&exact, int)?
+				.add(Exact::new(Self::from(1), true), int)?
+				.try_and_then(|x| x.frac_pow(half.value, int))?;
+			sqrt.add(exact, int)?
+				.try_and_then(|x| x.ln(int))
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.acosh(int)?))
+		// Real acosh is defined for x >= 1
+		if self.imag.is_zero() && self.real >= 1.into() {
+			Ok(Self::from(self.real.acosh(int)?))
+		} else {
+			// acosh(z)=ln(z+sqrt(z^2-1))
+			let exact = Exact::new(self, true);
+			let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+			let sqrt = exact
+				.clone()
+				.mul(&exact, int)?
+				.add(Exact::new(Self::from(1), true).neg(), int)?
+				.try_and_then(|x| x.frac_pow(half.value, int))?;
+			sqrt.add(exact, int)?
+				.try_and_then(|x| x.ln(int))
+				.map(|x| x.value)
+		}
 	}
 
 	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.atanh(int)?))
+		// Real atanh is defined for -1 < x < 1
+		// Undefined for x = 1, -1
+		if self.imag.is_zero() && Real::from(1).neg() <= self.real && self.real <= 1.into() {
+			Ok(Self::from(self.real.atanh(int)?))
+		} else {
+			// atanh(z)=ln(sqrt(-(z-1)/(z-1)))
+			let exact = Exact::new(self, true);
+			let one = Exact::new(Self::from(1), true);
+			let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
+
+			exact
+				.clone()
+				.add(one.clone(), int)?
+				.neg()
+				.div(exact.add(one.neg(), int)?, int)?
+				.try_and_then(|x| x.frac_pow(half.value, int))?
+				.try_and_then(|z| z.ln(int))
+				.map(|x| x.value)
+		}
 	}
 
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.ln(int)?))
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		if self.imag.is_zero() && self.real > 0.into() {
+			Ok(self.real.ln(int)?.apply(Self::from))
+		} else {
+			// ln(z) = ln(|z|) + i * arg(z)
+			let abs = self.clone().abs(int)?;
+			let real = abs.value.ln(int)?.combine(abs.exact);
+			let arg = self.arg(int)?;
+
+			Ok(Exact::new(
+				Self {
+					real: real.value,
+					imag: arg.value,
+				},
+				real.exact && arg.exact,
+			))
+		}
+	}
+
+	pub(crate) fn log<I: Interrupt>(self, base: Self, int: &I) -> Result<Self, FendError> {
+		// log_n(z) = ln(z) / ln(n)
+		let ln = self.ln(int)?;
+		let ln2 = base.ln(int)?;
+		Ok(ln.div(ln2, int)?.value)
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.log2(int)?))
+		if self.imag.is_zero() && self.real > 0.into() {
+			Ok(Self::from(self.real.log2(int)?))
+		} else {
+			self.log(Self::from(2), int)
+		}
 	}
-
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.expect_real()?.log10(int)?))
+		if self.imag.is_zero() && self.real > 0.into() {
+			Ok(Self::from(self.real.log10(int)?))
+		} else {
+			self.log(Self::from(10), int)
+		}
 	}
 
 	pub(crate) fn is_definitely_one(&self) -> bool {

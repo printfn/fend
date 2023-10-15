@@ -136,6 +136,10 @@ impl BigRat {
 		})
 	}
 
+	pub(crate) fn is_integer(&self) -> bool {
+		self.den == 1.into()
+	}
+
 	pub(crate) fn try_as_usize<I: Interrupt>(mut self, int: &I) -> Result<usize, FendError> {
 		if self.sign == Sign::Negative && self.num != 0.into() {
 			return Err(FendError::NegativeNumbersNotAllowed);
@@ -148,12 +152,15 @@ impl BigRat {
 	}
 
 	pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, FendError> {
+		if self.is_definitely_zero() {
+			return Ok(0.0);
+		}
 		self = self.simplify(int)?;
 		let positive_result = self.num.as_f64() / self.den.as_f64();
-		if self.sign == Sign::Positive {
-			Ok(positive_result)
-		} else {
+		if self.sign == Sign::Negative {
 			Ok(-positive_result)
+		} else {
+			Ok(positive_result)
 		}
 	}
 
@@ -213,6 +220,10 @@ impl BigRat {
 		Self::from_f64(f64::atan(self.into_f64(int)?), int)
 	}
 
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+		Self::from_f64(f64::atan2(self.into_f64(int)?, rhs.into_f64(int)?), int)
+	}
+
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		Self::from_f64(f64::sinh(self.into_f64(int)?), int)
 	}
@@ -253,7 +264,7 @@ impl BigRat {
 	}
 
 	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
 		if self <= 0.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -263,7 +274,13 @@ impl BigRat {
 				},
 			));
 		}
-		Self::from_f64(f64::ln(self.into_f64(int)?), int)
+		if self == 1.into() {
+			return Ok(Exact::new(0.into(), true));
+		}
+		Ok(Exact::new(
+			Self::from_f64(f64::ln(self.into_f64(int)?), int)?,
+			false,
+		))
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
@@ -931,6 +948,16 @@ impl BigRat {
 			}
 		}
 		low_bound.add(high_bound, int)?.div(&2.into(), int)
+	}
+
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		if self.num == 0.into() {
+			return Ok(Exact::new(Self::from(1), true));
+		}
+		Ok(Exact::new(
+			Self::from_f64(self.into_f64(int)?.exp(), int)?,
+			false,
+		))
 	}
 
 	// the boolean indicates whether or not the result is exact

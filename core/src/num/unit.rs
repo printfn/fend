@@ -405,7 +405,7 @@ impl Value {
 	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		let value = self.value.one_point()?.abs(int)?;
 		Ok(Self {
-			value: value.value.into(),
+			value: Complex::from(value.value).into(),
 			unit: self.unit,
 			exact: self.exact && value.exact,
 			base: self.base,
@@ -528,6 +528,28 @@ impl Value {
 		}
 	}
 
+	pub(crate) fn real(self) -> Result<Self, FendError> {
+		Ok(Self {
+			value: Complex::from(self.value.one_point()?.real()).into(),
+			..self
+		})
+	}
+
+	pub(crate) fn imag(self) -> Result<Self, FendError> {
+		Ok(Self {
+			value: Complex::from(self.value.one_point()?.imag()).into(),
+			..self
+		})
+	}
+
+	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
+		self.apply_fn_exact(
+			|c, int| c.arg(int).map(|c| c.apply(Complex::from)),
+			false,
+			int,
+		)
+	}
+
 	pub(crate) fn conjugate(self) -> Result<Self, FendError> {
 		Ok(Self {
 			value: self.value.one_point()?.conjugate().into(),
@@ -627,7 +649,7 @@ impl Value {
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		self.apply_fn(Complex::ln, true, int)
+		self.apply_fn_exact(Complex::ln, true, int)
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {

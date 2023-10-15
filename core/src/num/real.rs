@@ -99,6 +99,13 @@ impl Real {
 		})
 	}
 
+	pub(crate) fn is_integer(&self) -> bool {
+		match &self.pattern {
+			Pattern::Simple(s) => s.is_integer(),
+			Pattern::Pi(_) => false,
+		}
+	}
+
 	fn approximate<I: Interrupt>(self, int: &I) -> Result<BigRat, FendError> {
 		match self.pattern {
 			Pattern::Simple(s) => Ok(s),
@@ -160,6 +167,12 @@ impl Real {
 		})
 	}
 
+	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		// cos(x) = sin(x + pi/2)
+		let half_pi = Exact::new(Self::pi(), true).div(&Exact::new(Self::from(2), true), int)?;
+		Exact::new(self, true).add(half_pi, int)?.value.sin(int)
+	}
+
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		Ok(Self::from(self.approximate(int)?.asin(int)?))
 	}
@@ -170,6 +183,12 @@ impl Real {
 
 	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
 		Ok(Self::from(self.approximate(int)?.atan(int)?))
+	}
+
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Self, FendError> {
+		Ok(Self::from(
+			self.approximate(int)?.atan2(rhs.approximate(int)?, int)?,
+		))
 	}
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
@@ -197,8 +216,8 @@ impl Real {
 	}
 
 	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
-		Ok(Self::from(self.approximate(int)?.ln(int)?))
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		Ok(self.approximate(int)?.ln(int)?.apply(Self::from))
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> Result<Self, FendError> {
@@ -268,6 +287,10 @@ impl Real {
 			},
 			exact,
 		))
+	}
+
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> Result<Exact<Self>, FendError> {
+		Ok(self.approximate(int)?.exp(int)?.apply(Self::from))
 	}
 
 	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> Result<Exact<Self>, FendError> {
