@@ -1,13 +1,11 @@
-#![allow(unused_unsafe)]
-
 use instant::Instant;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::fmt::Write;
 use std::{error, fmt};
 use wasm_bindgen::prelude::*;
 
-thread_local!(static CURRENCY_DATA: RefCell<BTreeMap<String, f64>> = RefCell::new(BTreeMap::new()));
+thread_local!(static CURRENCY_DATA: RefCell<HashMap<String, f64>> = RefCell::new(HashMap::new()));
 
 struct TimeoutInterrupt {
 	start: Instant,
@@ -53,7 +51,7 @@ pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
 }
 
 fn random_u32() -> u32 {
-	let random_f64 = unsafe { js_sys::Math::random() };
+	let random_f64 = js_sys::Math::random();
 	(random_f64 * f64::from(u32::MAX)) as u32
 }
 
