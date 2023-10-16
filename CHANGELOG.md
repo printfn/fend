@@ -1,5 +1,16 @@
 ## Changelog
 
+### v1.3.0 (2023-10-16)
+
+* Support loading exchange rates from the UN treasury, which supports more
+    currencies than the European Central Bank. This can be configured via
+    the new `exchange-rate-source` option. (by [@Markos-Th09](https://github.com/Markos-Th09))
+* Exchange rates are now available in fend-web (by [@Markos-Th09](https://github.com/Markos-Th09))
+* Support complex numbers in many more situations, including trigonometric
+    functions, logarithms, exponentiation, etc.
+    (by [@Markos-Th09](https://github.com/Markos-Th09))
+* Add support for unit prefixes for parsecs (e.g. `Mpc`)
+
 ### v1.2.2 (2023-09-14)
 
 * Add crate features to control the TLS implementation: enabling `native-tls`
