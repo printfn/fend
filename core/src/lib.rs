@@ -44,6 +44,7 @@ use std::{collections::HashMap, fmt, io};
 use error::FendError;
 pub(crate) use eval::Attrs;
 pub use interrupt::Interrupt;
+use phf::phf_map;
 use serialize::{deserialize_string, deserialize_usize, serialize_string, serialize_usize};
 
 /// This contains the result of a computation.
@@ -444,6 +445,33 @@ impl Completion {
 	}
 }
 
+static GREEK_LETTERS: phf::Map<&'static str, &'static str> = phf_map! {
+	"\\alpha" => "α",
+	"\\beta" => "β",
+	"\\gamma" => "γ",
+	"\\delta" => "δ",
+	"\\epsilon" => "ε",
+	"\\zeta" => "ζ",
+	"\\eta" => "η",
+	"\\theta" => "θ",
+	"\\iota" => "ι",
+	"\\kappa" => "κ",
+	"\\lambda" => "λ",
+	"\\mu" => "μ",
+	"\\nu" => "ν",
+	"\\xi" => "ξ",
+	"\\omicron" => "ο",
+	"\\pi" => "π",
+	"\\rho" => "ρ",
+	"\\sigma" => "σ",
+	"\\tau" => "τ",
+	"\\upsilon" => "υ",
+	"\\phi" => "φ",
+	"\\chi" => "χ",
+	"\\psi" => "ψ",
+	"\\omega" => "ω",
+};
+
 #[must_use]
 pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) {
 	let mut prepend = "";
@@ -451,6 +479,17 @@ pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) 
 	if let Some((a, b)) = prefix.rsplit_once(' ') {
 		prepend = a;
 		prefix = b;
+	}
+	if prefix.starts_with('\\') {
+		return GREEK_LETTERS.get(prefix).map_or((0, vec![]), |&letter| {
+			(
+				0,
+				vec![Completion {
+					display: prefix.to_owned(),
+					insert: letter.to_owned(),
+				}],
+			)
+		});
 	}
 	if prefix.is_empty() {
 		return (0, vec![]);
