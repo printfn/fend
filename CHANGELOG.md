@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.3.1 (2023-10-26)
+
+* Add support for additional imperial and US customary units
+
 ### v1.3.0 (2023-10-16)
 
 * Support loading exchange rates from the UN treasury, which supports more
