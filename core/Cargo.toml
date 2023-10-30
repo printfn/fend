@@ -9,6 +9,3 @@ keywords.workspace = true
 categories.workspace = true
 license.workspace = true
 readme = "README.md"
-
-[dependencies]
-phf = { version = "0.11.2", features = ["macros"] }
