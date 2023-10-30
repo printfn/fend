@@ -444,6 +444,59 @@ impl Completion {
 	}
 }
 
+static GREEK_LOWERCASE_LETTERS: [(&str, &str); 24] = [
+	("alpha", "α"),
+	("beta", "β"),
+	("gamma", "γ"),
+	("delta", "δ"),
+	("epsilon", "ε"),
+	("zeta", "ζ"),
+	("eta", "η"),
+	("theta", "θ"),
+	("iota", "ι"),
+	("kappa", "κ"),
+	("lambda", "λ"),
+	("mu", "μ"),
+	("nu", "ν"),
+	("xi", "ξ"),
+	("omicron", "ο"),
+	("pi", "π"),
+	("rho", "ρ"),
+	("sigma", "σ"),
+	("tau", "τ"),
+	("upsilon", "υ"),
+	("phi", "φ"),
+	("chi", "χ"),
+	("psi", "ψ"),
+	("omega", "ω"),
+];
+static GREEK_UPPERCASE_LETTERS: [(&str, &str); 24] = [
+	("Alpha", "Α"),
+	("Beta", "Β"),
+	("Gamma", "Γ"),
+	("Delta", "Δ"),
+	("Epsilon", "Ε"),
+	("Zeta", "Ζ"),
+	("Eta", "Η"),
+	("Theta", "Θ"),
+	("Iota", "Ι"),
+	("Kappa", "Κ"),
+	("Lambda", "Λ"),
+	("Mu", "Μ"),
+	("Nu", "Ν"),
+	("Xi", "Ξ"),
+	("Omicron", "Ο"),
+	("Pi", "Π"),
+	("Rho", "Ρ"),
+	("Sigma", "Σ"),
+	("Tau", "Τ"),
+	("Upsilon", "Υ"),
+	("Phi", "Φ"),
+	("Chi", "Χ"),
+	("Psi", "Ψ"),
+	("Omega", "Ω"),
+];
+
 #[must_use]
 pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) {
 	let mut prepend = "";
@@ -451,6 +504,36 @@ pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) 
 	if let Some((a, b)) = prefix.rsplit_once(' ') {
 		prepend = a;
 		prefix = b;
+	}
+	if let Some(letter) = prefix.strip_prefix('\\') {
+		if letter.starts_with(|c: char| !c.is_ascii_alphabetic()) {
+			return (0, vec![]);
+		} else if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
+			return GREEK_UPPERCASE_LETTERS
+				.iter()
+				.find(|l| l.0 == letter)
+				.map_or((0, vec![]), |l| {
+					(
+						0,
+						vec![Completion {
+							display: prefix.to_string(),
+							insert: l.1.to_string(),
+						}],
+					)
+				});
+		}
+		return GREEK_LOWERCASE_LETTERS
+			.iter()
+			.find(|l| l.0 == letter)
+			.map_or((0, vec![]), |l| {
+				(
+					0,
+					vec![Completion {
+						display: prefix.to_string(),
+						insert: l.1.to_string(),
+					}],
+				)
+			});
 	}
 	if prefix.is_empty() {
 		return (0, vec![]);

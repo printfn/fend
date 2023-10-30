@@ -9,5 +9,3 @@ keywords.workspace = true
 categories.workspace = true
 license.workspace = true
 readme = "README.md"
-
-[dependencies]
