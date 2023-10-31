@@ -505,35 +505,29 @@ pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) 
 		prepend = a;
 		prefix = b;
 	}
+
 	if let Some(letter) = prefix.strip_prefix('\\') {
+		let position = prepend.len() + prepend.len().min(1);
 		if letter.starts_with(|c: char| !c.is_ascii_alphabetic()) {
 			return (0, vec![]);
-		} else if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
-			return GREEK_UPPERCASE_LETTERS
-				.iter()
-				.find(|l| l.0 == letter)
-				.map_or((0, vec![]), |l| {
-					(
-						0,
-						vec![Completion {
-							display: prefix.to_string(),
-							insert: l.1.to_string(),
-						}],
-					)
-				});
 		}
-		return GREEK_LOWERCASE_LETTERS
-			.iter()
-			.find(|l| l.0 == letter)
-			.map_or((0, vec![]), |l| {
-				(
-					0,
-					vec![Completion {
-						display: prefix.to_string(),
-						insert: l.1.to_string(),
-					}],
-				)
-			});
+
+		return if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
+			GREEK_UPPERCASE_LETTERS
+		} else {
+			GREEK_LOWERCASE_LETTERS
+		}
+		.iter()
+		.find(|l| l.0 == letter)
+		.map_or((0, vec![]), |l| {
+			(
+				position,
+				vec![Completion {
+					display: prefix.to_string(),
+					insert: l.1.to_string(),
+				}],
+			)
+		});
 	}
 	if prefix.is_empty() {
 		return (0, vec![]);
