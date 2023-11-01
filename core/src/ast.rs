@@ -425,7 +425,16 @@ pub(crate) fn evaluate<I: Interrupt>(
 					return Ok(val);
 				}
 			}
-			eval!(*a)?.apply(*b, ApplyMulHandling::Both, scope, attrs, context, int)?
+			match (*a, *b) {
+				(a, Expr::Of(x, expr)) if x.as_str() == "%" => eval!(a)?
+					.handle_num(
+						|x| x.div(Number::from(100), int),
+						Expr::UnaryDiv,
+						scope.clone(),
+					)?
+					.apply(*expr, ApplyMulHandling::Both, scope, attrs, context, int)?,
+				(a, b) => eval!(a)?.apply(b, ApplyMulHandling::Both, scope, attrs, context, int)?,
+			}
 		}
 		Expr::ApplyFunctionCall(a, b) => {
 			eval!(*a)?.apply(*b, ApplyMulHandling::OnlyApply, scope, attrs, context, int)?
