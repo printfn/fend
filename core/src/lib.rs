@@ -499,42 +499,34 @@ static GREEK_UPPERCASE_LETTERS: [(&str, &str); 24] = [
 
 #[must_use]
 pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) {
-	let mut prepend = "";
-	let position = prefix.len();
-	if let Some((a, b)) = prefix.rsplit_once(' ') {
-		prepend = a;
-		prefix = b;
-	}
-	if let Some(letter) = prefix.strip_prefix('\\') {
-		if letter.starts_with(|c: char| !c.is_ascii_alphabetic()) {
-			return (0, vec![]);
-		} else if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
-			return GREEK_UPPERCASE_LETTERS
-				.iter()
-				.find(|l| l.0 == letter)
-				.map_or((0, vec![]), |l| {
-					(
-						0,
-						vec![Completion {
-							display: prefix.to_string(),
-							insert: l.1.to_string(),
-						}],
-					)
-				});
-		}
-		return GREEK_LOWERCASE_LETTERS
+	if let Some((prefix, letter)) = prefix.rsplit_once('\\') {
+		if letter.starts_with(|c: char| c.is_ascii_alphabetic()) && letter.len() <= 7 {
+			return if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
+				GREEK_UPPERCASE_LETTERS
+			} else {
+				GREEK_LOWERCASE_LETTERS
+			}
 			.iter()
 			.find(|l| l.0 == letter)
 			.map_or((0, vec![]), |l| {
 				(
-					0,
+					prefix.len(),
 					vec![Completion {
 						display: prefix.to_string(),
 						insert: l.1.to_string(),
 					}],
 				)
 			});
+		}
 	}
+
+	let mut prepend = "";
+	let position = prefix.len();
+	if let Some((a, b)) = prefix.rsplit_once(' ') {
+		prepend = a;
+		prefix = b;
+	}
+
 	if prefix.is_empty() {
 		return (0, vec![]);
 	}
