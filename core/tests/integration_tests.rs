@@ -2149,6 +2149,27 @@ fn five_percent_times_100() {
 }
 
 #[test]
+fn five_percent_of_100() {
+	// Continuing the discussion in the previous test
+	// We handle the overloading in the evaluate function
+	// If we encounter an Of with a percent in the LHS
+	// Then we divide the LHS with 100 and multiply it with RHS
+	// Discarding the percent in the process
+
+	test_eval("5% of 100", "5");
+}
+
+#[test]
+fn five_percent_of_200() {
+	test_eval("2 + 5% of 200", "12");
+}
+
+#[test]
+fn five_percent_of_200_2() {
+	test_eval("(2 + 5)% of 200", "14");
+}
+
+#[test]
 fn units_1() {
 	test_eval("0m + 1kph * 1 hr", "1000 m");
 }
