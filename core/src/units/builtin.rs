@@ -529,9 +529,7 @@ const CGS_UNITS: &[UnitTuple] = &[
 	("Bi", "", "biot", ""),
 	("Fr", "", "franklin", ""),
 	("G", "", "gauss", ""),
-	("Lb", "", "lambert", ""),
 	("Mx", "", "maxwell", ""),
-	("Oe", "", "oersted", ""),
 	("ph", "", "phot", ""),
 	("P", "", "poise", ""),
 ];
@@ -667,7 +665,7 @@ const IMPERIAL_ABBREVIATIONS: &[UnitTuple] = &[
 	("psi", "", "pound force / inch^2", ""),
 	("fur", "furs", "furlong", ""),
 	("fir", "firs", "firkin", ""),
-	("ftn", "ftns", "forthnight", ""),
+	("ftn", "ftns", "fortnight", ""),
 ];
 
 const NAUTICAL_UNITS: &[UnitTuple] = &[
