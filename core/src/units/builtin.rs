@@ -504,6 +504,24 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 	("light", "", "c", ""),
 ];
 
+const CGS_UNITS: &[UnitTuple] = &[
+	("gal", "gals", "cm/s^2", ""),
+	("dyne", "dynes", "g*gal", ""),
+	("erg", "ergs", "g*cm^2/s^2", ""),
+	("barye", "baryes", "g/(cm*s^2)", ""),
+	("poise", "poises", "g/(cm*s)", ""),
+	("stokes", "", "cm^2/s", ""),
+	("kayser", "kaysers", "cm^-1", ""),
+];
+
+const CGS_ABBREVATIONS: &[UnitTuple] = &[
+	("dyn", "dyns", "dyne", ""),
+	("Ba", "", "barye", ""),
+	("P", "", "poise", ""),
+	("St", "", "", ""),
+	("K", "", "kayser", ""),
+];
+
 const IMPERIAL_UNITS: &[UnitTuple] = &[
 	("inch", "inches", "2.54 cm", ""),
 	("mil", "mils", "1/1000 inch", ""),
@@ -703,6 +721,8 @@ pub(crate) const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
 	IMPERIAL_ABBREVIATIONS,
 	NAUTICAL_UNITS,
 	CURRENCIES,
+	CGS_UNITS,
+	CGS_ABBREVATIONS,
 ];
 
 const SHORT_PREFIXES: &[(&str, &str)] = &[
