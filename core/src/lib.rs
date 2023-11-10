@@ -204,6 +204,7 @@ pub struct Context {
 	random_u32: Option<fn() -> u32>,
 	output_mode: OutputMode,
 	get_exchange_rate: Option<Arc<dyn ExchangeRateFn + Send + Sync>>,
+	custom_units: Vec<(String, String, String)>,
 }
 
 impl fmt::Debug for Context {
@@ -235,6 +236,7 @@ impl Context {
 			random_u32: None,
 			output_mode: OutputMode::SimpleText,
 			get_exchange_rate: None,
+			custom_units: vec![],
 		}
 	}
 
@@ -335,6 +337,42 @@ impl Context {
 	) {
 		self.get_exchange_rate = Some(Arc::new(get_exchange_rate));
 	}
+
+	pub fn define_custom_unit_v1(
+		&mut self,
+		singular: &str,
+		plural: &str,
+		definition: &str,
+		attribute: &CustomUnitAttribute,
+	) {
+		let definition_prefix = match attribute {
+			CustomUnitAttribute::None => "",
+			CustomUnitAttribute::AllowLongPrefix => "l@",
+			CustomUnitAttribute::AllowShortPrefix => "s@",
+			CustomUnitAttribute::IsLongPrefix => "lp@",
+			CustomUnitAttribute::Alias => "=",
+		};
+		self.custom_units.push((
+			singular.to_string(),
+			plural.to_string(),
+			format!("{definition_prefix}{definition}"),
+		));
+	}
+}
+
+/// These attributes make is possible to change the behaviour of custom units
+#[non_exhaustive]
+pub enum CustomUnitAttribute {
+	/// Don't allow using prefixes with this custom unit
+	None,
+	/// Support long prefixes (e.g. `milli-`, `giga-`) with this unit
+	AllowLongPrefix,
+	/// Support short prefixes (e.g. `k` for `kilo`) with this unit
+	AllowShortPrefix,
+	/// Allow using this unit as a long prefix with another unit
+	IsLongPrefix,
+	/// This unit definition is an alias and will always be replaced with its definition.
+	Alias,
 }
 
 /// This function evaluates a string using the given context. Any evaluation using this

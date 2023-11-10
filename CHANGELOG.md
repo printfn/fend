@@ -1,5 +1,25 @@
 ## Changelog
 
+### Unreleased
+
+* Add support for custom unit definitions: you can now define your own units
+    in the `~/.config/fend/config.toml` configuration file. For example:
+
+    ```toml
+    [[custom-units]]
+    singular = 'fortnight'
+    plural = 'fortnights'  # plural form is optional, defaults
+                           # to singular if not specified
+    definition = '14 days'
+    attribute = 'allow-long-prefix'  # this makes it possible to combine this
+                                     # unit with prefixes like 'milli-' or 'giga-'
+    ```
+
+    See the [default config file](https://github.com/printfn/fend/blob/main/cli/src/default_config.toml) for more examples.
+* You can now tab-complete greek letters in the CLI, e.g. `\alpha` becomes α
+    (by [@Markos-Th09](https://github.com/Markos-Th09))
+* Add CGS units (by [@Markos-Th09](https://github.com/Markos-Th09))
+
 ### v1.3.1 (2023-10-26)
 
 * Add support for additional imperial and US customary units

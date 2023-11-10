@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
 struct UnitDef {
 	singular: &'static str,
@@ -505,7 +507,7 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 ];
 
 const CGS_UNITS: &[UnitTuple] = &[
-	("gal", "gals", "cm/s^2", "accerelation"),
+	("gal", "gals", "cm/s^2", "acceleration"),
 	("dyne", "dynes", "g*gal", "force"),
 	("erg", "ergs", "g*cm^2/s^2", "work, energy"),
 	("barye", "baryes", "g/(cm*s^2)", "pressure"),
@@ -531,7 +533,6 @@ const CGS_UNITS: &[UnitTuple] = &[
 	("G", "", "gauss", ""),
 	("Mx", "", "maxwell", ""),
 	("ph", "", "phot", ""),
-	("P", "", "poise", ""),
 ];
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
@@ -778,11 +779,11 @@ pub(crate) fn query_unit(
 	ident: &str,
 	short_prefixes: bool,
 	case_sensitive: bool,
-) -> Option<(&'static str, &'static str, &'static str)> {
+) -> Option<(Cow<'static, str>, Cow<'static, str>, Cow<'static, str>)> {
 	if short_prefixes {
 		for (name, def) in SHORT_PREFIXES {
 			if *name == ident || (!case_sensitive && name.eq_ignore_ascii_case(ident)) {
-				return Some((name, name, def));
+				return Some((Cow::Borrowed(name), Cow::Borrowed(name), Cow::Borrowed(def)));
 			}
 		}
 	}
@@ -795,7 +796,11 @@ pub(crate) fn query_unit(
 		.as_str(),
 	) {
 		let name = CURRENCY_IDENTIFIERS[idx];
-		return Some((name, name, "$CURRENCY"));
+		return Some((
+			Cow::Borrowed(name),
+			Cow::Borrowed(name),
+			Cow::Borrowed("$CURRENCY"),
+		));
 	}
 	let mut candidates = vec![];
 	for group in ALL_UNIT_DEFS {
@@ -806,18 +811,26 @@ pub(crate) fn query_unit(
 				definition: def.2,
 			};
 			if def.singular == ident || def.plural == ident {
-				return Some((def.singular, def.plural, def.definition));
+				return Some((
+					Cow::Borrowed(def.singular),
+					Cow::Borrowed(def.plural),
+					Cow::Borrowed(def.definition),
+				));
 			}
 			if !case_sensitive
 				&& (def.singular.eq_ignore_ascii_case(ident)
 					|| def.plural.eq_ignore_ascii_case(ident))
 			{
-				candidates.push(Some((def.singular, def.plural, def.definition)));
+				candidates.push(Some((
+					Cow::Borrowed(def.singular),
+					Cow::Borrowed(def.plural),
+					Cow::Borrowed(def.definition),
+				)));
 			}
 		}
 	}
 	if candidates.len() == 1 {
-		return candidates[0];
+		return candidates.into_iter().next().unwrap();
 	}
 	None
 }

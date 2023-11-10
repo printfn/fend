@@ -10,6 +10,7 @@ mod args;
 mod color;
 mod config;
 mod context;
+mod custom_units;
 mod exchange_rates;
 mod file_paths;
 mod helper;

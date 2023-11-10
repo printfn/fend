@@ -21,14 +21,14 @@ pub(crate) enum PrefixRule {
 
 #[derive(Debug)]
 pub(crate) struct UnitDef {
-	singular: &'static str,
-	plural: &'static str,
+	singular: Cow<'static, str>,
+	plural: Cow<'static, str>,
 	prefix_rule: PrefixRule,
 	value: Value,
 }
 
 fn expr_unit<I: Interrupt>(
-	unit_def: (&'static str, &'static str, &'static str),
+	unit_def: (Cow<'static, str>, Cow<'static, str>, Cow<'static, str>),
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
@@ -39,7 +39,7 @@ fn expr_unit<I: Interrupt>(
 		let Some(exchange_rate_fn) = &context.get_exchange_rate else {
 			return Err(FendError::NoExchangeRatesAvailable);
 		};
-		let one_base_in_currency = exchange_rate_fn.relative_to_base_currency(singular)?;
+		let one_base_in_currency = exchange_rate_fn.relative_to_base_currency(&singular)?;
 		let value = evaluate_to_value(
 			format!("(1/{one_base_in_currency}) BASE_CURRENCY").as_str(),
 			None,
@@ -51,8 +51,8 @@ fn expr_unit<I: Interrupt>(
 		let value = Number::create_unit_value_from_value(
 			&value,
 			Cow::Borrowed(""),
-			Cow::Owned(singular.to_string()),
-			Cow::Owned(plural.to_string()),
+			singular.clone(),
+			plural.clone(),
 			int,
 		)?;
 		return Ok(UnitDef {
@@ -82,8 +82,8 @@ fn expr_unit<I: Interrupt>(
 	if definition == "!" {
 		return Ok(UnitDef {
 			value: Value::Num(Box::new(Number::new_base_unit(
-				Cow::Borrowed(singular),
-				Cow::Borrowed(plural),
+				singular.clone(),
+				plural.clone(),
 			))),
 			prefix_rule: rule,
 			singular,
@@ -98,8 +98,8 @@ fn expr_unit<I: Interrupt>(
 		num = Number::create_unit_value_from_value(
 			&num,
 			Cow::Borrowed(""),
-			Cow::Borrowed(singular),
-			Cow::Borrowed(plural),
+			singular.clone(),
+			plural.clone(),
 			int,
 		)?;
 	}
@@ -118,13 +118,8 @@ fn construct_prefixed_unit<I: Interrupt>(
 ) -> Result<Value, FendError> {
 	let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
 	assert_eq!(a.singular, a.plural);
-	let unit = Number::create_unit_value_from_value(
-		&product,
-		Cow::Borrowed(a.singular),
-		Cow::Borrowed(b.singular),
-		Cow::Borrowed(b.plural),
-		int,
-	)?;
+	let unit =
+		Number::create_unit_value_from_value(&product, a.singular, b.singular, b.plural, int)?;
 	Ok(Value::Num(Box::new(unit)))
 }
 
@@ -211,18 +206,42 @@ fn query_unit_case_sensitive<I: Interrupt>(
 	Err(FendError::IdentifierNotFound(ident.to_string().into()))
 }
 
+#[allow(clippy::type_complexity)]
 fn query_unit_internal(
 	ident: &str,
 	short_prefixes: bool,
 	case_sensitive: bool,
 	whole_unit: bool,
 	context: &mut crate::Context,
-) -> Result<(&'static str, &'static str, &'static str), FendError> {
+) -> Result<(Cow<'static, str>, Cow<'static, str>, Cow<'static, str>), FendError> {
+	if !short_prefixes {
+		for (s, p, d) in &context.custom_units {
+			let p = if p.is_empty() { s } else { p };
+			if (ident == s || ident == p)
+				|| (!case_sensitive
+					&& (s.eq_ignore_ascii_case(ident) || p.eq_ignore_ascii_case(ident)))
+			{
+				return Ok((
+					s.to_string().into(),
+					p.to_string().into(),
+					d.to_string().into(),
+				));
+			}
+		}
+	}
 	if whole_unit && context.fc_mode == crate::FCMode::CelsiusFahrenheit {
 		if ident == "C" {
-			return Ok(("C", "C", "=\u{b0}C"));
+			return Ok((
+				Cow::Borrowed("C"),
+				Cow::Borrowed("C"),
+				Cow::Borrowed("=\u{b0}C"),
+			));
 		} else if ident == "F" {
-			return Ok(("F", "F", "=\u{b0}F"));
+			return Ok((
+				Cow::Borrowed("F"),
+				Cow::Borrowed("F"),
+				Cow::Borrowed("=\u{b0}F"),
+			));
 		}
 	}
 	if let Some(unit_def) = builtin::query_unit(ident, short_prefixes, case_sensitive) {

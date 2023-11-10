@@ -1,4 +1,4 @@
-use crate::color;
+use crate::{color, custom_units::CustomUnitDefinition};
 use std::{env, fmt, fs, io};
 
 #[derive(Debug, Eq, PartialEq)]
@@ -10,6 +10,7 @@ pub struct Config {
 	pub max_history_size: usize,
 	pub enable_internet_access: bool,
 	pub exchange_rate_source: ExchangeRateSource,
+	pub custom_units: Vec<CustomUnitDefinition>,
 	unknown_settings: UnknownSettings,
 	unknown_keys: Vec<String>,
 }
@@ -75,6 +76,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 		let mut seen_max_hist_size = false;
 		let mut seen_enable_internet_access = false;
 		let mut seen_exchange_rate_source = false;
+		let mut seen_custom_units = false;
 		while let Some(key) = map.next_key::<String>()? {
 			match key.as_str() {
 				"prompt" => {
@@ -148,6 +150,13 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 						}
 					};
 				}
+				"custom-units" => {
+					if seen_custom_units {
+						return Err(serde::de::Error::duplicate_field("custom-units"));
+					}
+					result.custom_units = map.next_value()?;
+					seen_custom_units = true;
+				}
 				unknown_key => {
 					// this may occur if the user has multiple fend versions installed
 					map.next_value::<toml::Value>()?;
@@ -184,8 +193,9 @@ impl Default for Config {
 			max_history_size: 1000,
 			enable_internet_access: true,
 			unknown_settings: UnknownSettings::Warn,
-			unknown_keys: vec![],
 			exchange_rate_source: ExchangeRateSource::UnitedNations,
+			custom_units: vec![],
+			unknown_keys: vec![],
 		}
 	}
 }

@@ -58,3 +58,46 @@ keyword = { foreground = 'blue', bold = true }
 built-in-function = { foreground = 'blue', bold = true }
 date = {}
 other = {}
+
+# You can define custom units via a `custom-units` array. If there's
+# a unit you would like to see added to fend, please consider making
+# a pull request to add it to the built-in unit definitions.
+#
+# Example syntax:
+# ```
+# [[custom-units]]
+# singular = 'mile'
+# plural = 'miles'  # plural name can be omitted if it is
+#                   # the same as the singular name
+# definition = '1609.344 meters'
+# attribute = 'allow_long_prefix'
+# ```
+#
+# If the singular and plural names are the same, you can omit
+# the `plural` setting.
+#
+# The `attribute` setting is optional. It can be set
+# to one of these values:
+#   * 'none': this unit cannot be used with prefixes (default)
+#   * 'allow-long-prefix': allow prefixes like
+#         'milli-' or 'giga-' with this unit
+#   * 'allow-short-prefix': allow abbreviated
+#         prefixes like 'm' or 'G' (for 'milli' and 'giga' respectively)
+#   * 'is-long-prefix': allow using this unit
+#         as a long prefix with another unit
+#   * 'alias': always expand this unit to its definition
+#
+# Here are some more examples of how you could define custom units:
+#
+# ```
+# [[custom-units]]
+# singular = 'milli'
+# definition = '0.001'
+# attribute = 'is_long_prefix'
+#
+# [[custom-units]]
+# singular = 'byte'
+# plural = 'bytes'
+# definition = '!' # an exclamation mark defines a new base unit
+# attribute = 'allow_long_prefix'
+# ```

@@ -38,6 +38,14 @@ impl InnerCtx {
 		if config.coulomb_and_farad {
 			res.core_ctx.use_coulomb_and_farad();
 		}
+		for custom_unit in &config.custom_units {
+			res.core_ctx.define_custom_unit_v1(
+				&custom_unit.singular,
+				&custom_unit.plural,
+				&custom_unit.definition,
+				&custom_unit.attribute.to_fend_core(),
+			);
+		}
 		res
 	}
 }
