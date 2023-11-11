@@ -18,6 +18,8 @@
     See the [default config file](https://github.com/printfn/fend/blob/main/cli/src/default_config.toml) for more examples.
 * You can now tab-complete greek letters in the CLI, e.g. `\alpha` becomes α
     (by [@Markos-Th09](https://github.com/Markos-Th09))
+* You can now use the `of` operator to write e.g `5% of 100`
+    (by [@fa993](https://github.com/fa993))
 * Add CGS units (by [@Markos-Th09](https://github.com/Markos-Th09))
 
 ### v1.3.1 (2023-10-26)
