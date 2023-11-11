@@ -1,9 +1,9 @@
 ## Changelog
 
-### Unreleased
+### v1.3.2 (2023-11-11)
 
-* Add support for custom unit definitions: you can now define your own units
-    in the `~/.config/fend/config.toml` configuration file. For example:
+* You can now define your own custom units in the `~/.config/fend/config.toml`
+    configuration file. For example:
 
     ```toml
     [[custom-units]]
