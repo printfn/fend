@@ -23,8 +23,8 @@ unknown-settings = 'warn'
 
 # Whether to enable internet access. This is required for
 # currency conversions, where fend makes a request to
-# the European Central Bank website to download the latest
-# exchange rates.
+# the the UN treasury or the European Central Bank website
+# to download up-to-date exchange rates.
 enable-internet-access = true
 
 # Data source for currency exchange rates. fend supports
