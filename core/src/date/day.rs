@@ -48,13 +48,13 @@ mod tests {
 	use super::*;
 
 	#[test]
-	#[should_panic]
+	#[should_panic(expected = "day value 0 is out of range")]
 	fn day_0() {
 		Day::new(0);
 	}
 
 	#[test]
-	#[should_panic]
+	#[should_panic(expected = "day value 32 is out of range")]
 	fn day_32() {
 		Day::new(32);
 	}

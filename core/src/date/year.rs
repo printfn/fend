@@ -101,7 +101,7 @@ mod tests {
 	use super::*;
 
 	#[test]
-	#[should_panic]
+	#[should_panic(expected = "year 0 is invalid")]
 	fn year_0() {
 		Year::new(0);
 	}
