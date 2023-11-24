@@ -217,6 +217,8 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64-gnu.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64-gnu/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf/fend"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-musl.zip" \
+    "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-musl/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
     "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \

@@ -173,6 +173,21 @@ jobs:
           path: target/aarch64-unknown-linux-gnu/release/fend
           if-no-files-found: error
 
+      - name: Build (linux-x86_64-musl)
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        run: |
+          rustup target add x86_64-unknown-linux-musl
+          sudo apt-get install -yq musl-tools
+          cargo build --release --package fend --target x86_64-unknown-linux-musl
+
+      - name: Upload artifacts (linux-x86_64-musl)
+        uses: actions/upload-artifact@v3
+        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        with:
+          name: fend-${{ env.FEND_VERSION }}-linux-x86_64-musl
+          path: target/x86_64-unknown-linux-musl/release/fend
+          if-no-files-found: error
+
       - name: Set up Homebrew
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
