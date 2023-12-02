@@ -41,6 +41,7 @@ The easiest way to install fend locally is via your package manager:
 | Windows Package Manager | `winget install fend`      |
 | Chocolatey              | `choco install fend`       |
 | Scoop                   | `scoop install fend`       |
+| Pkgx                    | `pkgx fend`                |
 
 Alternatively, you can manually download the latest stable binaries
 [here](https://github.com/printfn/fend/releases/latest).
@@ -69,6 +70,7 @@ $ fend
 * [NPM fend-wasm-web package](https://www.npmjs.com/package/fend-wasm-web)
 * [NPM fend-wasm-nodejs package](https://www.npmjs.com/package/fend-wasm-nodejs)
 * [Telegram Bot](https://t.me/fend_calc_bot)
+* [Pkgx](https://pkgx.dev/pkgs/printfn.github.io/fend/)
 
 ## [Manual](https://printfn.github.io/fend/documentation/)
 

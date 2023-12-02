@@ -95,6 +95,14 @@ fend is available in the official AOSC OS package repository:
 oma install fend
 ```
 
+### PKGX
+
+fend is available on [pkgx]([https://pkgx.sh](https://pkgx.dev/pkgs/printfn.github.io/fend/)):
+
+```bash
+pkgx fend
+```
+
 ### NixOS / Nix package manager
 
 fend is available in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/fend/default.nix):
