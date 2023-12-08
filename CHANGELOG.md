@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.3.3 (2023-12-08)
+
+* Add `pkgx` package (by [@michaelessiet](https://github.com/michaelessiet))
+* Add `x86_64-unknown-linux-musl` binary
+* Fix terminal issues on some architectures such as MIPS (by [@eatradish](https://github.com/eatradish))
+
 ### v1.3.2 (2023-11-11)
 
 * Custom units can now be defined in the `~/.config/fend/config.toml`
