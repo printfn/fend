@@ -15,8 +15,8 @@ console = { version = "0.15.7", default-features = false }
 ctrlc = "3.4.1"
 fend-core.workspace = true
 home = "0.5.5"
-nanorand = { version = "0.7.0", default-features = false, features = ["std", "wyrand"] }
 native-tls = { version = "0.2.11", optional = true }
+rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 rustyline = { version =  "13.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
 serde = { version = "1.0.193", default-features = false }
 toml = { version = "0.8.8", default-features = false, features = ["parse"] }

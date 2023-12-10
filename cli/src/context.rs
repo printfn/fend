@@ -103,6 +103,5 @@ impl<'a> Context<'a> {
 }
 
 fn random_u32() -> u32 {
-	let mut rng = nanorand::WyRand::new();
-	nanorand::Rng::generate(&mut rng)
+	rand::random()
 }
