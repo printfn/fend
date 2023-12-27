@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Update Rust
         run: rustup update
@@ -121,7 +121,7 @@ jobs:
         uses: codecov/codecov-action@v3
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
           path: ${{ matrix.artifact-path }}
@@ -134,7 +134,7 @@ jobs:
           cargo build --release --package fend --target aarch64-apple-darwin
 
       - name: Upload artifacts (Apple Silicon)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'macos-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-macos-aarch64
@@ -150,7 +150,7 @@ jobs:
           cargo build --release --package fend --target armv7-unknown-linux-gnueabihf
 
       - name: Upload artifacts (linux-armv7-gnueabihf)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-armv7-gnueabihf
@@ -166,7 +166,7 @@ jobs:
           cargo build --release --package fend --target aarch64-unknown-linux-gnu
 
       - name: Upload artifacts (linux-aarch64-gnu)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-aarch64-gnu
@@ -181,7 +181,7 @@ jobs:
           cargo build --release --package fend --target x86_64-unknown-linux-musl
 
       - name: Upload artifacts (linux-x86_64-musl)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-x86_64-musl
@@ -201,7 +201,7 @@ jobs:
 
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: web
 
@@ -212,7 +212,7 @@ jobs:
 
       - name: Upload man page
         if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: man-page
           path: documentation/fend.1
@@ -226,7 +226,7 @@ jobs:
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
 
       - name: Upload artifacts (MSIX)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'windows-latest' }}
         with:
           name: fend-windows-x64-msix
@@ -239,7 +239,7 @@ jobs:
           .\windows-wix\build.ps1
 
       - name: Upload artifacts (MSI)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'windows-latest' }}
         with:
           name: fend-windows-x64-msi
@@ -262,6 +262,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
 
     permissions:
+      actions: read
       pages: write
       id-token: write
 
@@ -272,4 +273,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
