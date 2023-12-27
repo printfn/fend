@@ -614,6 +614,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 		"real" | "re" | "Re" => Value::BuiltInFunction(BuiltInFunction::Real),
 		"imag" | "im" | "Im" => Value::BuiltInFunction(BuiltInFunction::Imag),
 		"conjugate" => Value::BuiltInFunction(BuiltInFunction::Conjugate),
+		"unitless" => Value::Num(Box::new(Number::from(1))),
 		"arg" => Value::BuiltInFunction(BuiltInFunction::Arg),
 		"abs" => Value::BuiltInFunction(BuiltInFunction::Abs),
 		"sin" => Value::BuiltInFunction(BuiltInFunction::Sin),

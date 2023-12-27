@@ -2094,17 +2094,22 @@ fn three_meters_15_cm() {
 
 #[test]
 fn five_percent() {
-	test_eval("5%", "5%");
+	test_eval("5%", "0.05");
+}
+
+#[test]
+fn five_percent_to_percent() {
+	test_eval_simple("5% to %", "5%");
 }
 
 #[test]
 fn five_percent_plus_point_one() {
-	test_eval("5% + 0.1", "15%");
+	test_eval("5% + 0.1", "0.15");
 }
 
 #[test]
 fn five_percent_plus_one() {
-	test_eval("5% + 1", "105%");
+	test_eval("5% + 1", "1.05");
 }
 
 #[test]
@@ -2119,7 +2124,7 @@ fn one_plus_five_percent() {
 
 #[test]
 fn five_percent_times_five_percent() {
-	test_eval("5% * 5%", "0.25%");
+	test_eval("5% * 5%", "0.0025");
 }
 
 #[test]
@@ -2129,33 +2134,11 @@ fn five_percent_times_kg() {
 
 #[test]
 fn five_percent_times_100() {
-	/*
-	 * as discussed in the "simplify" function,
-	 * there are two ways to view this:
-	 *
-	 * 1. 5% of 100 (giving 5)
-	 * 2. 100x 5% (giving 500%)
-	 *
-	 * Mathematically they are equivalent values.
-	 * However, from a UI perspective they are not.
-	 *
-	 * I (Techcable) suggest overloading the "of" operator for that purpose.
-	 * For example "5% of 100 => 5".
-	 *
-	 * This would work for all values, and would specifically require that the
-	 * left side is formatted as a percentage.
-	 */
-	test_eval("5% * 100", "500%");
+	test_eval("5% * 100", "5");
 }
 
 #[test]
 fn five_percent_of_100() {
-	// Continuing the discussion in the previous test
-	// We handle the overloading in the evaluate function
-	// If we encounter an Of with a percent in the LHS
-	// Then we divide the LHS with 100 and multiply it with RHS
-	// Discarding the percent in the process
-
 	test_eval("5% of 100", "5");
 }
 
@@ -5193,7 +5176,7 @@ fn single_line_comment_and_linebreak_3() {
 
 #[test]
 fn percent_plus_per_mille() {
-	test_eval("4% + 3\u{2030}", "4.3%");
+	test_eval("4% + 3\u{2030}", "0.043");
 }
 
 #[test]
@@ -5809,4 +5792,14 @@ fn hubble_constant() {
 		"70 km s^-1 Mpc^-1 to 25dp",
 		"approx. 0.0000000000000000022685455 s^-1",
 	);
+}
+
+#[test]
+fn oc() {
+	test_eval("5 oC", "5 °C");
+}
+
+#[test]
+fn to_million() {
+	test_eval_simple("5 to million", "0.000005 million");
 }

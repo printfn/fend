@@ -1,5 +1,23 @@
 ## Changelog
 
+### Unreleased
+
+* Change unit simplification and unit aliasing to be simpler and more
+    consistent. Units like `%` and `million` are now simplified unless you
+    explicitly convert your result to one of those units.
+
+    For example:
+    ```
+    > 5%
+    0.05
+    > 46 million
+    46000000
+    > 0.5 to %
+    50%
+    > 34820000 to million
+    34.82 million
+    ```
+
 ### v1.3.3 (2023-12-08)
 
 * Add `pkgx` package (by [@michaelessiet](https://github.com/michaelessiet))

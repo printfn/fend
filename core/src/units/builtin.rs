@@ -432,9 +432,9 @@ const TIME_UNITS: &[UnitTuple] = &[
 ];
 
 const RATIOS: &[UnitTuple] = &[
-	("\u{2030}", "", "0.001", ""), // per mille
-	("percent", "", "0.01", ""),
-	("%", "", "percent", ""),
+	("\u{2030}", "", "=0.001", ""), // per mille
+	("percent", "", "=0.01", ""),
+	("%", "", "=percent", ""),
 	("bel", "bels", "0.5 * ln(10) neper", ""),
 	("decibel", "decibels", "1/10 bel", ""),
 	("dB", "", "decibel", ""),

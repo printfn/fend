@@ -24,6 +24,7 @@ pub(crate) struct UnitDef {
 	singular: Cow<'static, str>,
 	plural: Cow<'static, str>,
 	prefix_rule: PrefixRule,
+	alias: bool,
 	value: Value,
 }
 
@@ -51,6 +52,7 @@ fn expr_unit<I: Interrupt>(
 		let value = Number::create_unit_value_from_value(
 			&value,
 			Cow::Borrowed(""),
+			false,
 			singular.clone(),
 			plural.clone(),
 			int,
@@ -59,6 +61,7 @@ fn expr_unit<I: Interrupt>(
 			singular,
 			plural,
 			prefix_rule: PrefixRule::LongPrefixAllowed,
+			alias: false,
 			value: Value::Num(Box::new(value)),
 		});
 	}
@@ -88,16 +91,20 @@ fn expr_unit<I: Interrupt>(
 			prefix_rule: rule,
 			singular,
 			plural,
+			alias: false,
 		});
 	}
 	let (alias, definition) = definition
 		.strip_prefix('=')
 		.map_or((false, definition), |remaining| (true, remaining));
 	let mut num = evaluate_to_value(definition, None, attrs, context, int)?.expect_num()?;
-	if !alias && rule != PrefixRule::LongPrefix {
+	if rule == PrefixRule::LongPrefix || (alias && !num.is_unitless(int)?) {
+		// keep full unit
+	} else {
 		num = Number::create_unit_value_from_value(
 			&num,
 			Cow::Borrowed(""),
+			alias,
 			singular.clone(),
 			plural.clone(),
 			int,
@@ -108,6 +115,7 @@ fn expr_unit<I: Interrupt>(
 		prefix_rule: rule,
 		singular,
 		plural,
+		alias,
 	})
 }
 
@@ -118,8 +126,9 @@ fn construct_prefixed_unit<I: Interrupt>(
 ) -> Result<Value, FendError> {
 	let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
 	assert_eq!(a.singular, a.plural);
-	let unit =
-		Number::create_unit_value_from_value(&product, a.singular, b.singular, b.plural, int)?;
+	let unit = Number::create_unit_value_from_value(
+		&product, a.singular, b.alias, b.singular, b.plural, int,
+	)?;
 	Ok(Value::Num(Box::new(unit)))
 }
 

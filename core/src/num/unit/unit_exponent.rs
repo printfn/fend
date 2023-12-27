@@ -39,9 +39,8 @@ impl UnitExponent {
 		})
 	}
 
-	pub(crate) fn is_percentage_unit(&self) -> bool {
-		let (prefix, name) = self.unit.prefix_and_name(false);
-		prefix.is_empty() && ["%", "percent"].contains(&name)
+	pub(crate) fn is_alias(&self) -> bool {
+		self.unit.is_alias()
 	}
 
 	pub(crate) fn add_to_hashmap<I: Interrupt>(

@@ -4,7 +4,10 @@ use super::base_unit::BaseUnit;
 use crate::{
 	error::FendError,
 	num::complex::Complex,
-	serialize::{deserialize_string, deserialize_usize, serialize_string, serialize_usize},
+	serialize::{
+		deserialize_bool, deserialize_string, deserialize_usize, serialize_bool, serialize_string,
+		serialize_usize,
+	},
 };
 
 /// A named unit, like kilogram, megabyte or percent.
@@ -13,6 +16,7 @@ pub(crate) struct NamedUnit {
 	prefix: Cow<'static, str>,
 	singular_name: Cow<'static, str>,
 	plural_name: Cow<'static, str>,
+	alias: bool,
 	pub(super) base_units: HashMap<BaseUnit, Complex>,
 	pub(super) scale: Complex,
 }
@@ -22,6 +26,7 @@ impl NamedUnit {
 		prefix: Cow<'static, str>,
 		singular_name: Cow<'static, str>,
 		plural_name: Cow<'static, str>,
+		alias: bool,
 		base_units: HashMap<BaseUnit, Complex>,
 		scale: impl Into<Complex>,
 	) -> Self {
@@ -29,6 +34,7 @@ impl NamedUnit {
 			prefix,
 			singular_name,
 			plural_name,
+			alias,
 			base_units,
 			scale: scale.into(),
 		}
@@ -38,6 +44,7 @@ impl NamedUnit {
 		serialize_string(self.prefix.as_ref(), write)?;
 		serialize_string(self.singular_name.as_ref(), write)?;
 		serialize_string(self.plural_name.as_ref(), write)?;
+		serialize_bool(self.alias, write)?;
 
 		serialize_usize(self.base_units.len(), write)?;
 		for (a, b) in &self.base_units {
@@ -53,6 +60,7 @@ impl NamedUnit {
 		let prefix = deserialize_string(read)?;
 		let singular_name = deserialize_string(read)?;
 		let plural_name = deserialize_string(read)?;
+		let alias = deserialize_bool(read)?;
 
 		let len = deserialize_usize(read)?;
 		let mut hashmap = HashMap::with_capacity(len);
@@ -65,6 +73,7 @@ impl NamedUnit {
 			prefix: Cow::Owned(prefix),
 			singular_name: Cow::Owned(singular_name),
 			plural_name: Cow::Owned(plural_name),
+			alias,
 			base_units: hashmap,
 			scale: Complex::deserialize(read)?,
 		})
@@ -75,6 +84,7 @@ impl NamedUnit {
 			prefix: "".into(),
 			singular_name: base_unit.name().to_string().into(),
 			plural_name: base_unit.name().to_string().into(),
+			alias: false,
 			base_units: {
 				let mut base_units = HashMap::new();
 				base_units.insert(base_unit, 1.into());
@@ -97,6 +107,10 @@ impl NamedUnit {
 
 	pub(crate) fn has_no_base_units(&self) -> bool {
 		self.base_units.is_empty()
+	}
+
+	pub(crate) fn is_alias(&self) -> bool {
+		self.alias && self.has_no_base_units()
 	}
 
 	/// Returns whether or not this unit should be printed with a
