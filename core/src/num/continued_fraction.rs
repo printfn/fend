@@ -1,3 +1,10 @@
+// None of this code is currently used. See bigrat.rs and real.rs for the
+// current implementation.
+
+// Notes:
+// https://perl.plover.com/classes/cftalk/INFO/gosper.html
+// https://crypto.stanford.edu/pbc/notes/contfrac/nonsimple.html
+
 use crate::error::FendError;
 use crate::format::Format;
 use crate::interrupt::Never;
