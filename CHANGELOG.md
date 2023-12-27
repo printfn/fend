@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.4.0 (2023-12-27)
 
 * The license of fend has changed. As of v1.4.0, fend is available under
     the GPL 3.0 (or later). See
