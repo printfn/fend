@@ -12,9 +12,9 @@ readme = "../README.md"
 
 [dependencies]
 console = { version = "0.15.7", default-features = false }
-ctrlc = "3.4.1"
+ctrlc = "3.4.2"
 fend-core.workspace = true
-home = "0.5.5"
+home = "0.5.9"
 native-tls = { version = "0.2.11", optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 rustyline = { version =  "13.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }

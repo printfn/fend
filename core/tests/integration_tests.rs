@@ -4458,10 +4458,9 @@ fn test_hex_unit_conversion_complex() {
 	test_eval_simple("i yard lb to hex to kg m to 3sf", "approx. 0.6a2 i kg m");
 }
 
-#[ignore]
 #[test]
 fn convert_to_billion() {
-	test_eval("1000000000 to billion", "1 billion");
+	test_eval_simple("1000000000 to billion", "1 billion");
 }
 
 #[test]
