@@ -11,7 +11,6 @@ struct UnitDef {
 type UnitTuple = (&'static str, &'static str, &'static str, &'static str);
 
 const BASE_UNITS: &[UnitTuple] = &[
-	("unitless", "", "=1", ""),
 	("second", "seconds", "l@!", ""),
 	("meter", "meters", "l@!", ""),
 	("kilogram", "kilograms", "l@!", ""),
@@ -831,6 +830,30 @@ pub(crate) fn query_unit(
 	}
 	if candidates.len() == 1 {
 		return candidates.into_iter().next().unwrap();
+	}
+	None
+}
+
+const DEFAULT_UNITS: &[(&str, &str)] = &[
+	("second^-1", "hertz"),
+	("kilogram^1 meter^1 second^-2", "newton"),
+	("kilogram^1 meter^-1 second^-2", "pascal"),
+	("kilogram^1 meter^2 second^-2", "joule"),
+	("kilogram^1 meter^2 second^-3", "watt"),
+	("ohm", "ampere^-2 kilogram meter^2 second^-3"),
+	("volt", "ampere^-1 kilogram meter^2 second^-3"),
+	("liter", "meter^3"),
+];
+
+pub(crate) fn lookup_default_unit(base_units: &str) -> Option<&str> {
+	if let Some((_, unit)) = DEFAULT_UNITS.iter().find(|(base, _)| *base == base_units) {
+		return Some(unit);
+	}
+	if let Some((singular, _, _, _)) = BASE_UNITS
+		.iter()
+		.find(|(singular, _, _, _)| format!("{singular}^1") == base_units)
+	{
+		return Some(singular);
 	}
 	None
 }

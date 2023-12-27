@@ -8,6 +8,7 @@ use crate::Attrs;
 
 mod builtin;
 
+pub(crate) use builtin::lookup_default_unit;
 pub(crate) use builtin::IMPLICIT_UNIT_MAP;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

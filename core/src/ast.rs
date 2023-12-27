@@ -258,7 +258,7 @@ impl Expr {
 	pub(crate) fn format<I: Interrupt>(
 		&self,
 		attrs: Attrs,
-		ctx: &crate::Context,
+		ctx: &mut crate::Context,
 		int: &I,
 	) -> Result<String, FendError> {
 		Ok(match self {

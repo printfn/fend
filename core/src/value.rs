@@ -318,7 +318,7 @@ impl Value {
 		&self,
 		indent: usize,
 		attrs: Attrs,
-		ctx: &crate::Context,
+		ctx: &mut crate::Context,
 		int: &I,
 	) -> Result<String, FendError> {
 		let mut spans = vec![];
@@ -335,13 +335,13 @@ impl Value {
 		indent: usize,
 		spans: &mut Vec<Span>,
 		attrs: Attrs,
-		ctx: &crate::Context,
+		ctx: &mut crate::Context,
 		int: &I,
 	) -> Result<(), FendError> {
 		match self {
 			Self::Num(n) => {
 				n.clone()
-					.simplify(int)?
+					.simplify(attrs, ctx, int)?
 					.format(ctx, int)?
 					.spans(spans, attrs);
 			}

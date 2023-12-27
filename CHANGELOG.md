@@ -4,7 +4,9 @@
 
 * Change unit simplification and unit aliasing to be simpler and more
     consistent. Units like `%` and `million` are now simplified unless you
-    explicitly convert your result to one of those units.
+    explicitly convert your result to one of those units. fend will now also
+    simplify certain combinations of units, such as `volts / ohms` becoming
+    `amperes`.
 
     For example:
     ```
@@ -16,6 +18,8 @@
     50%
     > 34820000 to million
     34.82 million
+    > (5 volts) / (2 ohms)
+    2.5 amperes
     ```
 
 ### v1.3.3 (2023-12-08)

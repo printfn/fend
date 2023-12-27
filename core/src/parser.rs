@@ -86,6 +86,14 @@ fn parse_number(input: &[Token]) -> ParseResult<'_> {
 fn parse_ident(input: &[Token]) -> ParseResult<'_> {
 	match parse_token(input)? {
 		(Token::Ident(ident), remaining) => {
+			if ident.as_str() == "light" {
+				if let Ok((ident2, remaining2)) = parse_ident(remaining) {
+					return Ok((
+						Expr::Apply(Box::new(Expr::Ident(ident)), Box::new(ident2)),
+						remaining2,
+					));
+				}
+			}
 			if let Ok(((), remaining2)) = parse_fixed_symbol(remaining, Symbol::Of) {
 				let (inner, remaining3) = parse_parens_or_literal(remaining2)?;
 				Ok((Expr::Of(ident, Box::new(inner)), remaining3))

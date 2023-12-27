@@ -50,6 +50,13 @@ impl Complex {
 		self.real.try_as_usize(int)
 	}
 
+	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> Result<i64, FendError> {
+		if self.imag != 0.into() {
+			return Err(FendError::ComplexToInteger);
+		}
+		self.real.try_as_i64(int)
+	}
+
 	#[inline]
 	pub(crate) fn real(&self) -> Real {
 		self.real.clone()

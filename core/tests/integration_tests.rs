@@ -2194,7 +2194,7 @@ fn units_10() {
 
 #[test]
 fn units_11() {
-	test_eval("1 light year", "1 light year");
+	test_eval("1 light year", "1 light_year");
 }
 
 #[test]
@@ -2279,7 +2279,7 @@ fn units_33() {
 
 #[test]
 fn units_34() {
-	test_eval("1 light year", "1 light year");
+	test_eval("0.5 light year", "0.5 light_years");
 }
 
 #[test]
@@ -5802,4 +5802,14 @@ fn oc() {
 #[test]
 fn to_million() {
 	test_eval_simple("5 to million", "0.000005 million");
+}
+
+#[test]
+fn ohms_law() {
+	test_eval("(5 volts) / (2 ohms)", "2.5 amperes");
+}
+
+#[test]
+fn simplification_sec_hz() {
+	test_eval("c/(145MHz)", "approx. 2.0675341931 meters");
 }

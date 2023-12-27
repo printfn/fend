@@ -118,6 +118,19 @@ impl Real {
 		}
 	}
 
+	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> Result<i64, FendError> {
+		match self.pattern {
+			Pattern::Simple(s) => s.try_as_i64(int),
+			Pattern::Pi(n) => {
+				if n == 0.into() {
+					Ok(0)
+				} else {
+					Err(FendError::CannotConvertToInteger)
+				}
+			}
+		}
+	}
+
 	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> Result<usize, FendError> {
 		match self.pattern {
 			Pattern::Simple(s) => s.try_as_usize(int),

@@ -151,6 +151,25 @@ impl BigRat {
 		self.num.try_as_usize(int)
 	}
 
+	pub(crate) fn try_as_i64<I: Interrupt>(mut self, int: &I) -> Result<i64, FendError> {
+		self = self.simplify(int)?;
+		if self.den != 1.into() {
+			return Err(FendError::FractionToInteger);
+		}
+		let res = self.num.try_as_usize(int)?;
+		let res: i64 = res.try_into().map_err(|_| FendError::OutOfRange {
+			value: Box::new(res),
+			range: Range {
+				start: RangeBound::None,
+				end: RangeBound::Open(Box::new(i64::MAX)),
+			},
+		})?;
+		Ok(match self.sign {
+			Sign::Positive => res,
+			Sign::Negative => -res,
+		})
+	}
+
 	pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> Result<f64, FendError> {
 		if self.is_definitely_zero() {
 			return Ok(0.0);
