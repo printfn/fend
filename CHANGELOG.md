@@ -21,6 +21,10 @@
     > (5 volts) / (2 ohms)
     2.5 amperes
     ```
+- Rename Windows installer artifacts (MSI files) to also include the version
+    number, e.g. `fend-1.4.0-windows-x64.msi`.
+- Replace `nanorand` dependency with `rand`, which is better supported and
+    fixes compilation errors on FreeBSD.
 
 ### v1.3.3 (2023-12-08)
 

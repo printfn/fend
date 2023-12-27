@@ -229,7 +229,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'windows-latest' }}
         with:
-          name: fend-windows-x64-msix
+          name: fend-${{ env.FEND_VERSION }}-windows-x64-msix
           path: windows-msix/fend-windows-x64.msix
           if-no-files-found: error
 
@@ -242,7 +242,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'windows-latest' }}
         with:
-          name: fend-windows-x64-msi
+          name: fend-${{ env.FEND_VERSION }}-windows-x64-msi
           path: windows-wix/build/fend-windows-x64.msi
           if-no-files-found: error
 

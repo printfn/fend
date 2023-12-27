@@ -35,8 +35,8 @@ If you want to install the fend command-line application, you have the following
 
 ### Windows
 
-On Windows, you can install fend with a standard Windows installer package,
-which you can download [here](https://github.com/printfn/fend/releases/latest/download/fend-windows-x64.msi).
+On Windows, you can install fend with a standard Windows installer package (MSI),
+which you can download [here](https://github.com/printfn/fend/releases/latest).
 
 Alternatively you can install fend via
 [`winget`](https://docs.microsoft.com/en-us/windows/package-manager/winget/):
