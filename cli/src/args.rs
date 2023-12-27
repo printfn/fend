@@ -35,7 +35,9 @@ impl Action {
 				(true, "help" | "--help" | "-h") => print_help = true,
 				// NOTE: 'version' is already handled by fend itself
 				(true, "--version" | "-v" | "-V") => print_version = true,
-				(true, "--default-config") => print_default_config = true,
+				(true, "--default-config" | "--print-default-config") => {
+					print_default_config = true;
+				}
 				(true, "-f" | "--file") => {
 					idx += 1;
 					let filename = args.get(idx).ok_or("expected a filename")?;

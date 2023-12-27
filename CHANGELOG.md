@@ -13,6 +13,7 @@
     `amperes`.
 
     For example:
+
     ```
     > 5%
     0.05
@@ -100,12 +101,14 @@
 
 * Variable names with underscores can now be correctly referenced
 * Combined abbreviated units are now parsed case-insensitively:
+
     ```
     > 100 kwh
     100 kWh
     > 64 KB
     64 kB
     ```
+
 * Add a new configuration option `enable-internet-access` (defaults to `true`)
 * Add `tbs` unit as an abbreviation for tablespoons
 * Add `thou` unit, representing a thousandth of an inch
@@ -121,6 +124,7 @@
 
 * Add `@no_trailing_newline` attribute, which causes fend to not print a trailing
     newline after the calculation.
+
     ```
     $ fend @no_trailing_newline 5+5
     10
@@ -137,19 +141,23 @@
     * `n permute k` or `n nPr k`: compute the number of `k`-permutations of `n`
     * `n choose k` or `n nCr k`: number of `k`-combinations of `n`
 * Add `@noapprox` attribute to hide the `approx.` annotation in the output:
+
     ```
     > pi
     approx. 3.1415926535
     > @noapprox pi
     3.1415926535
     ```
+
 * Add `@plain_number` attribute, to remove `approx.` and any units. This is especially useful in automated scripts.
+
     ```
     > 5 m / (3 s)
     approx. 1.6666666666 m / s
     > @plain_number 5 m / (3 s)
     1.6666666666
     ```
+
 * Add a new date literal syntax, e.g. `@2000-01-01`
 * Improve visual feedback when using the Telegram bot (by [@miki-tebe](https://github.com/miki-tebe))
 * Add new SI prefixes quecca, ronna, ronto and quecto (by [@frectonz](https://github.com/frectonz))
@@ -270,6 +278,7 @@
 
 * Improve command-line argument parsing, including support for multiple arguments
 * The most recent calculation result is now stored in a special variable `_` (or `ans`):
+
     ```
     > 5 * 10
     50
@@ -308,6 +317,7 @@
 ### v0.1.21 (2021-07-11)
 
 * Add support for D&D-style dice syntax. For example, `d6` refers to a standard 6-sided die.
+
     ```
     > roll d6
     4
@@ -330,6 +340,7 @@
     > roll(d20 + d6 + 4) # arithmetic operations
     14
     ```
+
 * Fix `lux` unit definition
 * Remove the `->` conversion syntax: use `to` instead
 
@@ -365,28 +376,40 @@
 ### v0.1.16 (2021-05-21)
 
 * Add support for Unicode operators, such as ✕ or ÷
-* Add color customization to the command-line interface by editing the `config.toml` file. Refer to the default `config.toml` file [here](https://github.com/printfn/fend/blob/main/cli/src/default_config.toml).
+* Add color customization to the command-line interface by editing the
+    `config.toml` file. Refer to the default `config.toml` file
+    [here](https://github.com/printfn/fend/blob/main/cli/src/default_config.toml).
 
 ### v0.1.15 (2021-05-20)
 
 * Case-insensitive units: you can now write `5 Meters`
 * Experimental date support:
   * You can create a date object like so:
+
     ```
     > "2021-05-20" to date
     Thursday, 20 May 2021
     ```
-  * No other date-related functionality has been implemented yet, including no times/timezones, durations, date arithmetic or different date formats.
-* fend now parses single and double quotes as feet and inches (instead of as string literals) in more situations, so you can once again write:
+
+  * No other date-related functionality has been implemented yet, including no
+    times/timezones, durations, date arithmetic or different date formats.
+* fend now parses single and double quotes as feet and inches (instead of
+    as string literals) in more situations, so you can once again write:
+
     ```
     > 1.2192 m to '
     4'
     ```
-* The CLI program can now read options from a config file. Type `help` to find out where it is stored. The `config.toml` file can contain the following options:
+
+* The CLI program can now read options from a config file. Type `help` to
+    find out where it is stored. The `config.toml` file can contain the
+    following options:
+
     ```toml
     prompt = '> '
     color = false
     ```
+
 * Terminal color support: this is disabled by default, so you'll need to create a config file containing `color = true` first.
 * Added a `conjugate` function that computes the complex conjugate of a number: e.g. `conjugate(i)` is `-i`.
 * Improve consistency around error messages

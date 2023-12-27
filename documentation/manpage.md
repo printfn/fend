@@ -10,7 +10,7 @@ fend - arbitrary-precision unit-aware calculator
 
 # SYNOPSIS
 
-_fend_ **[OPTION | FILE | EXPRESSION]...** **[\--]** **[EXPRESSION]...**
+_fend_ **[option | file | expression]...** **[\--]** **[expression]...**
 
 # OPTIONS
 
@@ -20,11 +20,11 @@ _fend_ **[OPTION | FILE | EXPRESSION]...** **[\--]** **[EXPRESSION]...**
 **-v**, **-V**, **\--version**
 : Show the current version number
 
-**\--default-config**
+**\--default-config**, **\--print-default-config**
 : Print the default configuration file
 
 **-e**, **\--eval** **\<expr>**
-: Evaluate the given expression
+: Evaluate the given expression (e.g. `1+1`)
 
 **-f**, **\--file** **\<filename>**
 : Read and evaluate the given file
@@ -67,3 +67,9 @@ Bugs and feature suggestions can be reported at
 
 fend is licensed under the GPL 3.0 (or later). You can find the source code at
 [https://github.com/printfn/fend](https://github.com/printfn/fend).
+
+# CHANGELOG
+
+```{.include}
+../CHANGELOG.md
+```
