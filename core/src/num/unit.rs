@@ -9,7 +9,7 @@ use crate::units::{lookup_default_unit, query_unit_static};
 use crate::{ast, ident::Ident};
 use crate::{Attrs, Span, SpanKind};
 use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::Neg;
 use std::sync::Arc;
 use std::{fmt, io};
@@ -728,6 +728,7 @@ impl Value {
 		})
 	}
 
+	#[allow(clippy::too_many_lines)]
 	pub(crate) fn simplify<I: Interrupt>(
 		self,
 		attrs: Attrs,
@@ -832,17 +833,25 @@ impl Value {
 			simplifiable: self.simplifiable,
 		};
 
-		if result.unit.has_pos_and_neg_base_unit_exponents() {
+		if result.unit.components.len() > 1
+			&& !result
+				.unit
+				.components
+				.iter()
+				.any(|c| c.unit.singular_name == "rad" || c.unit.singular_name == "radian")
+		{
 			// try and replace unit with a default one, e.g. `kilogram` or `ampere`
 			let (hashmap, _) = result.unit.to_hashmap_and_scale(int)?;
-			let mut base_units = hashmap
+			if let Ok(mut base_units) = hashmap
 				.into_iter()
 				.map(|(k, v)| v.try_as_i64(int).map(|v| format!("{}^{v}", k.name())))
-				.collect::<Result<Vec<String>, _>>()?;
-			base_units.sort();
-			if let Some(new_unit) = lookup_default_unit(&base_units.join(" ")) {
-				let rhs = query_unit_static(new_unit, attrs, ctx, int)?.expect_num()?;
-				return result.convert_to(rhs, int);
+				.collect::<Result<Vec<String>, _>>()
+			{
+				base_units.sort();
+				if let Some(new_unit) = lookup_default_unit(&base_units.join(" ")) {
+					let rhs = query_unit_static(new_unit, attrs, ctx, int)?.expect_num()?;
+					return result.convert_to(rhs, int);
+				}
 			}
 		}
 
@@ -977,28 +986,6 @@ impl Unit {
 		Ok(Self { components: cs })
 	}
 
-	fn has_pos_and_neg_base_unit_exponents(&self) -> bool {
-		if self.components.len() <= 1 {
-			return false;
-		}
-
-		let mut pos = HashSet::new();
-		let mut neg = HashSet::new();
-		for comp in &self.components {
-			let component_sign = comp.exponent > 0.into();
-			for (base, base_exp) in &comp.unit.base_units {
-				let base_sign = base_exp > &0.into();
-				let combined_sign = component_sign == base_sign; // xnor
-				if combined_sign {
-					pos.insert(base);
-				} else {
-					neg.insert(base);
-				}
-			}
-		}
-		pos.intersection(&neg).next().is_some()
-	}
-
 	pub(crate) fn equal_to(&self, rhs: &str) -> bool {
 		if self.components.len() != 1 {
 			return false;
@@ -1011,7 +998,7 @@ impl Unit {
 		prefix.is_empty() && name == rhs
 	}
 
-	/// guarantees that base units with an cancelled exponents do not appear in the hashmap
+	/// base units with cancelled exponents do not appear in the hashmap
 	fn to_hashmap_and_scale<I: Interrupt>(&self, int: &I) -> Result<HashmapScale, FendError> {
 		let mut hashmap = HashMap::<BaseUnit, Complex>::new();
 		let mut scale = Complex::from(1);

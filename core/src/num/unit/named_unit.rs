@@ -14,7 +14,7 @@ use crate::{
 #[derive(Clone, Eq, PartialEq)]
 pub(crate) struct NamedUnit {
 	prefix: Cow<'static, str>,
-	singular_name: Cow<'static, str>,
+	pub(super) singular_name: Cow<'static, str>,
 	plural_name: Cow<'static, str>,
 	alias: bool,
 	pub(super) base_units: HashMap<BaseUnit, Complex>,

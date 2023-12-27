@@ -5812,3 +5812,13 @@ fn ohms_law() {
 fn simplification_sec_hz() {
 	test_eval("c/(145MHz)", "approx. 2.0675341931 meters");
 }
+
+#[test]
+fn simplification_ohms() {
+	test_eval("4556 ohm * ampere", "4556 volts");
+}
+
+#[test]
+fn simplification_ohms_2() {
+	test_eval("4556 volt / ampere", "4556 ohms");
+}

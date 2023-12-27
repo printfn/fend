@@ -841,8 +841,8 @@ const DEFAULT_UNITS: &[(&str, &str)] = &[
 	("pascal", "kilogram^1 meter^-1 second^-2"),
 	("joule", "kilogram^1 meter^2 second^-2"),
 	("watt", "kilogram^1 meter^2 second^-3"),
-	("ohm", "ampere^-2 kilogram meter^2 second^-3"),
-	("volt", "ampere^-1 kilogram meter^2 second^-3"),
+	("ohm", "ampere^-2 kilogram^1 meter^2 second^-3"),
+	("volt", "ampere^-1 kilogram^1 meter^2 second^-3"),
 	("liter", "meter^3"),
 ];
 
