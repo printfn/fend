@@ -4,6 +4,8 @@ mod base;
 mod bigrat;
 mod biguint;
 mod complex;
+#[allow(unused_macros, unused_variables, dead_code)]
+mod continued_fraction;
 mod dist;
 mod exact;
 mod formatting_style;

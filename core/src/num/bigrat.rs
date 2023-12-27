@@ -5,17 +5,17 @@ use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use std::{cmp, fmt, hash, io, ops};
 
-mod sign {
+pub(crate) mod sign {
 	use crate::{
 		error::FendError,
 		serialize::{deserialize_u8, serialize_u8},
 	};
 	use std::io;
 
-	#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+	#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 	pub(crate) enum Sign {
-		Positive,
 		Negative,
+		Positive,
 	}
 
 	impl Sign {
