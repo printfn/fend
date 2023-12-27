@@ -97,10 +97,28 @@ fn expr_unit<I: Interrupt>(
 	let (alias, definition) = definition
 		.strip_prefix('=')
 		.map_or((false, definition), |remaining| (true, remaining));
+	// long prefixes like `hecto` are always treated as aliases
+	let alias = alias || rule == PrefixRule::LongPrefix;
 	let mut num = evaluate_to_value(definition, None, attrs, context, int)?.expect_num()?;
-	if rule == PrefixRule::LongPrefix || (alias && !num.is_unitless(int)?) {
-		// keep full unit
-	} else {
+
+	// There are three cases to consider:
+	//   1. Unitless aliases (e.g. `million` or `mega`) should be treated as an
+	//      actual unit, but with the `alias` flag set so it can be simplified
+	//      when possible.
+	//   2. Aliases with units (e.g. `sqft`) should be a pure alias (not a unit)
+	//      so it can always be replaced. We can't convert this like unitless
+	//      aliases since we would be simplifying it to base units (scaled m^2),
+	//      so the precise unit we are aliasing to would be lost.
+	//   3. Units that aren't aliased (e.g. `meter`) should be converted to a
+	//      normal unit.
+	//
+	// One exception to these cases is `unitless`, which should always be
+	// replaced with `1` even when we aren't simplifying, so it is defined
+	// manually instead of as a normal unit definition.
+
+	#[allow(clippy::nonminimal_bool)]
+	if !alias || (alias && num.is_unitless(int)?) {
+		// convert to an actual unit (cases 1 and 3)
 		num = Number::create_unit_value_from_value(
 			&num,
 			Cow::Borrowed(""),
