@@ -835,19 +835,19 @@ pub(crate) fn query_unit(
 }
 
 const DEFAULT_UNITS: &[(&str, &str)] = &[
-	("second^-1", "hertz"),
-	("kilogram^1 meter^1 second^-2", "newton"),
-	("kilogram^1 meter^-1 second^-2", "pascal"),
-	("kilogram^1 meter^2 second^-2", "joule"),
-	("kilogram^1 meter^2 second^-3", "watt"),
+	("hertz", "second^-1"),
+	("newton", "kilogram^1 meter^1 second^-2"),
+	("pascal", "kilogram^1 meter^-1 second^-2"),
+	("joule", "kilogram^1 meter^2 second^-2"),
+	("watt", "kilogram^1 meter^2 second^-3"),
 	("ohm", "ampere^-2 kilogram meter^2 second^-3"),
 	("volt", "ampere^-1 kilogram meter^2 second^-3"),
 	("liter", "meter^3"),
 ];
 
 pub(crate) fn lookup_default_unit(base_units: &str) -> Option<&str> {
-	if let Some((_, unit)) = DEFAULT_UNITS.iter().find(|(base, _)| *base == base_units) {
-		return Some(unit);
+	if let Some((unit_name, _)) = DEFAULT_UNITS.iter().find(|(_, base)| *base == base_units) {
+		return Some(unit_name);
 	}
 	if let Some((singular, _, _, _)) = BASE_UNITS
 		.iter()
