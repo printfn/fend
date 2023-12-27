@@ -472,6 +472,7 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 	("cc", "", "cm^3", ""),
 	("are", "ares", "l@100 meter^2", ""),
 	("liter", "liters", "l@1000 cc", ""),
+	("litre", "litres", "liter", ""),
 	("l", "", "s@liter", ""),
 	("L", "", "s@liter", ""),
 	("micron", "microns", "l@micrometer", ""),
