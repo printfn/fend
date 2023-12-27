@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+* The license of fend has changed. As of v1.4.0, fend is available under
+    the GPL 3.0 (or later). See
+    [LICENSE.md](https://github.com/printfn/fend/blob/main/LICENSE.md)
+    for more information.
 * Change unit simplification and unit aliasing to be simpler and more
     consistent. Units like `%` and `million` are now simplified unless you
     explicitly convert your result to one of those units. fend will now also
@@ -20,10 +24,14 @@
     34.82 million
     > (5 volts) / (2 ohms)
     2.5 amperes
+    > 3 feet * 125 kg * s^-2
+    114.3 newtons
     ```
-- Rename Windows installer artifacts (MSI files) to also include the version
+
+    Please open an issue if you encounter any bugs or unexpected behavior.
+* Rename Windows installer artifacts (MSI files) to also include the version
     number, e.g. `fend-1.4.0-windows-x64.msi`.
-- Replace `nanorand` dependency with `rand`, which is better supported and
+* Replace `nanorand` dependency with `rand`, which is better supported and
     fixes compilation errors on FreeBSD.
 
 ### v1.3.3 (2023-12-08)
