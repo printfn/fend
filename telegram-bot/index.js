@@ -1,5 +1,4 @@
-const fend = require('fend-wasm-nodejs');
-const https = require("https");
+import fend from 'fend-wasm-nodejs';
 
 const TELEGRAM_BOT_API_TOKEN = process.env.TELEGRAM_BOT_API_TOKEN;
 
@@ -12,7 +11,7 @@ LAMBDA_URL="..."
 curl "https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/setWebhook" --form-string "url=${LAMBDA_URL}"
 */
 
-const processInput = (input, chatType) => {
+async function processInput(input, chatType) {
     if (input == '/start' || input == '/help') {
         return "fend is an arbitrary-precision unit-aware calculator.\n\nYou can send it maths questions like '1+1', 'sin(pi)' or 'sqrt(5)'. In group chats, you'll need to enclose your input in [[double square brackets]] like this: [[1+1]].";
     }
@@ -36,7 +35,7 @@ const processInput = (input, chatType) => {
     }
 };
 
-const processMessage = async (message) => {
+async function processMessage(message) {
     let text = message.text;
     let result = processInput(text, message.chat.type);
     if (result != null && result != '') {
@@ -53,7 +52,7 @@ const processMessage = async (message) => {
     }
 };
 
-const processUpdate = async (update) => {
+async function processUpdate(update) {
     console.log('Update: ' + JSON.stringify(update));
     if (update.message && update.message.text) {
         await processMessage(update.message);
@@ -73,7 +72,7 @@ const processUpdate = async (update) => {
     }
 };
 
-const pollUpdates = async () => {
+async function pollUpdates() {
     try {
         var highestOffet = 441392434;
         while (true) {
@@ -92,49 +91,35 @@ const pollUpdates = async () => {
     }
 };
 
-const postJSON = (url, jsonBody, method='POST', headers={}) => {
-    return new Promise(function(resolve, reject) {
-        let postData = Buffer.from(JSON.stringify(jsonBody), 'utf8');
-        let req = https.request(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json ; charset=UTF-8',
-                'Content-Length': postData.length,
-                ...headers
-            }
-        }, res => {
-            res.setEncoding("utf8");
-            let body = "";
-            res.on("data", data => {
-                body += data;
-            });
-            res.on("end", () => {
-                let responseObject = JSON.parse(body);
-                if (responseObject.ok) {
-                    resolve(responseObject.result);
-                } else {
-                    console.log('Error: ' + JSON.stringify(responseObject));
-                    reject(responseObject); // has fields 'description' and 'error_code'
-                }
-            });
-        });
-        req.write(postData);
-        req.end();
-    });
-};
+async function postJSON(url, body) {
+	let response = await fetch(url, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json ; charset=UTF-8',
+		},
+		body: JSON.stringify(body),
+	});
+	let responseObject = await response.json();
+	if (responseObject.ok) {
+		return responseObject.result;
+	} else {
+		const msg = 'Error: ' + JSON.stringify(responseObject);
+		console.log(msg);
+		throw new Error(msg);
+	}
+}
 
-if (process.env.AWS_REGION) {
-    // we're running in AWS Lambda
-    exports.handler = async (event) => {
-        let update = JSON.parse(event.body);
-        try {
-            await processUpdate(update);
-        } catch (error) {
-            console.log(error);
-        }
-        return { statusCode: 200, body: 'ok' };
-    };
-} else {
+export async function handler(event) {
+    let update = JSON.parse(event.body);
+    try {
+        await processUpdate(update);
+    } catch (error) {
+        console.log(error);
+    }
+    return { statusCode: 200, body: 'ok' };
+}
+
+if (!process.env.AWS_REGION) {
     // running locally
     pollUpdates();
 }

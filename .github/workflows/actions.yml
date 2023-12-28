@@ -52,6 +52,20 @@ jobs:
           rustup component add clippy
           cargo clippy --workspace --all-targets --all-features -- -D warnings
           cargo fmt -- --check
+      
+      - name: Compile icon/resources.res
+        if: ${{ matrix.platform == 'windows-latest' }}
+        run: |
+          $InstallationPath = vswhere -products * -latest -prerelease -property installationPath
+          pushd "$($InstallationPath)\VC\Auxiliary\Build"
+          cmd /c "vcvarsall.bat x64 & set" |
+          foreach {
+            if ($_ -match "=") {
+              $v = $_.split("=", 2); set-item -force -path "ENV:\$($v[0])" -value "$($v[1])" 
+            }
+          }
+          popd
+          .\icon\create-resources.ps1
 
       - name: Build, get version
         run: |
