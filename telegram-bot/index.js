@@ -1,3 +1,4 @@
+// @ts-check
 import fend from 'fend-wasm-nodejs';
 
 const TELEGRAM_BOT_API_TOKEN = process.env.TELEGRAM_BOT_API_TOKEN;
@@ -11,6 +12,15 @@ LAMBDA_URL="..."
 curl "https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/setWebhook" --form-string "url=${LAMBDA_URL}"
 */
 
+/**
+ * @typedef {{ text: string; chat: { type: string; id: number; }; }} Message
+ * @typedef {{ update_id: number, message?: Message; edited_message?: Message; inline_query?: { query: string; id: number; }; }} Update
+ */
+
+/**
+ * @param {string} input
+ * @param {string} chatType
+ */
 function processInput(input, chatType) {
     if (input == '/start' || input == '/help') {
         return "fend is an arbitrary-precision unit-aware calculator.\n\nYou can send it maths questions like '1+1', 'sin(pi)' or 'sqrt(5)'. In group chats, you'll need to enclose your input in [[double square brackets]] like this: [[1+1]].";
@@ -35,6 +45,9 @@ function processInput(input, chatType) {
     }
 };
 
+/**
+ * @param {Message} message
+ */
 async function processMessage(message) {
     let text = message.text;
     let result = processInput(text, message.chat.type);
@@ -52,6 +65,9 @@ async function processMessage(message) {
     }
 };
 
+/**
+ * @param {Update} update
+ */
 async function processUpdate(update) {
     console.log('Update: ' + JSON.stringify(update));
     if (update.message && update.message.text) {
@@ -77,6 +93,7 @@ async function pollUpdates() {
         var highestOffet = 441392434;
         while (true) {
             console.log('Polling getUpdates (30s)...')
+            /** @type Update[] */
             let updates = await postJSON('getUpdates', {
                 timeout: 30,
                 offset: highestOffet + 1,
@@ -91,6 +108,10 @@ async function pollUpdates() {
     }
 };
 
+/**
+ * @param {string} endpoint
+ * @param {any} body
+ */
 async function postJSON(endpoint, body) {
 	let response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/${endpoint}`, {
 		method: 'POST',
@@ -109,6 +130,9 @@ async function postJSON(endpoint, body) {
 	}
 }
 
+/**
+ * @param {{ body: string; }} event
+ */
 export async function handler(event) {
     let update = JSON.parse(event.body);
     try {
