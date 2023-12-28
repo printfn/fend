@@ -58,7 +58,7 @@ impl OutputColors {
 		}
 	}
 
-	pub fn get_color(&self, kind: fend_core::SpanKind) -> console::Style {
+	pub fn get_color(&self, kind: fend_core::SpanKind) -> String {
 		use fend_core::SpanKind;
 
 		match kind {

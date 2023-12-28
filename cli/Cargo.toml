@@ -11,7 +11,6 @@ license.workspace = true
 readme = "../README.md"
 
 [dependencies]
-console = { version = "0.15.7", default-features = false }
 ctrlc = "3.4.2"
 fend-core.workspace = true
 home = "0.5.9"

@@ -33,8 +33,7 @@ fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> S
 	let mut result = String::new();
 	for span in spans {
 		let style = config.colors.get_color(span.kind());
-		let styled_str = style.force_styling(true).apply_to(span.string());
-		write!(result, "{styled_str}").unwrap();
+		write!(result, "{style}{}\x1b[0m", span.string()).unwrap();
 	}
 	result
 }

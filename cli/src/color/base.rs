@@ -53,20 +53,6 @@ impl<'de> serde::Deserialize<'de> for Base {
 }
 
 impl Base {
-	pub fn as_ansi(&self) -> console::Color {
-		match self {
-			Self::Black => console::Color::Black,
-			Self::Red => console::Color::Red,
-			Self::Green => console::Color::Green,
-			Self::Yellow => console::Color::Yellow,
-			Self::Blue => console::Color::Blue,
-			Self::Magenta => console::Color::Magenta,
-			Self::Cyan => console::Color::Cyan,
-			Self::White | Self::Unknown(_) => console::Color::White,
-			Self::Color256(n) => console::Color::Color256(*n),
-		}
-	}
-
 	pub fn warn_about_unknown_colors(&self) {
 		if let Self::Unknown(name) = self {
 			eprintln!("Warning: ignoring unknown color `{name}`");

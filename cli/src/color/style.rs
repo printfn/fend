@@ -1,5 +1,5 @@
 use super::base::Base;
-use std::fmt;
+use std::fmt::{self, Write};
 
 #[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub struct Color {
@@ -83,18 +83,36 @@ impl Color {
 		}
 	}
 
-	pub fn to_ansi(&self) -> console::Style {
-		let mut style = console::Style::default();
-		if let Some(foreground) = &self.foreground {
-			style = style.fg(foreground.as_ansi());
-		}
+	pub fn to_ansi(&self) -> String {
+		let mut result = "\x1b[".to_string();
 		if self.underline {
-			style = style.underlined();
+			result.push_str("4;");
 		}
 		if self.bold {
-			style = style.bold();
+			result.push_str("1;");
 		}
-		style
+		if let Some(foreground) = &self.foreground {
+			match foreground {
+				Base::Black => result.push_str("30"),
+				Base::Red => result.push_str("31"),
+				Base::Green => result.push_str("32"),
+				Base::Yellow => result.push_str("33"),
+				Base::Blue => result.push_str("34"),
+				Base::Magenta => result.push_str("35"),
+				Base::Cyan => result.push_str("36"),
+				Base::White => result.push_str("37"),
+				Base::Color256(n) => {
+					result.push_str("38;5;");
+					write!(result, "{n}").unwrap();
+					result.push_str(&n.to_string());
+				}
+				Base::Unknown(_) => result.push_str("39"),
+			}
+		} else {
+			result.push_str("39");
+		}
+		result.push('m');
+		result
 	}
 
 	pub fn print_warnings_about_unknown_keys(&self, style_assignment: &str) {
