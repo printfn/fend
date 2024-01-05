@@ -26,6 +26,7 @@ use unit_exponent::UnitExponent;
 use super::Exact;
 
 #[derive(Clone)]
+#[allow(clippy::pedantic)]
 pub(crate) struct Value {
 	value: Dist,
 	unit: Unit,
