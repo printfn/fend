@@ -4155,7 +4155,6 @@ fn ten_sf() {
 	test_eval("10 sf", "10 sf");
 }
 
-// Start
 #[test]
 fn one_over_sin() {
 	test_eval_simple("1/sin", "\\x.(1/(sin x))");
@@ -5474,13 +5473,11 @@ fn test_invalid_dice_syntax_5() {
 	expect_error("30000000000000000d2", None);
 }
 
-// ERROR
 #[test]
 fn unit_literal() {
 	test_eval("()", "()");
 }
 
-// ERROR
 #[test]
 fn empty_statements() {
 	test_eval("1234;", "1234");
@@ -5576,7 +5573,6 @@ fn fudged_rhs_feet_conv() {
 	test_eval("6 foot 4 in cm", "193.04 cm");
 }
 
-// ERROR
 #[test]
 fn trivial_fn() {
 	// used for testing fn serialization
