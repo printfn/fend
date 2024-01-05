@@ -2,7 +2,7 @@ use std::{fmt, io};
 
 use crate::{
 	error::FendError,
-	serialize::{deserialize_u8, serialize_u8},
+	serialize::{Deserialize, Serialize}, result::FendCoreResult,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -34,7 +34,7 @@ impl Base {
 		}
 	}
 
-	pub(crate) const fn from_zero_based_prefix_char(ch: char) -> Result<Self, FendError> {
+	pub(crate) const fn from_zero_based_prefix_char(ch: char) -> FendCoreResult<Self> {
 		Ok(match ch {
 			'x' => Self(BaseEnum::Hex),
 			'o' => Self(BaseEnum::Octal),
@@ -43,7 +43,7 @@ impl Base {
 		})
 	}
 
-	pub(crate) const fn from_plain_base(base: u8) -> Result<Self, FendError> {
+	pub(crate) const fn from_plain_base(base: u8) -> FendCoreResult<Self> {
 		if base < 2 {
 			return Err(FendError::BaseTooSmall);
 		} else if base > 36 {
@@ -52,7 +52,7 @@ impl Base {
 		Ok(Self(BaseEnum::Plain(base)))
 	}
 
-	pub(crate) const fn from_custom_base(base: u8) -> Result<Self, FendError> {
+	pub(crate) const fn from_custom_base(base: u8) -> FendCoreResult<Self> {
 		if base < 2 {
 			return Err(FendError::BaseTooSmall);
 		} else if base > 36 {
@@ -118,30 +118,30 @@ impl Base {
 		})
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		match self.0 {
-			BaseEnum::Binary => serialize_u8(1, write)?,
-			BaseEnum::Octal => serialize_u8(2, write)?,
-			BaseEnum::Hex => serialize_u8(3, write)?,
+			BaseEnum::Binary => 1u8.serialize(write)?,
+			BaseEnum::Octal => 2u8.serialize(write)?,
+			BaseEnum::Hex => 3u8.serialize(write)?,
 			BaseEnum::Custom(b) => {
-				serialize_u8(4, write)?;
-				serialize_u8(b, write)?;
+				4u8.serialize(write)?;
+				b.serialize(write)?;
 			}
 			BaseEnum::Plain(b) => {
-				serialize_u8(5, write)?;
-				serialize_u8(b, write)?;
+				5u8.serialize(write)?;
+				b.serialize(write)?;
 			}
 		}
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Ok(Self(match deserialize_u8(read)? {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Ok(Self(match u8::deserialize(read)? {
 			1 => BaseEnum::Binary,
 			2 => BaseEnum::Octal,
 			3 => BaseEnum::Hex,
-			4 => BaseEnum::Custom(deserialize_u8(read)?),
-			5 => BaseEnum::Plain(deserialize_u8(read)?),
+			4 => BaseEnum::Custom(u8::deserialize(read)?),
+			5 => BaseEnum::Plain(u8::deserialize(read)?),
 			_ => return Err(FendError::DeserializationError),
 		}))
 	}

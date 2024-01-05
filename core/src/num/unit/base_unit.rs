@@ -1,9 +1,7 @@
 use std::{borrow::Cow, fmt, io};
 
-use crate::{
-	error::FendError,
-	serialize::{deserialize_string, serialize_string},
-};
+use crate::result::FendCoreResult;
+use crate::serialize::{Deserialize, Serialize};
 
 /// Represents a base unit, identified solely by its name. The name is not exposed to the user.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -32,14 +30,14 @@ impl BaseUnit {
 		self.name.as_ref()
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_string(self.name.as_ref(), write)?;
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.name.as_ref().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
 		Ok(Self {
-			name: Cow::Owned(deserialize_string(read)?),
+			name: Cow::Owned(String::deserialize(read)?),
 		})
 	}
 }

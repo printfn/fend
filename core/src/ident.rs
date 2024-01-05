@@ -1,8 +1,8 @@
 use std::{borrow::Cow, fmt, io};
 
 use crate::{
-	error::FendError,
-	serialize::{deserialize_string, serialize_string},
+	result::FendCoreResult,
+	serialize::{Deserialize, Serialize},
 };
 
 #[derive(Clone, Debug)]
@@ -27,13 +27,12 @@ impl Ident {
 		self.0 == "$" || self.0 == "\u{a3}"
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_string(self.0.as_ref(), write)?;
-		Ok(())
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.0.as_ref().serialize(write)
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Ok(Self(Cow::Owned(deserialize_string(read)?)))
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Ok(Self(Cow::Owned(String::deserialize(read)?)))
 	}
 }
 

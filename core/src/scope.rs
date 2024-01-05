@@ -1,6 +1,6 @@
-use crate::error::FendError;
 use crate::ident::Ident;
-use crate::serialize::{deserialize_bool, serialize_bool};
+use crate::result::FendCoreResult;
+use crate::serialize::{Deserialize, Serialize};
 use crate::value::Value;
 use crate::Attrs;
 use crate::{ast::Expr, error::Interrupt};
@@ -19,7 +19,7 @@ impl ScopeValue {
 		attrs: Attrs,
 		context: &mut crate::Context,
 		int: &I,
-	) -> Result<Value, FendError> {
+	) -> FendCoreResult<Value> {
 		match self {
 			Self::LazyVariable(expr, scope) => {
 				let value = crate::ast::evaluate(expr.clone(), scope.clone(), attrs, context, int)?;
@@ -28,14 +28,14 @@ impl ScopeValue {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		match self {
 			Self::LazyVariable(e, s) => {
 				e.serialize(write)?;
 				match s {
-					None => serialize_bool(false, write)?,
+					None => false.serialize(write)?,
 					Some(s) => {
-						serialize_bool(true, write)?;
+						true.serialize(write)?;
 						s.serialize(write)?;
 					}
 				}
@@ -44,9 +44,9 @@ impl ScopeValue {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
 		Ok(Self::LazyVariable(Expr::deserialize(read)?, {
-			if deserialize_bool(read)? {
+			if bool::deserialize(read)? {
 				None
 			} else {
 				Some(Arc::new(Scope::deserialize(read)?))
@@ -63,25 +63,25 @@ pub(crate) struct Scope {
 }
 
 impl Scope {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		self.ident.serialize(write)?;
 		self.value.serialize(write)?;
 		match &self.inner {
-			None => serialize_bool(false, write)?,
+			None => false.serialize(write)?,
 			Some(s) => {
-				serialize_bool(true, write)?;
+				true.serialize(write)?;
 				s.serialize(write)?;
 			}
 		}
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
 		Ok(Self {
 			ident: Ident::deserialize(read)?,
 			value: ScopeValue::deserialize(read)?,
 			inner: {
-				if deserialize_bool(read)? {
+				if bool::deserialize(read)? {
 					None
 				} else {
 					Some(Arc::new(Self::deserialize(read)?))
@@ -113,7 +113,7 @@ impl Scope {
 		attrs: Attrs,
 		context: &mut crate::Context,
 		int: &I,
-	) -> Result<Option<Value>, FendError> {
+	) -> FendCoreResult<Option<Value>> {
 		if self.ident.as_str() == ident.as_str() {
 			let value = self.value.eval(attrs, context, int)?;
 			Ok(Some(value))

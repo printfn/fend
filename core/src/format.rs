@@ -1,5 +1,6 @@
-use crate::error::{FendError, Interrupt};
+use crate::error::Interrupt;
 use crate::num::Exact;
+use crate::result::FendCoreResult;
 use std::fmt;
 
 pub(crate) trait Format {
@@ -10,10 +11,10 @@ pub(crate) trait Format {
 		&self,
 		params: &Self::Params,
 		int: &I,
-	) -> Result<Exact<Self::Out>, FendError>;
+	) -> FendCoreResult<Exact<Self::Out>>;
 
 	/// Simpler alternative to calling format
-	fn fm<I: Interrupt>(&self, int: &I) -> Result<Self::Out, FendError> {
+	fn fm<I: Interrupt>(&self, int: &I) -> FendCoreResult<Self::Out> {
 		Ok(self.format(&Default::default(), int)?.value)
 	}
 }

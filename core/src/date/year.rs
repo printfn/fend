@@ -2,7 +2,8 @@ use std::{convert, fmt, io};
 
 use crate::{
 	error::FendError,
-	serialize::{deserialize_i32, serialize_i32},
+	result::FendCoreResult,
+	serialize::{Deserialize, Serialize},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -14,6 +15,7 @@ impl Year {
 		Self(year)
 	}
 
+	#[inline]
 	pub(crate) fn value(self) -> i32 {
 		self.0
 	}
@@ -52,13 +54,13 @@ impl Year {
 		}
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_i32(self.value(), write)?;
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.value().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Self::try_from(deserialize_i32(read)?).map_err(|_| FendError::DeserializationError)
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Self::try_from(i32::deserialize(read)?).map_err(|_| FendError::DeserializationError)
 	}
 }
 

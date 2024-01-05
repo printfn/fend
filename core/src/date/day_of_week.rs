@@ -1,6 +1,7 @@
 use crate::{
 	error::FendError,
-	serialize::{deserialize_u8, serialize_u8},
+	result::FendCoreResult,
+	serialize::{Deserialize, Serialize},
 };
 use std::{fmt, io};
 
@@ -43,13 +44,13 @@ impl DayOfWeek {
 		}
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_u8(self.as_u8(), write)?;
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.as_u8().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Ok(match deserialize_u8(read)? {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Ok(match u8::deserialize(read)? {
 			0 => Self::Sunday,
 			1 => Self::Monday,
 			2 => Self::Tuesday,

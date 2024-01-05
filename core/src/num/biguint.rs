@@ -2,10 +2,8 @@ use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
-use crate::serialize::{
-	deserialize_u64, deserialize_u8, deserialize_usize, serialize_u64, serialize_u8,
-	serialize_usize,
-};
+use crate::result::FendCoreResult;
+use crate::serialize::{Deserialize, Serialize};
 use std::cmp::{max, Ordering};
 use std::{fmt, hash, io};
 
@@ -70,8 +68,8 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> Result<usize, FendError> {
-		let error = || -> Result<_, FendError> {
+	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> FendCoreResult<usize> {
+		let error = || -> FendCoreResult<_> {
 			Ok(out_of_range(
 				self.fm(int)?,
 				Range {
@@ -167,7 +165,7 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> FendCoreResult<Self> {
 		while b >= 1.into() {
 			let r = a.rem(&b, int)?;
 			a = b;
@@ -177,7 +175,7 @@ impl BigUint {
 		Ok(a)
 	}
 
-	pub(crate) fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> FendCoreResult<Self> {
 		if a.is_zero() && b.is_zero() {
 			return Err(FendError::ZeroToThePowerOfZero);
 		}
@@ -192,7 +190,7 @@ impl BigUint {
 
 	// computes the exact `n`-th root if possible, otherwise the next lower integer
 	#[allow(clippy::redundant_clone)]
-	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> Result<Exact<Self>, FendError> {
+	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FendCoreResult<Exact<Self>> {
 		if self == 0.into() || self == 1.into() || n == &Self::from(1) {
 			return Ok(Exact::new(self, true));
 		}
@@ -213,7 +211,7 @@ impl BigUint {
 		Ok(Exact::new(low_guess, false))
 	}
 
-	fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> Result<Self, FendError> {
+	fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> FendCoreResult<Self> {
 		let mut result = Self::from(1);
 		let mut base = self.clone();
 		while exponent > 0 {
@@ -227,7 +225,7 @@ impl BigUint {
 		Ok(result)
 	}
 
-	fn lshift<I: Interrupt>(&mut self, int: &I) -> Result<(), FendError> {
+	fn lshift<I: Interrupt>(&mut self, int: &I) -> FendCoreResult<()> {
 		match self {
 			Small(n) => {
 				if *n & 0xc000_0000_0000_0000 == 0 {
@@ -252,7 +250,7 @@ impl BigUint {
 		Ok(())
 	}
 
-	fn rshift<I: Interrupt>(&mut self, int: &I) -> Result<(), FendError> {
+	fn rshift<I: Interrupt>(&mut self, int: &I) -> FendCoreResult<()> {
 		match self {
 			Small(n) => *n >>= 1,
 			Large(value) => {
@@ -275,7 +273,7 @@ impl BigUint {
 		&self,
 		other: &Self,
 		int: &I,
-	) -> Result<(Self, Self), FendError> {
+	) -> FendCoreResult<(Self, Self)> {
 		if let (Small(a), Small(b)) = (self, other) {
 			if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
 				return Ok((Small(div_res), Small(mod_res)));
@@ -322,7 +320,7 @@ impl BigUint {
 	}
 
 	/// computes self *= other
-	fn mul_internal<I: Interrupt>(&mut self, other: &Self, int: &I) -> Result<(), FendError> {
+	fn mul_internal<I: Interrupt>(&mut self, other: &Self, int: &I) -> FendCoreResult<()> {
 		if self.is_zero() || other.is_zero() {
 			*self = Self::from(0);
 			return Ok(());
@@ -359,7 +357,7 @@ impl BigUint {
 	}
 
 	// Note: 0! = 1, 1! = 1
-	pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> FendCoreResult<Self> {
 		let mut res = Self::from(1);
 		while self > 1.into() {
 			test_int(int)?;
@@ -369,7 +367,7 @@ impl BigUint {
 		Ok(res)
 	}
 
-	pub(crate) fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		if let (Small(a), Small(b)) = (&self, &other) {
 			if let Some(res) = a.checked_mul(*b) {
 				return Ok(Self::from(res));
@@ -379,15 +377,15 @@ impl BigUint {
 		Ok(self)
 	}
 
-	fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+	fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		Ok(self.divmod(other, int)?.1)
 	}
 
-	pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> Result<bool, FendError> {
+	pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> FendCoreResult<bool> {
 		Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
 	}
 
-	pub(crate) fn div<I: Interrupt>(self, other: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn div<I: Interrupt>(self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		Ok(self.divmod(other, int)?.0)
 	}
 
@@ -446,32 +444,32 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		match self {
 			Small(x) => {
-				serialize_u8(1, write)?;
-				serialize_u64(*x, write)?;
+				1u8.serialize(write)?;
+				x.serialize(write)?;
 			}
 			Large(v) => {
-				serialize_u8(2, write)?;
-				serialize_usize(v.len(), write)?;
+				2u8.serialize(write)?;
+				v.len().serialize(write)?;
 				for b in v {
-					serialize_u64(*b, write)?;
+					b.serialize(write)?;
 				}
 			}
 		}
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		let kind = deserialize_u8(read)?;
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		let kind = u8::deserialize(read)?;
 		Ok(match kind {
-			1 => Self::Small(deserialize_u64(read)?),
+			1 => Self::Small(u64::deserialize(read)?),
 			2 => {
-				let len = deserialize_usize(read)?;
+				let len = usize::deserialize(read)?;
 				let mut v = Vec::with_capacity(len);
 				for _ in 0..len {
-					v.push(deserialize_u64(read)?);
+					v.push(u64::deserialize(read)?);
 				}
 				Self::Large(v)
 			}
@@ -542,7 +540,7 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
 		let mut rhs = rhs.try_as_usize(int)?;
 		if rhs > 64 {
 			self.make_large();
@@ -562,7 +560,7 @@ impl BigUint {
 		Ok(self)
 	}
 
-	pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
 		let rhs = rhs.try_as_usize(int)?;
 		for _ in 0..rhs {
 			if self.is_zero() {
@@ -651,7 +649,7 @@ impl Format for BigUint {
 		&self,
 		params: &Self::Params,
 		int: &I,
-	) -> Result<Exact<Self::Out>, FendError> {
+	) -> FendCoreResult<Exact<Self::Out>> {
 		let base_prefix = if params.write_base_prefix {
 			Some(params.base)
 		} else {
