@@ -1,6 +1,7 @@
 use crate::{
 	date::{Date, Day, Month, Year},
-	error::FendError, result::FendCoreResult,
+	error::FendError,
+	result::FendCoreResult,
 };
 use std::convert;
 

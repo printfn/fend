@@ -1,6 +1,6 @@
 use crate::result::FendCoreResult;
-use crate::{Serialize, Deserialize};
 use crate::FendError;
+use crate::{Deserialize, Serialize};
 use std::fmt;
 use std::io;
 

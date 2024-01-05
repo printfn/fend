@@ -2,7 +2,8 @@ use std::{fmt, io};
 
 use crate::{
 	error::FendError,
-	serialize::{Deserialize, Serialize}, result::FendCoreResult,
+	result::FendCoreResult,
+	serialize::{Deserialize, Serialize},
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]

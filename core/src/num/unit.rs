@@ -456,11 +456,7 @@ impl Value {
 		self.value.equals_int(0)
 	}
 
-	pub(crate) fn new_die<I: Interrupt>(
-		count: u32,
-		faces: u32,
-		int: &I,
-	) -> FendCoreResult<Self> {
+	pub(crate) fn new_die<I: Interrupt>(count: u32, faces: u32, int: &I) -> FendCoreResult<Self> {
 		Ok(Self::new(Dist::new_die(count, faces, int)?, vec![]))
 	}
 

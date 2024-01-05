@@ -139,11 +139,7 @@ fn expr_unit<I: Interrupt>(
 	})
 }
 
-fn construct_prefixed_unit<I: Interrupt>(
-	a: UnitDef,
-	b: UnitDef,
-	int: &I,
-) -> FendCoreResult<Value> {
+fn construct_prefixed_unit<I: Interrupt>(a: UnitDef, b: UnitDef, int: &I) -> FendCoreResult<Value> {
 	let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
 	assert_eq!(a.singular, a.plural);
 	let unit = Number::create_unit_value_from_value(
