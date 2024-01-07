@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.4.1 (2024-01-07)
+
+* Fix bug where fend could return incorrect results when calculating
+    exponents or roots of certain units, e.g. `sqrt(milli)`.
+
 ### v1.4.0 (2023-12-27)
 
 * The license of fend has changed. As of v1.4.0, fend is available under
