@@ -26,6 +26,7 @@ use super::Exact;
 
 #[derive(Clone)]
 pub(crate) struct Value {
+	#[allow(clippy::struct_field_names)]
 	value: Dist,
 	unit: Unit,
 	exact: bool,
@@ -753,10 +754,7 @@ impl Value {
 					exact: res_exact,
 				}
 				.mul(
-					&Exact {
-						value: comp.unit.scale.clone().into(),
-						exact: true,
-					},
+					&comp.unit.scale.pow(comp.exponent, int)?.apply(Dist::from),
 					int,
 				)?;
 				res_value = adjusted_res.value;

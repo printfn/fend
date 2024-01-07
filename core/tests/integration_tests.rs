@@ -5822,3 +5822,11 @@ fn simplification_ohms() {
 fn simplification_ohms_2() {
 	test_eval("4556 volt / ampere", "4556 ohms");
 }
+
+#[test]
+fn alias_sqrt() {
+	test_eval(
+		"partial_result = 2*(0.84 femto meter) / (1.35e-22 m/s^2); sqrt(partial_result)",
+		"approx. 3527.6684147527 s",
+	);
+}
