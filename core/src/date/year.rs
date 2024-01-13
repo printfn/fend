@@ -2,7 +2,7 @@ use std::{convert, fmt, io};
 
 use crate::{
 	error::FendError,
-	result::FendCoreResult,
+	result::FResult,
 	serialize::{Deserialize, Serialize},
 };
 
@@ -54,12 +54,12 @@ impl Year {
 		}
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 		self.value().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Self::try_from(i32::deserialize(read)?).map_err(|_| FendError::DeserializationError)
 	}
 }

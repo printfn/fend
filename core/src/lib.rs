@@ -45,7 +45,7 @@ use std::{collections::HashMap, fmt, io};
 use error::FendError;
 pub(crate) use eval::Attrs;
 pub use interrupt::Interrupt;
-use result::FendCoreResult;
+use result::FResult;
 use serialize::{Deserialize, Serialize};
 
 /// This contains the result of a computation.
@@ -282,7 +282,7 @@ impl Context {
 		self.output_mode = OutputMode::TerminalFixedWidth;
 	}
 
-	fn serialize_variables_internal(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	fn serialize_variables_internal(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.variables.len().serialize(write)?;
 		for (k, v) in &self.variables {
 			k.as_str().serialize(write)?;
@@ -305,7 +305,7 @@ impl Context {
 		}
 	}
 
-	fn deserialize_variables_internal(&mut self, read: &mut impl io::Read) -> FendCoreResult<()> {
+	fn deserialize_variables_internal(&mut self, read: &mut impl io::Read) -> FResult<()> {
 		let len = usize::deserialize(read)?;
 		self.variables.clear();
 		self.variables.reserve(len);

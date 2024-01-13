@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fmt, io};
 
 use crate::{
-	result::FendCoreResult,
+	result::FResult,
 	serialize::{Deserialize, Serialize},
 };
 
@@ -27,11 +27,11 @@ impl Ident {
 		self.0 == "$" || self.0 == "\u{a3}"
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.0.as_ref().serialize(write)
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self(Cow::Owned(String::deserialize(read)?)))
 	}
 }

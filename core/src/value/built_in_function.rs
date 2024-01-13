@@ -1,4 +1,4 @@
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::value::Expr;
 use crate::value::Ident;
 use crate::value::Scope;
@@ -54,7 +54,7 @@ impl BuiltInFunction {
 		)
 	}
 
-	pub(crate) fn invert(self) -> FendCoreResult<Value> {
+	pub(crate) fn invert(self) -> FResult<Value> {
 		Ok(match self {
 			Self::Sin => Value::BuiltInFunction(Self::Asin),
 			Self::Cos => Value::BuiltInFunction(Self::Acos),
@@ -101,7 +101,7 @@ impl BuiltInFunction {
 		}
 	}
 
-	fn try_from_str(s: &str) -> FendCoreResult<Self> {
+	fn try_from_str(s: &str) -> FResult<Self> {
 		Ok(match s {
 			"approximately" => Self::Approximately,
 			"abs" => Self::Abs,
@@ -130,11 +130,11 @@ impl BuiltInFunction {
 		})
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 		self.as_str().serialize(write)
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Self::try_from_str(String::deserialize(read)?.as_str())
 	}
 }

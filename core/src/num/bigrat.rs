@@ -3,13 +3,13 @@ use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use std::{cmp, fmt, hash, io, ops};
 
 pub(crate) mod sign {
 	use crate::{
 		error::FendError,
-		result::FendCoreResult,
+		result::FResult,
 		serialize::{Deserialize, Serialize},
 	};
 	use std::io;
@@ -39,11 +39,11 @@ pub(crate) mod sign {
 			}
 		}
 
-		pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 			(self as u8).serialize(write)
 		}
 
-		pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 			Ok(match u8::deserialize(read)? {
 				1 => Self::Positive,
 				2 => Self::Negative,
@@ -117,14 +117,14 @@ impl hash::Hash for BigRat {
 }
 
 impl BigRat {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.sign.serialize(write)?;
 		self.num.serialize(write)?;
 		self.den.serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self {
 			sign: Sign::deserialize(read)?,
 			num: BigUint::deserialize(read)?,
@@ -136,7 +136,7 @@ impl BigRat {
 		self.den == 1.into()
 	}
 
-	pub(crate) fn try_as_usize<I: Interrupt>(mut self, int: &I) -> FendCoreResult<usize> {
+	pub(crate) fn try_as_usize<I: Interrupt>(mut self, int: &I) -> FResult<usize> {
 		if self.sign == Sign::Negative && self.num != 0.into() {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
@@ -147,7 +147,7 @@ impl BigRat {
 		self.num.try_as_usize(int)
 	}
 
-	pub(crate) fn try_as_i64<I: Interrupt>(mut self, int: &I) -> FendCoreResult<i64> {
+	pub(crate) fn try_as_i64<I: Interrupt>(mut self, int: &I) -> FResult<i64> {
 		self = self.simplify(int)?;
 		if self.den != 1.into() {
 			return Err(FendError::FractionToInteger);
@@ -166,7 +166,7 @@ impl BigRat {
 		})
 	}
 
-	pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> FendCoreResult<f64> {
+	pub(crate) fn into_f64<I: Interrupt>(mut self, int: &I) -> FResult<f64> {
 		if self.is_definitely_zero() {
 			return Ok(0.0);
 		}
@@ -184,7 +184,7 @@ impl BigRat {
 		clippy::cast_sign_loss,
 		clippy::cast_precision_loss
 	)]
-	pub(crate) fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> FResult<Self> {
 		let negative = f < 0.0;
 		if negative {
 			f = -f;
@@ -205,7 +205,7 @@ impl BigRat {
 	}
 
 	// sin works for all real numbers
-	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		Ok(if self == 0.into() {
 			Exact::new(Self::from(0), true)
 		} else {
@@ -214,7 +214,7 @@ impl BigRat {
 	}
 
 	// asin, acos and atan only work for values between -1 and 1
-	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		let one = Self::from(1);
 		if self > one || self < -one {
 			return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)));
@@ -222,7 +222,7 @@ impl BigRat {
 		Self::from_f64(f64::asin(self.into_f64(int)?), int)
 	}
 
-	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		let one = Self::from(1);
 		if self > one || self < -one {
 			return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)));
@@ -231,32 +231,32 @@ impl BigRat {
 	}
 
 	// note that this works for any real number, unlike asin and acos
-	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Self::from_f64(f64::atan(self.into_f64(int)?), int)
 	}
 
-	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Self::from_f64(f64::atan2(self.into_f64(int)?, rhs.into_f64(int)?), int)
 	}
 
-	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Self::from_f64(f64::sinh(self.into_f64(int)?), int)
 	}
 
-	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Self::from_f64(f64::cosh(self.into_f64(int)?), int)
 	}
 
-	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Self::from_f64(f64::tanh(self.into_f64(int)?), int)
 	}
 
-	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Self::from_f64(f64::asinh(self.into_f64(int)?), int)
 	}
 
 	// value must not be less than 1
-	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self < 1.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -270,7 +270,7 @@ impl BigRat {
 	}
 
 	// value must be between -1 and 1.
-	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		let one: Self = 1.into();
 		if self >= one || self <= -one {
 			return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)));
@@ -279,7 +279,7 @@ impl BigRat {
 	}
 
 	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		if self <= 0.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -298,7 +298,7 @@ impl BigRat {
 		))
 	}
 
-	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self <= 0.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -311,7 +311,7 @@ impl BigRat {
 		Self::from_f64(f64::log2(self.into_f64(int)?), int)
 	}
 
-	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self <= 0.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -326,9 +326,9 @@ impl BigRat {
 
 	fn apply_uint_op<I: Interrupt, R>(
 		mut self,
-		f: impl FnOnce(BigUint, &I) -> FendCoreResult<R>,
+		f: impl FnOnce(BigUint, &I) -> FResult<R>,
 		int: &I,
-	) -> FendCoreResult<R> {
+	) -> FResult<R> {
 		self = self.simplify(int)?;
 		if self.den != 1.into() {
 			let n = self.fm(int)?;
@@ -340,7 +340,7 @@ impl BigRat {
 		f(self.num, int)
 	}
 
-	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(self.apply_uint_op(BigUint::factorial, int)?.into())
 	}
 
@@ -349,7 +349,7 @@ impl BigRat {
 		rhs: Self,
 		op: crate::ast::BitwiseBop,
 		int: &I,
-	) -> FendCoreResult<Self> {
+	) -> FResult<Self> {
 		use crate::ast::BitwiseBop;
 
 		Ok(self
@@ -371,7 +371,7 @@ impl BigRat {
 	}
 
 	/// compute a + b
-	fn add_internal<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	fn add_internal<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		// a + b == -((-a) + (-b))
 		if self.sign == Sign::Negative {
 			return Ok(-((-self).add_internal(-rhs, int)?));
@@ -423,7 +423,7 @@ impl BigRat {
 		})
 	}
 
-	fn simplify<I: Interrupt>(mut self, int: &I) -> FendCoreResult<Self> {
+	fn simplify<I: Interrupt>(mut self, int: &I) -> FResult<Self> {
 		if self.den == 1.into() {
 			return Ok(self);
 		}
@@ -433,7 +433,7 @@ impl BigRat {
 		Ok(self)
 	}
 
-	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		if rhs.num == 0.into() {
 			return Err(FendError::DivideByZero);
 		}
@@ -444,7 +444,7 @@ impl BigRat {
 		})
 	}
 
-	pub(crate) fn modulo<I: Interrupt>(mut self, mut rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn modulo<I: Interrupt>(mut self, mut rhs: Self, int: &I) -> FResult<Self> {
 		if rhs.num == 0.into() {
 			return Err(FendError::ModuloByZero);
 		}
@@ -466,7 +466,7 @@ impl BigRat {
 
 	// test if this fraction has a terminating representation
 	// e.g. in base 10: 1/4 = 0.25, but not 1/3
-	fn terminates_in_base<I: Interrupt>(&self, base: Base, int: &I) -> FendCoreResult<bool> {
+	fn terminates_in_base<I: Interrupt>(&self, base: Base, int: &I) -> FResult<bool> {
 		let mut x = self.clone();
 		let base_as_u64: u64 = base.base_as_u8().into();
 		let base = Self {
@@ -493,7 +493,7 @@ impl BigRat {
 		use_parens_if_product: bool,
 		sf_limit: Option<usize>,
 		int: &I,
-	) -> FendCoreResult<Exact<FormattedBigRat>> {
+	) -> FResult<Exact<FormattedBigRat>> {
 		let (ty, exact) = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
 			(FormattedBigRatType::Integer(None, false, term, false), true)
 		} else {
@@ -527,7 +527,7 @@ impl BigRat {
 		mixed: bool,
 		use_parens: bool,
 		int: &I,
-	) -> FendCoreResult<Exact<FormattedBigRat>> {
+	) -> FResult<Exact<FormattedBigRat>> {
 		let format_options = biguint::FormatOptions {
 			base,
 			write_base_prefix: true,
@@ -595,9 +595,9 @@ impl BigRat {
 		base: Base,
 		sign: Sign,
 		term: &'static str,
-		mut terminating: impl FnMut() -> FendCoreResult<bool>,
+		mut terminating: impl FnMut() -> FResult<bool>,
 		int: &I,
-	) -> FendCoreResult<Exact<FormattedBigRat>> {
+	) -> FResult<Exact<FormattedBigRat>> {
 		let integer_part = self.clone().num.div(&self.den, int)?;
 		let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
 			Some(sf)
@@ -689,10 +689,10 @@ impl BigRat {
 		numerator: &BigUint,
 		denominator: &BigUint,
 		max_digits: MaxDigitsToPrint,
-		mut terminating: impl FnMut() -> FendCoreResult<bool>,
-		print_integer_part: impl Fn(bool) -> FendCoreResult<(Sign, String)>,
+		mut terminating: impl FnMut() -> FResult<bool>,
+		print_integer_part: impl Fn(bool) -> FResult<(Sign, String)>,
 		int: &I,
-	) -> FendCoreResult<(Sign, Exact<String>)> {
+	) -> FResult<(Sign, Exact<String>)> {
 		let base_as_u64: u64 = base.base_as_u8().into();
 		let b: BigUint = base_as_u64.into();
 		let next_digit =
@@ -711,7 +711,7 @@ impl BigRat {
 				let next_num = bnum.sub(&digit.clone().mul(denominator, int)?);
 				Ok((next_num, digit))
 			};
-		let fold_digits = |mut s: String, digit: BigUint| -> FendCoreResult<String> {
+		let fold_digits = |mut s: String, digit: BigUint| -> FResult<String> {
 			let digit_str = digit
 				.format(
 					&biguint::FormatOptions {
@@ -771,9 +771,9 @@ impl BigRat {
 		base: Base,
 		ignore_number_of_leading_zeroes: bool,
 		mut next_digit: impl FnMut(usize, BigUint, &BigUint) -> Result<(BigUint, BigUint), NextDigitErr>,
-		print_integer_part: impl Fn(bool) -> FendCoreResult<(Sign, String)>,
+		print_integer_part: impl Fn(bool) -> FResult<(Sign, String)>,
 		int: &I,
-	) -> FendCoreResult<(Sign, Exact<String>)> {
+	) -> FResult<(Sign, Exact<String>)> {
 		let mut current_numerator = numerator.clone();
 		let mut i = 0;
 		let mut trailing_zeroes = 0;
@@ -896,11 +896,7 @@ impl BigRat {
 		Ok((lam, mu, collected_res))
 	}
 
-	pub(crate) fn pow<I: Interrupt>(
-		mut self,
-		mut rhs: Self,
-		int: &I,
-	) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn pow<I: Interrupt>(mut self, mut rhs: Self, int: &I) -> FResult<Exact<Self>> {
 		self = self.simplify(int)?;
 		rhs = rhs.simplify(int)?;
 		if self.num != 0.into() && self.sign == Sign::Negative && rhs.den != 1.into() {
@@ -945,7 +941,7 @@ impl BigRat {
 		val: &Self,
 		n: &Self,
 		int: &I,
-	) -> FendCoreResult<Self> {
+	) -> FResult<Self> {
 		let mut high_bound = low_bound.clone().add(1.into(), int)?;
 		for _ in 0..30 {
 			let guess = low_bound
@@ -961,7 +957,7 @@ impl BigRat {
 		low_bound.add(high_bound, int)?.div(&2.into(), int)
 	}
 
-	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		if self.num == 0.into() {
 			return Ok(Exact::new(Self::from(1), true));
 		}
@@ -973,7 +969,7 @@ impl BigRat {
 
 	// the boolean indicates whether or not the result is exact
 	// n must be an integer
-	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FResult<Exact<Self>> {
 		if self.num != 0.into() && self.sign == Sign::Negative {
 			return Err(FendError::RootsOfNegativeNumbers);
 		}
@@ -1021,7 +1017,7 @@ impl BigRat {
 		Ok(Exact::new(num_rat.div(&den_rat, int)?, false))
 	}
 
-	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		Ok(Self {
 			sign: Sign::sign_of_product(self.sign, rhs.sign),
 			num: self.num.mul(&rhs.num, int)?,
@@ -1029,7 +1025,7 @@ impl BigRat {
 		})
 	}
 
-	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		self.add_internal(rhs, int)
 	}
 
@@ -1041,7 +1037,7 @@ impl BigRat {
 		self.sign == Sign::Positive && self.num.is_definitely_one() && self.den.is_definitely_one()
 	}
 
-	pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		let n_factorial = self.clone().factorial(int)?;
 		let r_factorial = rhs.clone().factorial(int)?;
 		let n_minus_r_factorial = self.add(-rhs, int)?.factorial(int)?;
@@ -1049,7 +1045,7 @@ impl BigRat {
 		n_factorial.div(&denominator, int)
 	}
 
-	pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		let n_factorial = self.clone().factorial(int)?;
 		let n_minus_r_factorial = self.add(-rhs, int)?.factorial(int)?;
 		n_factorial.div(&n_minus_r_factorial, int)
@@ -1122,11 +1118,7 @@ impl Format for BigRat {
 	// Formats as an integer if possible, or a terminating float, otherwise as
 	// either a fraction or a potentially approximated floating-point number.
 	// The result 'exact' field indicates whether the number was exact or not.
-	fn format<I: Interrupt>(
-		&self,
-		params: &Self::Params,
-		int: &I,
-	) -> FendCoreResult<Exact<Self::Out>> {
+	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
 		let base = params.base;
 		let style = params.style;
 		let term = params.term;
@@ -1279,7 +1271,7 @@ mod tests {
 	use super::BigRat;
 
 	use crate::num::biguint::BigUint;
-	use crate::result::FendCoreResult;
+	use crate::result::FResult;
 	use std::mem;
 
 	#[test]
@@ -1291,7 +1283,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_addition() -> FendCoreResult<()> {
+	fn test_addition() -> FResult<()> {
 		let int = &crate::interrupt::Never;
 		let two = BigRat::from(2);
 		assert_eq!(two.clone().add(two, int)?, BigRat::from(4));

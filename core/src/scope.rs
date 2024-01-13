@@ -1,5 +1,5 @@
 use crate::ident::Ident;
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 use crate::value::Value;
 use crate::Attrs;
@@ -19,7 +19,7 @@ impl ScopeValue {
 		attrs: Attrs,
 		context: &mut crate::Context,
 		int: &I,
-	) -> FendCoreResult<Value> {
+	) -> FResult<Value> {
 		match self {
 			Self::LazyVariable(expr, scope) => {
 				let value = crate::ast::evaluate(expr.clone(), scope.clone(), attrs, context, int)?;
@@ -28,7 +28,7 @@ impl ScopeValue {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match self {
 			Self::LazyVariable(e, s) => {
 				e.serialize(write)?;
@@ -44,7 +44,7 @@ impl ScopeValue {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self::LazyVariable(Expr::deserialize(read)?, {
 			if bool::deserialize(read)? {
 				None
@@ -63,7 +63,7 @@ pub(crate) struct Scope {
 }
 
 impl Scope {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.ident.serialize(write)?;
 		self.value.serialize(write)?;
 		match &self.inner {
@@ -76,7 +76,7 @@ impl Scope {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self {
 			ident: Ident::deserialize(read)?,
 			value: ScopeValue::deserialize(read)?,
@@ -113,7 +113,7 @@ impl Scope {
 		attrs: Attrs,
 		context: &mut crate::Context,
 		int: &I,
-	) -> FendCoreResult<Option<Value>> {
+	) -> FResult<Option<Value>> {
 		if self.ident.as_str() == ident.as_str() {
 			let value = self.value.eval(attrs, context, int)?;
 			Ok(Some(value))

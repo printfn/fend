@@ -3,7 +3,7 @@ use crate::format::Format;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::ops::Neg;
@@ -76,7 +76,7 @@ impl hash::Hash for Real {
 }
 
 impl Real {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match &self.pattern {
 			Pattern::Simple(s) => {
 				1u8.serialize(write)?;
@@ -90,7 +90,7 @@ impl Real {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self {
 			pattern: match u8::deserialize(read)? {
 				1 => Pattern::Simple(BigRat::deserialize(read)?),
@@ -107,7 +107,7 @@ impl Real {
 		}
 	}
 
-	fn approximate<I: Interrupt>(self, int: &I) -> FendCoreResult<BigRat> {
+	fn approximate<I: Interrupt>(self, int: &I) -> FResult<BigRat> {
 		match self.pattern {
 			Pattern::Simple(s) => Ok(s),
 			Pattern::Pi(n) => {
@@ -119,7 +119,7 @@ impl Real {
 		}
 	}
 
-	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> FendCoreResult<i64> {
+	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> FResult<i64> {
 		match self.pattern {
 			Pattern::Simple(s) => s.try_as_i64(int),
 			Pattern::Pi(n) => {
@@ -132,7 +132,7 @@ impl Real {
 		}
 	}
 
-	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> FendCoreResult<usize> {
+	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> FResult<usize> {
 		match self.pattern {
 			Pattern::Simple(s) => s.try_as_usize(int),
 			Pattern::Pi(n) => {
@@ -146,7 +146,7 @@ impl Real {
 	}
 
 	// sin works for all real numbers
-	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		Ok(match self.pattern {
 			Pattern::Simple(s) => s.sin(int)?.apply(Self::from),
 			Pattern::Pi(n) => {
@@ -181,68 +181,68 @@ impl Real {
 		})
 	}
 
-	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		// cos(x) = sin(x + pi/2)
 		let half_pi = Exact::new(Self::pi(), true).div(&Exact::new(Self::from(2), true), int)?;
 		Exact::new(self, true).add(half_pi, int)?.value.sin(int)
 	}
 
-	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.asin(int)?))
 	}
 
-	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.acos(int)?))
 	}
 
-	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.atan(int)?))
 	}
 
-	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.approximate(int)?.atan2(rhs.approximate(int)?, int)?,
 		))
 	}
 
-	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.sinh(int)?))
 	}
 
-	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.cosh(int)?))
 	}
 
-	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.tanh(int)?))
 	}
 
-	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.asinh(int)?))
 	}
 
-	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.acosh(int)?))
 	}
 
-	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.atanh(int)?))
 	}
 
 	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		Ok(self.approximate(int)?.ln(int)?.apply(Self::from))
 	}
 
-	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.log2(int)?))
 	}
 
-	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.log10(int)?))
 	}
 
-	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.factorial(int)?))
 	}
 
@@ -253,7 +253,7 @@ impl Real {
 		imag: bool,
 		use_parens_if_fraction: bool,
 		int: &I,
-	) -> FendCoreResult<Exact<Formatted>> {
+	) -> FResult<Exact<Formatted>> {
 		let mut pi = false;
 		if style == FormattingStyle::Exact && !self.is_zero() {
 			if let Pattern::Pi(_) = self.pattern {
@@ -303,11 +303,11 @@ impl Real {
 		))
 	}
 
-	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		Ok(self.approximate(int)?.exp(int)?.apply(Self::from))
 	}
 
-	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Exact<Self>> {
 		// x^1 == x
 		if let Pattern::Simple(n) = &rhs.pattern {
 			if n == &1.into() {
@@ -335,7 +335,7 @@ impl Real {
 		}
 	}
 
-	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FResult<Exact<Self>> {
 		// TODO: Combining these match blocks is not currently possible because
 		// 'binding by-move and by-ref in the same pattern is unstable'
 		// https://github.com/rust-lang/rust/pull/76119
@@ -380,14 +380,14 @@ impl Real {
 		}
 	}
 
-	pub(crate) fn expect_rational(self) -> FendCoreResult<BigRat> {
+	pub(crate) fn expect_rational(self) -> FResult<BigRat> {
 		match self.pattern {
 			Pattern::Simple(a) => Ok(a),
 			Pattern::Pi(_) => Err(FendError::ExpectedARationalNumber),
 		}
 	}
 
-	pub(crate) fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.expect_rational()?
 				.modulo(rhs.expect_rational()?, int)?,
@@ -399,7 +399,7 @@ impl Real {
 		rhs: Self,
 		op: crate::ast::BitwiseBop,
 		int: &I,
-	) -> FendCoreResult<Self> {
+	) -> FResult<Self> {
 		Ok(Self::from(self.expect_rational()?.bitwise(
 			rhs.expect_rational()?,
 			op,
@@ -407,14 +407,14 @@ impl Real {
 		)?))
 	}
 
-	pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.expect_rational()?
 				.combination(rhs.expect_rational()?, int)?,
 		))
 	}
 
-	pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.expect_rational()?
 				.permutation(rhs.expect_rational()?, int)?,
@@ -423,7 +423,7 @@ impl Real {
 }
 
 impl Exact<Real> {
-	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		if self.exact && self.value.is_zero() {
 			return Ok(rhs);
 		} else if rhs.exact && rhs.value.is_zero() {
@@ -450,7 +450,7 @@ impl Exact<Real> {
 		)
 	}
 
-	pub(crate) fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn mul<I: Interrupt>(self, rhs: Exact<&Real>, int: &I) -> FResult<Self> {
 		if self.exact && self.value.is_zero() {
 			return Ok(self);
 		} else if rhs.exact && rhs.value.is_zero() {
@@ -484,7 +484,7 @@ impl Exact<Real> {
 		})
 	}
 
-	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		if rhs.value.is_zero() {
 			return Err(FendError::DivideByZero);
 		}

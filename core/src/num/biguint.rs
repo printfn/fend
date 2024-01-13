@@ -2,7 +2,7 @@ use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 use std::cmp::{max, Ordering};
 use std::{fmt, hash, io};
@@ -68,8 +68,8 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> FendCoreResult<usize> {
-		let error = || -> FendCoreResult<_> {
+	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> FResult<usize> {
+		let error = || -> FResult<_> {
 			Ok(out_of_range(
 				self.fm(int)?,
 				Range {
@@ -165,7 +165,7 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn gcd<I: Interrupt>(mut a: Self, mut b: Self, int: &I) -> FResult<Self> {
 		while b >= 1.into() {
 			let r = a.rem(&b, int)?;
 			a = b;
@@ -175,7 +175,7 @@ impl BigUint {
 		Ok(a)
 	}
 
-	pub(crate) fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn pow<I: Interrupt>(a: &Self, b: &Self, int: &I) -> FResult<Self> {
 		if a.is_zero() && b.is_zero() {
 			return Err(FendError::ZeroToThePowerOfZero);
 		}
@@ -190,7 +190,7 @@ impl BigUint {
 
 	// computes the exact `n`-th root if possible, otherwise the next lower integer
 	#[allow(clippy::redundant_clone)]
-	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn root_n<I: Interrupt>(self, n: &Self, int: &I) -> FResult<Exact<Self>> {
 		if self == 0.into() || self == 1.into() || n == &Self::from(1) {
 			return Ok(Exact::new(self, true));
 		}
@@ -211,7 +211,7 @@ impl BigUint {
 		Ok(Exact::new(low_guess, false))
 	}
 
-	fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> FendCoreResult<Self> {
+	fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> FResult<Self> {
 		let mut result = Self::from(1);
 		let mut base = self.clone();
 		while exponent > 0 {
@@ -225,7 +225,7 @@ impl BigUint {
 		Ok(result)
 	}
 
-	fn lshift<I: Interrupt>(&mut self, int: &I) -> FendCoreResult<()> {
+	fn lshift<I: Interrupt>(&mut self, int: &I) -> FResult<()> {
 		match self {
 			Small(n) => {
 				if *n & 0xc000_0000_0000_0000 == 0 {
@@ -250,7 +250,7 @@ impl BigUint {
 		Ok(())
 	}
 
-	fn rshift<I: Interrupt>(&mut self, int: &I) -> FendCoreResult<()> {
+	fn rshift<I: Interrupt>(&mut self, int: &I) -> FResult<()> {
 		match self {
 			Small(n) => *n >>= 1,
 			Large(value) => {
@@ -269,11 +269,7 @@ impl BigUint {
 		Ok(())
 	}
 
-	pub(crate) fn divmod<I: Interrupt>(
-		&self,
-		other: &Self,
-		int: &I,
-	) -> FendCoreResult<(Self, Self)> {
+	pub(crate) fn divmod<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<(Self, Self)> {
 		if let (Small(a), Small(b)) = (self, other) {
 			if let (Some(div_res), Some(mod_res)) = (a.checked_div(*b), a.checked_rem(*b)) {
 				return Ok((Small(div_res), Small(mod_res)));
@@ -320,7 +316,7 @@ impl BigUint {
 	}
 
 	/// computes self *= other
-	fn mul_internal<I: Interrupt>(&mut self, other: &Self, int: &I) -> FendCoreResult<()> {
+	fn mul_internal<I: Interrupt>(&mut self, other: &Self, int: &I) -> FResult<()> {
 		if self.is_zero() || other.is_zero() {
 			*self = Self::from(0);
 			return Ok(());
@@ -357,7 +353,7 @@ impl BigUint {
 	}
 
 	// Note: 0! = 1, 1! = 1
-	pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn factorial<I: Interrupt>(mut self, int: &I) -> FResult<Self> {
 		let mut res = Self::from(1);
 		while self > 1.into() {
 			test_int(int)?;
@@ -367,7 +363,7 @@ impl BigUint {
 		Ok(res)
 	}
 
-	pub(crate) fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn mul<I: Interrupt>(mut self, other: &Self, int: &I) -> FResult<Self> {
 		if let (Small(a), Small(b)) = (&self, &other) {
 			if let Some(res) = a.checked_mul(*b) {
 				return Ok(Self::from(res));
@@ -377,15 +373,15 @@ impl BigUint {
 		Ok(self)
 	}
 
-	fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> FendCoreResult<Self> {
+	fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<Self> {
 		Ok(self.divmod(other, int)?.1)
 	}
 
-	pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> FendCoreResult<bool> {
+	pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> FResult<bool> {
 		Ok(self.divmod(&Self::from(2), int)?.1 == 0.into())
 	}
 
-	pub(crate) fn div<I: Interrupt>(self, other: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn div<I: Interrupt>(self, other: &Self, int: &I) -> FResult<Self> {
 		Ok(self.divmod(other, int)?.0)
 	}
 
@@ -444,7 +440,7 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match self {
 			Small(x) => {
 				1u8.serialize(write)?;
@@ -461,7 +457,7 @@ impl BigUint {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let kind = u8::deserialize(read)?;
 		Ok(match kind {
 			1 => Self::Small(u64::deserialize(read)?),
@@ -540,7 +536,7 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FResult<Self> {
 		let mut rhs = rhs.try_as_usize(int)?;
 		if rhs > 64 {
 			self.make_large();
@@ -560,7 +556,7 @@ impl BigUint {
 		Ok(self)
 	}
 
-	pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FResult<Self> {
 		let rhs = rhs.try_as_usize(int)?;
 		for _ in 0..rhs {
 			if self.is_zero() {
@@ -645,11 +641,7 @@ impl Format for BigUint {
 	type Params = FormatOptions;
 	type Out = FormattedBigUint;
 
-	fn format<I: Interrupt>(
-		&self,
-		params: &Self::Params,
-		int: &I,
-	) -> FendCoreResult<Exact<Self::Out>> {
+	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
 		let base_prefix = if params.write_base_prefix {
 			Some(params.base)
 		} else {

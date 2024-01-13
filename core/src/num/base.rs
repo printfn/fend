@@ -2,7 +2,7 @@ use std::{fmt, io};
 
 use crate::{
 	error::FendError,
-	result::FendCoreResult,
+	result::FResult,
 	serialize::{Deserialize, Serialize},
 };
 
@@ -35,7 +35,7 @@ impl Base {
 		}
 	}
 
-	pub(crate) const fn from_zero_based_prefix_char(ch: char) -> FendCoreResult<Self> {
+	pub(crate) const fn from_zero_based_prefix_char(ch: char) -> FResult<Self> {
 		Ok(match ch {
 			'x' => Self(BaseEnum::Hex),
 			'o' => Self(BaseEnum::Octal),
@@ -44,7 +44,7 @@ impl Base {
 		})
 	}
 
-	pub(crate) const fn from_plain_base(base: u8) -> FendCoreResult<Self> {
+	pub(crate) const fn from_plain_base(base: u8) -> FResult<Self> {
 		if base < 2 {
 			return Err(FendError::BaseTooSmall);
 		} else if base > 36 {
@@ -53,7 +53,7 @@ impl Base {
 		Ok(Self(BaseEnum::Plain(base)))
 	}
 
-	pub(crate) const fn from_custom_base(base: u8) -> FendCoreResult<Self> {
+	pub(crate) const fn from_custom_base(base: u8) -> FResult<Self> {
 		if base < 2 {
 			return Err(FendError::BaseTooSmall);
 		} else if base > 36 {
@@ -119,7 +119,7 @@ impl Base {
 		})
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 		match self.0 {
 			BaseEnum::Binary => 1u8.serialize(write)?,
 			BaseEnum::Octal => 2u8.serialize(write)?,
@@ -136,7 +136,7 @@ impl Base {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self(match u8::deserialize(read)? {
 			1 => BaseEnum::Binary,
 			2 => BaseEnum::Octal,

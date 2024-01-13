@@ -2,7 +2,7 @@ use crate::error::{FendError, Interrupt};
 use crate::interrupt::test_int;
 use crate::num::bigrat::BigRat;
 use crate::num::complex::{self, Complex};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -20,7 +20,7 @@ pub(crate) struct Dist {
 }
 
 impl Dist {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.parts.len().serialize(write)?;
 		for (a, b) in &self.parts {
 			a.serialize(write)?;
@@ -29,7 +29,7 @@ impl Dist {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let len = usize::deserialize(read)?;
 		let mut hashmap = HashMap::with_capacity(len);
 		for _ in 0..len {
@@ -40,7 +40,7 @@ impl Dist {
 		Ok(Self { parts: hashmap })
 	}
 
-	pub(crate) fn one_point(self) -> FendCoreResult<Complex> {
+	pub(crate) fn one_point(self) -> FResult<Complex> {
 		if self.parts.len() == 1 {
 			Ok(self.parts.into_iter().next().unwrap().0)
 		} else {
@@ -48,7 +48,7 @@ impl Dist {
 		}
 	}
 
-	pub(crate) fn one_point_ref(&self) -> FendCoreResult<&Complex> {
+	pub(crate) fn one_point_ref(&self) -> FResult<&Complex> {
 		if self.parts.len() == 1 {
 			Ok(self.parts.iter().next().unwrap().0)
 		} else {
@@ -56,7 +56,7 @@ impl Dist {
 		}
 	}
 
-	pub(crate) fn new_die<I: Interrupt>(count: u32, faces: u32, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn new_die<I: Interrupt>(count: u32, faces: u32, int: &I) -> FResult<Self> {
 		assert!(count != 0);
 		assert!(faces != 0);
 		if count > 1 {
@@ -83,11 +83,7 @@ impl Dist {
 	}
 
 	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-	pub(crate) fn sample<I: Interrupt>(
-		self,
-		ctx: &crate::Context,
-		int: &I,
-	) -> FendCoreResult<Self> {
+	pub(crate) fn sample<I: Interrupt>(self, ctx: &crate::Context, int: &I) -> FResult<Self> {
 		if self.parts.len() == 1 {
 			return Ok(self);
 		}
@@ -117,7 +113,7 @@ impl Dist {
 		out: &mut String,
 		ctx: &crate::Context,
 		int: &I,
-	) -> FendCoreResult<Exact<()>> {
+	) -> FResult<Exact<()>> {
 		if self.parts.len() == 1 {
 			let res = self.parts.iter().next().unwrap().0.format(
 				exact,
@@ -181,9 +177,9 @@ impl Dist {
 	fn bop<I: Interrupt>(
 		self,
 		rhs: &Self,
-		mut f: impl FnMut(&Complex, &Complex, &I) -> FendCoreResult<Complex>,
+		mut f: impl FnMut(&Complex, &Complex, &I) -> FResult<Complex>,
 		int: &I,
-	) -> FendCoreResult<Self> {
+	) -> FResult<Self> {
 		let mut result = HashMap::<Complex, BigRat>::new();
 		for (n1, p1) in &self.parts {
 			for (n2, p2) in &rhs.parts {
@@ -201,7 +197,7 @@ impl Dist {
 }
 
 impl Exact<Dist> {
-	pub(crate) fn add<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn add<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		let self_exact = self.exact;
 		let rhs_exact = rhs.exact;
 		let mut exact = true;
@@ -220,7 +216,7 @@ impl Exact<Dist> {
 		))
 	}
 
-	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		let self_exact = self.exact;
 		let rhs_exact = rhs.exact;
 		let mut exact = true;
@@ -239,7 +235,7 @@ impl Exact<Dist> {
 		))
 	}
 
-	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn div<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		let self_exact = self.exact;
 		let rhs_exact = rhs.exact;
 		let mut exact = true;

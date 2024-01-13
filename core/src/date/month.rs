@@ -1,4 +1,4 @@
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::FendError;
 use crate::{
 	date::Year,
@@ -88,12 +88,12 @@ impl Month {
 		}
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 		self.as_u8().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Self::try_from(u8::deserialize(read)?).map_err(|_| FendError::DeserializationError)
 	}
 

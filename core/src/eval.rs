@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-	ast, error::Interrupt, lexer, parser, result::FendCoreResult, scope::Scope, value::Value, Span,
+	ast, error::Interrupt, lexer, parser, result::FResult, scope::Scope, value::Value, Span,
 };
 
 pub(crate) fn evaluate_to_value<I: Interrupt>(
@@ -10,7 +10,7 @@ pub(crate) fn evaluate_to_value<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> FendCoreResult<Value> {
+) -> FResult<Value> {
 	let lex = lexer::lex(input, int);
 	let mut tokens = vec![];
 	let mut missing_open_parens: i32 = 0;
@@ -77,7 +77,7 @@ pub(crate) fn evaluate_to_spans<I: Interrupt>(
 	scope: Option<Arc<Scope>>,
 	context: &mut crate::Context,
 	int: &I,
-) -> FendCoreResult<(Vec<Span>, bool, Attrs)> {
+) -> FResult<(Vec<Span>, bool, Attrs)> {
 	let (attrs, input) = parse_attrs(input);
 	let value = evaluate_to_value(input, scope, attrs, context, int)?;
 	context.variables.insert("_".to_string(), value.clone());

@@ -1,4 +1,4 @@
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::FendError;
 use crate::{Deserialize, Serialize};
 use std::fmt;
@@ -17,12 +17,12 @@ impl Day {
 		Self(day)
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 		self.value().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let n = u8::deserialize(read)?;
 		if n == 0 || n >= 32 {
 			return Err(FendError::DeserializationError);

@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap, fmt, io};
 
 use super::base_unit::BaseUnit;
 use crate::num::complex::Complex;
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 
 /// A named unit, like kilogram, megabyte or percent.
@@ -35,7 +35,7 @@ impl NamedUnit {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.prefix.as_ref().serialize(write)?;
 		self.singular_name.as_ref().serialize(write)?;
 		self.plural_name.as_ref().serialize(write)?;
@@ -51,7 +51,7 @@ impl NamedUnit {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let prefix = String::deserialize(read)?;
 		let singular_name = String::deserialize(read)?;
 		let plural_name = String::deserialize(read)?;

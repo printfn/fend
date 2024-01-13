@@ -1,7 +1,7 @@
 use crate::{
 	date::{Date, Day, Month, Year},
 	error::FendError,
-	result::FendCoreResult,
+	result::FResult,
 };
 use std::convert;
 
@@ -60,7 +60,7 @@ fn parse_yyyymmdd(s: &str) -> Result<(Date, &str), ()> {
 	Ok((Date { year, month, day }, s))
 }
 
-pub(crate) fn parse_date(s: &str) -> FendCoreResult<Date> {
+pub(crate) fn parse_date(s: &str) -> FResult<Date> {
 	let trimmed = s.trim();
 	if let Ok((date, remaining)) = parse_yyyymmdd(trimmed) {
 		if remaining.is_empty() {

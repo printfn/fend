@@ -2,7 +2,7 @@ use crate::error::{FendError, Interrupt};
 use crate::num::real::{self, Real};
 use crate::num::Exact;
 use crate::num::{Base, FormattingStyle};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use std::cmp::Ordering;
 use std::ops::Neg;
 use std::{fmt, io};
@@ -31,27 +31,27 @@ pub(crate) enum UseParentheses {
 }
 
 impl Complex {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.real.serialize(write)?;
 		self.imag.serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self {
 			real: Real::deserialize(read)?,
 			imag: Real::deserialize(read)?,
 		})
 	}
 
-	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> FendCoreResult<usize> {
+	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> FResult<usize> {
 		if self.imag != 0.into() {
 			return Err(FendError::ComplexToInteger);
 		}
 		self.real.try_as_usize(int)
 	}
 
-	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> FendCoreResult<i64> {
+	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> FResult<i64> {
 		if self.imag != 0.into() {
 			return Err(FendError::ComplexToInteger);
 		}
@@ -75,7 +75,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.imag != 0.into() {
 			return Err(FendError::FactorialComplex);
 		}
@@ -85,7 +85,7 @@ impl Complex {
 		})
 	}
 
-	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		// e^(a + bi) = e^a * e^(bi) = e^a * (cos(b) + i * sin(b))
 		let r = self.real.exp(int)?;
 		let exact = r.exact;
@@ -99,7 +99,7 @@ impl Complex {
 		))
 	}
 
-	fn pow_n<I: Interrupt>(self, n: usize, int: &I) -> FendCoreResult<Exact<Self>> {
+	fn pow_n<I: Interrupt>(self, n: usize, int: &I) -> FResult<Exact<Self>> {
 		if n == 0 {
 			return Ok(Exact::new(Self::from(1), true));
 		}
@@ -118,7 +118,7 @@ impl Complex {
 		Ok(result)
 	}
 
-	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Exact<Self>> {
 		if !rhs.real.is_integer() || !rhs.imag.is_integer() {
 			return self.frac_pow(rhs, int);
 		}
@@ -191,7 +191,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Real>> {
+	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
 		Ok(if self.imag.is_zero() {
 			if self.real < 0.into() {
 				Exact::new(-self.real, true)
@@ -213,7 +213,7 @@ impl Complex {
 		})
 	}
 
-	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Real>> {
+	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
 		Ok(Exact::new(self.imag.atan2(self.real, int)?, false))
 	}
 
@@ -224,7 +224,7 @@ impl Complex {
 		base: Base,
 		use_parentheses: UseParentheses,
 		int: &I,
-	) -> FendCoreResult<Exact<Formatted>> {
+	) -> FResult<Exact<Formatted>> {
 		let style = if !exact && style == FormattingStyle::Auto {
 			FormattingStyle::DecimalPlaces(10)
 		} else if self.imag != 0.into() && style == FormattingStyle::Auto {
@@ -285,7 +285,7 @@ impl Complex {
 			)
 		})
 	}
-	pub(crate) fn frac_pow<I: Interrupt>(self, n: Self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn frac_pow<I: Interrupt>(self, n: Self, int: &I) -> FResult<Exact<Self>> {
 		if self.imag.is_zero() && n.imag.is_zero() && self.real >= 0.into() {
 			Ok(self.real.pow(n.real, int)?.apply(Self::from))
 		} else {
@@ -294,7 +294,7 @@ impl Complex {
 		}
 	}
 
-	fn expect_real(self) -> FendCoreResult<Real> {
+	fn expect_real(self) -> FResult<Real> {
 		if self.imag.is_zero() {
 			Ok(self.real)
 		} else {
@@ -302,7 +302,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		// sin(a + bi) = sin(a) * cosh(b) + i * cos(a) * sinh(b)
 		if self.imag.is_zero() {
 			Ok(self.real.sin(int)?.apply(Self::from))
@@ -323,7 +323,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		// cos(a + bi) = cos(a) * cosh(b) - i * sin(a) * sinh(b)
 		if self.imag.is_zero() {
 			Ok(self.real.cos(int)?.apply(Self::from))
@@ -344,7 +344,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn tan<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn tan<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		let num = self.clone().sin(int)?;
 		let den = self.cos(int)?;
 		num.div(den, int)
@@ -352,7 +352,7 @@ impl Complex {
 
 	/// Calculates ln(i * z + sqrt(1 - z^2))
 	/// This is used to implement asin and acos for all complex numbers
-	fn asin_ln<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	fn asin_ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		let half = Exact::new(Self::from(1), true).div(Exact::new(Self::from(2), true), int)?;
 		let exact = Exact::new(self, true);
 		let i = Exact::new(Self::i(), true);
@@ -366,7 +366,7 @@ impl Complex {
 			.try_and_then(|x| x.ln(int))
 	}
 
-	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real asin is defined for -1 <= x <= 1
 		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
 			Ok(Self::from(self.real.asin(int)?))
@@ -380,7 +380,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real acos is defined for -1 <= x <= 1
 		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
 			Ok(Self::from(self.real.acos(int)?))
@@ -396,7 +396,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real atan is defined for all real numbers
 		if self.imag.is_zero() {
 			Ok(Self::from(self.real.atan(int)?))
@@ -420,7 +420,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.imag.is_zero() {
 			Ok(Self::from(self.real.sinh(int)?))
 		} else {
@@ -437,7 +437,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.imag.is_zero() {
 			Ok(Self::from(self.real.cosh(int)?))
 		} else {
@@ -454,7 +454,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.imag.is_zero() {
 			Ok(Self::from(self.real.tanh(int)?))
 		} else {
@@ -465,7 +465,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real asinh is defined for all real numbers
 		if self.imag.is_zero() {
 			Ok(Self::from(self.real.asinh(int)?))
@@ -484,7 +484,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real acosh is defined for x >= 1
 		if self.imag.is_zero() && self.real >= 1.into() {
 			Ok(Self::from(self.real.acosh(int)?))
@@ -503,7 +503,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real atanh is defined for -1 < x < 1
 		// Undefined for x = 1, -1
 		if self.imag.is_zero() && Real::from(1).neg() <= self.real && self.real <= 1.into() {
@@ -525,7 +525,7 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FendCoreResult<Exact<Self>> {
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		if self.imag.is_zero() && self.real > 0.into() {
 			Ok(self.real.ln(int)?.apply(Self::from))
 		} else {
@@ -544,21 +544,21 @@ impl Complex {
 		}
 	}
 
-	pub(crate) fn log<I: Interrupt>(self, base: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log<I: Interrupt>(self, base: Self, int: &I) -> FResult<Self> {
 		// log_n(z) = ln(z) / ln(n)
 		let ln = self.ln(int)?;
 		let ln2 = base.ln(int)?;
 		Ok(ln.div(ln2, int)?.value)
 	}
 
-	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.imag.is_zero() && self.real > 0.into() {
 			Ok(Self::from(self.real.log2(int)?))
 		} else {
 			self.log(Self::from(2), int)
 		}
 	}
-	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.imag.is_zero() && self.real > 0.into() {
 			Ok(Self::from(self.real.log10(int)?))
 		} else {
@@ -570,7 +570,7 @@ impl Complex {
 		self.real.is_definitely_one() && self.imag.is_definitely_zero()
 	}
 
-	pub(crate) fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn modulo<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.expect_real()?.modulo(rhs.expect_real()?, int)?,
 		))
@@ -581,7 +581,7 @@ impl Complex {
 		rhs: Self,
 		op: crate::ast::BitwiseBop,
 		int: &I,
-	) -> FendCoreResult<Self> {
+	) -> FResult<Self> {
 		Ok(Self::from(self.expect_real()?.bitwise(
 			rhs.expect_real()?,
 			op,
@@ -589,13 +589,13 @@ impl Complex {
 		)?))
 	}
 
-	pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn combination<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.expect_real()?.combination(rhs.expect_real()?, int)?,
 		))
 	}
 
-	pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn permutation<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		Ok(Self::from(
 			self.expect_real()?.permutation(rhs.expect_real()?, int)?,
 		))
@@ -603,7 +603,7 @@ impl Complex {
 }
 
 impl Exact<Complex> {
-	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		let (self_real, self_imag) = self.apply(|x| (x.real, x.imag)).pair();
 		let (rhs_real, rhs_imag) = rhs.apply(|x| (x.real, x.imag)).pair();
 		let real = self_real.add(rhs_real, int)?;
@@ -617,7 +617,7 @@ impl Exact<Complex> {
 		))
 	}
 
-	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
 		// (a + bi) * (c + di)
 		//     => ac + bci + adi - bd
 		//     => (ac - bd) + (bc + ad)i
@@ -639,7 +639,7 @@ impl Exact<Complex> {
 		))
 	}
 
-	pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> FendCoreResult<Self> {
+	pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
 		// (u + vi) / (x + yi) = (1/(x^2 + y^2)) * ((ux + vy) + (vx - uy)i)
 		let (u, v) = self.apply(|x| (x.real, x.imag)).pair();
 		let (x, y) = rhs.apply(|x| (x.real, x.imag)).pair();

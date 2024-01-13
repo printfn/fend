@@ -2,7 +2,7 @@ use crate::date::Date;
 use crate::error::{FendError, Interrupt};
 use crate::ident::Ident;
 use crate::num::{Base, Number};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use std::{borrow, convert, fmt};
 
 #[derive(Clone, Debug)]
@@ -73,7 +73,7 @@ impl fmt::Display for Symbol {
 	}
 }
 
-fn parse_char(input: &str) -> FendCoreResult<(char, &str)> {
+fn parse_char(input: &str) -> FResult<(char, &str)> {
 	input
 		.chars()
 		.next()
@@ -83,7 +83,7 @@ fn parse_char(input: &str) -> FendCoreResult<(char, &str)> {
 		})
 }
 
-fn parse_ascii_digit(input: &str, base: Base) -> FendCoreResult<(u8, &str)> {
+fn parse_ascii_digit(input: &str, base: Base) -> FResult<(u8, &str)> {
 	let (ch, input) = parse_char(input)?;
 	let possible_digit = ch.to_digit(base.base_as_u8().into());
 	possible_digit
@@ -93,7 +93,7 @@ fn parse_ascii_digit(input: &str, base: Base) -> FendCoreResult<(u8, &str)> {
 		})
 }
 
-fn parse_fixed_char(input: &str, ch: char) -> FendCoreResult<((), &str)> {
+fn parse_fixed_char(input: &str, ch: char) -> FResult<((), &str)> {
 	let (parsed_ch, input) = parse_char(input)?;
 	if parsed_ch == ch {
 		Ok(((), input))
@@ -102,7 +102,7 @@ fn parse_fixed_char(input: &str, ch: char) -> FendCoreResult<((), &str)> {
 	}
 }
 
-fn parse_digit_separator(input: &str) -> FendCoreResult<((), &str)> {
+fn parse_digit_separator(input: &str) -> FResult<((), &str)> {
 	let (parsed_ch, input) = parse_char(input)?;
 	if parsed_ch == '_' || parsed_ch == ',' {
 		Ok(((), input))
@@ -148,7 +148,7 @@ fn parse_integer<'a, E: From<FendError>>(
 	Ok(((), input))
 }
 
-fn parse_base_prefix(input: &str) -> FendCoreResult<(Base, &str)> {
+fn parse_base_prefix(input: &str) -> FResult<(Base, &str)> {
 	// 0x -> 16
 	// 0o -> 8
 	// 0b -> 2
@@ -192,7 +192,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
 	num_nonrec_digits: usize,
 	base: Base,
 	int: &I,
-) -> FendCoreResult<((), &'a str)> {
+) -> FResult<((), &'a str)> {
 	let original_input = input;
 	// If there's no '(': return Ok but don't parse anything
 	if parse_fixed_char(input, '(').is_err() {
@@ -206,7 +206,7 @@ fn parse_recurring_digits<'a, I: Interrupt>(
 	let mut recurring_number_num = Number::from(0);
 	let mut recurring_number_den = Number::from(1);
 	let base_as_u64 = u64::from(base.base_as_u8());
-	let ((), input) = parse_integer(input, true, base, &mut |digit| -> FendCoreResult<()> {
+	let ((), input) = parse_integer(input, true, base, &mut |digit| -> FResult<()> {
 		let digit_as_u64 = u64::from(digit);
 		recurring_number_num = recurring_number_num
 			.clone()
@@ -232,7 +232,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 	mut input: &'a str,
 	base: Base,
 	int: &I,
-) -> FendCoreResult<(Number, &'a str)> {
+) -> FResult<(Number, &'a str)> {
 	let mut is_dice_with_no_count = false;
 	if input.starts_with('d') && base.base_as_u8() <= 10 {
 		let mut chars = input.chars();
@@ -249,14 +249,13 @@ fn parse_basic_number<'a, I: Interrupt>(
 	let mut is_integer = true;
 
 	if parse_fixed_char(input, '.').is_err() && !is_dice_with_no_count {
-		let ((), remaining) =
-			parse_integer(input, true, base, &mut |digit| -> FendCoreResult<()> {
-				res = res
-					.clone()
-					.mul(base_as_u64.into(), int)?
-					.add(u64::from(digit).into(), int)?;
-				Ok(())
-			})?;
+		let ((), remaining) = parse_integer(input, true, base, &mut |digit| -> FResult<()> {
+			res = res
+				.clone()
+				.mul(base_as_u64.into(), int)?
+				.add(u64::from(digit).into(), int)?;
+			Ok(())
+		})?;
 		input = remaining;
 	}
 
@@ -304,7 +303,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 				};
 				let mut face_count = 0_u32;
 				let ((), remaining2) =
-					parse_integer(remaining, false, base, &mut |digit| -> FendCoreResult<()> {
+					parse_integer(remaining, false, base, &mut |digit| -> FResult<()> {
 						face_count = face_count
 							.checked_mul(base.base_as_u8().into())
 							.ok_or(FendError::InvalidDiceSyntax)?
@@ -357,7 +356,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 				let mut exp = Number::zero_with_base(base);
 				let base_num = Number::from(u64::from(base.base_as_u8()));
 				let ((), remaining2) =
-					parse_integer(input, true, base, &mut |digit| -> FendCoreResult<()> {
+					parse_integer(input, true, base, &mut |digit| -> FResult<()> {
 						exp = (exp.clone().mul(base_num.clone(), int)?)
 							.add(u64::from(digit).into(), int)?;
 						Ok(())
@@ -375,7 +374,7 @@ fn parse_basic_number<'a, I: Interrupt>(
 	Ok((res, input))
 }
 
-fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> FendCoreResult<(Number, &'a str)> {
+fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> FResult<(Number, &'a str)> {
 	let (base, input) = parse_base_prefix(input).unwrap_or((Base::default(), input));
 	let (res, input) = parse_basic_number(input, base, int)?;
 	Ok((res, input))
@@ -415,7 +414,7 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
 	}
 }
 
-fn parse_ident(input: &str, allow_dots: bool) -> FendCoreResult<(Token, &str)> {
+fn parse_ident(input: &str, allow_dots: bool) -> FResult<(Token, &str)> {
 	let (first_char, _) = parse_char(input)?;
 	if !is_valid_in_ident(first_char, None) || first_char == '.' && !allow_dots {
 		return Err(FendError::InvalidCharAtBeginningOfIdent(first_char));
@@ -449,7 +448,7 @@ fn parse_ident(input: &str, allow_dots: bool) -> FendCoreResult<(Token, &str)> {
 	))
 }
 
-fn parse_symbol(ch: char, input: &mut &str) -> FendCoreResult<Token> {
+fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 	let mut test_next = |next: char| {
 		if input.starts_with(next) {
 			let (_, remaining) = input.split_at(next.len_utf8());
@@ -506,7 +505,7 @@ fn parse_symbol(ch: char, input: &mut &str) -> FendCoreResult<Token> {
 	}))
 }
 
-fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices<'_>) -> FendCoreResult<char> {
+fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices<'_>) -> FResult<char> {
 	if chars_iter
 		.next()
 		.ok_or(FendError::UnterminatedStringLiteral)?
@@ -545,7 +544,7 @@ fn parse_unicode_escape(chars_iter: &mut std::str::CharIndices<'_>) -> FendCoreR
 	}
 }
 
-fn parse_string_literal(input: &str, terminator: char) -> FendCoreResult<(Token, &str)> {
+fn parse_string_literal(input: &str, terminator: char) -> FResult<(Token, &str)> {
 	let (_, input) = input.split_at(1);
 	let mut chars_iter = input.char_indices();
 	let mut literal_length = None;
@@ -682,7 +681,7 @@ fn skip_whitespace_and_comments(input: &mut &str) {
 	}
 }
 
-fn parse_date(input: &str) -> FendCoreResult<(Date, &str)> {
+fn parse_date(input: &str) -> FResult<(Date, &str)> {
 	let (_, input) = input.split_at(1); // skip '@' symbol
 	let mut input2 = input;
 	let mut split_idx = 0;
@@ -713,7 +712,7 @@ fn parse_date(input: &str) -> FendCoreResult<(Date, &str)> {
 }
 
 impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
-	fn next_token(&mut self) -> FendCoreResult<Option<Token>> {
+	fn next_token(&mut self) -> FResult<Option<Token>> {
 		skip_whitespace_and_comments(&mut self.input);
 		let (ch, following) = {
 			let mut chars = self.input.chars();
@@ -776,7 +775,7 @@ impl<'a, 'b, I: Interrupt> Lexer<'a, 'b, I> {
 }
 
 impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
-	type Item = FendCoreResult<Token>;
+	type Item = FResult<Token>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		let res = match self.next_token() {

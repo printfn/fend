@@ -3,7 +3,7 @@ use crate::eval::evaluate_to_value;
 use crate::ident::Ident;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::scope::Scope;
 use crate::serialize::{Deserialize, Serialize};
 use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
@@ -35,7 +35,7 @@ pub(crate) enum Bop {
 }
 
 impl Bop {
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FResult<()> {
 		let n: u8 = match self {
 			Self::Plus => 0,
 			Self::ImplicitPlus => 1,
@@ -56,7 +56,7 @@ impl Bop {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(match u8::deserialize(read)? {
 			0 => Self::Plus,
 			1 => Self::ImplicitPlus,
@@ -126,7 +126,7 @@ pub(crate) enum Expr {
 }
 
 impl Expr {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match self {
 			Self::Literal(x) => {
 				0u8.serialize(write)?;
@@ -206,7 +206,7 @@ impl Expr {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(match u8::deserialize(read)? {
 			0 => Self::Literal(Value::deserialize(read)?),
 			1 => Self::Ident(Ident::deserialize(read)?),
@@ -261,7 +261,7 @@ impl Expr {
 		attrs: Attrs,
 		ctx: &mut crate::Context,
 		int: &I,
-	) -> FendCoreResult<String> {
+	) -> FResult<String> {
 		Ok(match self {
 			Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
 			Self::Literal(v) => v.format_to_plain_string(0, attrs, ctx, int)?,
@@ -314,7 +314,7 @@ impl Expr {
 }
 
 /// returns true if rhs is '-1' or '(-1)'
-fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> FendCoreResult<bool> {
+fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> FResult<bool> {
 	if let Expr::UnaryMinus(inner) = rhs {
 		if let Expr::Literal(Value::Num(n)) = &**inner {
 			if n.is_unitless_one(int)? {
@@ -340,7 +340,7 @@ pub(crate) fn evaluate<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> FendCoreResult<Value> {
+) -> FResult<Value> {
 	macro_rules! eval {
 		($e:expr) => {
 			evaluate($e, scope.clone(), attrs, context, int)
@@ -460,7 +460,7 @@ fn evaluate_add<I: Interrupt>(
 	b: Value,
 	scope: Option<Arc<Scope>>,
 	int: &I,
-) -> FendCoreResult<Value> {
+) -> FResult<Value> {
 	Ok(match (a, b) {
 		(Value::Num(a), Value::Num(b)) => Value::Num(Box::new(a.add(*b, int)?)),
 		(Value::String(a), Value::String(b)) => {
@@ -504,7 +504,7 @@ fn evaluate_as<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> FendCoreResult<Value> {
+) -> FResult<Value> {
 	if let Expr::Ident(ident) = &b {
 		match ident.as_str() {
 			"bool" | "boolean" => {
@@ -581,7 +581,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> FendCoreResult<Value> {
+) -> FResult<Value> {
 	macro_rules! eval_box {
 		($input:expr) => {
 			Box::new(evaluate_to_value(

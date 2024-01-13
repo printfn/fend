@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt, io};
 
-use crate::result::FendCoreResult;
+use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 
 /// Represents a base unit, identified solely by its name. The name is not exposed to the user.
@@ -30,12 +30,12 @@ impl BaseUnit {
 		self.name.as_ref()
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.name.as_ref().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(Self {
 			name: Cow::Owned(String::deserialize(read)?),
 		})

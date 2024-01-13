@@ -2,7 +2,7 @@ use std::{fmt, io};
 
 use crate::{
 	error::FendError,
-	result::FendCoreResult,
+	result::FResult,
 	serialize::{Deserialize, Serialize},
 };
 
@@ -58,7 +58,7 @@ impl fmt::Debug for FormattingStyle {
 }
 
 impl FormattingStyle {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match self {
 			Self::ImproperFraction => 1u8.serialize(write)?,
 			Self::MixedFraction => 2u8.serialize(write)?,
@@ -77,7 +77,7 @@ impl FormattingStyle {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		Ok(match u8::deserialize(read)? {
 			1 => Self::ImproperFraction,
 			2 => Self::MixedFraction,
