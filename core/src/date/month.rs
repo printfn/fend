@@ -1,22 +1,25 @@
-use crate::serialize::serialize_u8;
+use crate::result::FendCoreResult;
 use crate::FendError;
-use crate::{date::Year, serialize::deserialize_u8};
+use crate::{
+	date::Year,
+	serialize::{Deserialize, Serialize},
+};
 use std::{convert, fmt, io};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) enum Month {
-	January,
-	February,
-	March,
-	April,
-	May,
-	June,
-	July,
-	August,
-	September,
-	October,
-	November,
-	December,
+	January = 1,
+	February = 2,
+	March = 3,
+	April = 4,
+	May = 5,
+	June = 6,
+	July = 7,
+	August = 8,
+	September = 9,
+	October = 10,
+	November = 11,
+	December = 12,
 }
 
 impl Month {
@@ -85,13 +88,13 @@ impl Month {
 		}
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_u8(self.as_u8(), write)?;
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.as_u8().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Self::try_from(deserialize_u8(read)?).map_err(|_| FendError::DeserializationError)
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Self::try_from(u8::deserialize(read)?).map_err(|_| FendError::DeserializationError)
 	}
 
 	fn as_u8(self) -> u8 {

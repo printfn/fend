@@ -3,8 +3,9 @@ use crate::eval::evaluate_to_value;
 use crate::ident::Ident;
 use crate::interrupt::test_int;
 use crate::num::{Base, FormattingStyle, Number};
+use crate::result::FendCoreResult;
 use crate::scope::Scope;
-use crate::serialize::{deserialize_u8, serialize_u8};
+use crate::serialize::{Deserialize, Serialize};
 use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
 use crate::Attrs;
 use std::sync::Arc;
@@ -34,8 +35,8 @@ pub(crate) enum Bop {
 }
 
 impl Bop {
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-		let n = match self {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		let n: u8 = match self {
 			Self::Plus => 0,
 			Self::ImplicitPlus => 1,
 			Self::Minus => 2,
@@ -51,12 +52,12 @@ impl Bop {
 			Self::Combination => 12,
 			Self::Permutation => 13,
 		};
-		serialize_u8(n, write)?;
+		n.serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Ok(match deserialize_u8(read)? {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Ok(match u8::deserialize(read)? {
 			0 => Self::Plus,
 			1 => Self::ImplicitPlus,
 			2 => Self::Minus,
@@ -125,79 +126,79 @@ pub(crate) enum Expr {
 }
 
 impl Expr {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		match self {
 			Self::Literal(x) => {
-				serialize_u8(0, write)?;
+				0u8.serialize(write)?;
 				x.serialize(write)?;
 			}
 			Self::Ident(i) => {
-				serialize_u8(1, write)?;
+				1u8.serialize(write)?;
 				i.serialize(write)?;
 			}
 			Self::Parens(e) => {
-				serialize_u8(2, write)?;
+				2u8.serialize(write)?;
 				e.serialize(write)?;
 			}
 			Self::UnaryMinus(e) => {
-				serialize_u8(3, write)?;
+				3u8.serialize(write)?;
 				e.serialize(write)?;
 			}
 			Self::UnaryPlus(e) => {
-				serialize_u8(4, write)?;
+				4u8.serialize(write)?;
 				e.serialize(write)?;
 			}
 			Self::UnaryDiv(e) => {
-				serialize_u8(5, write)?;
+				5u8.serialize(write)?;
 				e.serialize(write)?;
 			}
 			Self::Factorial(e) => {
-				serialize_u8(6, write)?;
+				6u8.serialize(write)?;
 				e.serialize(write)?;
 			}
 			Self::Bop(op, a, b) => {
-				serialize_u8(7, write)?;
+				7u8.serialize(write)?;
 				op.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::Apply(a, b) => {
-				serialize_u8(8, write)?;
+				8u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::ApplyFunctionCall(a, b) => {
-				serialize_u8(9, write)?;
+				9u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::ApplyMul(a, b) => {
-				serialize_u8(10, write)?;
+				10u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::As(a, b) => {
-				serialize_u8(11, write)?;
+				11u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::Fn(a, b) => {
-				serialize_u8(12, write)?;
+				12u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::Of(a, b) => {
-				serialize_u8(13, write)?;
+				13u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::Assign(a, b) => {
-				serialize_u8(14, write)?;
+				14u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::Statements(a, b) => {
-				serialize_u8(15, write)?;
+				15u8.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
@@ -205,8 +206,8 @@ impl Expr {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Ok(match deserialize_u8(read)? {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Ok(match u8::deserialize(read)? {
 			0 => Self::Literal(Value::deserialize(read)?),
 			1 => Self::Ident(Ident::deserialize(read)?),
 			2 => Self::Parens(Box::new(Self::deserialize(read)?)),
@@ -260,7 +261,7 @@ impl Expr {
 		attrs: Attrs,
 		ctx: &mut crate::Context,
 		int: &I,
-	) -> Result<String, FendError> {
+	) -> FendCoreResult<String> {
 		Ok(match self {
 			Self::Literal(Value::String(s)) => format!(r#""{}""#, s.as_ref()),
 			Self::Literal(v) => v.format_to_plain_string(0, attrs, ctx, int)?,
@@ -313,7 +314,7 @@ impl Expr {
 }
 
 /// returns true if rhs is '-1' or '(-1)'
-fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> Result<bool, FendError> {
+fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> FendCoreResult<bool> {
 	if let Expr::UnaryMinus(inner) = rhs {
 		if let Expr::Literal(Value::Num(n)) = &**inner {
 			if n.is_unitless_one(int)? {
@@ -339,7 +340,7 @@ pub(crate) fn evaluate<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	macro_rules! eval {
 		($e:expr) => {
 			evaluate($e, scope.clone(), attrs, context, int)
@@ -459,7 +460,7 @@ fn evaluate_add<I: Interrupt>(
 	b: Value,
 	scope: Option<Arc<Scope>>,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	Ok(match (a, b) {
 		(Value::Num(a), Value::Num(b)) => Value::Num(Box::new(a.add(*b, int)?)),
 		(Value::String(a), Value::String(b)) => {
@@ -503,7 +504,7 @@ fn evaluate_as<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	if let Expr::Ident(ident) = &b {
 		match ident.as_str() {
 			"bool" | "boolean" => {
@@ -580,7 +581,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	macro_rules! eval_box {
 		($input:expr) => {
 			Box::new(evaluate_to_value(

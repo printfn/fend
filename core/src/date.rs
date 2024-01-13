@@ -11,7 +11,7 @@ pub(crate) use day_of_week::DayOfWeek;
 pub(crate) use month::Month;
 use year::Year;
 
-use crate::{error::FendError, ident::Ident, value::Value};
+use crate::{error::FendError, ident::Ident, result::FendCoreResult, value::Value};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
@@ -21,7 +21,7 @@ pub(crate) struct Date {
 }
 
 impl Date {
-	pub(crate) fn today(context: &mut crate::Context) -> Result<Self, FendError> {
+	pub(crate) fn today(context: &mut crate::Context) -> FendCoreResult<Self> {
 		let Some(current_time_info) = &context.current_time else {
 			return Err(FendError::UnableToGetCurrentDate);
 		};
@@ -120,7 +120,7 @@ impl Date {
 		}
 	}
 
-	pub(crate) fn diff_months(self, mut months: i64) -> Result<Self, FendError> {
+	pub(crate) fn diff_months(self, mut months: i64) -> FendCoreResult<Self> {
 		let mut result = self;
 		while months >= 12 {
 			result.year = result.year.next();
@@ -170,18 +170,18 @@ impl Date {
 		Ok(result)
 	}
 
-	pub(crate) fn parse(s: &str) -> Result<Self, FendError> {
+	pub(crate) fn parse(s: &str) -> FendCoreResult<Self> {
 		parser::parse_date(s)
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		self.year.serialize(write)?;
 		self.month.serialize(write)?;
 		self.day.serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
 		Ok(Self {
 			year: Year::deserialize(read)?,
 			month: Month::deserialize(read)?,
@@ -189,7 +189,7 @@ impl Date {
 		})
 	}
 
-	pub(crate) fn get_object_member(self, key: &Ident) -> Result<crate::value::Value, FendError> {
+	pub(crate) fn get_object_member(self, key: &Ident) -> FendCoreResult<crate::value::Value> {
 		Ok(match key.as_str() {
 			"month" => Value::Month(self.month),
 			"day_of_week" => Value::DayOfWeek(self.day_of_week()),
@@ -197,7 +197,7 @@ impl Date {
 		})
 	}
 
-	pub(crate) fn add(self, rhs: Value) -> Result<Value, FendError> {
+	pub(crate) fn add(self, rhs: Value) -> FendCoreResult<Value> {
 		let rhs = rhs.expect_num()?;
 		let int = &crate::interrupt::Never;
 		if rhs.unit_equal_to("day") {
@@ -212,7 +212,7 @@ impl Date {
 		}
 	}
 
-	pub(crate) fn sub(self, rhs: Value) -> Result<Value, FendError> {
+	pub(crate) fn sub(self, rhs: Value) -> FendCoreResult<Value> {
 		let int = &crate::interrupt::Never;
 		let rhs = rhs.expect_num()?;
 

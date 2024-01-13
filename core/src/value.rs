@@ -2,11 +2,9 @@ use crate::ast::Bop;
 use crate::date::{Date, DayOfWeek, Month};
 use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
+use crate::result::FendCoreResult;
 use crate::scope::Scope;
-use crate::serialize::{
-	deserialize_bool, deserialize_string, deserialize_u8, deserialize_usize, serialize_bool,
-	serialize_string, serialize_u8, serialize_usize,
-};
+use crate::serialize::{Deserialize, Serialize};
 use crate::{ast::Expr, ident::Ident};
 use crate::{date, Attrs, Span, SpanKind};
 use std::borrow::Cow;
@@ -46,73 +44,73 @@ pub(crate) enum ApplyMulHandling {
 }
 
 impl Value {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		match self {
 			Self::Num(n) => {
-				serialize_u8(0, write)?;
+				0u8.serialize(write)?;
 				n.serialize(write)?;
 			}
 			Self::BuiltInFunction(f) => {
-				serialize_u8(1, write)?;
+				1u8.serialize(write)?;
 				f.serialize(write)?;
 			}
 			Self::Format(f) => {
-				serialize_u8(2, write)?;
+				2u8.serialize(write)?;
 				f.serialize(write)?;
 			}
-			Self::Dp => serialize_u8(3, write)?,
-			Self::Sf => serialize_u8(4, write)?,
+			Self::Dp => 3u8.serialize(write)?,
+			Self::Sf => 4u8.serialize(write)?,
 			Self::Base(b) => {
-				serialize_u8(5, write)?;
+				5u8.serialize(write)?;
 				b.serialize(write)?;
 			}
 			Self::Fn(i, e, s) => {
-				serialize_u8(6, write)?;
+				6u8.serialize(write)?;
 				i.serialize(write)?;
 				e.serialize(write)?;
 				match s {
-					None => serialize_bool(false, write)?,
+					None => false.serialize(write)?,
 					Some(s) => {
-						serialize_bool(true, write)?;
+						true.serialize(write)?;
 						s.serialize(write)?;
 					}
 				}
 			}
 			Self::Object(o) => {
-				serialize_u8(7, write)?;
-				serialize_usize(o.len(), write)?;
+				7u8.serialize(write)?;
+				o.len().serialize(write)?;
 				for (k, v) in o {
-					serialize_string(k.as_ref(), write)?;
+					k.as_ref().serialize(write)?;
 					v.serialize(write)?;
 				}
 			}
 			Self::String(s) => {
-				serialize_u8(8, write)?;
-				serialize_string(s, write)?;
+				8u8.serialize(write)?;
+				s.as_ref().serialize(write)?;
 			}
-			Self::Unit => serialize_u8(9, write)?,
+			Self::Unit => 9u8.serialize(write)?,
 			Self::Bool(b) => {
-				serialize_u8(10, write)?;
-				serialize_bool(*b, write)?;
+				10u8.serialize(write)?;
+				b.serialize(write)?;
 			}
 			Self::Month(m) => {
-				serialize_u8(11, write)?;
+				11u8.serialize(write)?;
 				m.serialize(write)?;
 			}
 			Self::DayOfWeek(d) => {
-				serialize_u8(12, write)?;
+				12u8.serialize(write)?;
 				d.serialize(write)?;
 			}
 			Self::Date(d) => {
-				serialize_u8(13, write)?;
+				13u8.serialize(write)?;
 				d.serialize(write)?;
 			}
 		}
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		Ok(match deserialize_u8(read)? {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		Ok(match u8::deserialize(read)? {
 			0 => Self::Num(Box::new(Number::deserialize(read)?)),
 			1 => Self::BuiltInFunction(BuiltInFunction::deserialize(read)?),
 			2 => Self::Format(FormattingStyle::deserialize(read)?),
@@ -122,26 +120,26 @@ impl Value {
 			6 => Self::Fn(
 				Ident::deserialize(read)?,
 				Box::new(Expr::deserialize(read)?),
-				if deserialize_bool(read)? {
+				if bool::deserialize(read)? {
 					Some(Arc::new(Scope::deserialize(read)?))
 				} else {
 					None
 				},
 			),
 			7 => Self::Object({
-				let len = deserialize_usize(read)?;
+				let len = usize::deserialize(read)?;
 				let mut v = Vec::with_capacity(len);
 				for _ in 0..len {
 					v.push((
-						Cow::Owned(deserialize_string(read)?),
+						Cow::Owned(String::deserialize(read)?),
 						Box::new(Self::deserialize(read)?),
 					));
 				}
 				v
 			}),
-			8 => Self::String(Cow::Owned(deserialize_string(read)?)),
+			8 => Self::String(Cow::Owned(String::deserialize(read)?)),
 			9 => Self::Unit,
-			10 => Self::Bool(deserialize_bool(read)?),
+			10 => Self::Bool(bool::deserialize(read)?),
 			11 => Self::Month(Month::deserialize(read)?),
 			12 => Self::DayOfWeek(DayOfWeek::deserialize(read)?),
 			13 => Self::Date(Date::deserialize(read)?),
@@ -167,7 +165,7 @@ impl Value {
 		}
 	}
 
-	fn as_bool(&self) -> Result<bool, FendError> {
+	fn as_bool(&self) -> FendCoreResult<bool> {
 		if let Self::Bool(b) = self {
 			Ok(*b)
 		} else {
@@ -175,7 +173,7 @@ impl Value {
 		}
 	}
 
-	pub(crate) fn expect_num(self) -> Result<Number, FendError> {
+	pub(crate) fn expect_num(self) -> FendCoreResult<Number> {
 		match self {
 			Self::Num(bigrat) => Ok(*bigrat),
 			_ => Err(FendError::ExpectedANumber),
@@ -188,10 +186,10 @@ impl Value {
 
 	pub(crate) fn handle_num(
 		self,
-		eval_fn: impl FnOnce(Number) -> Result<Number, FendError>,
+		eval_fn: impl FnOnce(Number) -> FendCoreResult<Number>,
 		lazy_fn: impl FnOnce(Box<Expr>) -> Expr,
 		scope: Option<Arc<Scope>>,
-	) -> Result<Self, FendError> {
+	) -> FendCoreResult<Self> {
 		Ok(match self {
 			Self::Num(n) => Self::Num(Box::new(eval_fn(*n)?)),
 			Self::Fn(param, expr, scope) => Self::Fn(param, Box::new(lazy_fn(expr)), scope),
@@ -203,11 +201,11 @@ impl Value {
 	pub(crate) fn handle_two_nums<F1: FnOnce(Box<Expr>) -> Expr, F2: FnOnce(Box<Expr>) -> Expr>(
 		self,
 		rhs: Self,
-		eval_fn: impl FnOnce(Number, Number) -> Result<Number, FendError>,
+		eval_fn: impl FnOnce(Number, Number) -> FendCoreResult<Number>,
 		lazy_fn_lhs: impl FnOnce(Number) -> F1,
 		lazy_fn_rhs: impl FnOnce(Number) -> F2,
 		scope: Option<Arc<Scope>>,
-	) -> Result<Self, FendError> {
+	) -> FendCoreResult<Self> {
 		Ok(match (self, rhs) {
 			(Self::Num(a), Self::Num(b)) => Self::Num(Box::new(eval_fn(*a, *b)?)),
 			(Self::BuiltInFunction(f), Self::Num(a)) => f.wrap_with_expr(lazy_fn_lhs(*a), scope),
@@ -230,7 +228,7 @@ impl Value {
 		attrs: Attrs,
 		context: &mut crate::Context,
 		int: &I,
-	) -> Result<Self, FendError> {
+	) -> FendCoreResult<Self> {
 		let stringified_self = self.format_to_plain_string(0, attrs, context, int)?;
 		Ok(match self {
 			Self::Num(n) => {
@@ -277,7 +275,7 @@ impl Value {
 		attrs: Attrs,
 		context: &mut crate::Context,
 		int: &I,
-	) -> Result<Self, FendError> {
+	) -> FendCoreResult<Self> {
 		let arg = crate::ast::evaluate(arg, scope.clone(), attrs, context, int)?;
 		Ok(Self::Num(Box::new(match func {
 			BuiltInFunction::Approximately => arg.expect_num()?.make_approximate(),
@@ -320,7 +318,7 @@ impl Value {
 		attrs: Attrs,
 		ctx: &mut crate::Context,
 		int: &I,
-	) -> Result<String, FendError> {
+	) -> FendCoreResult<String> {
 		let mut spans = vec![];
 		self.format(indent, &mut spans, attrs, ctx, int)?;
 		let mut res = String::new();
@@ -337,7 +335,7 @@ impl Value {
 		attrs: Attrs,
 		ctx: &mut crate::Context,
 		int: &I,
-	) -> Result<(), FendError> {
+	) -> FendCoreResult<()> {
 		match self {
 			Self::Num(n) => {
 				n.clone()
@@ -438,7 +436,7 @@ impl Value {
 		Ok(())
 	}
 
-	pub(crate) fn get_object_member(self, key: &Ident) -> Result<Self, FendError> {
+	pub(crate) fn get_object_member(self, key: &Ident) -> FendCoreResult<Self> {
 		match self {
 			Self::Object(kv) => {
 				for (k, v) in kv {

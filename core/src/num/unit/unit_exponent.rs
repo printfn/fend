@@ -1,14 +1,10 @@
 use std::{collections::HashMap, fmt, io};
 
-use crate::{
-	error::FendError,
-	interrupt::test_int,
-	num::{
-		complex::{self, Complex, UseParentheses},
-		Base, Exact, FormattingStyle,
-	},
-	Interrupt,
-};
+use crate::interrupt::test_int;
+use crate::num::complex::{self, Complex, UseParentheses};
+use crate::num::{Base, Exact, FormattingStyle};
+use crate::result::FendCoreResult;
+use crate::Interrupt;
 
 use super::{base_unit::BaseUnit, named_unit::NamedUnit};
 
@@ -26,13 +22,13 @@ impl UnitExponent {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		self.unit.serialize(write)?;
 		self.exponent.serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
 		Ok(Self {
 			unit: NamedUnit::deserialize(read)?,
 			exponent: Complex::deserialize(read)?,
@@ -49,7 +45,7 @@ impl UnitExponent {
 		scale: &mut Complex,
 		exact: &mut bool,
 		int: &I,
-	) -> Result<(), FendError> {
+	) -> FendCoreResult<()> {
 		test_int(int)?;
 		let overall_exp = &Exact::new(self.exponent.clone(), true);
 		for (base_unit, base_exp) in &self.unit.base_units {
@@ -90,7 +86,7 @@ impl UnitExponent {
 		plural: bool,
 		invert_exp: bool,
 		int: &I,
-	) -> Result<Exact<FormattedExponent<'_>>, FendError> {
+	) -> FendCoreResult<Exact<FormattedExponent<'_>>> {
 		let (prefix, name) = self.unit.prefix_and_name(plural);
 		let exp = if invert_exp {
 			-self.exponent.clone()

@@ -1,6 +1,6 @@
-use crate::serialize::deserialize_u8;
-use crate::serialize::serialize_u8;
+use crate::result::FendCoreResult;
 use crate::FendError;
+use crate::{Deserialize, Serialize};
 use std::fmt;
 use std::io;
 
@@ -17,13 +17,13 @@ impl Day {
 		Self(day)
 	}
 
-	pub(crate) fn serialize(self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_u8(self.value(), write)?;
+	pub(crate) fn serialize(self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.value().serialize(write)?;
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		let n = deserialize_u8(read)?;
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		let n = u8::deserialize(read)?;
 		if n == 0 || n >= 32 {
 			return Err(FendError::DeserializationError);
 		}

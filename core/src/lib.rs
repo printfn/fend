@@ -33,6 +33,7 @@ pub mod json;
 mod lexer;
 mod num;
 mod parser;
+mod result;
 mod scope;
 mod serialize;
 mod units;
@@ -44,7 +45,8 @@ use std::{collections::HashMap, fmt, io};
 use error::FendError;
 pub(crate) use eval::Attrs;
 pub use interrupt::Interrupt;
-use serialize::{deserialize_string, deserialize_usize, serialize_string, serialize_usize};
+use result::FendCoreResult;
+use serialize::{Deserialize, Serialize};
 
 /// This contains the result of a computation.
 #[derive(PartialEq, Eq, Debug)]
@@ -280,10 +282,10 @@ impl Context {
 		self.output_mode = OutputMode::TerminalFixedWidth;
 	}
 
-	fn serialize_variables_internal(&self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_usize(self.variables.len(), write)?;
+	fn serialize_variables_internal(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.variables.len().serialize(write)?;
 		for (k, v) in &self.variables {
-			serialize_string(k.as_str(), write)?;
+			k.as_str().serialize(write)?;
 			v.serialize(write)?;
 		}
 		Ok(())
@@ -303,16 +305,14 @@ impl Context {
 		}
 	}
 
-	fn deserialize_variables_internal(
-		&mut self,
-		read: &mut impl io::Read,
-	) -> Result<(), FendError> {
-		let len = deserialize_usize(read)?;
+	fn deserialize_variables_internal(&mut self, read: &mut impl io::Read) -> FendCoreResult<()> {
+		let len = usize::deserialize(read)?;
 		self.variables.clear();
 		self.variables.reserve(len);
 		for _ in 0..len {
-			self.variables
-				.insert(deserialize_string(read)?, value::Value::deserialize(read)?);
+			let s = String::deserialize(read)?;
+			let v = value::Value::deserialize(read)?;
+			self.variables.insert(s, v);
 		}
 		Ok(())
 	}

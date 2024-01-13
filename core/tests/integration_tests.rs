@@ -5693,11 +5693,13 @@ fn permutation_test() {
 	test_eval("10 permute 3", "720");
 }
 
+// ERROR
 #[test]
 fn date_literals() {
 	test_eval_simple("@1970-01-01", "Thursday, 1 January 1970");
 }
 
+// ERROR
 #[test]
 fn date_literal_subtraction() {
 	test_eval_simple("@2022-11-29 - 2 days", "Sunday, 27 November 2022");

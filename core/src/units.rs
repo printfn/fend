@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
+use crate::result::FendCoreResult;
 use crate::value::Value;
 use crate::Attrs;
 
@@ -34,7 +35,7 @@ fn expr_unit<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<UnitDef, FendError> {
+) -> FendCoreResult<UnitDef> {
 	let (singular, plural, definition) = unit_def;
 	let mut definition = definition.trim();
 	if definition == "$CURRENCY" {
@@ -138,11 +139,7 @@ fn expr_unit<I: Interrupt>(
 	})
 }
 
-fn construct_prefixed_unit<I: Interrupt>(
-	a: UnitDef,
-	b: UnitDef,
-	int: &I,
-) -> Result<Value, FendError> {
+fn construct_prefixed_unit<I: Interrupt>(a: UnitDef, b: UnitDef, int: &I) -> FendCoreResult<Value> {
 	let product = a.value.expect_num()?.mul(b.value.expect_num()?, int)?;
 	assert_eq!(a.singular, a.plural);
 	let unit = Number::create_unit_value_from_value(
@@ -156,7 +153,7 @@ pub(crate) fn query_unit<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	if ident.starts_with('\'') && ident.ends_with('\'') && ident.len() >= 3 {
 		let ident = ident.split_at(1).1;
 		let ident = ident.split_at(ident.len() - 1).0;
@@ -173,7 +170,7 @@ pub(crate) fn query_unit_static<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	match query_unit_case_sensitive(ident, true, attrs, context, int) {
 		Err(FendError::IdentifierNotFound(_)) => (),
 		Err(e) => return Err(e),
@@ -190,7 +187,7 @@ fn query_unit_case_sensitive<I: Interrupt>(
 	attrs: Attrs,
 	context: &mut crate::Context,
 	int: &I,
-) -> Result<Value, FendError> {
+) -> FendCoreResult<Value> {
 	match query_unit_internal(ident, false, case_sensitive, true, context) {
 		Err(FendError::IdentifierNotFound(_)) => (),
 		Err(e) => return Err(e),
@@ -241,7 +238,7 @@ fn query_unit_internal(
 	case_sensitive: bool,
 	whole_unit: bool,
 	context: &mut crate::Context,
-) -> Result<(Cow<'static, str>, Cow<'static, str>, Cow<'static, str>), FendError> {
+) -> FendCoreResult<(Cow<'static, str>, Cow<'static, str>, Cow<'static, str>)> {
 	if !short_prefixes {
 		for (s, p, d) in &context.custom_units {
 			let p = if p.is_empty() { s } else { p };

@@ -10,6 +10,7 @@ use crate::format::Format;
 use crate::interrupt::Never;
 use crate::num::bigrat::sign::Sign;
 use crate::num::biguint::BigUint;
+use crate::result::FendCoreResult;
 use crate::Interrupt;
 use std::hash::Hash;
 use std::rc::Rc;
@@ -42,7 +43,7 @@ impl ContinuedFraction {
 		}
 	}
 
-	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> Result<usize, FendError> {
+	pub(crate) fn try_as_usize<I: Interrupt>(&self, int: &I) -> FendCoreResult<usize> {
 		if self.actual_integer_sign() == Sign::Negative {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
@@ -96,7 +97,7 @@ impl ContinuedFraction {
 		self.integer == 0.into() && (self.fraction)().next().is_none()
 	}
 
-	pub(crate) fn invert(self) -> Result<Self, FendError> {
+	pub(crate) fn invert(self) -> FendCoreResult<Self> {
 		if self.actual_integer_sign() == Sign::Negative {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
@@ -126,7 +127,7 @@ impl ContinuedFraction {
 		args: [impl Into<BigUint>; 4],
 		f: fn() -> Option<BigUint>,
 		int: &I,
-	) -> Result<Self, FendError> {
+	) -> FendCoreResult<Self> {
 		if self.actual_integer_sign() == Sign::Negative {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
@@ -165,7 +166,7 @@ impl ContinuedFraction {
 		x: Self,
 		y: Self,
 		args: [impl Into<BigUint>; 8],
-	) -> Result<Self, FendError> {
+	) -> FendCoreResult<Self> {
 		if x.actual_integer_sign() == Sign::Negative || y.actual_integer_sign() == Sign::Negative {
 			return Err(FendError::NegativeNumbersNotAllowed);
 		}
@@ -208,22 +209,22 @@ impl ContinuedFraction {
 		})
 	}
 
-	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn add<I: Interrupt>(&self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		Self::bihomographic(self.clone(), other.clone(), [0, 1, 1, 0, 0, 0, 0, 1])
 	}
 
-	pub(crate) fn mul<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn mul<I: Interrupt>(&self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		Self::bihomographic(self.clone(), other.clone(), [1, 0, 0, 0, 0, 0, 0, 1])
 	}
 
-	pub(crate) fn div<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn div<I: Interrupt>(&self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		if other.is_zero() {
 			return Err(FendError::DivideByZero);
 		}
 		self.clone().invert()?.mul(&other.clone().invert()?, int)
 	}
 
-	pub(crate) fn modulo<I: Interrupt>(&self, other: &Self, int: &I) -> Result<Self, FendError> {
+	pub(crate) fn modulo<I: Interrupt>(&self, other: &Self, int: &I) -> FendCoreResult<Self> {
 		if other.is_zero() {
 			return Err(FendError::ModuloByZero);
 		}
@@ -237,14 +238,14 @@ impl ContinuedFraction {
 		Ok(Self::from(self.integer.divmod(&other.integer, int)?.1))
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
 		self.integer_sign.serialize(write)?;
 		self.integer.serialize(write)?;
 		// TODO serialize fraction
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
 		Ok(Self {
 			integer_sign: Sign::deserialize(read)?,
 			integer: BigUint::deserialize(read)?,
@@ -661,7 +662,7 @@ fn format_as_integer<I: Interrupt>(
 	use_parens_if_product: bool,
 	sf_limit: Option<usize>,
 	int: &I,
-) -> Result<Exact<FormattedContinuedFraction>, FendError> {
+) -> FendCoreResult<Exact<FormattedContinuedFraction>> {
 	let (ty, exact) = if !term.is_empty() && !base.has_prefix() && num == &1.into() {
 		(
 			FormattedContinuedFractionType::Integer(None, false, term, false),
@@ -698,7 +699,7 @@ impl Format for ContinuedFraction {
 		&self,
 		params: &Self::Params,
 		int: &I,
-	) -> Result<Exact<Self::Out>, FendError> {
+	) -> FendCoreResult<Exact<Self::Out>> {
 		let sign = self.actual_integer_sign();
 
 		// try as integer if possible

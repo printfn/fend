@@ -1,10 +1,10 @@
-use crate::error::FendError;
+use crate::{error::FendError, result::FendCoreResult};
 
 pub trait Interrupt {
 	fn should_interrupt(&self) -> bool;
 }
 
-pub(crate) fn test_int<I: crate::error::Interrupt>(int: &I) -> Result<(), FendError> {
+pub(crate) fn test_int<I: crate::error::Interrupt>(int: &I) -> FendCoreResult<()> {
 	if int.should_interrupt() {
 		Err(FendError::Interrupted)
 	} else {

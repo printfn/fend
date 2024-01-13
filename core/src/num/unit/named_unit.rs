@@ -1,14 +1,9 @@
 use std::{borrow::Cow, collections::HashMap, fmt, io};
 
 use super::base_unit::BaseUnit;
-use crate::{
-	error::FendError,
-	num::complex::Complex,
-	serialize::{
-		deserialize_bool, deserialize_string, deserialize_usize, serialize_bool, serialize_string,
-		serialize_usize,
-	},
-};
+use crate::num::complex::Complex;
+use crate::result::FendCoreResult;
+use crate::serialize::{Deserialize, Serialize};
 
 /// A named unit, like kilogram, megabyte or percent.
 #[derive(Clone, Eq, PartialEq)]
@@ -40,13 +35,13 @@ impl NamedUnit {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> Result<(), FendError> {
-		serialize_string(self.prefix.as_ref(), write)?;
-		serialize_string(self.singular_name.as_ref(), write)?;
-		serialize_string(self.plural_name.as_ref(), write)?;
-		serialize_bool(self.alias, write)?;
+	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FendCoreResult<()> {
+		self.prefix.as_ref().serialize(write)?;
+		self.singular_name.as_ref().serialize(write)?;
+		self.plural_name.as_ref().serialize(write)?;
+		self.alias.serialize(write)?;
 
-		serialize_usize(self.base_units.len(), write)?;
+		self.base_units.len().serialize(write)?;
 		for (a, b) in &self.base_units {
 			a.serialize(write)?;
 			b.serialize(write)?;
@@ -56,13 +51,13 @@ impl NamedUnit {
 		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> Result<Self, FendError> {
-		let prefix = deserialize_string(read)?;
-		let singular_name = deserialize_string(read)?;
-		let plural_name = deserialize_string(read)?;
-		let alias = deserialize_bool(read)?;
+	pub(crate) fn deserialize(read: &mut impl io::Read) -> FendCoreResult<Self> {
+		let prefix = String::deserialize(read)?;
+		let singular_name = String::deserialize(read)?;
+		let plural_name = String::deserialize(read)?;
+		let alias = bool::deserialize(read)?;
 
-		let len = deserialize_usize(read)?;
+		let len = usize::deserialize(read)?;
 		let mut hashmap = HashMap::with_capacity(len);
 		for _ in 0..len {
 			let k = BaseUnit::deserialize(read)?;
