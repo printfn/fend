@@ -307,7 +307,7 @@ const COMMON_SI_DERIVED_UNITS: &[UnitTuple] = &[
 	(
 		"horsepower",
 		"horsepowers",
-		"l@745.699987158227022 watts",
+		"l@745.69987158227022 watts",
 		"",
 	),
 	("hp", "", "s@horsepower", ""),
