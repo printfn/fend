@@ -123,6 +123,7 @@ These are some projects making use of fend:
 
 * [MicroPad](https://getmicropad.com)
 * [Fendesk](https://github.com/SekoiaTree/fendesk)
+* [metasearch2](https://github.com/mat-1/metasearch2)
 
 Feel free to make a pull request to add your own!
 
