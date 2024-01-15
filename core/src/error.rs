@@ -51,6 +51,7 @@ pub(crate) enum FendError {
 	ExpectedACharacter,
 	StringCannotBeLonger,
 	StringCannotBeEmpty,
+	InvalidCodepoint(usize),
 	ExpectedADigit(char),
 	ExpectedChar(char, char),
 	ExpectedDigitSeparator(char),
@@ -160,6 +161,9 @@ impl fmt::Display for FendError {
 			Self::ExpectedARealNumber => write!(f, "expected a real number"),
 			Self::StringCannotBeLonger => write!(f, "string cannot be longer than one codepoint"),
 			Self::StringCannotBeEmpty => write!(f, "string cannot be empty"),
+			Self::InvalidCodepoint(codepoint) => {
+				write!(f, "invalid codepoint: U+{codepoint:04x}")
+			}
 			Self::UnableToGetCurrentDate => write!(f, "unable to get the current date"),
 			Self::NegativeNumbersNotAllowed => write!(f, "negative numbers are not allowed"),
 			Self::ProbabilityDistributionsNotAllowed => {

@@ -544,6 +544,20 @@ fn evaluate_as<I: Interrupt>(
 				}
 				return Err(FendError::ExpectedAString);
 			}
+			"char" | "character" => {
+				let a = evaluate(a, scope, attrs, context, int)?;
+				if let Value::Num(v) = a {
+					let n = v.try_as_usize(int)?;
+					let ch = n
+						.try_into()
+						.ok()
+						.and_then(std::char::from_u32)
+						.ok_or(FendError::InvalidCodepoint(n))?;
+
+					return Ok(Value::String(ch.to_string().into()));
+				}
+				return Err(FendError::ExpectedANumber);
+			}
 			_ => (),
 		}
 	}
