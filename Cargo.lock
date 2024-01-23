@@ -123,7 +123,7 @@ dependencies = [
 
 [[package]]
 name = "fend"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "ctrlc",
  "fend-core",
@@ -139,11 +139,11 @@ dependencies = [
 
 [[package]]
 name = "fend-core"
-version = "1.4.1"
+version = "1.4.2"
 
 [[package]]
 name = "fend-wasm"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "fend-core",
  "instant",

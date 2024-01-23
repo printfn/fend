@@ -1,5 +1,13 @@
 ## Changelog
 
+### v1.4.2 (2024-01-23)
+
+* Add ability to convert codepoints to characters, e.g. `97 to character`
+    (by [@mat-1](https://github.com/mat-1))
+* Fix horsepower value (by [@probablykasper](https://github.com/probablykasper))
+* Fix license files not being included in the workspace member packages
+    (`fend-core` etc.) (by [@albertlarsan68](https://github.com/albertlarsan68))
+
 ### v1.4.1 (2024-01-07)
 
 * Fix bug where fend could return incorrect results when calculating
