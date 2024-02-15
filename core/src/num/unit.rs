@@ -538,6 +538,42 @@ impl Value {
 		}
 	}
 
+	pub(crate) fn floor<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let value = self.value.one_point()?.floor(int)?;
+		Ok(Self {
+			value: Complex::from(value.value).into(),
+			unit: self.unit,
+			exact: self.exact && value.exact,
+			base: self.base,
+			format: self.format,
+			simplifiable: self.simplifiable,
+		})
+	}
+
+	pub(crate) fn ceil<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let value = self.value.one_point()?.ceil(int)?;
+		Ok(Self {
+			value: Complex::from(value.value).into(),
+			unit: self.unit,
+			exact: self.exact && value.exact,
+			base: self.base,
+			format: self.format,
+			simplifiable: self.simplifiable,
+		})
+	}
+
+	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let value = self.value.one_point()?.round(int)?;
+		Ok(Self {
+			value: Complex::from(value.value).into(),
+			unit: self.unit,
+			exact: self.exact && value.exact,
+			base: self.base,
+			format: self.format,
+			simplifiable: self.simplifiable,
+		})
+	}
+
 	pub(crate) fn real(self) -> FResult<Self> {
 		Ok(Self {
 			value: Complex::from(self.value.one_point()?.real()).into(),

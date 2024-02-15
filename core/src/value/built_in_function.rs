@@ -36,6 +36,9 @@ pub(crate) enum BuiltInFunction {
 	Real,
 	Imag,
 	Arg,
+	Floor,
+	Ceil,
+	Round,
 }
 
 impl BuiltInFunction {
@@ -98,6 +101,9 @@ impl BuiltInFunction {
 			Self::Real => "real",
 			Self::Imag => "imag",
 			Self::Arg => "arg",
+			Self::Floor => "floor",
+			Self::Ceil => "ceil",
+			Self::Round => "round",
 		}
 	}
 

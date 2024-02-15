@@ -246,6 +246,18 @@ impl Real {
 		Ok(Self::from(self.approximate(int)?.factorial(int)?))
 	}
 
+	pub(crate) fn floor<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		Ok(Self::from(self.approximate(int)?.floor(int)?))
+	}
+
+	pub(crate) fn ceil<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		Ok(Self::from(self.approximate(int)?.ceil(int)?))
+	}
+
+	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		Ok(Self::from(self.approximate(int)?.round(int)?))
+	}
+
 	pub(crate) fn format<I: Interrupt>(
 		&self,
 		base: Base,

@@ -213,6 +213,18 @@ impl Complex {
 		})
 	}
 
+	pub(crate) fn floor<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
+		Ok(Exact::new(self.expect_real()?.floor(int)?, true))
+	}
+
+	pub(crate) fn ceil<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
+		Ok(Exact::new(self.expect_real()?.ceil(int)?, true))
+	}
+
+	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
+		Ok(Exact::new(self.expect_real()?.round(int)?, true))
+	}
+
 	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
 		Ok(Exact::new(self.imag.atan2(self.real, int)?, false))
 	}

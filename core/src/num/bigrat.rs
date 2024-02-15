@@ -344,6 +344,21 @@ impl BigRat {
 		Ok(self.apply_uint_op(BigUint::factorial, int)?.into())
 	}
 
+	pub(crate) fn floor<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let float = self.into_f64(int)?.floor();
+		Self::from_f64(float, int)
+	}
+
+	pub(crate) fn ceil<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let float = self.into_f64(int)?.ceil();
+		Self::from_f64(float, int)
+	}
+
+	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let float = self.into_f64(int)?.round();
+		Self::from_f64(float, int)
+	}
+
 	pub(crate) fn bitwise<I: Interrupt>(
 		self,
 		rhs: Self,
