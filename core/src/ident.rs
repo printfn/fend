@@ -24,7 +24,7 @@ impl Ident {
 	pub(crate) fn is_prefix_unit(&self) -> bool {
 		// when changing this also make sure to change number output formatting
 		// lexer identifier splitting
-		self.0 == "$" || self.0 == "\u{a3}"
+		["$", "\u{a3}", "\u{a5}"].contains(&&*self.0)
 	}
 
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {

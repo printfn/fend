@@ -393,7 +393,7 @@ fn is_valid_in_ident(ch: char, prev: Option<char>) -> bool {
 		'㏌', '㏏', '㏐', '㏓', '㏔', '㏕', '㏖', '㏗', '㏙', '㏛', '㏜', '㏝',
 	];
 	let only_valid_by_themselves = ['%', '‰', '‱', '′', '″', '’', '”', 'π'];
-	let split_on_subsequent_digit = ['$', '£'];
+	let split_on_subsequent_digit = ['$', '£', '¥'];
 	let always_invalid = ['λ'];
 	if always_invalid.contains(&ch) {
 		false

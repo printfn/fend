@@ -200,7 +200,7 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 				}
 				Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
 			}
-			// support e.g. '$5' or '£3'
+			// support e.g. '$5', '£3' or '¥10'
 			(Expr::Ident(i), Expr::Literal(Value::Num(_))) if i.is_prefix_unit() => {
 				Expr::Apply(Box::new(lhs.clone()), Box::new(rhs))
 			}

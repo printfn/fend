@@ -5371,6 +5371,11 @@ fn gbp_symbol() {
 }
 
 #[test]
+fn jpy_symbol() {
+	test_eval("¥5 + ¥3", "¥8");
+}
+
+#[test]
 fn two_statements() {
 	test_eval("2; 4", "4");
 }
