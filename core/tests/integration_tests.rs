@@ -5832,3 +5832,9 @@ fn alias_sqrt() {
 		"approx. 3527.6684147527 s",
 	);
 }
+
+#[test]
+fn test_superscript() {
+	test_eval("200²", "40000");
+	test_eval("13¹³ days", "302875106592253 days");
+}
