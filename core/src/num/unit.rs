@@ -948,7 +948,7 @@ impl FormattedValue {
 				kind: SpanKind::Ident,
 			});
 		}
-		if self.unit_str == "$" || self.unit_str == "\u{a3}" && !attrs.plain_number {
+		if ["$", "\u{a3}", "\u{a5}"].contains(&self.unit_str.as_str()) && !attrs.plain_number {
 			spans.push(Span {
 				string: self.unit_str,
 				kind: SpanKind::Ident,
