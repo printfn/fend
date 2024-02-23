@@ -309,6 +309,9 @@ impl Value {
 			BuiltInFunction::Real => arg.expect_num()?.real()?,
 			BuiltInFunction::Imag => arg.expect_num()?.imag()?,
 			BuiltInFunction::Arg => arg.expect_num()?.arg(int)?,
+			BuiltInFunction::Floor => arg.expect_num()?.floor(int)?,
+			BuiltInFunction::Ceil => arg.expect_num()?.ceil(int)?,
+			BuiltInFunction::Round => arg.expect_num()?.round(int)?,
 		})))
 	}
 

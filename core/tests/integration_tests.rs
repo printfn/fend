@@ -2676,6 +2676,33 @@ fn factorial_of_three_kg() {
 }
 
 #[test]
+fn test_floor() {
+	test_eval("floor(3)", "3");
+	test_eval("floor(3.9)", "3");
+	test_eval("floor(-3)", "-3");
+	test_eval("floor(-3.1)", "-4");
+}
+
+#[test]
+fn test_ceil() {
+	test_eval("ceil(3)", "3");
+	test_eval("ceil(3.3)", "4");
+	test_eval("ceil(-3)", "-3");
+	test_eval("ceil(-3.3)", "-3");
+}
+
+#[test]
+fn test_round() {
+	test_eval("round(3)", "3");
+
+	test_eval("round(3.3)", "3");
+	test_eval("round(3.7)", "4");
+
+	test_eval("round(-3.3)", "-3");
+	test_eval("round(-3.7)", "-4");
+}
+
+#[test]
 fn recurring_digits_1() {
 	test_eval_simple("9/11 to float", "0.(81)");
 }
