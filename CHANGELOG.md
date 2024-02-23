@@ -1,5 +1,13 @@
 ## Changelog
 
+### v1.4.3 (2024-02-23)
+
+* Add `floor`, `ceil` and `round` functions (by
+    [@frectonz](https://github.com/frectonz))
+* Add ¥ symbol for Japanese Yen (by [@frectonz](https://github.com/frectonz))
+* Support power notation using Unicode superscript digits (by
+    [@frectonz](https://github.com/frectonz))
+
 ### v1.4.2 (2024-01-23)
 
 * Add ability to convert codepoints to characters, e.g. `97 to character`
@@ -52,7 +60,8 @@
 
 * Add `pkgx` package (by [@michaelessiet](https://github.com/michaelessiet))
 * Add `x86_64-unknown-linux-musl` binary
-* Fix terminal issues on some architectures such as MIPS (by [@eatradish](https://github.com/eatradish))
+* Fix terminal issues on some architectures such as MIPS (by
+    [@eatradish](https://github.com/eatradish))
 
 ### v1.3.2 (2023-11-11)
 
