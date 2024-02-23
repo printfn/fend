@@ -371,7 +371,50 @@ fn parse_basic_number<'a, I: Interrupt>(
 		}
 	}
 
+	// parse exponentiation via unicode superscript digits
+	if base.base_as_u8() <= 10
+		&& input
+			.chars()
+			.next()
+			.is_some_and(|c| SUPERSCRIPT_DIGITS.contains(&c))
+	{
+		if let Ok((mut power_digits, remaining)) = parse_power_number(input) {
+			let mut exponent = Number::zero_with_base(base);
+
+			power_digits.reverse();
+
+			for (i, digit) in power_digits.into_iter().enumerate() {
+				let num = digit * 10u64.pow(u32::try_from(i).unwrap());
+				exponent = exponent.add(num.into(), int)?;
+			}
+
+			res = res.pow(exponent, int)?;
+			input = remaining;
+		}
+	}
+
 	Ok((res, input))
+}
+
+const SUPERSCRIPT_DIGITS: [char; 10] = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+
+fn parse_power_number(input: &str) -> FResult<(Vec<u64>, &str)> {
+	let mut digits: Vec<u64> = Vec::new();
+
+	let (mut ch, mut input) = parse_char(input)?;
+	while let Some((idx, _)) = SUPERSCRIPT_DIGITS
+		.iter()
+		.enumerate()
+		.find(|(_, x)| **x == ch)
+	{
+		digits.push(idx as u64);
+		if input.is_empty() {
+			break;
+		}
+		(ch, input) = parse_char(input)?;
+	}
+
+	Ok((digits, input))
 }
 
 fn parse_number<'a, I: Interrupt>(input: &'a str, int: &I) -> FResult<(Number, &'a str)> {
