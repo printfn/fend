@@ -27,4 +27,4 @@ windows-sys = { version = "0.52.0", features = ["Win32_Foundation", "Win32_Stora
 [features]
 native-tls = [ "dep:ureq", "dep:native-tls", "ureq/native-tls" ]
 rustls = [ "dep:ureq", "ureq/tls" ]
-default = [ "rustls" ]
+default = [ "native-tls" ]
