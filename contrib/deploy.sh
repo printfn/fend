@@ -264,7 +264,7 @@ sed "s/$OLD_VERSION/$NEW_VERSION/" "$TMPDIR/fend-aur/PKGBUILD" \
 mv "$TMPDIR/fend-aur/.SRCINFO_NEW" "$TMPDIR/fend-aur/.SRCINFO"
 mv "$TMPDIR/fend-aur/PKGBUILD_NEW" "$TMPDIR/fend-aur/PKGBUILD"
 gitdiff "$TMPDIR/fend-aur" 7 7 # 5 lines in 2 files
-git -C "$TMPDIR/fend-aur" commit -am "fend $OLD_VERSION -> $NEW_VERSION"
+TZ=UTC git -C "$TMPDIR/fend-aur" commit -am "fend $OLD_VERSION -> $NEW_VERSION"
 git -C "$TMPDIR/fend-aur" --no-pager log --pretty=full HEAD~.. \
     | grep '^Author: printfn <printfn@users.noreply.github.com>$'
 git -C "$TMPDIR/fend-aur" --no-pager log --pretty=full HEAD~.. \
