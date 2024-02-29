@@ -23,6 +23,9 @@ fn test_eval_simple(input: &str, expected: &str) {
 		evaluate(input, &mut context).unwrap().get_main_result(),
 		expected
 	);
+	if let Ok(res) = evaluate(expected, &mut context) {
+		assert_ne!(res.get_main_result(), expected);
+	}
 	test_serialization_roundtrip(&mut context);
 }
 
@@ -251,12 +254,12 @@ fn to_float_4() {
 
 #[test]
 fn to_float_5() {
-	test_eval_simple("0.(0) to float", "0");
+	test_eval("0.(0) to float", "0");
 }
 
 #[test]
 fn to_float_6() {
-	test_eval_simple("0.123(00) to float", "0.123");
+	test_eval("0.123(00) to float", "0.123");
 }
 
 #[test]
