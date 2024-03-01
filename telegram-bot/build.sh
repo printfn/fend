@@ -11,5 +11,5 @@ npm install
 
 rm -f lambda_package.zip
 zip -r lambda_package.zip \
-    node_modules/ index.js \
-    package.json package-lock.json
+	node_modules/ index.js \
+	package.json package-lock.json

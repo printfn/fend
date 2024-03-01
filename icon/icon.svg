@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
-    <defs>
-        <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#ffbc6b;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#ff8100;stop-opacity:1" />
-        </linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#backgroundGradient)" />
-    <g id="svgGroup" stroke-linecap="round" fill-rule="evenodd" font-size="9pt" stroke="#000" stroke-width="0.25mm"
-        fill="#000" style="stroke:#000;stroke-width:0.25mm;fill:#000" transform="translate(165 95)">
-        <path
-            d="M 84.766 321.289 L 48.438 321.289 L 48.438 151.563 L 0 151.563 L 0 121.289 L 48.438 121.289 L 48.438 111.133 Q 48.438 67.969 58.203 47.266 A 81.232 81.232 0 0 1 86.489 14.543 A 97.253 97.253 0 0 1 88.379 13.281 A 75.662 75.662 0 0 1 110.41 3.748 Q 124.536 0 142.383 0 A 260.592 260.592 0 0 1 193.945 5.274 L 193.945 39.844 A 216.172 216.172 0 0 0 172.804 33.95 Q 161.995 31.557 152.317 30.809 A 111.201 111.201 0 0 0 143.75 30.469 A 79.617 79.617 0 0 0 127.632 32.03 A 61.788 61.788 0 0 0 113.086 36.914 A 44.317 44.317 0 0 0 95.04 53.148 A 56.664 56.664 0 0 0 92.285 57.91 A 48.827 48.827 0 0 0 88.65 67.694 Q 84.766 82.239 84.766 107.227 L 84.766 121.289 L 171.289 121.289 L 171.289 151.563 L 84.766 151.563 L 84.766 321.289 Z"
-            vector-effect="non-scaling-stroke" />
-    </g>
+	<defs>
+		<linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" style="stop-color:#ffbc6b;stop-opacity:1" />
+			<stop offset="100%" style="stop-color:#ff8100;stop-opacity:1" />
+		</linearGradient>
+	</defs>
+	<rect width="100%" height="100%" fill="url(#backgroundGradient)" />
+	<g id="svgGroup" stroke-linecap="round" fill-rule="evenodd" font-size="9pt" stroke="#000" stroke-width="0.25mm"
+		fill="#000" style="stroke:#000;stroke-width:0.25mm;fill:#000" transform="translate(165 95)">
+		<path
+			d="M 84.766 321.289 L 48.438 321.289 L 48.438 151.563 L 0 151.563 L 0 121.289 L 48.438 121.289 L 48.438 111.133 Q 48.438 67.969 58.203 47.266 A 81.232 81.232 0 0 1 86.489 14.543 A 97.253 97.253 0 0 1 88.379 13.281 A 75.662 75.662 0 0 1 110.41 3.748 Q 124.536 0 142.383 0 A 260.592 260.592 0 0 1 193.945 5.274 L 193.945 39.844 A 216.172 216.172 0 0 0 172.804 33.95 Q 161.995 31.557 152.317 30.809 A 111.201 111.201 0 0 0 143.75 30.469 A 79.617 79.617 0 0 0 127.632 32.03 A 61.788 61.788 0 0 0 113.086 36.914 A 44.317 44.317 0 0 0 95.04 53.148 A 56.664 56.664 0 0 0 92.285 57.91 A 48.827 48.827 0 0 0 88.65 67.694 Q 84.766 82.239 84.766 107.227 L 84.766 121.289 L 171.289 121.289 L 171.289 151.563 L 84.766 151.563 L 84.766 321.289 Z"
+			vector-effect="non-scaling-stroke" />
+	</g>
 </svg>
