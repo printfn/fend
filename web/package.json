@@ -1,0 +1,29 @@
+{
+	"name": "fend-web",
+	"private": true,
+	"version": "0.0.0",
+	"description": "",
+	"main": "widget.js",
+	"scripts": {
+		"format": "prettier --write .",
+		"check": "prettier --check ."
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/printfn/fend.git"
+	},
+	"author": "printfn",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/printfn/fend/issues"
+	},
+	"homepage": "https://github.com/printfn/fend#readme",
+	"devDependencies": {
+		"prettier": "^3.2.5"
+	},
+	"prettier": {
+		"useTabs": true,
+		"singleQuote": true,
+		"arrowParens": "avoid"
+	}
+}

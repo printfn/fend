@@ -2,6 +2,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+npm ci
+npm run check
+
 (cd ../wasm && wasm-pack build --target no-modules --out-dir ../web/pkg)
 
 convert -resize "128x128" ../icon/icon.svg fend-icon-128.png

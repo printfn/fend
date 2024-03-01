@@ -6,6 +6,7 @@
 /telegram-bot/node_modules/
 /telegram-bot/package-lock.json
 
+/web/node_modules/
 /web/documentation/
 /web/fend-icon-128.png
 /web/pkg/
