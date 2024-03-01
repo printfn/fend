@@ -23,6 +23,9 @@ fn test_eval_simple(input: &str, expected: &str) {
 		evaluate(input, &mut context).unwrap().get_main_result(),
 		expected
 	);
+	if let Ok(res) = evaluate(expected, &mut context) {
+		assert_ne!(res.get_main_result(), expected);
+	}
 	test_serialization_roundtrip(&mut context);
 }
 
@@ -251,12 +254,12 @@ fn to_float_4() {
 
 #[test]
 fn to_float_5() {
-	test_eval_simple("0.(0) to float", "0");
+	test_eval("0.(0) to float", "0");
 }
 
 #[test]
 fn to_float_6() {
-	test_eval_simple("0.123(00) to float", "0.123");
+	test_eval("0.123(00) to float", "0.123");
 }
 
 #[test]
@@ -296,7 +299,7 @@ fn to_float_13() {
 
 #[test]
 fn to_float_14() {
-	test_eval_simple("6#0.(1) to float in base 10", "0.2");
+	test_eval("6#0.(1) to float in base 10", "0.2");
 }
 
 #[test]
@@ -1816,32 +1819,32 @@ fn e_in_binary() {
 
 #[test]
 fn base_conversion_1() {
-	test_eval_simple("16 to base 2", "10000");
+	test_eval("16 to base 2", "10000");
 }
 
 #[test]
 fn base_conversion_2() {
-	test_eval_simple("0x10ffff to decimal", "1114111");
+	test_eval("0x10ffff to decimal", "1114111");
 }
 
 #[test]
 fn base_conversion_3() {
-	test_eval_simple("0o400 to decimal", "256");
+	test_eval("0o400 to decimal", "256");
 }
 
 #[test]
 fn base_conversion_4() {
-	test_eval_simple("100 to base 6", "244");
+	test_eval("100 to base 6", "244");
 }
 
 #[test]
 fn base_conversion_5() {
-	test_eval_simple("65536 to hex", "10000");
+	test_eval("65536 to hex", "10000");
 }
 
 #[test]
 fn base_conversion_6() {
-	test_eval_simple("65536 to octal", "200000");
+	test_eval("65536 to octal", "200000");
 }
 
 #[test]
@@ -2724,12 +2727,12 @@ fn recurring_digits_4() {
 
 #[test]
 fn recurring_digits_5() {
-	test_eval_simple("0.21 as 1 dp", "approx. 0.2");
+	test_eval("0.21 as 1 dp", "approx. 0.2");
 }
 
 #[test]
 fn recurring_digits_6() {
-	test_eval_simple("0.21 to 1 dp to auto", "0.21");
+	test_eval("0.21 to 1 dp to auto", "0.21");
 }
 
 #[test]
@@ -3155,7 +3158,7 @@ fn acos_3() {
 
 #[test]
 fn acos_minus_3() {
-	test_eval_simple("acos (-3)", "approx. 3.1415926535 - 1.762747174i");
+	test_eval("acos (-3)", "approx. 3.1415926535 - 1.762747174i");
 }
 
 #[test]
@@ -3165,7 +3168,7 @@ fn acos_one_point_zero_one() {
 
 #[test]
 fn acos_minus_one_point_zero_one() {
-	test_eval_simple("acos (-1.01)", "approx. 3.1415926535 - 0.1413037694i");
+	test_eval("acos (-1.01)", "approx. 3.1415926535 - 0.1413037694i");
 }
 
 #[test]
@@ -4259,27 +4262,27 @@ fn sf_13() {
 
 #[test]
 fn sf_small_1() {
-	test_eval_simple("pi / 1000000 to 1 sf", "approx. 0.000003");
+	test_eval("pi / 1000000 to 1 sf", "approx. 0.000003");
 }
 
 #[test]
 fn sf_small_2() {
-	test_eval_simple("pi / 1000000 to 2 sf", "approx. 0.0000031");
+	test_eval("pi / 1000000 to 2 sf", "approx. 0.0000031");
 }
 
 #[test]
 fn sf_small_3() {
-	test_eval_simple("pi / 1000000 to 3 sf", "approx. 0.00000314");
+	test_eval("pi / 1000000 to 3 sf", "approx. 0.00000314");
 }
 
 #[test]
 fn sf_small_4() {
-	test_eval_simple("pi / 1000000 to 4 sf", "approx. 0.000003141");
+	test_eval("pi / 1000000 to 4 sf", "approx. 0.000003141");
 }
 
 #[test]
 fn sf_small_5() {
-	test_eval_simple("pi / 1000000 to 5 sf", "approx. 0.0000031415");
+	test_eval("pi / 1000000 to 5 sf", "approx. 0.0000031415");
 }
 
 #[test]
@@ -4324,137 +4327,137 @@ fn quarter() {
 
 #[test]
 fn million_pi_1_sf() {
-	test_eval_simple("1e6 pi to 1 sf", "approx. 3000000");
+	test_eval("1e6 pi to 1 sf", "approx. 3000000");
 }
 
 #[test]
 fn million_pi_2_sf() {
-	test_eval_simple("1e6 pi to 2 sf", "approx. 3100000");
+	test_eval("1e6 pi to 2 sf", "approx. 3100000");
 }
 
 #[test]
 fn million_pi_3_sf() {
-	test_eval_simple("1e6 pi to 3 sf", "approx. 3140000");
+	test_eval("1e6 pi to 3 sf", "approx. 3140000");
 }
 
 #[test]
 fn million_pi_4_sf() {
-	test_eval_simple("1e6 pi to 4 sf", "approx. 3141000");
+	test_eval("1e6 pi to 4 sf", "approx. 3141000");
 }
 
 #[test]
 fn million_pi_5_sf() {
-	test_eval_simple("1e6 pi to 5 sf", "approx. 3141500");
+	test_eval("1e6 pi to 5 sf", "approx. 3141500");
 }
 
 #[test]
 fn million_pi_6_sf() {
-	test_eval_simple("1e6 pi to 6 sf", "approx. 3141590");
+	test_eval("1e6 pi to 6 sf", "approx. 3141590");
 }
 
 #[test]
 fn million_pi_7_sf() {
-	test_eval_simple("1e6 pi to 7 sf", "approx. 3141592");
+	test_eval("1e6 pi to 7 sf", "approx. 3141592");
 }
 
 #[test]
 fn million_pi_8_sf() {
-	test_eval_simple("1e6 pi to 8 sf", "approx. 3141592.6");
+	test_eval("1e6 pi to 8 sf", "approx. 3141592.6");
 }
 
 #[test]
 fn million_pi_9_sf() {
-	test_eval_simple("1e6 pi to 9 sf", "approx. 3141592.65");
+	test_eval("1e6 pi to 9 sf", "approx. 3141592.65");
 }
 
 #[test]
 fn million_pi_10_sf() {
-	test_eval_simple("1e6 pi to 10 sf", "approx. 3141592.653");
+	test_eval("1e6 pi to 10 sf", "approx. 3141592.653");
 }
 
 #[test]
 fn large_integer_to_1_sf() {
-	test_eval_simple("1234567 to 1 sf", "approx. 1000000");
+	test_eval("1234567 to 1 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_2_sf() {
-	test_eval_simple("1234567 to 2 sf", "approx. 1200000");
+	test_eval("1234567 to 2 sf", "approx. 1200000");
 }
 
 #[test]
 fn large_integer_to_3_sf() {
-	test_eval_simple("1234567 to 3 sf", "approx. 1230000");
+	test_eval("1234567 to 3 sf", "approx. 1230000");
 }
 
 #[test]
 fn large_integer_to_4_sf() {
-	test_eval_simple("1234567 to 4 sf", "approx. 1234000");
+	test_eval("1234567 to 4 sf", "approx. 1234000");
 }
 
 #[test]
 fn large_integer_to_5_sf() {
-	test_eval_simple("1234567 to 5 sf", "approx. 1234500");
+	test_eval("1234567 to 5 sf", "approx. 1234500");
 }
 
 #[test]
 fn large_integer_to_6_sf() {
-	test_eval_simple("1234567 to 6 sf", "approx. 1234560");
+	test_eval("1234567 to 6 sf", "approx. 1234560");
 }
 
 #[test]
 fn large_integer_to_7_sf() {
-	test_eval_simple("1234567 to 7 sf", "1234567");
+	test_eval("1234567 to 7 sf", "1234567");
 }
 
 #[test]
 fn large_integer_to_8_sf() {
-	test_eval_simple("1234567 to 8 sf", "1234567");
+	test_eval("1234567 to 8 sf", "1234567");
 }
 
 #[test]
 fn large_integer_to_9_sf() {
-	test_eval_simple("1234567 to 9 sf", "1234567");
+	test_eval("1234567 to 9 sf", "1234567");
 }
 
 #[test]
 fn large_integer_to_10_sf() {
-	test_eval_simple("1234567 to 10 sf", "1234567");
+	test_eval("1234567 to 10 sf", "1234567");
 }
 
 #[test]
 fn trailing_zeroes_sf_1() {
-	test_eval_simple("1234560 to 5sf", "approx. 1234500");
+	test_eval("1234560 to 5sf", "approx. 1234500");
 }
 
 #[test]
 fn trailing_zeroes_sf_2() {
-	test_eval_simple("1234560 to 6sf", "1234560");
+	test_eval("1234560 to 6sf", "1234560");
 }
 
 #[test]
 fn trailing_zeroes_sf_3() {
-	test_eval_simple("1234560 to 7sf", "1234560");
+	test_eval("1234560 to 7sf", "1234560");
 }
 
 #[test]
 fn trailing_zeroes_sf_4() {
-	test_eval_simple("1234560.1 to 6sf", "approx. 1234560");
+	test_eval("1234560.1 to 6sf", "approx. 1234560");
 }
 
 #[test]
 fn trailing_zeroes_sf_5() {
-	test_eval_simple("12345601 to 6sf", "approx. 12345600");
+	test_eval("12345601 to 6sf", "approx. 12345600");
 }
 
 #[test]
 fn trailing_zeroes_sf_6() {
-	test_eval_simple("12345601 to 7sf", "approx. 12345600");
+	test_eval("12345601 to 7sf", "approx. 12345600");
 }
 
 #[test]
 fn trailing_zeroes_sf_7() {
-	test_eval_simple("12345601 to 8sf", "12345601");
+	test_eval("12345601 to 8sf", "12345601");
 }
 
 #[test]
@@ -4810,7 +4813,7 @@ fn one_inch_with_space() {
 
 #[test]
 fn empty_string() {
-	test_eval_simple("\"\"", "");
+	test_eval("\"\"", "");
 }
 
 #[test]
@@ -5094,7 +5097,7 @@ fn unicode_escape_696969() {
 
 #[test]
 fn unicode_escape_69() {
-	test_eval_simple("'\\u{69}'", "i");
+	test_eval("'\\u{69}'", "i");
 }
 
 #[test]
@@ -5608,7 +5611,7 @@ fn fudged_rhs_feet_conv() {
 #[test]
 fn trivial_fn() {
 	// used for testing fn serialization
-	test_eval_simple("x:()", "\\x.()");
+	test_eval("x:()", "\\x.()");
 }
 
 #[test]
