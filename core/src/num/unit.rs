@@ -25,7 +25,7 @@ use unit_exponent::UnitExponent;
 
 use super::Exact;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Eq)]
 #[allow(clippy::pedantic)]
 pub(crate) struct Value {
 	#[allow(clippy::struct_field_names)]
@@ -35,6 +35,12 @@ pub(crate) struct Value {
 	base: Base,
 	format: FormattingStyle,
 	simplifiable: bool,
+}
+
+impl PartialEq for Value {
+	fn eq(&self, other: &Self) -> bool {
+		self.value == other.value && self.unit == other.unit
+	}
 }
 
 impl Value {

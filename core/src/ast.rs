@@ -474,7 +474,12 @@ pub(crate) fn evaluate<I: Interrupt>(
 			let lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
 			let rhs = evaluate(*b, scope.clone(), attrs, context, int)?;
 
-			Value::Bool(if is_equals { lhs == rhs } else { lhs != rhs })
+			if let (Value::Num(l), Value::Num(r)) = (&lhs, &rhs) {
+				let a = l.clone().sub(*r.clone(), int)?;
+				Value::Bool(if is_equals { a.is_zero() } else { !a.is_zero() })
+			} else {
+				Value::Bool(if is_equals { lhs == rhs } else { lhs != rhs })
+			}
 		}
 	})
 }
