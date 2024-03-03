@@ -122,7 +122,7 @@ pub(crate) enum Expr {
 	Of(Ident, Box<Expr>),
 
 	Assign(Ident, Box<Expr>),
-	Equality(Box<Expr>, Box<Expr>),
+	Equality(bool, Box<Expr>, Box<Expr>),
 	Statements(Box<Expr>, Box<Expr>),
 }
 
@@ -203,8 +203,9 @@ impl Expr {
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
-			Self::Equality(a, b) => {
+			Self::Equality(is_equals, a, b) => {
 				16u8.serialize(write)?;
+				is_equals.serialize(write)?;
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
@@ -259,6 +260,7 @@ impl Expr {
 				Box::new(Self::deserialize(read)?),
 			),
 			16 => Self::Equality(
+				bool::deserialize(read)?,
 				Box::new(Self::deserialize(read)?),
 				Box::new(Self::deserialize(read)?),
 			),
@@ -319,9 +321,10 @@ impl Expr {
 				a.format(attrs, ctx, int)?,
 				b.format(attrs, ctx, int)?
 			),
-			Self::Equality(a, b) => format!(
-				"{} == {}",
+			Self::Equality(is_equals, a, b) => format!(
+				"{} {} {}",
 				a.format(attrs, ctx, int)?,
+				if *is_equals { "==" } else { "!=" },
 				b.format(attrs, ctx, int)?
 			),
 		})
@@ -467,11 +470,11 @@ pub(crate) fn evaluate<I: Interrupt>(
 			let _lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
 			evaluate(*b, scope, attrs, context, int)?
 		}
-		Expr::Equality(a, b) => {
+		Expr::Equality(is_equals, a, b) => {
 			let lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
 			let rhs = evaluate(*b, scope.clone(), attrs, context, int)?;
 
-			Value::Bool(lhs == rhs)
+			Value::Bool(if is_equals { lhs == rhs } else { lhs != rhs })
 		}
 	})
 }

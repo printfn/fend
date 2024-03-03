@@ -468,7 +468,16 @@ fn parse_equality(input: &[Token]) -> ParseResult<'_> {
 	let (lhs, input) = parse_function(input)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::DoubleEquals) {
 		let (rhs, remaining) = parse_function(remaining)?;
-		Ok((Expr::Equality(Box::new(lhs), Box::new(rhs)), remaining))
+		Ok((
+			Expr::Equality(true, Box::new(lhs), Box::new(rhs)),
+			remaining,
+		))
+	} else if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::NotEquals) {
+		let (rhs, remaining) = parse_function(remaining)?;
+		Ok((
+			Expr::Equality(false, Box::new(lhs), Box::new(rhs)),
+			remaining,
+		))
 	} else {
 		Ok((lhs, input))
 	}
