@@ -18,7 +18,7 @@ pub(crate) mod built_in_function;
 
 use built_in_function::BuiltInFunction;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Value {
 	Num(Box<Number>),
 	BuiltInFunction(BuiltInFunction),

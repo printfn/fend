@@ -25,7 +25,7 @@ use unit_exponent::UnitExponent;
 
 use super::Exact;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 #[allow(clippy::pedantic)]
 pub(crate) struct Value {
 	#[allow(clippy::struct_field_names)]
@@ -982,7 +982,7 @@ impl fmt::Display for FormattedValue {
 	}
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 struct Unit {
 	components: Vec<UnitExponent>,
 }

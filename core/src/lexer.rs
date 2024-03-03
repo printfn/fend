@@ -36,7 +36,8 @@ pub(crate) enum Symbol {
 	ShiftLeft,
 	ShiftRight,
 	Semicolon,
-	Equals, // used for assignment
+	Equals,       // used for assignment
+	DoubleEquals, // used for equality
 	Combination,
 	Permutation,
 }
@@ -65,6 +66,7 @@ impl fmt::Display for Symbol {
 			Self::ShiftRight => ">>",
 			Self::Semicolon => ";",
 			Self::Equals => "=",
+			Self::DoubleEquals => "==",
 			Self::Combination => "nCr",
 			Self::Permutation => "nPr",
 		};
@@ -523,6 +525,8 @@ fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 		'=' => {
 			if test_next('>') {
 				Symbol::Fn
+			} else if test_next('=') {
+				Symbol::DoubleEquals
 			} else {
 				Symbol::Equals
 			}

@@ -13,7 +13,7 @@ use std::{fmt, io};
 use super::real::Real;
 use super::{Base, Exact, FormattingStyle};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct Dist {
 	// invariant: probabilities must sum to 1
 	parts: HashMap<Complex, BigRat>,

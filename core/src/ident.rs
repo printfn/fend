@@ -5,7 +5,7 @@ use crate::{
 	serialize::{Deserialize, Serialize},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Ident(Cow<'static, str>);
 
 impl Ident {

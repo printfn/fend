@@ -8,7 +8,7 @@ use crate::Interrupt;
 
 use super::{base_unit::BaseUnit, named_unit::NamedUnit};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct UnitExponent {
 	pub(crate) unit: NamedUnit,
 	pub(crate) exponent: Complex,
