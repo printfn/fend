@@ -5873,3 +5873,16 @@ fn test_superscript() {
 	test_eval("200²", "40000");
 	test_eval("13¹³ days", "302875106592253 days");
 }
+
+#[test]
+fn test_equality() {
+	test_eval("1 + 2 == 3", "true");
+	test_eval("1 + 2 != 4", "true");
+	test_eval("true == false", "false");
+	test_eval("true != false", "true");
+	test_eval("2m == 200cm", "true");
+	test_eval("2kg == 200cm", "false");
+	test_eval("2kg == true", "false");
+	test_eval("2.010m == 200cm", "false");
+	test_eval("2.000m == approx. 200cm", "true");
+}

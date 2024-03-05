@@ -7,7 +7,7 @@ use crate::{ast::Expr, error::Interrupt};
 use std::io;
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum ScopeValue {
 	//Variable(Value),
 	LazyVariable(Expr, Option<Arc<Scope>>),
@@ -55,7 +55,7 @@ impl ScopeValue {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Scope {
 	ident: Ident,
 	value: ScopeValue,

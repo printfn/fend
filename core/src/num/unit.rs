@@ -8,7 +8,7 @@ use crate::scope::Scope;
 use crate::serialize::{Deserialize, Serialize};
 use crate::units::{lookup_default_unit, query_unit_static};
 use crate::{ast, ident::Ident};
-use crate::{Attrs, Span, SpanKind};
+use crate::{interrupt::Never, Attrs, Span, SpanKind};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Neg;
@@ -36,6 +36,20 @@ pub(crate) struct Value {
 	format: FormattingStyle,
 	simplifiable: bool,
 }
+
+impl PartialEq for Value {
+	fn eq(&self, other: &Self) -> bool {
+		if self.value == other.value && self.unit == other.unit {
+			return true;
+		}
+		match self.clone().sub(other.clone(), &Never) {
+			Err(_) => false,
+			Ok(result) => result.is_zero(),
+		}
+	}
+}
+
+impl Eq for Value {}
 
 impl Value {
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
@@ -982,7 +996,8 @@ impl fmt::Display for FormattedValue {
 	}
 }
 
-#[derive(Clone)]
+// TODO: equality comparisons should not depend on order
+#[derive(Clone, PartialEq, Eq)]
 struct Unit {
 	components: Vec<UnitExponent>,
 }

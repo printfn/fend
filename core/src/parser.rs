@@ -464,8 +464,27 @@ fn parse_function(input: &[Token]) -> ParseResult<'_> {
 	Ok((lhs, input))
 }
 
-fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
+fn parse_equality(input: &[Token]) -> ParseResult<'_> {
 	let (lhs, input) = parse_function(input)?;
+	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::DoubleEquals) {
+		let (rhs, remaining) = parse_function(remaining)?;
+		Ok((
+			Expr::Equality(true, Box::new(lhs), Box::new(rhs)),
+			remaining,
+		))
+	} else if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::NotEquals) {
+		let (rhs, remaining) = parse_function(remaining)?;
+		Ok((
+			Expr::Equality(false, Box::new(lhs), Box::new(rhs)),
+			remaining,
+		))
+	} else {
+		Ok((lhs, input))
+	}
+}
+
+fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
+	let (lhs, input) = parse_equality(input)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Equals) {
 		if let Expr::Ident(s) = lhs {
 			let (rhs, remaining) = parse_assignment(remaining)?;

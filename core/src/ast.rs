@@ -99,7 +99,7 @@ impl fmt::Display for Bop {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Expr {
 	Literal(Value),
 	Ident(Ident),
@@ -122,6 +122,7 @@ pub(crate) enum Expr {
 	Of(Ident, Box<Expr>),
 
 	Assign(Ident, Box<Expr>),
+	Equality(bool, Box<Expr>, Box<Expr>),
 	Statements(Box<Expr>, Box<Expr>),
 }
 
@@ -202,6 +203,12 @@ impl Expr {
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
+			Self::Equality(is_equals, a, b) => {
+				16u8.serialize(write)?;
+				is_equals.serialize(write)?;
+				a.serialize(write)?;
+				b.serialize(write)?;
+			}
 		}
 		Ok(())
 	}
@@ -249,6 +256,11 @@ impl Expr {
 				Box::new(Self::deserialize(read)?),
 			),
 			15 => Self::Statements(
+				Box::new(Self::deserialize(read)?),
+				Box::new(Self::deserialize(read)?),
+			),
+			16 => Self::Equality(
+				bool::deserialize(read)?,
 				Box::new(Self::deserialize(read)?),
 				Box::new(Self::deserialize(read)?),
 			),
@@ -307,6 +319,12 @@ impl Expr {
 			Self::Statements(a, b) => format!(
 				"{}; {}",
 				a.format(attrs, ctx, int)?,
+				b.format(attrs, ctx, int)?
+			),
+			Self::Equality(is_equals, a, b) => format!(
+				"{} {} {}",
+				a.format(attrs, ctx, int)?,
+				if *is_equals { "==" } else { "!=" },
 				b.format(attrs, ctx, int)?
 			),
 		})
@@ -451,6 +469,12 @@ pub(crate) fn evaluate<I: Interrupt>(
 		Expr::Statements(a, b) => {
 			let _lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
 			evaluate(*b, scope, attrs, context, int)?
+		}
+		Expr::Equality(is_equals, a, b) => {
+			let lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
+			let rhs = evaluate(*b, scope.clone(), attrs, context, int)?;
+
+			Value::Bool(if is_equals { lhs == rhs } else { lhs != rhs })
 		}
 	})
 }
