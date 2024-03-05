@@ -20,8 +20,8 @@ default = []
 [dependencies]
 fend-core.workspace = true
 instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
-js-sys = "0.3.68"
-wasm-bindgen = "0.2.91"
+js-sys = "0.3.69"
+wasm-bindgen = "0.2.92"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]
