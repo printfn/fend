@@ -1,5 +1,26 @@
 ## Changelog
 
+### v1.4.4 (2024-03-05)
+
+* Add `==` and `!=` operators for equality and inequality (by
+    [@frectonz](https://github.com/frectonz))
+
+    For example:
+
+    ```
+    > 2 metres == 200 cm
+    true
+    > 4 kg == 2 lbs
+    false
+    ```
+* The fend CLI now uses `native-tls` by default, instead of `rustls`.
+    On Windows this uses SChannel (via the `schannel` crate), on macOS it
+    uses Secure Transport via the `security-framework` crate, and on Linux
+    it links to OpenSSL with the `openssl` crate.
+    You can continue using `rustls` by compiling with the
+    `--no-default-features --features rustls` flags.
+    See the CLI's `Cargo.toml` for further details.
+
 ### v1.4.3 (2024-02-23)
 
 * Add `floor`, `ceil` and `round` functions (by
