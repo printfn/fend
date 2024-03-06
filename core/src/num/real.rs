@@ -39,34 +39,6 @@ pub(crate) enum Pattern {
 	Pi(BigRat),
 }
 
-impl Ord for Real {
-	fn cmp(&self, other: &Self) -> Ordering {
-		match (&self.pattern, &other.pattern) {
-			(Pattern::Simple(a), Pattern::Simple(b)) | (Pattern::Pi(a), Pattern::Pi(b)) => a.cmp(b),
-			_ => {
-				let int = &crate::interrupt::Never;
-				let a = self.clone().approximate(int).unwrap();
-				let b = other.clone().approximate(int).unwrap();
-				a.cmp(&b)
-			}
-		}
-	}
-}
-
-impl PartialOrd for Real {
-	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		Some(self.cmp(other))
-	}
-}
-
-impl PartialEq for Real {
-	fn eq(&self, other: &Self) -> bool {
-		self.cmp(other) == Ordering::Equal
-	}
-}
-
-impl Eq for Real {}
-
 impl hash::Hash for Real {
 	fn hash<H: hash::Hasher>(&self, state: &mut H) {
 		match &self.pattern {
@@ -76,6 +48,17 @@ impl hash::Hash for Real {
 }
 
 impl Real {
+	pub(crate) fn compare<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<Ordering> {
+		Ok(match (&self.pattern, &other.pattern) {
+			(Pattern::Simple(a), Pattern::Simple(b)) | (Pattern::Pi(a), Pattern::Pi(b)) => a.cmp(b),
+			_ => {
+				let a = self.clone().approximate(int)?;
+				let b = other.clone().approximate(int)?;
+				a.cmp(&b)
+			}
+		})
+	}
+
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match &self.pattern {
 			Pattern::Simple(s) => {
@@ -377,6 +360,30 @@ impl Real {
 		match &self.pattern {
 			Pattern::Simple(a) | Pattern::Pi(a) => a.is_definitely_zero() || a == &0.into(),
 		}
+	}
+
+	pub(crate) fn is_pos(&self) -> bool {
+		match &self.pattern {
+			Pattern::Simple(a) | Pattern::Pi(a) => !a.is_definitely_zero() && a > &0.into(),
+		}
+	}
+
+	pub(crate) fn is_neg(&self) -> bool {
+		match &self.pattern {
+			Pattern::Simple(a) | Pattern::Pi(a) => !a.is_definitely_zero() && a < &0.into(),
+		}
+	}
+
+	pub(crate) fn between_plus_minus_one_incl<I: Interrupt>(&self, int: &I) -> FResult<bool> {
+		// -1 <= x <= 1
+		Ok(Self::from(1).neg().compare(self, int)? != Ordering::Greater
+			&& self.compare(&1.into(), int)? != Ordering::Greater)
+	}
+
+	pub(crate) fn between_plus_minus_one_excl<I: Interrupt>(&self, int: &I) -> FResult<bool> {
+		// -1 < x < 1
+		Ok(Self::from(1).neg().compare(self, int)? == Ordering::Less
+			&& self.compare(&1.into(), int)? == Ordering::Less)
 	}
 
 	pub(crate) fn is_definitely_zero(&self) -> bool {

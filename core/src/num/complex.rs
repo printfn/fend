@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 use std::ops::Neg;
 use std::{fmt, io};
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Hash)]
 pub(crate) struct Complex {
 	real: Real,
 	imag: Real,
@@ -31,6 +31,14 @@ pub(crate) enum UseParentheses {
 }
 
 impl Complex {
+	pub(crate) fn compare<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<Option<Ordering>> {
+		if self.imag().is_zero() && other.imag().is_zero() {
+			Ok(Some(self.real().compare(&other.real(), int)?))
+		} else {
+			Ok(None)
+		}
+	}
+
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.real.serialize(write)?;
 		self.imag.serialize(write)?;
@@ -45,14 +53,14 @@ impl Complex {
 	}
 
 	pub(crate) fn try_as_usize<I: Interrupt>(self, int: &I) -> FResult<usize> {
-		if self.imag != 0.into() {
+		if !self.imag.is_zero() {
 			return Err(FendError::ComplexToInteger);
 		}
 		self.real.try_as_usize(int)
 	}
 
 	pub(crate) fn try_as_i64<I: Interrupt>(self, int: &I) -> FResult<i64> {
-		if self.imag != 0.into() {
+		if !self.imag.is_zero() {
 			return Err(FendError::ComplexToInteger);
 		}
 		self.real.try_as_i64(int)
@@ -76,7 +84,7 @@ impl Complex {
 	}
 
 	pub(crate) fn factorial<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		if self.imag != 0.into() {
+		if !self.imag.is_zero() {
 			return Err(FendError::FactorialComplex);
 		}
 		Ok(Self {
@@ -193,13 +201,13 @@ impl Complex {
 
 	pub(crate) fn abs<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
 		Ok(if self.imag.is_zero() {
-			if self.real < 0.into() {
+			if self.real.is_neg() {
 				Exact::new(-self.real, true)
 			} else {
 				Exact::new(self.real, true)
 			}
 		} else if self.real.is_zero() {
-			if self.imag < 0.into() {
+			if self.imag.is_neg() {
 				Exact::new(-self.imag, true)
 			} else {
 				Exact::new(self.imag, true)
@@ -239,7 +247,7 @@ impl Complex {
 	) -> FResult<Exact<Formatted>> {
 		let style = if !exact && style == FormattingStyle::Auto {
 			FormattingStyle::DecimalPlaces(10)
-		} else if self.imag != 0.into() && style == FormattingStyle::Auto {
+		} else if !self.imag.is_zero() && style == FormattingStyle::Auto {
 			FormattingStyle::Exact
 		} else {
 			style
@@ -275,7 +283,7 @@ impl Complex {
 			let mut exact = exact;
 			let real_part = self.real.format(base, style, false, false, int)?;
 			exact = exact && real_part.exact;
-			let (positive, imag_part) = if self.imag > 0.into() {
+			let (positive, imag_part) = if self.imag.is_pos() {
 				(true, self.imag.format(base, style, true, false, int)?)
 			} else {
 				(
@@ -298,7 +306,7 @@ impl Complex {
 		})
 	}
 	pub(crate) fn frac_pow<I: Interrupt>(self, n: Self, int: &I) -> FResult<Exact<Self>> {
-		if self.imag.is_zero() && n.imag.is_zero() && self.real >= 0.into() {
+		if self.imag.is_zero() && n.imag.is_zero() && !self.real.is_neg() {
 			Ok(self.real.pow(n.real, int)?.apply(Self::from))
 		} else {
 			let exponent = self.ln(int)?.mul(&Exact::new(n, true), int)?;
@@ -380,7 +388,7 @@ impl Complex {
 
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real asin is defined for -1 <= x <= 1
-		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
+		if self.imag.is_zero() && self.real.between_plus_minus_one_incl(int)? {
 			Ok(Self::from(self.real.asin(int)?))
 		} else {
 			// asin(z) = -i * ln(i * z + sqrt(1 - z^2))
@@ -394,7 +402,7 @@ impl Complex {
 
 	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real acos is defined for -1 <= x <= 1
-		if self.imag.is_zero() && Real::from(1).neg() < self.real && self.real < 1.into() {
+		if self.imag.is_zero() && self.real.between_plus_minus_one_incl(int)? {
 			Ok(Self::from(self.real.acos(int)?))
 		} else {
 			// acos(z) = pi/2 + i * ln(i * z + sqrt(1 - z^2))
@@ -498,7 +506,7 @@ impl Complex {
 
 	pub(crate) fn acosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real acosh is defined for x >= 1
-		if self.imag.is_zero() && self.real >= 1.into() {
+		if self.imag.is_zero() && self.real.compare(&1.into(), int)? != Ordering::Less {
 			Ok(Self::from(self.real.acosh(int)?))
 		} else {
 			// acosh(z)=ln(z+sqrt(z^2-1))
@@ -518,7 +526,7 @@ impl Complex {
 	pub(crate) fn atanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		// Real atanh is defined for -1 < x < 1
 		// Undefined for x = 1, -1
-		if self.imag.is_zero() && Real::from(1).neg() <= self.real && self.real <= 1.into() {
+		if self.imag.is_zero() && self.real.between_plus_minus_one_excl(int)? {
 			Ok(Self::from(self.real.atanh(int)?))
 		} else {
 			// atanh(z)=ln(sqrt(-(z-1)/(z-1)))
@@ -538,7 +546,7 @@ impl Complex {
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
-		if self.imag.is_zero() && self.real > 0.into() {
+		if self.imag.is_zero() && self.real.is_pos() {
 			Ok(self.real.ln(int)?.apply(Self::from))
 		} else {
 			// ln(z) = ln(|z|) + i * arg(z)
@@ -564,14 +572,14 @@ impl Complex {
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		if self.imag.is_zero() && self.real > 0.into() {
+		if self.imag.is_zero() && self.real.is_pos() {
 			Ok(Self::from(self.real.log2(int)?))
 		} else {
 			self.log(Self::from(2), int)
 		}
 	}
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		if self.imag.is_zero() && self.real > 0.into() {
+		if self.imag.is_zero() && self.real.is_pos() {
 			Ok(Self::from(self.real.log10(int)?))
 		} else {
 			self.log(Self::from(10), int)
@@ -688,20 +696,6 @@ impl Exact<Complex> {
 		)
 		.mul(&multiplicand, int)?;
 		Ok(result)
-	}
-}
-
-impl PartialOrd for Complex {
-	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		if self == other {
-			Some(Ordering::Equal)
-		} else if self.real <= other.real && self.imag <= other.imag {
-			Some(Ordering::Less)
-		} else if self.real >= other.real && self.imag >= other.imag {
-			Some(Ordering::Greater)
-		} else {
-			None
-		}
 	}
 }
 

@@ -3172,6 +3172,16 @@ fn acos_minus_one_point_zero_one() {
 }
 
 #[test]
+fn acos_one() {
+	test_eval("acos 1", "approx. 0");
+}
+
+#[test]
+fn acos_minus_one() {
+	test_eval("acos (-1)", "approx. 3.1415926535");
+}
+
+#[test]
 fn atan_1() {
 	test_eval("atan 1", "approx. 0.7853981633");
 }

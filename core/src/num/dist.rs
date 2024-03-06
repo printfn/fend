@@ -1,11 +1,10 @@
 use crate::error::{FendError, Interrupt};
-use crate::interrupt::test_int;
+use crate::interrupt::{test_int, Never};
 use crate::num::bigrat::BigRat;
 use crate::num::complex::{self, Complex};
 use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::fmt::Write;
 use std::ops::Neg;
 use std::{fmt, io};
@@ -13,10 +12,10 @@ use std::{fmt, io};
 use super::real::Real;
 use super::{Base, Exact, FormattingStyle};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub(crate) struct Dist {
 	// invariant: probabilities must sum to 1
-	parts: HashMap<Complex, BigRat>,
+	parts: Vec<(Complex, BigRat)>,
 }
 
 impl Dist {
@@ -31,13 +30,13 @@ impl Dist {
 
 	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let len = usize::deserialize(read)?;
-		let mut hashmap = HashMap::with_capacity(len);
+		let mut parts = Vec::with_capacity(len);
 		for _ in 0..len {
 			let k = Complex::deserialize(read)?;
 			let v = BigRat::deserialize(read)?;
-			hashmap.insert(k, v);
+			parts.push((k, v));
 		}
-		Ok(Self { parts: hashmap })
+		Ok(Self { parts })
 	}
 
 	pub(crate) fn one_point(self) -> FResult<Complex> {
@@ -50,7 +49,7 @@ impl Dist {
 
 	pub(crate) fn one_point_ref(&self) -> FResult<&Complex> {
 		if self.parts.len() == 1 {
-			Ok(self.parts.iter().next().unwrap().0)
+			Ok(&self.parts[0].0)
 		} else {
 			Err(FendError::ProbabilityDistributionsNotAllowed)
 		}
@@ -69,17 +68,18 @@ impl Dist {
 			}
 			return Ok(result);
 		}
-		let mut hashmap = HashMap::new();
+		let mut parts = Vec::new();
 		let probability = BigRat::from(1).div(&BigRat::from(u64::from(faces)), int)?;
 		for face in 1..=faces {
 			test_int(int)?;
-			hashmap.insert(Complex::from(u64::from(face)), probability.clone());
+			parts.push((Complex::from(u64::from(face)), probability.clone()));
 		}
-		Ok(Self { parts: hashmap })
+		Ok(Self { parts })
 	}
 
-	pub(crate) fn equals_int(&self, val: u64) -> bool {
-		self.parts.len() == 1 && self.parts.keys().next().unwrap() == &val.into()
+	pub(crate) fn equals_int<I: Interrupt>(&self, val: u64, int: &I) -> FResult<bool> {
+		Ok(self.parts.len() == 1
+			&& self.parts[0].0.compare(&val.into(), int)? == Some(Ordering::Equal))
 	}
 
 	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -115,13 +115,9 @@ impl Dist {
 		int: &I,
 	) -> FResult<Exact<()>> {
 		if self.parts.len() == 1 {
-			let res = self.parts.iter().next().unwrap().0.format(
-				exact,
-				style,
-				base,
-				use_parentheses,
-				int,
-			)?;
+			let res = self.parts[0]
+				.0
+				.format(exact, style, base, use_parentheses, int)?;
 			write!(out, "{}", res.value)?;
 			Ok(Exact::new((), res.exact))
 		} else {
@@ -135,7 +131,7 @@ impl Dist {
 				ordered_kvs.push((n, prob, prob_f64));
 			}
 			ordered_kvs.sort_unstable_by(|(a, _, _), (b, _, _)| {
-				a.partial_cmp(b).unwrap_or(Ordering::Equal)
+				a.compare(b, &Never).unwrap().unwrap_or(Ordering::Equal)
 			});
 			if ctx.output_mode == crate::OutputMode::SimpleText {
 				write!(out, "{{ ")?;
@@ -180,19 +176,25 @@ impl Dist {
 		mut f: impl FnMut(&Complex, &Complex, &I) -> FResult<Complex>,
 		int: &I,
 	) -> FResult<Self> {
-		let mut result = HashMap::<Complex, BigRat>::new();
+		let mut parts = Vec::<(Complex, BigRat)>::new();
 		for (n1, p1) in &self.parts {
 			for (n2, p2) in &rhs.parts {
 				let n = f(n1, n2, int)?;
 				let p = p1.clone().mul(p2, int)?;
-				if let Some(prob) = result.get_mut(&n) {
-					*prob = prob.clone().add(p, int)?;
-				} else {
-					result.insert(n, p);
+				let mut found = false;
+				for (k, prob) in &mut parts {
+					if k.compare(&n, int)? == Some(Ordering::Equal) {
+						*prob = prob.clone().add(p.clone(), int)?;
+						found = true;
+						break;
+					}
+				}
+				if !found {
+					parts.push((n, p));
 				}
 			}
 		}
-		Ok(Self { parts: result })
+		Ok(Self { parts })
 	}
 }
 
@@ -257,9 +259,9 @@ impl Exact<Dist> {
 
 impl From<Complex> for Dist {
 	fn from(v: Complex) -> Self {
-		let mut parts = HashMap::new();
-		parts.insert(v, BigRat::from(1));
-		Self { parts }
+		Self {
+			parts: vec![(v, 1.into())],
+		}
 	}
 }
 
@@ -286,11 +288,10 @@ impl fmt::Debug for Dist {
 
 impl Neg for Dist {
 	type Output = Self;
-	fn neg(self) -> Self {
-		let mut res = HashMap::new();
-		for (k, v) in self.parts {
-			res.insert(-k, v);
+	fn neg(mut self) -> Self {
+		for (k, _) in &mut self.parts {
+			*k = -k.clone();
 		}
-		Self { parts: res }
+		self
 	}
 }

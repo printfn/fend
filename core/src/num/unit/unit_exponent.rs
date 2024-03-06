@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::{collections::HashMap, fmt, io};
 
 use crate::interrupt::test_int;
@@ -8,7 +9,7 @@ use crate::Interrupt;
 
 use super::{base_unit::BaseUnit, named_unit::NamedUnit};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub(crate) struct UnitExponent {
 	pub(crate) unit: NamedUnit,
 	pub(crate) exponent: Complex,
@@ -55,14 +56,14 @@ impl UnitExponent {
 			if let Some(exp) = hashmap.get_mut(base_unit) {
 				let new_exp = Exact::new(exp.clone(), true).add(product, int)?;
 				*exact = *exact && new_exp.exact;
-				if new_exp.value == 0.into() {
+				if new_exp.value.compare(&0.into(), int)? == Some(Ordering::Equal) {
 					hashmap.remove(base_unit);
 				} else {
 					*exp = new_exp.value;
 				}
 			} else {
 				*exact = *exact && product.exact;
-				if product.value != 0.into() {
+				if product.value.compare(&0.into(), int)? != Some(Ordering::Equal) {
 					let adj_exp = overall_exp.clone().mul(&base_exp, int)?;
 					hashmap.insert(base_unit.clone(), adj_exp.value);
 					*exact = *exact && adj_exp.exact;
@@ -93,7 +94,7 @@ impl UnitExponent {
 		} else {
 			self.exponent.clone()
 		};
-		let (exact, exponent) = if exp == 1.into() {
+		let (exact, exponent) = if exp.compare(&1.into(), int)? == Some(Ordering::Equal) {
 			(true, None)
 		} else {
 			let formatted =

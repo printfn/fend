@@ -10,6 +10,7 @@ use crate::units::{lookup_default_unit, query_unit_static};
 use crate::{ast, ident::Ident};
 use crate::{Attrs, Span, SpanKind};
 use std::borrow::Cow;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::Neg;
 use std::sync::Arc;
@@ -22,6 +23,8 @@ pub(crate) mod unit_exponent;
 use base_unit::BaseUnit;
 use named_unit::NamedUnit;
 use unit_exponent::UnitExponent;
+
+use self::named_unit::compare_hashmaps;
 
 use super::Exact;
 
@@ -43,23 +46,17 @@ impl Value {
 		other: &Self,
 		int: &I,
 	) -> FResult<Option<cmp::Ordering>> {
-		if self.value == other.value && self.unit == other.unit {
-			return Ok(Some(cmp::Ordering::Equal));
-		}
 		match self.clone().sub(other.clone(), int) {
 			Err(FendError::Interrupted) => Err(FendError::Interrupted),
 			Err(_) => Ok(None),
 			Ok(result) => {
-				if result.is_zero() {
+				if result.is_zero(int)? {
 					return Ok(Some(cmp::Ordering::Equal));
 				}
 				let Ok(c) = result.value.one_point() else {
 					return Ok(None);
 				};
-				if !c.imag().is_zero() {
-					return Ok(None);
-				}
-				Ok(Some(c.real().cmp(&0.into())))
+				c.compare(&0.into(), int)
 			}
 		}
 	}
@@ -217,7 +214,7 @@ impl Value {
 		int: &I,
 	) -> FResult<Self> {
 		for (lhs_unit, rhs_unit) in crate::units::IMPLICIT_UNIT_MAP {
-			if self.unit.equal_to(lhs_unit) && rhs.is_unitless(int)? {
+			if self.unit.equal_to(lhs_unit, int)? && rhs.is_unitless(int)? {
 				let inches =
 					ast::resolve_identifier(&Ident::new_str(rhs_unit), None, attrs, context, int)?
 						.expect_num()?;
@@ -228,7 +225,7 @@ impl Value {
 	}
 
 	pub(crate) fn convert_to<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
-		if rhs.value.one_point()? != 1.into() {
+		if rhs.value.one_point()?.compare(&1.into(), int)? != Some(Ordering::Equal) {
 			return Err(FendError::ConversionRhsNumerical);
 		}
 		let scale_factor = Unit::compute_scale_factor(&self.unit, &rhs.unit, int)?;
@@ -392,7 +389,7 @@ impl Value {
 	}
 
 	pub(crate) fn is_unitless_one<I: Interrupt>(&self, int: &I) -> FResult<bool> {
-		Ok(self.exact && self.value.equals_int(1) && self.is_unitless(int)?)
+		Ok(self.exact && self.value.equals_int(1, int)? && self.is_unitless(int)?)
 	}
 
 	pub(crate) fn pow<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
@@ -480,8 +477,8 @@ impl Value {
 		}
 	}
 
-	pub(crate) fn is_zero(&self) -> bool {
-		self.value.equals_int(0)
+	pub(crate) fn is_zero<I: Interrupt>(&self, int: &I) -> FResult<bool> {
+		self.value.equals_int(0, int)
 	}
 
 	pub(crate) fn new_die<I: Interrupt>(count: u32, faces: u32, int: &I) -> FResult<Self> {
@@ -757,7 +754,7 @@ impl Value {
 			.exact;
 		let unit_string = self.unit.format(
 			"",
-			self.value.equals_int(1),
+			self.value.equals_int(1, int)?,
 			self.base,
 			self.format,
 			true,
@@ -818,7 +815,7 @@ impl Value {
 				continue;
 			}
 			for res_comp in &mut res_components {
-				if comp.unit.has_no_base_units() && comp.unit != res_comp.unit {
+				if comp.unit.has_no_base_units() && !comp.unit.compare(&res_comp.unit, int)? {
 					continue;
 				}
 				let conversion = Unit::compute_scale_factor(
@@ -838,7 +835,9 @@ impl Value {
 				);
 				match conversion {
 					Ok(scale_factor) => {
-						if scale_factor.offset.value != 0.into() {
+						if scale_factor.offset.value.compare(&0.into(), int)?
+							!= Some(Ordering::Equal)
+						{
 							// don't merge units that have offsets
 							break;
 						}
@@ -875,7 +874,15 @@ impl Value {
 		}
 
 		// remove units with exponent == 0
-		res_components.retain(|unit_exponent| unit_exponent.exponent != 0.into());
+		{
+			let mut res_components2 = Vec::with_capacity(res_components.len());
+			for c in res_components {
+				if c.exponent.compare(&0.into(), int)? != Some(Ordering::Equal) {
+					res_components2.push(c);
+				}
+			}
+			res_components = res_components2;
+		}
 		let result = Self {
 			value: res_value,
 			unit: Unit {
@@ -912,8 +919,8 @@ impl Value {
 		Ok(result)
 	}
 
-	pub(crate) fn unit_equal_to(&self, rhs: &str) -> bool {
-		self.unit.equal_to(rhs)
+	pub(crate) fn unit_equal_to<I: Interrupt>(&self, rhs: &str, int: &I) -> FResult<bool> {
+		self.unit.equal_to(rhs, int)
 	}
 }
 
@@ -1009,7 +1016,7 @@ impl fmt::Display for FormattedValue {
 }
 
 // TODO: equality comparisons should not depend on order
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 struct Unit {
 	components: Vec<UnitExponent>,
 }
@@ -1041,16 +1048,16 @@ impl Unit {
 		Ok(Self { components: cs })
 	}
 
-	pub(crate) fn equal_to(&self, rhs: &str) -> bool {
+	pub(crate) fn equal_to<I: Interrupt>(&self, rhs: &str, int: &I) -> FResult<bool> {
 		if self.components.len() != 1 {
-			return false;
+			return Ok(false);
 		}
 		let unit = &self.components[0];
-		if unit.exponent != 1.into() {
-			return false;
+		if unit.exponent.compare(&1.into(), int)? != Some(Ordering::Equal) {
+			return Ok(false);
 		}
 		let (prefix, name) = unit.unit.prefix_and_name(false);
-		prefix.is_empty() && name == rhs
+		Ok(prefix.is_empty() && name == rhs)
 	}
 
 	/// base units with cancelled exponents do not appear in the hashmap
@@ -1068,9 +1075,14 @@ impl Unit {
 		hashmap: HashMap<BaseUnit, Complex>,
 		int: &I,
 	) -> FResult<HashmapScaleOffset> {
-		if hashmap.len() == 1
-			&& hashmap.get(&BaseUnit::new(Cow::Borrowed("celsius"))) == Some(&1.into())
-		{
+		let check = |s: &'static str| -> FResult<bool> {
+			Ok(hashmap.len() == 1
+				&& match hashmap.get(&BaseUnit::new(Cow::Borrowed(s))) {
+					None => false,
+					Some(c) => c.compare(&1.into(), int)? == Some(Ordering::Equal),
+				})
+		};
+		if check("celsius")? {
 			let mut result_hashmap = HashMap::new();
 			result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
 			return Ok((
@@ -1080,9 +1092,7 @@ impl Unit {
 					.div(Exact::new(Complex::from(100), true), int)?,
 			));
 		}
-		if hashmap.len() == 1
-			&& hashmap.get(&BaseUnit::new(Cow::Borrowed("fahrenheit"))) == Some(&1.into())
-		{
+		if check("fahrenheit")? {
 			let mut result_hashmap = HashMap::new();
 			result_hashmap.insert(BaseUnit::new(Cow::Borrowed("kelvin")), 1.into());
 			return Ok((
@@ -1146,7 +1156,7 @@ impl Unit {
 		let (hash_b, scale_b) = into.to_hashmap_and_scale(int)?;
 		let (hash_a, adj_a, offset_a) = Self::reduce_hashmap(hash_a, int)?;
 		let (hash_b, adj_b, offset_b) = Self::reduce_hashmap(hash_b, int)?;
-		if hash_a == hash_b {
+		if compare_hashmaps(&hash_a, &hash_b, int)? {
 			Ok(ScaleFactor {
 				scale_1: scale_a.mul(&adj_a, int)?,
 				offset: offset_a.add(-offset_b, int)?,
@@ -1208,7 +1218,7 @@ impl Unit {
 		let mut negative_components = vec![];
 		let mut first = true;
 		for unit_exponent in &self.components {
-			if unit_exponent.exponent < 0.into() {
+			if unit_exponent.exponent.compare(&0.into(), int)? == Some(Ordering::Less) {
 				negative_components.push(unit_exponent);
 			} else {
 				positive_components.push(unit_exponent);

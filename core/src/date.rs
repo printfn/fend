@@ -11,7 +11,7 @@ pub(crate) use day_of_week::DayOfWeek;
 pub(crate) use month::Month;
 use year::Year;
 
-use crate::{error::FendError, ident::Ident, result::FResult, value::Value};
+use crate::{error::FendError, ident::Ident, result::FResult, value::Value, Interrupt};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub(crate) struct Date {
@@ -197,10 +197,9 @@ impl Date {
 		})
 	}
 
-	pub(crate) fn add(self, rhs: Value) -> FResult<Value> {
+	pub(crate) fn add<I: Interrupt>(self, rhs: Value, int: &I) -> FResult<Value> {
 		let rhs = rhs.expect_num()?;
-		let int = &crate::interrupt::Never;
-		if rhs.unit_equal_to("day") {
+		if rhs.unit_equal_to("day", int)? {
 			let num_days = rhs.try_as_usize_unit(int)?;
 			let mut result = self;
 			for _ in 0..num_days {
@@ -212,18 +211,17 @@ impl Date {
 		}
 	}
 
-	pub(crate) fn sub(self, rhs: Value) -> FResult<Value> {
-		let int = &crate::interrupt::Never;
+	pub(crate) fn sub<I: Interrupt>(self, rhs: Value, int: &I) -> FResult<Value> {
 		let rhs = rhs.expect_num()?;
 
-		if rhs.unit_equal_to("day") {
+		if rhs.unit_equal_to("day", int)? {
 			let num_days = rhs.try_as_usize_unit(int)?;
 			let mut result = self;
 			for _ in 0..num_days {
 				result = result.prev();
 			}
 			Ok(Value::Date(result))
-		} else if rhs.unit_equal_to("week") {
+		} else if rhs.unit_equal_to("week", int)? {
 			let num_weeks = rhs.try_as_usize_unit(int)?;
 			let mut result = self;
 			for _ in 0..num_weeks {
@@ -232,12 +230,12 @@ impl Date {
 				}
 			}
 			Ok(Value::Date(result))
-		} else if rhs.unit_equal_to("month") {
+		} else if rhs.unit_equal_to("month", int)? {
 			let num_months = rhs.try_as_usize_unit(int)?;
 			let result = self
 				.diff_months(-i64::try_from(num_months).map_err(|_| FendError::ValueTooLarge)?)?;
 			Ok(Value::Date(result))
-		} else if rhs.unit_equal_to("year") {
+		} else if rhs.unit_equal_to("year", int)? {
 			let num_years = rhs.try_as_usize_unit(int)?;
 			let num_months = num_years * 12;
 			let result = self

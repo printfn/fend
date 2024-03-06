@@ -1,12 +1,14 @@
+use std::cmp::Ordering;
 use std::{borrow::Cow, collections::HashMap, fmt, io};
 
 use super::base_unit::BaseUnit;
 use crate::num::complex::Complex;
 use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
+use crate::Interrupt;
 
 /// A named unit, like kilogram, megabyte or percent.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone)]
 pub(crate) struct NamedUnit {
 	prefix: Cow<'static, str>,
 	pub(super) singular_name: Cow<'static, str>,
@@ -14,6 +16,27 @@ pub(crate) struct NamedUnit {
 	alias: bool,
 	pub(super) base_units: HashMap<BaseUnit, Complex>,
 	pub(super) scale: Complex,
+}
+
+pub(crate) fn compare_hashmaps<I: Interrupt>(
+	a: &HashMap<BaseUnit, Complex>,
+	b: &HashMap<BaseUnit, Complex>,
+	int: &I,
+) -> FResult<bool> {
+	if a.len() != b.len() {
+		return Ok(false);
+	}
+	for (k, v) in a {
+		match b.get(k) {
+			None => return Ok(false),
+			Some(o) => {
+				if v.compare(o, int)? != Some(Ordering::Equal) {
+					return Ok(false);
+				}
+			}
+		}
+	}
+	Ok(true)
 }
 
 impl NamedUnit {
@@ -72,6 +95,15 @@ impl NamedUnit {
 			base_units: hashmap,
 			scale: Complex::deserialize(read)?,
 		})
+	}
+
+	pub(crate) fn compare<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<bool> {
+		Ok(self.prefix == other.prefix
+			&& self.singular_name == other.singular_name
+			&& self.plural_name == other.plural_name
+			&& self.alias == other.alias
+			&& self.scale.compare(&other.scale, int)? == Some(Ordering::Equal)
+			&& compare_hashmaps(&self.base_units, &other.base_units, int)?)
 	}
 
 	pub(crate) fn new_from_base(base_unit: BaseUnit) -> Self {

@@ -419,7 +419,7 @@ pub(crate) fn evaluate<I: Interrupt>(
 			let a = eval!(*a)?;
 			match a {
 				Value::Num(a) => Value::Num(Box::new(a.sub(eval!(*b)?.expect_num()?, int)?)),
-				Value::Date(a) => a.sub(eval!(*b)?)?,
+				Value::Date(a) => a.sub(eval!(*b)?, int)?,
 				f @ (Value::BuiltInFunction(_) | Value::Fn(_, _, _)) => f.apply(
 					Expr::UnaryMinus(b),
 					ApplyMulHandling::OnlyApply,
@@ -555,7 +555,7 @@ fn evaluate_add<I: Interrupt>(
 			)),
 			scope,
 		),
-		(Value::Date(d), b) => d.add(b)?,
+		(Value::Date(d), b) => d.add(b, int)?,
 		_ => return Err(FendError::ExpectedANumber),
 	})
 }
@@ -572,7 +572,7 @@ fn evaluate_as<I: Interrupt>(
 		match ident.as_str() {
 			"bool" | "boolean" => {
 				let num = evaluate(a, scope, attrs, context, int)?.expect_num()?;
-				return Ok(Value::Bool(!num.is_zero()));
+				return Ok(Value::Bool(!num.is_zero(int)?));
 			}
 			"date" => {
 				let a = evaluate(a, scope, attrs, context, int)?;
