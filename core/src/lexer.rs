@@ -545,6 +545,8 @@ fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 		'<' => {
 			if test_next('<') {
 				Symbol::ShiftLeft
+			} else if test_next('>') {
+				Symbol::NotEquals
 			} else {
 				return Err(FendError::UnexpectedChar(ch));
 			}

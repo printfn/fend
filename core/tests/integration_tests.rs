@@ -5889,6 +5889,7 @@ fn test_equality() {
 	test_eval("1 + 2 == 3", "true");
 	test_eval("1 + 2 != 4", "true");
 	test_eval("1 + 2 ≠ 4", "true");
+	test_eval("1 + 2 <> 4", "true");
 	test_eval("true == false", "false");
 	test_eval("true != false", "true");
 	test_eval("true ≠ false", "true");
