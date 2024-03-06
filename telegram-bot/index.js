@@ -13,7 +13,7 @@ curl "https://api.telegram.org/bot${TELEGRAM_BOT_API_TOKEN}/setWebhook" --form-s
 */
 
 /**
- * @typedef {{ text: string; chat: { type: string; id: number; }; }} Message
+ * @typedef {{ message_id: number; text: string; chat: { type: string; id: number; }; }} Message
  * @typedef {{ update_id: number, message?: Message; edited_message?: Message; inline_query?: { query: string; id: number; }; }} Update
  */
 
@@ -61,6 +61,7 @@ async function processMessage(message) {
 			text: result,
 			disable_web_page_preview: true,
 			disable_notification: true,
+			reply_parameters: { message_id: message.message_id }
 		});
 	}
 };
