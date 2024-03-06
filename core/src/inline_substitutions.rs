@@ -49,6 +49,33 @@ impl InlineFendResult {
 	}
 }
 
+/// Evaluates fend syntax embedded in Markdown or similarly-formatted strings.
+///
+/// Any calculations in `[[` and `]]` are evaluated and replaced with their
+/// results.
+///
+/// This function implements a subset of markdown parsing, ensuring that
+/// backtick-escaped notation will not be evaluated.
+///
+/// # Examples
+/// ```
+/// let mut ctx = fend_core::Context::new();
+/// struct NeverInterrupt;
+/// impl fend_core::Interrupt for NeverInterrupt {
+/// 	fn should_interrupt(&self) -> bool {
+/// 		false
+/// 	}
+/// }
+/// let int = NeverInterrupt;
+///
+/// let result = fend_core::substitute_inline_fend_expressions(
+/// 	"The answer is [[1+1]].", &mut ctx, &int);
+///
+/// assert_eq!(result.get_parts().len(), 3);
+/// assert_eq!(result.get_parts()[0].get_contents(), "The answer is ");
+/// assert_eq!(result.get_parts()[1].get_contents(), "2");
+/// assert_eq!(result.get_parts()[2].get_contents(), ".");
+/// ```
 pub fn substitute_inline_fend_expressions(
 	input: &str,
 	context: &mut Context,

@@ -5,6 +5,7 @@
 #![forbid(clippy::needless_borrow)]
 #![forbid(unreachable_pub)]
 #![forbid(elided_lifetimes_in_paths)]
+#![allow(clippy::tabs_in_doc_comments)]
 
 //! This library implements most of the features of [fend](https://github.com/printfn/fend).
 //!
