@@ -3,12 +3,12 @@ use crate::date::{Date, DayOfWeek, Month};
 use crate::error::{FendError, Interrupt};
 use crate::num::{Base, FormattingStyle, Number};
 use crate::result::FResult;
-use crate::scope::Scope;
+use crate::scope::{compare_option_arc_scope, Scope};
 use crate::serialize::{Deserialize, Serialize};
 use crate::{ast::Expr, ident::Ident};
 use crate::{date, Attrs, Span, SpanKind};
 use std::borrow::Cow;
-use std::io;
+use std::{cmp, io};
 use std::{
 	fmt::{self, Write},
 	sync::Arc,
@@ -18,7 +18,7 @@ pub(crate) mod built_in_function;
 
 use built_in_function::BuiltInFunction;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub(crate) enum Value {
 	Num(Box<Number>),
 	BuiltInFunction(BuiltInFunction),
@@ -44,6 +44,51 @@ pub(crate) enum ApplyMulHandling {
 }
 
 impl Value {
+	pub(crate) fn compare<I: Interrupt>(
+		&self,
+		other: &Self,
+		int: &I,
+	) -> FResult<Option<cmp::Ordering>> {
+		let c = |cmp| {
+			if cmp {
+				Some(cmp::Ordering::Equal)
+			} else {
+				None
+			}
+		};
+		Ok(match (self, other) {
+			(Self::Num(a), Self::Num(b)) => a.compare(b, int)?,
+			(Self::BuiltInFunction(a), Self::BuiltInFunction(b)) => c(a == b),
+			(Self::Format(a), Self::Format(b)) => c(a == b),
+			(Self::Dp, Self::Dp) | (Self::Sf, Self::Sf) | (Self::Unit, Self::Unit) => c(true),
+			(Self::Base(a), Self::Base(b)) => c(a == b),
+			(Self::Fn(a1, a2, a3), Self::Fn(b1, b2, b3)) => {
+				c(a1 == b1 && a2.compare(b2, int)? && compare_option_arc_scope(a3, b3, int)?)
+			}
+			(Self::Object(a), Self::Object(b)) => {
+				if a.len() != b.len() {
+					return Ok(None);
+				}
+				for ((a1, a2), (b1, b2)) in a.iter().zip(b.iter()) {
+					if a1 != b1 {
+						return Ok(None);
+					}
+					match a2.compare(b2, int)? {
+						Some(cmp::Ordering::Equal) => (),
+						other => return Ok(other),
+					}
+				}
+				return Ok(Some(cmp::Ordering::Equal));
+			}
+			(Self::String(a), Self::String(b)) => c(a == b),
+			(Self::Bool(a), Self::Bool(b)) => c(a == b),
+			(Self::Month(a), Self::Month(b)) => c(a == b),
+			(Self::DayOfWeek(a), Self::DayOfWeek(b)) => c(a == b),
+			(Self::Date(a), Self::Date(b)) => c(a == b),
+			_ => None,
+		})
+	}
+
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match self {
 			Self::Num(n) => {

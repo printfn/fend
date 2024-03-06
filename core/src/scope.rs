@@ -7,13 +7,18 @@ use crate::{ast::Expr, error::Interrupt};
 use std::io;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 enum ScopeValue {
-	//Variable(Value),
 	LazyVariable(Expr, Option<Arc<Scope>>),
 }
 
 impl ScopeValue {
+	pub(crate) fn compare<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<bool> {
+		let Self::LazyVariable(a1, a2) = self;
+		let Self::LazyVariable(b1, b2) = other;
+		Ok(a1.compare(b1, int)? && compare_option_arc_scope(a2, b2, int)?)
+	}
+
 	fn eval<I: Interrupt>(
 		&self,
 		attrs: Attrs,
@@ -55,14 +60,32 @@ impl ScopeValue {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub(crate) struct Scope {
 	ident: Ident,
 	value: ScopeValue,
 	inner: Option<Arc<Scope>>,
 }
 
+pub(crate) fn compare_option_arc_scope<I: Interrupt>(
+	a: &Option<Arc<Scope>>,
+	b: &Option<Arc<Scope>>,
+	int: &I,
+) -> FResult<bool> {
+	Ok(match (a, b) {
+		(None, None) => true,
+		(Some(a), Some(b)) => a.compare(b, int)?,
+		_ => false,
+	})
+}
+
 impl Scope {
+	pub(crate) fn compare<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<bool> {
+		Ok(self.ident == other.ident
+			&& self.value.compare(&other.value, int)?
+			&& compare_option_arc_scope(&self.inner, &other.inner, int)?)
+	}
+
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.ident.serialize(write)?;
 		self.value.serialize(write)?;

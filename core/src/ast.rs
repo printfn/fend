@@ -9,7 +9,7 @@ use crate::serialize::{Deserialize, Serialize};
 use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
 use crate::Attrs;
 use std::sync::Arc;
-use std::{fmt, io};
+use std::{cmp, fmt, io};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum BitwiseBop {
@@ -99,7 +99,7 @@ impl fmt::Display for Bop {
 	}
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) enum Expr {
 	Literal(Value),
 	Ident(Ident),
@@ -127,6 +127,43 @@ pub(crate) enum Expr {
 }
 
 impl Expr {
+	pub(crate) fn compare<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<bool> {
+		Ok(match (self, other) {
+			(Self::Literal(a), Self::Literal(b)) => {
+				a.compare(b, int)? == Some(cmp::Ordering::Equal)
+			}
+			(Self::Ident(a), Self::Ident(b)) => a == b,
+			(Self::Parens(a), Self::Parens(b)) => a.compare(b, int)?,
+			(Self::UnaryMinus(a), Self::UnaryMinus(b)) => a.compare(b, int)?,
+			(Self::UnaryPlus(a), Self::UnaryPlus(b)) => a.compare(b, int)?,
+			(Self::UnaryDiv(a), Self::UnaryDiv(b)) => a.compare(b, int)?,
+			(Self::Factorial(a), Self::Factorial(b)) => a.compare(b, int)?,
+			(Self::Bop(a1, a2, a3), Self::Bop(b1, b2, b3)) => {
+				a1 == b1 && a2.compare(b2, int)? && a3.compare(b3, int)?
+			}
+			(Self::Apply(a1, a2), Self::Apply(b1, b2)) => {
+				a1.compare(b1, int)? && a2.compare(b2, int)?
+			}
+			(Self::ApplyFunctionCall(a1, a2), Self::ApplyFunctionCall(b1, b2)) => {
+				a1.compare(b1, int)? && a2.compare(b2, int)?
+			}
+			(Self::ApplyMul(a1, a2), Self::ApplyMul(b1, b2)) => {
+				a1.compare(b1, int)? && a2.compare(b2, int)?
+			}
+			(Self::As(a1, a2), Self::As(b1, b2)) => a1.compare(b1, int)? && a2.compare(b2, int)?,
+			(Self::Fn(a1, a2), Self::Fn(b1, b2)) => a1 == b1 && a2.compare(b2, int)?,
+			(Self::Of(a1, a2), Self::Of(b1, b2)) => a1 == b1 && a2.compare(b2, int)?,
+			(Self::Assign(a1, a2), Self::Assign(b1, b2)) => a1 == b1 && a2.compare(b2, int)?,
+			(Self::Equality(a1, a2, a3), Self::Equality(b1, b2, b3)) => {
+				a1 == b1 && a2.compare(b2, int)? && a3.compare(b3, int)?
+			}
+			(Self::Statements(a1, a2), Self::Statements(b1, b2)) => {
+				a1.compare(b1, int)? && a2.compare(b2, int)?
+			}
+			_ => false,
+		})
+	}
+
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		match self {
 			Self::Literal(x) => {
@@ -473,8 +510,10 @@ pub(crate) fn evaluate<I: Interrupt>(
 		Expr::Equality(is_equals, a, b) => {
 			let lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
 			let rhs = evaluate(*b, scope.clone(), attrs, context, int)?;
-
-			Value::Bool(if is_equals { lhs == rhs } else { lhs != rhs })
+			Value::Bool(match lhs.compare(&rhs, int)? {
+				Some(cmp::Ordering::Equal) => is_equals,
+				Some(cmp::Ordering::Greater | cmp::Ordering::Less) | None => !is_equals,
+			})
 		}
 	})
 }

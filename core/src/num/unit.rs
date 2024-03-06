@@ -8,12 +8,12 @@ use crate::scope::Scope;
 use crate::serialize::{Deserialize, Serialize};
 use crate::units::{lookup_default_unit, query_unit_static};
 use crate::{ast, ident::Ident};
-use crate::{interrupt::Never, Attrs, Span, SpanKind};
+use crate::{Attrs, Span, SpanKind};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Neg;
 use std::sync::Arc;
-use std::{fmt, io};
+use std::{cmp, fmt, io};
 
 pub(crate) mod base_unit;
 pub(crate) mod named_unit;
@@ -37,21 +37,33 @@ pub(crate) struct Value {
 	simplifiable: bool,
 }
 
-impl PartialEq for Value {
-	fn eq(&self, other: &Self) -> bool {
+impl Value {
+	pub(crate) fn compare<I: Interrupt>(
+		&self,
+		other: &Self,
+		int: &I,
+	) -> FResult<Option<cmp::Ordering>> {
 		if self.value == other.value && self.unit == other.unit {
-			return true;
+			return Ok(Some(cmp::Ordering::Equal));
 		}
-		match self.clone().sub(other.clone(), &Never) {
-			Err(_) => false,
-			Ok(result) => result.is_zero(),
+		match self.clone().sub(other.clone(), int) {
+			Err(FendError::Interrupted) => Err(FendError::Interrupted),
+			Err(_) => Ok(None),
+			Ok(result) => {
+				if result.is_zero() {
+					return Ok(Some(cmp::Ordering::Equal));
+				}
+				let Ok(c) = result.value.one_point() else {
+					return Ok(None);
+				};
+				if !c.imag().is_zero() {
+					return Ok(None);
+				}
+				Ok(Some(c.real().cmp(&0.into())))
+			}
 		}
 	}
-}
 
-impl Eq for Value {}
-
-impl Value {
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.value.serialize(write)?;
 		self.unit.serialize(write)?;
