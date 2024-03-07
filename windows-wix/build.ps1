@@ -4,8 +4,6 @@ if (Test-Path $PSScriptRoot\build) {
 	Remove-Item -Recurse -Force $PSScriptRoot\build
 }
 
-choco install wixtoolset
-
 mkdir $PSScriptRoot\build
 
 & "C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" `
