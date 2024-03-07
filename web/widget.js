@@ -178,11 +178,7 @@ async function getExchangeRates() {
 	const map = new Map();
 
 	try {
-		const res = await fetch(
-			`https://corsproxy.io/?${encodeURIComponent(
-				'https://treasury.un.org/operationalrates/xsql2XML.php',
-			)}`,
-		);
+		const res = await fetch('https://fend.pr.workers.dev/exchange-rates');
 		const xml = await res.text();
 		const dom = new DOMParser().parseFromString(xml, 'text/xml');
 
@@ -200,10 +196,19 @@ async function getExchangeRates() {
 }
 
 async function load() {
-	await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
-	initialiseWithHandlers(await getExchangeRates());
+	try {
+		await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
+		initialiseWithHandlers(await getExchangeRates());
 
-	evaluateFendWithTimeout('1 + 2', 500);
+		const result = evaluateFendWithTimeout('1 + 2', 500);
+		if (result !== '3') {
+			alert('Failed to initialise WebAssembly');
+			return;
+		}
+	} catch (e) {
+		alert('Failed to initialise WebAssembly');
+		return;
+	}
 	wasmInitialised = true;
 
 	inputText.addEventListener('input', update);
