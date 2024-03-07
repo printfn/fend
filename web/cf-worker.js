@@ -9,6 +9,10 @@ export default {
 			const fetchResult = await fetch(
 				'https://treasury.un.org/operationalrates/xsql2XML.php',
 				{
+					cf: {
+						cacheTtl: 86400,
+						cacheEverything: true,
+					},
 					headers: {
 						'X-Source': 'Cloudflare-Workers',
 					},
