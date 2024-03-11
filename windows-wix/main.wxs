@@ -1,5 +1,4 @@
-<?xml version='1.0' encoding='windows-1252'?>
-<!-- This file is based on cargo-wix -->
+﻿<!-- This file is based on cargo-wix -->
 
 <!--
 	Copyright (C) 2017 Christopher R. Field.
@@ -23,22 +22,10 @@
 	destination for 32-bit versus 64-bit installers. Removal of these lines will
 	cause installation errors.
 -->
-<?if $(sys.BUILDARCH) = x64 or $(sys.BUILDARCH) = arm64 ?>
-	<?define Win64 = "yes" ?>
-	<?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
-<?else ?>
-	<?define Win64 = "no" ?>
-	<?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
-<?endif ?>
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
 
-	<Product Id='*' Name='fend' UpgradeCode='2E3C8164-E07C-4B26-82B2-C5613FE8AD8F'
-		Manufacturer='printfn' Language='1033' Codepage='1252' Version='$(var.Version)'>
-
-		<Package Id='*' Keywords='Installer' Description='Arbitrary-precision unit-aware calculator'
-			Manufacturer='printfn' InstallerVersion='450' Languages='1033' Compressed='yes'
-			InstallScope='perMachine' SummaryCodepage='1252' />
+	<Package Name="fend" UpgradeCode="2E3C8164-E07C-4B26-82B2-C5613FE8AD8F" Manufacturer="printfn" Language="1033" Codepage="1252" Version="$(var.Version)" InstallerVersion="450"><SummaryInformation Keywords="Installer" Description="Arbitrary-precision unit-aware calculator" Manufacturer="printfn" />
 
 		<!--
 			Same-version upgrades need to be allowed, otherwise fend will get installed multiple
@@ -46,97 +33,89 @@
 			Unfortunately setting that attribute does result in a compiler warning (LGHT1076).
 			See https://wixtoolset.org/documentation/manual/v3/xsd/wix/majorupgrade.html for more info.
 		-->
-		<MajorUpgrade
-			Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
-			DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
+		<MajorUpgrade Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
 
 		<Property Id="APPLICATIONFOLDER" Secure="yes">
-			<RegistrySearch Id="FindInstallLocation" Root="HKCU" Key="Software\fend" Name="InstallationPath" Type="raw" Win64="$(var.Win64)" />
+			<RegistrySearch Id="FindInstallLocation" Root="HKCU" Key="Software\fend" Name="InstallationPath" Type="raw" />
 		</Property>
 
-		<Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1' />
-		<Property Id='DiskPrompt' Value='fend Installation' />
+		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" DiskPrompt="CD-ROM #1" />
+		<Property Id="DiskPrompt" Value="fend Installation" />
 
-		<Directory Id='TARGETDIR' Name='SourceDir'>
-			<Directory Id="ProgramMenuFolder">
-				<!-- Create shortcut to start fend from the taskbar -->
-				<Directory Id="ApplicationProgramsFolder" Name="fend">
-					<Component Id='ApplicationShortcut' Guid='{15F35903-1FBC-47C0-852D-BFC51D428385}' Win64='$(var.Win64)'>
-						<Shortcut Id='ApplicationStartMenuShortcut' Name='fend' Description='Arbitrary-precision unit-aware calculator' Target='[!fend.exe]' WorkingDirectory='APPLICATIONFOLDER' />
-						<RemoveFolder Id='CleanUpShortCut' Directory='ApplicationProgramsFolder' On='uninstall' />
-						<RegistryValue Root='HKCU' Key='Software\fend' Name='installed' Type='integer' Value='1' KeyPath='yes' />
-						<!-- make upgrading easier by remembering where it was installed -->
-						<RegistryValue Root='HKCU' Key='Software\fend' Name='InstallationPath' Type='string' Value='[APPLICATIONFOLDER]' />
-					</Component>
-				</Directory>
-			</Directory>
 
-			<Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
-				<Directory Id='APPLICATIONFOLDER' Name='fend'>
-					<Component Id='License' Guid='*'>
-						<File Id='LicenseFile' Name='LICENSE.md' DiskId='1' Source='$(var.LicenseMdPath)' KeyPath='yes' />
-					</Component>
-					<Directory Id='Bin' Name='bin'>
-						<Component Id='Path' Guid='CDEF645B-899B-4FB5-B932-70DDF60C1D24' KeyPath='yes'>
-							<Environment Id='PATH' Name='PATH' Value='[Bin]' Permanent='no' Part='last' Action='set' System='yes' />
-						</Component>
-						<Component Id='binary0' Guid='*'>
-							<File Id='fend.exe' Name='fend.exe' DiskId='1' Source='$(var.FendExePath)' KeyPath='yes' />
-						</Component>
-					</Directory>
-				</Directory>
-			</Directory>
 
-			<Directory Id="DesktopFolder" Name="Desktop">
-				<!-- Create shortcut to start fend from the desktop -->
-				<Component Id="ApplicationShortcutDesktop" Guid="6EC22391-82AE-4394-BD05-6930293265EA">
-					<Shortcut Id="ApplicationDesktopShortcut" Name="fend" Description="Arbitrary-precision unit-aware calculator" Target="[!fend.exe]" WorkingDirectory='APPLICATIONFOLDER' />
-					<RemoveFolder Id="CleanUpDesktopShortcut" On="uninstall" />
-					<RegistryValue Root="HKCU" Key="Software\fend" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
-				</Component>
-			</Directory>
-		</Directory>
+		<Feature Id="Binaries" Title="Application" Description="Installs fend." Level="1" ConfigurableDirectory="APPLICATIONFOLDER" AllowAdvertise="no" Display="expand" AllowAbsent="no">
 
-		<Feature Id='Binaries' Title='Application' Description='Installs fend.' Level='1'
-			ConfigurableDirectory='APPLICATIONFOLDER' AllowAdvertise='no' Display='expand' Absent='disallow'>
+			<ComponentRef Id="License" />
+			<ComponentRef Id="binary0" />
+			<ComponentRef Id="ApplicationShortcut" />
 
-			<ComponentRef Id='License' />
-			<ComponentRef Id='binary0' />
-			<ComponentRef Id='ApplicationShortcut' />
-
-			<Feature Id='Environment' Title='PATH Environment Variable'
-				Description='Add the install location of the [ProductName] executable to the PATH system environment variable. This allows the [ProductName] executable to be called from any location.'
-				Level='1' Absent='allow'>
-				<ComponentRef Id='Path' />
+			<Feature Id="Environment" Title="PATH Environment Variable" Description="Add the install location of the [ProductName] executable to the PATH system environment variable. This allows the [ProductName] executable to be called from any location." Level="1">
+				<ComponentRef Id="Path" />
 			</Feature>
 
 
-			<Feature Id='DesktopShortcut' Title='Add a Desktop shortcut' Description='Creates a shortcut on your desktop for easier access.' Level='1' Absent='allow'>
-				<ComponentRef Id='ApplicationShortcutDesktop' />
+			<Feature Id="DesktopShortcut" Title="Add a Desktop shortcut" Description="Creates a shortcut on your desktop for easier access." Level="1">
+				<ComponentRef Id="ApplicationShortcutDesktop" />
 			</Feature>
 		</Feature>
 
-		<SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize' />
+		<SetProperty Id="ARPINSTALLLOCATION" Value="[APPLICATIONFOLDER]" After="CostFinalize" />
 
-		<Icon Id='ProductICO' SourceFile='$(var.IconPath)' />
-		<Property Id='ARPPRODUCTICON' Value='ProductICO' />
+		<Icon Id="ProductICO" SourceFile="$(var.IconPath)" />
+		<Property Id="ARPPRODUCTICON" Value="ProductICO" />
 
-		<Property Id='ARPHELPLINK' Value='https://github.com/printfn/fend' />
+		<Property Id="ARPHELPLINK" Value="https://github.com/printfn/fend" />
 
 		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch fend" />
 
 		<UI>
-			<UIRef Id='WixUI_FeatureTree' />
-			<Publish Dialog='WelcomeDlg' Control='Next' Event='NewDialog' Value='CustomizeDlg' Order='99'>1</Publish>
-			<Publish Dialog='CustomizeDlg' Control='Back' Event='NewDialog' Value='WelcomeDlg' Order='99'>1</Publish>
-			<Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">
-				WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed
-			</Publish>
+			<ui:WixUI Id="WixUI_FeatureTree" />
+			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg" Order="99" />
+			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" />
+			<Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication" Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed" />
 		</UI>
 
 		<Property Id="WixShellExecTarget" Value="[#fend.exe]" />
-		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+		<CustomAction Id="LaunchApplication" DllEntry="WixShellExec" Impersonate="yes" BinaryRef="Wix4UtilCA_X86" />
 
-	</Product>
+			<StandardDirectory Id="ProgramMenuFolder">
+				<!-- Create shortcut to start fend from the taskbar -->
+				<Directory Id="ApplicationProgramsFolder" Name="fend">
+					<Component Id="ApplicationShortcut" Guid="{15F35903-1FBC-47C0-852D-BFC51D428385}">
+						<Shortcut Id="ApplicationStartMenuShortcut" Name="fend" Description="Arbitrary-precision unit-aware calculator" Target="[!fend.exe]" WorkingDirectory="APPLICATIONFOLDER" />
+						<RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall" />
+						<RegistryValue Root="HKCU" Key="Software\fend" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+						<!-- make upgrading easier by remembering where it was installed -->
+						<RegistryValue Root="HKCU" Key="Software\fend" Name="InstallationPath" Type="string" Value="[APPLICATIONFOLDER]" />
+					</Component>
+				</Directory>
+			</StandardDirectory>
+
+			<StandardDirectory Id="ProgramFiles6432Folder">
+				<Directory Id="APPLICATIONFOLDER" Name="fend">
+					<Component Id="License">
+						<File Id="LicenseFile" Name="LICENSE.md" DiskId="1" Source="$(var.LicenseMdPath)" KeyPath="yes" />
+					</Component>
+					<Directory Id="Bin" Name="bin">
+						<Component Id="Path" Guid="CDEF645B-899B-4FB5-B932-70DDF60C1D24" KeyPath="yes">
+							<Environment Id="PATH" Name="PATH" Value="[Bin]" Permanent="no" Part="last" Action="set" System="yes" />
+						</Component>
+						<Component Id="binary0">
+							<File Id="fend.exe" Name="fend.exe" DiskId="1" Source="$(var.FendExePath)" KeyPath="yes" />
+						</Component>
+					</Directory>
+				</Directory>
+			</StandardDirectory>
+
+			<StandardDirectory Id="DesktopFolder">
+				<!-- Create shortcut to start fend from the desktop -->
+				<Component Id="ApplicationShortcutDesktop" Guid="6EC22391-82AE-4394-BD05-6930293265EA">
+					<Shortcut Id="ApplicationDesktopShortcut" Name="fend" Description="Arbitrary-precision unit-aware calculator" Target="[!fend.exe]" WorkingDirectory="APPLICATIONFOLDER" />
+					<RemoveFolder Id="CleanUpDesktopShortcut" On="uninstall" />
+					<RegistryValue Root="HKCU" Key="Software\fend" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+				</Component>
+			</StandardDirectory>
+		</Package>
 
 </Wix>

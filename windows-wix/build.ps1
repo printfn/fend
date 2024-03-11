@@ -6,18 +6,16 @@ if (Test-Path $PSScriptRoot\build) {
 
 mkdir $PSScriptRoot\build
 
-& "C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" `
-	-arch x64 -ext WixUtilExtension `
-	-dVersion="$Env:FEND_VERSION" `
-	-dFendExePath="$PSScriptRoot\..\target\release\fend.exe" `
-	-dLicenseMdPath="$PSScriptRoot\..\LICENSE.md" `
-	-dIconPath="$PSScriptRoot\..\icon\fend-icon.ico" `
-	-o "$PSScriptRoot\build\" "$PSScriptRoot\main.wxs"
+Set-Location "$PSScriptRoot"
 
-& "C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe" `
-	-spdb `
-	-ext WixUIExtension `
-	-ext WixUtilExtension `
-	-cultures:en-US `
-	-out "$PSScriptRoot\build\fend-windows-x64.msi" `
-	"$PSScriptRoot\build\main.wixobj"
+dotnet tool restore
+dotnet tool run wix extension add WixToolset.UI.wixext/4.0.4
+dotnet tool run wix extension add WixToolset.Util.wixext/4.0.4
+
+dotnet tool run wix build `
+	-arch x64 -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext `
+	-d Version="$Env:FEND_VERSION" `
+	-d FendExePath="$PSScriptRoot\..\target\release\fend.exe" `
+	-d LicenseMdPath="$PSScriptRoot\..\LICENSE.md" `
+	-d IconPath="$PSScriptRoot\..\icon\fend-icon.ico" `
+	-o "$PSScriptRoot\build\fend-windows-x64.msi" "$PSScriptRoot\main.wxs"

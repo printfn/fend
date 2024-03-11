@@ -1,5 +1,8 @@
 /documentation/fend.1
 
+/icon/fend-icon.ico
+/icon/resources.res
+
 /target/
 
 /telegram-bot/lambda_package.zip
@@ -14,4 +17,6 @@
 /windows-msix/build/
 /windows-msix/fend-windows-x64.msix
 
+/windows-wix/.wix/
 /windows-wix/build/
+/windows-wix/obj/

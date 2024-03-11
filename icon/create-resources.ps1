@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 # https://learn.microsoft.com/en-us/windows/win32/menurc/using-rc-the-rc-command-line-
 
-cd "$PSScriptRoot"
+Set-Location "$PSScriptRoot"
 
 & magick convert icon.svg `
 	`( "-clone" 0 "-resize" 16x16 `) `

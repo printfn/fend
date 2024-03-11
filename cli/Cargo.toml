@@ -11,7 +11,7 @@ license.workspace = true
 readme = "../README.md"
 
 [dependencies]
-ctrlc = "3.4.2"
+ctrlc = "3.4.4"
 fend-core.workspace = true
 home = "0.5.9"
 native-tls = { version = "0.2.11", optional = true }
