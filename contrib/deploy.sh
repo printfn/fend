@@ -99,8 +99,9 @@ npm whoami
 
 PATH="$HOME/.cargo/bin:$PATH"
 echo "Ensure that we are using Rustup"
-if [[ ! "$(which rustc)" =~ .cargo/bin/rustc$ ]]; then
-	fail "Using $(which rustc) which does not seem to be from Rustup"
+rustc_cmd=$(command -v rustc)
+if [[ ! "$rustc_cmd" =~ .cargo/bin/rustc$ ]]; then
+	fail "Using $rustc_cmd which does not seem to be from Rustup"
 fi
 
 echo "Making sure the git repository is clean..."
