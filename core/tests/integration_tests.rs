@@ -5899,3 +5899,40 @@ fn test_equality() {
 	test_eval("2.010m == 200cm", "false");
 	test_eval("2.000m == approx. 200cm", "true");
 }
+
+#[test]
+fn test_roman() {
+	expect_error(
+		"0 to roman",
+		Some("zero cannot be represented as a roman numeral"),
+	);
+	test_eval_simple("1 to roman", "I");
+	test_eval_simple("2 to roman", "II");
+	test_eval_simple("3 to roman", "III");
+	test_eval_simple("4 to roman", "IV");
+	test_eval_simple("5 to roman", "V");
+	test_eval_simple("6 to roman", "VI");
+	test_eval_simple("7 to roman", "VII");
+	test_eval_simple("8 to roman", "VIII");
+	test_eval_simple("9 to roman", "IX");
+	test_eval_simple("10 to roman", "X");
+	test_eval_simple("11 to roman", "XI");
+	test_eval_simple("12 to roman", "XII");
+	test_eval_simple("13 to roman", "XIII");
+	test_eval_simple("14 to roman", "XIV");
+	test_eval_simple("15 to roman", "XV");
+	test_eval_simple("16 to roman", "XVI");
+	test_eval_simple("17 to roman", "XVII");
+	test_eval_simple("18 to roman", "XVIII");
+	test_eval_simple("19 to roman", "XIX");
+	test_eval_simple("20 to roman", "XX");
+	test_eval_simple("21 to roman", "XXI");
+	test_eval_simple("22 to roman", "XXII");
+	test_eval_simple("45 to roman", "XLV");
+	test_eval_simple("134 to roman", "CXXXIV");
+	test_eval_simple("1965 to roman", "MCMLXV");
+	test_eval_simple("2020 to roman", "MMXX");
+	test_eval_simple("3456 to roman", "MMMCDLVI");
+	test_eval_simple("1452 to roman", "MCDLII");
+	test_eval_simple("20002 to roman", "MMMMMMMMMMMMMMMMMMMMII");
+}

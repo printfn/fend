@@ -9,7 +9,7 @@ use crate::serialize::{Deserialize, Serialize};
 use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
 use crate::Attrs;
 use std::sync::Arc;
-use std::{cmp, fmt, io};
+use std::{borrow, cmp, fmt, io};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum BitwiseBop {
@@ -621,6 +621,15 @@ fn evaluate_as<I: Interrupt>(
 				}
 				return Err(FendError::ExpectedANumber);
 			}
+			"roman" | "roman_numeral" => {
+				let a = evaluate(a, scope, attrs, context, int)?
+					.expect_num()?
+					.try_as_usize(int)?;
+				if a == 0 {
+					return Err(FendError::RomanNumeralZero);
+				}
+				return Ok(Value::String(borrow::Cow::Owned(to_roman(a))));
+			}
 			_ => (),
 		}
 	}
@@ -753,4 +762,31 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 		"yesterday" => Value::Date(crate::date::Date::today(context)?.prev()),
 		_ => return crate::units::query_unit(ident.as_str(), attrs, context, int),
 	})
+}
+
+fn to_roman(mut num: usize) -> String {
+	// based on https://stackoverflow.com/a/41358305
+	let mut result = String::new();
+	for (r, n) in [
+		("M", 1000),
+		("CM", 900),
+		("D", 500),
+		("CD", 400),
+		("C", 100),
+		("XC", 90),
+		("L", 50),
+		("XL", 40),
+		("X", 10),
+		("IX", 9),
+		("V", 5),
+		("IV", 4),
+		("I", 1),
+	] {
+		let q = num / n;
+		num -= q * n;
+		for _ in 0..q {
+			result.push_str(r);
+		}
+	}
+	result
 }

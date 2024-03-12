@@ -94,6 +94,7 @@ pub(crate) enum FendError {
 		before: date::Date,
 		after: date::Date,
 	},
+	RomanNumeralZero,
 }
 
 impl fmt::Display for FendError {
@@ -248,6 +249,7 @@ impl fmt::Display for FendError {
 					"{month} {expected_day}, {year} does not exist, did you mean {before} or {after}?",
 				)
 			}
+			Self::RomanNumeralZero => write!(f, "zero cannot be represented as a roman numeral"),
 		}
 	}
 }
