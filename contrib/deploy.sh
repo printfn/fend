@@ -81,7 +81,7 @@ fi
 
 OLD_VERSION="$(cargo run --package fend --quiet -- version)"
 
-if ! command -v "wasm-pack"; then
+if ! command -v "wasm-pack" >/dev/null; then
 	fail "Please install wasm-pack"
 fi
 
