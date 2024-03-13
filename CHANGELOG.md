@@ -1,5 +1,15 @@
 ## Changelog
 
+### v1.4.5 (2024-03-13)
+
+* Add support for converting numbers to roman numerals (e.g.
+    `45 to roman` becomes `XLV`)
+* Add `≠` as an alias for `!=` (by [@haykam821](https://github.com/haykam821))
+* Add `<>` as another alias for `!=`
+* Update Windows MSI installer to WiX 4
+* The fend Telegram bot now directly replies to messages, making it easier to
+    use in group chats (by [@frectonz](https://github.com/frectonz))
+
 ### v1.4.4 (2024-03-05)
 
 * Add `==` and `!=` operators for equality and inequality (by
