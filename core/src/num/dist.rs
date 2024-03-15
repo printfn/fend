@@ -96,7 +96,27 @@ impl Dist {
 			}
 			res = Some(Self::from(k));
 		}
-		Ok(res.expect("there must be at least one part in a dist"))
+		res.ok_or(FendError::EmptyDistribution)
+	}
+
+	pub(crate) fn mean<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		if self.parts.is_empty() {
+			return Err(FendError::EmptyDistribution);
+		}
+
+		let len = self.parts.len();
+
+		if self.parts.len() == 1 {
+			return Ok(self);
+		}
+
+		let mut result = Exact::new(Complex::from(0), true);
+		for (k, _v) in self.parts {
+			result = result.add(Exact::new(k, true), int)?;
+		}
+
+		result = result.div(Exact::new(Complex::from(len as u64), true), int)?;
+		Ok(Self::from(result.value))
 	}
 
 	#[allow(

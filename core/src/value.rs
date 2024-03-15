@@ -349,6 +349,7 @@ impl Value {
 				return Ok(Self::Base(Base::from_plain_base(n)?));
 			}
 			BuiltInFunction::Sample => arg.expect_num()?.sample(context, int)?,
+			BuiltInFunction::Mean => arg.expect_num()?.mean(int)?,
 			BuiltInFunction::Not => return Ok(Self::Bool(!arg.as_bool()?)),
 			BuiltInFunction::Conjugate => arg.expect_num()?.conjugate()?,
 			BuiltInFunction::Real => arg.expect_num()?.real()?,

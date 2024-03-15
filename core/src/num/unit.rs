@@ -537,6 +537,13 @@ impl Value {
 		})
 	}
 
+	pub(crate) fn mean<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		Ok(Self {
+			value: self.value.mean(int)?,
+			..self
+		})
+	}
+
 	fn convert_angle_to_rad<I: Interrupt>(
 		self,
 		scope: Option<Arc<Scope>>,

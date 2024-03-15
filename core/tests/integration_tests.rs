@@ -5936,3 +5936,15 @@ fn test_roman() {
 	test_eval_simple("1452 to roman", "MCDLII");
 	test_eval_simple("20002 to roman", "MMMMMMMMMMMMMMMMMMMMII");
 }
+
+#[test]
+fn test_mean() {
+	test_eval("mean d1", "1");
+	test_eval("mean d2", "1.5");
+	test_eval("mean d500", "250.5");
+
+	test_eval("mean (d1 + d1)", "2");
+	test_eval("mean (d2 + d500)", "252");
+
+	test_eval("average d500", "250.5");
+}
