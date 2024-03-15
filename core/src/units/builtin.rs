@@ -56,6 +56,7 @@ const BITS_AND_BYTES: &[UnitTuple] = &[
 	("b", "", "s@bit", ""),
 	("B", "", "s@byte", ""),
 	("octet", "octets", "l@8 bits", ""),
+	("nibble", "nibbles", "l@4 bits", ""),
 ];
 
 const STANDARD_PREFIXES: &[UnitTuple] = &[
