@@ -129,5 +129,5 @@ Feel free to make a pull request to add your own!
 
 ## License
 
-fend is licensed under the GPL 3.0 (or later). See [LICENSE.md](LICENSE.md)
+fend is available under the MIT license. See [LICENSE.md](LICENSE.md)
 for more information.

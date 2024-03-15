@@ -65,7 +65,7 @@ Bugs and feature suggestions can be reported at
 
 # COPYRIGHT
 
-fend is licensed under the GPL 3.0 (or later). You can find the source code at
+fend is available under the MIT license. You can find the source code at
 [https://github.com/printfn/fend](https://github.com/printfn/fend).
 
 # CHANGELOG

@@ -10,7 +10,7 @@ homepage = "https://github.com/printfn/fend"
 repository = "https://github.com/printfn/fend"
 keywords = ["calculator", "cli", "conversion", "math", "tool"]
 categories = ["command-line-utilities", "mathematics", "science"]
-license = "GPL-3.0-or-later"
+license = "MIT"
 
 [workspace.dependencies]
 fend-core = { version = "1.4.5", path = "core" }
