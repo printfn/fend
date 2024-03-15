@@ -5940,3 +5940,8 @@ fn test_roman() {
 		Some("100001 must lie in the interval [1, 100000]"),
 	);
 }
+
+#[test]
+fn rack_unit() {
+	test_eval("4U to cm", "17.78 cm");
+}

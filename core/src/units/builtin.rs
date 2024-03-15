@@ -588,6 +588,8 @@ const IMPERIAL_UNITS: &[UnitTuple] = &[
 	("ramsdens_chain", "", "l@5 rope", ""),
 	("roman_mile", "roman_miles", "l@50 ramsdens_chain", ""),
 	("gunters_chain", "gunters_chains", "l@4 rod", ""),
+	("rack_unit", "rack_units", "l@1.75 inches", ""),
+	("U", "", "rack_unit", ""),
 ];
 
 const LIQUID_UNITS: &[UnitTuple] = &[
