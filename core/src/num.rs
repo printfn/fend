@@ -39,8 +39,8 @@ impl<T: fmt::Display + fmt::Debug + 'static> RangeBound<T> {
 
 #[derive(Debug)]
 pub(crate) struct Range<T> {
-	start: RangeBound<T>,
-	end: RangeBound<T>,
+	pub(crate) start: RangeBound<T>,
+	pub(crate) end: RangeBound<T>,
 }
 
 impl<T> Range<T> {

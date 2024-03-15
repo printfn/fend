@@ -2,7 +2,7 @@ use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::ident::Ident;
 use crate::interrupt::test_int;
-use crate::num::{Base, FormattingStyle, Number};
+use crate::num::{Base, FormattingStyle, Number, Range, RangeBound};
 use crate::result::FResult;
 use crate::scope::Scope;
 use crate::serialize::{Deserialize, Serialize};
@@ -627,6 +627,16 @@ fn evaluate_as<I: Interrupt>(
 					.try_as_usize(int)?;
 				if a == 0 {
 					return Err(FendError::RomanNumeralZero);
+				}
+				let upper_limit = 100_000;
+				if a > upper_limit {
+					return Err(FendError::OutOfRange {
+						value: Box::new(a),
+						range: Range {
+							start: RangeBound::Closed(Box::new(1)),
+							end: RangeBound::Closed(Box::new(upper_limit)),
+						},
+					});
 				}
 				return Ok(Value::String(borrow::Cow::Owned(to_roman(a))));
 			}
