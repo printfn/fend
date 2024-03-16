@@ -16,13 +16,6 @@
 	limitations under the License.
 -->
 
-<!--
-	Please do not remove these pre-processor If-Else blocks. These are used with
-	the `cargo wix` subcommand to automatically determine the installation
-	destination for 32-bit versus 64-bit installers. Removal of these lines will
-	cause installation errors.
--->
-
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
 
 	<Package Name="fend" UpgradeCode="2E3C8164-E07C-4B26-82B2-C5613FE8AD8F" Manufacturer="printfn"

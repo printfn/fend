@@ -34,7 +34,20 @@ macro_rules! impl_serde {
 	};
 }
 
-impl_serde!(u8 i32 u64 usize);
+impl_serde!(u8 i32 u64);
+
+impl Serialize for usize {
+	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+		(*self as u64).serialize(write)
+	}
+}
+
+impl Deserialize for usize {
+	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
+		let val = u64::deserialize(read)?;
+		Self::try_from(val).map_err(|_| FendError::DeserializationError)
+	}
+}
 
 impl Serialize for &str {
 	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {

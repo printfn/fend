@@ -294,8 +294,7 @@ impl Context {
 
 	/// Serializes all variables defined in this context to a stream of bytes.
 	/// Note that the specific format is NOT stable, and can change with any
-	/// minor update. It is also not compatible between 32-bit and
-	/// 64-bit architectures.
+	/// minor update.
 	///
 	/// # Errors
 	/// This function returns an error if the input cannot be serialized.
