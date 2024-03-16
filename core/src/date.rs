@@ -21,7 +21,7 @@ pub(crate) struct Date {
 }
 
 impl Date {
-	pub(crate) fn today(context: &mut crate::Context) -> FResult<Self> {
+	pub(crate) fn today(context: &crate::Context) -> FResult<Self> {
 		let Some(current_time_info) = &context.current_time else {
 			return Err(FendError::UnableToGetCurrentDate);
 		};

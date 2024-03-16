@@ -237,7 +237,7 @@ fn query_unit_internal(
 	short_prefixes: bool,
 	case_sensitive: bool,
 	whole_unit: bool,
-	context: &mut crate::Context,
+	context: &crate::Context,
 ) -> FResult<(Cow<'static, str>, Cow<'static, str>, Cow<'static, str>)> {
 	if !short_prefixes {
 		for (s, p, d) in &context.custom_units {

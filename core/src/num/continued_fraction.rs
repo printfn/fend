@@ -61,7 +61,7 @@ impl ContinuedFraction {
 		let mut denominator = 1.0;
 		for term in self.into_iter().take(MAX_ITERATIONS) {
 			denominator = 1.0 / (denominator + term.as_f64());
-			result = result * denominator + term.as_f64();
+			result = result.mul_add(denominator, term.as_f64());
 		}
 		result
 	}
@@ -404,17 +404,11 @@ impl Iterator for BihomographicIterator {
 				}
 				BihomographicState::Shift { right_first } => {
 					if right_first {
-						if let Ok(()) = self.shift_right() {
-							self.state = BihomographicState::Initial;
-							continue;
-						} else if let Ok(()) = self.shift_down() {
+						if self.shift_right() == Ok(()) || self.shift_down() == Ok(()) {
 							self.state = BihomographicState::Initial;
 							continue;
 						}
-					} else if let Ok(()) = self.shift_down() {
-						self.state = BihomographicState::Initial;
-						continue;
-					} else if let Ok(()) = self.shift_right() {
+					} else if self.shift_down() == Ok(()) || self.shift_right() == Ok(()) {
 						self.state = BihomographicState::Initial;
 						continue;
 					}
@@ -807,8 +801,7 @@ mod tests {
 				.take(1000)
 				.map(|b| b.try_as_usize(&Never).unwrap())
 				.collect::<Vec<_>>(),
-			Some(1)
-				.into_iter()
+			iter::once(1)
 				.chain([2, 1, 1, 2, 36].into_iter().cycle())
 				.take(1000)
 				.collect::<Vec<_>>(),

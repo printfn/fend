@@ -509,7 +509,7 @@ pub(crate) fn evaluate<I: Interrupt>(
 		}
 		Expr::Equality(is_equals, a, b) => {
 			let lhs = evaluate(*a, scope.clone(), attrs, context, int)?;
-			let rhs = evaluate(*b, scope.clone(), attrs, context, int)?;
+			let rhs = evaluate(*b, scope, attrs, context, int)?;
 			Value::Bool(match lhs.compare(&rhs, int)? {
 				Some(cmp::Ordering::Equal) => is_equals,
 				Some(cmp::Ordering::Greater | cmp::Ordering::Less) | None => !is_equals,

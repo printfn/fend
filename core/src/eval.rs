@@ -16,7 +16,7 @@ pub(crate) fn evaluate_to_value<I: Interrupt>(
 	let mut missing_open_parens: i32 = 0;
 	for token in lex {
 		let token = token?;
-		if let lexer::Token::Symbol(lexer::Symbol::CloseParens) = token {
+		if matches!(token, lexer::Token::Symbol(lexer::Symbol::CloseParens)) {
 			missing_open_parens += 1;
 		}
 		tokens.push(token);

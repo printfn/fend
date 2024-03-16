@@ -144,7 +144,7 @@ impl Complex {
 			let rem = rhs.clone().real.modulo(4.into(), int);
 			// Reduced case: (ix)^y = x^y * i^y
 			if self.real.is_zero() && rhs.imag.is_zero() {
-				if let Ok(n) = rhs.real.clone().try_as_usize(int) {
+				if let Ok(n) = rhs.real.try_as_usize(int) {
 					return self.pow_n(n, int);
 				}
 
@@ -380,8 +380,7 @@ impl Complex {
 		let sqrt = Exact::new(Self::from(1), true)
 			.add(exact.clone().mul(&exact, int)?.neg(), int)?
 			.try_and_then(|x| x.frac_pow(half.value, int))?;
-		i.clone()
-			.mul(&exact, int)?
+		i.mul(&exact, int)?
 			.add(sqrt, int)?
 			.try_and_then(|x| x.ln(int))
 	}

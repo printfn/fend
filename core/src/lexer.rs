@@ -845,7 +845,7 @@ impl<'a, I: Interrupt> Iterator for Lexer<'a, '_, I> {
 			res,
 			Some(Ok(Token::Num(_) | Token::Symbol(Symbol::UnitConversion)))
 		);
-		if let Some(Ok(Token::Symbol(Symbol::Backslash))) = res {
+		if matches!(res, Some(Ok(Token::Symbol(Symbol::Backslash)))) {
 			self.after_backslash_state = 1;
 		} else if self.after_backslash_state == 1 {
 			if let Some(Ok(Token::Ident(_))) = res {

@@ -278,11 +278,11 @@ impl Value {
 		Ok(match self {
 			Self::Num(n) => {
 				let other = crate::ast::evaluate(other, scope.clone(), attrs, context, int)?;
-				if let Self::Dp = other {
+				if matches!(other, Self::Dp) {
 					let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
 					return Ok(Self::Format(FormattingStyle::DecimalPlaces(num)));
 				}
-				if let Self::Sf = other {
+				if matches!(other, Self::Sf) {
 					let num = Self::Num(n).expect_num()?.try_as_usize(int)?;
 					if num == 0 {
 						return Err(FendError::CannotFormatWithZeroSf);
