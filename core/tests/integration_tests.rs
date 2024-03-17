@@ -5946,5 +5946,8 @@ fn test_mean() {
 	test_eval("mean (d1 + d1)", "2");
 	test_eval("mean (d2 + d500)", "252");
 
+	test_eval("mean (d6 / d2)", "2.625");
+	test_eval("mean (d10 / d2)", "4.125");
+
 	test_eval("average d500", "250.5");
 }

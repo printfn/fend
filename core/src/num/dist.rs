@@ -102,20 +102,17 @@ impl Dist {
 	pub(crate) fn mean<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self.parts.is_empty() {
 			return Err(FendError::EmptyDistribution);
-		}
-
-		let len = self.parts.len();
-
-		if self.parts.len() == 1 {
+		} else if self.parts.len() == 1 {
 			return Ok(self);
 		}
 
 		let mut result = Exact::new(Complex::from(0), true);
-		for (k, _v) in self.parts {
-			result = result.add(Exact::new(k, true), int)?;
+		for (k, v) in self.parts {
+			result = Exact::new(k, true)
+				.mul(&Exact::new(Complex::from(Real::from(v)), true), int)?
+				.add(result, int)?;
 		}
 
-		result = result.div(Exact::new(Complex::from(len as u64), true), int)?;
 		Ok(Self::from(result.value))
 	}
 
