@@ -706,6 +706,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 		"true" => Value::Bool(true),
 		"false" => Value::Bool(false),
 		"sample" | "roll" => Value::BuiltInFunction(BuiltInFunction::Sample),
+		"mean" | "average" => Value::BuiltInFunction(BuiltInFunction::Mean),
 		"sqrt" => evaluate_to_value("x: x^(1/2)", scope, attrs, context, int)?,
 		"cbrt" => evaluate_to_value("x: x^(1/3)", scope, attrs, context, int)?,
 		"real" | "re" | "Re" => Value::BuiltInFunction(BuiltInFunction::Real),

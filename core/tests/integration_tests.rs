@@ -5945,3 +5945,18 @@ fn test_roman() {
 fn rack_unit() {
 	test_eval("4U to cm", "17.78 cm");
 }
+
+#[test]
+fn test_mean() {
+	test_eval("mean d1", "1");
+	test_eval("mean d2", "1.5");
+	test_eval("mean d500", "250.5");
+
+	test_eval("mean (d1 + d1)", "2");
+	test_eval("mean (d2 + d500)", "252");
+
+	test_eval("mean (d6 / d2)", "2.625");
+	test_eval("mean (d10 / d2)", "4.125");
+
+	test_eval("average d500", "250.5");
+}

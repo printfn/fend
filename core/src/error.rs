@@ -24,6 +24,7 @@ pub(crate) enum FendError {
 	},
 	NegativeNumbersNotAllowed,
 	ProbabilityDistributionsNotAllowed,
+	EmptyDistribution,
 	FractionToInteger,
 	ModuloByZero,
 	RandomNumbersNotAvailable,
@@ -173,6 +174,7 @@ impl fmt::Display for FendError {
 					"probability distributions are not allowed (consider using `sample`)"
 				)
 			}
+			Self::EmptyDistribution => write!(f, "there must be at least one part in a dist"),
 			Self::ParseDateError(s) => write!(f, "failed to convert '{s}' to a date"),
 			Self::ExpectedAString => write!(f, "expected a string"),
 			Self::UnableToInvertFunction(name) => write!(f, "unable to invert function {name}"),
