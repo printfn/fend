@@ -52,7 +52,7 @@ jobs:
           rustup component add clippy
           cargo clippy --workspace --all-targets --all-features -- -D warnings
           cargo fmt -- --check
-      
+
       - name: Compile icon/resources.res
         if: ${{ matrix.platform == 'windows-latest' }}
         run: |
@@ -61,7 +61,7 @@ jobs:
           cmd /c "vcvarsall.bat x64 & set" |
           foreach {
             if ($_ -match "=") {
-              $v = $_.split("=", 2); set-item -force -path "ENV:\$($v[0])" -value "$($v[1])" 
+              $v = $_.split("=", 2); set-item -force -path "ENV:\$($v[0])" -value "$($v[1])"
             }
           }
           popd
@@ -133,7 +133,10 @@ jobs:
 
       - name: Upload to codecov.io
         if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -261,17 +264,56 @@ jobs:
           path: windows-wix/build/fend-windows-x64.msi
           if-no-files-found: error
 
-      - name: Deploy Telegram Bot
+      - name: Build telegram bot
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         run: |
           ./telegram-bot/build.sh
 
+      - name: Upload artifacts (telegram bot)
+        uses: actions/upload-artifact@v4
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
+        with:
+          name: lambda_package
+          path: telegram-bot/lambda_package.zip
+          if-no-files-found: error
+
+  deploy_telegram:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: ${{ github.ref == 'refs/heads/main' }}
+
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+
+    environment:
+      name: telegram-bot
+      url: https://t.me/fend_calc_bot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda_package
+          path: telegram-bot/
+
+      - name: Get AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.ROLE_TO_ASSUME_ARN }}
+          role-duration-seconds: 900
+          mask-aws-account-id: true
+
+      - name: Deploy Telegram Bot
+        run: |
           TELEGRAM_BOT_API_TOKEN=${{ secrets.TELEGRAM_BOT_API_TOKEN }} \
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             ./telegram-bot/deploy.sh
 
-  deploy:
+  deploy_website:
     runs-on: ubuntu-latest
     needs: [build]
     if: ${{ github.ref == 'refs/heads/main' }}
