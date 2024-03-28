@@ -1,5 +1,21 @@
 ## Changelog
 
+### v1.4.6 (2024-03-28)
+
+* Add function `mean` (or `average`) to compute the mean value of probability
+    distributions (by [haykam821](https://github.com/haykam821)). For example:
+
+    ```
+    > mean(d6)
+    7
+    > average(1d20 + 5)
+    15.5
+    ```
+* Add units `nibble` (4 bits) and `U` (rack units, equal to `1.75 inches`)
+* Serialised variables are now compatible between 32-bit and 64-bit platforms
+* Fix bug where calculating very large roman numerals could crash
+    the application
+
 ### v1.4.5 (2024-03-13)
 
 * Add support for converting numbers to roman numerals (e.g.
