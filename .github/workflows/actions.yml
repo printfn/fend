@@ -16,15 +16,15 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-14, windows-latest]
         include:
           - platform: ubuntu-latest
             artifact-path: target/release/fend
             artifact-platform-name: linux-x64
             env-command: ">> $GITHUB_ENV"
-          - platform: macos-latest
+          - platform: macos-14
             artifact-path: target/release/fend
-            artifact-platform-name: macos-x64
+            artifact-platform-name: macos-aarch64
             env-command: ">> $GITHUB_ENV"
           - platform: windows-latest
             artifact-path: target/release/fend.exe
@@ -145,18 +145,18 @@ jobs:
           path: ${{ matrix.artifact-path }}
           if-no-files-found: error
 
-      - name: Build (Apple Silicon)
-        if: ${{ matrix.platform == 'macos-latest' }}
+      - name: Build (macOS x86_64)
+        if: ${{ matrix.platform == 'macos-14' }}
         run: |
-          rustup target add aarch64-apple-darwin
-          cargo build --release --package fend --target aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
+          cargo build --release --package fend --target x86_64-apple-darwin
 
-      - name: Upload artifacts (Apple Silicon)
+      - name: Upload artifacts (macOS x86_64)
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.platform == 'macos-latest' }}
+        if: ${{ matrix.platform == 'macos-14' }}
         with:
-          name: fend-${{ env.FEND_VERSION }}-macos-aarch64
-          path: target/aarch64-apple-darwin/release/fend
+          name: fend-${{ env.FEND_VERSION }}-macos-x64
+          path: target/x86_64-apple-darwin/release/fend
           if-no-files-found: error
 
       - name: Build (linux-armv7-gnueabihf)
