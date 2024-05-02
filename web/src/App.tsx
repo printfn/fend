@@ -1,20 +1,5 @@
-import {
-	evaluateFendWithTimeout,
-	evaluateFendWithVariablesJson,
-	default as initWasm,
-	initialiseWithHandlers,
-} from 'fend-wasm';
-import {
-	type FormEvent,
-	type KeyboardEvent,
-	type ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { getExchangeRates } from './lib/exchange-rates';
+import { type FormEvent, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { fend } from './lib/wasm';
 
 const examples = `
 > 5'10" to cm
@@ -46,36 +31,22 @@ const exampleContent = (
 	</p>
 );
 
-async function load() {
-	try {
-		await initWasm();
-		initialiseWithHandlers(await getExchangeRates());
-
-		const result = evaluateFendWithTimeout('1 + 2', 500);
-		if (result !== '3') {
-			alert('Failed to initialise WebAssembly');
-			return;
-		}
-	} catch (e) {
-		console.error(e);
-		alert('Failed to initialise WebAssembly');
-		return;
-	}
-}
-await load();
-
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [currentInput, setCurrentInput] = useState('');
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
 	const [history, setHistory] = useState<string[]>([]);
 	const [variables, setVariables] = useState('');
 	const [navigation, setNavigation] = useState(0);
-	const hint = useMemo<string>(() => {
-		const result = JSON.parse(evaluateFendWithVariablesJson(currentInput, 100, variables));
-		if (!result.ok) {
-			return '';
-		}
-		return result.result;
+	const [hint, setHint] = useState('');
+	useEffect(() => {
+		(async () => {
+			const result = await fend(currentInput, 100, variables);
+			if (!result.ok) {
+				setHint('');
+			} else {
+				setHint(result.result);
+			}
+		})();
 	}, [currentInput, variables]);
 	const inputText = useRef<HTMLTextAreaElement>(null);
 	const inputHint = useRef<HTMLParagraphElement>(null);
@@ -93,37 +64,39 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	}, []);
 	const evaluate = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
-			// allow multiple lines to be entered if shift, ctrl
-			// or meta is held, otherwise evaluate the expression
-			if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey)) {
-				return;
-			}
-			event.preventDefault();
-			if (currentInput.trim() === 'clear') {
+			(async () => {
+				// allow multiple lines to be entered if shift, ctrl
+				// or meta is held, otherwise evaluate the expression
+				if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey)) {
+					return;
+				}
+				event.preventDefault();
+				if (currentInput.trim() === 'clear') {
+					setCurrentInput('');
+					setOutput(null);
+					return;
+				}
+				const request = <p>{`> ${currentInput}`}</p>;
+				if (currentInput.trim().length > 0) {
+					setHistory(h => [...h, currentInput]);
+				}
+				setNavigation(0);
+				const fendResult = await fend(currentInput, 500, variables);
 				setCurrentInput('');
-				setOutput(null);
-				return;
-			}
-			const request = <p>{`> ${currentInput}`}</p>;
-			if (currentInput.trim().length > 0) {
-				setHistory(h => [...h, currentInput]);
-			}
-			setNavigation(0);
-			const fendResult = JSON.parse(evaluateFendWithVariablesJson(currentInput, 500, variables));
-			setCurrentInput('');
-			console.log(fendResult);
-			const result = <p>{fendResult.ok ? fendResult.result : fendResult.message}</p>;
-			if (fendResult.ok && fendResult.variables.length > 0) {
-				setVariables(fendResult.variables);
-			}
-			setOutput(o => (
-				<>
-					{o}
-					{request}
-					{result}
-				</>
-			));
-			inputHint.current?.scrollIntoView();
+				console.log(fendResult);
+				const result = <p>{fendResult.ok ? fendResult.result : fendResult.message}</p>;
+				if (fendResult.ok && fendResult.variables.length > 0) {
+					setVariables(fendResult.variables);
+				}
+				setOutput(o => (
+					<>
+						{o}
+						{request}
+						{result}
+					</>
+				));
+				inputHint.current?.scrollIntoView();
+			})();
 		},
 		[currentInput, variables],
 	);
@@ -147,11 +120,6 @@ export default function App({ widget = false }: { widget?: boolean }) {
 		},
 		[currentInput, navigation, history],
 	);
-	useEffect(() => {
-		(async () => {
-			await load();
-		})();
-	}, []);
 	useEffect(() => {
 		document.addEventListener('click', focus);
 		return () => {
