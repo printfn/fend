@@ -7,21 +7,22 @@
 		"dev": "vite",
 		"build": "tsc || true && vite build",
 		"preview": "vite preview",
-		"format": "prettier --write .",
-		"check": "prettier --check ."
+		"format": "biome check --apply .",
+		"check": "biome check ."
 	},
 	"dependencies": {
-		"fend-wasm": "file:../wasm/pkg-fend-web"
+		"fend-wasm": "file:../wasm/pkg-fend-web",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^1.7.2",
 		"@types/node": "^20.12.8",
+		"@types/react": "^18.3.1",
+		"@types/react-dom": "^18.3.0",
+		"@vitejs/plugin-react-swc": "^3.6.0",
 		"prettier": "^3.2.5",
 		"typescript": "^5.4.5",
-		"vite": "^5.2.10"
-	},
-	"prettier": {
-		"useTabs": true,
-		"singleQuote": true,
-		"arrowParens": "avoid"
+		"vite": "^5.2.11"
 	}
 }

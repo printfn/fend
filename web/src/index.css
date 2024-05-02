@@ -84,10 +84,6 @@ main > * {
 	overflow: hidden;
 	resize: none;
 }
-#input #text:after {
-	content: attr(data-replicated-value) ' ';
-	visibility: hidden;
-}
 #input #text textarea,
 #input #text:after {
 	grid-area: 1 / 1 / 2 / 2;

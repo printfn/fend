@@ -1,43 +1,16 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fend - an arbitrary-precision unit-aware calculator</title>
-<link rel="icon" href="/fend-icon-128.png">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fend - an arbitrary-precision unit-aware calculator</title>
+    <link rel="icon" href="/fend-icon-128.png">
 </head>
+
 <body>
-<main>
-	<h1 id="about">
-		<a rel="noreferrer noopener" target="_blank" href="https://printfn.github.io/fend/documentation/">fend</a> is an arbitrary-precision unit-aware calculator.
-	</h1>
-	<div id="input">
-		<div id="text">
-			<textarea autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" id="input-text" rows="1" autofocus></textarea>
-		</div>
-		<p id="input-hint"></p>
-	</div>
-	<div id="output">
-		<p id="examples">&#10;<b>examples:</b>
-> 5'10" to cm
-177.8 cm
-
-> cos (pi/4) + i * (sin (pi/4))
-approx. 0.7071067811 + 0.7071067811i
-
-> 0b1001 + 3
-0b1100
-
-> 0xffff to decimal
-65535
-
-> 100 °C to °F
-212 °F
-
-> 1 lightyear to parsecs
-approx. 0.3066013937 parsecs&#10;&#10;<b>give it a go:</b>&#10;</p>
-	</div>
-</main>
-<script type="module" src="/src/widget.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>
