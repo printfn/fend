@@ -2,24 +2,22 @@
 	"name": "fend-web",
 	"private": true,
 	"version": "0.0.0",
-	"description": "",
-	"main": "widget.js",
+	"type": "module",
 	"scripts": {
+		"dev": "vite",
+		"build": "tsc || true && vite build",
+		"preview": "vite preview",
 		"format": "prettier --write .",
 		"check": "prettier --check ."
 	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/printfn/fend.git"
+	"dependencies": {
+		"fend-wasm": "file:../wasm/pkg-fend-web"
 	},
-	"author": "printfn",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/printfn/fend/issues"
-	},
-	"homepage": "https://github.com/printfn/fend#readme",
 	"devDependencies": {
-		"prettier": "^3.2.5"
+		"@types/node": "^20.12.8",
+		"prettier": "^3.2.5",
+		"typescript": "^5.4.5",
+		"vite": "^5.2.10"
 	},
 	"prettier": {
 		"useTabs": true,

@@ -1,9 +1,10 @@
-const {
-	initialise,
+import './widget.css';
+import {
+	default as initWasm,
 	initialiseWithHandlers,
 	evaluateFendWithTimeout,
 	evaluateFendWithVariablesJson,
-} = wasm_bindgen;
+} from 'fend-wasm?init';
 
 const EVALUATE_KEY = 13;
 const NAVIGATE_UP_KEY = 38;
@@ -197,7 +198,7 @@ async function getExchangeRates() {
 
 async function load() {
 	try {
-		await wasm_bindgen('./pkg/fend_wasm_bg.wasm');
+		await initWasm();
 		initialiseWithHandlers(await getExchangeRates());
 
 		const result = evaluateFendWithTimeout('1 + 2', 500);
@@ -206,6 +207,7 @@ async function load() {
 			return;
 		}
 	} catch (e) {
+		console.error(e);
 		alert('Failed to initialise WebAssembly');
 		return;
 	}

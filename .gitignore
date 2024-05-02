@@ -10,9 +10,9 @@
 /telegram-bot/package-lock.json
 
 /web/node_modules/
-/web/documentation/
-/web/fend-icon-128.png
-/web/pkg/
+/web/public/documentation/
+/web/public/fend-icon-128.png
+/web/dist/
 
 /windows-msix/build/
 /windows-msix/fend-windows-x64.msix

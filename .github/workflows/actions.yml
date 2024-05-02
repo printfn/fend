@@ -221,7 +221,7 @@ jobs:
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: web/dist
 
       - name: Build man page
         if: ${{ matrix.platform == 'ubuntu-latest' }}
