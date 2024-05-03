@@ -1,5 +1,6 @@
 import { type FormEvent, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { fend } from './lib/wasm';
+import { ThreeDotsScale } from 'react-svg-spinners';
+import { fend } from './lib/fend';
 
 const examples = `
 > 5'10" to cm
@@ -38,6 +39,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	const [variables, setVariables] = useState('');
 	const [navigation, setNavigation] = useState(0);
 	const [hint, setHint] = useState('');
+	const [pending, setPending] = useState(0);
 	useEffect(() => {
 		(async () => {
 			const result = await fend(currentInput, 100, variables);
@@ -81,7 +83,12 @@ export default function App({ widget = false }: { widget?: boolean }) {
 					setHistory(h => [...h, currentInput]);
 				}
 				setNavigation(0);
-				const fendResult = await fend(currentInput, 500, variables);
+				setPending(p => p + 1);
+				const fendResult = await fend(currentInput, 1000000000, variables);
+				setPending(p => p - 1);
+				if (fendResult.ok === false && fendResult.message === 'cancelled') {
+					return;
+				}
 				setCurrentInput('');
 				console.log(fendResult);
 				const result = <p>{fendResult.ok ? fendResult.result : fendResult.message}</p>;
@@ -161,7 +168,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 					/>
 				</div>
 				<p id="input-hint" ref={inputHint}>
-					{hint}
+					{hint || (pending > 0 ? <ThreeDotsScale /> : null)}
 				</p>
 			</div>
 		</main>

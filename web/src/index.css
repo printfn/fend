@@ -43,7 +43,7 @@ main {
 	display: grid;
 	grid-template-columns: auto auto;
 	grid-template-rows: auto auto auto;
-	max-width: 60ch;
+	max-width: 80ch;
 	padding: 3ch;
 	margin: auto;
 }
@@ -55,8 +55,9 @@ main > * {
 #output {
 	grid-row: 2;
 }
-#output p {
+#output p, #input-hint {
 	white-space: pre-wrap;
+	word-break: break-all;
 }
 
 #input {
