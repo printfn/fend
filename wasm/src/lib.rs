@@ -30,7 +30,22 @@ impl fend_core::Interrupt for TimeoutInterrupt {
 #[wasm_bindgen]
 pub fn initialise() {}
 
-#[wasm_bindgen(js_name = initialiseWithHandlers)]
+#[wasm_bindgen(typescript_custom_section)]
+const _: &'static str = r#"
+/** Initialise currency data. The provided `currencyData` map should contain
+  * currency names mapped to their relative values.
+  *
+  * For example:
+  * ```typescript
+  * const currencyData = new Map();
+  * currencyData.set('USD', 1);
+  * currencyData.set('EUR', 0.9);
+  * initialiseWithHandlers(currencyData);
+  * ``` */
+export function initialiseWithHandlers(currencyData: Map<string, number>): void;
+"#;
+
+#[wasm_bindgen(js_name = initialiseWithHandlers, skip_typescript)]
 pub fn initialise_with_handlers(currency_data: js_sys::Map) {
 	initialise();
 	CURRENCY_DATA.get_or_init(|| {
@@ -40,14 +55,6 @@ pub fn initialise_with_handlers(currency_data: js_sys::Map) {
 		});
 		rust_data
 	});
-}
-
-// These two functions should be merged at some point, but that would be a breaking
-// API change.
-
-#[wasm_bindgen(js_name = evaluateFendWithTimeout)]
-pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
-	evaluate_fend_with_timeout(input, timeout)
 }
 
 fn random_u32() -> u32 {
@@ -94,7 +101,13 @@ fn create_context() -> fend_core::Context {
 	ctx
 }
 
-#[wasm_bindgen]
+// this function is deprecated
+#[wasm_bindgen(js_name = evaluate_fend_with_timeout, skip_typescript)]
+pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
+	evaluate_fend_with_timeout(input, timeout)
+}
+
+#[wasm_bindgen(js_name = evaluateFendWithTimeout)]
 pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
 	let mut ctx = create_context();
 	let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
