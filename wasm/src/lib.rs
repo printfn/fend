@@ -1,11 +1,11 @@
 use instant::Instant;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::sync::OnceLock;
 use std::{error, fmt};
 use wasm_bindgen::prelude::*;
 
-thread_local!(static CURRENCY_DATA: RefCell<HashMap<String, f64>> = RefCell::new(HashMap::new()));
+static CURRENCY_DATA: OnceLock<HashMap<String, f64>> = OnceLock::new();
 
 struct TimeoutInterrupt {
 	start: Instant,
@@ -33,12 +33,12 @@ pub fn initialise() {}
 #[wasm_bindgen(js_name = initialiseWithHandlers)]
 pub fn initialise_with_handlers(currency_data: js_sys::Map) {
 	initialise();
-	CURRENCY_DATA.with(|cell| {
-		assert!(cell.borrow().is_empty());
-		let mut rust_data = cell.borrow_mut();
+	CURRENCY_DATA.get_or_init(|| {
+		let mut rust_data = HashMap::new();
 		currency_data.for_each(&mut |value, key| {
 			rust_data.insert(key.as_string().unwrap(), value.as_f64().unwrap());
 		});
+		rust_data
 	});
 }
 
@@ -73,11 +73,11 @@ impl From<UnknownExchangeRate> for JsValue {
 }
 
 fn currency_handler(currency: &str) -> Result<f64, Box<dyn error::Error + Send + Sync + 'static>> {
-	CURRENCY_DATA.with(|currency_data| match currency_data.borrow().get(currency) {
+	match CURRENCY_DATA.get().and_then(|x| x.get(currency)) {
 		None => Err(Box::new(UnknownExchangeRate(currency.to_string()))
 			as Box<dyn error::Error + Send + Sync>),
 		Some(rate) => Ok(*rate),
-	})
+	}
 }
 
 fn create_context() -> fend_core::Context {
@@ -88,11 +88,9 @@ fn create_context() -> fend_core::Context {
 		date.get_timezone_offset() as i64 * 60,
 	);
 	ctx.set_random_u32_fn(random_u32);
-	CURRENCY_DATA.with(|currency_data| {
-		if !currency_data.borrow().is_empty() {
-			ctx.set_exchange_rate_handler_v1(currency_handler);
-		}
-	});
+	if CURRENCY_DATA.get().is_some_and(|x| !x.is_empty()) {
+		ctx.set_exchange_rate_handler_v1(currency_handler);
+	}
 	ctx
 }
 
