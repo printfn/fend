@@ -32,6 +32,14 @@ const exampleContent = (
 	</p>
 );
 
+function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
+	return (
+		<a rel="noreferrer noopener" target="_blank" href={`https://${href}`}>
+			{children}
+		</a>
+	);
+}
+
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [currentInput, setCurrentInput] = useState('');
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
@@ -142,10 +150,8 @@ export default function App({ widget = false }: { widget?: boolean }) {
 		<main>
 			{!widget && (
 				<h1 id="about">
-					<a rel="noreferrer noopener" target="_blank" href="https://printfn.github.io/fend/documentation/">
-						fend
-					</a>{' '}
-					is an arbitrary-precision unit-aware calculator.
+					<NewTabLink href="printfn.github.io/fend/documentation/">fend</NewTabLink> is an arbitrary-precision
+					unit-aware calculator.
 				</h1>
 			)}
 			<div id="output">{output}</div>

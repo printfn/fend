@@ -97,7 +97,7 @@ oma install fend
 
 ### PKGX
 
-fend is available on [pkgx]([https://pkgx.sh](https://pkgx.dev/pkgs/printfn.github.io/fend/)):
+fend is available on [pkgx](https://pkgx.dev/pkgs/printfn.github.io/fend/):
 
 ```bash
 pkgx fend

@@ -10,7 +10,7 @@
 }
 
 body {
-	background: hsl(30, 15%, 90%);
+	background: hsl(30, 25%, 90%);
 	font: 16px/150% monospace;
 	color: hsl(30, 25%, 10%);
 	margin: 0;
@@ -21,7 +21,7 @@ a {
 }
 
 b {
-	color: hsl(30, 25%, 40%);
+	color: hsl(30, 85%, 40%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,11 +30,11 @@ b {
 	}
 
 	b {
-		color: hsl(30, 25%, 70%);
+		color: hsl(30, 85%, 70%);
 	}
 
 	body {
-		background: hsl(30, 25%, 10%);
+		background: hsl(30, 35%, 10%);
 		color: hsl(30, 15%, 90%);
 	}
 }
