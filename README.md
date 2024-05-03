@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend-core)](https://crates.io/crates/fend)
 
-<img alt="fend icon" src="https://raw.githubusercontent.com/printfn/fend/main/icon/icon.svg" width="100" />
+<a href="https://printfn.github.io/fend"><img alt="fend icon" src="https://raw.githubusercontent.com/printfn/fend/main/icon/icon.svg" width="100" /></a>
 
 [fend](https://printfn.github.io/fend) is an arbitrary-precision unit-aware calculator.
 
