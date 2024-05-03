@@ -6,7 +6,7 @@ import { defineConfig, searchForWorkspaceRoot } from 'vite';
 export default defineConfig({
 	base: '/fend/',
 	build: {
-		target: 'esnext',
+		minify: false,
 		rollupOptions: {
 			input: {
 				main: resolve(__dirname, 'index.html'),
@@ -14,6 +14,7 @@ export default defineConfig({
 			},
 		},
 		sourcemap: true,
+		target: 'esnext',
 	},
 	plugins: [react()],
 	server: {
