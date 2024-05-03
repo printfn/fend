@@ -17,11 +17,11 @@ body {
 }
 
 a {
-	color: hsl(90, 70%, 30%);
+	color: hsl(90, 100%, 23%);
 }
 
 b {
-	color: hsl(30, 85%, 40%);
+	color: hsl(30, 100%, 30%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -40,21 +40,11 @@ b {
 }
 
 main {
-	display: grid;
-	grid-template-columns: auto auto;
-	grid-template-rows: auto auto auto;
 	max-width: 80ch;
 	padding: 3ch;
 	margin: auto;
 }
 
-main > * {
-	grid-column: 1/3;
-}
-
-#output {
-	grid-row: 2;
-}
 #output p, #input-hint {
 	white-space: pre-wrap;
 	word-break: break-all;
@@ -64,7 +54,6 @@ main > * {
 	display: grid;
 	grid-template-columns: 2ch 1fr;
 	grid-template-rows: auto auto;
-	grid-row: 3;
 }
 #input p {
 	grid-column: 1/3;
