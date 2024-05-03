@@ -96,10 +96,12 @@ jobs:
             cargo test --workspace -- --quiet
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 18
+          LLVM_VERSION="$(rustc -vV | sed -n 's/LLVM version: //p' | grep -o '^[^.]\+')"
+          echo "rustc llvm version: $LLVM_VERSION"
+          sudo ./llvm.sh "$LLVM_VERSION"
           rm llvm.sh
-          llvm-profdata-18 merge -sparse */*.profraw -o fend.profdata
-          llvm-cov-18 report \
+          "llvm-profdata-$LLVM_VERSION" merge -sparse */*.profraw -o fend.profdata
+          "llvm-cov-$LLVM_VERSION" report \
             --use-color \
             --ignore-filename-regex='/.cargo/registry' \
             --ignore-filename-regex='/rustc' \
@@ -116,7 +118,7 @@ jobs:
                 printf "%s %s " -object $file; \
               done \
             )
-          llvm-cov-18 export \
+          "llvm-cov-$LLVM_VERSION" export \
             --ignore-filename-regex='/.cargo/registry' \
             --ignore-filename-regex='/rustc' \
             --format='lcov' \
