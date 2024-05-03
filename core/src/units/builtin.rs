@@ -700,6 +700,13 @@ const CURRENCIES: &[UnitTuple] = &[
 	("zl", "zl", "PLN", ""),
 ];
 
+const HISTORICAL_UNITS: &[UnitTuple] = &[
+	("shaku", "shaku", "0.303 m", ""),
+	("tsubo", "tsubo", "3.306 m^2", ""),
+	("tatami", "tatami", "tsubo / 2", ""),
+	("tatami_mat", "tatami_mats", "=tatami", ""),
+];
+
 // from https://en.wikipedia.org/wiki/ISO_4217
 const CURRENCY_IDENTIFIERS: &[&str] = &[
 	"AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT",
@@ -743,6 +750,7 @@ pub(crate) const ALL_UNIT_DEFS: &[&[UnitTuple]] = &[
 	NAUTICAL_UNITS,
 	CURRENCIES,
 	CGS_UNITS,
+	HISTORICAL_UNITS,
 ];
 
 const SHORT_PREFIXES: &[(&str, &str)] = &[
