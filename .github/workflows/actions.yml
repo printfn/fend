@@ -94,9 +94,12 @@ jobs:
         run: |
           RUSTFLAGS="-C instrument-coverage" \
             cargo test --workspace -- --quiet
-          sudo apt-get install -yq llvm
-          llvm-profdata merge -sparse */*.profraw -o fend.profdata
-          llvm-cov report \
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+          rm llvm.sh
+          llvm-profdata-18 merge -sparse */*.profraw -o fend.profdata
+          llvm-cov-18 report \
             --use-color \
             --ignore-filename-regex='/.cargo/registry' \
             --ignore-filename-regex='/rustc' \
@@ -113,7 +116,7 @@ jobs:
                 printf "%s %s " -object $file; \
               done \
             )
-          llvm-cov export \
+          llvm-cov-18 export \
             --ignore-filename-regex='/.cargo/registry' \
             --ignore-filename-regex='/rustc' \
             --format='lcov' \
