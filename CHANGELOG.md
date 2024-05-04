@@ -1,5 +1,13 @@
 ## Changelog
 
+### v1.4.8 (2024-05-04)
+
+* Add support for `%` for modulo as an alternative to `mod`. Since `%` is also
+    used for percentages, the way the operator is interpreted depends on
+    context: `5 % 2` or `(348*34)%(293-1)` is parsed as modulo, whereas `5%` or
+    `5% + 3` continues to be treated as a percentage.
+* Add constants `electron_mass`, `proton_mass` and `neutron_mass`
+
 ### v1.4.7 (2024-05-04)
 
 * Add Japanese units `shaku`, `tsubo` and `tatami`
@@ -11,7 +19,7 @@
 * Fix a bug where variable serialisation could cause numbers to be negated. This
     only affected fend-wasm and fend-web but could lead to incorrect results
     when using variables across multiple calculations.
-* Add some custom TypeScript definitions to fend-wasm.
+* Add some custom TypeScript definitions to fend-wasm
 
 ### v1.4.6 (2024-03-28)
 
