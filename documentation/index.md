@@ -150,13 +150,13 @@ $ fend
 >
 ```
 
-```{.include format=commonmark+attributes}
+```{.include format=commonmark+attributes+pipe_tables}
 chapters/expressions.md
 ```
 
 ## Configuration
 
-```{.include format=commonmark+attributes}
+```{.include format=commonmark+attributes+pipe_tables}
 chapters/configuration.md
 ```
 
@@ -165,10 +165,10 @@ chapters/configuration.md
 
 ## Scripting
 
-```{.include format=commonmark+attributes}
+```{.include format=commonmark+attributes+pipe_tables}
 chapters/scripting.md
 ```
 
-```{.include format=commonmark+attributes}
+```{.include format=commonmark+attributes+pipe_tables}
 ../CHANGELOG.md
 ```

@@ -11,6 +11,10 @@ header-includes: |
                 color: hsl(30, 25%, 70%);
             }
 
+            code span.fu {
+                color: #90acf2;
+            }
+
             html {
                 background: hsl(30, 25%, 10%);
                 color: hsl(30, 15%, 90%);

@@ -136,7 +136,7 @@ These are all the supported operators:
 | `<<`, `>>` | | left |
 | `&`, `and` | | left |
 | `xor` | | left |
-| `|`, `or` | | left |
+| `\|`, `or` | | left |
 | `choose`, `nCr` | | left |
 | `permute`, `nPr` | | left |
 | `\ .`, `:`, `=>` | | left |
