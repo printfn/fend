@@ -1996,6 +1996,11 @@ fn exponents_28() {
 }
 
 #[test]
+fn exponents_29() {
+	test_eval("e^2.72", "approx. 15.1803222449");
+}
+
+#[test]
 fn one_kg() {
 	test_eval("1kg", "1 kg");
 }
