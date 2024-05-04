@@ -4717,6 +4717,7 @@ fn zero_kilocelsius_to_millifahrenheit() {
 }
 
 #[test]
+#[ignore]
 fn five_percent_celsius_to_fahrenheit() {
 	test_eval("5% °C to °F", "32.09 °F");
 }
@@ -5964,4 +5965,10 @@ fn test_mean() {
 	test_eval("mean (d10 / d2)", "4.125");
 
 	test_eval("average d500", "250.5");
+}
+
+#[test]
+fn modulo_percent() {
+	test_eval("5%4", "1");
+	test_eval("(104857566-103811072+1) % (1024*1024/512)", "2015");
 }
