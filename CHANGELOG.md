@@ -1,5 +1,18 @@
 ## Changelog
 
+### v1.4.7 (2024-05-04)
+
+* Add Japanese units `shaku`, `tsubo` and `tatami`
+* Significantly improve performance when calculating powers with
+    decimal numbers, e.g. `e^27.2`
+* Revamp fend's web UI: it is now built with React and runs calculations
+    in a background thread. This fixes the timeout issues that used to affect
+    long-running calculations.
+* Fix a bug where variable serialisation could cause numbers to be negated. This
+    only affected fend-wasm and fend-web but could lead to incorrect results
+    when using variables across multiple calculations.
+* Add some custom TypeScript definitions to fend-wasm.
+
 ### v1.4.6 (2024-03-28)
 
 * Add function `mean` (or `average`) to compute the mean value of probability

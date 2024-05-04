@@ -2,6 +2,7 @@
 	"name": "fend-web",
 	"private": true,
 	"version": "0.0.0",
+	"description": "Arbitrary-precision unit-aware calculator",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
@@ -25,5 +26,15 @@
 		"prettier": "^3.2.5",
 		"typescript": "^5.4.5",
 		"vite": "^5.2.11"
-	}
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/printfn/fend.git"
+	},
+	"author": "printfn",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/printfn/fend/issues"
+	},
+	"homepage": "https://github.com/printfn/fend#readme"
 }
