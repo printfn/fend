@@ -19,7 +19,7 @@ default = []
 
 [dependencies]
 fend-core.workspace = true
-instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
+instant = { version = "0.1.13", features = [ "wasm-bindgen" ] }
 js-sys = "0.3.69"
 wasm-bindgen = "0.2.92"
 
