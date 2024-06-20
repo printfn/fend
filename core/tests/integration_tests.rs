@@ -5978,3 +5978,19 @@ fn modulo_unitless() {
 	test_eval("5 mod (4k)", "5");
 	test_eval("(4k)^2", "16000000");
 }
+
+#[test]
+fn fibonacci() {
+	test_eval("fib 0", "0");
+	test_eval("fib 1", "1");
+	test_eval("fib 2", "1");
+	test_eval("fib 3", "2");
+	test_eval("fib 4", "3");
+	test_eval("fib 5", "5");
+	test_eval("fib 6", "8");
+	test_eval("fib 7", "13");
+	test_eval("fib 8", "21");
+	test_eval("fib 9", "34");
+	test_eval("fib 10", "55");
+	test_eval("fib 11", "89");
+}

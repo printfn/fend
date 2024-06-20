@@ -26,6 +26,9 @@ use unit_exponent::UnitExponent;
 
 use self::named_unit::compare_hashmaps;
 
+use super::bigrat::BigRat;
+use super::biguint::BigUint;
+use super::real::Real;
 use super::Exact;
 
 #[derive(Clone)]
@@ -587,6 +590,21 @@ impl Value {
 			base: self.base,
 			format: self.format,
 			simplifiable: self.simplifiable,
+		})
+	}
+
+	pub(crate) fn fibonacci<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		Ok(Self {
+			unit: Unit::unitless(),
+			exact: self.exact,
+			base: self.base,
+			format: self.format,
+			simplifiable: self.simplifiable,
+			value: Complex::from(Real::from(BigRat::from(BigUint::fibonacci(
+				self.try_as_usize(int)?,
+				int,
+			)?)))
+			.into(),
 		})
 	}
 

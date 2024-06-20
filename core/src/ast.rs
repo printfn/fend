@@ -742,6 +742,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 		"log2" => Value::BuiltInFunction(BuiltInFunction::Log2),
 		"log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
 		"not" => Value::BuiltInFunction(BuiltInFunction::Not),
+		"fib" | "fibonacci" => Value::BuiltInFunction(BuiltInFunction::Fibonacci),
 		"exp" => evaluate_to_value("x: e^x", scope, attrs, context, int)?,
 		"approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
 		"auto" => Value::Format(FormattingStyle::Auto),
