@@ -1,5 +1,12 @@
 ## Changelog
 
+### v1.4.9 (2024-06-20)
+
+* Fix modulo and some other binary operators (including bitwise operators)
+    returning incorrect results in calculations with certain scaled units,
+    e.g. `4 mod (1k)` or `4k xor 5`
+* Add unit `sol` (Martian day)
+
 ### v1.4.8 (2024-05-04)
 
 * Add support for `%` for modulo as an alternative to `mod`. Since `%` is also
