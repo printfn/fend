@@ -137,7 +137,7 @@ jobs:
             ) >coverage.txt
 
       - name: Upload to codecov.io
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
