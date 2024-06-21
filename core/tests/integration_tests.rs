@@ -2102,22 +2102,22 @@ fn three_meters_15_cm() {
 
 #[test]
 fn five_percent() {
-	test_eval("5%", "0.05");
+	test_eval("5%", "5%");
 }
 
 #[test]
 fn five_percent_to_percent() {
-	test_eval_simple("5% to %", "5%");
+	test_eval("5% to %", "5%");
 }
 
 #[test]
 fn five_percent_plus_point_one() {
-	test_eval("5% + 0.1", "0.15");
+	test_eval("5% + 0.1", "15%");
 }
 
 #[test]
 fn five_percent_plus_one() {
-	test_eval("5% + 1", "1.05");
+	test_eval("5% + 1", "105%");
 }
 
 #[test]
@@ -2132,7 +2132,7 @@ fn one_plus_five_percent() {
 
 #[test]
 fn five_percent_times_five_percent() {
-	test_eval("5% * 5%", "0.0025");
+	test_eval("5% * 5%", "0.25%");
 }
 
 #[test]
@@ -2142,7 +2142,7 @@ fn five_percent_times_kg() {
 
 #[test]
 fn five_percent_times_100() {
-	test_eval("5% * 100", "5");
+	test_eval("5% * 100", "500%");
 }
 
 #[test]
@@ -5221,7 +5221,7 @@ fn single_line_comment_and_linebreak_3() {
 
 #[test]
 fn percent_plus_per_mille() {
-	test_eval("4% + 3\u{2030}", "0.043");
+	test_eval("4% + 3\u{2030}", "4.3%");
 }
 
 #[test]
