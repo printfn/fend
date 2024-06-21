@@ -44,20 +44,14 @@ fn store_cached_data(source: config::ExchangeRateSource, xml: &str) -> Result<()
 	Ok(())
 }
 
-#[cfg(feature = "native-tls")]
-fn ureq_get(url: &str) -> Result<String, Error> {
-	let tls_connector = std::sync::Arc::new(native_tls::TlsConnector::new()?);
-	let agent = ureq::builder().tls_connector(tls_connector).build();
-	Ok(agent.get(url).call()?.into_string()?)
+#[cfg(any(feature = "native-tls", feature = "rustls"))]
+fn http_get(url: &str) -> Result<String, Error> {
+	let response = minreq::get(url).send()?;
+	Ok(response.as_str()?.to_string())
 }
 
-#[cfg(all(feature = "rustls", not(feature = "native-tls")))]
-fn ureq_get(url: &str) -> Result<String, Error> {
-	Ok(ureq::get(url).call()?.into_string()?)
-}
-
-#[cfg(all(not(feature = "rustls"), not(feature = "native-tls")))]
-fn ureq_get(_url: &str) -> Result<String, Error> {
+#[cfg(not(any(feature = "native-tls", feature = "rustls")))]
+fn http_get(_url: &str) -> Result<String, Error> {
 	Err("internet access has been disabled in this build of fend".into())
 }
 
@@ -77,7 +71,7 @@ fn load_exchange_rate_xml(source: config::ExchangeRateSource) -> Result<(String,
 			"https://treasury.un.org/operationalrates/xsql2XML.php"
 		}
 	};
-	let xml = ureq_get(url)?;
+	let xml = http_get(url)?;
 	Ok((xml, false))
 }
 
