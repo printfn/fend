@@ -5994,3 +5994,14 @@ fn fibonacci() {
 	test_eval("fib 10", "55");
 	test_eval("fib 11", "89");
 }
+
+#[test]
+fn uppercase_identifiers() {
+	test_eval("SIN PI", "0");
+	test_eval("COS TAU", "1");
+	test_eval("LOG 1", "approx. 0");
+	test_eval("LOG10 1", "approx. 0");
+	test_eval("EXP 0", "approx. 1");
+
+	expect_error("foo = 1; FOO", Some("unknown identifier 'FOO'"));
+}
