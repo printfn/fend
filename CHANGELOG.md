@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.5.0 (2024-07-10)
+
+* Add fibonacci function (e.g. `fib 6` is 8, `fib 7` is 13)
+* Keep percentage unit during automatic unit simplification
+* Support uppercase identifiers for built-in functions, e.g. `SQRT` or `EXP`
+
 ### v1.4.9 (2024-06-20)
 
 * Fix modulo and some other binary operators (including bitwise operators)
