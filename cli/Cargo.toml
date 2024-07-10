@@ -16,7 +16,7 @@ fend-core.workspace = true
 home = "0.5.9"
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 rustyline = { version =  "14.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
-serde = { version = "1.0.203", default-features = false }
+serde = { version = "1.0.204", default-features = false }
 toml = { version = "0.8.14", default-features = false, features = ["parse"] }
 minreq = { version = "2.11.2", default-features = false, optional = true }
 
