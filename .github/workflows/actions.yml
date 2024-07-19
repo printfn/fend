@@ -100,6 +100,7 @@ jobs:
           echo "rustc llvm version: $LLVM_VERSION"
           sudo ./llvm.sh "$LLVM_VERSION"
           rm llvm.sh
+          sudo apt-get install llvm-$LLVM_VERSION-tools
           "llvm-profdata-$LLVM_VERSION" merge -sparse */*.profraw -o fend.profdata
           "llvm-cov-$LLVM_VERSION" report \
             --use-color \
