@@ -510,7 +510,12 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 	("sqm", "", "=m^2", ""),
 	("sqmm", "", "=mm^2", ""),
 	("gongjin", "", "l@1 kilogram", ""),
-	("toe", "toe", "s@41.868 gigajoules", "tonne of oil equivalent"),
+	(
+		"toe",
+		"toe",
+		"s@41.868 gigajoules",
+		"tonne of oil equivalent",
+	),
 	("kgoe", "kgoe", "1/1000 toe", "kilogram of oil equivalent"),
 	// TODO remove these compatibility units
 	("lightyear", "lightyears", "light_year", ""),
