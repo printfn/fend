@@ -17,11 +17,11 @@ home = "0.5.9"
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 rustyline = { version =  "14.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
 serde = { version = "1.0.204", default-features = false }
-toml = { version = "0.8.15", default-features = false, features = ["parse"] }
+toml = { version = "0.8.19", default-features = false, features = ["parse"] }
 minreq = { version = "2.12.0", default-features = false, optional = true }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.52.0", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+windows-sys = { version = "0.59.0", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
 
 [features]
 native-tls = [ "dep:minreq", "minreq/https-native" ]
