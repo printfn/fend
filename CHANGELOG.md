@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.5.1 (2024-08-10)
+
+* Add units `kgoe` and `toe` (kilogram/tonne of oil equivalent)
+
 ### v1.5.0 (2024-07-10)
 
 * Add fibonacci function (e.g. `fib 6` is 8, `fib 7` is 13)
