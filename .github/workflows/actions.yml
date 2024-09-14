@@ -151,20 +151,6 @@ jobs:
           path: ${{ matrix.artifact-path }}
           if-no-files-found: error
 
-      - name: Build (macOS x86_64)
-        if: ${{ matrix.platform == 'macos-14' }}
-        run: |
-          rustup target add x86_64-apple-darwin
-          cargo build --release --package fend --target x86_64-apple-darwin
-
-      - name: Upload artifacts (macOS x86_64)
-        uses: actions/upload-artifact@v4
-        if: ${{ matrix.platform == 'macos-14' }}
-        with:
-          name: fend-${{ env.FEND_VERSION }}-macos-x64
-          path: target/x86_64-apple-darwin/release/fend
-          if-no-files-found: error
-
       - name: Build (linux-armv7-gnueabihf)
         if: ${{ matrix.platform == 'ubuntu-24.04' }}
         run: |

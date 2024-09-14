@@ -222,8 +222,6 @@ zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-musl.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-musl/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64/fend"
-zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
-	"$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-exe.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-exe/fend.exe"
 cp "$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-msi/fend-windows-x64.msi" \
@@ -242,7 +240,6 @@ gh release --repo printfn/fend \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-musl.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-macos-aarch64.zip" \
-	"$TMPDIR/artifacts/fend-$NEW_VERSION-macos-x64.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64-exe.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-windows-x64.msi" \
 	"$TMPDIR/artifacts/fend.1"
