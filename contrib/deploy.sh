@@ -212,8 +212,8 @@ gh run download "$GH_RUN_ID" --dir "$TMPDIR/artifacts"
 echo "Zipping artifacts..."
 # --junk-paths prevents directory names from being stored in the zip file,
 # so the binary is stored at the top level
-zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
-	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64/fend"
+zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-gnu.zip" \
+	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-gnu/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64-gnu.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64-gnu/fend"
 zip --junk-paths "$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
@@ -235,7 +235,7 @@ gh release --repo printfn/fend \
 	create "v$NEW_VERSION" --title "Version $NEW_VERSION" \
 	--notes "$CHANGELOG2" \
 	--draft \
-	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x64.zip" \
+	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-gnu.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-aarch64-gnu.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-armv7-gnueabihf.zip" \
 	"$TMPDIR/artifacts/fend-$NEW_VERSION-linux-x86_64-musl.zip" \

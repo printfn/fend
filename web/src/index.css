@@ -11,7 +11,7 @@
 
 body {
 	background: hsl(30, 25%, 90%);
-	font: 16px/150% monospace;
+	font: 16px / 150% monospace;
 	color: hsl(30, 25%, 10%);
 	margin: 0;
 }
@@ -45,7 +45,8 @@ main {
 	margin: auto;
 }
 
-#output p, #input-hint {
+#output p,
+#input-hint {
 	white-space: pre-wrap;
 	word-break: break-all;
 }
@@ -56,11 +57,11 @@ main {
 	grid-template-rows: auto auto;
 }
 #input p {
-	grid-column: 1/3;
+	grid-column: 1 / 3;
 	grid-row: 2;
 }
 #input:before {
-	content: '>';
+	content: ">";
 }
 #input #text {
 	display: grid;

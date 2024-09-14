@@ -20,7 +20,7 @@ jobs:
         include:
           - platform: ubuntu-24.04
             artifact-path: target/release/fend
-            artifact-platform-name: linux-x64
+            artifact-platform-name: linux-x86_64-gnu
             env-command: ">> $GITHUB_ENV"
           - platform: macos-14
             artifact-path: target/release/fend
