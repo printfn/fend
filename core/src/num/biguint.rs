@@ -613,6 +613,7 @@ impl BigUint {
 	}
 
 	pub(crate) fn to_words<I: Interrupt>(&self, int: &I) -> FResult<String> {
+		// it would be nice to implement https://www.mrob.com/pub/math/largenum.html at some point
 		let num = self
 			.format(
 				&FormatOptions {
