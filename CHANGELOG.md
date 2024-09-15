@@ -1,5 +1,14 @@
 ## Changelog
 
+### v1.5.2 (2024-09-15)
+
+* You can now convert numbers to words. For example, `123 to words` returns
+    `one hundred and twenty-three`. This supports numbers up to `10^66 - 1`
+    (vigintillions).
+* Add `ton_of_tnt` unit (approx. 4 gigajoules)
+* The `linux-x64` binary has been renamed to `linux-x86_64-gnu` for
+    consistency/clarity
+
 ### v1.5.1 (2024-08-10)
 
 * Add units `kgoe` and `toe` (kilogram/tonne of oil equivalent)
