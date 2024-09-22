@@ -184,6 +184,9 @@ impl Value {
 	}
 
 	pub(crate) fn add<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
+		if rhs.is_zero(int)? {
+			return Ok(self);
+		}
 		let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
 		let scaled = Exact::new(rhs.value, rhs.exact)
 			.mul(&scale_factor.scale_1.apply(Dist::from), int)?
@@ -241,19 +244,7 @@ impl Value {
 	}
 
 	pub(crate) fn sub<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
-		let scale_factor = Unit::compute_scale_factor(&rhs.unit, &self.unit, int)?;
-		let scaled = Exact::new(rhs.value, rhs.exact)
-			.mul(&scale_factor.scale_1.apply(Dist::from), int)?
-			.div(&scale_factor.scale_2.apply(Dist::from), int)?;
-		let value = Exact::new(self.value, self.exact).add(&-scaled, int)?;
-		Ok(Self {
-			value: value.value,
-			unit: self.unit,
-			exact: self.exact && rhs.exact && value.exact,
-			base: self.base,
-			format: self.format,
-			simplifiable: self.simplifiable,
-		})
+		self.add(-rhs, int)
 	}
 
 	pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {

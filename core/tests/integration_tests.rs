@@ -6033,3 +6033,14 @@ fn test_words() {
 	test_eval_simple("1000000000000000000000 to words", "one sextillion");
 	test_eval_simple("1000000000000000000000000 to words", "one septillion");
 }
+
+#[test]
+fn test_plus_zero_ignore_units() {
+	test_eval("4m + 0", "4 m");
+	test_eval("4m + 0kg", "4 m");
+	test_eval("4m + (sin pi) kg", "4 m");
+	expect_error(
+		"4m + (sin (pi/2)) kg",
+		Some("cannot convert from kg to m: units 'kilogram' and 'meter' are incompatible"),
+	);
+}
