@@ -16,13 +16,13 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-24.04, macos-14, windows-latest]
+        platform: [ubuntu-24.04, macos-15, windows-latest]
         include:
           - platform: ubuntu-24.04
             artifact-path: target/release/fend
             artifact-platform-name: linux-x86_64-gnu
             env-command: ">> $GITHUB_ENV"
-          - platform: macos-14
+          - platform: macos-15
             artifact-path: target/release/fend
             artifact-platform-name: macos-aarch64
             env-command: ">> $GITHUB_ENV"
