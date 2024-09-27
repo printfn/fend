@@ -5940,10 +5940,10 @@ fn test_roman() {
 	test_eval_simple("2020 to roman", "MMXX");
 	test_eval_simple("3456 to roman", "MMMCDLVI");
 	test_eval_simple("1452 to roman", "MCDLII");
-	test_eval_simple("20002 to roman", "MMMMMMMMMMMMMMMMMMMMII");
+	test_eval_simple("20002 to roman", "X\u{305}X\u{305}II");
 	expect_error(
-		"100001 to roman",
-		Some("100001 must lie in the interval [1, 100000]"),
+		"1000000001 to roman",
+		Some("1000000001 must lie in the interval [1, 1000000000]"),
 	);
 }
 

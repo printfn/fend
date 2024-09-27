@@ -630,7 +630,7 @@ fn evaluate_as<I: Interrupt>(
 				if a == 0 {
 					return Err(FendError::RomanNumeralZero);
 				}
-				let upper_limit = 100_000;
+				let upper_limit = 1_000_000_000;
 				if a > upper_limit {
 					return Err(FendError::OutOfRange {
 						value: Box::new(a),
@@ -640,7 +640,7 @@ fn evaluate_as<I: Interrupt>(
 						},
 					});
 				}
-				return Ok(Value::String(borrow::Cow::Owned(to_roman(a))));
+				return Ok(Value::String(borrow::Cow::Owned(to_roman(a, true))));
 			}
 			"words" => {
 				let uint = evaluate(a, scope, attrs, context, int)?
@@ -823,10 +823,10 @@ fn resolve_builtin_identifier<I: Interrupt>(
 	})
 }
 
-fn to_roman(mut num: usize) -> String {
+fn to_roman(mut num: usize, large: bool) -> String {
 	// based on https://stackoverflow.com/a/41358305
 	let mut result = String::new();
-	for (r, n) in [
+	let values = [
 		("M", 1000),
 		("CM", 900),
 		("D", 500),
@@ -840,7 +840,21 @@ fn to_roman(mut num: usize) -> String {
 		("V", 5),
 		("IV", 4),
 		("I", 1),
-	] {
+	];
+	if large {
+		for (r, mut n) in &values[0..values.len() - 1] {
+			n *= 1000;
+			let q = num / n;
+			num -= q * n;
+			for _ in 0..q {
+				for ch in r.chars() {
+					result.push(ch);
+					result.push('\u{305}'); // combining overline
+				}
+			}
+		}
+	}
+	for (r, n) in values {
 		let q = num / n;
 		num -= q * n;
 		for _ in 0..q {
