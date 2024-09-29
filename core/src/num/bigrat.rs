@@ -724,11 +724,17 @@ impl BigRat {
 		let next_digit =
 			|i: usize, num: BigUint, base: &BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
 				test_int(int)?;
-				if num == 0.into()
-					|| max_digits == MaxDigitsToPrint::DecimalPlaces(i)
+				if num == 0.into() {
+					// reached the end of the number
+					return Err(NextDigitErr::Terminated { round_up: false });
+				}
+				if max_digits == MaxDigitsToPrint::DecimalPlaces(i)
 					|| max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
 				{
-					return Err(NextDigitErr::Terminated);
+					// round up if remaining fraction is >1/2
+					return Err(NextDigitErr::Terminated {
+						round_up: num.mul(&2.into(), int)? >= *denominator,
+					});
 				}
 				// digit = base * numerator / denominator
 				// next_numerator = base * numerator - digit * denominator
@@ -785,7 +791,7 @@ impl BigRat {
 				trailing_digits.push(')');
 				Ok((sign, Exact::new(trailing_digits, true))) // the recurring decimal is exact
 			}
-			Err(NextDigitErr::Terminated) => {
+			Err(NextDigitErr::Terminated { round_up: _ }) => {
 				panic!("decimal number terminated unexpectedly");
 			}
 			Err(NextDigitErr::Error(e)) => Err(e),
@@ -844,7 +850,7 @@ impl BigRat {
 						i += 1;
 					}
 				}
-				Err(NextDigitErr::Terminated) => {
+				Err(NextDigitErr::Terminated { round_up }) => {
 					let sign = if let Some(actual_sign) = actual_sign {
 						actual_sign
 					} else {
@@ -854,6 +860,9 @@ impl BigRat {
 						trailing_digits.push_str(&formatted_int);
 						sign
 					};
+					if round_up {
+						// todo
+					}
 					// is the number exact, or did we need to truncate?
 					let exact = current_numerator == 0.into();
 					return Ok((sign, Exact::new(trailing_digits, exact)));
@@ -1079,7 +1088,11 @@ impl BigRat {
 }
 enum NextDigitErr {
 	Error(FendError),
-	Terminated,
+	/// Stop printing digits because we've reached the end of the number or the
+	/// limit of how much we want to print
+	Terminated {
+		round_up: bool,
+	},
 }
 
 impl From<FendError> for NextDigitErr {
