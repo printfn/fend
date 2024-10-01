@@ -5,6 +5,7 @@
 
 /target/
 
+/telegram-bot/dist/
 /telegram-bot/lambda_package.zip
 /telegram-bot/node_modules/
 /telegram-bot/package-lock.json

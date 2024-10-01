@@ -8,7 +8,8 @@ jq "setpath([\"name\"]; \"fend-wasm-nodejs\")" ../wasm/pkg-nodejs/package.json >
 mv temp ../wasm/pkg-nodejs/package.json
 
 npm install
-npm exec -- esbuild --bundle index.js --outdir=dist --platform=node
+npm exec tsc
+npm exec -- esbuild --bundle index.ts --outdir=dist --platform=node
 
 rm -f lambda_package.zip
 zip -j lambda_package.zip dist/index.js package.json package-lock.json
