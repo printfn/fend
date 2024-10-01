@@ -24,5 +24,8 @@
 	"homepage": "https://github.com/printfn/fend#readme",
 	"dependencies": {
 		"fend-wasm-nodejs": "file:../wasm/pkg-nodejs"
+	},
+	"devDependencies": {
+		"esbuild": "^0.24.0"
 	}
 }
