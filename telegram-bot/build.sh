@@ -12,4 +12,5 @@ npm exec tsc
 npm exec -- esbuild --bundle index.ts --outdir=dist --platform=node
 
 rm -f lambda_package.zip
-zip -j lambda_package.zip dist/index.js package.json package-lock.json
+# don't include package.json because esbuild makes a CJS bundle that won't work if node finds `"type": "module"`
+zip -j lambda_package.zip dist/index.js
