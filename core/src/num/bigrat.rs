@@ -4,6 +4,7 @@ use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
+use core::f64;
 use std::{cmp, fmt, hash, io, ops};
 
 pub(crate) mod sign {
@@ -289,26 +290,6 @@ impl BigRat {
 		Self::from_f64(f64::atanh(self.into_f64(int)?), int)
 	}
 
-	// For all logs: value must be greater than 0
-	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
-		if self <= 0.into() {
-			return Err(out_of_range(
-				self.fm(int)?,
-				Range {
-					start: RangeBound::Open(0),
-					end: RangeBound::None,
-				},
-			));
-		}
-		if self == 1.into() {
-			return Ok(Exact::new(0.into(), true));
-		}
-		Ok(Exact::new(
-			Self::from_f64(f64::ln(self.into_f64(int)?), int)?,
-			false,
-		))
-	}
-
 	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self <= 0.into() {
 			return Err(out_of_range(
@@ -319,20 +300,28 @@ impl BigRat {
 				},
 			));
 		}
-		Self::from_f64(f64::log2(self.into_f64(int)?), int)
+		let approx_f64 = self.clone().into_f64(int)?;
+		Ok(if approx_f64.is_infinite() {
+			(self.num.ilog2() - self.den.ilog2()).into()
+		} else {
+			Self::from_f64(f64::log2(approx_f64), int)?
+		})
+	}
+
+	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		if self == 1.into() {
+			return Ok(Exact::new(0.into(), true));
+		}
+		Ok(Exact::new(
+			self.log2(int)?
+				.div(&Self::from_f64(std::f64::consts::LOG2_E, int)?, int)?,
+			false,
+		))
 	}
 
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		if self <= 0.into() {
-			return Err(out_of_range(
-				self.fm(int)?,
-				Range {
-					start: RangeBound::Open(0),
-					end: RangeBound::None,
-				},
-			));
-		}
-		Self::from_f64(f64::log10(self.into_f64(int)?), int)
+		self.log2(int)?
+			.div(&Self::from_f64(std::f64::consts::LOG2_10, int)?, int)
 	}
 
 	fn apply_uint_op<I: Interrupt, R>(

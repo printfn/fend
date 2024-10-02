@@ -133,6 +133,11 @@ impl BigUint {
 		}
 	}
 
+	pub(crate) fn ilog2(&self) -> u64 {
+		assert!(!self.is_zero());
+		self.bits() - 1
+	}
+
 	fn make_large(&mut self) {
 		match self {
 			Small(n) => {

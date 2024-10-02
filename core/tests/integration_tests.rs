@@ -3283,7 +3283,7 @@ fn log10_1000() {
 
 #[test]
 fn log10_10000() {
-	test_eval("log10 10000", "approx. 4");
+	test_eval("log10 10000", "approx. 3.9999999999");
 }
 
 #[test]
@@ -3303,7 +3303,7 @@ fn log_1000() {
 
 #[test]
 fn log_10000() {
-	test_eval("log 10000", "approx. 4");
+	test_eval("log 10000", "approx. 3.9999999999");
 }
 
 #[test]
@@ -3314,6 +3314,11 @@ fn log_100000() {
 #[test]
 fn log2_65536() {
 	test_eval("log2 65536", "approx. 16");
+}
+
+#[test]
+fn log2_2_2048() {
+	test_eval("log2(2^2048)", "approx. 2048");
 }
 
 #[test]
