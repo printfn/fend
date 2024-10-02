@@ -300,12 +300,7 @@ impl BigRat {
 				},
 			));
 		}
-		let approx_f64 = self.clone().into_f64(int)?;
-		Ok(if approx_f64.is_infinite() {
-			(self.num.ilog2() - self.den.ilog2()).into()
-		} else {
-			Self::from_f64(f64::log2(approx_f64), int)?
-		})
+		Self::from_f64(self.num.log2(int)? - self.den.log2(int)?, int)
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {

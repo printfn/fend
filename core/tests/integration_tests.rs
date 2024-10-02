@@ -3322,6 +3322,11 @@ fn log2_2_2048() {
 }
 
 #[test]
+fn log2_3_2_2048() {
+	test_eval("log2(3*2^2048)", "approx. 2049.5849625007");
+}
+
+#[test]
 fn log10_minus_1() {
 	test_eval("log10 (-1)", "approx. 1.3643763538i");
 }
