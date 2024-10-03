@@ -36,6 +36,17 @@ enable-internet-access = true
 #   * 'disabled' will disable loading of exchange rate data
 exchange-rate-source = "UN"
 
+# Decimal and thousands separator style. This can be used to switch
+# between e.g. 1,234.56 and 1.234,56.
+#
+# Possible values:
+#   * `default`: uses the default
+#   * `dot`: uses dots as decimal separator and commas as the thousands
+#       separator. This is commonly used in English.
+#   * `comma`: uses commas as decimal separator and dots as the thousands
+#       separator. This is common in European languages.
+decimal-separator-style = "default"
+
 # This section controls the colors that are used by
 # fend. Make sure the `enable-colors` setting is
 # turned on for this to work.
