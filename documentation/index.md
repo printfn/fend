@@ -13,7 +13,7 @@ You can check your version of fend at any time by typing `version`. If you are u
     1. [AOSC OS](#aosc-os)
     1. [NixOS / Nix package manager](#nixos-nix-package-manager)
     1. [Pre-built binaries](#pre-built-binaries)
-    1. [Install via crates.io](#install-via-crates.io)
+    1. [Install via crates.io](#install-via-crates-io)
 1. [Numbers](#numbers)
 1. [Arithmetic](#arithmetic)
 1. [Units](#units)

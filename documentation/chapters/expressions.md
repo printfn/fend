@@ -305,6 +305,15 @@ fend supports a few different output formats. It tries to choose an appropriate 
 * `<n> sf`: Numbers are shown with the given number of significant figures. For example `pi to 3 sf` becomes `approx. 3.14`.
 * `<n> dp`: This format shows the number as a decimal, with up to the given number of digits after the decimal point. Recurring digits will also be shown normally. For example, `1/3 to 5 dp` becomes `0.33333`.
 
+The `@noapprox` attribute can be used to hide the `approx.` annotation in the output:
+
+```
+> pi to 6 dp
+approx. 3.141592
+> @noapprox pi to 6 dp
+3.141592
+```
+
 ## Strings
 
 fend supports string literals, which can be enclosed in either single or double quotes. Strings are always encoded in UTF-8. Either type supports all the same escape sequences, which are as follows:
