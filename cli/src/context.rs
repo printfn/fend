@@ -46,6 +46,8 @@ impl InnerCtx {
 				&custom_unit.attribute.to_fend_core(),
 			);
 		}
+		res.core_ctx
+			.set_decimal_separator_style(config.decimal_separator);
 		res
 	}
 }

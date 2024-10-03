@@ -1,3 +1,5 @@
+use fend_core::DecimalSeparatorStyle;
+
 use crate::{color, custom_units::CustomUnitDefinition};
 use std::{env, fmt, fs, io};
 
@@ -11,6 +13,7 @@ pub struct Config {
 	pub enable_internet_access: bool,
 	pub exchange_rate_source: ExchangeRateSource,
 	pub custom_units: Vec<CustomUnitDefinition>,
+	pub decimal_separator: DecimalSeparatorStyle,
 	unknown_settings: UnknownSettings,
 	unknown_keys: Vec<String>,
 }
@@ -67,6 +70,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 		formatter.write_str("a fend configuration struct")
 	}
 
+	#[allow(clippy::too_many_lines)]
 	fn visit_map<V: serde::de::MapAccess<'de>>(self, mut map: V) -> Result<Config, V::Error> {
 		let mut result = Config::default();
 		let mut seen_prompt = false;
@@ -77,6 +81,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 		let mut seen_enable_internet_access = false;
 		let mut seen_exchange_rate_source = false;
 		let mut seen_custom_units = false;
+		let mut seen_decimal_separator_style = false;
 		while let Some(key) = map.next_key::<String>()? {
 			match key.as_str() {
 				"prompt" => {
@@ -157,6 +162,23 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 					result.custom_units = map.next_value()?;
 					seen_custom_units = true;
 				}
+				"decimal-separator-style" => {
+					if seen_decimal_separator_style {
+						return Err(serde::de::Error::duplicate_field("decimal-separator-style"));
+					}
+					let style: String = map.next_value()?;
+					result.decimal_separator = match style.as_str() {
+						"dot" | "default" => DecimalSeparatorStyle::Dot,
+						"comma" => DecimalSeparatorStyle::Comma,
+						v => {
+							return Err(serde::de::Error::invalid_value(
+								serde::de::Unexpected::Str(v),
+								&"`default`, `dot` or `comma`",
+							))
+						}
+					};
+					seen_decimal_separator_style = true;
+				}
 				unknown_key => {
 					// this may occur if the user has multiple fend versions installed
 					map.next_value::<toml::Value>()?;
@@ -178,6 +200,9 @@ impl<'de> serde::Deserialize<'de> for Config {
 			"max-history-size",
 			"unknown-settings",
 			"enable-internet-access",
+			"custom-units",
+			"decimal-separator-style",
+			"exchange-rate-source",
 		];
 		deserializer.deserialize_struct("Config", FIELDS, ConfigVisitor)
 	}
@@ -195,6 +220,7 @@ impl Default for Config {
 			unknown_settings: UnknownSettings::Warn,
 			exchange_rate_source: ExchangeRateSource::UnitedNations,
 			custom_units: vec![],
+			decimal_separator: DecimalSeparatorStyle::Dot,
 			unknown_keys: vec![],
 		}
 	}

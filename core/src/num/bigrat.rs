@@ -4,6 +4,7 @@ use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
+use crate::DecimalSeparatorStyle;
 use core::f64;
 use std::{cmp, fmt, hash, io, ops};
 
@@ -599,6 +600,7 @@ impl BigRat {
 		))
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	fn format_as_decimal<I: Interrupt>(
 		&self,
 		style: FormattingStyle,
@@ -606,6 +608,7 @@ impl BigRat {
 		sign: Sign,
 		term: &'static str,
 		mut terminating: impl FnMut() -> FResult<bool>,
+		decimal_separator: DecimalSeparatorStyle,
 		int: &I,
 	) -> FResult<Exact<FormattedBigRat>> {
 		let integer_part = self.clone().num.div(&self.den, int)?;
@@ -678,6 +681,7 @@ impl BigRat {
 			num_trailing_digits_to_print,
 			terminating,
 			print_integer_part,
+			decimal_separator,
 			int,
 		)?;
 		Ok(Exact::new(
@@ -694,6 +698,7 @@ impl BigRat {
 	}
 
 	/// Prints the decimal expansion of num/den, where num < den, in the given base.
+	#[allow(clippy::too_many_arguments)]
 	fn format_trailing_digits<I: Interrupt>(
 		base: Base,
 		numerator: &BigUint,
@@ -701,6 +706,7 @@ impl BigRat {
 		max_digits: MaxDigitsToPrint,
 		mut terminating: impl FnMut() -> FResult<bool>,
 		print_integer_part: impl Fn(bool) -> FResult<(Sign, String)>,
+		decimal_separator: DecimalSeparatorStyle,
 		int: &I,
 	) -> FResult<(Sign, Exact<String>)> {
 		let base_as_u64: u64 = base.base_as_u8().into();
@@ -752,6 +758,7 @@ impl BigRat {
 				ignore_number_of_leading_zeroes,
 				next_digit,
 				print_integer_part,
+				decimal_separator,
 				int,
 			);
 		}
@@ -768,7 +775,7 @@ impl BigRat {
 				let (sign, formatted_int) = print_integer_part(false)?;
 				let mut trailing_digits = String::new();
 				trailing_digits.push_str(&formatted_int);
-				trailing_digits.push('.');
+				trailing_digits.push(decimal_separator.decimal_separator());
 				trailing_digits.push_str(a);
 				trailing_digits.push('(');
 				trailing_digits.push_str(b);
@@ -788,6 +795,7 @@ impl BigRat {
 		ignore_number_of_leading_zeroes: bool,
 		mut next_digit: impl FnMut(usize, BigUint, &BigUint) -> Result<(BigUint, BigUint), NextDigitErr>,
 		print_integer_part: impl Fn(bool) -> FResult<(Sign, String)>,
+		decimal_separator: DecimalSeparatorStyle,
 		int: &I,
 	) -> FResult<(Sign, Exact<String>)> {
 		let mut current_numerator = numerator.clone();
@@ -812,7 +820,7 @@ impl BigRat {
 							let (sign, formatted_int) = print_integer_part(false)?;
 							actual_sign = Some(sign);
 							trailing_digits.push_str(&formatted_int);
-							trailing_digits.push('.');
+							trailing_digits.push(decimal_separator.decimal_separator());
 						}
 						for _ in 0..trailing_zeroes {
 							trailing_digits.push('0');
@@ -1132,6 +1140,7 @@ pub(crate) struct FormatOptions {
 	pub(crate) style: FormattingStyle,
 	pub(crate) term: &'static str,
 	pub(crate) use_parens_if_fraction: bool,
+	pub(crate) decimal_separator: DecimalSeparatorStyle,
 }
 
 impl Format for BigRat {
@@ -1191,7 +1200,15 @@ impl Format for BigRat {
 		}
 
 		// not a fraction, will be printed as a decimal
-		x.format_as_decimal(style, base, sign, term, terminating, int)
+		x.format_as_decimal(
+			style,
+			base,
+			sign,
+			term,
+			terminating,
+			params.decimal_separator,
+			int,
+		)
 	}
 }
 

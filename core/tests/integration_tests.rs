@@ -6054,3 +6054,27 @@ fn test_plus_zero_ignore_units() {
 		Some("cannot convert from kg to m: units 'kilogram' and 'meter' are incompatible"),
 	);
 }
+
+#[test]
+fn european_formatting() {
+	let mut ctx = Context::new();
+	ctx.set_decimal_separator_style(fend_core::DecimalSeparatorStyle::Comma);
+	assert_eq!(
+		fend_core::evaluate("1.234,56 * 1000", &mut ctx)
+			.unwrap()
+			.get_main_result(),
+		"1234560"
+	);
+	assert_eq!(
+		fend_core::evaluate("100-1,9", &mut ctx)
+			.unwrap()
+			.get_main_result(),
+		"98,1"
+	);
+	assert_eq!(
+		fend_core::evaluate("sin(1,2)", &mut ctx)
+			.unwrap()
+			.get_main_result(),
+		"approx. 0,9320390859"
+	);
+}
