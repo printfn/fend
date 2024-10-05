@@ -1,5 +1,21 @@
 ## Changelog
 
+### v1.5.3 (2024-10-06)
+
+* Added support for using commas rather than dots as the decimal separator,
+    as is common in many European languages. This can be enabled by setting
+    `decimal-separator-style = "comma"` in `~/.config/fend/config.toml`,
+    and it changes e.g. `1.23` to `1,23`, or `1,234.00` to `1.234,00`.
+* Support large roman numerals beyond 1000 using overlines, e.g.
+    `15400 to roman` is `X̅V̅CD`. Numerals with an overline are 1000 times
+    larger, so `V̅` is 5,000, `X̅` is 10,000 etc. Note that these numbers may not
+    be displayed correctly if your terminal doesn't have full Unicode support.
+* Improve accuracy of logarithms and support logarithms with operands larger
+    than `2^1023`, e.g. `log2 10^1234` now works correctly.
+* Add `light_speed`/`lightspeed` unit, equivalent to the existing constant `c`
+* Allow adding `0` regardless of units in some situations, e.g. `1 km + 0`.
+    This works because zero is the additive identity.
+
 ### v1.5.2 (2024-09-15)
 
 * You can now convert numbers to words. For example, `123 to words` returns
