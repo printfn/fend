@@ -18,9 +18,9 @@
 		"react-svg-spinners": "^0.3.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.2",
+		"@biomejs/biome": "^1.9.3",
 		"@types/node": "^22.7.4",
-		"@types/react": "^18.3.10",
+		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"@vitejs/plugin-react-swc": "^3.7.1",
 		"prettier": "^3.3.3",
