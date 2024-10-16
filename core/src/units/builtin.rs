@@ -60,6 +60,7 @@ const BITS_AND_BYTES: &[UnitTuple] = &[
 ];
 
 const STANDARD_PREFIXES: &[UnitTuple] = &[
+	("quetta", "", "lp@1e30", ""),
 	("quecca", "", "lp@1e30", ""),
 	("ronna", "", "lp@1e27", ""),
 	("yotta", "", "lp@1e24", ""),
@@ -780,6 +781,8 @@ const SHORT_PREFIXES: &[(&str, &str)] = &[
 	("Ei", "sp@exbi"),
 	("Zi", "sp@zebi"),
 	("Yi", "sp@yobi"),
+	("Q", "sp@quetta"),
+	("R", "sp@ronna"),
 	("Y", "sp@yotta"),
 	("Z", "sp@zetta"),
 	("E", "sp@exa"),
@@ -802,6 +805,8 @@ const SHORT_PREFIXES: &[(&str, &str)] = &[
 	("a", "sp@atto"),
 	("z", "sp@zepto"),
 	("y", "sp@yocto"),
+	("r", "sp@ronto"),
+	("q", "sp@quecto"),
 ];
 
 #[allow(clippy::too_many_lines)]
