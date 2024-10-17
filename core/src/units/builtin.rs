@@ -61,7 +61,6 @@ const BITS_AND_BYTES: &[UnitTuple] = &[
 
 const STANDARD_PREFIXES: &[UnitTuple] = &[
 	("quetta", "", "lp@1e30", ""),
-	("quecca", "", "lp@1e30", ""),
 	("ronna", "", "lp@1e27", ""),
 	("yotta", "", "lp@1e24", ""),
 	("zetta", "", "lp@1e21", ""),
