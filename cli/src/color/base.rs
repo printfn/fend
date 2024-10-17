@@ -16,7 +16,7 @@ pub enum Base {
 
 struct BaseVisitor;
 
-impl<'de> serde::de::Visitor<'de> for BaseVisitor {
+impl serde::de::Visitor<'_> for BaseVisitor {
 	type Value = Base;
 
 	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

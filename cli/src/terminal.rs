@@ -75,7 +75,7 @@ impl From<rustyline::error::ReadlineError> for ReadLineError {
 
 fn save_history(
 	rl: &mut rustyline::Editor<helper::Helper<'_>, rustyline::history::FileHistory>,
-	path: &Option<path::PathBuf>,
+	path: Option<&path::PathBuf>,
 ) -> io::Result<()> {
 	if let Some(history_path) = path {
 		file_paths::get_state_dir(file_paths::DirMode::Create)?;
@@ -90,7 +90,7 @@ impl PromptState<'_> {
 	pub fn read_line(&mut self) -> Result<String, ReadLineError> {
 		let res = self.rl.readline(self.config.prompt.as_str());
 		// ignore errors when saving history
-		mem::drop(save_history(&mut self.rl, &self.history_path));
+		mem::drop(save_history(&mut self.rl, self.history_path.as_ref()));
 		Ok(res?)
 	}
 }

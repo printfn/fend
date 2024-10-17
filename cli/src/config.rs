@@ -27,7 +27,7 @@ pub enum ExchangeRateSource {
 
 struct ExchangeRateSourceVisitor;
 
-impl<'de> serde::de::Visitor<'de> for ExchangeRateSourceVisitor {
+impl serde::de::Visitor<'_> for ExchangeRateSourceVisitor {
 	type Value = ExchangeRateSource;
 
 	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

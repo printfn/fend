@@ -2,7 +2,7 @@
 
 ### v1.5.3 (2024-10-06)
 
-* Added support for using commas rather than dots as the decimal separator,
+* Add support for using commas rather than dots as the decimal separator,
     as is common in many European languages. This can be enabled by setting
     `decimal-separator-style = "comma"` in `~/.config/fend/config.toml`,
     and it changes e.g. `1.23` to `1,23`, or `1,234.00` to `1.234,00`.
@@ -133,10 +133,6 @@
 
 ### v1.4.0 (2023-12-27)
 
-* The license of fend has changed. As of v1.4.0, fend is available under
-    the GPL 3.0 (or later). See
-    [LICENSE.md](https://github.com/printfn/fend/blob/main/LICENSE.md)
-    for more information.
 * Change unit simplification and unit aliasing to be simpler and more
     consistent. Units like `%` and `million` are now simplified unless you
     explicitly convert your result to one of those units. fend will now also

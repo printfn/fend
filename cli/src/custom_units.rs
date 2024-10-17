@@ -12,7 +12,7 @@ pub enum CustomUnitAttribute {
 
 struct CustomUnitAttributeVisitor;
 
-impl<'de> serde::de::Visitor<'de> for CustomUnitAttributeVisitor {
+impl serde::de::Visitor<'_> for CustomUnitAttributeVisitor {
 	type Value = CustomUnitAttribute;
 
 	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
