@@ -12,5 +12,6 @@
 [target.x86_64-pc-windows-msvc]
 rustflags = [
     "-Ctarget-feature=+crt-static",
-    "-Clink-args=../../../icon/resources.res",
+    "-L./icon",
+    "-Clink-args=resources.res",
 ]
