@@ -8,7 +8,6 @@
 /telegram-bot/dist/
 /telegram-bot/lambda_package.zip
 /telegram-bot/node_modules/
-/telegram-bot/package-lock.json
 
 /web/node_modules/
 /web/public/documentation/
