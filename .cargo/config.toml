@@ -9,7 +9,7 @@
 # ```
 # and checking that the output doesn't contain any MSVCR DLLs
 
-[target.x86_64-pc-windows-msvc]
+[target.'cfg(all(target_arch = "x86_64", target_os = "windows", target_env = "msvc")']
 rustflags = [
     "-Ctarget-feature=+crt-static",
     "-L./icon",
