@@ -834,11 +834,16 @@ impl Value {
 			UseParentheses::IfComplex
 		};
 		let mut formatted_value = String::new();
+		let format = if !self.exact && self.format == FormattingStyle::Auto {
+			FormattingStyle::DecimalPlaces(10)
+		} else {
+			self.format
+		};
 		let mut exact = self
 			.value
 			.format(
 				self.exact,
-				self.format,
+				format,
 				self.base,
 				use_parentheses,
 				&mut formatted_value,
