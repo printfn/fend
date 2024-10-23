@@ -9,9 +9,5 @@
 # ```
 # and checking that the output doesn't contain any MSVCR DLLs
 
-[target.'cfg(all(target_arch = "x86_64", target_os = "windows", target_env = "msvc")']
-rustflags = [
-    "-Ctarget-feature=+crt-static",
-    "-L./icon",
-    "-Clink-args=resources.res",
-]
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-Ctarget-feature=+crt-static"]
