@@ -27,8 +27,8 @@ if (Test-Path $PSScriptRoot\fend-windows-x64.msix) {
 mkdir $PSScriptRoot\build
 Copy-Item $PSScriptRoot\..\target\release\fend.exe $PSScriptRoot\build
 (Get-Content $PSScriptRoot\AppxManifest.xml).replace('$FEND_VERSION', $Env:FEND_VERSION) | Set-Content $PSScriptRoot\build\AppxManifest.xml
-& magick convert -resize 44x44 $PSScriptRoot\..\icon\icon.svg $PSScriptRoot\build\fend-icon-44.png
-& magick convert -resize 150x150 $PSScriptRoot\..\icon\icon.svg $PSScriptRoot\build\fend-icon-150.png
+& magick $PSScriptRoot\..\icon\icon.svg -resize 44x44 $PSScriptRoot\build\fend-icon-44.png
+& magick $PSScriptRoot\..\icon\icon.svg -resize 150x150 $PSScriptRoot\build\fend-icon-150.png
 
 & "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe" `
 	pack `
