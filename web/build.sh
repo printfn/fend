@@ -2,6 +2,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Ubuntu 24.04 doesn't ship with ImageMagick v7
+if ! type magick &>/dev/null; then
+	alias magick=convert
+fi
+
 npm ci
 npm run check
 
