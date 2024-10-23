@@ -8,7 +8,7 @@ npm run check
 rm -rf ../wasm/pkg-fend-web
 (cd ../wasm && wasm-pack build --target web --out-dir pkg-fend-web)
 
-convert -resize "128x128" ../icon/icon.svg public/fend-icon-128.png
+magick ../icon/icon.svg -resize "128x128" public/fend-icon-128.png
 
 mkdir -p public/documentation
 
