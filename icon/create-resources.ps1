@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 Set-Location "$PSScriptRoot"
 
-& magick convert icon.svg `
+& magick icon.svg `
 	`( "-clone" 0 "-resize" 16x16 `) `
 	`( "-clone" 0 "-resize" 32x32 `) `
 	`( "-clone" 0 "-resize" 48x48 `) `
