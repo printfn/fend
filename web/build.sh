@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 
 # Ubuntu 24.04 doesn't ship with ImageMagick v7
 if ! type magick &>/dev/null; then
+	shopt -s expand_aliases # https://unix.stackexchange.com/a/1498
 	alias magick=convert
 fi
 
