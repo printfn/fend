@@ -26,7 +26,7 @@
 		"fend-wasm-nodejs": "file:../wasm/pkg-nodejs"
 	},
 	"devDependencies": {
-		"@types/node": "^22.7.7",
+		"@types/node": "^22.7.9",
 		"esbuild": "^0.24.0",
 		"typescript": "^5.6.3"
 	}

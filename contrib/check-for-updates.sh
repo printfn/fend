@@ -20,6 +20,7 @@ cargo metadata --format-version 1 --no-deps \
 	done
 
 (cd web && npx npm-check-updates -u && npm update)
+(cd telegram-bot && npx npm-check-updates -u && npm update)
 
 current_wix="$(jq -r .tools.wix.version < windows-wix/.config/dotnet-tools.json)"
 # https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource
