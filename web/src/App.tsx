@@ -117,6 +117,10 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	);
 	const navigate = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
+			if (event.key === 'k' && event.metaKey !== event.ctrlKey) {
+				setOutput(null);
+				return;
+			}
 			if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
 				return;
 			}

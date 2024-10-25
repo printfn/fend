@@ -2,6 +2,7 @@
 
 ## Next
 * Add `text` as a synonym for `string`
+* Add `Cmd`+`K` / `Ctrl`+`K` to clear the web UI output
 
 ### v1.5.3 (2024-10-06)
 
