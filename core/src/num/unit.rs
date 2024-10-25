@@ -278,12 +278,29 @@ impl Value {
 	}
 
 	pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
+		println!("====== div");
+		println!("\t{:?}", self);
+		println!("\t{:?}", rhs);
 		let mut components = self.unit.components.clone();
 		for rhs_component in rhs.unit.components {
-			components.push(UnitExponent::new(
-				rhs_component.unit,
-				-rhs_component.exponent,
-			));
+			let mut self_has_unit = false;
+			for self_component in &self.unit.components {
+				if compare_hashmaps(
+					&self_component.unit.base_units,
+					&rhs_component.unit.base_units,
+					int,
+				)? {
+					self_has_unit = true;
+					break;
+				}
+			}
+			let new_exponent = if self_has_unit {
+				-rhs_component.exponent
+			} else {
+				rhs_component.exponent
+			};
+			println!("\t\t{:?}", new_exponent);
+			components.push(UnitExponent::new(rhs_component.unit, new_exponent));
 		}
 		let value =
 			Exact::new(self.value, self.exact).div(&Exact::new(rhs.value, rhs.exact), int)?;
