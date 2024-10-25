@@ -49,7 +49,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	useEffect(() => {
 		const history100 = history.slice(-100);
 		localStorage.setItem('fend_history', JSON.stringify(history100));
-	}, [history])
+	}, [history]);
 	const [variables, setVariables] = useState('');
 	const [navigation, setNavigation] = useState(0);
 	const [hint, setHint] = useState('');
