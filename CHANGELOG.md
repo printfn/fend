@@ -2,6 +2,7 @@
 
 ## Next
 * Add `text` as a synonym for `string`
+* Keep history after reloading the web UI
 
 ### v1.5.3 (2024-10-06)
 
