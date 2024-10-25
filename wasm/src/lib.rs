@@ -27,7 +27,8 @@ impl fend_core::Interrupt for TimeoutInterrupt {
 	}
 }
 
-#[wasm_bindgen]
+/// @deprecated this function is not needed
+#[wasm_bindgen(skip_typescript)]
 pub fn initialise() {}
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -101,7 +102,7 @@ fn create_context() -> fend_core::Context {
 	ctx
 }
 
-// this function is deprecated
+/// @deprecated use `evaluateFendWithTimeout` instead
 #[wasm_bindgen(js_name = evaluate_fend_with_timeout, skip_typescript)]
 pub fn evaluate_fend_with_timeout_2(input: &str, timeout: u32) -> String {
 	evaluate_fend_with_timeout(input, timeout)
