@@ -40,10 +40,16 @@ function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
 	);
 }
 
+const initialHistory = JSON.parse(localStorage.getItem('fend_history') || '[]');
+
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [currentInput, setCurrentInput] = useState('');
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
-	const [history, setHistory] = useState<string[]>([]);
+	const [history, setHistory] = useState<string[]>(initialHistory);
+	useEffect(() => {
+		const history100 = history.slice(0, 100);
+		localStorage.setItem('fend_history', JSON.stringify(history100));
+	}, [history])
 	const [variables, setVariables] = useState('');
 	const [navigation, setNavigation] = useState(0);
 	const [hint, setHint] = useState('');
