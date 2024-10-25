@@ -2,8 +2,6 @@ import fend from 'fend-wasm-nodejs';
 
 const TELEGRAM_BOT_API_TOKEN = process.env.TELEGRAM_BOT_API_TOKEN;
 
-fend.initialise();
-
 /*
 Setting a webhook:
 TELEGRAM_BOT_API_TOKEN="..."
