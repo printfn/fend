@@ -328,7 +328,7 @@ fn parse_implicit_multiplication(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_multiplicative(input: &[Token]) -> ParseResult<'_> {
-	let (mut res, mut input) = parse_implicit_multiplication(input)?;
+	let (mut res, mut input) = parse_power(input, true)?;
 	println!("parse_multiplicative {:?}", input.to_vec());
 	loop {
 		if let Ok((term, remaining)) = parse_multiplication_cont(input) {
