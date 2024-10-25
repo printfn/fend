@@ -117,8 +117,10 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	);
 	const navigate = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
-			if (event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey
-				|| event.key === `l` && event.ctrlKey && !event.metaKey && !event.altKey) {
+			if (
+				(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
+				(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
+			) {
 				// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
 				setOutput(null);
 				return;
