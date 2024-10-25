@@ -83,7 +83,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 			(async () => {
 				// allow multiple lines to be entered if shift, ctrl
 				// or meta is held, otherwise evaluate the expression
-				if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey)) {
+				if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
 					return;
 				}
 				event.preventDefault();
@@ -123,6 +123,14 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	);
 	const navigate = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
+			if (
+				(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
+				(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
+			) {
+				// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
+				setOutput(null);
+				return;
+			}
 			if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
 				return;
 			}
@@ -169,7 +177,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						autoCapitalize="none"
 						spellCheck="false"
 						id="input-text"
-						rows={1}
+						rows={currentInput.split('\n').length}
 						ref={inputText}
 						value={currentInput}
 						onInput={update}
