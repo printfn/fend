@@ -1,6 +1,9 @@
 ## Changelog
 
+### Unreleased
+
 * Add `text` as a synonym for `string` (e.g. `5 to text`)
+* Add variants like `sqcm`, `cm2`, `cbcm` and `cm3` for common length units
 * Add `Cmd`+`k` / `Ctrl`+`k` or `Ctrl`+`l` to clear the web UI output
 * Fix multiline input not being visible in the web UI
 * Persist command history in the browser's local storage when using the web UI
