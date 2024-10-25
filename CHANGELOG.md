@@ -2,6 +2,7 @@
 
 ## Next
 * Add `text` as a synonym for `string`
+* Fix multiline input not being visible in the web UI
 
 ### v1.5.3 (2024-10-06)
 
