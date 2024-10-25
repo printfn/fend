@@ -2,6 +2,7 @@
 
 ## Next
 * Add `text` as a synonym for `string`
+* Add variants like `sqm`, `m2`, `cbm` and `m3` for common length units
 
 ### v1.5.3 (2024-10-06)
 
