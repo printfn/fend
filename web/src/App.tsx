@@ -47,7 +47,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
 	const [history, setHistory] = useState<string[]>(initialHistory);
 	useEffect(() => {
-		const history100 = history.slice(0, 100);
+		const history100 = history.slice(-100);
 		localStorage.setItem('fend_history', JSON.stringify(history100));
 	}, [history])
 	const [variables, setVariables] = useState('');
