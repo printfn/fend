@@ -1,5 +1,8 @@
 ## Changelog
 
+## Next
+* Add `text` as a synonym for `string`
+
 ### v1.5.3 (2024-10-06)
 
 * Add support for using commas rather than dots as the decimal separator,
