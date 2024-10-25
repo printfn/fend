@@ -308,7 +308,7 @@ fn parse_modulo2_cont(input: &[Token]) -> ParseResult<'_> {
 	}) {
 		return Err(ParseError::UnexpectedInput);
 	}
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_implicit_multiplication(input)?;
 	Ok((b, input))
 }
 
