@@ -1,10 +1,9 @@
 ## Changelog
 
-### Next
-
 * Add `text` as a synonym for `string` (e.g. `5 to text`)
-* Add `Cmd`+`K` / `Ctrl`+`K` or `Ctrl`+`L` to clear the web UI output
+* Add `Cmd`+`k` / `Ctrl`+`k` or `Ctrl`+`l` to clear the web UI output
 * Fix multiline input not being visible in the web UI
+* Persist command history in the browser's local storage when using the web UI
 
 ### v1.5.3 (2024-10-06)
 
