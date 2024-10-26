@@ -278,6 +278,9 @@ impl Value {
 	}
 
 	pub(crate) fn div<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
+		println!("====== div");
+		println!("\t{:?}", self);
+		println!("\t{:?}", rhs);
 		let mut components = self.unit.components.clone();
 		for rhs_component in rhs.unit.components {
 			components.push(UnitExponent::new(

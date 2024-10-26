@@ -11,6 +11,7 @@ pub(crate) fn evaluate_to_value<I: Interrupt>(
 	context: &mut crate::Context,
 	int: &I,
 ) -> FResult<Value> {
+	println!("evaluate_to_value");
 	let lex = lexer::lex(input, context, int);
 	let mut tokens = vec![];
 	let mut missing_open_parens: i32 = 0;
@@ -24,7 +25,9 @@ pub(crate) fn evaluate_to_value<I: Interrupt>(
 	for _ in 0..missing_open_parens {
 		tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
 	}
+	println!("\t{:?}", tokens);
 	let parsed = parser::parse_tokens(&tokens)?;
+	println!("parsed: {:#?}", parsed);
 	let result = ast::evaluate(parsed, scope, attrs, context, int)?;
 	Ok(result)
 }
@@ -80,6 +83,7 @@ pub(crate) fn evaluate_to_spans<I: Interrupt>(
 ) -> FResult<(Vec<Span>, bool, Attrs)> {
 	let (attrs, input) = parse_attrs(input);
 	let value = evaluate_to_value(input, scope, attrs, context, int)?;
+	println!("{} {:#?}", value.type_name(), value);
 	context.variables.insert("_".to_string(), value.clone());
 	context.variables.insert("ans".to_string(), value.clone());
 	Ok((

@@ -489,7 +489,14 @@ pub(crate) fn evaluate<I: Interrupt>(
 		}
 		Expr::Bop(bop, a, b) => eval!(*a)?.handle_two_nums(
 			eval!(*b)?,
-			|a, b| a.bop(bop, b, attrs, context, int),
+			|a, b| {
+				// println!("====== .bop() '{}'", bop);
+				// println!("\t{:?}", a);
+				// println!("\t{:?}", b);
+				// println!("\tattr {:?}", attrs);
+				// println!("\t context {:?}", context);
+				a.bop(bop, b, attrs, context, int)
+			},
 			|a| |f| Expr::Bop(bop, f, Box::new(Expr::Literal(Value::Num(Box::new(a))))),
 			|a| |f| Expr::Bop(bop, Box::new(Expr::Literal(Value::Num(Box::new(a)))), f),
 			scope,

@@ -207,7 +207,12 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 			(_, Expr::Literal(Value::Num(_))) => {
 				Expr::ApplyFunctionCall(Box::new(lhs.clone()), Box::new(rhs))
 			}
-			(Expr::Literal(Value::Num(_)) | Expr::ApplyMul(_, _), _) => {
+			(Expr::ApplyMul(_, _), _) => {
+				println!("\t-> ApplyMul *");
+				Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
+			}
+			(Expr::Literal(Value::Num(_)), _) => {
+				println!("\t-> ApplyMul implicit, rhs {:?}", rhs);
 				Expr::ApplyMul(Box::new(lhs.clone()), Box::new(rhs))
 			}
 			_ => Expr::Apply(Box::new(lhs.clone()), Box::new(rhs)),
@@ -268,13 +273,15 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 
 fn parse_multiplication_cont(input: &[Token]) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Mul)?;
+	println!("\t\tparse_multiplication_cont2 {:?}", input.to_vec());
 	let (b, input) = parse_power(input, true)?;
+	println!("\t\tparse_multiplication_cont3 {:?}", input.to_vec());
 	Ok((b, input))
 }
 
 fn parse_division_cont(input: &[Token]) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Div)?;
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_implicit_multiplication(input)?;
 	Ok((b, input))
 }
 
@@ -301,29 +308,51 @@ fn parse_modulo2_cont(input: &[Token]) -> ParseResult<'_> {
 	}) {
 		return Err(ParseError::UnexpectedInput);
 	}
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_implicit_multiplication(input)?;
 	Ok((b, input))
+}
+
+fn parse_implicit_multiplication(input: &[Token]) -> ParseResult<'_> {
+	let (mut res, mut input) = parse_power(input, true)?;
+	println!("parse_implicit_multiplication {:?}", input.to_vec());
+	loop {
+		if let Ok((new_res, remaining)) = parse_apply_cont(input, &res) {
+			println!("\tparse_apply_cont {:?}", remaining.to_vec());
+			res = new_res;
+			input = remaining;
+		} else {
+			break;
+		}
+	}
+	Ok((res, input))
 }
 
 fn parse_multiplicative(input: &[Token]) -> ParseResult<'_> {
 	let (mut res, mut input) = parse_power(input, true)?;
+	println!("parse_multiplicative {:?}", input.to_vec());
 	loop {
 		if let Ok((term, remaining)) = parse_multiplication_cont(input) {
+			println!("\tparse_multiplication_cont {:?}", remaining.to_vec());
 			res = Expr::Bop(Bop::Mul, Box::new(res.clone()), Box::new(term));
 			input = remaining;
 		} else if let Ok((term, remaining)) = parse_division_cont(input) {
+			println!("\tparse_division_cont {:?}", remaining.to_vec());
 			res = Expr::Bop(Bop::Div, Box::new(res.clone()), Box::new(term));
 			input = remaining;
 		} else if let Ok((term, remaining)) = parse_modulo_cont(input) {
+			println!("\tparse_modulo_cont {:?}", remaining.to_vec());
 			res = Expr::Bop(Bop::Mod, Box::new(res.clone()), Box::new(term));
 			input = remaining;
 		} else if let Ok((term, remaining)) = parse_modulo2_cont(input) {
+			println!("\tparse_modulo2_cont {:?}", remaining.to_vec());
 			res = Expr::Bop(Bop::Mod, Box::new(res.clone()), Box::new(term));
 			input = remaining;
 		} else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res) {
+			println!("\tparse_mixed_fraction {:?}", remaining.to_vec());
 			res = new_res;
 			input = remaining;
 		} else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res) {
+			println!("\tparse_apply_cont {:?}", remaining.to_vec());
 			res = new_res;
 			input = remaining;
 		} else {
