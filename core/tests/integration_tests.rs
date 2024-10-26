@@ -796,6 +796,15 @@ fn order_of_operations_17() {
 }
 
 #[test]
+fn order_of_operations_18() {
+	test_eval("1/2/4", "0.125");
+}
+#[test]
+fn order_of_operations_19() {
+	test_eval("19 % 7 % 3", "2");
+}
+
+#[test]
 fn yobibyte() {
 	test_eval("1 YiB to bytes", "1208925819614629174706176 bytes");
 }
@@ -6077,4 +6086,34 @@ fn european_formatting() {
 			.get_main_result(),
 		"approx. 0,9320390859"
 	);
+}
+
+#[test]
+fn implitic_mul_priority_1() {
+	test_eval("10m/2s", "2 m / s");
+}
+
+#[test]
+fn implitic_mul_priority_2() {
+	test_eval("10m/2s * 5 s", "25 m");
+}
+
+#[test]
+fn implitic_mul_priority_3() {
+	test_eval("sin pi/2", "0")
+}
+
+#[test]
+fn implitic_mul_priority_4() {
+	test_eval("1 3/8 inches", "1.375 inches")
+}
+
+#[test]
+fn implitic_mul_priority_5() {
+	test_eval("-sin (pi/2)", "-1")
+}
+
+#[test]
+fn implitic_mul_priority_6() {
+	test_eval("-sin (pi/2)", "-1")
 }
