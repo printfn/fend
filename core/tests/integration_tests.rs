@@ -6078,3 +6078,11 @@ fn european_formatting() {
 		"approx. 0,9320390859"
 	);
 }
+
+#[test]
+fn kilopond() {
+	test_eval("kilopond to N", "9.80665 N");
+	test_eval("megapond to N", "9806.65 N");
+	test_eval("gf to N", "0.00980665 N");
+	expect_error("GF to N", Some("cannot convert from GF to N: units 'ampere^2 second^4 kilogram^-1 meter^-2' and 'kilogram meter / second^2' are incompatible"));
+}

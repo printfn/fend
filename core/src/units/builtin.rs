@@ -586,6 +586,8 @@ const CGS_UNITS: &[UnitTuple] = &[
 	("G", "", "gauss", ""),
 	("Mx", "", "maxwell", ""),
 	("ph", "", "phot", ""),
+	("gf", "", "s@g force", ""),
+	("pond", "", "l@gf", ""),
 ];
 
 const IMPERIAL_UNITS: &[UnitTuple] = &[
