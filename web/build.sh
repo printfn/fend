@@ -9,7 +9,8 @@ if ! type magick &>/dev/null; then
 fi
 
 npm ci
-npm run check
+npm run lint
+npm run format -- --check
 
 rm -rf ../wasm/pkg-fend-web
 (cd ../wasm && wasm-pack build --target web --out-dir pkg-fend-web)

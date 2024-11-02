@@ -30,7 +30,7 @@ export async function fend(input: string, timeout: number, variables: string): P
 				if (workerCache) {
 					workerCache.active = false;
 				}
-				reject(e);
+				reject(new Error(e.message));
 			};
 			workerCache = w;
 			w.active = true;

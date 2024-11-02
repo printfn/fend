@@ -9,9 +9,10 @@ export type FendArgs = {
 
 export type FendResult = { ok: true; result: string; variables: string } | { ok: false; message: string };
 
-self.addEventListener('message', async ({ data }: MessageEvent<FendArgs>) => {
+const eventListener = async ({ data }: MessageEvent<FendArgs>) => {
 	await initWasm();
 	initialiseWithHandlers(data.currencyData);
-	const result: FendResult = JSON.parse(evaluateFendWithVariablesJson(data.input, data.timeout, data.variables));
+	const result = JSON.parse(evaluateFendWithVariablesJson(data.input, data.timeout, data.variables)) as FendResult;
 	postMessage(result);
-});
+};
+self.addEventListener('message', (ev: MessageEvent<FendArgs>) => void eventListener(ev));

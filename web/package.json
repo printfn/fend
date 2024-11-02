@@ -8,8 +8,8 @@
 		"dev": "vite",
 		"build": "tsc && vite build",
 		"preview": "vite preview",
-		"format": "biome check --write .",
-		"check": "biome check ."
+		"format": "prettier --write .",
+		"lint": "eslint ."
 	},
 	"dependencies": {
 		"fend-wasm": "file:../wasm/pkg-fend-web",
@@ -18,13 +18,18 @@
 		"react-svg-spinners": "^0.3.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
+		"@eslint/js": "^9.14.0",
 		"@types/node": "^22.7.9",
 		"@types/react": "^18.3.12",
 		"@types/react-dom": "^18.3.1",
 		"@vitejs/plugin-react-swc": "^3.7.1",
+		"eslint": "^9.14.0",
+		"eslint-plugin-react-hooks": "^5.0.0",
+		"eslint-plugin-react-refresh": "^0.4.14",
+		"globals": "^15.11.0",
 		"prettier": "^3.3.3",
 		"typescript": "^5.6.3",
+		"typescript-eslint": "^8.12.2",
 		"vite": "^5.4.10"
 	},
 	"repository": {
@@ -36,5 +41,11 @@
 	"bugs": {
 		"url": "https://github.com/printfn/fend/issues"
 	},
-	"homepage": "https://github.com/printfn/fend#readme"
+	"homepage": "https://github.com/printfn/fend#readme",
+	"prettier": {
+		"useTabs": true,
+		"arrowParens": "avoid",
+		"singleQuote": true,
+		"printWidth": 120
+	}
 }

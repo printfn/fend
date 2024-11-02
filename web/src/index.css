@@ -61,7 +61,7 @@ main {
 	grid-row: 2;
 }
 #input:before {
-	content: ">";
+	content: '>';
 }
 #input #text {
 	display: grid;

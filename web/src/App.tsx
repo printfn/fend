@@ -40,7 +40,7 @@ function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
 	);
 }
 
-const initialHistory = JSON.parse(localStorage.getItem('fend_history') || '[]');
+const initialHistory = JSON.parse(localStorage.getItem('fend_history') || '[]') as string[];
 
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [currentInput, setCurrentInput] = useState('');
@@ -55,7 +55,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	const [hint, setHint] = useState('');
 	const [pending, setPending] = useState(0);
 	useEffect(() => {
-		(async () => {
+		void (async () => {
 			const result = await fend(currentInput, 100, variables);
 			if (!result.ok) {
 				setHint('');
@@ -80,7 +80,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	}, []);
 	const evaluate = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
-			(async () => {
+			void (async () => {
 				// allow multiple lines to be entered if shift, ctrl
 				// or meta is held, otherwise evaluate the expression
 				if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
@@ -100,7 +100,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				setPending(p => p + 1);
 				const fendResult = await fend(currentInput, 1000000000, variables);
 				setPending(p => p - 1);
-				if (fendResult.ok === false && fendResult.message === 'cancelled') {
+				if (!fendResult.ok && fendResult.message === 'cancelled') {
 					return;
 				}
 				setCurrentInput('');
@@ -183,7 +183,6 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						onInput={update}
 						onKeyPress={evaluate}
 						onKeyDown={navigate}
-						// biome-ignore lint/a11y/noAutofocus:
 						autoFocus
 					/>
 				</div>
