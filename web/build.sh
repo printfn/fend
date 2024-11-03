@@ -8,12 +8,12 @@ if ! type magick &>/dev/null; then
 	alias magick=convert
 fi
 
+rm -rf ../wasm/pkg-fend-web
+(cd ../wasm && wasm-pack build --target web --out-dir pkg-fend-web)
+
 npm ci
 npm run lint
 npm run format -- --check
-
-rm -rf ../wasm/pkg-fend-web
-(cd ../wasm && wasm-pack build --target web --out-dir pkg-fend-web)
 
 magick ../icon/icon.svg -resize "128x128" public/fend-icon-128.png
 
