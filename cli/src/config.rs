@@ -218,7 +218,7 @@ impl Default for Config {
 			max_history_size: 1000,
 			enable_internet_access: true,
 			unknown_settings: UnknownSettings::Warn,
-			exchange_rate_source: ExchangeRateSource::UnitedNations,
+			exchange_rate_source: ExchangeRateSource::EuropeanUnion,
 			custom_units: vec![],
 			decimal_separator: DecimalSeparatorStyle::Dot,
 			unknown_keys: vec![],

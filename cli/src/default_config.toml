@@ -34,7 +34,7 @@ enable-internet-access = true
 #   * `EU` retrieves data from the EU central bank
 #     (endpoint: https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
 #   * 'disabled' will disable loading of exchange rate data
-exchange-rate-source = "UN"
+exchange-rate-source = "EU"
 
 # Decimal and thousands separator style. This can be used to switch
 # between e.g. 1,234.56 and 1.234,56.
