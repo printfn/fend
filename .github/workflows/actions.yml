@@ -207,7 +207,7 @@ jobs:
         run: |
           brew install pandoc
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-          sudo apt-get install -yq imagemagick
+          sudo apt-get install -yq imagemagick inkscape
           ./web/build.sh
 
       - name: Upload GitHub Pages artifact
