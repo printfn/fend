@@ -567,6 +567,8 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 	("light", "", "c", ""),
 	("at", "at", "s@kgf/cm^2", "technical atmosphere"),
 	("Torr", "Torr", "s@101325/760 Pascals", ""),
+	("katal", "", "l@mol/second", "catalytic activity"),
+	("kat", "", "s@katal", ""),
 ];
 
 const CGS_UNITS: &[UnitTuple] = &[
