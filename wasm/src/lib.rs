@@ -27,8 +27,6 @@ impl fend_core::Interrupt for TimeoutInterrupt {
 	}
 }
 
-/// @deprecated this function is not needed
-#[wasm_bindgen(skip_typescript)]
 pub fn initialise() {}
 
 #[wasm_bindgen(typescript_custom_section)]
