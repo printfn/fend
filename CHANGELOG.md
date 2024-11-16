@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### v1.5.4 (2024-11-17)
 
 * Add `text` as a synonym for `string` (e.g. `5 to text`)
 * Add units `gf` (gram-force), `pond` and variations thereof
