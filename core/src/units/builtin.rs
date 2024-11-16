@@ -565,6 +565,8 @@ const COMMON_PHYSICAL_UNITS: &[UnitTuple] = &[
 	// TODO remove these compatibility units
 	("lightyear", "lightyears", "light_year", ""),
 	("light", "", "c", ""),
+	("at", "at", "s@kgf/cm^2", "technical atmosphere"),
+	("Torr", "Torr", "s@101325/760 Pascals", ""),
 ];
 
 const CGS_UNITS: &[UnitTuple] = &[
