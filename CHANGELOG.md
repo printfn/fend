@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.5.5 (2024-11-17)
+
+* Fix build errors in 1.5.4
+
 ### v1.5.4 (2024-11-17)
 
 * Add `text` as a synonym for `string` (e.g. `5 to text`)
