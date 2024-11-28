@@ -864,7 +864,7 @@ fn to_roman(mut num: usize, large: bool) -> String {
 		("I", 1),
 	];
 	if large {
-		for (r, mut n) in &values[0..values.len() - 1] {
+		for &(ref r, mut n) in &values[0..values.len() - 1] {
 			n *= 1000;
 			let q = num / n;
 			num -= q * n;
