@@ -1,16 +1,7 @@
-import {
-	type FormEvent,
-	type KeyboardEvent,
-	type ReactNode,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-	useTransition,
-} from 'react';
+import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { ThreeDotsScale } from 'react-svg-spinners';
 import { fend } from './lib/fend';
-import { useHistory } from './hooks/useHistory';
+import { useCurrentInput } from './hooks/useCurrentInput';
 
 const examples = `
 > 5'10" to cm
@@ -51,11 +42,9 @@ function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
 }
 
 export default function App({ widget = false }: { widget?: boolean }) {
-	const [currentInput, setCurrentInput] = useState('');
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
-	const { history, addToHistory } = useHistory();
+	const { currentInput, addToHistory, onInput, upArrow, downArrow } = useCurrentInput();
 	const [variables, setVariables] = useState('');
-	const [navigation, setNavigation] = useState(0);
 	const [hint, setHint] = useState('');
 	useEffect(() => {
 		void (async () => {
@@ -77,10 +66,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 			inputText.current?.focus();
 		}
 	}, []);
-	const update = useCallback((e: FormEvent<HTMLTextAreaElement>) => {
-		setCurrentInput(e.currentTarget.value);
-		setNavigation(0);
-	}, []);
+
 	const [isPending, startTransition] = useTransition();
 	const onKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -92,19 +78,14 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				setOutput(null);
 				return;
 			}
-			if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-				if (navigation > 0) {
-					event.preventDefault();
-					if (event.key === 'ArrowUp') {
-						setNavigation(n => Math.min(n + 1, history.length));
-					} else {
-						setNavigation(n => Math.max(n - 1, 0));
-						setCurrentInput('');
-					}
-				} else if (currentInput.trim().length === 0 && event.key === 'ArrowUp' && history.length > 0) {
-					event.preventDefault();
-					setNavigation(1);
-				}
+			if (event.key === 'ArrowUp') {
+				event.preventDefault();
+				upArrow();
+				return;
+			}
+			if (event.key === 'ArrowDown') {
+				event.preventDefault();
+				downArrow();
 				return;
 			}
 
@@ -115,7 +96,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 			}
 			event.preventDefault();
 			if (currentInput.trim() === 'clear') {
-				setCurrentInput('');
+				onInput('');
 				setOutput(null);
 				return;
 			}
@@ -123,12 +104,11 @@ export default function App({ widget = false }: { widget?: boolean }) {
 			startTransition(async () => {
 				const request = <p>{`> ${currentInput}`}</p>;
 				addToHistory(currentInput);
-				setNavigation(0);
 				const fendResult = await fend(currentInput, 1000000000, variables);
 				if (!fendResult.ok && fendResult.message === 'cancelled') {
 					return;
 				}
-				setCurrentInput('');
+				onInput('');
 				console.log(fendResult);
 				const result = <p>{fendResult.ok ? fendResult.result : fendResult.message}</p>;
 				if (fendResult.ok && fendResult.variables.length > 0) {
@@ -144,7 +124,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				inputHint.current?.scrollIntoView();
 			});
 		},
-		[currentInput, addToHistory, variables, history.length, navigation],
+		[currentInput, addToHistory, variables, onInput, downArrow, upArrow],
 	);
 	useEffect(() => {
 		document.addEventListener('click', focus);
@@ -152,11 +132,6 @@ export default function App({ widget = false }: { widget?: boolean }) {
 			document.removeEventListener('click', focus);
 		};
 	}, [focus]);
-	useEffect(() => {
-		if (navigation > 0) {
-			setCurrentInput(history[history.length - navigation]);
-		}
-	}, [navigation, history]);
 	return (
 		<main>
 			{!widget && (
@@ -177,13 +152,13 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						rows={currentInput.split('\n').length}
 						ref={inputText}
 						value={currentInput}
-						onInput={update}
+						onInput={onInput}
 						onKeyDown={onKeyDown}
 						autoFocus
 					/>
 				</div>
 				<p id="input-hint" ref={inputHint}>
-					{hint || (isPending ? <ThreeDotsScale /> : null)}
+					{hint || (isPending ? <ThreeDotsScale /> : <>&nbsp;</>)}
 				</p>
 			</div>
 		</main>
