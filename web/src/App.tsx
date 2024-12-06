@@ -43,7 +43,7 @@ function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
 
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
-	const { currentInput, addToHistory, onInput, upArrow, downArrow } = useCurrentInput();
+	const { currentInput, submit, onInput, upArrow, downArrow } = useCurrentInput();
 	const [variables, setVariables] = useState('');
 	const [hint, setHint] = useState('');
 	useEffect(() => {
@@ -103,7 +103,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 
 			startTransition(async () => {
 				const request = <p>{`> ${currentInput}`}</p>;
-				addToHistory(currentInput);
+				submit();
 				const fendResult = await fend(currentInput, 1000000000, variables);
 				if (!fendResult.ok && fendResult.message === 'cancelled') {
 					return;
@@ -124,7 +124,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				inputHint.current?.scrollIntoView();
 			});
 		},
-		[currentInput, addToHistory, variables, onInput, downArrow, upArrow],
+		[currentInput, submit, variables, onInput, downArrow, upArrow],
 	);
 	useEffect(() => {
 		document.addEventListener('click', focus);

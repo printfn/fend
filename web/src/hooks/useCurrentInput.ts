@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useState } from 'react';
 import { useHistory } from './useHistory';
 
 export function useCurrentInput() {
-	const { history, addToHistory: saveToHistory } = useHistory();
+	const { history, addToHistory } = useHistory();
 	const [currentInput, setCurrentInput] = useState('');
 	const [navigation, setNavigation] = useState(0);
 
@@ -53,13 +53,10 @@ export function useCurrentInput() {
 		navigate('down');
 	}, [navigate]);
 
-	const addToHistory = useCallback(
-		(newEntry: string) => {
-			saveToHistory(newEntry);
-			setNavigation(0);
-		},
-		[saveToHistory],
-	);
+	const submit = useCallback(() => {
+		addToHistory(currentInput);
+		setNavigation(0);
+	}, [currentInput, addToHistory]);
 
-	return { currentInput, addToHistory, onInput, downArrow, upArrow };
+	return { currentInput, submit, onInput, downArrow, upArrow };
 }
