@@ -1,4 +1,13 @@
-import { type FormEvent, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import {
+	type FormEvent,
+	type KeyboardEvent,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useTransition,
+} from 'react';
 import { ThreeDotsScale } from 'react-svg-spinners';
 import { fend } from './lib/fend';
 import { useHistory } from './hooks/useHistory';
@@ -48,7 +57,6 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	const [variables, setVariables] = useState('');
 	const [navigation, setNavigation] = useState(0);
 	const [hint, setHint] = useState('');
-	const [pending, setPending] = useState(0);
 	useEffect(() => {
 		void (async () => {
 			const result = await fend(currentInput, 100, variables);
@@ -73,50 +81,50 @@ export default function App({ widget = false }: { widget?: boolean }) {
 		setCurrentInput(e.currentTarget.value);
 		setNavigation(0);
 	}, []);
+	const [isPending, startTransition] = useTransition();
 	const onKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
-			void (async () => {
-				if (
-					(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
-					(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
-				) {
-					// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
-					setOutput(null);
-					return;
-				}
-				if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-					if (navigation > 0) {
-						event.preventDefault();
-						if (event.key === 'ArrowUp') {
-							setNavigation(n => Math.min(n + 1, history.length));
-						} else {
-							setNavigation(n => Math.max(n - 1, 0));
-							setCurrentInput('');
-						}
-					} else if (currentInput.trim().length === 0 && event.key === 'ArrowUp' && history.length > 0) {
-						event.preventDefault();
-						setNavigation(1);
+			if (
+				(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
+				(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
+			) {
+				// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
+				setOutput(null);
+				return;
+			}
+			if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+				if (navigation > 0) {
+					event.preventDefault();
+					if (event.key === 'ArrowUp') {
+						setNavigation(n => Math.min(n + 1, history.length));
+					} else {
+						setNavigation(n => Math.max(n - 1, 0));
+						setCurrentInput('');
 					}
-					return;
+				} else if (currentInput.trim().length === 0 && event.key === 'ArrowUp' && history.length > 0) {
+					event.preventDefault();
+					setNavigation(1);
 				}
+				return;
+			}
 
-				// allow multiple lines to be entered if shift, ctrl
-				// or meta is held, otherwise evaluate the expression
-				if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
-					return;
-				}
-				event.preventDefault();
-				if (currentInput.trim() === 'clear') {
-					setCurrentInput('');
-					setOutput(null);
-					return;
-				}
+			// allow multiple lines to be entered if shift, ctrl
+			// or meta is held, otherwise evaluate the expression
+			if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
+				return;
+			}
+			event.preventDefault();
+			if (currentInput.trim() === 'clear') {
+				setCurrentInput('');
+				setOutput(null);
+				return;
+			}
+
+			startTransition(async () => {
 				const request = <p>{`> ${currentInput}`}</p>;
 				addToHistory(currentInput);
 				setNavigation(0);
-				setPending(p => p + 1);
 				const fendResult = await fend(currentInput, 1000000000, variables);
-				setPending(p => p - 1);
 				if (!fendResult.ok && fendResult.message === 'cancelled') {
 					return;
 				}
@@ -134,7 +142,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 					</>
 				));
 				inputHint.current?.scrollIntoView();
-			})();
+			});
 		},
 		[currentInput, addToHistory, variables, history.length, navigation],
 	);
@@ -175,7 +183,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 					/>
 				</div>
 				<p id="input-hint" ref={inputHint}>
-					{hint || (pending > 0 ? <ThreeDotsScale /> : null)}
+					{hint || (isPending ? <ThreeDotsScale /> : null)}
 				</p>
 			</div>
 		</main>
