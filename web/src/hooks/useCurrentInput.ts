@@ -1,10 +1,21 @@
-import { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, startTransition, useCallback, useState } from 'react';
 import { useHistory } from './useHistory';
 
-export function useCurrentInput() {
+export function useCurrentInput(evaluateHint: (input: string) => Promise<string>) {
 	const { history, addToHistory } = useHistory();
-	const [currentInput, setCurrentInput] = useState('');
+	const [currentInput, setCurrentInputInternal] = useState('');
 	const [navigation, setNavigation] = useState(0);
+	const [hint, setHint] = useState('');
+
+	const setCurrentInput = useCallback(
+		(value: string) => {
+			setCurrentInputInternal(value);
+			startTransition(async () => {
+				setHint(await evaluateHint(value));
+			});
+		},
+		[evaluateHint],
+	);
 
 	const navigate = useCallback(
 		(direction: 'up' | 'down') => {
@@ -27,13 +38,16 @@ export function useCurrentInput() {
 				return newValue;
 			});
 		},
-		[history],
+		[history, setCurrentInput],
 	);
 
-	const onInput = useCallback((e: string | FormEvent<HTMLTextAreaElement>) => {
-		setNavigation(0);
-		setCurrentInput(typeof e === 'string' ? e : e.currentTarget.value);
-	}, []);
+	const onInput = useCallback(
+		(e: string | FormEvent<HTMLTextAreaElement>) => {
+			setNavigation(0);
+			setCurrentInput(typeof e === 'string' ? e : e.currentTarget.value);
+		},
+		[setCurrentInput],
+	);
 
 	const upArrow = useCallback(() => {
 		if (currentInput.trim().length !== 0 && navigation === 0) {
@@ -52,5 +66,5 @@ export function useCurrentInput() {
 		setNavigation(0);
 	}, [currentInput, addToHistory]);
 
-	return { currentInput, submit, onInput, downArrow, upArrow };
+	return { currentInput, submit, onInput, downArrow, upArrow, hint };
 }

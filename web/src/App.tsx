@@ -1,8 +1,8 @@
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import { fend } from './lib/fend';
 import { useCurrentInput } from './hooks/useCurrentInput';
 import NewTabLink from './components/NewTabLink';
 import PendingOutput from './components/PendingOutput';
+import { useFend } from './hooks/useFend';
 
 const examples = `
 > 5'10" to cm
@@ -36,8 +36,8 @@ const exampleContent = (
 
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
-	const { currentInput, submit, onInput, upArrow, downArrow } = useCurrentInput();
-	const [variables, setVariables] = useState('');
+	const { evaluate, evaluateHint } = useFend();
+	const { currentInput, submit, onInput, upArrow, downArrow, hint } = useCurrentInput(evaluateHint);
 	const inputText = useRef<HTMLTextAreaElement>(null);
 	const pendingOutput = useRef<HTMLParagraphElement>(null);
 	const focus = useCallback(() => {
@@ -86,16 +86,12 @@ export default function App({ widget = false }: { widget?: boolean }) {
 			startTransition(async () => {
 				const request = <p>{`> ${currentInput}`}</p>;
 				submit();
-				const fendResult = await fend(currentInput, 1000000000, variables);
+				const fendResult = await evaluate(currentInput);
 				if (!fendResult.ok && fendResult.message === 'cancelled') {
 					return;
 				}
 				onInput('');
-				console.log(fendResult);
 				const result = <p>{fendResult.ok ? fendResult.result : fendResult.message}</p>;
-				if (fendResult.ok && fendResult.variables.length > 0) {
-					setVariables(fendResult.variables);
-				}
 				setOutput(o => (
 					<>
 						{o}
@@ -106,7 +102,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				pendingOutput.current?.scrollIntoView({ behavior: 'smooth' });
 			});
 		},
-		[currentInput, submit, variables, onInput, downArrow, upArrow],
+		[currentInput, submit, onInput, downArrow, upArrow, evaluate],
 	);
 	useEffect(() => {
 		document.addEventListener('click', focus);
@@ -139,7 +135,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						autoFocus
 					/>
 				</div>
-				<PendingOutput ref={pendingOutput} currentInput={currentInput} variables={variables} isPending={isPending} />
+				<PendingOutput ref={pendingOutput} hint={hint} isPending={isPending} />
 			</div>
 		</main>
 	);
