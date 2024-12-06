@@ -103,7 +103,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						{result}
 					</>
 				));
-				pendingOutput.current?.scrollIntoView();
+				pendingOutput.current?.scrollIntoView({ behavior: 'smooth' });
 			});
 		},
 		[currentInput, submit, variables, onInput, downArrow, upArrow],
