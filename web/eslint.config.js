@@ -12,12 +12,15 @@ const reactHooksPlugin = reactHooks;
 const reactHooksRules = reactHooks.configs.recommended.rules;
 
 export default tseslint.config(
-	{ ignores: ['dist'] },
+	js.configs.recommended,
+	...tseslint.configs.strictTypeChecked,
+	reactRefresh.configs.vite,
+	{ ignores: ['dist', 'cloudflare', 'eslint.config.js'] },
 	{
-		extends: [js.configs.recommended, ...tseslint.configs.strictTypeChecked],
 		files: ['**/*.{ts,tsx}'],
+	},
+	{
 		languageOptions: {
-			ecmaVersion: 2020,
 			globals: globals.browser,
 			parserOptions: {
 				projectService: true,
@@ -26,11 +29,10 @@ export default tseslint.config(
 		},
 		plugins: {
 			'react-hooks': reactHooksPlugin,
-			'react-refresh': reactRefresh,
 		},
 		rules: {
 			...reactHooksRules,
-			'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+			'@typescript-eslint/promise-function-async': 'error',
 		},
 	},
 );
