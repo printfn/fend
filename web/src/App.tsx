@@ -1,6 +1,7 @@
 import { type FormEvent, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { ThreeDotsScale } from 'react-svg-spinners';
 import { fend } from './lib/fend';
+import { useHistory } from './hooks/useHistory';
 
 const examples = `
 > 5'10" to cm
@@ -40,16 +41,10 @@ function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
 	);
 }
 
-const initialHistory = JSON.parse(localStorage.getItem('fend_history') || '[]') as string[];
-
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [currentInput, setCurrentInput] = useState('');
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
-	const [history, setHistory] = useState<string[]>(initialHistory);
-	useEffect(() => {
-		const history100 = history.slice(-100);
-		localStorage.setItem('fend_history', JSON.stringify(history100));
-	}, [history]);
+	const { history, addToHistory } = useHistory();
 	const [variables, setVariables] = useState('');
 	const [navigation, setNavigation] = useState(0);
 	const [hint, setHint] = useState('');
@@ -93,9 +88,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 					return;
 				}
 				const request = <p>{`> ${currentInput}`}</p>;
-				if (currentInput.trim().length > 0) {
-					setHistory(h => [...h, currentInput]);
-				}
+				addToHistory(currentInput);
 				setNavigation(0);
 				setPending(p => p + 1);
 				const fendResult = await fend(currentInput, 1000000000, variables);
@@ -119,7 +112,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				inputHint.current?.scrollIntoView();
 			})();
 		},
-		[currentInput, variables],
+		[currentInput, addToHistory, variables],
 	);
 	const navigate = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
