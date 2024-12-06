@@ -7,7 +7,7 @@ export function useCurrentInput() {
 	const [navigation, setNavigation] = useState(0);
 
 	const navigate = useCallback(
-		(direction: 'up' | 'down' | 'bottom') => {
+		(direction: 'up' | 'down') => {
 			setNavigation(n => {
 				let newValue: number;
 				switch (direction) {
@@ -17,14 +17,11 @@ export function useCurrentInput() {
 					case 'down':
 						newValue = Math.max(n - 1, 0);
 						break;
-					case 'bottom':
-						newValue = 0;
-						break;
 				}
 				if (newValue > 0) {
 					setCurrentInput(history[history.length - newValue]);
 				}
-				if (newValue === 0 && (direction === 'up' || direction === 'down')) {
+				if (newValue === 0) {
 					setCurrentInput('');
 				}
 				return newValue;
@@ -33,13 +30,10 @@ export function useCurrentInput() {
 		[history],
 	);
 
-	const onInput = useCallback(
-		(e: string | FormEvent<HTMLTextAreaElement>) => {
-			navigate('bottom');
-			setCurrentInput(typeof e === 'string' ? e : e.currentTarget.value);
-		},
-		[navigate],
-	);
+	const onInput = useCallback((e: string | FormEvent<HTMLTextAreaElement>) => {
+		setNavigation(0);
+		setCurrentInput(typeof e === 'string' ? e : e.currentTarget.value);
+	}, []);
 
 	const upArrow = useCallback(() => {
 		if (currentInput.trim().length !== 0 && navigation === 0) {
