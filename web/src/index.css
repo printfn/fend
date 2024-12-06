@@ -37,6 +37,10 @@ b {
 		background: hsl(30, 35%, 10%);
 		color: hsl(30, 15%, 90%);
 	}
+
+	svg circle {
+		fill: white;
+	}
 }
 
 main {
