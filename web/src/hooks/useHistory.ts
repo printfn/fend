@@ -9,8 +9,9 @@ export function useHistory() {
 		if (newEntry.startsWith(' ')) return;
 		if (newEntry.trim().length === 0) return;
 		setHistory(prevHistory => {
-			const updatedHistory = [...prevHistory, newEntry]
-				.filter((entry, idx, array) => idx === 0 || entry !== array[idx - 1]);
+			const updatedHistory = [...prevHistory, newEntry].filter(
+				(entry, idx, array) => idx === 0 || entry !== array[idx - 1],
+			);
 			localStorage.setItem('fend_history', JSON.stringify(updatedHistory.slice(-100)));
 			return updatedHistory;
 		});

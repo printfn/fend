@@ -73,9 +73,33 @@ export default function App({ widget = false }: { widget?: boolean }) {
 		setCurrentInput(e.currentTarget.value);
 		setNavigation(0);
 	}, []);
-	const evaluate = useCallback(
+	const onKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLTextAreaElement>) => {
 			void (async () => {
+				if (
+					(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
+					(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
+				) {
+					// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
+					setOutput(null);
+					return;
+				}
+				if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+					if (navigation > 0) {
+						event.preventDefault();
+						if (event.key === 'ArrowUp') {
+							setNavigation(n => Math.min(n + 1, history.length));
+						} else {
+							setNavigation(n => Math.max(n - 1, 0));
+							setCurrentInput('');
+						}
+					} else if (currentInput.trim().length === 0 && event.key === 'ArrowUp' && history.length > 0) {
+						event.preventDefault();
+						setNavigation(1);
+					}
+					return;
+				}
+
 				// allow multiple lines to be entered if shift, ctrl
 				// or meta is held, otherwise evaluate the expression
 				if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
@@ -112,35 +136,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 				inputHint.current?.scrollIntoView();
 			})();
 		},
-		[currentInput, addToHistory, variables],
-	);
-	const navigate = useCallback(
-		(event: KeyboardEvent<HTMLTextAreaElement>) => {
-			if (
-				(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
-				(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
-			) {
-				// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
-				setOutput(null);
-				return;
-			}
-			if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
-				return;
-			}
-			if (navigation > 0) {
-				event.preventDefault();
-				if (event.key === 'ArrowUp') {
-					setNavigation(n => Math.min(n + 1, history.length));
-				} else {
-					setNavigation(n => Math.max(n - 1, 0));
-					setCurrentInput('');
-				}
-			} else if (currentInput.trim().length === 0 && event.key === 'ArrowUp' && history.length > 0) {
-				event.preventDefault();
-				setNavigation(1);
-			}
-		},
-		[currentInput, navigation, history],
+		[currentInput, addToHistory, variables, history.length, navigation],
 	);
 	useEffect(() => {
 		document.addEventListener('click', focus);
@@ -174,8 +170,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						ref={inputText}
 						value={currentInput}
 						onInput={update}
-						onKeyPress={evaluate}
-						onKeyDown={navigate}
+						onKeyDown={onKeyDown}
 						autoFocus
 					/>
 				</div>
