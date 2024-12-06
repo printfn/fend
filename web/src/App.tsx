@@ -154,7 +154,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 		return () => {
 			document.removeEventListener('click', focus);
 		};
-	});
+	}, [focus]);
 	useEffect(() => {
 		if (navigation > 0) {
 			setCurrentInput(history[history.length - navigation]);
