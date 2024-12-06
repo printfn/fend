@@ -1,7 +1,8 @@
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import { ThreeDotsScale } from 'react-svg-spinners';
 import { fend } from './lib/fend';
 import { useCurrentInput } from './hooks/useCurrentInput';
+import NewTabLink from './components/NewTabLink';
+import PendingOutput from './components/PendingOutput';
 
 const examples = `
 > 5'10" to cm
@@ -33,31 +34,12 @@ const exampleContent = (
 	</p>
 );
 
-function NewTabLink({ children, href }: { children: ReactNode; href: string }) {
-	return (
-		<a rel="noreferrer noopener" target="_blank" href={`https://${href}`}>
-			{children}
-		</a>
-	);
-}
-
 export default function App({ widget = false }: { widget?: boolean }) {
 	const [output, setOutput] = useState<ReactNode>(widget ? <></> : exampleContent);
 	const { currentInput, submit, onInput, upArrow, downArrow } = useCurrentInput();
 	const [variables, setVariables] = useState('');
-	const [hint, setHint] = useState('');
-	useEffect(() => {
-		void (async () => {
-			const result = await fend(currentInput, 100, variables);
-			if (!result.ok) {
-				setHint('');
-			} else {
-				setHint(result.result);
-			}
-		})();
-	}, [currentInput, variables]);
 	const inputText = useRef<HTMLTextAreaElement>(null);
-	const inputHint = useRef<HTMLParagraphElement>(null);
+	const pendingOutput = useRef<HTMLParagraphElement>(null);
 	const focus = useCallback(() => {
 		// allow the user to select text for copying and
 		// pasting, but if text is deselected (collapsed)
@@ -121,7 +103,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						{result}
 					</>
 				));
-				inputHint.current?.scrollIntoView();
+				pendingOutput.current?.scrollIntoView();
 			});
 		},
 		[currentInput, submit, variables, onInput, downArrow, upArrow],
@@ -157,9 +139,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						autoFocus
 					/>
 				</div>
-				<p id="input-hint" ref={inputHint}>
-					{hint || (isPending ? <ThreeDotsScale /> : <>&nbsp;</>)}
-				</p>
+				<PendingOutput ref={pendingOutput} currentInput={currentInput} variables={variables} isPending={isPending} />
 			</div>
 		</main>
 	);

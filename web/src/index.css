@@ -50,7 +50,7 @@ main {
 }
 
 #output p,
-#input-hint {
+#pending-output {
 	white-space: pre-wrap;
 	word-break: break-all;
 }
