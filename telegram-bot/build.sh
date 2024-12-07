@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 rm -rfv ../wasm/pkg
 (cd ../wasm && wasm-pack build)
 
-npm install
+npm ci
 npm exec tsc
 node --experimental-strip-types esbuild.ts
 

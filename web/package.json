@@ -12,7 +12,7 @@
 		"lint": "eslint ."
 	},
 	"dependencies": {
-		"fend-wasm": "file:../wasm/pkg-fend-web",
+		"fend-wasm": "file:../wasm/pkg",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
 		"react-svg-spinners": "^0.3.1"
@@ -32,12 +32,16 @@
 		"prettier": "^3.4.2",
 		"typescript": "^5.7.2",
 		"typescript-eslint": "^8.17.0",
-		"vite": "^6.0.3"
+		"vite": "^6.0.3",
+		"vite-plugin-wasm": "^3.3.0"
 	},
 	"overrides": {
 		"react-svg-spinners": {
 			"react": "$react",
 			"react-dom": "$react-dom"
+		},
+		"vite-plugin-wasm": {
+			"vite": "$vite"
 		}
 	},
 	"repository": {
