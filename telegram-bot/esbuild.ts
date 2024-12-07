@@ -1,4 +1,4 @@
-import { context } from "esbuild";
+import { context } from 'esbuild';
 import { wasmLoader } from 'esbuild-plugin-wasm';
 
 const watch = process.argv.includes('--watch');

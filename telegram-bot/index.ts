@@ -1,6 +1,6 @@
-import * as fend from 'fend-wasm';
+import { evaluateFendWithTimeout, substituteInlineFendExpressions } from 'fend-wasm';
 
-const two = fend.evaluateFendWithTimeout('1+1', 500);
+const two = evaluateFendWithTimeout('1+1', 500);
 if (two !== '2') {
 	throw new Error(`could not execute webassembly: got '${two}' instead of '2'`);
 }
@@ -35,13 +35,13 @@ type Update = {
 
 function processInput(input: string, chatType: string) {
 	if (input == '/start' || input == '/help') {
-		return "fend is an arbitrary-precision unit-aware calculator.\n\nYou can send it maths questions like '1+1', 'sin(pi)' or 'sqrt(5)'. In group chats, you'll need to enclose your input in [[double square brackets]] like this: [[1+1]].";
+		return "fend is an arbitrary-precision unit-aware calculator.\n\nYou can send maths questions like '1+1', 'sin(pi)' or 'sqrt(5)'. In group chats, you'll need to enclose your input in [[double square brackets]] like this: [[1+1]].";
 	}
 
 	if (chatType == 'private' || chatType == 'inline') {
-		return fend.evaluateFendWithTimeout(input, 500);
+		return evaluateFendWithTimeout(input, 500);
 	} else if (chatType == 'group' || chatType == 'supergroup' || chatType == 'channel') {
-		let response = JSON.parse(fend.substituteInlineFendExpressions(input, 500));
+		let response = JSON.parse(substituteInlineFendExpressions(input, 500));
 		let result = '';
 		let foundCalculation = false;
 		for (let part of response) {
@@ -96,7 +96,14 @@ async function processUpdate(update: Update) {
 		let result = processInput(input, 'inline');
 		let results: InlineQueryResult[] = [];
 		if (result != null && result != '') {
-			results.push({type: 'article', title: result, id: '1', input_message_content: {message_text: result}});
+			results.push({
+				type: 'article',
+				title: result,
+				id: '1',
+				input_message_content: {
+					message_text: result,
+				},
+			});
 		}
 		await postJSON('answerInlineQuery', {
 			inline_query_id: update.inline_query.id,
