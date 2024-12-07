@@ -1,4 +1,4 @@
-import * as fend from 'fend-wasm-nodejs';
+import * as fend from 'fend-wasm';
 
 const two = fend.evaluateFendWithTimeout('1+1', 500);
 if (two !== '2') {

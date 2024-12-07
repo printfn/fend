@@ -23,7 +23,7 @@
 	},
 	"homepage": "https://github.com/printfn/fend#readme",
 	"dependencies": {
-		"fend-wasm-nodejs": "file:../wasm/pkg-nodejs"
+		"fend-wasm": "file:../wasm/pkg"
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.1",
