@@ -1,7 +1,7 @@
 import * as fend from 'fend-wasm-nodejs';
 
 const two = fend.evaluateFendWithTimeout('1+1', 500);
-if (two !== '20') {
+if (two !== '2') {
 	throw new Error(`could not execute webassembly: got '${two}' instead of '2'`);
 }
 
