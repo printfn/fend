@@ -1,5 +1,10 @@
 import * as fend from 'fend-wasm-nodejs';
 
+const two = fend.evaluateFendWithTimeout('1+1', 500);
+if (two !== '20') {
+	throw new Error(`could not execute webassembly: got '${two}' instead of '2'`);
+}
+
 const TELEGRAM_BOT_API_TOKEN = process.env.TELEGRAM_BOT_API_TOKEN;
 
 /*

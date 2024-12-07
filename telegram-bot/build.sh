@@ -9,8 +9,8 @@ mv temp ../wasm/pkg-nodejs/package.json
 
 npm install
 npm exec tsc
-npm exec -- esbuild --bundle index.ts --outdir=dist --platform=node --format=esm --loader:.wasm=binary
+node --experimental-strip-types esbuild.ts
 
 rm -f lambda_package.zip
 
-zip -j lambda_package.zip package.json dist/index.js
+zip -j -r lambda_package.zip package.json dist/
