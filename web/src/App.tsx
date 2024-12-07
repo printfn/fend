@@ -99,7 +99,9 @@ export default function App({ widget = false }: { widget?: boolean }) {
 						{result}
 					</>
 				));
-				pendingOutput.current?.scrollIntoView({ behavior: 'smooth' });
+				setTimeout(() => {
+					pendingOutput.current?.scrollIntoView({ behavior: 'smooth' });
+				}, 50);
 			});
 		},
 		[currentInput, submit, onInput, downArrow, upArrow, evaluate],
