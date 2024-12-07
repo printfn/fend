@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc && vite build",
+		"build": "tsc -b && vite build",
 		"preview": "vite preview",
 		"format": "prettier --write .",
 		"lint": "eslint ."
@@ -20,8 +20,8 @@
 	"devDependencies": {
 		"@eslint/js": "^9.16.0",
 		"@types/node": "^22.10.1",
-		"@types/react": "^19.0.0",
-		"@types/react-dom": "^19.0.0",
+		"@types/react": "^19.0.1",
+		"@types/react-dom": "^19.0.1",
 		"@vitejs/plugin-react": "^4.3.4",
 		"babel-plugin-react-compiler": "^19.0.0-beta-df7b47d-20241124",
 		"eslint": "^9.16.0",
