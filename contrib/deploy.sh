@@ -187,16 +187,6 @@ jq "setpath([\"name\"]; \"fend-wasm-web\") | del(.sideEffects)" \
 mv temp wasm/pkgweb/package.json
 (cd wasm/pkgweb && npm publish)
 
-echo "Building NPM package fend-wasm-nodejs"
-rm -rfv wasm/pkg-nodejs
-(cd wasm && wasm-pack build --target nodejs --out-dir pkg-nodejs)
-echo "Renaming package to 'fend-wasm-nodejs'..."
-jq "setpath([\"name\"]; \"fend-wasm-nodejs\")" wasm/pkg-nodejs/package.json >temp
-mv temp wasm/pkg-nodejs/package.json
-(cd wasm/pkg-nodejs && npm publish --dry-run 2>&1)|grep "total files:"|grep 5
-echo "Publishing npm package"
-(cd wasm/pkg-nodejs && npm publish)
-
 TMPDIR="$(mktemp -d)"
 if [[ ! -d "$TMPDIR" ]]; then
 	>&2 echo "Failed to create temp directory"
