@@ -1,4 +1,4 @@
-import fend from 'fend-wasm-nodejs';
+import * as fend from 'fend-wasm-nodejs';
 
 const TELEGRAM_BOT_API_TOKEN = process.env.TELEGRAM_BOT_API_TOKEN;
 
