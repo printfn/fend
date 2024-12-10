@@ -91,7 +91,7 @@ export default function App({ widget = false }: { widget?: boolean }) {
 					return;
 				}
 				onInput('');
-				const result = <p>{fendResult.ok ? fendResult.result : fendResult.message}</p>;
+				const result = <p>{fendResult.ok ? fendResult.result : `Error: ${fendResult.message}`}</p>;
 				setOutput(o => (
 					<>
 						{o}

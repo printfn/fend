@@ -2,78 +2,95 @@ import { getExchangeRates } from './exchange-rates';
 import type { FendArgs, FendResult } from './worker';
 import MyWorker from './worker?worker';
 
-let exchangeRateCache: Map<string, number> | null = null;
+function newAbortError(message: string) {
+	const e = new Error(message);
+	e.name = 'AbortError';
+	return e;
+}
+
 type State = 'new' | 'ready' | 'busy';
-class WorkerCache {
-	worker!: Worker;
-	state!: State;
-	initialisedPromise!: Promise<void>;
+type WorkerCache = {
+	worker: Worker;
+	state: State;
+	initialisedPromise: Promise<void>;
 	resolveDone?: (r: FendResult) => void;
 	rejectError?: (e: Error) => void;
+};
 
-	init() {
-		this.state = 'new';
-		this.worker = new MyWorker({
+function init() {
+	let resolveInitialised: () => void;
+	const result: WorkerCache = {
+		state: 'new',
+		worker: new MyWorker({
 			name: 'fend worker',
-		});
-		let resolveInitialised: () => void;
-		this.initialisedPromise = new Promise<void>(resolve => {
+		}),
+		initialisedPromise: new Promise<void>(resolve => {
 			resolveInitialised = resolve;
-		});
-		this.worker.onmessage = (e: MessageEvent<FendResult | 'ready'>) => {
-			this.state = 'ready';
-			if (e.data === 'ready') {
-				resolveInitialised();
-			} else {
-				this.resolveDone?.(e.data);
-			}
-		};
-		this.worker.onerror = e => {
-			this.state = 'ready';
-			this.rejectError?.(new Error(e.message, { cause: e }));
-		};
-		this.worker.onmessageerror = e => {
-			this.state = 'ready';
-			this.rejectError?.(new Error('received messageerror event', { cause: e }));
-		};
-	}
-
-	constructor() {
-		this.init();
-	}
-
-	async query(args: FendArgs) {
-		if (this.state === 'new') {
-			await this.initialisedPromise;
+		}),
+	};
+	result.worker.onmessage = (e: MessageEvent<FendResult | 'ready'>) => {
+		result.state = 'ready';
+		if (e.data === 'ready') {
+			resolveInitialised();
+		} else {
+			result.resolveDone?.(e.data);
 		}
-		if (this.state === 'busy') {
-			console.log('terminating existing worker');
-			this.worker.terminate();
-			this.resolveDone?.({ ok: false, message: 'cancelled' });
-			this.init();
-			await this.initialisedPromise;
-		}
-		if (this.state !== 'ready') {
-			throw new Error('unexpected worker state: ' + this.state);
-		}
-		const p = new Promise<FendResult>((resolve, reject) => {
-			this.resolveDone = resolve;
-			this.rejectError = reject;
-		});
-		this.state = 'busy';
-		this.worker.postMessage(args);
-		return await p;
-	}
+	};
+	result.worker.onerror = e => {
+		result.state = 'ready';
+		result.rejectError?.(new Error(e.message, { cause: e }));
+	};
+	result.worker.onmessageerror = e => {
+		result.state = 'ready';
+		result.rejectError?.(new Error('received messageerror event', { cause: e }));
+	};
+	return result;
 }
-const workerCache = new WorkerCache();
+
+let workerCache: WorkerCache = init();
+let id = 0;
+
+async function query(args: FendArgs) {
+	let w = workerCache;
+	const i = ++id;
+	if (w.state === 'new') {
+		await w.initialisedPromise;
+		if (i < id) {
+			throw newAbortError('created new worker during initialisation');
+		}
+	}
+	if (w.state === 'busy') {
+		console.log('terminating existing worker');
+		w.worker.terminate();
+		w.resolveDone?.({ ok: false, message: 'cancelled' });
+		w = init();
+		workerCache = w;
+		await w.initialisedPromise;
+		if (i < id) {
+			throw newAbortError('created new worker while worker was busy');
+		}
+	}
+	if (w.state !== 'ready') {
+		throw new Error('unexpected worker state: ' + w.state);
+	}
+	const p = new Promise<FendResult>((resolve, reject) => {
+		w.resolveDone = resolve;
+		w.rejectError = reject;
+	});
+	w.state = 'busy';
+	w.worker.postMessage(args);
+	return await p;
+}
 
 export async function fend(input: string, timeout: number, variables: string): Promise<FendResult> {
 	try {
-		const currencyData = exchangeRateCache || (await getExchangeRates());
-		exchangeRateCache = currencyData;
+		const currencyData = await getExchangeRates();
 		const args: FendArgs = { input, timeout, variables, currencyData };
-		return await workerCache.query(args);
+		return await query(args);
 	} catch (e) {
+		if (e instanceof Error && e.name === 'AbortError') {
+			return { ok: false, message: 'Aborted' };
+		}
 		console.error(e);
 		alert('Failed to initialise WebAssembly');
 		return { ok: false, message: 'Failed to initialise WebAssembly' };
