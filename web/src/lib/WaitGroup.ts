@@ -11,6 +11,7 @@ export class WaitGroup {
 		}
 		++this.#counter;
 	}
+
 	leave() {
 		if (this.#counter <= 0 || !this.#resolve) {
 			throw new Error('leave() called without a matching enter()');
@@ -21,11 +22,10 @@ export class WaitGroup {
 			this.#resolve = undefined;
 		}
 	}
+
 	async wait(abortSignal?: AbortSignal) {
 		if (abortSignal) {
-			await abortPromise(abortSignal, async () => {
-				await this.#promise;
-			});
+			await abortPromise(abortSignal, this.#promise);
 		} else {
 			await this.#promise;
 		}
@@ -36,18 +36,16 @@ export class WaitGroup {
 	}
 }
 
-async function abortPromise(abortSignal: AbortSignal, f: () => Promise<void>) {
-	return new Promise((resolve, reject) => {
+async function abortPromise<T>(abortSignal: AbortSignal, promise: Promise<T>) {
+	return new Promise<T>((resolve, reject) => {
 		if (abortSignal.aborted) {
-			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-			reject(abortSignal.reason);
+			reject(abortSignal.reason as Error);
 			return;
 		}
 
 		const onAbort = () => {
 			cleanup();
-			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-			reject(abortSignal.reason);
+			reject(abortSignal.reason as Error);
 		};
 
 		const cleanup = () => {
@@ -56,15 +54,14 @@ async function abortPromise(abortSignal: AbortSignal, f: () => Promise<void>) {
 
 		abortSignal.addEventListener('abort', onAbort);
 
-		f().then(
+		promise.then(
 			value => {
 				cleanup();
 				resolve(value);
 			},
 			(error: unknown) => {
 				cleanup();
-				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-				reject(error);
+				reject(error as Error);
 			},
 		);
 	});
