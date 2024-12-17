@@ -8,8 +8,8 @@ if ! type magick &>/dev/null; then
 	alias magick=convert
 fi
 
-rm -rf ../wasm/pkg
-(cd ../wasm && wasm-pack build)
+rm -rf ../wasm/fend-wasm
+(cd ../wasm && wasm-pack build -d fend-wasm)
 
 npm ci
 npm run lint

@@ -33,7 +33,7 @@ export default defineConfig({
 	],
 	server: {
 		fs: {
-			allow: [searchForWorkspaceRoot(process.cwd()), '../wasm/pkg-fend-web'],
+			allow: [searchForWorkspaceRoot(process.cwd()), '../wasm/fend-wasm'],
 		},
 	},
 });

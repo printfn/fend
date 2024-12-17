@@ -2,4 +2,5 @@
 /pkgweb/
 /pkg-nodejs/
 /pkg-fend-web/
+/fend-wasm/
 wasm-pack.log
