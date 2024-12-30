@@ -20,7 +20,7 @@
 	"devDependencies": {
 		"@eslint/js": "^9.17.0",
 		"@types/node": "^22.10.2",
-		"@types/react": "^19.0.1",
+		"@types/react": "^19.0.2",
 		"@types/react-dom": "^19.0.2",
 		"@vitejs/plugin-react": "^4.3.4",
 		"babel-plugin-react-compiler": "^19.0.0-beta-df7b47d-20241124",
@@ -28,20 +28,17 @@
 		"eslint-plugin-react-compiler": "^19.0.0-beta-df7b47d-20241124",
 		"eslint-plugin-react-hooks": "^5.1.0",
 		"eslint-plugin-react-refresh": "^0.4.16",
-		"globals": "^15.13.0",
+		"globals": "^15.14.0",
 		"prettier": "^3.4.2",
 		"typescript": "^5.7.2",
-		"typescript-eslint": "^8.18.1",
-		"vite": "^6.0.3",
-		"vite-plugin-wasm": "^3.3.0"
+		"typescript-eslint": "^8.18.2",
+		"vite": "^6.0.6",
+		"vite-plugin-wasm": "^3.4.1"
 	},
 	"overrides": {
 		"react-svg-spinners": {
 			"react": "$react",
 			"react-dom": "$react-dom"
-		},
-		"vite-plugin-wasm": {
-			"vite": "$vite"
 		}
 	},
 	"repository": {

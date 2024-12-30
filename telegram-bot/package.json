@@ -27,7 +27,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.2",
-		"esbuild": "^0.24.0",
+		"esbuild": "^0.24.2",
 		"esbuild-plugin-wasm": "^1.1.0",
 		"typescript": "^5.7.2"
 	}

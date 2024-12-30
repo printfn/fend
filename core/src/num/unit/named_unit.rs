@@ -163,9 +163,7 @@ impl NamedUnit {
 		self.singular_name
 			.chars()
 			.next()
-			.map_or(true, |first_char| {
-				char::is_alphabetic(first_char) || first_char == '\u{b0}'
-			})
+			.is_none_or(|first_char| char::is_alphabetic(first_char) || first_char == '\u{b0}')
 	}
 }
 

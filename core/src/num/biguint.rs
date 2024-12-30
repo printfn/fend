@@ -882,7 +882,7 @@ impl Format for BigUint {
 					test_int(int)?;
 					let divmod_res = num.divmod(&divisor, int)?;
 					let mut digit_group_value =
-						u128::from(divmod_res.1.get(1)) << 64 | u128::from(divmod_res.1.get(0));
+						(u128::from(divmod_res.1.get(1)) << 64) | u128::from(divmod_res.1.get(0));
 					for _ in 0..rounds {
 						let digit_value = digit_group_value % base_as_u128;
 						digit_group_value /= base_as_u128;
@@ -905,7 +905,7 @@ impl Format for BigUint {
 				}
 				let exact = params
 					.sf_limit
-					.map_or(true, |sf| sf >= output.len() - num_leading_zeroes);
+					.is_none_or(|sf| sf >= output.len() - num_leading_zeroes);
 				Exact::new(
 					FormattedBigUint {
 						base: base_prefix,
