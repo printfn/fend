@@ -35,7 +35,7 @@ The easiest way to install fend locally is via your package manager:
 | ----------------------- | -------------------------- |
 | Homebrew                | `brew install fend`        |
 | MacPorts                | `sudo port install fend`   |
-| AUR (Arch Linux)        | `yay -Syu aur/fend-bin`    |
+| AUR (Arch Linux)        | `yay -S aur/fend-bin`      |
 | AOSC OS                 | `oma install fend`         |
 | Xbps (Void Linux)       | `xbps-install fend`        |
 | Nix                     | `nix-env -iA nixpkgs.fend` |
