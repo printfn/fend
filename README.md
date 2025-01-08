@@ -38,7 +38,7 @@ The easiest way to install fend locally is via your package manager:
 | AUR (Arch Linux)        | `yay -Syu aur/fend-bin`    |
 | AOSC OS                 | `oma install fend`         |
 | Xbps (Void Linux)       | `xbps-install fend`        |
-| Nix                     | `nix-env -iA nixpkgs.fend` |
+| Nix                     | Add `pkgs.fend` to `environment.systemPackages` or any user-specific package list, or run `nix-shell -p fend` to try it out in a temp-shell. Using `nix-env -iA` is not recommended if you care about certain key features of Nix. |
 | Cargo                   | `cargo install fend`       |
 | Windows Package Manager | `winget install fend`      |
 | Chocolatey              | `choco install fend`       |
