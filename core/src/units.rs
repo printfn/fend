@@ -202,6 +202,7 @@ fn query_unit_case_sensitive<I: Interrupt>(
 		}
 	}
 	let mut split_idx = ident.chars().next().unwrap().len_utf8();
+	#[allow(clippy::needless_continue)]
 	while split_idx < ident.len() {
 		let (prefix, remaining_ident) = ident.split_at(split_idx);
 		split_idx += remaining_ident.chars().next().unwrap().len_utf8();
