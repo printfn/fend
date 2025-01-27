@@ -7,7 +7,7 @@ rm -rfv ../wasm/pkg
 
 npm ci
 npm exec tsc
-node --experimental-strip-types esbuild.ts
+node esbuild.ts
 
 rm -f lambda_package.zip
 
