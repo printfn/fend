@@ -391,7 +391,6 @@ fn implicit_lambda_12() {
 }
 
 #[test]
-#[ignore]
 fn implicit_lambda_13() {
 	test_eval("-sqrt 4", "-2");
 }
