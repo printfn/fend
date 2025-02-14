@@ -40,14 +40,6 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	const { currentInput, submit, onInput, upArrow, downArrow, hint } = useCurrentInput(evaluateHint);
 	const inputText = useRef<HTMLTextAreaElement>(null);
 	const pendingOutput = useRef<HTMLParagraphElement>(null);
-	const focus = useCallback(() => {
-		// allow the user to select text for copying and
-		// pasting, but if text is deselected (collapsed)
-		// refocus the input field
-		if (document.activeElement !== inputText.current && document.getSelection()?.isCollapsed) {
-			inputText.current?.focus();
-		}
-	}, []);
 
 	const [isPending, startTransition] = useTransition();
 	const onKeyDown = useCallback(
@@ -107,11 +99,19 @@ export default function App({ widget = false }: { widget?: boolean }) {
 		[currentInput, submit, onInput, downArrow, upArrow, evaluate],
 	);
 	useEffect(() => {
+		const focus = () => {
+			// allow the user to select text for copying and
+			// pasting, but if text is deselected (collapsed)
+			// refocus the input field
+			if (document.activeElement !== inputText.current && document.getSelection()?.isCollapsed) {
+				inputText.current?.focus();
+			}
+		};
 		document.addEventListener('click', focus);
 		return () => {
 			document.removeEventListener('click', focus);
 		};
-	}, [focus]);
+	}, []);
 	return (
 		<main>
 			{!widget && (
