@@ -973,7 +973,7 @@ impl Value {
 					}
 					Err(FendError::Interrupted) => return Err(FendError::Interrupted),
 					Err(_) => (),
-				};
+				}
 			}
 			res_components.push(comp.clone());
 		}

@@ -309,7 +309,7 @@ impl<F: Fn() -> Option<BigUint>> Iterator for HomographicIterator<F> {
 					self.state = HomographicState::Terminated;
 					return None;
 				}
-			};
+			}
 		}
 	}
 }

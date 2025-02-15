@@ -466,7 +466,7 @@ impl BigUint {
 			Ordering::Equal => return Self::from(0),
 			Ordering::Less => unreachable!("number would be less than 0"),
 			Ordering::Greater => (),
-		};
+		}
 		if other.is_zero() {
 			return self;
 		}

@@ -351,7 +351,7 @@ fn parse_implicit_addition(input: &[Token]) -> ParseResult<'_> {
 				Expr::Bop(Bop::ImplicitPlus, Box::new(res), Box::new(rhs)),
 				remaining,
 			));
-		};
+		}
 	}
 	Ok((res, input))
 }
