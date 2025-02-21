@@ -1,6 +1,6 @@
+use crate::Error;
 use crate::config::{self, ExchangeRateSource};
 use crate::file_paths;
-use crate::Error;
 use std::{error, fmt, fs, io::Write, time};
 
 const MAX_AGE: u64 = 86400 * 3;
@@ -126,7 +126,7 @@ fn parse_exchange_rates_un(exchange_rates: &str) -> Result<Vec<(String, f64)>, E
 			None if exchange_rates
 				== "\r\n\t</UN_OPERATIONAL_RATES>\r\n</UN_OPERATIONAL_RATES_DATASET>" =>
 			{
-				break
+				break;
 			}
 			None => return Err(err.into()),
 		};

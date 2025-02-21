@@ -1,16 +1,16 @@
 use std::borrow::Cow;
 
+use crate::Attrs;
 use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
 use crate::result::FResult;
 use crate::value::Value;
-use crate::Attrs;
 
 mod builtin;
 
-pub(crate) use builtin::lookup_default_unit;
 pub(crate) use builtin::IMPLICIT_UNIT_MAP;
+pub(crate) use builtin::lookup_default_unit;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(crate) enum PrefixRule {

@@ -1,11 +1,11 @@
+use crate::DecimalSeparatorStyle;
 use crate::error::{FendError, Interrupt};
 use crate::format::Format;
-use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::Exact;
+use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::{Base, FormattingStyle};
 use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
-use crate::DecimalSeparatorStyle;
 use std::cmp::Ordering;
 use std::ops::Neg;
 use std::{fmt, hash, io};

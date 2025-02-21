@@ -2,10 +2,10 @@ use std::cmp::Ordering;
 use std::{borrow::Cow, collections::HashMap, fmt, io};
 
 use super::base_unit::BaseUnit;
+use crate::Interrupt;
 use crate::num::complex::Complex;
 use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
-use crate::Interrupt;
 
 /// A named unit, like kilogram, megabyte or percent.
 #[derive(Clone)]

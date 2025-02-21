@@ -6,7 +6,7 @@ use crate::num::{Base, FormattingStyle, Number, Range, RangeBound};
 use crate::result::FResult;
 use crate::scope::Scope;
 use crate::serialize::{Deserialize, Serialize};
-use crate::value::{built_in_function::BuiltInFunction, ApplyMulHandling, Value};
+use crate::value::{ApplyMulHandling, Value, built_in_function::BuiltInFunction};
 use crate::{Attrs, Context, DecimalSeparatorStyle};
 use std::borrow::Cow;
 use std::sync::Arc;

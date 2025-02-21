@@ -38,7 +38,7 @@ impl serde::de::Visitor<'_> for CustomUnitAttributeVisitor {
 						"is-long-prefix",
 						"alias",
 					],
-				))
+				));
 			}
 		})
 	}
@@ -82,7 +82,9 @@ impl<'de> serde::Deserialize<'de> for CustomUnitDefinition {
 			type Value = CustomUnitDefinition;
 
 			fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-				formatter.write_str("a custom unit definition, with properties `singular`, `plural`, `definition` and `attribute`")
+				formatter.write_str(
+					"a custom unit definition, with properties `singular`, `plural`, `definition` and `attribute`",
+				)
 			}
 
 			fn visit_map<V: serde::de::MapAccess<'de>>(

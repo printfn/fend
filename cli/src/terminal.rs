@@ -26,7 +26,7 @@ pub fn init_prompt<'a>(
 	context: &context::Context<'a>,
 ) -> Result<PromptState<'a>, Box<dyn error::Error>> {
 	use rustyline::{
-		config::Builder, history::FileHistory, Cmd, Editor, KeyCode, KeyEvent, Modifiers, Movement,
+		Cmd, Editor, KeyCode, KeyEvent, Modifiers, Movement, config::Builder, history::FileHistory,
 	};
 
 	let mut rl = Editor::<helper::Helper<'_>, FileHistory>::with_config(

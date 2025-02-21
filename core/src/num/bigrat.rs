@@ -1,10 +1,10 @@
+use crate::DecimalSeparatorStyle;
 use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
-use crate::DecimalSeparatorStyle;
 use core::f64;
 use std::{cmp, fmt, hash, io, ops};
 
@@ -1304,8 +1304,8 @@ impl fmt::Display for FormattedBigRat {
 
 #[cfg(test)]
 mod tests {
-	use super::sign::Sign;
 	use super::BigRat;
+	use super::sign::Sign;
 
 	use crate::num::biguint::BigUint;
 	use crate::result::FResult;

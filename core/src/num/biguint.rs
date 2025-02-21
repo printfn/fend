@@ -1,10 +1,10 @@
 use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
-use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
+use crate::num::{Base, Exact, Range, RangeBound, out_of_range};
 use crate::result::FResult;
 use crate::serialize::{Deserialize, Serialize};
-use std::cmp::{max, Ordering};
+use std::cmp::{Ordering, max};
 use std::{fmt, hash, io};
 
 #[derive(Clone)]
@@ -1141,7 +1141,15 @@ mod tests {
 			"ten quintillion three hundred and forty-seven trillion one billion twenty-three million two"
 		);
 		assert_eq!(
-			BigUint::Large(vec![0, 0x0e3c_bb5a_c574_1c64, 0x1cfd_a3a5_6977_58bf, 0x097e_dd87]).to_words(int).unwrap_err().to_string(),
+			BigUint::Large(vec![
+				0,
+				0x0e3c_bb5a_c574_1c64,
+				0x1cfd_a3a5_6977_58bf,
+				0x097e_dd87
+			])
+			.to_words(int)
+			.unwrap_err()
+			.to_string(),
 			"1000000000000000000000000000000000000000000000000000000000000000000 must lie in the interval [0, 10^66 - 1]"
 		);
 		Ok(())

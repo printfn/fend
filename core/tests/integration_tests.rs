@@ -1,4 +1,4 @@
-use fend_core::{evaluate, Context};
+use fend_core::{Context, evaluate};
 
 #[track_caller]
 fn test_serialization_roundtrip(context: &mut Context) {
@@ -125,10 +125,12 @@ fn two_pi() {
 #[test]
 fn pi_to_fraction() {
 	let mut ctx = Context::new();
-	assert!(evaluate("pi to fraction", &mut ctx)
-		.unwrap()
-		.get_main_result()
-		.starts_with("approx."));
+	assert!(
+		evaluate("pi to fraction", &mut ctx)
+			.unwrap()
+			.get_main_result()
+			.starts_with("approx.")
+	);
 }
 
 const DIVISION_BY_ZERO_ERROR: &str = "division by zero";
@@ -6036,9 +6038,15 @@ fn test_words() {
 		"one million two hundred and thirty-four thousand five hundred and sixty-seven",
 	);
 	test_eval_simple("1000000000 to words", "one billion");
-	test_eval_simple("9876543210 to words", "nine billion eight hundred and seventy-six million five hundred and forty-three thousand two hundred and ten");
+	test_eval_simple(
+		"9876543210 to words",
+		"nine billion eight hundred and seventy-six million five hundred and forty-three thousand two hundred and ten",
+	);
 	test_eval_simple("1000000000000 to words", "one trillion");
-	test_eval_simple("1234567890123456 to words", "one quadrillion two hundred and thirty-four trillion five hundred and sixty-seven billion eight hundred and ninety million one hundred and twenty-three thousand four hundred and fifty-six");
+	test_eval_simple(
+		"1234567890123456 to words",
+		"one quadrillion two hundred and thirty-four trillion five hundred and sixty-seven billion eight hundred and ninety million one hundred and twenty-three thousand four hundred and fifty-six",
+	);
 	test_eval_simple("1000000000000000000000 to words", "one sextillion");
 	test_eval_simple("1000000000000000000000000 to words", "one septillion");
 }
@@ -6083,7 +6091,12 @@ fn kilopond() {
 	test_eval("kilopond to N", "9.80665 N");
 	test_eval("megapond to N", "9806.65 N");
 	test_eval("gf to N", "0.00980665 N");
-	expect_error("GF to N", Some("cannot convert from GF to N: units 'ampere^2 second^4 kilogram^-1 meter^-2' and 'kilogram meter / second^2' are incompatible"));
+	expect_error(
+		"GF to N",
+		Some(
+			"cannot convert from GF to N: units 'ampere^2 second^4 kilogram^-1 meter^-2' and 'kilogram meter / second^2' are incompatible",
+		),
+	);
 }
 
 #[derive(Debug)]

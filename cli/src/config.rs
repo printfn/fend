@@ -43,7 +43,7 @@ impl serde::de::Visitor<'_> for ExchangeRateSourceVisitor {
 				return Err(serde::de::Error::unknown_variant(
 					v,
 					&["EU", "UN", "disabled"],
-				))
+				));
 			}
 		})
 	}
@@ -103,7 +103,9 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 					} else if enable_colors == "always".into() {
 						result.enable_colors = true;
 					} else {
-						eprintln!("Error: unknown config setting for `{key}`, expected one of `'never'`, `'auto'` or `'always'`");
+						eprintln!(
+							"Error: unknown config setting for `{key}`, expected one of `'never'`, `'auto'` or `'always'`"
+						);
 					}
 					seen_enable_colors = true;
 				}
@@ -151,7 +153,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 							return Err(serde::de::Error::invalid_value(
 								serde::de::Unexpected::Str(v),
 								&"`ignore` or `warn`",
-							))
+							));
 						}
 					};
 				}
@@ -174,7 +176,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 							return Err(serde::de::Error::invalid_value(
 								serde::de::Unexpected::Str(v),
 								&"`default`, `dot` or `comma`",
-							))
+							));
 						}
 					};
 					seen_decimal_separator_style = true;
