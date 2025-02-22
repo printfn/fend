@@ -24,7 +24,8 @@ impl From<HomeDirError> for io::Error {
 }
 
 fn get_home_dir() -> Result<path::PathBuf, HomeDirError> {
-	let Some(home_dir) = home::home_dir() else {
+	#[allow(deprecated)]
+	let Some(home_dir) = env::home_dir() else {
 		return Err(HomeDirError);
 	};
 	Ok(home_dir)

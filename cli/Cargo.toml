@@ -13,7 +13,6 @@ readme = "../README.md"
 [dependencies]
 ctrlc = "3.4.5"
 fend-core.workspace = true
-home = "0.5.11"
 rand = { version = "0.9.0", default-features = false, features = ["thread_rng"] }
 rustyline = { version =  "15.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
 serde = { version = "1.0.218", default-features = false }
