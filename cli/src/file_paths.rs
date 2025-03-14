@@ -19,7 +19,7 @@ impl error::Error for HomeDirError {}
 
 impl From<HomeDirError> for io::Error {
 	fn from(e: HomeDirError) -> Self {
-		Self::new(io::ErrorKind::Other, e)
+		io::Error::other(e)
 	}
 }
 

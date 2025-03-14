@@ -248,7 +248,7 @@ fn read_config_file() -> Config {
 	let config = match toml::from_str(&config_string) {
 		Ok(config) => config,
 		Err(e) => {
-			eprintln!("Error: invalid config file in {path:?}:\n{e}");
+			eprintln!("Error: invalid config file in {}:\n{e}", path.display());
 			eprint!("Using the default config file instead, you can view it ");
 			eprintln!("by running `fend --default-config`");
 			Config::default()
