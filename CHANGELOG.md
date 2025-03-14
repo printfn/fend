@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.5.6 (2025-03-14)
+
+* Improve accuracy of pi and roots
+* Fix parsing of negated function calls like `-sqrt 4`
+* Add miscellaneous `fend-web` UI improvements
+
 ### v1.5.5 (2024-11-17)
 
 * Fix build errors in 1.5.4
