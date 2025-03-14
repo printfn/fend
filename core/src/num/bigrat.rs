@@ -967,7 +967,7 @@ impl BigRat {
 		int: &I,
 	) -> FResult<Self> {
 		let mut high_bound = low_bound.clone().add(1.into(), int)?;
-		for _ in 0..30 {
+		for _ in 0..50 {
 			let guess = low_bound
 				.clone()
 				.add(high_bound.clone(), int)?

@@ -573,7 +573,7 @@ fn large_simple_subtraction_2() {
 
 #[test]
 fn sqrt_half() {
-	test_eval("sqrt (1/2)", "approx. 0.7071067814");
+	test_eval("sqrt (1/2)", "approx. 0.7071067811");
 }
 
 #[test]
@@ -588,7 +588,7 @@ fn sqrt_1() {
 
 #[test]
 fn sqrt_2() {
-	test_eval("sqrt 2", "approx. 1.4142135619");
+	test_eval("sqrt 2", "approx. 1.4142135623");
 }
 
 #[test]
@@ -1202,7 +1202,7 @@ fn powers_15() {
 
 #[test]
 fn powers_16() {
-	test_eval("4^(1/4)", "approx. 1.4142135619");
+	test_eval("4^(1/4)", "approx. 1.4142135623");
 }
 
 #[test]
@@ -1214,7 +1214,7 @@ fn powers_17() {
 fn powers_18() {
 	test_eval(
 		"5.2*10^15*300^(3/2)",
-		"approx. 27019992598076723515.9873962402",
+		"approx. 27019992598074485776.9266786817",
 	);
 }
 
@@ -2501,7 +2501,7 @@ fn abs_2_i() {
 
 #[test]
 fn abs_1_plus_i() {
-	test_eval("abs (1 + i)", "approx. 1.4142135619");
+	test_eval("abs (1 + i)", "approx. 1.4142135623");
 }
 
 #[test]
@@ -5398,7 +5398,7 @@ fn day_of_week_type_name() {
 
 #[test]
 fn phi() {
-	test_eval("phi", "approx. 1.6180339886");
+	test_eval("phi", "approx. 1.6180339887");
 }
 
 #[test]
