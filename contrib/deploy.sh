@@ -97,10 +97,13 @@ cargo fmt -- --check
 echo "Making sure we are logged in to npm..."
 npm whoami
 
+echo "Making sure we are logged in to crates.io..."
+cargo owner --list fend >/dev/null
+
 PATH="$HOME/.cargo/bin:$PATH"
 echo "Ensure that we are using Rustup"
 rustc_cmd=$(command -v rustc)
-if [[ ! "$rustc_cmd" =~ .cargo/bin/rustc$ ]]; then
+if [[ ! "$rustc_cmd" =~ .(cargo|rustup)/bin/rustc$ ]]; then
 	fail "Using $rustc_cmd which does not seem to be from Rustup"
 fi
 
