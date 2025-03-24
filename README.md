@@ -59,7 +59,7 @@ $ fend
 
 ### Packages
 
-* [Homebrew](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/fend.rb)
+* [Homebrew](https://github.com/Homebrew/brew#homebrew)
 * [MacPorts](https://ports.macports.org/port/fend/)
 * [AUR (built from source)](https://aur.archlinux.org/packages/fend/)
 * [AUR (pre-built binary)](https://aur.archlinux.org/packages/fend-bin/)
