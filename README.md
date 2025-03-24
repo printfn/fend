@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/printfn/fend/branch/main/graph/badge.svg)](https://codecov.io/gh/printfn/fend)
 [![crates.io](https://img.shields.io/crates/v/fend)](https://crates.io/crates/fend)
 [![downloads](https://img.shields.io/crates/d/fend-core)](https://crates.io/crates/fend)
+[![license](https://img.shields.io/github/license/printfn/fend)](https://github.com/printfn/fend/blob/main/LICENSE.md)
 
 <a href="https://printfn.github.io/fend"><img alt="fend icon" src="https://raw.githubusercontent.com/printfn/fend/main/icon/icon.svg" width="100" /></a>
 
