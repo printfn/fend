@@ -12,6 +12,7 @@ pub struct Config {
 	pub max_history_size: usize,
 	pub enable_internet_access: bool,
 	pub exchange_rate_source: ExchangeRateSource,
+	pub exchange_rate_max_age: u64,
 	pub custom_units: Vec<CustomUnitDefinition>,
 	pub decimal_separator: DecimalSeparatorStyle,
 	unknown_settings: UnknownSettings,
@@ -80,6 +81,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 		let mut seen_max_hist_size = false;
 		let mut seen_enable_internet_access = false;
 		let mut seen_exchange_rate_source = false;
+		let mut seen_exchange_rate_max_age = false;
 		let mut seen_custom_units = false;
 		let mut seen_decimal_separator_style = false;
 		while let Some(key) = map.next_key::<String>()? {
@@ -122,6 +124,13 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 					}
 					result.exchange_rate_source = map.next_value()?;
 					seen_exchange_rate_source = true;
+				}
+				"exchange-rate-max-age" => {
+					if seen_exchange_rate_max_age {
+						return Err(serde::de::Error::duplicate_field("exchange-rate-max-age"));
+					}
+					result.exchange_rate_max_age = map.next_value()?;
+					seen_exchange_rate_max_age = true;
 				}
 				"colors" => {
 					if seen_colors {
@@ -205,6 +214,7 @@ impl<'de> serde::Deserialize<'de> for Config {
 			"custom-units",
 			"decimal-separator-style",
 			"exchange-rate-source",
+			"exchange-rate-max-age",
 		];
 		deserializer.deserialize_struct("Config", FIELDS, ConfigVisitor)
 	}
@@ -221,6 +231,7 @@ impl Default for Config {
 			enable_internet_access: true,
 			unknown_settings: UnknownSettings::Warn,
 			exchange_rate_source: ExchangeRateSource::EuropeanUnion,
+			exchange_rate_max_age: 60 * 60 * 24 * 3,
 			custom_units: vec![],
 			decimal_separator: DecimalSeparatorStyle::Dot,
 			unknown_keys: vec![],

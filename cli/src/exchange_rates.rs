@@ -1,9 +1,8 @@
+use std::{error, fmt, fs, io::Write, time};
+
 use crate::Error;
 use crate::config::{self, ExchangeRateSource};
 use crate::file_paths;
-use std::{error, fmt, fs, io::Write, time};
-
-const MAX_AGE: u64 = 86400 * 3;
 
 fn get_current_timestamp() -> Result<u64, Error> {
 	Ok(time::SystemTime::now()
@@ -19,7 +18,7 @@ fn get_cache_filename(source: config::ExchangeRateSource) -> Result<&'static str
 	})
 }
 
-fn load_cached_data(source: config::ExchangeRateSource) -> Result<String, Error> {
+fn load_cached_data(source: config::ExchangeRateSource, max_age: u64) -> Result<String, Error> {
 	let mut cache_file = file_paths::get_cache_dir(file_paths::DirMode::DontCreate)?;
 	cache_file.push(get_cache_filename(source)?);
 	let cache_contents = fs::read_to_string(cache_file)?;
@@ -30,7 +29,7 @@ fn load_cached_data(source: config::ExchangeRateSource) -> Result<String, Error>
 	let age = current_timestamp
 		.checked_sub(timestamp)
 		.ok_or("invalid cache timestamp")?;
-	if age > MAX_AGE {
+	if age > max_age {
 		return Err("cache expired".into());
 	}
 	Ok(cache_xml.to_string())
@@ -55,8 +54,11 @@ fn http_get(_url: &str) -> Result<String, Error> {
 	Err("internet access has been disabled in this build of fend".into())
 }
 
-fn load_exchange_rate_xml(source: config::ExchangeRateSource) -> Result<(String, bool), Error> {
-	match load_cached_data(source) {
+fn load_exchange_rate_xml(
+	source: config::ExchangeRateSource,
+	max_age: u64,
+) -> Result<(String, bool), Error> {
+	match load_cached_data(source, max_age) {
 		Ok(xml) => return Ok((xml, true)),
 		Err(_e) => {
 			// failed to load cached data
@@ -152,8 +154,11 @@ fn parse_exchange_rates_un(exchange_rates: &str) -> Result<Vec<(String, f64)>, E
 	Ok(result)
 }
 
-fn get_exchange_rates(source: config::ExchangeRateSource) -> Result<Vec<(String, f64)>, Error> {
-	let (xml, cached) = load_exchange_rate_xml(source)?;
+fn get_exchange_rates(
+	source: config::ExchangeRateSource,
+	max_age: u64,
+) -> Result<Vec<(String, f64)>, Error> {
+	let (xml, cached) = load_exchange_rate_xml(source, max_age)?;
 	let parsed_data = parse_exchange_rates(source, &xml)?;
 	if !cached {
 		store_cached_data(source, &xml)?;
@@ -195,6 +200,7 @@ impl error::Error for ExchangeRateSourceDisabledError {}
 pub struct ExchangeRateHandler {
 	pub enable_internet_access: bool,
 	pub source: ExchangeRateSource,
+	pub max_age: u64,
 }
 
 impl fend_core::ExchangeRateFn for ExchangeRateHandler {
@@ -205,7 +211,7 @@ impl fend_core::ExchangeRateFn for ExchangeRateHandler {
 		if !self.enable_internet_access {
 			return Err(InternetAccessDisabledError.into());
 		}
-		let exchange_rates = get_exchange_rates(self.source)?;
+		let exchange_rates = get_exchange_rates(self.source, self.max_age)?;
 		for (c, rate) in exchange_rates {
 			if currency == c {
 				return Ok(rate);
