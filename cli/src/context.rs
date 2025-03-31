@@ -74,6 +74,7 @@ impl<'a> Context<'a> {
 		let exchange_rate_handler = exchange_rates::ExchangeRateHandler {
 			enable_internet_access: config.enable_internet_access,
 			source: config.exchange_rate_source,
+			max_age: config.exchange_rate_max_age,
 		};
 		ctx_borrow
 			.core_ctx

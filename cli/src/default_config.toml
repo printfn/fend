@@ -36,6 +36,10 @@ enable-internet-access = true
 #   * 'disabled' will disable loading of exchange rate data
 exchange-rate-source = "EU"
 
+# Maximum age of cached exchange rates in seconds.
+# If the cached data is older than this value, it will be refreshed.
+exchange-rate-max-age = 259200
+
 # Decimal and thousands separator style. This can be used to switch
 # between e.g. 1,234.56 and 1.234,56.
 #
