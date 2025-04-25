@@ -586,7 +586,7 @@ const CGS_UNITS: &[UnitTuple] = &[
 	("maxwell", "maxwells", "10^-8 weber", ""),
 	("phot", "phots", "10000 lux", ""),
 	("stilb", "stilbs", "10000 candela/m^2", ""),
-	// abbrevations
+	// abbreviations
 	("gallileo", "gallileos", "gal", ""),
 	("dyn", "dyns", "dyne", ""),
 	("Ba", "", "barye", ""),

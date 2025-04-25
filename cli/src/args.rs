@@ -7,7 +7,7 @@ use std::{env, fs};
 /// the [`env::args()`]`.skip(1)` iterator.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
-	/// Print the help message (without quitting explaination).
+	/// Print the help message (without quitting explanation).
 	Help,
 	/// Print the current version.
 	Version,
