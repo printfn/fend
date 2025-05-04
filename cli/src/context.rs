@@ -88,7 +88,7 @@ impl<'a> Context<'a> {
 		ctx_borrow.core_ctx.set_output_mode_terminal();
 		ctx_borrow.input_typed = !line.is_empty();
 		let int = HintInterrupt::default();
-		fend_core::evaluate_preview_with_interrupt(line, &mut ctx_borrow.core_ctx, &int)
+		fend_core::evaluate_preview_with_interrupt(line, &ctx_borrow.core_ctx, &int)
 	}
 
 	pub fn serialize(&self) -> Result<Vec<u8>, String> {
