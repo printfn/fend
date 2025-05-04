@@ -485,18 +485,17 @@ pub fn evaluate_with_interrupt(
 /// also disabled. Currency conversions (exchange rates) are disabled.
 pub fn evaluate_preview_with_interrupt(
 	input: &str,
-	context: &mut Context,
+	context: &Context,
 	int: &impl Interrupt,
 ) -> FendResult {
 	let empty = FendResult::empty();
 	// unfortunately making a complete copy of the context is necessary
 	// because we want variables to still work in multi-statement inputs
 	// like `a = 2; 5a`.
-	let context_clone = context.clone();
-	context.random_u32 = None;
-	context.get_exchange_rate = None;
-	let result = evaluate_with_interrupt_internal(input, context, int);
-	*context = context_clone;
+	let mut context_clone = context.clone();
+	context_clone.random_u32 = None;
+	context_clone.get_exchange_rate = None;
+	let result = evaluate_with_interrupt_internal(input, &mut context_clone, int);
 	let Ok(result) = result else {
 		return empty;
 	};
