@@ -1,6 +1,6 @@
 [workspace]
-members = ["cli", "core", "wasm"]
 resolver = "2"
+members = ["cli", "core", "gemini", "wasm"]
 
 [workspace.package]
 version = "1.5.6"

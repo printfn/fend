@@ -20,3 +20,5 @@
 /windows-wix/.wix/
 /windows-wix/build/
 /windows-wix/obj/
+
+*.pem
