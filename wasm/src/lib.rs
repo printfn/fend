@@ -1,9 +1,9 @@
-use instant::Instant;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::OnceLock;
 use std::{error, fmt};
 use wasm_bindgen::prelude::*;
+use web_time::Instant;
 
 static CURRENCY_DATA: OnceLock<HashMap<String, f64>> = OnceLock::new();
 
