@@ -658,7 +658,7 @@ impl BigUint {
 
 		let mut i = num.len();
 		while i > 0 {
-			let start = if i >= 3 { i - 3 } else { 0 };
+			let start = i.saturating_sub(3);
 			chunks.push(&num[start..i]);
 			i = start;
 		}
