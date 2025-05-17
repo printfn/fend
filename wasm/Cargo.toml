@@ -24,4 +24,4 @@ wasm-bindgen = "0.2.100"
 web-time = "1.1.0"
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-Oz"]
+wasm-opt = ["-Oz", "--enable-nontrapping-float-to-int", "--enable-bulk-memory"]
