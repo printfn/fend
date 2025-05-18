@@ -100,7 +100,7 @@ npm whoami
 echo "Making sure we are logged in to crates.io..."
 cargo owner --list fend >/dev/null
 
-PATH="$HOME/.cargo/bin:$PATH"
+PATH="${XDG_DATA_HOME-$HOME/.local/share}/cargo/bin:$PATH"
 echo "Ensure that we are using Rustup"
 rustc_cmd=$(command -v rustc)
 if [[ ! "$rustc_cmd" =~ .(cargo|rustup)/bin/rustc$ ]]; then
