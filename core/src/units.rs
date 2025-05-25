@@ -51,6 +51,7 @@ fn expr_unit<I: Interrupt>(
 			format!("(1/{one_base_in_currency}) BASE_CURRENCY").as_str(),
 			None,
 			attrs,
+			&mut vec![],
 			context,
 			int,
 		)?
@@ -105,7 +106,8 @@ fn expr_unit<I: Interrupt>(
 		.map_or((false, definition), |remaining| (true, remaining));
 	// long prefixes like `hecto` are always treated as aliases
 	let alias = alias || rule == PrefixRule::LongPrefix;
-	let mut num = evaluate_to_value(definition, None, attrs, context, int)?.expect_num()?;
+	let mut num =
+		evaluate_to_value(definition, None, attrs, &mut vec![], context, int)?.expect_num()?;
 
 	// There are three cases to consider:
 	//   1. Unitless aliases (e.g. `million` or `mega`) should be treated as an

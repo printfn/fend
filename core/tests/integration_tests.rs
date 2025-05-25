@@ -5537,18 +5537,18 @@ fn test_invalid_dice_syntax_5() {
 
 #[test]
 fn unit_literal() {
-	test_eval("()", "()");
+	test_eval("()", "");
 }
 
 #[test]
 fn empty_statements() {
 	test_eval("1234;", "1234");
 	test_eval(";432", "432");
-	test_eval(";", "()");
+	test_eval(";", "");
 	test_eval(";;3", "3");
 	test_eval("34;;;", "34");
 	test_eval(";2;;3;a=4;;4a", "16");
-	test_eval(";2;;3;a=4;;4a;;;()", "()");
+	test_eval(";2;;3;a=4;;4a;;;()", "");
 }
 
 #[test]

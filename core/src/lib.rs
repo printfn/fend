@@ -56,7 +56,6 @@ use serialize::{Deserialize, Serialize};
 pub struct FendResult {
 	plain_result: String,
 	span_result: Vec<Span>,
-	is_unit: bool, // is this the () type
 	attrs: eval::Attrs,
 }
 
@@ -123,18 +122,24 @@ impl FendResult {
 		})
 	}
 
-	/// Returns whether or not the result is the `()` type. It can sometimes
-	/// be useful to hide these values.
 	#[must_use]
+	#[deprecated(note = "use `output_is_empty()` instead")]
 	pub fn is_unit_type(&self) -> bool {
-		self.is_unit
+		self.output_is_empty()
+	}
+
+	/// Returns whether the output should be hidden by default. This is set
+	/// if the output would just be the unit `()` type. It's useful to hide this
+	/// by default.
+	#[must_use]
+	pub fn output_is_empty(&self) -> bool {
+		self.span_result.is_empty()
 	}
 
 	fn empty() -> Self {
 		Self {
 			plain_result: String::new(),
 			span_result: vec![],
-			is_unit: true,
 			attrs: Attrs::default(),
 		}
 	}
@@ -235,6 +240,7 @@ pub struct Context {
 	fc_mode: FCMode,
 	random_u32: Option<fn() -> u32>,
 	output_mode: OutputMode,
+	echo_result: bool, // whether to automatically print the result
 	get_exchange_rate: Option<Arc<dyn ExchangeRateFn + Send + Sync>>,
 	custom_units: Vec<(String, String, String)>,
 	decimal_separator: DecimalSeparatorStyle,
@@ -249,8 +255,9 @@ impl fmt::Debug for Context {
 			.field("fc_mode", &self.fc_mode)
 			.field("random_u32", &self.random_u32)
 			.field("output_mode", &self.output_mode)
+			.field("echo_result", &self.echo_result)
 			.field("custom_units", &self.custom_units)
-			.field("decimal_separator_style", &self.decimal_separator)
+			.field("decimal_separator", &self.decimal_separator)
 			.finish_non_exhaustive()
 	}
 }
@@ -271,6 +278,7 @@ impl Context {
 			fc_mode: FCMode::CelsiusFahrenheit,
 			random_u32: None,
 			output_mode: OutputMode::SimpleText,
+			echo_result: true,
 			get_exchange_rate: None,
 			custom_units: vec![],
 			decimal_separator: DecimalSeparatorStyle::default(),
@@ -283,7 +291,7 @@ impl Context {
 	///
 	/// The first argument (`ms_since_1970`) must be the number of elapsed milliseconds
 	/// since January 1, 1970 at midnight UTC, ignoring leap seconds in the same way
-	/// as unix time.
+	/// as Unix time.
 	///
 	/// The second argument (`tz_offset_secs`) is the current time zone
 	/// offset to UTC, in seconds.
@@ -309,6 +317,13 @@ impl Context {
 	/// Clear the random number generator after setting it with via [`Self::set_random_u32_fn`]
 	pub fn disable_rng(&mut self) {
 		self.random_u32 = None;
+	}
+
+	/// Whether to automatically print the resulting value of this calculation.
+	/// This option is enabled by default. If disabled, only values printed
+	/// with the `print` or `println` functions will be shown in the output.
+	pub fn set_echo_result(&mut self, echo_result: bool) {
+		self.echo_result = echo_result;
 	}
 
 	/// Change the output mode to fixed-width terminal style. This enables ASCII
@@ -436,7 +451,7 @@ fn evaluate_with_interrupt_internal(
 		// no or blank input: return no output
 		return Ok(FendResult::empty());
 	}
-	let (result, is_unit, attrs) = match eval::evaluate_to_spans(input, None, context, int) {
+	let (result, attrs) = match eval::evaluate_to_spans(input, None, context, int) {
 		Ok(value) => value,
 		Err(e) => {
 			let mut error: &dyn Error = &e;
@@ -455,7 +470,6 @@ fn evaluate_with_interrupt_internal(
 	Ok(FendResult {
 		plain_result,
 		span_result: result,
-		is_unit,
 		attrs,
 	})
 }
@@ -501,7 +515,7 @@ pub fn evaluate_preview_with_interrupt(
 	};
 	let s = result.get_main_result();
 	if s.is_empty()
-		|| result.is_unit_type()
+		|| result.output_is_empty()
 		|| s.len() > 50
 		|| s.trim() == input.trim()
 		|| s.contains(|c| c < ' ')

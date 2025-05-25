@@ -29,7 +29,7 @@ You can write in any other base (between 2 and 36 inclusive) by writing `<base>#
 100
 ```
 
-There is no difference between `to`, `as` or `in` to convert between bases, formats or units.
+There is no difference between `to`, `as` or `in` to convert between bases, formats, or units.
 
 You can also use `e` to for exponential notation, like so:
 
