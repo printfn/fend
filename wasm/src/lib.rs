@@ -112,7 +112,7 @@ pub fn evaluate_fend_with_timeout(input: &str, timeout: u32) -> String {
 	let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
 	match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
 		Ok(res) => {
-			if res.is_unit_type() {
+			if res.output_is_empty() {
 				return "".to_string();
 			}
 			res.get_main_result().to_string()
@@ -133,7 +133,7 @@ pub fn evaluate_fend_with_timeout_multiple(inputs: &str, timeout: u32) -> String
 		let interrupt = TimeoutInterrupt::new_with_timeout(u128::from(timeout));
 		match fend_core::evaluate_with_interrupt(input, &mut ctx, &interrupt) {
 			Ok(res) => {
-				if !res.is_unit_type() {
+				if !res.output_is_empty() {
 					result.push_str(res.get_main_result());
 				}
 			}
@@ -167,7 +167,7 @@ pub fn evaluate_fend_with_variables_json(input: &str, timeout: u32, variables: &
 		Ok(res) => {
 			let escaped_result = {
 				let mut escaped_result = String::new();
-				if !res.is_unit_type() {
+				if !res.output_is_empty() {
 					fend_core::json::escape_string(res.get_main_result(), &mut escaped_result);
 				}
 				escaped_result

@@ -45,23 +45,20 @@ fn eval_and_print_res(
 	int: &impl fend_core::Interrupt,
 	config: &config::Config,
 ) -> EvalResult {
-	match context.eval(line, int, config) {
+	match context.eval(line, print_res, int, config) {
 		Ok(res) => {
 			let result: Vec<_> = res.get_main_result_spans().collect();
-			if result.is_empty() || res.is_unit_type() {
+			if result.is_empty() || res.output_is_empty() {
 				return EvalResult::NoInput;
 			}
-			if print_res {
-				let string_result = if config.enable_colors {
-					print_spans(result, config)
-				} else {
-					res.get_main_result().to_string()
-				};
-				if res.has_trailing_newline() {
-					println!("{string_result}");
-				} else {
-					print!("{string_result}");
-				}
+			let string_result = if config.enable_colors {
+				print_spans(result, config)
+			} else {
+				res.get_main_result().to_string()
+			};
+			print!("{string_result}");
+			if res.has_trailing_newline() && !res.get_main_result().ends_with('\n') {
+				println!();
 			}
 			EvalResult::Ok
 		}

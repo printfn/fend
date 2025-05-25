@@ -65,6 +65,7 @@ impl<'a> Context<'a> {
 	pub fn eval(
 		&self,
 		line: &str,
+		echo_result: bool,
 		int: &impl fend_core::Interrupt,
 		config: &config::Config,
 	) -> Result<fend_core::FendResult, String> {
@@ -79,6 +80,7 @@ impl<'a> Context<'a> {
 		ctx_borrow
 			.core_ctx
 			.set_exchange_rate_handler_v1(exchange_rate_handler);
+		ctx_borrow.core_ctx.set_echo_result(echo_result);
 		ctx_borrow.input_typed = false;
 		fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
 	}
