@@ -39,11 +39,16 @@ fn expr_unit<I: Interrupt>(
 	let (singular, plural, definition) = unit_def;
 	let mut definition = definition.trim();
 	if definition == "$CURRENCY" {
-		let Some(exchange_rate_fn) = &context.get_exchange_rate else {
+		let Some(exchange_rate_fn) = &context.get_exchange_rate_v2 else {
 			return Err(FendError::NoExchangeRatesAvailable);
 		};
 		let one_base_in_currency = exchange_rate_fn
-			.relative_to_base_currency(&singular)
+			.relative_to_base_currency(
+				&singular,
+				&crate::ExchangeRateFnV2Options {
+					is_preview: context.is_preview,
+				},
+			)
 			.map_err(|e| {
 				FendError::Wrap(format!("failed to retrieve {singular} exchange rate"), e)
 			})?;

@@ -57,12 +57,16 @@ fn http_get(_url: &str) -> Result<String, Error> {
 fn load_exchange_rate_xml(
 	source: config::ExchangeRateSource,
 	max_age: u64,
+	options: &fend_core::ExchangeRateFnV2Options,
 ) -> Result<(String, bool), Error> {
 	match load_cached_data(source, max_age) {
 		Ok(xml) => return Ok((xml, true)),
 		Err(_e) => {
 			// failed to load cached data
 		}
+	}
+	if options.is_preview() {
+		return Err(ExchangeRateSourceDisabledError.into());
 	}
 	let url = match source {
 		ExchangeRateSource::Disabled => return Err(ExchangeRateSourceDisabledError.into()),
@@ -157,8 +161,9 @@ fn parse_exchange_rates_un(exchange_rates: &str) -> Result<Vec<(String, f64)>, E
 fn get_exchange_rates(
 	source: config::ExchangeRateSource,
 	max_age: u64,
+	options: &fend_core::ExchangeRateFnV2Options,
 ) -> Result<Vec<(String, f64)>, Error> {
-	let (xml, cached) = load_exchange_rate_xml(source, max_age)?;
+	let (xml, cached) = load_exchange_rate_xml(source, max_age, options)?;
 	let parsed_data = parse_exchange_rates(source, &xml)?;
 	if !cached {
 		store_cached_data(source, &xml)?;
@@ -203,15 +208,16 @@ pub struct ExchangeRateHandler {
 	pub max_age: u64,
 }
 
-impl fend_core::ExchangeRateFn for ExchangeRateHandler {
+impl fend_core::ExchangeRateFnV2 for ExchangeRateHandler {
 	fn relative_to_base_currency(
 		&self,
 		currency: &str,
+		options: &fend_core::ExchangeRateFnV2Options,
 	) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>> {
 		if !self.enable_internet_access {
 			return Err(InternetAccessDisabledError.into());
 		}
-		let exchange_rates = get_exchange_rates(self.source, self.max_age)?;
+		let exchange_rates = get_exchange_rates(self.source, self.max_age, options)?;
 		for (c, rate) in exchange_rates {
 			if currency == c {
 				return Ok(rate);

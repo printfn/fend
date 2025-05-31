@@ -78,11 +78,18 @@ impl From<UnknownExchangeRate> for JsValue {
 	}
 }
 
-fn currency_handler(currency: &str) -> Result<f64, Box<dyn error::Error + Send + Sync + 'static>> {
-	match CURRENCY_DATA.get().and_then(|x| x.get(currency)) {
-		None => Err(Box::new(UnknownExchangeRate(currency.to_string()))
-			as Box<dyn error::Error + Send + Sync>),
-		Some(rate) => Ok(*rate),
+struct CurrencyHandler;
+impl fend_core::ExchangeRateFnV2 for CurrencyHandler {
+	fn relative_to_base_currency(
+		&self,
+		currency: &str,
+		_options: &fend_core::ExchangeRateFnV2Options,
+	) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>> {
+		match CURRENCY_DATA.get().and_then(|x| x.get(currency)) {
+			None => Err(Box::new(UnknownExchangeRate(currency.to_string()))
+				as Box<dyn error::Error + Send + Sync>),
+			Some(rate) => Ok(*rate),
+		}
 	}
 }
 
@@ -95,7 +102,7 @@ fn create_context() -> fend_core::Context {
 	);
 	ctx.set_random_u32_fn(random_u32);
 	if CURRENCY_DATA.get().is_some_and(|x| !x.is_empty()) {
-		ctx.set_exchange_rate_handler_v1(currency_handler);
+		ctx.set_exchange_rate_handler_v2(CurrencyHandler);
 	}
 	ctx
 }

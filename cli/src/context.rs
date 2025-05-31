@@ -48,6 +48,13 @@ impl InnerCtx {
 		}
 		res.core_ctx
 			.set_decimal_separator_style(config.decimal_separator);
+		let exchange_rate_handler = exchange_rates::ExchangeRateHandler {
+			enable_internet_access: config.enable_internet_access,
+			source: config.exchange_rate_source,
+			max_age: config.exchange_rate_max_age,
+		};
+		res.core_ctx
+			.set_exchange_rate_handler_v2(exchange_rate_handler);
 		res
 	}
 }
@@ -67,19 +74,10 @@ impl<'a> Context<'a> {
 		line: &str,
 		echo_result: bool,
 		int: &impl fend_core::Interrupt,
-		config: &config::Config,
 	) -> Result<fend_core::FendResult, String> {
 		let mut ctx_borrow = self.ctx.borrow_mut();
 		ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
 		ctx_borrow.core_ctx.set_output_mode_terminal();
-		let exchange_rate_handler = exchange_rates::ExchangeRateHandler {
-			enable_internet_access: config.enable_internet_access,
-			source: config.exchange_rate_source,
-			max_age: config.exchange_rate_max_age,
-		};
-		ctx_borrow
-			.core_ctx
-			.set_exchange_rate_handler_v1(exchange_rate_handler);
 		ctx_borrow.core_ctx.set_echo_result(echo_result);
 		ctx_borrow.input_typed = false;
 		fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
