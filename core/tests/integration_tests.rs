@@ -1251,7 +1251,7 @@ fn exponent_too_large() {
 #[test]
 fn i_powers() {
 	for (i, result) in (0..=100).zip(["1", "i", "-1", "-i"].iter().cycle()) {
-		test_eval(&format!("i^{}", i), result);
+		test_eval(&format!("i^{i}"), result);
 	}
 }
 

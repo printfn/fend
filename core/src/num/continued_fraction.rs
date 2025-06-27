@@ -839,7 +839,7 @@ mod tests {
 	}
 
 	#[test]
-	#[ignore]
+	#[ignore = "doesn't work"]
 	fn addition() {
 		let a = cf!(4);
 		let b = cf!(3);
