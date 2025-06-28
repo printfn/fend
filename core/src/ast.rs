@@ -379,19 +379,17 @@ impl Expr {
 /// returns true if rhs is '-1' or '(-1)'
 fn should_compute_inverse<I: Interrupt>(rhs: &Expr, int: &I) -> FResult<bool> {
 	if let Expr::UnaryMinus(inner) = rhs {
-		if let Expr::Literal(Value::Num(n)) = &**inner {
-			if n.is_unitless_one(int)? {
-				return Ok(true);
-			}
+		if let Expr::Literal(Value::Num(n)) = &**inner
+			&& n.is_unitless_one(int)?
+		{
+			return Ok(true);
 		}
-	} else if let Expr::Parens(inner) = rhs {
-		if let Expr::UnaryMinus(inner2) = &**inner {
-			if let Expr::Literal(Value::Num(n)) = &**inner2 {
-				if n.is_unitless_one(int)? {
-					return Ok(true);
-				}
-			}
-		}
+	} else if let Expr::Parens(inner) = rhs
+		&& let Expr::UnaryMinus(inner2) = &**inner
+		&& let Expr::Literal(Value::Num(n)) = &**inner2
+		&& n.is_unitless_one(int)?
+	{
+		return Ok(true);
 	}
 	Ok(false)
 }
@@ -733,10 +731,10 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 	int: &I,
 ) -> FResult<Value> {
 	let cloned_scope = scope.clone();
-	if let Some(ref scope) = cloned_scope {
-		if let Some(val) = scope.get(ident, attrs, spans, context, int)? {
-			return Ok(val);
-		}
+	if let Some(ref scope) = cloned_scope
+		&& let Some(val) = scope.get(ident, attrs, spans, context, int)?
+	{
+		return Ok(val);
 	}
 	if let Some(val) = context.variables.get(ident.as_str()) {
 		return Ok(val.clone());

@@ -666,25 +666,26 @@ static GREEK_UPPERCASE_LETTERS: [(&str, &str); 24] = [
 
 #[must_use]
 pub fn get_completions_for_prefix(mut prefix: &str) -> (usize, Vec<Completion>) {
-	if let Some((prefix, letter)) = prefix.rsplit_once('\\') {
-		if letter.starts_with(|c: char| c.is_ascii_alphabetic()) && letter.len() <= 7 {
-			return if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
-				GREEK_UPPERCASE_LETTERS
-			} else {
-				GREEK_LOWERCASE_LETTERS
-			}
-			.iter()
-			.find(|l| l.0 == letter)
-			.map_or((0, vec![]), |l| {
-				(
-					prefix.len(),
-					vec![Completion {
-						display: prefix.to_string(),
-						insert: l.1.to_string(),
-					}],
-				)
-			});
+	if let Some((prefix, letter)) = prefix.rsplit_once('\\')
+		&& letter.starts_with(|c: char| c.is_ascii_alphabetic())
+		&& letter.len() <= 7
+	{
+		return if letter.starts_with(|c: char| c.is_ascii_uppercase()) {
+			GREEK_UPPERCASE_LETTERS
+		} else {
+			GREEK_LOWERCASE_LETTERS
 		}
+		.iter()
+		.find(|l| l.0 == letter)
+		.map_or((0, vec![]), |l| {
+			(
+				prefix.len(),
+				vec![Completion {
+					display: prefix.to_string(),
+					insert: l.1.to_string(),
+				}],
+			)
+		});
 	}
 
 	let mut prepend = "";

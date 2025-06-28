@@ -60,15 +60,13 @@ impl Action {
 				(true, "--") => before_double_dash = false,
 				(_, arg) => {
 					let mut read_file = false;
-					if before_double_dash {
-						if let Ok(contents) = fs::read_to_string(arg) {
-							if !expr.is_empty() {
-								exprs.push(expr);
-								expr = String::new();
-							}
-							exprs.push(contents);
-							read_file = true;
+					if before_double_dash && let Ok(contents) = fs::read_to_string(arg) {
+						if !expr.is_empty() {
+							exprs.push(expr);
+							expr = String::new();
 						}
+						exprs.push(contents);
+						read_file = true;
 					}
 					if !read_file && !arg.trim().is_empty() {
 						if !expr.is_empty() {

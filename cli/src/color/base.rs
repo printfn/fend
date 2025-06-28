@@ -27,10 +27,10 @@ impl serde::de::Visitor<'_> for BaseVisitor {
 	}
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
-		if let Some(color_n) = v.strip_prefix("256:") {
-			if let Ok(n) = color_n.parse::<u8>() {
-				return Ok(Base::Color256(n));
-			}
+		if let Some(color_n) = v.strip_prefix("256:")
+			&& let Ok(n) = color_n.parse::<u8>()
+		{
+			return Ok(Base::Color256(n));
 		}
 		Ok(match v {
 			"black" => Base::Black,
