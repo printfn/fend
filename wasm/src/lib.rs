@@ -56,9 +56,13 @@ pub fn initialise_with_handlers(currency_data: js_sys::Map) {
 	});
 }
 
-fn random_u32() -> u32 {
-	let random_f64 = js_sys::Math::random();
-	(random_f64 * f64::from(u32::MAX)) as u32
+#[derive(Debug)]
+struct Random {}
+impl fend_core::Random for Random {
+	fn random_u32(&mut self) -> u32 {
+		let random_f64 = js_sys::Math::random();
+		(random_f64 * f64::from(u32::MAX)) as u32
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -100,7 +104,7 @@ fn create_context() -> fend_core::Context {
 		date.get_time() as u64,
 		date.get_timezone_offset() as i64 * 60,
 	);
-	ctx.set_random_u32_fn(random_u32);
+	ctx.set_rng(Random {});
 	if CURRENCY_DATA.get().is_some_and(|x| !x.is_empty()) {
 		ctx.set_exchange_rate_handler_v2(CurrencyHandler);
 	}

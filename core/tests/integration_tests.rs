@@ -5488,8 +5488,16 @@ fn coulomb_farad_mode() {
 #[test]
 fn test_rolling_dice() {
 	let mut ctx = Context::new();
-	ctx.set_random_u32_fn(|| 5);
+	ctx.set_rng(Five {});
 	evaluate("roll d20", &mut ctx).unwrap();
+}
+
+#[derive(Debug)]
+struct Five {}
+impl fend_core::Random for Five {
+	fn random_u32(&mut self) -> u32 {
+		5
+	}
 }
 
 #[test]

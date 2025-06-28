@@ -583,7 +583,7 @@ impl Value {
 		})
 	}
 
-	pub(crate) fn sample<I: Interrupt>(self, ctx: &crate::Context, int: &I) -> FResult<Self> {
+	pub(crate) fn sample<I: Interrupt>(self, ctx: &mut crate::Context, int: &I) -> FResult<Self> {
 		Ok(Self {
 			value: self.value.sample(ctx, int)?,
 			..self

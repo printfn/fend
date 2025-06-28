@@ -76,7 +76,7 @@ impl<'a> Context<'a> {
 		int: &impl fend_core::Interrupt,
 	) -> Result<fend_core::FendResult, String> {
 		let mut ctx_borrow = self.ctx.borrow_mut();
-		ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
+		ctx_borrow.core_ctx.set_rng(crate::random::Random::new());
 		ctx_borrow.core_ctx.set_output_mode_terminal();
 		ctx_borrow.core_ctx.set_echo_result(echo_result);
 		ctx_borrow.input_typed = false;
@@ -103,8 +103,4 @@ impl<'a> Context<'a> {
 	pub fn get_input_typed(&self) -> bool {
 		self.ctx.borrow().input_typed
 	}
-}
-
-fn random_u32() -> u32 {
-	rand::random()
 }
