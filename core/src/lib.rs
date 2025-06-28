@@ -34,6 +34,7 @@ pub mod json;
 mod lexer;
 mod num;
 mod parser;
+mod random;
 mod result;
 mod scope;
 mod serialize;
@@ -49,6 +50,7 @@ use std::{collections::HashMap, fmt, io};
 use error::FendError;
 pub(crate) use eval::Attrs;
 pub use interrupt::Interrupt;
+pub use random::Random;
 use result::FResult;
 use serialize::{Deserialize, Serialize};
 
@@ -286,12 +288,11 @@ impl DecimalSeparatorStyle {
 /// preserved, but you can also manually serialise all variables
 /// and recreate the context for every calculation, depending on
 /// which is easier.
-#[derive(Clone)]
 pub struct Context {
 	current_time: Option<CurrentTimeInfo>,
 	variables: HashMap<String, value::Value>,
 	fc_mode: FCMode,
-	random_u32: Option<fn() -> u32>,
+	rng: Option<Box<dyn Random>>,
 	output_mode: OutputMode,
 	echo_result: bool, // whether to automatically print the result
 	get_exchange_rate_v2: Option<Arc<dyn ExchangeRateFnV2 + Send + Sync>>,
@@ -307,13 +308,31 @@ impl fmt::Debug for Context {
 			.field("current_time", &self.current_time)
 			.field("variables", &self.variables)
 			.field("fc_mode", &self.fc_mode)
-			.field("random_u32", &self.random_u32)
+			.field("rng", &self.rng)
 			.field("output_mode", &self.output_mode)
 			.field("echo_result", &self.echo_result)
 			.field("custom_units", &self.custom_units)
 			.field("decimal_separator", &self.decimal_separator)
 			.field("is_preview", &self.is_preview)
 			.finish_non_exhaustive()
+	}
+}
+
+impl Clone for Context {
+	fn clone(&self) -> Self {
+		// we can't derive Clone because of the rng field
+		Self {
+			current_time: self.current_time.clone(),
+			variables: self.variables.clone(),
+			fc_mode: self.fc_mode.clone(),
+			rng: None,
+			output_mode: self.output_mode.clone(),
+			echo_result: self.echo_result,
+			get_exchange_rate_v2: self.get_exchange_rate_v2.clone(),
+			custom_units: self.custom_units.clone(),
+			decimal_separator: self.decimal_separator,
+			is_preview: self.is_preview,
+		}
 	}
 }
 
@@ -331,7 +350,7 @@ impl Context {
 			current_time: None,
 			variables: HashMap::new(),
 			fc_mode: FCMode::CelsiusFahrenheit,
-			random_u32: None,
+			rng: None,
 			output_mode: OutputMode::SimpleText,
 			echo_result: true,
 			get_exchange_rate_v2: None,
@@ -366,13 +385,13 @@ impl Context {
 	}
 
 	/// Set a random number generator
-	pub fn set_random_u32_fn(&mut self, random_u32: fn() -> u32) {
-		self.random_u32 = Some(random_u32);
+	pub fn set_rng(&mut self, rng: impl Random + 'static) {
+		self.rng = Some(Box::new(rng));
 	}
 
-	/// Clear the random number generator after setting it with via [`Self::set_random_u32_fn`]
+	/// Clear the random number generator after setting it with via [`Self::set_rng`]
 	pub fn disable_rng(&mut self) {
-		self.random_u32 = None;
+		self.rng = None;
 	}
 
 	/// Whether to automatically print the resulting value of this calculation.
@@ -574,7 +593,6 @@ pub fn evaluate_preview_with_interrupt(
 	// because we want variables to still work in multi-statement inputs
 	// like `a = 2; 5a`.
 	let mut context_clone = context.clone();
-	context_clone.random_u32 = None;
 	context_clone.is_preview = true;
 	let result = evaluate_with_interrupt_internal(input, &mut context_clone, int);
 	mem::drop(context_clone);

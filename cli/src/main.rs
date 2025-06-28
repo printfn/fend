@@ -15,6 +15,7 @@ mod exchange_rates;
 mod file_paths;
 mod helper;
 mod interrupt;
+mod random;
 mod terminal;
 
 use args::Action as ArgsAction;
