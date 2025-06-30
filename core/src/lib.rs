@@ -326,11 +326,11 @@ impl Clone for Context {
 			fc_mode: self.fc_mode.clone(),
 			random_u32: None,
 			output_mode: self.output_mode.clone(),
-			echo_result: self.echo_result.clone(),
+			echo_result: self.echo_result,
 			get_exchange_rate_v2: self.get_exchange_rate_v2.clone(),
 			custom_units: self.custom_units.clone(),
-			decimal_separator: self.decimal_separator.clone(),
-			is_preview: self.is_preview.clone(),
+			decimal_separator: self.decimal_separator,
+			is_preview: self.is_preview,
 		}
 	}
 }
