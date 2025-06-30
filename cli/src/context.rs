@@ -75,8 +75,12 @@ impl<'a> Context<'a> {
 		echo_result: bool,
 		int: &impl fend_core::Interrupt,
 	) -> Result<fend_core::FendResult, String> {
+		use rand::SeedableRng;
+
 		let mut ctx_borrow = self.ctx.borrow_mut();
-		ctx_borrow.core_ctx.set_random_u32_fn(random_u32);
+		ctx_borrow
+			.core_ctx
+			.set_random_u32_trait(Random(rand::rngs::StdRng::from_os_rng()));
 		ctx_borrow.core_ctx.set_output_mode_terminal();
 		ctx_borrow.core_ctx.set_echo_result(echo_result);
 		ctx_borrow.input_typed = false;
@@ -105,6 +109,11 @@ impl<'a> Context<'a> {
 	}
 }
 
-fn random_u32() -> u32 {
-	rand::random()
+struct Random(rand::rngs::StdRng);
+
+impl fend_core::random::RandomSource for Random {
+	fn get_random_u32(&mut self) -> u32 {
+		use rand::Rng;
+		self.0.random()
+	}
 }

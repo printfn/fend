@@ -30,6 +30,7 @@ mod ident;
 mod inline_substitutions;
 mod interrupt;
 /// This module is not meant to be used by other crates. It may change or be removed at any point.
+#[doc(hidden)]
 pub mod json;
 mod lexer;
 mod num;
@@ -173,6 +174,7 @@ enum OutputMode {
 }
 
 /// An exchange rate handler.
+#[deprecated(note = "Use `ExchangeRateFnV2` instead")]
 pub trait ExchangeRateFn {
 	/// Returns the value of a currency relative to the base currency.
 	/// The base currency depends on your implementation. fend-core can work
@@ -181,12 +183,14 @@ pub trait ExchangeRateFn {
 	/// # Errors
 	/// This function errors out if the currency was not found or the
 	/// conversion is impossible for any reason (HTTP request failed, etc.)
+	#[deprecated(note = "Use `ExchangeRateFnV2::relative_to_base_currency` instead")]
 	fn relative_to_base_currency(
 		&self,
 		currency: &str,
 	) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>;
 }
 
+#[allow(deprecated)]
 impl<T> ExchangeRateFn for T
 where
 	T: Fn(&str) -> Result<f64, Box<dyn std::error::Error + Send + Sync + 'static>>,
@@ -234,6 +238,7 @@ pub trait ExchangeRateFnV2 {
 }
 
 struct ExchangeRateV1CompatWrapper {
+	#[allow(deprecated)]
 	get_exchange_rate_v1: Arc<dyn ExchangeRateFn + Send + Sync>,
 }
 
@@ -246,8 +251,22 @@ impl ExchangeRateFnV2 for ExchangeRateV1CompatWrapper {
 		if options.is_preview {
 			return Err(FendError::NoExchangeRatesAvailable.into());
 		}
+		#[allow(deprecated)]
 		self.get_exchange_rate_v1
 			.relative_to_base_currency(currency)
+	}
+}
+
+pub mod random {
+	pub trait RandomSource {
+		fn get_random_u32(&mut self) -> u32;
+	}
+
+	pub(crate) struct RandomSourceFn(pub(crate) fn() -> u32);
+	impl RandomSource for RandomSourceFn {
+		fn get_random_u32(&mut self) -> u32 {
+			(self.0)()
+		}
 	}
 }
 
@@ -286,12 +305,11 @@ impl DecimalSeparatorStyle {
 /// preserved, but you can also manually serialise all variables
 /// and recreate the context for every calculation, depending on
 /// which is easier.
-#[derive(Clone)]
 pub struct Context {
 	current_time: Option<CurrentTimeInfo>,
 	variables: HashMap<String, value::Value>,
 	fc_mode: FCMode,
-	random_u32: Option<fn() -> u32>,
+	random_u32: Option<Box<dyn random::RandomSource>>,
 	output_mode: OutputMode,
 	echo_result: bool, // whether to automatically print the result
 	get_exchange_rate_v2: Option<Arc<dyn ExchangeRateFnV2 + Send + Sync>>,
@@ -300,14 +318,30 @@ pub struct Context {
 	is_preview: bool,
 }
 
+impl Clone for Context {
+	fn clone(&self) -> Self {
+		Self {
+			current_time: self.current_time.clone(),
+			variables: self.variables.clone(),
+			fc_mode: self.fc_mode.clone(),
+			random_u32: None,
+			output_mode: self.output_mode.clone(),
+			echo_result: self.echo_result.clone(),
+			get_exchange_rate_v2: self.get_exchange_rate_v2.clone(),
+			custom_units: self.custom_units.clone(),
+			decimal_separator: self.decimal_separator.clone(),
+			is_preview: self.is_preview.clone(),
+		}
+	}
+}
+
 impl fmt::Debug for Context {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		// we can't derive Debug because of the get_exchange_rate field
+		// we can't derive Debug because of the get_exchange_rate and random_u32 fields
 		f.debug_struct("Context")
 			.field("current_time", &self.current_time)
 			.field("variables", &self.variables)
 			.field("fc_mode", &self.fc_mode)
-			.field("random_u32", &self.random_u32)
 			.field("output_mode", &self.output_mode)
 			.field("echo_result", &self.echo_result)
 			.field("custom_units", &self.custom_units)
@@ -365,9 +399,14 @@ impl Context {
 		self.fc_mode = FCMode::CoulombFarad;
 	}
 
-	/// Set a random number generator
+	/// Configure random number generator using a function pointer
 	pub fn set_random_u32_fn(&mut self, random_u32: fn() -> u32) {
-		self.random_u32 = Some(random_u32);
+		self.random_u32 = Some(Box::new(random::RandomSourceFn(random_u32)));
+	}
+
+	/// Configure random number generator using a custom type
+	pub fn set_random_u32_trait(&mut self, random_u32: impl random::RandomSource + 'static) {
+		self.random_u32 = Some(Box::new(random_u32));
 	}
 
 	/// Clear the random number generator after setting it with via [`Self::set_random_u32_fn`]
@@ -437,6 +476,7 @@ impl Context {
 
 	/// Set a handler function for loading exchange rates.
 	#[deprecated(note = "Use `set_exchange_rate_handler_v2` instead")]
+	#[allow(deprecated)]
 	pub fn set_exchange_rate_handler_v1<T: ExchangeRateFn + 'static + Send + Sync>(
 		&mut self,
 		get_exchange_rate: T,
