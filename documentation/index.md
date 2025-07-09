@@ -125,7 +125,6 @@ Binaries are available for:
 
 * Linux (aarch64)
 * Linux (x86-64)
-* Linux (armv7-gnueabihf)
 * macOS (64-bit Intel)
 * macOS (Apple Silicon)
 * Windows (64-bit)
