@@ -14,13 +14,13 @@ readme = "../README.md"
 ctrlc = "3.4.7"
 fend-core.workspace = true
 rand = { version = "0.9.1", default-features = false, features = ["thread_rng"] }
-rustyline = { version =  "15.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
+rustyline = { version =  "16.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
 serde = { version = "1.0.219", default-features = false }
-toml = { version = "0.8.22", default-features = false, features = ["parse"] }
-minreq = { version = "2.13.4", default-features = false, optional = true }
+toml = { version = "0.9.2", default-features = false, features = ["parse", "serde", "std"] }
+minreq = { version = "2.14.0", default-features = false, optional = true }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59.0", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+windows-sys = { version = "0.60.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
 
 [features]
 native-tls = [ "dep:minreq", "minreq/https-native" ]
