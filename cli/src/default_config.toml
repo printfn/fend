@@ -29,12 +29,13 @@ enable-internet-access = true
 
 # Data source for currency exchange rates. fend supports
 # the following options:
+#   * `auto` retrieves data from both sources in parallel
 #   * `UN` retrieves data from the UN treasury
 #     (endpoint: https://treasury.un.org/operationalrates/xsql2XML.php)
 #   * `EU` retrieves data from the EU central bank
 #     (endpoint: https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
 #   * 'disabled' will disable loading of exchange rate data
-exchange-rate-source = "EU"
+exchange-rate-source = "auto"
 
 # Maximum age of cached exchange rates in seconds.
 # If the cached data is older than this value, it will be refreshed.

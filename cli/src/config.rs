@@ -1,7 +1,7 @@
 use fend_core::DecimalSeparatorStyle;
 
 use crate::{color, custom_units::CustomUnitDefinition};
-use std::{env, fmt, fs, io};
+use std::{env, fmt, fs, io, time};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Config {
@@ -11,7 +11,7 @@ pub struct Config {
 	pub colors: color::OutputColors,
 	pub max_history_size: usize,
 	pub enable_internet_access: bool,
-	pub exchange_rate_source: ExchangeRateSource,
+	pub exchange_rate_source: ExchangeRateSetting,
 	pub exchange_rate_max_age: u64,
 	pub custom_units: Vec<CustomUnitDefinition>,
 	pub decimal_separator: DecimalSeparatorStyle,
@@ -20,37 +20,69 @@ pub struct Config {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-pub enum ExchangeRateSource {
+pub enum ExchangeRateSetting {
+	Auto,
 	Disabled,
 	EuropeanUnion,
 	UnitedNations,
 }
 
+impl ExchangeRateSetting {
+	pub fn get_sources(self) -> &'static [ExchangeRateSource] {
+		match self {
+			ExchangeRateSetting::Auto => &[
+				ExchangeRateSource::EuropeanUnion,
+				ExchangeRateSource::UnitedNations,
+			],
+			ExchangeRateSetting::Disabled => &[],
+			ExchangeRateSetting::EuropeanUnion => &[ExchangeRateSource::EuropeanUnion],
+			ExchangeRateSetting::UnitedNations => &[ExchangeRateSource::UnitedNations],
+		}
+	}
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum ExchangeRateSource {
+	EuropeanUnion,
+	UnitedNations,
+}
+
+impl ExchangeRateSource {
+	// EU data is generally more reliable and more up-to-date, but supports fewer currencies
+	pub fn get_delay(self) -> time::Duration {
+		match self {
+			ExchangeRateSource::EuropeanUnion => time::Duration::ZERO,
+			ExchangeRateSource::UnitedNations => time::Duration::from_millis(1500),
+		}
+	}
+}
+
 struct ExchangeRateSourceVisitor;
 
 impl serde::de::Visitor<'_> for ExchangeRateSourceVisitor {
-	type Value = ExchangeRateSource;
+	type Value = ExchangeRateSetting;
 
 	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-		formatter.write_str("`EU`, `UN`, or `disabled`")
+		formatter.write_str("`auto`, `EU`, `UN`, or `disabled`")
 	}
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
 		Ok(match v {
-			"EU" => ExchangeRateSource::EuropeanUnion,
-			"UN" => ExchangeRateSource::UnitedNations,
-			"disabled" => ExchangeRateSource::Disabled,
+			"auto" => ExchangeRateSetting::Auto,
+			"EU" => ExchangeRateSetting::EuropeanUnion,
+			"UN" => ExchangeRateSetting::UnitedNations,
+			"disabled" => ExchangeRateSetting::Disabled,
 			_ => {
 				return Err(serde::de::Error::unknown_variant(
 					v,
-					&["EU", "UN", "disabled"],
+					&["auto", "EU", "UN", "disabled"],
 				));
 			}
 		})
 	}
 }
 
-impl<'de> serde::Deserialize<'de> for ExchangeRateSource {
+impl<'de> serde::Deserialize<'de> for ExchangeRateSetting {
 	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		deserializer.deserialize_str(ExchangeRateSourceVisitor)
 	}
@@ -230,7 +262,7 @@ impl Default for Config {
 			max_history_size: 1000,
 			enable_internet_access: true,
 			unknown_settings: UnknownSettings::Warn,
-			exchange_rate_source: ExchangeRateSource::EuropeanUnion,
+			exchange_rate_source: ExchangeRateSetting::Auto,
 			exchange_rate_max_age: 60 * 60 * 24 * 3,
 			custom_units: vec![],
 			decimal_separator: DecimalSeparatorStyle::Dot,

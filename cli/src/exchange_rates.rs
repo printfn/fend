@@ -1,7 +1,7 @@
 use std::{error, fmt, fs, io::Write, time};
 
 use crate::Error;
-use crate::config::{self, ExchangeRateSource};
+use crate::config::{self, ExchangeRateSetting, ExchangeRateSource};
 use crate::file_paths;
 
 fn get_current_timestamp() -> Result<u64, Error> {
@@ -10,17 +10,22 @@ fn get_current_timestamp() -> Result<u64, Error> {
 		.as_secs())
 }
 
-fn get_cache_filename(source: config::ExchangeRateSource) -> Result<&'static str, Error> {
-	Ok(match source {
-		ExchangeRateSource::Disabled => return Err(ExchangeRateSourceDisabledError.into()),
+fn get_cache_filename(source: config::ExchangeRateSource) -> &'static str {
+	match source {
 		ExchangeRateSource::EuropeanUnion => "eurofxref-daily.xml.cache",
 		ExchangeRateSource::UnitedNations => "xsql2XML.php.cache",
-	})
+	}
+}
+
+struct RawData {
+	exchange_rate_data: String,
+	source: ExchangeRateSource,
+	cached: bool,
 }
 
 fn load_cached_data(source: config::ExchangeRateSource, max_age: u64) -> Result<String, Error> {
 	let mut cache_file = file_paths::get_cache_dir(file_paths::DirMode::DontCreate)?;
-	cache_file.push(get_cache_filename(source)?);
+	cache_file.push(get_cache_filename(source));
 	let cache_contents = fs::read_to_string(cache_file)?;
 	let (timestamp, cache_xml) =
 		cache_contents.split_at(cache_contents.find(';').ok_or("invalid cache file")?);
@@ -37,39 +42,25 @@ fn load_cached_data(source: config::ExchangeRateSource, max_age: u64) -> Result<
 
 fn store_cached_data(source: config::ExchangeRateSource, xml: &str) -> Result<(), Error> {
 	let mut cache_file = file_paths::get_cache_dir(file_paths::DirMode::Create)?;
-	cache_file.push(get_cache_filename(source)?);
+	cache_file.push(get_cache_filename(source));
 	let mut file = fs::File::create(cache_file)?;
 	write!(file, "{};{xml}", get_current_timestamp()?)?;
 	Ok(())
 }
 
 #[cfg(any(feature = "native-tls", feature = "rustls"))]
-fn http_get(url: &str) -> Result<String, Error> {
-	let response = minreq::get(url).send()?;
-	Ok(response.as_str()?.to_string())
+async fn http_get(url: &str) -> Result<String, Error> {
+	let response = reqwest::get(url).await?.text().await?;
+	Ok(response)
 }
 
 #[cfg(not(any(feature = "native-tls", feature = "rustls")))]
-fn http_get(_url: &str) -> Result<String, Error> {
+async fn http_get(_url: &str) -> Result<String, Error> {
 	Err("internet access has been disabled in this build of fend".into())
 }
 
-fn load_exchange_rate_xml(
-	source: config::ExchangeRateSource,
-	max_age: u64,
-	options: &fend_core::ExchangeRateFnV2Options,
-) -> Result<(String, bool), Error> {
-	match load_cached_data(source, max_age) {
-		Ok(xml) => return Ok((xml, true)),
-		Err(_e) => {
-			// failed to load cached data
-		}
-	}
-	if options.is_preview() {
-		return Err(ExchangeRateSourceDisabledError.into());
-	}
+async fn load_exchange_rate_xml(source: config::ExchangeRateSource) -> Result<RawData, Error> {
 	let url = match source {
-		ExchangeRateSource::Disabled => return Err(ExchangeRateSourceDisabledError.into()),
 		ExchangeRateSource::EuropeanUnion => {
 			"https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 		}
@@ -77,18 +68,64 @@ fn load_exchange_rate_xml(
 			"https://treasury.un.org/operationalrates/xsql2XML.php"
 		}
 	};
-	let xml = http_get(url)?;
-	Ok((xml, false))
+	Ok(RawData {
+		exchange_rate_data: http_get(url).await?,
+		source,
+		cached: false,
+	})
 }
 
-fn parse_exchange_rates(
-	source: config::ExchangeRateSource,
-	exchange_rates: &str,
-) -> Result<Vec<(String, f64)>, Error> {
-	match source {
-		ExchangeRateSource::Disabled => Err(ExchangeRateSourceDisabledError.into()),
-		ExchangeRateSource::EuropeanUnion => parse_exchange_rates_eu(exchange_rates),
-		ExchangeRateSource::UnitedNations => parse_exchange_rates_un(exchange_rates),
+#[derive(Debug)]
+struct MultiError(&'static str, Vec<Error>);
+impl fmt::Display for MultiError {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "{}", self.0)?;
+		if !self.1.is_empty() {
+			write!(f, ": [")?;
+			for (i, e) in self.1.iter().enumerate() {
+				if i != 0 {
+					write!(f, ", ")?;
+				}
+				write!(f, "{e}")?;
+			}
+			write!(f, "]")?;
+		}
+		Ok(())
+	}
+}
+impl error::Error for MultiError {}
+
+async fn load_exchange_rates_auto(
+	sources: &[config::ExchangeRateSource],
+) -> Result<RawData, Error> {
+	let use_delay = sources.len() > 1;
+	let mut tasks = tokio::task::JoinSet::new();
+	for &source in sources {
+		tasks.spawn(async move {
+			if use_delay {
+				tokio::time::sleep(source.get_delay()).await;
+			}
+			load_exchange_rate_xml(source).await
+		});
+	}
+	let mut errors = vec![];
+	while let Some(result) = tasks.join_next().await {
+		match result {
+			Ok(Ok(res)) => return Ok(res),
+			Ok(Err(e)) => errors.push(e),
+			_ => (),
+		}
+	}
+	if errors.len() == 1 {
+		return Err(errors.into_iter().next().unwrap());
+	}
+	Err(MultiError("failed to load exchange rate data", errors).into())
+}
+
+fn parse_exchange_rates(data: &RawData) -> Result<Vec<(String, f64)>, Error> {
+	match data.source {
+		ExchangeRateSource::EuropeanUnion => parse_exchange_rates_eu(&data.exchange_rate_data),
+		ExchangeRateSource::UnitedNations => parse_exchange_rates_un(&data.exchange_rate_data),
 	}
 }
 
@@ -159,16 +196,40 @@ fn parse_exchange_rates_un(exchange_rates: &str) -> Result<Vec<(String, f64)>, E
 }
 
 fn get_exchange_rates(
-	source: config::ExchangeRateSource,
+	setting: config::ExchangeRateSetting,
 	max_age: u64,
 	options: &fend_core::ExchangeRateFnV2Options,
 ) -> Result<Vec<(String, f64)>, Error> {
-	let (xml, cached) = load_exchange_rate_xml(source, max_age, options)?;
-	let parsed_data = parse_exchange_rates(source, &xml)?;
-	if !cached {
-		store_cached_data(source, &xml)?;
+	if options.is_preview() {
+		return Err(ExchangeRateSourceDisabledError.into());
 	}
-	Ok(parsed_data)
+	let sources = setting.get_sources();
+	if sources.is_empty() {
+		return Err(ExchangeRateSourceDisabledError.into());
+	}
+	let rt = tokio::runtime::Runtime::new()?;
+	rt.block_on(async {
+		let mut data = None;
+		for &source in sources {
+			if let Ok(xml) = load_cached_data(source, max_age) {
+				data = Some(RawData {
+					exchange_rate_data: xml,
+					source,
+					cached: true,
+				});
+				break;
+			}
+		}
+		let data = match data {
+			Some(data) => data,
+			None => load_exchange_rates_auto(sources).await?,
+		};
+		let parsed_data = parse_exchange_rates(&data)?;
+		if !data.cached {
+			store_cached_data(data.source, &data.exchange_rate_data)?;
+		}
+		Ok(parsed_data)
+	})
 }
 
 #[derive(Debug, Clone)]
@@ -204,7 +265,7 @@ impl error::Error for ExchangeRateSourceDisabledError {}
 
 pub struct ExchangeRateHandler {
 	pub enable_internet_access: bool,
-	pub source: ExchangeRateSource,
+	pub source: ExchangeRateSetting,
 	pub max_age: u64,
 }
 
