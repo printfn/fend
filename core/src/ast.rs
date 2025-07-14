@@ -793,7 +793,7 @@ fn resolve_builtin_identifier<I: Interrupt>(
 		"pi" | "\u{3c0}" => Value::Num(Box::new(Number::pi())),
 		"tau" | "\u{3c4}" => Value::Num(Box::new(Number::pi().mul(2.into(), int)?)),
 		"e" => evaluate_to_value(
-			"approx. 2.718281828459045235",
+			"approx. 2718281828459045235/1000000000000000000",
 			scope,
 			attrs,
 			spans,

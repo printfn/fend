@@ -6134,3 +6134,17 @@ fn test_nested_exchange_rate_error() {
 		"failed to retrieve EUR exchange rate: my error: inner error",
 	);
 }
+
+#[test]
+fn decimal_separator_comma() {
+	let mut context = Context::new();
+	context.set_decimal_separator_style(fend_core::DecimalSeparatorStyle::Comma);
+	assert_eq!(
+		evaluate("e", &mut context).unwrap().get_main_result(),
+		"approx. 2,7182818284"
+	);
+	assert_eq!(
+		evaluate("1' to m", &mut context).unwrap().get_main_result(),
+		"0,3048 m"
+	);
+}

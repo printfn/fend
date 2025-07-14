@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
-use crate::Attrs;
 use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::num::Number;
 use crate::result::FResult;
 use crate::value::Value;
+use crate::{Attrs, DecimalSeparatorStyle};
 
 mod builtin;
 
@@ -111,8 +111,11 @@ fn expr_unit<I: Interrupt>(
 		.map_or((false, definition), |remaining| (true, remaining));
 	// long prefixes like `hecto` are always treated as aliases
 	let alias = alias || rule == PrefixRule::LongPrefix;
+	let sep = context.decimal_separator;
+	context.decimal_separator = DecimalSeparatorStyle::Dot;
 	let mut num =
 		evaluate_to_value(definition, None, attrs, &mut vec![], context, int)?.expect_num()?;
+	context.decimal_separator = sep;
 
 	// There are three cases to consider:
 	//   1. Unitless aliases (e.g. `million` or `mega`) should be treated as an
