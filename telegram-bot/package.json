@@ -26,8 +26,8 @@
 		"fend-wasm": "file:../wasm/pkg"
 	},
 	"devDependencies": {
-		"@types/node": "^22.15.18",
-		"esbuild": "^0.25.4",
+		"@types/node": "^24.0.13",
+		"esbuild": "^0.25.6",
 		"esbuild-plugin-wasm": "^1.1.0",
 		"typescript": "^5.8.3"
 	}

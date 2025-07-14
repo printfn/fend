@@ -9,8 +9,8 @@ mkdir $PSScriptRoot\build
 Set-Location "$PSScriptRoot"
 
 dotnet tool restore
-dotnet tool run wix extension add WixToolset.UI.wixext/5.0.2
-dotnet tool run wix extension add WixToolset.Util.wixext/5.0.2
+dotnet tool run wix extension add WixToolset.UI.wixext/6.0.1
+dotnet tool run wix extension add WixToolset.Util.wixext/6.0.1
 
 dotnet tool run wix build `
 	-arch x64 -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext `

@@ -27,6 +27,7 @@ current_wix="$(jq -r .tools.wix.version < windows-wix/.config/dotnet-tools.json)
 latest_wix="$(curl -sL "$(
 	curl -sL https://api.nuget.org/v3/index.json \
 		| jq -r '.resources[] | select(."@type" == "RegistrationsBaseUrl/3.6.0") | ."@id" + "wix/index.json"')" \
+	| gzip -d \
 	| jq '.items[0].items[].catalogEntry.version | select (. | contains("-") | not)' \
 	| jq -sr '. | last')"
 
