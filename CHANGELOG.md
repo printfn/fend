@@ -1,5 +1,23 @@
 ## Changelog
 
+### v1.5.7 (2025-07-14)
+
+* Add `print` and `println` functions
+
+    These print functions are especially useful in scripts, for example:
+
+    ```
+    #!/usr/bin/env fend
+    a = "Hello World";
+    println(a);
+    println(5 * 5);
+    ```
+* Add `exchange-rate-max-age` configuration option
+* Add support for simultaneously downloading currency exchange rates from
+    multiple APIs, improving reliability in case the API goes offline
+* Support trait implementations for random number generation
+* Fix several bugs when using commas as decimal separators
+
 ### v1.5.6 (2025-03-14)
 
 * Improve accuracy of pi and roots
