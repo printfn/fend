@@ -95,7 +95,7 @@ echo "Running cargo fmt..."
 cargo fmt -- --check
 
 echo "Making sure we are logged in to npm..."
-npm whoami
+npm adduser # `npm whoami` returns success even if the auth token is invalid/expired
 
 echo "Making sure we are logged in to crates.io..."
 cargo owner --list fend >/dev/null
