@@ -30,9 +30,15 @@ pub fn register_handler() -> CtrlC {
 		}
 		r.store(false, sync::atomic::Ordering::SeqCst);
 	};
-	if ctrlc::set_handler(handler).is_err() {
-		eprintln!("Unable to set Ctrl-C handler");
-	}
+	tokio::task::spawn(async move {
+		loop {
+			if let Err(e) = tokio::signal::ctrl_c().await {
+				eprintln!("unable to set Ctrl-C handler: {e}");
+				break;
+			}
+			handler();
+		}
+	});
 
 	interrupt
 }

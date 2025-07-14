@@ -11,14 +11,13 @@ license.workspace = true
 readme = "../README.md"
 
 [dependencies]
-ctrlc = "3.4.7"
 fend-core.workspace = true
 rand = { version = "0.9.1", default-features = false, features = ["thread_rng"] }
 rustyline = { version =  "16.0.0", default-features = false, features = ["with-file-history", "custom-bindings"] }
 serde = { version = "1.0.219", default-features = false }
 toml = { version = "0.9.2", default-features = false, features = ["parse", "serde", "std"] }
 reqwest = { version = "0.12.22", default-features = false, features = ["http2", "system-proxy"], optional = true }
-tokio = { version = "1.46.1", default-features = false, features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.46.1", default-features = false, features = ["macros", "rt-multi-thread", "signal"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.60.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
