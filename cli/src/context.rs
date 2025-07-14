@@ -1,4 +1,6 @@
-use std::{cell::RefCell, time};
+use std::time;
+
+use tokio::sync::RwLock;
 
 use crate::{config, exchange_rates};
 
@@ -61,15 +63,15 @@ impl InnerCtx {
 
 #[derive(Clone)]
 pub struct Context<'a> {
-	ctx: &'a RefCell<InnerCtx>,
+	ctx: &'a RwLock<InnerCtx>,
 }
 
 impl<'a> Context<'a> {
-	pub fn new(ctx: &'a RefCell<InnerCtx>) -> Self {
+	pub fn new(ctx: &'a RwLock<InnerCtx>) -> Self {
 		Self { ctx }
 	}
 
-	pub fn eval(
+	pub async fn eval(
 		&self,
 		line: &str,
 		echo_result: bool,
@@ -77,35 +79,40 @@ impl<'a> Context<'a> {
 	) -> Result<fend_core::FendResult, String> {
 		use rand::SeedableRng;
 
-		let mut ctx_borrow = self.ctx.borrow_mut();
+		let mut ctx_borrow = self.ctx.write().await;
 		ctx_borrow
 			.core_ctx
 			.set_random_u32_trait(Random(rand::rngs::StdRng::from_os_rng()));
 		ctx_borrow.core_ctx.set_output_mode_terminal();
 		ctx_borrow.core_ctx.set_echo_result(echo_result);
 		ctx_borrow.input_typed = false;
-		fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
+		tokio::task::block_in_place(|| {
+			fend_core::evaluate_with_interrupt(line, &mut ctx_borrow.core_ctx, int)
+		})
 	}
 
-	pub fn eval_hint(&self, line: &str) -> fend_core::FendResult {
-		let mut ctx_borrow = self.ctx.borrow_mut();
+	pub async fn eval_hint(&self, line: &str) -> fend_core::FendResult {
+		let mut ctx_borrow = self.ctx.write().await;
 		ctx_borrow.core_ctx.set_output_mode_terminal();
 		ctx_borrow.input_typed = !line.is_empty();
 		let int = HintInterrupt::default();
-		fend_core::evaluate_preview_with_interrupt(line, &ctx_borrow.core_ctx, &int)
+		tokio::task::block_in_place(|| {
+			fend_core::evaluate_preview_with_interrupt(line, &ctx_borrow.core_ctx, &int)
+		})
 	}
 
-	pub fn serialize(&self) -> Result<Vec<u8>, String> {
+	pub async fn serialize(&self) -> Result<Vec<u8>, String> {
 		let mut result = vec![];
 		self.ctx
-			.borrow()
+			.read()
+			.await
 			.core_ctx
 			.serialize_variables(&mut result)?;
 		Ok(result)
 	}
 
-	pub fn get_input_typed(&self) -> bool {
-		self.ctx.borrow().input_typed
+	pub async fn get_input_typed(&self) -> bool {
+		self.ctx.read().await.input_typed
 	}
 }
 

@@ -1,5 +1,7 @@
 use std::{error, fmt, fs, io::Write, time};
 
+use tokio::runtime::Handle;
+
 use crate::Error;
 use crate::config::{self, ExchangeRateSetting, ExchangeRateSource};
 use crate::file_paths;
@@ -207,7 +209,7 @@ fn get_exchange_rates(
 	if sources.is_empty() {
 		return Err(ExchangeRateSourceDisabledError.into());
 	}
-	let rt = tokio::runtime::Runtime::new()?;
+	let rt = Handle::current();
 	rt.block_on(async {
 		let mut data = None;
 		for &source in sources {

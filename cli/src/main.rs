@@ -20,6 +20,7 @@ mod terminal;
 use args::Action as ArgsAction;
 use context::Context;
 use process::ExitCode;
+use tokio::sync::RwLock;
 
 type Error = Box<dyn error::Error + Send + Sync + 'static>;
 
@@ -38,14 +39,14 @@ fn print_spans(spans: Vec<fend_core::SpanRef<'_>>, config: &config::Config) -> S
 	result
 }
 
-fn eval_and_print_res(
+async fn eval_and_print_res(
 	line: &str,
 	context: &mut Context<'_>,
 	print_res: bool,
 	int: &impl fend_core::Interrupt,
 	config: &config::Config,
 ) -> EvalResult {
-	match context.eval(line, print_res, int) {
+	match context.eval(line, print_res, int).await {
 		Ok(res) => {
 			let result: Vec<_> = res.get_main_result_spans().collect();
 			if result.is_empty() || res.output_is_empty() {
@@ -95,8 +96,8 @@ fn print_help(explain_quitting: bool) {
 	}
 }
 
-fn repl_loop(config: &config::Config) -> ExitCode {
-	let core_context = std::cell::RefCell::new(context::InnerCtx::new(config));
+async fn repl_loop(config: &config::Config) -> ExitCode {
+	let core_context = RwLock::new(context::InnerCtx::new(config));
 	let mut context = Context::new(&core_context);
 	let mut prompt_state = match terminal::init_prompt(config, &context) {
 		Ok(prompt_state) => prompt_state,
@@ -116,13 +117,13 @@ fn repl_loop(config: &config::Config) -> ExitCode {
 				"help" | "?" => {
 					print_help(true);
 				}
-				"!serialize" => match context.serialize() {
+				"!serialize" => match context.serialize().await {
 					Ok(res) => println!("{res:?}"),
 					Err(e) => eprintln!("{e}"),
 				},
 				line => {
 					interrupt.reset();
-					match eval_and_print_res(line, &mut context, true, &interrupt, config) {
+					match eval_and_print_res(line, &mut context, true, &interrupt, config).await {
 						EvalResult::Ok => {
 							last_command_success = true;
 							initial_run = false;
@@ -137,7 +138,7 @@ fn repl_loop(config: &config::Config) -> ExitCode {
 				}
 			},
 			Err(terminal::ReadLineError::Interrupted) => {
-				match (initial_run, context.get_input_typed()) {
+				match (initial_run, context.get_input_typed().await) {
 					(_, true) => {
 						// input has been typed => do nothing
 					}
@@ -165,9 +166,9 @@ fn repl_loop(config: &config::Config) -> ExitCode {
 	}
 }
 
-fn eval_exprs(exprs: &[String]) -> ExitCode {
+async fn eval_exprs(exprs: &[String]) -> ExitCode {
 	let config = config::read();
-	let core_context = std::cell::RefCell::new(context::InnerCtx::new(&config));
+	let core_context = RwLock::new(context::InnerCtx::new(&config));
 	for (i, expr) in exprs.iter().enumerate() {
 		let print_res = i == exprs.len() - 1;
 		match eval_and_print_res(
@@ -176,7 +177,9 @@ fn eval_exprs(exprs: &[String]) -> ExitCode {
 			print_res,
 			&interrupt::Never::default(),
 			&config,
-		) {
+		)
+		.await
+		{
 			EvalResult::Ok | EvalResult::NoInput => (),
 			EvalResult::Err => return ExitCode::FAILURE,
 		}
@@ -184,7 +187,7 @@ fn eval_exprs(exprs: &[String]) -> ExitCode {
 	ExitCode::SUCCESS
 }
 
-fn real_main() -> ExitCode {
+async fn real_main() -> ExitCode {
 	// Assemble the action from all but the first argument.
 	let action = match ArgsAction::get() {
 		Ok(action) => action,
@@ -204,12 +207,12 @@ fn real_main() -> ExitCode {
 			println!("{}", config::DEFAULT_CONFIG_FILE);
 		}
 		ArgsAction::Eval { exprs } => {
-			return eval_exprs(&exprs);
+			return eval_exprs(&exprs).await;
 		}
 		ArgsAction::Repl => {
 			if terminal::is_terminal_stdin() {
 				let config = config::read();
-				return repl_loop(&config);
+				return repl_loop(&config).await;
 			}
 			let mut input = String::new();
 			match io::Read::read_to_string(&mut io::stdin(), &mut input) {
@@ -219,12 +222,13 @@ fn real_main() -> ExitCode {
 					return ExitCode::FAILURE;
 				}
 			}
-			return eval_exprs(&[input]);
+			return eval_exprs(&[input]).await;
 		}
 	}
 	ExitCode::SUCCESS
 }
 
-fn main() -> process::ExitCode {
-	real_main()
+#[tokio::main]
+async fn main() -> process::ExitCode {
+	real_main().await
 }

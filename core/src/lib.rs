@@ -258,7 +258,7 @@ impl ExchangeRateFnV2 for ExchangeRateV1CompatWrapper {
 }
 
 pub mod random {
-	pub trait RandomSource {
+	pub trait RandomSource: Send + Sync {
 		fn get_random_u32(&mut self) -> u32;
 	}
 

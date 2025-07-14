@@ -1,3 +1,5 @@
+use tokio::runtime::Handle;
+
 use crate::{config, context::Context};
 
 pub struct Hint(String);
@@ -27,17 +29,22 @@ impl rustyline::hint::Hinter for Helper<'_> {
 	type Hint = Hint;
 
 	fn hint(&self, line: &str, _pos: usize, _ctx: &rustyline::Context<'_>) -> Option<Hint> {
-		let result = self.ctx.eval_hint(line);
-		let s = result.get_main_result();
-		Some(if s.is_empty() {
-			return None;
-		} else if self.config.enable_colors {
-			Hint(format!(
-				"\n{}",
-				crate::print_spans(result.get_main_result_spans().collect(), self.config)
-			))
-		} else {
-			Hint(format!("\n{s}"))
+		tokio::task::block_in_place(|| {
+			let rt = Handle::current();
+			rt.block_on(async {
+				let result = self.ctx.eval_hint(line).await;
+				let s = result.get_main_result();
+				Some(if s.is_empty() {
+					return None;
+				} else if self.config.enable_colors {
+					Hint(format!(
+						"\n{}",
+						crate::print_spans(result.get_main_result_spans().collect(), self.config)
+					))
+				} else {
+					Hint(format!("\n{s}"))
+				})
+			})
 		})
 	}
 }
