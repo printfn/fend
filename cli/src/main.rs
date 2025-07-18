@@ -118,7 +118,12 @@ async fn repl_loop(config: &config::Config) -> ExitCode {
 					print_help(true);
 				}
 				"!serialize" => match context.serialize().await {
-					Ok(res) => println!("{res:?}"),
+					Ok(res) => {
+						for b in res {
+							print!("{b:02x}");
+						}
+						println!();
+					}
 					Err(e) => eprintln!("{e}"),
 				},
 				line => {
