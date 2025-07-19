@@ -6,6 +6,12 @@ where
 	Self: Sized,
 {
 	fn serialize(&self, write: &mut impl io::Write) -> FResult<()>;
+
+	fn serialize_with_tag(&self, write: &mut impl io::Write, tag: u64) -> FResult<()> {
+		serialize_int(tag, 0xc0, write)?;
+		self.serialize(write)?;
+		Ok(())
+	}
 }
 
 pub(crate) trait Deserialize
@@ -43,24 +49,84 @@ fn serialize_int(abs: u64, or: u8, write: &mut impl io::Write) -> FResult<()> {
 	Ok(())
 }
 
-fn deserialize_int(reader: &mut impl io::Read) -> FResult<(u8, u64)> {
-	let mut r = || -> FResult<u8> {
-		let mut buf = [0];
-		reader.read_exact(&mut buf)?;
-		Ok(buf[0])
-	};
-	let n = r()?;
-	Ok((
-		n,
-		match n & 0x1f {
-			0..=0x17 => (n & 0x1f).into(),
-			0x18 => r()?.into(),
-			0x19 => u16::from_be_bytes([r()?, r()?]).into(),
-			0x1a => u32::from_be_bytes([r()?, r()?, r()?, r()?]).into(),
-			0x1b => u64::from_be_bytes([r()?, r()?, r()?, r()?, r()?, r()?, r()?, r()?]),
-			_ => return Err(FendError::DeserializationError),
-		},
-	))
+#[allow(dead_code)]
+pub(crate) enum CborValue {
+	Uint(u64),
+	Negative(u64),
+	Bytes(Vec<u8>),
+	String(String),
+	Array(Vec<CborValue>),
+	Tag(u64, Box<CborValue>),
+	Boolean(bool),
+	Null,
+	Undefined,
+	F32(f32),
+	F64(f64),
+}
+
+impl CborValue {
+	pub(crate) fn as_int<T: TryFrom<u64> + TryFrom<i64>>(&self) -> FResult<T> {
+		match self {
+			Self::Uint(val) => (*val)
+				.try_into()
+				.map_err(|_| FendError::DeserializationError),
+			Self::Negative(val) => {
+				(-i64::try_from(*val).map_err(|_| FendError::DeserializationError)? - 1)
+					.try_into()
+					.map_err(|_| FendError::DeserializationError)
+			}
+			_ => Err(FendError::DeserializationError),
+		}
+	}
+}
+
+impl Deserialize for CborValue {
+	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
+		let mut r = || -> FResult<u8> {
+			let mut buf = [0];
+			read.read_exact(&mut buf)?;
+			Ok(buf[0])
+		};
+		let n = r()?;
+		let mut read_payload = || {
+			Ok(match n & 0x1f {
+				0..=0x17 => (n & 0x1f).into(),
+				0x18 => r()?.into(),
+				0x19 => u16::from_be_bytes([r()?, r()?]).into(),
+				0x1a => u32::from_be_bytes([r()?, r()?, r()?, r()?]).into(),
+				0x1b => u64::from_be_bytes([r()?, r()?, r()?, r()?, r()?, r()?, r()?, r()?]),
+				0x1c..=0x1f => return Err(FendError::DeserializationError),
+				_ => unreachable!(),
+			})
+		};
+		Ok(match n & 0xe0 {
+			0x00 => Self::Uint(read_payload()?),
+			0x20 => Self::Negative(read_payload()?),
+			0x40 | 0x60 => {
+				let len = read_payload()?;
+				let mut buf =
+					vec![0; usize::try_from(len).map_err(|_| FendError::DeserializationError)?];
+				read.read_exact(&mut buf)?;
+				if n & 0xe0 == 0x40 {
+					Self::Bytes(buf)
+				} else {
+					Self::String(
+						String::from_utf8(buf).map_err(|_| FendError::DeserializationError)?,
+					)
+				}
+			}
+			0x80 | 0xa0 => return Err(FendError::DeserializationError),
+			0xc0 => Self::Tag(read_payload()?, Box::new(Self::deserialize(read)?)),
+			0xe0 => match read_payload()? {
+				0x14 => Self::Boolean(false),
+				0x15 => Self::Boolean(true),
+				0x16 => Self::Null,
+				0x17 => Self::Undefined,
+				_ => return Err(FendError::DeserializationError),
+			},
+			_ => unreachable!(),
+		})
+	}
 }
 
 macro_rules! impl_serde {
@@ -79,15 +145,7 @@ macro_rules! impl_serde {
 			impl Deserialize for $typ {
 				#[allow(clippy::cast_possible_truncation)]
 				fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
-					let (flag, result) = deserialize_int(read)?;
-					match flag {
-						0..=0x1f => (),
-						0x20..=0x37 => return (-i128::from(flag) + 0x1f).try_into().map_err(|_| FendError::DeserializationError),
-						0x38..=0x3b => return (-i128::from(result) - 1).try_into().map_err(|_| FendError::DeserializationError),
-						_ => return Err(FendError::DeserializationError),
-					}
-					let result = <$typ>::try_from(result).map_err(|_| FendError::DeserializationError)?;
-					Ok(result)
+					CborValue::deserialize(read)?.as_int()
 				}
 			}
 		) +
@@ -95,6 +153,23 @@ macro_rules! impl_serde {
 }
 
 impl_serde!(u8 i32 u64 usize);
+
+impl Serialize for &[u8] {
+	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+		serialize_int(self.len() as u64, 0x40, write)?;
+		write.write_all(self)?;
+		Ok(())
+	}
+}
+
+impl Deserialize for Vec<u8> {
+	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
+		let CborValue::Bytes(val) = CborValue::deserialize(read)? else {
+			return Err(FendError::DeserializationError);
+		};
+		Ok(val)
+	}
+}
 
 impl Serialize for &str {
 	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
@@ -106,16 +181,10 @@ impl Serialize for &str {
 
 impl Deserialize for String {
 	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
-		let (flag, len) = deserialize_int(read)?;
-		if !matches!(flag, 0x60..=0x7f) {
+		let CborValue::String(val) = CborValue::deserialize(read)? else {
 			return Err(FendError::DeserializationError);
-		}
-		let mut buf = vec![0; usize::try_from(len).map_err(|_| FendError::DeserializationError)?];
-		read.read_exact(&mut buf)?;
-		match Self::from_utf8(buf) {
-			Ok(string) => Ok(string),
-			Err(_) => Err(FendError::DeserializationError),
-		}
+		};
+		Ok(val)
 	}
 }
 
@@ -127,13 +196,10 @@ impl Serialize for bool {
 
 impl Deserialize for bool {
 	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
-		let mut buf = [0; 1];
-		read.read_exact(&mut buf[..])?;
-		match buf[0] {
-			0xf4 => Ok(false),
-			0xf5 => Ok(true),
-			_ => Err(FendError::DeserializationError),
-		}
+		let CborValue::Boolean(val) = CborValue::deserialize(read)? else {
+			return Err(FendError::DeserializationError);
+		};
+		Ok(val)
 	}
 }
 

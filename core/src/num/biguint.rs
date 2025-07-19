@@ -3,7 +3,7 @@ use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::{Base, Exact, Range, RangeBound, out_of_range};
 use crate::result::FResult;
-use crate::serialize::{Deserialize, Serialize};
+use crate::serialize::{CborValue, Deserialize, Serialize};
 use std::cmp::{Ordering, max};
 use std::{fmt, hash, io};
 
@@ -162,6 +162,18 @@ impl BigUint {
 				*self = Large(vec![*n]);
 			}
 			Large(_) => (),
+		}
+	}
+
+	fn reduce(&mut self) {
+		let Large(v) = self else {
+			return;
+		};
+		while v.len() > 1 && v[v.len() - 1] == 0 {
+			v.pop();
+		}
+		if v.len() == 1 {
+			*self = Small(v[0]);
 		}
 	}
 
@@ -509,32 +521,39 @@ impl BigUint {
 	}
 
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
-		match self {
+		let mut x = self.clone();
+		x.reduce();
+		match x {
 			Small(x) => {
-				1u8.serialize(write)?;
 				x.serialize(write)?;
 			}
 			Large(v) => {
-				2u8.serialize(write)?;
-				v.len().serialize(write)?;
-				for b in v {
-					b.serialize(write)?;
-				}
+				let bytes: Vec<_> = v
+					.iter()
+					.rev()
+					.flat_map(|u| u.to_be_bytes())
+					.skip_while(|&b| b == 0)
+					.collect();
+				bytes.as_slice().serialize_with_tag(write, 2)?;
 			}
 		}
 		Ok(())
 	}
 
 	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
-		let kind = u8::deserialize(read)?;
-		Ok(match kind {
-			1 => Self::Small(u64::deserialize(read)?),
-			2 => {
-				let len = usize::deserialize(read)?;
-				let mut v = Vec::with_capacity(len);
-				for _ in 0..len {
-					v.push(u64::deserialize(read)?);
+		Ok(match CborValue::deserialize(read)? {
+			CborValue::Uint(n) => Self::Small(n),
+			CborValue::Tag(2, inner) => {
+				let CborValue::Bytes(mut b) = *inner else {
+					return Err(FendError::DeserializationError);
+				};
+				b.reverse();
+				while b.len() % 8 != 0 {
+					b.push(0);
 				}
+				let (chunks, rem) = b.as_chunks::<8>();
+				assert!(rem.is_empty());
+				let v: Vec<u64> = chunks.iter().map(|&c| u64::from_le_bytes(c)).collect();
 				Self::Large(v)
 			}
 			_ => return Err(FendError::DeserializationError),
@@ -972,6 +991,10 @@ impl FormattedBigUint {
 
 #[cfg(test)]
 mod tests {
+	use std::io;
+
+	use crate::{format::Format, interrupt::Never, num::biguint::FormatOptions};
+
 	use super::BigUint;
 	type Res = Result<(), crate::error::FendError>;
 
@@ -1153,5 +1176,17 @@ mod tests {
 			"1000000000000000000000000000000000000000000000000000000000000000000 must lie in the interval [0, 10^66 - 1]"
 		);
 		Ok(())
+	}
+
+	#[test]
+	fn serialisation() {
+		let bytes = b"\xc2\x49\x01\x00\x00\x00\x00\x00\x00\x00\x00";
+		let dec = BigUint::deserialize(&mut io::Cursor::new(bytes))
+			.unwrap()
+			.format(&FormatOptions::default(), &Never)
+			.unwrap()
+			.value
+			.to_string();
+		assert_eq!(dec, "18446744073709551616");
 	}
 }
