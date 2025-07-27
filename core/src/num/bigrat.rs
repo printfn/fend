@@ -5,8 +5,9 @@ use crate::interrupt::test_int;
 use crate::num::biguint::BigUint;
 use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
+use crate::serialize::CborValue;
 use core::f64;
-use std::{cmp, fmt, hash, io, ops};
+use std::{cmp, fmt, hash, ops};
 
 pub(crate) mod sign {
 	use crate::{
@@ -49,7 +50,7 @@ pub(crate) mod sign {
 			Ok(match u8::deserialize(read)? {
 				1 => Self::Negative,
 				2 => Self::Positive,
-				_ => return Err(FendError::DeserializationError),
+				_ => return Err(FendError::DeserializationError("sign must be 1 or 2")),
 			})
 		}
 	}
@@ -119,18 +120,44 @@ impl hash::Hash for BigRat {
 }
 
 impl BigRat {
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
-		self.sign.serialize(write)?;
-		self.num.serialize(write)?;
-		self.den.serialize(write)?;
-		Ok(())
+	pub(crate) fn serialize(&self) -> CborValue {
+		let num = self.num.serialize(self.sign);
+		if self.den == 1.into() {
+			num
+		} else {
+			let den = self.den.serialize(Sign::Positive);
+			CborValue::Tag(30, Box::new(CborValue::Array(vec![num, den])))
+		}
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
-		Ok(Self {
-			sign: Sign::deserialize(read)?,
-			num: BigUint::deserialize(read)?,
-			den: BigUint::deserialize(read)?,
+	pub(crate) fn deserialize(value: CborValue) -> FResult<Self> {
+		Ok(match value {
+			CborValue::Tag(30, inner) => {
+				if let CborValue::Array(arr) = *inner
+					&& arr.len() == 2
+				{
+					let mut arr = arr.into_iter();
+					let (num, sign) = BigUint::deserialize(arr.next().unwrap())?;
+					let (den, Sign::Positive) = BigUint::deserialize(arr.next().unwrap())? else {
+						return Err(FendError::DeserializationError(
+							"tag 30 denominator must be positive",
+						));
+					};
+					Self { sign, num, den }
+				} else {
+					return Err(FendError::DeserializationError(
+						"tag 30 must contain a length-2 array",
+					));
+				}
+			}
+			value => {
+				let (num, sign) = BigUint::deserialize(value)?;
+				Self {
+					sign,
+					num,
+					den: 1.into(),
+				}
+			}
 		})
 	}
 

@@ -1,11 +1,12 @@
 use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
+use crate::num::bigrat::sign::Sign;
 use crate::num::{Base, Exact, Range, RangeBound, out_of_range};
 use crate::result::FResult;
-use crate::serialize::{CborValue, Deserialize, Serialize};
+use crate::serialize::CborValue;
 use std::cmp::{Ordering, max};
-use std::{fmt, hash, io};
+use std::{fmt, hash};
 
 #[derive(Clone)]
 pub(crate) enum BigUint {
@@ -520,13 +521,21 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+	pub(crate) fn serialize(&self, mut sign: Sign) -> CborValue {
 		let mut x = self.clone();
 		x.reduce();
-		match x {
-			Small(x) => {
-				x.serialize(write)?;
+		if sign == Sign::Negative {
+			if x.is_zero() {
+				sign = Sign::Positive;
+			} else {
+				x = x.sub(&1.into());
 			}
+		}
+		match x {
+			Small(x) => match sign {
+				Sign::Positive => CborValue::Uint(x),
+				Sign::Negative => CborValue::Negative(x),
+			},
 			Large(v) => {
 				let bytes: Vec<_> = v
 					.iter()
@@ -534,18 +543,24 @@ impl BigUint {
 					.flat_map(|u| u.to_be_bytes())
 					.skip_while(|&b| b == 0)
 					.collect();
-				bytes.as_slice().serialize_with_tag(write, 2)?;
+				let tag = match sign {
+					Sign::Negative => 3,
+					Sign::Positive => 2,
+				};
+				CborValue::Tag(tag, Box::new(CborValue::Bytes(bytes)))
 			}
 		}
-		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
-		Ok(match CborValue::deserialize(read)? {
-			CborValue::Uint(n) => Self::Small(n),
-			CborValue::Tag(2, inner) => {
+	pub(crate) fn deserialize(value: CborValue) -> FResult<(Self, Sign)> {
+		Ok(match value {
+			CborValue::Uint(n) => (Self::Small(n), Sign::Positive),
+			CborValue::Negative(n) => (Self::Small(n.checked_add(1).unwrap()), Sign::Negative),
+			CborValue::Tag(tag @ (2 | 3), inner) => {
 				let CborValue::Bytes(mut b) = *inner else {
-					return Err(FendError::DeserializationError);
+					return Err(FendError::DeserializationError(
+						"biguint with tag 2 or 3 does not contain bytes",
+					));
 				};
 				b.reverse();
 				while b.len() % 8 != 0 {
@@ -553,10 +568,22 @@ impl BigUint {
 				}
 				let (chunks, rem) = b.as_chunks::<8>();
 				assert!(rem.is_empty());
-				let v: Vec<u64> = chunks.iter().map(|&c| u64::from_le_bytes(c)).collect();
-				Self::Large(v)
+				let mut v = Self::Large(chunks.iter().map(|&c| u64::from_le_bytes(c)).collect());
+				let sign = match tag {
+					2 => Sign::Positive,
+					3 => {
+						v = v.add(&1.into());
+						Sign::Negative
+					}
+					_ => unreachable!(),
+				};
+				(v, sign)
 			}
-			_ => return Err(FendError::DeserializationError),
+			_ => {
+				return Err(FendError::DeserializationError(
+					"biguint must have major type 0, 1 or 6",
+				));
+			}
 		})
 	}
 
@@ -993,7 +1020,12 @@ impl FormattedBigUint {
 mod tests {
 	use std::io;
 
-	use crate::{format::Format, interrupt::Never, num::biguint::FormatOptions};
+	use crate::{
+		format::Format,
+		interrupt::Never,
+		num::biguint::FormatOptions,
+		serialize::{CborValue, Deserialize},
+	};
 
 	use super::BigUint;
 	type Res = Result<(), crate::error::FendError>;
@@ -1181,12 +1213,14 @@ mod tests {
 	#[test]
 	fn serialisation() {
 		let bytes = b"\xc2\x49\x01\x00\x00\x00\x00\x00\x00\x00\x00";
-		let dec = BigUint::deserialize(&mut io::Cursor::new(bytes))
-			.unwrap()
-			.format(&FormatOptions::default(), &Never)
-			.unwrap()
-			.value
-			.to_string();
+		let dec =
+			BigUint::deserialize(CborValue::deserialize(&mut io::Cursor::new(bytes)).unwrap())
+				.unwrap()
+				.0
+				.format(&FormatOptions::default(), &Never)
+				.unwrap()
+				.value
+				.to_string();
 		assert_eq!(dec, "18446744073709551616");
 	}
 }

@@ -73,7 +73,11 @@ impl Bop {
 			11 => Self::Bitwise(BitwiseBop::RightShift),
 			12 => Self::Combination,
 			13 => Self::Permutation,
-			_ => return Err(FendError::DeserializationError),
+			_ => {
+				return Err(FendError::DeserializationError(
+					"binary operator is out of range",
+				));
+			}
 		})
 	}
 }
@@ -309,7 +313,7 @@ impl Expr {
 				Box::new(Self::deserialize(read)?),
 				Box::new(Self::deserialize(read)?),
 			),
-			_ => return Err(FendError::DeserializationError),
+			_ => return Err(FendError::DeserializationError("expr type is out of range")),
 		})
 	}
 

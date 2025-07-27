@@ -5,10 +5,10 @@ use crate::num::Exact;
 use crate::num::bigrat::{BigRat, FormattedBigRat};
 use crate::num::{Base, FormattingStyle};
 use crate::result::FResult;
-use crate::serialize::{Deserialize, Serialize};
+use crate::serialize::CborValue;
 use std::cmp::Ordering;
 use std::ops::Neg;
-use std::{fmt, hash, io};
+use std::{fmt, hash};
 
 use super::bigrat;
 use super::biguint::BigUint;
@@ -61,26 +61,21 @@ impl Real {
 		})
 	}
 
-	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+	pub(crate) fn serialize(&self) -> CborValue {
 		match &self.pattern {
-			Pattern::Simple(s) => {
-				1u8.serialize(write)?;
-				s.serialize(write)?;
-			}
+			Pattern::Simple(s) => s.serialize(),
 			Pattern::Pi(n) => {
-				2u8.serialize(write)?;
-				n.serialize(write)?;
+				// private use tag
+				CborValue::Tag(80000, Box::new(n.serialize()))
 			}
 		}
-		Ok(())
 	}
 
-	pub(crate) fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
+	pub(crate) fn deserialize(value: CborValue) -> FResult<Self> {
 		Ok(Self {
-			pattern: match u8::deserialize(read)? {
-				1 => Pattern::Simple(BigRat::deserialize(read)?),
-				2 => Pattern::Pi(BigRat::deserialize(read)?),
-				_ => return Err(FendError::DeserializationError),
+			pattern: match value {
+				CborValue::Tag(80000, inner) => Pattern::Pi(BigRat::deserialize(*inner)?),
+				value => Pattern::Simple(BigRat::deserialize(value)?),
 			},
 		})
 	}

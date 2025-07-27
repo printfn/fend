@@ -3,7 +3,7 @@ use crate::interrupt::{Never, test_int};
 use crate::num::bigrat::BigRat;
 use crate::num::complex::{self, Complex};
 use crate::result::FResult;
-use crate::serialize::{Deserialize, Serialize};
+use crate::serialize::{CborValue, Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::Write;
 use std::ops::Neg;
@@ -22,8 +22,8 @@ impl Dist {
 	pub(crate) fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		self.parts.len().serialize(write)?;
 		for (a, b) in &self.parts {
-			a.serialize(write)?;
-			b.serialize(write)?;
+			a.serialize().serialize(write)?;
+			b.serialize().serialize(write)?;
 		}
 		Ok(())
 	}
@@ -32,8 +32,8 @@ impl Dist {
 		let len = usize::deserialize(read)?;
 		let mut parts = Vec::with_capacity(len);
 		for _ in 0..len {
-			let k = Complex::deserialize(read)?;
-			let v = BigRat::deserialize(read)?;
+			let k = Complex::deserialize(CborValue::deserialize(read)?)?;
+			let v = BigRat::deserialize(CborValue::deserialize(read)?)?;
 			parts.push((k, v));
 		}
 		Ok(Self { parts })

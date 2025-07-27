@@ -1,10 +1,7 @@
 use crate::{error::FendError, result::FResult};
 use std::io;
 
-pub(crate) trait Serialize
-where
-	Self: Sized,
-{
+pub(crate) trait Serialize {
 	fn serialize(&self, write: &mut impl io::Write) -> FResult<()>;
 
 	fn serialize_with_tag(&self, write: &mut impl io::Write, tag: u64) -> FResult<()> {
@@ -67,16 +64,53 @@ pub(crate) enum CborValue {
 impl CborValue {
 	pub(crate) fn as_int<T: TryFrom<u64> + TryFrom<i64>>(&self) -> FResult<T> {
 		match self {
-			Self::Uint(val) => (*val)
+			Self::Uint(val) => (*val).try_into().map_err(|_| {
+				FendError::DeserializationError("cbor uint is out of range of target type")
+			}),
+			Self::Negative(val) => (-i64::try_from(*val).map_err(|_| {
+				FendError::DeserializationError("cbor negative int is out of range of i64")
+			})? - 1)
 				.try_into()
-				.map_err(|_| FendError::DeserializationError),
-			Self::Negative(val) => {
-				(-i64::try_from(*val).map_err(|_| FendError::DeserializationError)? - 1)
-					.try_into()
-					.map_err(|_| FendError::DeserializationError)
-			}
-			_ => Err(FendError::DeserializationError),
+				.map_err(|_| {
+					FendError::DeserializationError(
+						"cbor negative int is out of range of target type",
+					)
+				}),
+			_ => Err(FendError::DeserializationError(
+				"cbor integer must have major type 0 or 1",
+			)),
 		}
+	}
+}
+
+impl Serialize for CborValue {
+	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+		match self {
+			Self::Uint(v) => v.serialize(write)?,
+			Self::Negative(v) => serialize_int(*v, 0x20, write)?,
+			Self::Bytes(v) => {
+				v.serialize(write)?;
+			}
+			Self::String(v) => {
+				v.serialize(write)?;
+			}
+			Self::Array(v) => {
+				v.serialize(write)?;
+			}
+			Self::Tag(tag, v) => v.serialize_with_tag(write, *tag)?,
+			Self::Boolean(v) => v.serialize(write)?,
+			Self::Null => write.write_all(&[0xf6])?,
+			Self::Undefined => write.write_all(&[0xf7])?,
+			Self::F32(v) => {
+				write.write_all(&[0xfa])?;
+				write.write_all(&v.to_be_bytes())?;
+			}
+			Self::F64(v) => {
+				write.write_all(&[0xfb])?;
+				write.write_all(&v.to_be_bytes())?;
+			}
+		}
+		Ok(())
 	}
 }
 
@@ -95,7 +129,11 @@ impl Deserialize for CborValue {
 				0x19 => u16::from_be_bytes([r()?, r()?]).into(),
 				0x1a => u32::from_be_bytes([r()?, r()?, r()?, r()?]).into(),
 				0x1b => u64::from_be_bytes([r()?, r()?, r()?, r()?, r()?, r()?, r()?, r()?]),
-				0x1c..=0x1f => return Err(FendError::DeserializationError),
+				0x1c..=0x1f => {
+					return Err(FendError::DeserializationError(
+						"payload cannot be between 0x1c and 0x1f inclusive",
+					));
+				}
 				_ => unreachable!(),
 			})
 		};
@@ -104,25 +142,48 @@ impl Deserialize for CborValue {
 			0x20 => Self::Negative(read_payload()?),
 			0x40 | 0x60 => {
 				let len = read_payload()?;
-				let mut buf =
-					vec![0; usize::try_from(len).map_err(|_| FendError::DeserializationError)?];
+				let mut buf = vec![
+					0;
+					usize::try_from(len).map_err(|_| {
+						FendError::DeserializationError(
+							"string/byte array length cannot be converted to usize",
+						)
+					})?
+				];
 				read.read_exact(&mut buf)?;
 				if n & 0xe0 == 0x40 {
 					Self::Bytes(buf)
 				} else {
-					Self::String(
-						String::from_utf8(buf).map_err(|_| FendError::DeserializationError)?,
-					)
+					Self::String(String::from_utf8(buf).map_err(|_| {
+						FendError::DeserializationError("string contains non-utf8 characters")
+					})?)
 				}
 			}
-			0x80 | 0xa0 => return Err(FendError::DeserializationError),
+			0x80 => {
+				let len = read_payload()?;
+				let len = usize::try_from(len).map_err(|_| {
+					FendError::DeserializationError("array length cannot be converted to usize")
+				})?;
+				let mut arr = Vec::with_capacity(len);
+				for _ in 0..len {
+					arr.push(Self::deserialize(read)?);
+				}
+				Self::Array(arr)
+			}
+			0xa0 => {
+				return Err(FendError::DeserializationError("maps are not implemented"));
+			}
 			0xc0 => Self::Tag(read_payload()?, Box::new(Self::deserialize(read)?)),
 			0xe0 => match read_payload()? {
 				0x14 => Self::Boolean(false),
 				0x15 => Self::Boolean(true),
 				0x16 => Self::Null,
 				0x17 => Self::Undefined,
-				_ => return Err(FendError::DeserializationError),
+				_ => {
+					return Err(FendError::DeserializationError(
+						"major type 7 has an out-of-range payload",
+					));
+				}
 			},
 			_ => unreachable!(),
 		})
@@ -133,10 +194,10 @@ macro_rules! impl_serde {
 	($($typ: ty)+) => {
 		$(
 			impl Serialize for $typ {
-				#[allow(unused_comparisons, clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
+				#[allow(unused_comparisons, clippy::cast_sign_loss, clippy::cast_lossless)]
 				fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 					Ok(if *self < 0 {
-						serialize_int((-(*self as i128) - 1) as u64, 0x20, write)?
+						serialize_int(!*self as u64, 0x20, write)?
 					} else {
 						serialize_int(*self as u64, 0, write)?
 					})
@@ -154,7 +215,7 @@ macro_rules! impl_serde {
 
 impl_serde!(u8 i32 u64 usize);
 
-impl Serialize for &[u8] {
+impl Serialize for [u8] {
 	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		serialize_int(self.len() as u64, 0x40, write)?;
 		write.write_all(self)?;
@@ -165,13 +226,15 @@ impl Serialize for &[u8] {
 impl Deserialize for Vec<u8> {
 	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let CborValue::Bytes(val) = CborValue::deserialize(read)? else {
-			return Err(FendError::DeserializationError);
+			return Err(FendError::DeserializationError(
+				"cbor value is not a byte array",
+			));
 		};
 		Ok(val)
 	}
 }
 
-impl Serialize for &str {
+impl Serialize for str {
 	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
 		serialize_int(self.len() as u64, 0x60, write)?;
 		write.write_all(self.as_bytes())?;
@@ -182,7 +245,9 @@ impl Serialize for &str {
 impl Deserialize for String {
 	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let CborValue::String(val) = CborValue::deserialize(read)? else {
-			return Err(FendError::DeserializationError);
+			return Err(FendError::DeserializationError(
+				"cbor value is not a string",
+			));
 		};
 		Ok(val)
 	}
@@ -197,9 +262,21 @@ impl Serialize for bool {
 impl Deserialize for bool {
 	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
 		let CborValue::Boolean(val) = CborValue::deserialize(read)? else {
-			return Err(FendError::DeserializationError);
+			return Err(FendError::DeserializationError(
+				"cbor value is not a boolean",
+			));
 		};
 		Ok(val)
+	}
+}
+
+impl Serialize for [CborValue] {
+	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+		serialize_int(self.len() as u64, 0x80, write)?;
+		for v in self {
+			v.serialize(write)?;
+		}
+		Ok(())
 	}
 }
 
