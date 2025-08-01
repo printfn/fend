@@ -6147,4 +6147,11 @@ fn decimal_separator_comma() {
 		evaluate("1' to m", &mut context).unwrap().get_main_result(),
 		"0,3048 m"
 	);
+	context.set_exchange_rate_handler_v2(fend_core::test_utils::DummyCurrencyHandler);
+	assert_eq!(
+		evaluate("1,3 eur to aud", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1,69 AUD"
+	);
 }
