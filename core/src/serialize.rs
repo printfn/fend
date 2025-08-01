@@ -53,6 +53,7 @@ pub(crate) enum CborValue {
 	Bytes(Vec<u8>),
 	String(String),
 	Array(Vec<CborValue>),
+	Map(Vec<(CborValue, CborValue)>),
 	Tag(u64, Box<CborValue>),
 	Boolean(bool),
 	Null,
@@ -96,6 +97,9 @@ impl Serialize for CborValue {
 			}
 			Self::Array(v) => {
 				v.serialize(write)?;
+			}
+			Self::Map(kv) => {
+				serialize_map(kv.len(), kv.iter(), write)?;
 			}
 			Self::Tag(tag, v) => v.serialize_with_tag(write, *tag)?,
 			Self::Boolean(v) => v.serialize(write)?,
@@ -171,7 +175,15 @@ impl Deserialize for CborValue {
 				Self::Array(arr)
 			}
 			0xa0 => {
-				return Err(FendError::DeserializationError("maps are not implemented"));
+				let len = read_payload()?;
+				let len = usize::try_from(len).map_err(|_| {
+					FendError::DeserializationError("map length cannot be converted to usize")
+				})?;
+				let mut kv = Vec::with_capacity(len);
+				for _ in 0..len {
+					kv.push((Self::deserialize(read)?, Self::deserialize(read)?));
+				}
+				Self::Map(kv)
 			}
 			0xc0 => Self::Tag(read_payload()?, Box::new(Self::deserialize(read)?)),
 			0xe0 => match read_payload()? {
@@ -278,6 +290,19 @@ impl Serialize for [CborValue] {
 		}
 		Ok(())
 	}
+}
+
+fn serialize_map<'a>(
+	len: usize,
+	map: impl IntoIterator<Item = &'a (CborValue, CborValue)>,
+	write: &mut impl io::Write,
+) -> FResult<()> {
+	serialize_int(len.try_into().unwrap(), 0xa0, write)?;
+	for (k, v) in map {
+		k.serialize(write)?;
+		v.serialize(write)?;
+	}
+	Ok(())
 }
 
 #[cfg(test)]
