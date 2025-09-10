@@ -253,6 +253,15 @@ impl BigRat {
 		})
 	}
 
+	// cos works for all real numbers
+	pub(crate) fn cos<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		Ok(if self == 0.into() {
+			Exact::new(Self::from(1), true)
+		} else {
+			Exact::new(Self::from_f64(f64::cos(self.into_f64(int)?), int)?, false)
+		})
+	}
+
 	// asin, acos and atan only work for values between -1 and 1
 	pub(crate) fn asin<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		let one = Self::from(1);
