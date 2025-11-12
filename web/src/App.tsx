@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState, useTransition } from 'react';
 import { useCurrentInput } from './hooks/useCurrentInput';
 import NewTabLink from './components/NewTabLink';
 import PendingOutput from './components/PendingOutput';
@@ -42,62 +42,59 @@ export default function App({ widget = false }: { widget?: boolean }) {
 	const pendingOutput = useRef<HTMLParagraphElement>(null);
 
 	const [isPending, startTransition] = useTransition();
-	const onKeyDown = useCallback(
-		(event: KeyboardEvent<HTMLTextAreaElement>) => {
-			if (
-				(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
-				(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
-			) {
-				// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
-				setOutput(null);
-				return;
-			}
-			if (event.key === 'ArrowUp') {
-				event.preventDefault();
-				upArrow();
-				return;
-			}
-			if (event.key === 'ArrowDown') {
-				event.preventDefault();
-				downArrow();
-				return;
-			}
-
-			// allow multiple lines to be entered if shift, ctrl
-			// or meta is held, otherwise evaluate the expression
-			if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
-				return;
-			}
+	const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+		if (
+			(event.key === 'k' && event.metaKey !== event.ctrlKey && !event.altKey) ||
+			(event.key === 'l' && event.ctrlKey && !event.metaKey && !event.altKey)
+		) {
+			// Cmd+K, Ctrl+K or Ctrl+L to clear the buffer
+			setOutput(null);
+			return;
+		}
+		if (event.key === 'ArrowUp') {
 			event.preventDefault();
-			if (currentInput.trim() === 'clear') {
-				onInput('');
-				setOutput(null);
+			upArrow();
+			return;
+		}
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			downArrow();
+			return;
+		}
+
+		// allow multiple lines to be entered if shift, ctrl
+		// or meta is held, otherwise evaluate the expression
+		if (!(event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
+			return;
+		}
+		event.preventDefault();
+		if (currentInput.trim() === 'clear') {
+			onInput('');
+			setOutput(null);
+			return;
+		}
+
+		startTransition(async () => {
+			const request = <p>{`> ${currentInput}`}</p>;
+			submit();
+			const fendResult = await evaluate(currentInput);
+			if (!fendResult.ok && fendResult.message === 'cancelled') {
 				return;
 			}
-
-			startTransition(async () => {
-				const request = <p>{`> ${currentInput}`}</p>;
-				submit();
-				const fendResult = await evaluate(currentInput);
-				if (!fendResult.ok && fendResult.message === 'cancelled') {
-					return;
-				}
-				onInput('');
-				const result = <p>{fendResult.ok ? fendResult.result : `Error: ${fendResult.message}`}</p>;
-				setOutput(o => (
-					<>
-						{o}
-						{request}
-						{result}
-					</>
-				));
-				setTimeout(() => {
-					pendingOutput.current?.scrollIntoView({ behavior: 'smooth' });
-				}, 50);
-			});
-		},
-		[currentInput, submit, onInput, downArrow, upArrow, evaluate],
-	);
+			onInput('');
+			const result = <p>{fendResult.ok ? fendResult.result : `Error: ${fendResult.message}`}</p>;
+			setOutput(o => (
+				<>
+					{o}
+					{request}
+					{result}
+				</>
+			));
+			setTimeout(() => {
+				pendingOutput.current?.scrollIntoView({ behavior: 'smooth' });
+			}, 50);
+		});
+	};
 	useEffect(() => {
 		const focus = () => {
 			// allow the user to select text for copying and

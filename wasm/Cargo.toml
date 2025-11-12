@@ -19,8 +19,8 @@ default = []
 
 [dependencies]
 fend-core.workspace = true
-js-sys = "0.3.77"
-wasm-bindgen = "0.2.100"
+js-sys = "0.3.82"
+wasm-bindgen = "0.2.105"
 web-time = "1.1.0"
 
 [package.metadata.wasm-pack.profile.release]
