@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
 	js.configs.recommended,
 	...tseslint.configs.strictTypeChecked,
-	reactHooks.configs.recommended,
+	reactHooks.configs.flat.recommended,
 	reactRefresh.configs.vite,
 	{ ignores: ['dist', 'cloudflare', 'eslint.config.js'] },
 	{
@@ -24,8 +24,6 @@ export default tseslint.config(
 			},
 		},
 		rules: {
-			'react-hooks/exhaustive-deps': 'error',
-			'react-hooks/react-compiler': 'error',
 			'@typescript-eslint/promise-function-async': 'error',
 		},
 	},
