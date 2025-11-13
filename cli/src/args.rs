@@ -55,7 +55,7 @@ impl Action {
 						exprs.push(expr);
 						expr = String::new();
 					}
-					exprs.push(e.to_string());
+					exprs.push(e.clone());
 				}
 				(true, "--") => before_double_dash = false,
 				(_, arg) => {

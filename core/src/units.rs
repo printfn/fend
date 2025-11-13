@@ -264,11 +264,7 @@ fn query_unit_internal(
 				|| (!case_sensitive
 					&& (s.eq_ignore_ascii_case(ident) || p.eq_ignore_ascii_case(ident)))
 			{
-				return Ok((
-					s.to_string().into(),
-					p.to_string().into(),
-					d.to_string().into(),
-				));
+				return Ok((s.clone().into(), p.clone().into(), d.clone().into()));
 			}
 		}
 	}

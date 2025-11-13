@@ -143,34 +143,26 @@ impl Expr {
 				a.compare(b, ctx, int)? == Some(cmp::Ordering::Equal)
 			}
 			(Self::Ident(a), Self::Ident(b)) => a == b,
-			(Self::Parens(a), Self::Parens(b)) => a.compare(b, ctx, int)?,
-			(Self::UnaryMinus(a), Self::UnaryMinus(b)) => a.compare(b, ctx, int)?,
-			(Self::UnaryPlus(a), Self::UnaryPlus(b)) => a.compare(b, ctx, int)?,
-			(Self::UnaryDiv(a), Self::UnaryDiv(b)) => a.compare(b, ctx, int)?,
-			(Self::Factorial(a), Self::Factorial(b)) => a.compare(b, ctx, int)?,
+			(Self::Parens(a), Self::Parens(b))
+			| (Self::UnaryMinus(a), Self::UnaryMinus(b))
+			| (Self::UnaryPlus(a), Self::UnaryPlus(b))
+			| (Self::UnaryDiv(a), Self::UnaryDiv(b))
+			| (Self::Factorial(a), Self::Factorial(b)) => a.compare(b, ctx, int)?,
 			(Self::Bop(a1, a2, a3), Self::Bop(b1, b2, b3)) => {
 				a1 == b1 && a2.compare(b2, ctx, int)? && a3.compare(b3, ctx, int)?
 			}
-			(Self::Apply(a1, a2), Self::Apply(b1, b2)) => {
+			(Self::Apply(a1, a2), Self::Apply(b1, b2))
+			| (Self::ApplyFunctionCall(a1, a2), Self::ApplyFunctionCall(b1, b2))
+			| (Self::ApplyMul(a1, a2), Self::ApplyMul(b1, b2))
+			| (Self::As(a1, a2), Self::As(b1, b2))
+			| (Self::Statements(a1, a2), Self::Statements(b1, b2)) => {
 				a1.compare(b1, ctx, int)? && a2.compare(b2, ctx, int)?
 			}
-			(Self::ApplyFunctionCall(a1, a2), Self::ApplyFunctionCall(b1, b2)) => {
-				a1.compare(b1, ctx, int)? && a2.compare(b2, ctx, int)?
-			}
-			(Self::ApplyMul(a1, a2), Self::ApplyMul(b1, b2)) => {
-				a1.compare(b1, ctx, int)? && a2.compare(b2, ctx, int)?
-			}
-			(Self::As(a1, a2), Self::As(b1, b2)) => {
-				a1.compare(b1, ctx, int)? && a2.compare(b2, ctx, int)?
-			}
-			(Self::Fn(a1, a2), Self::Fn(b1, b2)) => a1 == b1 && a2.compare(b2, ctx, int)?,
-			(Self::Of(a1, a2), Self::Of(b1, b2)) => a1 == b1 && a2.compare(b2, ctx, int)?,
-			(Self::Assign(a1, a2), Self::Assign(b1, b2)) => a1 == b1 && a2.compare(b2, ctx, int)?,
+			(Self::Fn(a1, a2), Self::Fn(b1, b2))
+			| (Self::Of(a1, a2), Self::Of(b1, b2))
+			| (Self::Assign(a1, a2), Self::Assign(b1, b2)) => a1 == b1 && a2.compare(b2, ctx, int)?,
 			(Self::Equality(a1, a2, a3), Self::Equality(b1, b2, b3)) => {
 				a1 == b1 && a2.compare(b2, ctx, int)? && a3.compare(b3, ctx, int)?
-			}
-			(Self::Statements(a1, a2), Self::Statements(b1, b2)) => {
-				a1.compare(b1, ctx, int)? && a2.compare(b2, ctx, int)?
 			}
 			_ => false,
 		})

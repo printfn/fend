@@ -1151,7 +1151,7 @@ impl FormattedValue {
 			return;
 		}
 		spans.push(Span {
-			string: self.number.to_string(),
+			string: self.number.clone(),
 			kind: SpanKind::Number,
 		});
 		if !attrs.plain_number {
