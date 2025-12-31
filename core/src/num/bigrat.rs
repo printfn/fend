@@ -673,21 +673,27 @@ impl BigRat {
 			let num_digits_of_int_part = formatted_integer_part.value.num_digits();
 			// reduce decimal places by however many digits we already printed
 			// in the integer portion
-			//
-			// saturate to zero in case we already exhausted all digits and
-			// shouldn't print any decimal places
-			let dp = sf.saturating_sub(num_digits_of_int_part);
-			if integer_part == 0.into() {
-				// if the integer part is 0, we don't want leading zeroes
-				// after the decimal point to affect the number of non-zero
-				// digits printed
 
-				// we add 1 to the number of decimal places in this case because
-				// the integer component of '0' shouldn't count against the
-				// number of significant figures
-				MaxDigitsToPrint::DpButIgnoreLeadingZeroes(dp + 1)
+			// If we truncated the integer part (e.g. 12 to 1 sf -> 10),
+			// do NOT try to round up based on the decimal fraction.
+			if num_digits_of_int_part > sf {
+				MaxDigitsToPrint::DecimalPlacesNoRounding(0)
 			} else {
-				MaxDigitsToPrint::DecimalPlaces(dp)
+				// saturate to zero in case we already exhausted all digits and
+				// shouldn't print any decimal places
+				let dp = sf.saturating_sub(num_digits_of_int_part);
+				if integer_part == 0.into() {
+					// if the integer part is 0, we don't want leading zeroes
+					// after the decimal point to affect the number of non-zero
+					// digits printed
+
+					// we add 1 to the number of decimal places in this case because
+					// the integer component of '0' shouldn't count against the
+					// number of significant figures
+					MaxDigitsToPrint::DpButIgnoreLeadingZeroes(dp + 1)
+				} else {
+					MaxDigitsToPrint::DecimalPlaces(dp)
+				}
 			}
 		} else {
 			MaxDigitsToPrint::DecimalPlaces(10)
@@ -750,6 +756,12 @@ impl BigRat {
 				if num == 0.into() {
 					// reached the end of the number
 					return Err(NextDigitErr::Terminated { round_up: false });
+				}
+				// Explicitly handle the NoRounding case
+				if let MaxDigitsToPrint::DecimalPlacesNoRounding(limit) = max_digits {
+					if i == limit {
+						return Err(NextDigitErr::Terminated { round_up: false });
+					}
 				}
 				if max_digits == MaxDigitsToPrint::DecimalPlaces(i)
 					|| max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
@@ -886,7 +898,31 @@ impl BigRat {
 						sign
 					};
 					if round_up {
-						// todo
+						let mut chars: Vec<char> = trailing_digits.chars().collect();
+						let mut carry = true;
+						for i in (0..chars.len()).rev() {
+							let c = chars[i];
+							if c == decimal_separator.decimal_separator() {
+								continue;
+							}
+							if let Some(d) = c.to_digit(base.base_as_u8().into()) {
+								if d + 1 < base.base_as_u8().into() {
+									chars[i] =
+										char::from_digit(d + 1, base.base_as_u8().into()).unwrap();
+									carry = false;
+									break;
+								}
+								chars[i] = '0';
+							} else {
+								chars.insert(i + 1, '1');
+								carry = false;
+								break;
+							}
+						}
+						if carry {
+							chars.insert(0, '1');
+						}
+						trailing_digits = chars.into_iter().collect();
 					}
 					// is the number exact, or did we need to truncate?
 					let exact = current_numerator == 0.into();
@@ -1134,6 +1170,8 @@ enum MaxDigitsToPrint {
 	DecimalPlaces(usize),
 	/// Print only the given number of dps, but ignore leading zeroes after the decimal point
 	DpButIgnoreLeadingZeroes(usize),
+	/// Print digits but strictly truncate at the limit (no rounding up)
+	DecimalPlacesNoRounding(usize),
 }
 
 impl ops::Neg for BigRat {

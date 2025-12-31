@@ -4297,6 +4297,16 @@ fn sf_small_2() {
 }
 
 #[test]
+fn sf_rounding_integer_carry() {
+	test_eval("123.9 to 3 sf", "approx. 124");
+}
+
+#[test]
+fn sf_rounding_small_decimal() {
+	test_eval("0.00555 to 2 sf", "approx. 0.0056");
+}
+
+#[test]
 fn sf_small_3() {
 	test_eval("pi / 1000000 to 3 sf", "approx. 0.00000314");
 }
