@@ -409,7 +409,7 @@ fn inverse_sin_point_five() {
 
 #[test]
 fn inverse_sin_nested() {
-	test_eval("sin^-1 (sin 0.5", "approx. 0.5");
+	test_eval("sin^-1 (sin 0.5)", "approx. 0.4999999999");
 }
 
 #[test]
@@ -1214,7 +1214,7 @@ fn powers_17() {
 fn powers_18() {
 	test_eval(
 		"5.2*10^15*300^(3/2)",
-		"approx. 27019992598074485776.9266786817",
+		"approx. 27019992598074485779.0281629274",
 	);
 }
 
@@ -3193,6 +3193,16 @@ fn atan_1() {
 }
 
 #[test]
+fn atan_zero_point_five() {
+	test_eval("atan 0.5", "approx. 0.463647609");
+}
+
+#[test]
+fn atan_minus_zero_point_three_one() {
+	test_eval("atan (-0.31)", "approx. -0.30060567");
+}
+
+#[test]
 fn sinh_0() {
 	test_eval("sinh 0", "approx. 0");
 }
@@ -3284,7 +3294,7 @@ fn log10_1000() {
 
 #[test]
 fn log10_10000() {
-	test_eval("log10 10000", "approx. 3.9999999999");
+	test_eval("log10 10000", "approx. 4");
 }
 
 #[test]
@@ -3304,7 +3314,7 @@ fn log_1000() {
 
 #[test]
 fn log_10000() {
-	test_eval("log 10000", "approx. 3.9999999999");
+	test_eval("log 10000", "approx. 4");
 }
 
 #[test]
@@ -3339,7 +3349,7 @@ fn log2_minus_1() {
 
 #[test]
 fn sqrt_minus_two() {
-	test_eval_simple("sqrt(-2)", "approx. 0 + 1.4142135623i");
+	test_eval("sqrt(-2)", "approx. 1.4142135623i");
 }
 
 #[test]
@@ -3414,8 +3424,7 @@ fn sqrt_i() {
 
 #[test]
 fn sqrt_minus_two_i() {
-	// FIXME: exactly 1 - i
-	test_eval("sqrt (-2i)", "approx. 0.9999999999 - 0.9999999999i");
+	test_eval("sqrt (-2i)", "approx. 1 - 0.9999999999i");
 }
 
 #[test]
