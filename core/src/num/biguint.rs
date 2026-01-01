@@ -178,42 +178,10 @@ impl BigUint {
 		}
 	}
 
-	fn set(&mut self, idx: usize, new_value: u64) {
-		match self {
-			Small(n) => {
-				if idx == 0 {
-					*n = new_value;
-				} else if new_value == 0 {
-					// no need to do anything
-				} else {
-					self.make_large();
-					self.set(idx, new_value);
-				}
-			}
-			Large(value) => {
-				while idx >= value.len() {
-					value.push(0);
-				}
-				value[idx] = new_value;
-			}
-		}
-	}
-
 	fn value_len(&self) -> usize {
 		match self {
 			Small(_) => 1,
 			Large(value) => value.len(),
-		}
-	}
-
-	fn value_push(&mut self, new: u64) {
-		if new == 0 {
-			return;
-		}
-		self.make_large();
-		match self {
-			Small(_) => unreachable!(),
-			Large(v) => v.push(new),
 		}
 	}
 
@@ -535,7 +503,7 @@ impl BigUint {
 	}
 
 	// Knuth's Algorithm D (The Art of Computer Programming, Vol 2, 4.3.1)
-	#[allow(clippy::cast_possible_truncation)]
+	#[allow(clippy::cast_possible_truncation, clippy::too_many_lines)]
 	fn div_rem_knuth<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<(Self, Self)> {
 		let mut dividend_digits = match self {
 			Small(n) => vec![*n],
@@ -863,10 +831,6 @@ impl BigUint {
 			n -= 1;
 		}
 		Ok(b)
-	}
-
-	fn rem<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<Self> {
-		Ok(self.divmod(other, int)?.1)
 	}
 
 	pub(crate) fn is_even<I: Interrupt>(&self, int: &I) -> FResult<bool> {
@@ -1655,18 +1619,6 @@ mod tests {
 		assert_eq!(BigUint::from(6).div(&two, int)?, BigUint::from(3));
 		assert_eq!(BigUint::from(7).div(&two, int)?, BigUint::from(3));
 		assert_eq!(BigUint::from(8).div(&two, int)?, BigUint::from(4));
-		Ok(())
-	}
-
-	#[test]
-	fn test_rem() -> Res {
-		let int = &crate::interrupt::Never;
-		let three = BigUint::from(3);
-		assert_eq!(BigUint::from(20).rem(&three, int)?, BigUint::from(2));
-		assert_eq!(BigUint::from(21).rem(&three, int)?, BigUint::from(0));
-		assert_eq!(BigUint::from(22).rem(&three, int)?, BigUint::from(1));
-		assert_eq!(BigUint::from(23).rem(&three, int)?, BigUint::from(2));
-		assert_eq!(BigUint::from(24).rem(&three, int)?, BigUint::from(0));
 		Ok(())
 	}
 
