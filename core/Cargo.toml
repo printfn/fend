@@ -9,3 +9,6 @@ keywords.workspace = true
 categories.workspace = true
 license.workspace = true
 readme = "README.md"
+
+[dependencies]
+num-traits = "0.2.19"
