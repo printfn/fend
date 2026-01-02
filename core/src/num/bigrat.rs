@@ -758,10 +758,10 @@ impl BigRat {
 					return Err(NextDigitErr::Terminated { round_up: false });
 				}
 				// Explicitly handle the NoRounding case
-				if let MaxDigitsToPrint::DecimalPlacesNoRounding(limit) = max_digits {
-					if i == limit {
-						return Err(NextDigitErr::Terminated { round_up: false });
-					}
+				if let MaxDigitsToPrint::DecimalPlacesNoRounding(limit) = max_digits
+					&& i == limit
+				{
+					return Err(NextDigitErr::Terminated { round_up: false });
 				}
 				if max_digits == MaxDigitsToPrint::DecimalPlaces(i)
 					|| max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
