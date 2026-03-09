@@ -736,6 +736,90 @@ impl BigRat {
 		))
 	}
 
+	/// Computes the next digit of the decimal expansion of numerator/denominator.
+	///
+	/// Returns `Ok((next_numerator, digit))` or `Err(NextDigitErr::Terminated)` when
+	/// the expansion ends (either exactly or at the requested precision limit).
+	fn compute_next_digit<I: Interrupt>(
+		i: usize,
+		num: BigUint,
+		base: &BigUint,
+		denominator: &BigUint,
+		max_digits: MaxDigitsToPrint,
+		int: &I,
+	) -> Result<(BigUint, BigUint), NextDigitErr> {
+		test_int(int)?;
+		if num == 0.into() {
+			return Err(NextDigitErr::Terminated { round_up: false });
+		}
+		if let MaxDigitsToPrint::DecimalPlacesNoRounding(limit) = max_digits
+			&& i == limit
+		{
+			return Err(NextDigitErr::Terminated { round_up: false });
+		}
+		if max_digits == MaxDigitsToPrint::DecimalPlaces(i)
+			|| max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
+		{
+			return Err(NextDigitErr::Terminated {
+				round_up: num.mul(&2.into(), int)? >= *denominator,
+			});
+		}
+		// digit = base * numerator / denominator
+		// next_numerator = base * numerator - digit * denominator
+		let bnum = num.mul(base, int)?;
+		let digit = bnum.clone().div(denominator, int)?;
+		let next_num = bnum.sub(&digit.clone().mul(denominator, int)?);
+		Ok((next_num, digit))
+	}
+
+	/// Formats a recurring decimal with cycle notation, e.g. `1.3(18)`.
+	fn format_recurring_cycle(
+		cycle_length: usize,
+		location: usize,
+		output: &str,
+		formatted_int: &str,
+		decimal_separator: DecimalSeparatorStyle,
+	) -> String {
+		let (ab, _) = output.split_at(location + cycle_length);
+		let (a, b) = ab.split_at(location);
+		let mut result = String::new();
+		result.push_str(formatted_int);
+		result.push(decimal_separator.decimal_separator());
+		result.push_str(a);
+		result.push('(');
+		result.push_str(b);
+		result.push(')');
+		result
+	}
+
+	/// Propagates a carry through a formatted decimal string to round it up.
+	fn round_up_decimal(trailing_digits: &str, base: Base, decimal_separator: char) -> String {
+		let mut chars: Vec<char> = trailing_digits.chars().collect();
+		let mut carry = true;
+		for i in (0..chars.len()).rev() {
+			let c = chars[i];
+			if c == decimal_separator {
+				continue;
+			}
+			if let Some(d) = c.to_digit(base.base_as_u8().into()) {
+				if d + 1 < base.base_as_u8().into() {
+					chars[i] = char::from_digit(d + 1, base.base_as_u8().into()).unwrap();
+					carry = false;
+					break;
+				}
+				chars[i] = '0';
+			} else {
+				chars.insert(i + 1, '1');
+				carry = false;
+				break;
+			}
+		}
+		if carry {
+			chars.insert(0, '1');
+		}
+		chars.into_iter().collect()
+	}
+
 	/// Prints the decimal expansion of num/den, where num < den, in the given base.
 	#[allow(clippy::too_many_arguments)]
 	fn format_trailing_digits<I: Interrupt>(
@@ -750,33 +834,10 @@ impl BigRat {
 	) -> FResult<(Sign, Exact<String>)> {
 		let base_as_u64: u64 = base.base_as_u8().into();
 		let b: BigUint = base_as_u64.into();
+		let den = denominator;
 		let next_digit =
 			|i: usize, num: BigUint, base: &BigUint| -> Result<(BigUint, BigUint), NextDigitErr> {
-				test_int(int)?;
-				if num == 0.into() {
-					// reached the end of the number
-					return Err(NextDigitErr::Terminated { round_up: false });
-				}
-				// Explicitly handle the NoRounding case
-				if let MaxDigitsToPrint::DecimalPlacesNoRounding(limit) = max_digits
-					&& i == limit
-				{
-					return Err(NextDigitErr::Terminated { round_up: false });
-				}
-				if max_digits == MaxDigitsToPrint::DecimalPlaces(i)
-					|| max_digits == MaxDigitsToPrint::DpButIgnoreLeadingZeroes(i)
-				{
-					// round up if remaining fraction is >1/2
-					return Err(NextDigitErr::Terminated {
-						round_up: num.mul(&2.into(), int)? >= *denominator,
-					});
-				}
-				// digit = base * numerator / denominator
-				// next_numerator = base * numerator - digit * denominator
-				let bnum = num.mul(base, int)?;
-				let digit = bnum.clone().div(denominator, int)?;
-				let next_num = bnum.sub(&digit.clone().mul(denominator, int)?);
-				Ok((next_num, digit))
+				Self::compute_next_digit(i, num, base, den, max_digits, int)
 			};
 		let fold_digits = |mut s: String, digit: BigUint| -> FResult<String> {
 			let digit_str = digit
@@ -815,16 +876,14 @@ impl BigRat {
 			String::new(),
 		) {
 			Ok((cycle_length, location, output)) => {
-				let (ab, _) = output.split_at(location + cycle_length);
-				let (a, b) = ab.split_at(location);
 				let (sign, formatted_int) = print_integer_part(false)?;
-				let mut trailing_digits = String::new();
-				trailing_digits.push_str(&formatted_int);
-				trailing_digits.push(decimal_separator.decimal_separator());
-				trailing_digits.push_str(a);
-				trailing_digits.push('(');
-				trailing_digits.push_str(b);
-				trailing_digits.push(')');
+				let trailing_digits = Self::format_recurring_cycle(
+					cycle_length,
+					location,
+					&output,
+					&formatted_int,
+					decimal_separator,
+				);
 				Ok((sign, Exact::new(trailing_digits, true))) // the recurring decimal is exact
 			}
 			Err(NextDigitErr::Terminated { round_up: _ }) => {
@@ -898,31 +957,11 @@ impl BigRat {
 						sign
 					};
 					if round_up {
-						let mut chars: Vec<char> = trailing_digits.chars().collect();
-						let mut carry = true;
-						for i in (0..chars.len()).rev() {
-							let c = chars[i];
-							if c == decimal_separator.decimal_separator() {
-								continue;
-							}
-							if let Some(d) = c.to_digit(base.base_as_u8().into()) {
-								if d + 1 < base.base_as_u8().into() {
-									chars[i] =
-										char::from_digit(d + 1, base.base_as_u8().into()).unwrap();
-									carry = false;
-									break;
-								}
-								chars[i] = '0';
-							} else {
-								chars.insert(i + 1, '1');
-								carry = false;
-								break;
-							}
-						}
-						if carry {
-							chars.insert(0, '1');
-						}
-						trailing_digits = chars.into_iter().collect();
+						trailing_digits = Self::round_up_decimal(
+							&trailing_digits,
+							base,
+							decimal_separator.decimal_separator(),
+						);
 					}
 					// is the number exact, or did we need to truncate?
 					let exact = current_numerator == 0.into();
