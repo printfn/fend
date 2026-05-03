@@ -50,6 +50,8 @@ impl InnerCtx {
 		}
 		res.core_ctx
 			.set_decimal_separator_style(config.decimal_separator);
+		res.core_ctx
+			.set_implicit_multiplication_precedence(config.implicit_multiplication_precedence);
 		let exchange_rate_handler = exchange_rates::ExchangeRateHandler {
 			enable_internet_access: config.enable_internet_access,
 			source: config.exchange_rate_source,

@@ -1,4 +1,4 @@
-use fend_core::DecimalSeparatorStyle;
+use fend_core::{DecimalSeparatorStyle, ImplicitMultiplicationPrecedence};
 
 use crate::{color, custom_units::CustomUnitDefinition};
 use std::{env, fmt, fs, io, time};
@@ -15,6 +15,7 @@ pub struct Config {
 	pub exchange_rate_max_age: u64,
 	pub custom_units: Vec<CustomUnitDefinition>,
 	pub decimal_separator: DecimalSeparatorStyle,
+	pub implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
 	unknown_settings: UnknownSettings,
 	unknown_keys: Vec<String>,
 }
@@ -116,6 +117,7 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 		let mut seen_exchange_rate_max_age = false;
 		let mut seen_custom_units = false;
 		let mut seen_decimal_separator_style = false;
+		let mut seen_implicit_multiplication_precedence = false;
 		while let Some(key) = map.next_key::<String>()? {
 			match key.as_str() {
 				"prompt" => {
@@ -222,6 +224,29 @@ impl<'de> serde::de::Visitor<'de> for ConfigVisitor {
 					};
 					seen_decimal_separator_style = true;
 				}
+				"implicit-multiplication-precedence" => {
+					if seen_implicit_multiplication_precedence {
+						return Err(serde::de::Error::duplicate_field(
+							"implicit-multiplication-precedence",
+						));
+					}
+					let precedence: String = map.next_value()?;
+					result.implicit_multiplication_precedence = match precedence.as_str() {
+						"same-as-division" | "default" => {
+							ImplicitMultiplicationPrecedence::SameAsDivision
+						}
+						"higher-than-division" => {
+							ImplicitMultiplicationPrecedence::HigherThanDivision
+						}
+						v => {
+							return Err(serde::de::Error::invalid_value(
+								serde::de::Unexpected::Str(v),
+								&"`default`, `same-as-division` or `higher-than-division`",
+							));
+						}
+					};
+					seen_implicit_multiplication_precedence = true;
+				}
 				unknown_key => {
 					// this may occur if the user has multiple fend versions installed
 					map.next_value::<toml::Value>()?;
@@ -245,6 +270,7 @@ impl<'de> serde::Deserialize<'de> for Config {
 			"enable-internet-access",
 			"custom-units",
 			"decimal-separator-style",
+			"implicit-multiplication-precedence",
 			"exchange-rate-source",
 			"exchange-rate-max-age",
 		];
@@ -266,6 +292,7 @@ impl Default for Config {
 			exchange_rate_max_age: 60 * 60 * 24 * 3,
 			custom_units: vec![],
 			decimal_separator: DecimalSeparatorStyle::Dot,
+			implicit_multiplication_precedence: ImplicitMultiplicationPrecedence::SameAsDivision,
 			unknown_keys: vec![],
 		}
 	}
@@ -350,5 +377,16 @@ mod tests {
 	fn test_default_config_file() {
 		let deserialized: Config = toml::from_str(DEFAULT_CONFIG_FILE).unwrap();
 		assert_eq!(deserialized, Config::default());
+	}
+
+	#[test]
+	fn test_implicit_multiplication_precedence_config() {
+		let deserialized: Config =
+			toml::from_str("implicit-multiplication-precedence = 'higher-than-division'\n")
+				.unwrap();
+		assert_eq!(
+			deserialized.implicit_multiplication_precedence,
+			ImplicitMultiplicationPrecedence::HigherThanDivision
+		);
 	}
 }

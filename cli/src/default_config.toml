@@ -52,6 +52,19 @@ exchange-rate-max-age = 259200
 #       separator. This is common in European languages.
 decimal-separator-style = "default"
 
+# Precedence for implicit multiplication and function application relative
+# to division. By default, fend keeps the historic behavior where `1 / 2m`
+# is parsed as `(1 / 2) m`. Set this to `higher-than-division` to parse it
+# as `1 / (2 m)` instead.
+#
+# Possible values:
+#   * `default`: uses the default
+#   * `same-as-division`: implicit multiplication has the same precedence
+#       as explicit multiplication and division
+#   * `higher-than-division`: implicit multiplication binds more tightly
+#       than explicit multiplication and division
+implicit-multiplication-precedence = "default"
+
 # This section controls the colors that are used by
 # fend. Make sure the `enable-colors` setting is
 # turned on for this to work.

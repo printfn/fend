@@ -611,13 +611,7 @@ fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 				return Err(FendError::UnexpectedChar(ch));
 			}
 		}
-		'>' => {
-			if test_next('>') {
-				Symbol::ShiftRight
-			} else {
-				return Err(FendError::UnexpectedChar(ch));
-			}
-		}
+		'>' if test_next('>') => Symbol::ShiftRight,
 		';' => Symbol::Semicolon,
 		_ => return Err(FendError::UnexpectedChar(ch)),
 	}))

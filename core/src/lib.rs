@@ -281,6 +281,19 @@ pub enum DecimalSeparatorStyle {
 	Comma,
 }
 
+/// Controls how implicit multiplication/function application is parsed relative to division.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[non_exhaustive]
+pub enum ImplicitMultiplicationPrecedence {
+	/// Parse implicit multiplication with the same precedence as explicit multiplication and division.
+	/// This keeps the historic fend behavior, where `1 / 2m` is parsed like `(1 / 2) m`.
+	#[default]
+	SameAsDivision,
+	/// Parse implicit multiplication more tightly than explicit multiplication and division.
+	/// In this mode, `1 / 2m` is parsed like `1 / (2 m)`.
+	HigherThanDivision,
+}
+
 impl DecimalSeparatorStyle {
 	fn decimal_separator(self) -> char {
 		match self {
@@ -315,6 +328,7 @@ pub struct Context {
 	get_exchange_rate_v2: Option<Arc<dyn ExchangeRateFnV2 + Send + Sync>>,
 	custom_units: Vec<(String, String, String)>,
 	decimal_separator: DecimalSeparatorStyle,
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
 	is_preview: bool,
 }
 
@@ -330,6 +344,7 @@ impl Clone for Context {
 			get_exchange_rate_v2: self.get_exchange_rate_v2.clone(),
 			custom_units: self.custom_units.clone(),
 			decimal_separator: self.decimal_separator,
+			implicit_multiplication_precedence: self.implicit_multiplication_precedence,
 			is_preview: self.is_preview,
 		}
 	}
@@ -346,6 +361,10 @@ impl fmt::Debug for Context {
 			.field("echo_result", &self.echo_result)
 			.field("custom_units", &self.custom_units)
 			.field("decimal_separator", &self.decimal_separator)
+			.field(
+				"implicit_multiplication_precedence",
+				&self.implicit_multiplication_precedence,
+			)
 			.field("is_preview", &self.is_preview)
 			.finish_non_exhaustive()
 	}
@@ -371,6 +390,7 @@ impl Context {
 			get_exchange_rate_v2: None,
 			custom_units: vec![],
 			decimal_separator: DecimalSeparatorStyle::default(),
+			implicit_multiplication_precedence: ImplicitMultiplicationPrecedence::default(),
 			is_preview: false,
 		}
 	}
@@ -519,6 +539,14 @@ impl Context {
 	/// change the number format from e.g. `1,234.00` to `1.234,00`.
 	pub fn set_decimal_separator_style(&mut self, style: DecimalSeparatorStyle) {
 		self.decimal_separator = style;
+	}
+
+	/// Sets how implicit multiplication is parsed relative to division.
+	pub fn set_implicit_multiplication_precedence(
+		&mut self,
+		precedence: ImplicitMultiplicationPrecedence,
+	) {
+		self.implicit_multiplication_precedence = precedence;
 	}
 }
 

@@ -1,3 +1,4 @@
+use crate::ImplicitMultiplicationPrecedence;
 use crate::ast::{Bop, Expr};
 use crate::lexer::{Symbol, Token};
 use crate::value::Value;
@@ -83,11 +84,15 @@ fn parse_number(input: &[Token]) -> ParseResult<'_> {
 	}
 }
 
-fn parse_ident(input: &[Token]) -> ParseResult<'_> {
+fn parse_ident(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	match parse_token(input)? {
 		(Token::Ident(ident), remaining) => {
 			if ident.as_str() == "light"
-				&& let Ok((ident2, remaining2)) = parse_ident(remaining)
+				&& let Ok((ident2, remaining2)) =
+					parse_ident(remaining, implicit_multiplication_precedence)
 			{
 				return Ok((
 					Expr::Apply(Box::new(Expr::Ident(ident)), Box::new(ident2)),
@@ -95,7 +100,8 @@ fn parse_ident(input: &[Token]) -> ParseResult<'_> {
 				));
 			}
 			if let Ok(((), remaining2)) = parse_fixed_symbol(remaining, Symbol::Of) {
-				let (inner, remaining3) = parse_parens_or_literal(remaining2)?;
+				let (inner, remaining3) =
+					parse_parens_or_literal(remaining2, implicit_multiplication_precedence)?;
 				Ok((Expr::Of(ident, Box::new(inner)), remaining3))
 			} else {
 				Ok((Expr::Ident(ident), remaining))
@@ -105,12 +111,15 @@ fn parse_ident(input: &[Token]) -> ParseResult<'_> {
 	}
 }
 
-fn parse_parens(input: &[Token]) -> ParseResult<'_> {
+fn parse_parens(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::OpenParens)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::CloseParens) {
 		return Ok((Expr::Literal(Value::Unit), remaining));
 	}
-	let (inner, mut input) = parse_expression(input)?;
+	let (inner, mut input) = parse_expression(input, implicit_multiplication_precedence)?;
 	// allow omitting closing parentheses at end of input
 	if !input.is_empty() {
 		let ((), remaining) = parse_fixed_symbol(input, Symbol::CloseParens)?;
@@ -119,33 +128,47 @@ fn parse_parens(input: &[Token]) -> ParseResult<'_> {
 	Ok((Expr::Parens(Box::new(inner)), input))
 }
 
-fn parse_backslash_lambda(input: &[Token]) -> ParseResult<'_> {
+fn parse_backslash_lambda(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Backslash)?;
-	let (Expr::Ident(ident), input) = parse_ident(input)? else {
+	let (Expr::Ident(ident), input) = parse_ident(input, implicit_multiplication_precedence)?
+	else {
 		return Err(ParseError::ExpectedIdentifier);
 	};
 	let ((), input) =
 		parse_fixed_symbol(input, Symbol::Dot).map_err(|_| ParseError::ExpectedDotInLambda)?;
-	let (rhs, input) = parse_function(input)?;
+	let (rhs, input) = parse_function(input, implicit_multiplication_precedence)?;
 	Ok((Expr::Fn(ident, Box::new(rhs)), input))
 }
 
-fn parse_parens_or_literal(input: &[Token]) -> ParseResult<'_> {
+fn parse_parens_or_literal(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let (token, remaining) = parse_token(input)?;
 
 	match token {
 		Token::Num(_) => parse_number(input),
-		Token::Ident(_) => parse_ident(input),
+		Token::Ident(_) => parse_ident(input, implicit_multiplication_precedence),
 		Token::StringLiteral(s) => Ok((Expr::Literal(Value::String(s)), remaining)),
-		Token::Symbol(Symbol::OpenParens) => parse_parens(input),
-		Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
+		Token::Symbol(Symbol::OpenParens) => {
+			parse_parens(input, implicit_multiplication_precedence)
+		}
+		Token::Symbol(Symbol::Backslash) => {
+			parse_backslash_lambda(input, implicit_multiplication_precedence)
+		}
 		Token::Symbol(s) => Err(ParseError::UnexpectedSymbol(s)),
 		Token::Date(d) => Ok((Expr::Literal(Value::Date(d)), remaining)),
 	}
 }
 
-fn parse_factorial(input: &[Token]) -> ParseResult<'_> {
-	let (mut res, mut input) = parse_parens_or_literal(input)?;
+fn parse_factorial(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut res, mut input) = parse_parens_or_literal(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
 		res = Expr::Factorial(Box::new(res));
 		input = remaining;
@@ -153,34 +176,45 @@ fn parse_factorial(input: &[Token]) -> ParseResult<'_> {
 	Ok((res, input))
 }
 
-fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<'_> {
+fn parse_power(
+	input: &[Token],
+	allow_unary: bool,
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	if allow_unary {
 		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Sub) {
-			let (result, remaining) = parse_power(remaining, true)?;
+			let (result, remaining) =
+				parse_power(remaining, true, implicit_multiplication_precedence)?;
 			return Ok((Expr::UnaryMinus(Box::new(result)), remaining));
 		}
 		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Add) {
-			let (result, remaining) = parse_power(remaining, true)?;
+			let (result, remaining) =
+				parse_power(remaining, true, implicit_multiplication_precedence)?;
 			return Ok((Expr::UnaryPlus(Box::new(result)), remaining));
 		}
 		// The precedence of unary division relative to exponentiation
 		// is not important because /a^b -> (1/a)^b == 1/(a^b)
 		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Div) {
-			let (result, remaining) = parse_power(remaining, true)?;
+			let (result, remaining) =
+				parse_power(remaining, true, implicit_multiplication_precedence)?;
 			return Ok((Expr::UnaryDiv(Box::new(result)), remaining));
 		}
 	}
-	let (mut result, mut input) = parse_factorial(input)?;
+	let (mut result, mut input) = parse_factorial(input, implicit_multiplication_precedence)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Pow) {
-		let (rhs, remaining) = parse_power(remaining, true)?;
+		let (rhs, remaining) = parse_power(remaining, true, implicit_multiplication_precedence)?;
 		result = Expr::Bop(Bop::Pow, Box::new(result), Box::new(rhs));
 		input = remaining;
 	}
 	Ok((result, input))
 }
 
-fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
-	let (rhs, input) = parse_power(input, false)?;
+fn parse_apply_cont<'a>(
+	input: &'a [Token],
+	lhs: &Expr,
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'a> {
+	let (rhs, input) = parse_power(input, false, implicit_multiplication_precedence)?;
 	Ok((
 		match (lhs, &rhs) {
 			(
@@ -221,7 +255,11 @@ fn parse_apply_cont<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 	))
 }
 
-fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
+fn parse_mixed_fraction<'a>(
+	input: &'a [Token],
+	lhs: &Expr,
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'a> {
 	let (positive, lhs, other_factor) = match lhs {
 		Expr::Literal(Value::Num(_)) => (true, lhs, None),
 		Expr::UnaryMinus(x) => {
@@ -244,13 +282,13 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 		},
 		_ => return Err(ParseError::InvalidMixedFraction),
 	};
-	let (rhs_top, input) = parse_power(input, false)?;
+	let (rhs_top, input) = parse_power(input, false, implicit_multiplication_precedence)?;
 	if let Expr::Literal(Value::Num(_)) = rhs_top {
 	} else {
 		return Err(ParseError::InvalidMixedFraction);
 	}
 	let ((), input) = parse_fixed_symbol(input, Symbol::Div)?;
-	let (rhs_bottom, input) = parse_power(input, false)?;
+	let (rhs_bottom, input) = parse_power(input, false, implicit_multiplication_precedence)?;
 	if let Expr::Literal(Value::Num(_)) = rhs_bottom {
 	} else {
 		return Err(ParseError::InvalidMixedFraction);
@@ -271,26 +309,38 @@ fn parse_mixed_fraction<'a>(input: &'a [Token], lhs: &Expr) -> ParseResult<'a> {
 	Ok((mixed_fraction, input))
 }
 
-fn parse_multiplication_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_multiplication_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Mul)?;
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_multiplicative_operand(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
-fn parse_division_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_division_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Div)?;
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_multiplicative_operand(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
-fn parse_modulo_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_modulo_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Mod)?;
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_multiplicative_operand(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
 // try parsing `%` as modulo
-fn parse_modulo2_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_modulo2_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let (token, input) = parse_token(input)?;
 	if let Token::Ident(ident) = token {
 		if ident.as_str() != "%" {
@@ -306,29 +356,75 @@ fn parse_modulo2_cont(input: &[Token]) -> ParseResult<'_> {
 	}) {
 		return Err(ParseError::UnexpectedInput);
 	}
-	let (b, input) = parse_power(input, true)?;
+	let (b, input) = parse_multiplicative_operand(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
-fn parse_multiplicative(input: &[Token]) -> ParseResult<'_> {
-	let (mut res, mut input) = parse_power(input, true)?;
+fn parse_apply_chain(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut res, mut input) = parse_power(input, true, implicit_multiplication_precedence)?;
+	while let Ok((new_res, remaining)) =
+		parse_apply_cont(input, &res, implicit_multiplication_precedence)
+	{
+		res = new_res;
+		input = remaining;
+	}
+	Ok((res, input))
+}
+
+fn parse_multiplicative_operand(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	match implicit_multiplication_precedence {
+		ImplicitMultiplicationPrecedence::SameAsDivision => {
+			parse_power(input, true, implicit_multiplication_precedence)
+		}
+		ImplicitMultiplicationPrecedence::HigherThanDivision => {
+			parse_apply_chain(input, implicit_multiplication_precedence)
+		}
+	}
+}
+
+fn parse_multiplicative(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut res, mut input) =
+		parse_multiplicative_operand(input, implicit_multiplication_precedence)?;
 	loop {
-		if let Ok((term, remaining)) = parse_multiplication_cont(input) {
+		if let Ok((term, remaining)) =
+			parse_multiplication_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::Bop(Bop::Mul, Box::new(res.clone()), Box::new(term));
 			input = remaining;
-		} else if let Ok((term, remaining)) = parse_division_cont(input) {
+		} else if let Ok((term, remaining)) =
+			parse_division_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::Bop(Bop::Div, Box::new(res.clone()), Box::new(term));
 			input = remaining;
-		} else if let Ok((term, remaining)) = parse_modulo_cont(input) {
+		} else if let Ok((term, remaining)) =
+			parse_modulo_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::Bop(Bop::Mod, Box::new(res.clone()), Box::new(term));
 			input = remaining;
-		} else if let Ok((term, remaining)) = parse_modulo2_cont(input) {
+		} else if let Ok((term, remaining)) =
+			parse_modulo2_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::Bop(Bop::Mod, Box::new(res.clone()), Box::new(term));
 			input = remaining;
-		} else if let Ok((new_res, remaining)) = parse_mixed_fraction(input, &res) {
+		} else if let Ok((new_res, remaining)) =
+			parse_mixed_fraction(input, &res, implicit_multiplication_precedence)
+		{
 			res = new_res;
 			input = remaining;
-		} else if let Ok((new_res, remaining)) = parse_apply_cont(input, &res) {
+		} else if implicit_multiplication_precedence
+			== ImplicitMultiplicationPrecedence::SameAsDivision
+			&& let Ok((new_res, remaining)) =
+				parse_apply_cont(input, &res, implicit_multiplication_precedence)
+		{
 			res = new_res;
 			input = remaining;
 		} else {
@@ -338,9 +434,13 @@ fn parse_multiplicative(input: &[Token]) -> ParseResult<'_> {
 	Ok((res, input))
 }
 
-fn parse_implicit_addition(input: &[Token]) -> ParseResult<'_> {
-	let (res, input) = parse_multiplicative(input)?;
-	if let Ok((rhs, remaining)) = parse_implicit_addition(input) {
+fn parse_implicit_addition(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (res, input) = parse_multiplicative(input, implicit_multiplication_precedence)?;
+	if let Ok((rhs, remaining)) = parse_implicit_addition(input, implicit_multiplication_precedence)
+	{
 		// n i n i, n i i n i i, etc. (n: number literal, i: identifier)
 		if let (
 			Expr::ApplyMul(_, _),
@@ -356,34 +456,52 @@ fn parse_implicit_addition(input: &[Token]) -> ParseResult<'_> {
 	Ok((res, input))
 }
 
-fn parse_addition_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_addition_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Add)?;
-	let (b, input) = parse_implicit_addition(input)?;
+	let (b, input) = parse_implicit_addition(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
-fn parse_subtraction_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_subtraction_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::Sub)?;
-	let (b, input) = parse_implicit_addition(input)?;
+	let (b, input) = parse_implicit_addition(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
-fn parse_to_cont(input: &[Token]) -> ParseResult<'_> {
+fn parse_to_cont(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	let ((), input) = parse_fixed_symbol(input, Symbol::UnitConversion)?;
-	let (b, input) = parse_implicit_addition(input)?;
+	let (b, input) = parse_implicit_addition(input, implicit_multiplication_precedence)?;
 	Ok((b, input))
 }
 
-fn parse_additive(input: &[Token]) -> ParseResult<'_> {
-	let (mut res, mut input) = parse_implicit_addition(input)?;
+fn parse_additive(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut res, mut input) = parse_implicit_addition(input, implicit_multiplication_precedence)?;
 	loop {
-		if let Ok((term, remaining)) = parse_addition_cont(input) {
+		if let Ok((term, remaining)) =
+			parse_addition_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::Bop(Bop::Plus, Box::new(res), Box::new(term));
 			input = remaining;
-		} else if let Ok((term, remaining)) = parse_subtraction_cont(input) {
+		} else if let Ok((term, remaining)) =
+			parse_subtraction_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::Bop(Bop::Minus, Box::new(res), Box::new(term));
 			input = remaining;
-		} else if let Ok((term, remaining)) = parse_to_cont(input) {
+		} else if let Ok((term, remaining)) =
+			parse_to_cont(input, implicit_multiplication_precedence)
+		{
 			res = Expr::As(Box::new(res), Box::new(term));
 			input = remaining;
 		} else {
@@ -393,11 +511,14 @@ fn parse_additive(input: &[Token]) -> ParseResult<'_> {
 	Ok((res, input))
 }
 
-fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
-	let (mut result, mut input) = parse_additive(input)?;
+fn parse_bitshifts(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut result, mut input) = parse_additive(input, implicit_multiplication_precedence)?;
 	loop {
 		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::ShiftLeft) {
-			let (rhs, remaining) = parse_additive(remaining)?;
+			let (rhs, remaining) = parse_additive(remaining, implicit_multiplication_precedence)?;
 			result = Expr::Bop(
 				Bop::Bitwise(crate::ast::BitwiseBop::LeftShift),
 				Box::new(result),
@@ -405,7 +526,7 @@ fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
 			);
 			input = remaining;
 		} else if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::ShiftRight) {
-			let (rhs, remaining) = parse_additive(remaining)?;
+			let (rhs, remaining) = parse_additive(remaining, implicit_multiplication_precedence)?;
 			result = Expr::Bop(
 				Bop::Bitwise(crate::ast::BitwiseBop::RightShift),
 				Box::new(result),
@@ -419,10 +540,13 @@ fn parse_bitshifts(input: &[Token]) -> ParseResult<'_> {
 	Ok((result, input))
 }
 
-fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
-	let (mut result, mut input) = parse_bitshifts(input)?;
+fn parse_bitwise_and(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut result, mut input) = parse_bitshifts(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::BitwiseAnd) {
-		let (rhs, remaining) = parse_bitshifts(remaining)?;
+		let (rhs, remaining) = parse_bitshifts(remaining, implicit_multiplication_precedence)?;
 		result = Expr::Bop(
 			Bop::Bitwise(crate::ast::BitwiseBop::And),
 			Box::new(result),
@@ -433,10 +557,13 @@ fn parse_bitwise_and(input: &[Token]) -> ParseResult<'_> {
 	Ok((result, input))
 }
 
-fn parse_bitwise_xor(input: &[Token]) -> ParseResult<'_> {
-	let (mut result, mut input) = parse_bitwise_and(input)?;
+fn parse_bitwise_xor(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut result, mut input) = parse_bitwise_and(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::BitwiseXor) {
-		let (rhs, remaining) = parse_bitwise_and(remaining)?;
+		let (rhs, remaining) = parse_bitwise_and(remaining, implicit_multiplication_precedence)?;
 		result = Expr::Bop(
 			Bop::Bitwise(crate::ast::BitwiseBop::Xor),
 			Box::new(result),
@@ -447,10 +574,13 @@ fn parse_bitwise_xor(input: &[Token]) -> ParseResult<'_> {
 	Ok((result, input))
 }
 
-fn parse_bitwise_or(input: &[Token]) -> ParseResult<'_> {
-	let (mut result, mut input) = parse_bitwise_xor(input)?;
+fn parse_bitwise_or(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut result, mut input) = parse_bitwise_xor(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::BitwiseOr) {
-		let (rhs, remaining) = parse_bitwise_xor(remaining)?;
+		let (rhs, remaining) = parse_bitwise_xor(remaining, implicit_multiplication_precedence)?;
 		result = Expr::Bop(
 			Bop::Bitwise(crate::ast::BitwiseBop::Or),
 			Box::new(result),
@@ -461,31 +591,40 @@ fn parse_bitwise_or(input: &[Token]) -> ParseResult<'_> {
 	Ok((result, input))
 }
 
-fn parse_combination(input: &[Token]) -> ParseResult<'_> {
-	let (mut result, mut input) = parse_bitwise_or(input)?;
+fn parse_combination(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut result, mut input) = parse_bitwise_or(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Combination) {
-		let (rhs, remaining) = parse_bitwise_or(remaining)?;
+		let (rhs, remaining) = parse_bitwise_or(remaining, implicit_multiplication_precedence)?;
 		result = Expr::Bop(Bop::Combination, Box::new(result), Box::new(rhs));
 		input = remaining;
 	}
 	Ok((result, input))
 }
 
-fn parse_permutation(input: &[Token]) -> ParseResult<'_> {
-	let (mut result, mut input) = parse_combination(input)?;
+fn parse_permutation(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (mut result, mut input) = parse_combination(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Permutation) {
-		let (rhs, remaining) = parse_combination(remaining)?;
+		let (rhs, remaining) = parse_combination(remaining, implicit_multiplication_precedence)?;
 		result = Expr::Bop(Bop::Permutation, Box::new(result), Box::new(rhs));
 		input = remaining;
 	}
 	Ok((result, input))
 }
 
-fn parse_function(input: &[Token]) -> ParseResult<'_> {
-	let (lhs, input) = parse_permutation(input)?;
+fn parse_function(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (lhs, input) = parse_permutation(input, implicit_multiplication_precedence)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Fn) {
 		if let Expr::Ident(s) = lhs {
-			let (rhs, remaining) = parse_function(remaining)?;
+			let (rhs, remaining) = parse_function(remaining, implicit_multiplication_precedence)?;
 			return Ok((Expr::Fn(s, Box::new(rhs)), remaining));
 		}
 		return Err(ParseError::ExpectedIdentifierAsArgument);
@@ -493,16 +632,19 @@ fn parse_function(input: &[Token]) -> ParseResult<'_> {
 	Ok((lhs, input))
 }
 
-fn parse_equality(input: &[Token]) -> ParseResult<'_> {
-	let (lhs, input) = parse_function(input)?;
+fn parse_equality(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (lhs, input) = parse_function(input, implicit_multiplication_precedence)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::DoubleEquals) {
-		let (rhs, remaining) = parse_function(remaining)?;
+		let (rhs, remaining) = parse_function(remaining, implicit_multiplication_precedence)?;
 		Ok((
 			Expr::Equality(true, Box::new(lhs), Box::new(rhs)),
 			remaining,
 		))
 	} else if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::NotEquals) {
-		let (rhs, remaining) = parse_function(remaining)?;
+		let (rhs, remaining) = parse_function(remaining, implicit_multiplication_precedence)?;
 		Ok((
 			Expr::Equality(false, Box::new(lhs), Box::new(rhs)),
 			remaining,
@@ -512,11 +654,14 @@ fn parse_equality(input: &[Token]) -> ParseResult<'_> {
 	}
 }
 
-fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
-	let (lhs, input) = parse_equality(input)?;
+fn parse_assignment(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	let (lhs, input) = parse_equality(input, implicit_multiplication_precedence)?;
 	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Equals) {
 		if let Expr::Ident(s) = lhs {
-			let (rhs, remaining) = parse_assignment(remaining)?;
+			let (rhs, remaining) = parse_assignment(remaining, implicit_multiplication_precedence)?;
 			return Ok((Expr::Assign(s, Box::new(rhs)), remaining));
 		}
 		return Err(ParseError::ExpectedIdentifierInAssignment);
@@ -524,32 +669,41 @@ fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
 	Ok((lhs, input))
 }
 
-fn parse_statements(mut input: &[Token]) -> ParseResult<'_> {
+fn parse_statements(
+	mut input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
 		input = remaining;
 	}
 	if input.is_empty() {
 		return Ok((Expr::Literal(Value::Unit), &[]));
 	}
-	let (mut result, mut input) = parse_assignment(input)?;
+	let (mut result, mut input) = parse_assignment(input, implicit_multiplication_precedence)?;
 	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Semicolon) {
 		if remaining.is_empty() || matches!(remaining[0], Token::Symbol(Symbol::Semicolon)) {
 			input = remaining;
 			continue;
 		}
-		let (rhs, remaining) = parse_assignment(remaining)?;
+		let (rhs, remaining) = parse_assignment(remaining, implicit_multiplication_precedence)?;
 		result = Expr::Statements(Box::new(result), Box::new(rhs));
 		input = remaining;
 	}
 	Ok((result, input))
 }
 
-pub(crate) fn parse_expression(input: &[Token]) -> ParseResult<'_> {
-	parse_statements(input)
+pub(crate) fn parse_expression(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> ParseResult<'_> {
+	parse_statements(input, implicit_multiplication_precedence)
 }
 
-pub(crate) fn parse_tokens(input: &[Token]) -> Result<Expr, ParseError> {
-	let (res, remaining) = parse_expression(input)?;
+pub(crate) fn parse_tokens(
+	input: &[Token],
+	implicit_multiplication_precedence: ImplicitMultiplicationPrecedence,
+) -> Result<Expr, ParseError> {
+	let (res, remaining) = parse_expression(input, implicit_multiplication_precedence)?;
 	if !remaining.is_empty() {
 		return Err(ParseError::UnexpectedInput);
 	}

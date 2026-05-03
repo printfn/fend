@@ -2224,6 +2224,38 @@ fn units_14() {
 }
 
 #[test]
+fn implicit_multiplication_same_precedence_as_division_by_default() {
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("5.6 L / 100km", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"0.056 L km"
+	);
+}
+
+#[test]
+fn implicit_multiplication_higher_precedence_than_division() {
+	let mut context = Context::new();
+	context.set_exchange_rate_handler_v2(fend_core::test_utils::DummyCurrencyHandler);
+	context.set_implicit_multiplication_precedence(
+		fend_core::ImplicitMultiplicationPrecedence::HigherThanDivision,
+	);
+	assert_eq!(
+		evaluate("5.6 L / 100km", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"0.056 L / km"
+	);
+	assert_eq!(
+		evaluate("83 km * (5.6 L / 100km) * ($1.9 / L) * 2", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"$17.6624"
+	);
+}
+
+#[test]
 fn units_15() {
 	test_eval("5 i/2", "2.5i");
 }

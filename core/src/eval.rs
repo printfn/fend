@@ -25,7 +25,7 @@ pub(crate) fn evaluate_to_value<I: Interrupt>(
 	for _ in 0..missing_open_parens {
 		tokens.insert(0, lexer::Token::Symbol(lexer::Symbol::OpenParens));
 	}
-	let parsed = parser::parse_tokens(&tokens)?;
+	let parsed = parser::parse_tokens(&tokens, context.implicit_multiplication_precedence)?;
 	let result = ast::evaluate(parsed, scope, attrs, spans, context, int)?;
 	Ok(result)
 }
