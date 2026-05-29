@@ -86,7 +86,7 @@ other = {}
 # plural = 'miles'  # plural name can be omitted if it is
 #                   # the same as the singular name
 # definition = '1609.344 meters'
-# attribute = 'allow_long_prefix'
+# attribute = 'allow-long-prefix'
 # ```
 #
 # If the singular and plural names are the same, you can omit
@@ -109,11 +109,11 @@ other = {}
 # [[custom-units]]
 # singular = 'milli'
 # definition = '0.001'
-# attribute = 'is_long_prefix'
+# attribute = 'is-long-prefix'
 #
 # [[custom-units]]
 # singular = 'byte'
 # plural = 'bytes'
 # definition = '!' # an exclamation mark defines a new base unit
-# attribute = 'allow_long_prefix'
+# attribute = 'allow-long-prefix'
 # ```
