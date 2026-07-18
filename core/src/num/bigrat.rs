@@ -690,11 +690,21 @@ impl BigRat {
 				ty: decimal.value.ty,
 			};
 
+			let (FormattedBigRatType::Integer(_, _, is_imag, _)
+			| FormattedBigRatType::Decimal(_, _, is_imag)) = decimal.ty
+			else {
+				unreachable!()
+			};
+
 			let (mut value, exponent): (String, usize) = if positive_exponent {
 				let mut string = decimal.to_string();
 
 				if let Some(idx) = string.find(decimal_separator.decimal_separator()) {
 					string.remove(idx);
+				}
+
+				while string.ends_with('i') {
+					string.remove(string.len() - 1);
 				}
 
 				(string, num_digits_of_int_part - 1)
@@ -736,6 +746,7 @@ impl BigRat {
 						" × 10^",
 						if positive_exponent { "" } else { "-" },
 						exponent,
+						is_imag,
 					),
 				},
 				exact,
@@ -1395,7 +1406,8 @@ enum FormattedBigRatType {
 	// separator ("E", " × 10^")
 	// sign of exponent ("", "-", "+")
 	// exponent
-	ScientificNotation(Box<str>, &'static str, &'static str, usize),
+	// string (empty, "i", "pi", etc.)
+	ScientificNotation(Box<str>, &'static str, &'static str, usize, &'static str),
 }
 
 #[must_use]
@@ -1456,8 +1468,8 @@ impl fmt::Display for FormattedBigRat {
 				}
 				write!(f, "{term}")?;
 			}
-			FormattedBigRatType::ScientificNotation(m, separator, sign, exponent) => {
-				write!(f, "{m}{separator}{sign}{exponent}")?;
+			FormattedBigRatType::ScientificNotation(m, separator, sign, exponent, imag) => {
+				write!(f, "{m}{separator}{sign}{exponent}{imag}")?;
 			}
 		}
 		Ok(())

@@ -6271,8 +6271,6 @@ fn test_scientific_notation_edge_cases() {
 		"approx. 3.142 × 10^0"
 	);
 
-	return;
-
 	let mut context = Context::new();
 	assert_eq!(
 		evaluate("5i to 3 sn", &mut context)
@@ -6280,6 +6278,8 @@ fn test_scientific_notation_edge_cases() {
 			.get_main_result(),
 		"5.00 × 10^0i"
 	);
+
+	return;
 
 	let mut context = Context::new();
 	assert_eq!(
