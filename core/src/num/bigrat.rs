@@ -636,7 +636,7 @@ impl BigRat {
 		))
 	}
 
-	#[allow(clippy::too_many_arguments)]
+	#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 	fn format_as_decimal<I: Interrupt>(
 		&self,
 		style: FormattingStyle,
@@ -647,12 +647,13 @@ impl BigRat {
 		decimal_separator: DecimalSeparatorStyle,
 		int: &I,
 	) -> FResult<Exact<FormattedBigRat>> {
-		let integer_part = self.clone().num.div(&self.den, int)?;
-		let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
-			Some(sf)
-		} else {
-			None
+	    let integer_part = self.num.clone().div(&self.den, int)?;
+
+		let sf_limit = match style {
+		    FormattingStyle::SignificantFigures(sf) | FormattingStyle::ScientificNotation(sf) => Some(sf),
+			_ => None,
 		};
+
 		let formatted_integer_part = integer_part.format(
 			&biguint::FormatOptions {
 				base,
@@ -661,6 +662,68 @@ impl BigRat {
 			},
 			int,
 		)?;
+
+    	if let FormattingStyle::ScientificNotation(sf) = style {
+      		let num_digits_of_int_part = formatted_integer_part.value.num_digits();
+
+            let positive_exponent = !integer_part.is_definitely_zero();
+
+            let mut exact: bool = formatted_integer_part.exact;
+
+            let (value, exponent): (Box<str>, usize) = if positive_exponent {
+                let mut string = formatted_integer_part.value.to_string();
+
+                if string.len() > sf {
+                    string.truncate(sf);
+                }
+
+                string.insert(1, '.');
+
+                (string.into(), (num_digits_of_int_part - 1))
+            } else {
+                let decimal = self.format_as_decimal(FormattingStyle::SignificantFigures(sf), base, sign, term, terminating, decimal_separator, int)?;
+
+                if !decimal.exact {
+                    exact = false;
+                }
+
+                let string = decimal.value.to_string();
+
+                let first_non_zero_digit = string.as_bytes().iter().enumerate().find(|(_, b)| {
+                    assert!(b.is_ascii_digit() || **b == b'.');
+
+                    **b != b'.' && **b != b'0'
+                }).unwrap().0;
+
+
+                let mut string = string.as_str()[first_non_zero_digit..].to_string();
+
+                if string.len() > sf {
+                    string.truncate(sf);
+                } else {
+                    while string.len() < sf {
+                        string.push('0');
+                    }
+                }
+
+                string.insert(1, '.');
+
+                (string.into(), first_non_zero_digit - 1)
+            };
+
+            return Ok(Exact::new(
+    			FormattedBigRat {
+    				sign,
+    				ty: FormattedBigRatType::ScientificNotation(
+                        value,
+                        " × 10^",
+                        if positive_exponent { "" } else { "-" },
+                        exponent,
+    				),
+    			},
+    			exact,
+    		));
+    	}
 
 		let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
 			|| (style == FormattingStyle::Auto && terminating()?)
@@ -1236,7 +1299,7 @@ impl Format for BigRat {
 		x.sign = Sign::Positive;
 
 		// try as integer if possible
-		if x.den == 1.into() {
+		if x.den == 1.into() && !matches!(style, FormattingStyle::ScientificNotation(_)) {
 			let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
 				Some(sf)
 			} else {
@@ -1311,6 +1374,11 @@ enum FormattedBigRatType {
 	// space
 	// string (empty, "i", "pi", etc.)
 	Decimal(String, bool, &'static str),
+	// string representation of decimal number (may not contain recurring digits)
+	// separator ("E", " × 10^")
+	// sign of exponent ("", "-", "+")
+	// exponent
+	ScientificNotation(Box<str>, &'static str, &'static str, usize),
 }
 
 #[must_use]
@@ -1371,6 +1439,9 @@ impl fmt::Display for FormattedBigRat {
 				}
 				write!(f, "{term}")?;
 			}
+            FormattedBigRatType::ScientificNotation(m, separator, sign, exponent) => {
+                write!(f, "{m}{separator}{sign}{exponent}")?;
+            },
 		}
 		Ok(())
 	}
