@@ -40,7 +40,7 @@ impl fmt::Display for FormattingStyle {
 			Self::Exact => write!(f, "exact"),
 			Self::DecimalPlaces(d) => write!(f, "{d} dp"),
 			Self::SignificantFigures(s) => write!(f, "{s} sf"),
-            Self::ScientificNotation(s) => write!(f, "{s} sn"),
+			Self::ScientificNotation(s) => write!(f, "{s} sn"),
 			Self::Auto => write!(f, "auto"),
 		}
 	}
@@ -55,7 +55,7 @@ impl fmt::Debug for FormattingStyle {
 			Self::Exact => write!(f, "exact"),
 			Self::DecimalPlaces(d) => write!(f, "{d} dp"),
 			Self::SignificantFigures(s) => write!(f, "{s} sf"),
-            Self::ScientificNotation(s) => write!(f, "{s} sn"),
+			Self::ScientificNotation(s) => write!(f, "{s} sn"),
 			Self::Auto => write!(f, "auto"),
 		}
 	}

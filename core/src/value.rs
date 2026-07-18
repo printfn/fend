@@ -62,7 +62,10 @@ impl Value {
 			(Self::Num(a), Self::Num(b)) => a.compare(b, ctx.decimal_separator, int)?,
 			(Self::BuiltInFunction(a), Self::BuiltInFunction(b)) => c(a == b),
 			(Self::Format(a), Self::Format(b)) => c(a == b),
-			(Self::Dp, Self::Dp) | (Self::Sf, Self::Sf) | (Self::Sn, Self::Sn) | (Self::Unit, Self::Unit) => c(true),
+			(Self::Dp, Self::Dp)
+			| (Self::Sf, Self::Sf)
+			| (Self::Sn, Self::Sn)
+			| (Self::Unit, Self::Unit) => c(true),
 			(Self::Base(a), Self::Base(b)) => c(a == b),
 			(Self::Fn(a1, a2, a3), Self::Fn(b1, b2, b3)) => c(a1 == b1
 				&& a2.compare(b2, ctx, int)?
