@@ -677,7 +677,9 @@ impl BigRat {
                     string.truncate(sf);
                 }
 
-                string.insert(1, '.');
+                if sf > 1 {
+                    string.insert(1, '.');
+                }
 
                 (string.into(), (num_digits_of_int_part - 1))
             } else {
@@ -706,7 +708,9 @@ impl BigRat {
                     }
                 }
 
-                string.insert(1, '.');
+                if sf > 1 {
+                    string.insert(1, '.');
+                }
 
                 (string.into(), first_non_zero_digit - 1)
             };
