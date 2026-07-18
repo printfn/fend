@@ -7,6 +7,7 @@ use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
 use crate::serialize::CborValue;
 use core::f64;
+use std::fmt::Debug;
 use std::{cmp, fmt, hash, ops};
 
 pub(crate) mod sign {
@@ -672,39 +673,35 @@ impl BigRat {
 
 			let positive_exponent = !integer_part.is_definitely_zero();
 
-			let mut exact: bool = formatted_integer_part.exact;
+			let decimal = self.format_as_decimal(
+				FormattingStyle::SignificantFigures(sf),
+				base,
+				sign,
+				term,
+				terminating,
+				decimal_separator,
+				int,
+			)?;
+
+			let exact: bool = formatted_integer_part.exact && decimal.exact;
+
+			let decimal = FormattedBigRat {
+				sign: Sign::Positive,
+				ty: decimal.value.ty,
+			};
 
 			let (mut value, exponent): (String, usize) = if positive_exponent {
-				let string = formatted_integer_part.value.to_string();
+				let mut string = decimal.to_string();
+
+				if let Some(idx) = string.find(decimal_separator.decimal_separator()) {
+					string.remove(idx);
+				}
 
 				(string, num_digits_of_int_part - 1)
 			} else {
-				let decimal = self.format_as_decimal(
-					FormattingStyle::SignificantFigures(sf),
-					base,
-					sign,
-					term,
-					terminating,
-					decimal_separator,
-					int,
-				)?;
+				let string = decimal.to_string();
 
-				if !decimal.exact {
-					exact = false;
-				}
-
-				let is_negative = decimal.value.sign == Sign::Negative;
-
-				let string = decimal.value.to_string();
-
-				let trimmed_string = if is_negative {
-					let minus = string.chars().next().unwrap();
-
-					&string.as_str()[minus.len_utf8()..]
-				} else {
-					string.as_str()
-				};
-				let trimmed_string: String = trimmed_string
+				let trimmed_string: String = string
 					.trim_start_matches(|ch| {
 						ch == decimal_separator.decimal_separator() || ch == '0'
 					})
@@ -714,8 +711,7 @@ impl BigRat {
 					.chars()
 					.count()
 					.saturating_sub(trimmed_string.chars().count())
-					.saturating_sub(1)
-					.saturating_sub(is_negative.into());
+					.saturating_sub(1);
 
 				(trimmed_string, zeros)
 			};

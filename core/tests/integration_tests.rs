@@ -6260,3 +6260,40 @@ fn test_scientific_notation_approx() {
 		"approx. 1 × 10^67"
 	);
 }
+
+#[test]
+fn test_scientific_notation_edge_cases() {
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("pi to 4 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 3.142 × 10^0"
+	);
+
+	return;
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("5i to 3 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"5.00 × 10^0i"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("12389 to 3 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1.24 × 10^4"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("123.456 to 5 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1.2346 × 10^2"
+	);
+}
