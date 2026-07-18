@@ -8,7 +8,7 @@ fn test_serialization_roundtrip(context: &mut Context) {
 	match context.deserialize_variables(&mut v.as_slice()) {
 		Ok(()) => (),
 		Err(s) => {
-			eprintln!("Data: {:?}", v);
+			eprintln!("Data: {v:?}");
 			eprintln!("Context: {ctx_debug_repr}");
 			panic!("Failed to deserialize: {s}");
 		}
@@ -6165,5 +6165,98 @@ fn decimal_separator_comma() {
 			.unwrap()
 			.get_main_result(),
 		"1,69 AUD"
+	);
+}
+
+#[test]
+fn test_scientific_notation() {
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("10^67 to 4 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1.000 × 10^67"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("10^-67 to 4 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1.000 × 10^-67"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("-10^67 to 5 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"-1.0000 × 10^67"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("-10^-67 to 5 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"-1.0000 × 10^-67"
+	);
+}
+
+#[test]
+fn test_scientific_notation_with_comma() {
+	let mut context = Context::new();
+	context.set_decimal_separator_style(fend_core::DecimalSeparatorStyle::Comma);
+	assert_eq!(
+		evaluate("10^67 to 4 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1,000 × 10^67"
+	);
+
+	let mut context = Context::new();
+	context.set_decimal_separator_style(fend_core::DecimalSeparatorStyle::Comma);
+	assert_eq!(
+		evaluate("10^-67 to 4 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"1,000 × 10^-67"
+	);
+
+	let mut context = Context::new();
+	context.set_decimal_separator_style(fend_core::DecimalSeparatorStyle::Comma);
+	assert_eq!(
+		evaluate("-10^67 to 5 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"-1,0000 × 10^67"
+	);
+
+	let mut context = Context::new();
+	context.set_decimal_separator_style(fend_core::DecimalSeparatorStyle::Comma);
+	assert_eq!(
+		evaluate("-10^-67 to 5 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"-1,0000 × 10^-67"
+	);
+}
+
+#[test]
+fn test_scientific_notation_approx() {
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("1 + 10^67 to 2 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1.0 × 10^67"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("1 + 10^67 to 1 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1 × 10^67"
 	);
 }

@@ -665,25 +665,19 @@ impl BigRat {
 			int,
 		)?;
 
-		if let FormattingStyle::ScientificNotation(sf) = style {
+		if !self.is_definitely_zero()
+			&& let FormattingStyle::ScientificNotation(sf) = style
+		{
 			let num_digits_of_int_part = formatted_integer_part.value.num_digits();
 
 			let positive_exponent = !integer_part.is_definitely_zero();
 
 			let mut exact: bool = formatted_integer_part.exact;
 
-			let (value, exponent): (Box<str>, usize) = if positive_exponent {
-				let mut string = formatted_integer_part.value.to_string();
+			let (mut value, exponent): (String, usize) = if positive_exponent {
+				let string = formatted_integer_part.value.to_string();
 
-				if string.len() > sf {
-					string.truncate(sf);
-				}
-
-				if sf > 1 {
-					string.insert(1, '.');
-				}
-
-				(string.into(), (num_digits_of_int_part - 1))
+				(string, num_digits_of_int_part - 1)
 			} else {
 				let decimal = self.format_as_decimal(
 					FormattingStyle::SignificantFigures(sf),
@@ -699,42 +693,50 @@ impl BigRat {
 					exact = false;
 				}
 
+				let is_negative = decimal.value.sign == Sign::Negative;
+
 				let string = decimal.value.to_string();
 
-				let first_non_zero_digit = string
-					.as_bytes()
-					.iter()
-					.enumerate()
-					.find(|(_, b)| {
-						assert!(b.is_ascii_digit() || **b == b'.');
+				let trimmed_string = if is_negative {
+					let minus = string.chars().next().unwrap();
 
-						**b != b'.' && **b != b'0'
-					})
-					.unwrap()
-					.0;
-
-				let mut string = string.as_str()[first_non_zero_digit..].to_string();
-
-				if string.len() > sf {
-					string.truncate(sf);
+					&string.as_str()[minus.len_utf8()..]
 				} else {
-					while string.len() < sf {
-						string.push('0');
-					}
-				}
+					string.as_str()
+				};
+				let trimmed_string: String = trimmed_string
+					.trim_start_matches(|ch| {
+						ch == decimal_separator.decimal_separator() || ch == '0'
+					})
+					.into();
 
-				if sf > 1 {
-					string.insert(1, '.');
-				}
+				let zeros = string
+					.chars()
+					.count()
+					.saturating_sub(trimmed_string.chars().count())
+					.saturating_sub(1)
+					.saturating_sub(is_negative.into());
 
-				(string.into(), first_non_zero_digit - 1)
+				(trimmed_string, zeros)
 			};
+
+			if value.len() > sf {
+				value.truncate(sf);
+			} else {
+				while value.len() < sf {
+					value.push('0');
+				}
+			}
+
+			if sf > 1 {
+				value.insert(1, decimal_separator.decimal_separator());
+			}
 
 			return Ok(Exact::new(
 				FormattedBigRat {
 					sign,
 					ty: FormattedBigRatType::ScientificNotation(
-						value,
+						value.into(),
 						" × 10^",
 						if positive_exponent { "" } else { "-" },
 						exponent,
