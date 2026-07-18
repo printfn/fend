@@ -6279,21 +6279,21 @@ fn test_scientific_notation_edge_cases() {
 		"5.00 × 10^0i"
 	);
 
-	return;
-
-	let mut context = Context::new();
-	assert_eq!(
-		evaluate("12389 to 3 sn", &mut context)
-			.unwrap()
-			.get_main_result(),
-		"1.24 × 10^4"
-	);
-
 	let mut context = Context::new();
 	assert_eq!(
 		evaluate("123.456 to 5 sn", &mut context)
 			.unwrap()
 			.get_main_result(),
-		"1.2346 × 10^2"
+		"approx. 1.2346 × 10^2"
 	);
+
+	/*
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("12389 to 3 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1.24 × 10^4"
+	);
+	*/
 }
