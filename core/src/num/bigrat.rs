@@ -696,13 +696,13 @@ impl BigRat {
 
 			let mut string = decimal.to_string();
 
+			if string.ends_with(is_imag) {
+				string.truncate(string.len() - is_imag.len());
+			}
+
 			let positive_exponent = positive_exponent || !string.starts_with('0');
 
 			let (mut value, exponent): (String, usize) = if positive_exponent {
-				while string.ends_with('i') {
-					string.remove(string.len() - 1);
-				}
-
 				let exponent: usize;
 
 				if let Some(idx) = string.find(decimal_separator.decimal_separator()) {
@@ -714,7 +714,6 @@ impl BigRat {
 
 				(string, exponent)
 			} else {
-				let string = string.trim_end_matches('i');
 				let trimmed_string: String = string
 					.trim_start_matches(|ch| {
 						ch == decimal_separator.decimal_separator() || ch == '0'

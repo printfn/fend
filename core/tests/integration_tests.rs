@@ -6398,4 +6398,12 @@ fn test_scientific_notation_edge_cases() {
 			.get_main_result(),
 		"approx. 0b1.1 × 0b10^0b11"
 	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("36#i to 1sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"36#i × 36#10^36#0"
+	);
 }
