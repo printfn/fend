@@ -756,6 +756,7 @@ impl BigRat {
 				FormattedBigRat {
 					sign,
 					ty: FormattedBigRatType::ScientificNotation(
+						base,
 						value.into(),
 						separator,
 						if positive_exponent { "" } else { "-" },
@@ -1431,6 +1432,7 @@ enum FormattedBigRatType {
 	// exponent
 	// string (empty, "i", "pi", etc.)
 	ScientificNotation(
+		Base,
 		Box<str>,
 		ScientificNotationSeparator,
 		&'static str,
@@ -1518,7 +1520,9 @@ impl fmt::Display for FormattedBigRat {
 				}
 				write!(f, "{term}")?;
 			}
-			FormattedBigRatType::ScientificNotation(m, separator, sign, exponent, imag) => {
+			FormattedBigRatType::ScientificNotation(base, m, separator, sign, exponent, imag) => {
+				base.write_prefix(f)?;
+
 				if imag.is_empty() {
 					write!(f, "{m}{separator}{sign}{exponent}")?;
 				} else {
