@@ -1465,24 +1465,6 @@ impl Format for BigUint {
 	}
 }
 
-#[test]
-fn test_format_big_uint_hex() {
-	let ff = BigUint::Small(255);
-	let opts = FormatOptions {
-		base: Base::HEX,
-		write_base_prefix: false,
-		sf_limit: Some(1),
-	};
-
-	assert_eq!(
-		ff.format(&opts, &crate::interrupt::Never)
-			.expect("formatting should work")
-			.value
-			.to_string(),
-		"100",
-	);
-}
-
 #[derive(Debug)]
 enum FormattedBigUintType {
 	Zero,
@@ -1595,6 +1577,67 @@ mod tests {
 
 	use super::BigUint;
 	type Res = Result<(), crate::error::FendError>;
+
+	#[test]
+	fn test_format_big_uint_hex() {
+		let opts = FormatOptions {
+			base: super::Base::HEX,
+			write_base_prefix: false,
+			sf_limit: Some(1),
+		};
+
+		let ff = BigUint::Small(0xff);
+		assert_eq!(
+			ff.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"100",
+		);
+		let f8 = BigUint::Small(0xf8);
+		assert_eq!(
+			f8.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"100",
+		);
+		let f7 = BigUint::Small(0xf7);
+		assert_eq!(
+			f7.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"f0",
+		);
+	}
+
+	#[test]
+	fn test_format_big_uint_base9() {
+		let opts = FormatOptions {
+			base: super::Base::from_custom_base(9).unwrap(),
+			write_base_prefix: false,
+			sf_limit: Some(1),
+		};
+
+		let u44 = BigUint::Small(4 * 9 + 4);
+		assert_eq!(
+			u44.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"40",
+		);
+
+		let u45 = BigUint::Small(4 * 9 + 5);
+		assert_eq!(
+			u45.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"50",
+		);
+	}
 
 	#[test]
 	fn test_sqrt() -> Res {
