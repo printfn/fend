@@ -1379,16 +1379,15 @@ impl Format for BigUint {
 	type Out = FormattedBigUint;
 
 	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
-		let base_prefix = if params.write_base_prefix {
-			Some(params.base)
+		let base = if params.write_base_prefix {
+			params.base
 		} else {
-			None
+			Base::from_plain_base(params.base.base_as_u8()).expect("is valid base")
 		};
-
 		if self.is_zero() {
 			return Ok(Exact::new(
 				FormattedBigUint {
-					base: base_prefix,
+					base,
 					ty: FormattedBigUintType::Zero,
 				},
 				true,
@@ -1400,7 +1399,8 @@ impl Format for BigUint {
 			if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						base,
+
 						ty: FormattedBigUintType::Simple(num.get(0)),
 					},
 					true,
@@ -1454,7 +1454,8 @@ impl Format for BigUint {
 					.is_none_or(|sf| sf >= output.len() - num_leading_zeroes);
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						base,
+
 						ty: FormattedBigUintType::Complex(output, params.sf_limit),
 					},
 					exact,
@@ -1474,15 +1475,26 @@ enum FormattedBigUintType {
 #[must_use]
 #[derive(Debug)]
 pub(crate) struct FormattedBigUint {
-	base: Option<Base>,
+	base: Base,
 	ty: FormattedBigUintType,
+}
+
+fn parse_char(ch: char) -> u8 {
+	if ch.is_ascii_digit() {
+		ch as u8 - b'0'
+	} else if ch.is_ascii_lowercase() {
+		10 + ch as u8 - b'a'
+	} else if ch.is_ascii_uppercase() {
+		10 + ch as u8 - b'A'
+	} else {
+		unreachable!("{ch} needs to be a digit");
+	}
 }
 
 impl fmt::Display for FormattedBigUint {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		if let Some(base) = self.base {
-			base.write_prefix(f)?;
-		}
+		self.base.write_prefix(f)?;
+
 		match &self.ty {
 			FormattedBigUintType::Zero => write!(f, "0")?,
 			FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
@@ -1497,22 +1509,29 @@ impl fmt::Display for FormattedBigUint {
 					let mut chars = chars.peekable();
 
 					if let Some(last_non_zero_char) = chars.next() {
-						debug_assert!(
-							last_non_zero_char.is_ascii_digit(),
-							"{last_non_zero_char} is not an ascii digit"
-						);
+						let mut last_digit: u8 = parse_char(last_non_zero_char);
+						let after_digit = chars.peek().map_or(0u8, |ch| parse_char(*ch));
 
-						let mut last_digit: u8 = last_non_zero_char as u8 - b'0';
-						let after_digit = chars.peek().map_or(0u8, |ch| {
-							debug_assert!(ch.is_ascii_digit(), "{ch} is not an ascii digit");
-							*ch as u8 - b'0'
-						});
+						let base = self.base.base_as_u8();
 
-						if after_digit >= 5 {
+						debug_assert!(last_digit < base);
+						debug_assert!(after_digit < base);
+
+						if after_digit >= base.div_ceil(2) {
 							last_digit += 1;
 						}
 
-						write!(f, "{last_digit}")?;
+						if last_digit == base {
+							write!(f, "10")?;
+						} else {
+							debug_assert!(last_digit < base);
+							write!(
+								f,
+								"{}",
+								Base::digit_as_char(last_digit.into())
+									.expect("needs to be valid char")
+							)?;
+						}
 					}
 
 					for _ in chars {
@@ -1558,6 +1577,67 @@ mod tests {
 
 	use super::BigUint;
 	type Res = Result<(), crate::error::FendError>;
+
+	#[test]
+	fn test_format_big_uint_hex() {
+		let opts = FormatOptions {
+			base: super::Base::HEX,
+			write_base_prefix: false,
+			sf_limit: Some(1),
+		};
+
+		let ff = BigUint::Small(0xff);
+		assert_eq!(
+			ff.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"100",
+		);
+		let f8 = BigUint::Small(0xf8);
+		assert_eq!(
+			f8.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"100",
+		);
+		let f7 = BigUint::Small(0xf7);
+		assert_eq!(
+			f7.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"f0",
+		);
+	}
+
+	#[test]
+	fn test_format_big_uint_base9() {
+		let opts = FormatOptions {
+			base: super::Base::from_custom_base(9).unwrap(),
+			write_base_prefix: false,
+			sf_limit: Some(1),
+		};
+
+		let u44 = BigUint::Small(4 * 9 + 4);
+		assert_eq!(
+			u44.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"40",
+		);
+
+		let u45 = BigUint::Small(4 * 9 + 5);
+		assert_eq!(
+			u45.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"50",
+		);
+	}
 
 	#[test]
 	fn test_sqrt() -> Res {
