@@ -1379,16 +1379,11 @@ impl Format for BigUint {
 	type Out = FormattedBigUint;
 
 	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
-		let base_prefix = if params.write_base_prefix {
-			Some(params.base)
-		} else {
-			None
-		};
-
 		if self.is_zero() {
 			return Ok(Exact::new(
 				FormattedBigUint {
-					base: base_prefix,
+					write_base_prefix: params.write_base_prefix,
+					base: params.base,
 					ty: FormattedBigUintType::Zero,
 				},
 				true,
@@ -1400,7 +1395,8 @@ impl Format for BigUint {
 			if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						write_base_prefix: params.write_base_prefix,
+						base: params.base,
 						ty: FormattedBigUintType::Simple(num.get(0)),
 					},
 					true,
@@ -1454,7 +1450,8 @@ impl Format for BigUint {
 					.is_none_or(|sf| sf >= output.len() - num_leading_zeroes);
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						write_base_prefix: params.write_base_prefix,
+						base: params.base,
 						ty: FormattedBigUintType::Complex(output, params.sf_limit),
 					},
 					exact,
@@ -1474,14 +1471,27 @@ enum FormattedBigUintType {
 #[must_use]
 #[derive(Debug)]
 pub(crate) struct FormattedBigUint {
-	base: Option<Base>,
+	write_base_prefix: bool,
+	base: Base,
 	ty: FormattedBigUintType,
+}
+
+fn parse_char(ch: char) -> u8 {
+	if ch.is_ascii_digit() {
+		ch as u8 - b'0'
+	} else if ch.is_ascii_lowercase() {
+		10 + ch as u8 - b'a'
+	} else if ch.is_ascii_uppercase() {
+		10 + ch as u8 - b'A'
+	} else {
+		unreachable!("{ch} needs to be a digit");
+	}
 }
 
 impl fmt::Display for FormattedBigUint {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		if let Some(base) = self.base {
-			base.write_prefix(f)?;
+		if self.write_base_prefix {
+			self.base.write_prefix(f)?;
 		}
 		match &self.ty {
 			FormattedBigUintType::Zero => write!(f, "0")?,
@@ -1497,22 +1507,29 @@ impl fmt::Display for FormattedBigUint {
 					let mut chars = chars.peekable();
 
 					if let Some(last_non_zero_char) = chars.next() {
-						debug_assert!(
-							last_non_zero_char.is_ascii_digit(),
-							"{last_non_zero_char} is not an ascii digit"
-						);
+						let mut last_digit: u8 = parse_char(last_non_zero_char);
+						let after_digit = chars.peek().map_or(0u8, |ch| parse_char(*ch));
 
-						let mut last_digit: u8 = last_non_zero_char as u8 - b'0';
-						let after_digit = chars.peek().map_or(0u8, |ch| {
-							debug_assert!(ch.is_ascii_digit(), "{ch} is not an ascii digit");
-							*ch as u8 - b'0'
-						});
+						let base = self.base.base_as_u8();
 
-						if after_digit >= 5 {
+						debug_assert!(last_digit < base);
+						debug_assert!(after_digit < base);
+
+						if after_digit >= base.div_ceil(2) {
 							last_digit += 1;
 						}
 
-						write!(f, "{last_digit}")?;
+						if last_digit == base {
+							write!(f, "10")?;
+						} else {
+							debug_assert!(last_digit < base);
+							write!(
+								f,
+								"{}",
+								Base::digit_as_char(last_digit.into())
+									.expect("needs to be valid char")
+							)?;
+						}
 					}
 
 					for _ in chars {
