@@ -1379,11 +1379,15 @@ impl Format for BigUint {
 	type Out = FormattedBigUint;
 
 	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
+		let base = if params.write_base_prefix {
+			params.base
+		} else {
+			Base::from_plain_base(params.base.base_as_u8()).expect("is valid base")
+		};
 		if self.is_zero() {
 			return Ok(Exact::new(
 				FormattedBigUint {
-					write_base_prefix: params.write_base_prefix,
-					base: params.base,
+					base,
 					ty: FormattedBigUintType::Zero,
 				},
 				true,
@@ -1395,8 +1399,8 @@ impl Format for BigUint {
 			if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
 				Exact::new(
 					FormattedBigUint {
-						write_base_prefix: params.write_base_prefix,
-						base: params.base,
+						base,
+
 						ty: FormattedBigUintType::Simple(num.get(0)),
 					},
 					true,
@@ -1450,8 +1454,8 @@ impl Format for BigUint {
 					.is_none_or(|sf| sf >= output.len() - num_leading_zeroes);
 				Exact::new(
 					FormattedBigUint {
-						write_base_prefix: params.write_base_prefix,
-						base: params.base,
+						base,
+
 						ty: FormattedBigUintType::Complex(output, params.sf_limit),
 					},
 					exact,
@@ -1471,7 +1475,6 @@ enum FormattedBigUintType {
 #[must_use]
 #[derive(Debug)]
 pub(crate) struct FormattedBigUint {
-	write_base_prefix: bool,
 	base: Base,
 	ty: FormattedBigUintType,
 }
@@ -1490,9 +1493,8 @@ fn parse_char(ch: char) -> u8 {
 
 impl fmt::Display for FormattedBigUint {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		if self.write_base_prefix {
-			self.base.write_prefix(f)?;
-		}
+		self.base.write_prefix(f)?;
+
 		match &self.ty {
 			FormattedBigUintType::Zero => write!(f, "0")?,
 			FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
