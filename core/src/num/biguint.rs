@@ -1500,47 +1500,55 @@ impl fmt::Display for FormattedBigUint {
 			FormattedBigUintType::Zero => write!(f, "0")?,
 			FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
 			FormattedBigUintType::Complex(s, sf_limit) => {
-				let mut chars = s.chars().rev();
+				debug_assert!(s.is_ascii());
+				debug_assert_eq!(s.len(), s.chars().count());
 
-				if let Some(sf_limit) = sf_limit {
-					for char in (&mut chars).take(sf_limit - 1) {
-						write!(f, "{char}")?;
-					}
+				if let Some(sf_limit) = sf_limit
+					&& s.len() > *sf_limit
+				{
+					let s = s.as_bytes();
 
-					let mut chars = chars.peekable();
+					let after_last_char =
+						parse_char(char::from(s[s.len() - 1 - *sf_limit]), self.base);
 
-					if let Some(last_non_zero_char) = chars.next() {
-						let mut last_digit: u8 = parse_char(last_non_zero_char, self.base);
-						let after_digit = chars.peek().map_or(0u8, |ch| parse_char(*ch, self.base));
+					let round_up = after_last_char >= self.base.base_as_u8().div_ceil(2);
 
-						let base = self.base.base_as_u8();
+					let mut zeros_count = s.len() - sf_limit;
 
-						debug_assert!(last_digit < base);
-						debug_assert!(after_digit < base);
+					if round_up {
+						let max: u8 = self.base.max_char().try_into().expect("is ascii");
 
-						if after_digit >= base.div_ceil(2) {
-							last_digit += 1;
-						}
+						let number = &s[s.len() - sf_limit..];
 
-						if last_digit == base {
-							write!(f, "10")?;
+						let trailing_max_count = number.iter().take_while(|p| **p == max).count();
+
+						zeros_count += trailing_max_count;
+
+						if trailing_max_count == *sf_limit {
+							write!(f, "1")?;
 						} else {
-							debug_assert!(last_digit < base);
-							write!(
-								f,
-								"{}",
-								Base::digit_as_char(last_digit.into())
-									.expect("needs to be valid char")
-							)?;
+							let mut chars = number.iter().rev();
+							for ch in (&mut chars).take(sf_limit - trailing_max_count - 1) {
+								write!(f, "{}", char::from(*ch))?;
+							}
+							let mut num = parse_char(char::from(*chars.next().unwrap()), self.base);
+							debug_assert!(num < max);
+							num += 1;
+							write!(f, "{}", Base::digit_as_char(num.into()).unwrap())?;
+						}
+					} else {
+						// truncate
+						for ch in s.iter().rev().take(*sf_limit) {
+							write!(f, "{}", char::from(*ch))?;
 						}
 					}
 
-					for _ in chars {
+					for _ in 0..zeros_count {
 						write!(f, "0")?;
 					}
 				} else {
-					for char in chars {
-						write!(f, "{char}")?;
+					for ch in s.as_bytes().iter().rev() {
+						write!(f, "{}", char::from(*ch))?;
 					}
 				}
 			}
