@@ -694,9 +694,11 @@ impl BigRat {
 				unreachable!()
 			};
 
-			let (mut value, exponent): (String, usize) = if positive_exponent {
-				let mut string = decimal.to_string();
+			let mut string = decimal.to_string();
 
+			let positive_exponent = positive_exponent || !string.starts_with('0');
+
+			let (mut value, exponent): (String, usize) = if positive_exponent {
 				while string.ends_with('i') {
 					string.remove(string.len() - 1);
 				}
@@ -712,8 +714,6 @@ impl BigRat {
 
 				(string, exponent)
 			} else {
-				let string = decimal.to_string();
-
 				let trimmed_string: String = string
 					.trim_start_matches(|ch| {
 						ch == decimal_separator.decimal_separator() || ch == '0'
