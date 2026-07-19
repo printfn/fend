@@ -1487,11 +1487,40 @@ impl fmt::Display for FormattedBigUint {
 			FormattedBigUintType::Zero => write!(f, "0")?,
 			FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
 			FormattedBigUintType::Complex(s, sf_limit) => {
-				for (i, ch) in s.chars().rev().enumerate() {
-					if sf_limit.is_some() && &Some(i) >= sf_limit {
+				let mut chars = s.chars().rev();
+
+				if let Some(sf_limit) = sf_limit {
+					for char in (&mut chars).take(sf_limit - 1) {
+						write!(f, "{char}")?;
+					}
+
+					let mut chars = chars.peekable();
+
+					if let Some(last_non_zero_char) = chars.next() {
+						debug_assert!(
+							last_non_zero_char.is_ascii_digit(),
+							"{last_non_zero_char} is not an ascii digit"
+						);
+
+						let mut last_digit: u8 = last_non_zero_char as u8 - b'0';
+						let after_digit = chars.peek().map_or(0u8, |ch| {
+							debug_assert!(ch.is_ascii_digit(), "{ch} is not an ascii digit");
+							*ch as u8 - b'0'
+						});
+
+						if after_digit >= 5 {
+							last_digit += 1;
+						}
+
+						write!(f, "{last_digit}")?;
+					}
+
+					for _ in chars {
 						write!(f, "0")?;
-					} else {
-						write!(f, "{ch}")?;
+					}
+				} else {
+					for char in chars {
+						write!(f, "{char}")?;
 					}
 				}
 			}
