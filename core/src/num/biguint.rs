@@ -1,6 +1,6 @@
 use crate::error::{FendError, Interrupt};
 use crate::format::Format;
-use crate::interrupt::{test_int};
+use crate::interrupt::test_int;
 use crate::num::bigrat::sign::Sign;
 use crate::num::{Base, Exact, Range, RangeBound, out_of_range};
 use crate::result::FResult;
