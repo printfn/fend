@@ -7,7 +7,7 @@ use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
 use crate::serialize::CborValue;
 use core::f64;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Write};
 use std::{cmp, fmt, hash, ops};
 
 pub(crate) mod sign {
@@ -675,7 +675,7 @@ impl BigRat {
 
 			let decimal = self.format_as_decimal(
 				FormattingStyle::SignificantFigures(sf),
-				base,
+				Base::from_plain_base(base.base_as_u8()).expect("is valid base"),
 				sign,
 				term,
 				terminating,
@@ -738,14 +738,33 @@ impl BigRat {
 				value.insert(1, decimal_separator.decimal_separator());
 			}
 
+			let separator = if base.is_plain() {
+				ScientificNotationSeparator::StaticStr(" × 10^")
+			} else {
+				let mut base_str = String::with_capacity(4);
+				base.write_prefix(&mut base_str)?;
+				base_str.write_str("10")?;
+
+				ScientificNotationSeparator::DynamicBase(" × ", base_str.into(), "^")
+			};
+
 			return Ok(Exact::new(
 				FormattedBigRat {
 					sign,
 					ty: FormattedBigRatType::ScientificNotation(
 						value.into(),
-						" × 10^",
+						separator,
 						if positive_exponent { "" } else { "-" },
-						exponent,
+						BigUint::Small(exponent as u64)
+							.format(
+								&biguint::FormatOptions {
+									base,
+									write_base_prefix: true,
+									sf_limit: None,
+								},
+								int,
+							)?
+							.value,
 						is_imag,
 					),
 				},
@@ -1407,7 +1426,34 @@ enum FormattedBigRatType {
 	// sign of exponent ("", "-", "+")
 	// exponent
 	// string (empty, "i", "pi", etc.)
-	ScientificNotation(Box<str>, &'static str, &'static str, usize, &'static str),
+	ScientificNotation(
+		Box<str>,
+		ScientificNotationSeparator,
+		&'static str,
+		FormattedBigUint,
+		&'static str,
+	),
+}
+
+#[derive(Debug)]
+pub(crate) enum ScientificNotationSeparator {
+	/// e.g. "E"
+	StaticStr(&'static str),
+	// mult " × "
+	// base
+	// pow "^"
+	DynamicBase(&'static str, Box<str>, &'static str),
+}
+
+impl Display for ScientificNotationSeparator {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::StaticStr(value) => f.write_str(value),
+			Self::DynamicBase(mult, base, pow) => {
+				write!(f, "{mult}{base}{pow}")
+			}
+		}
+	}
 }
 
 #[must_use]

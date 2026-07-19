@@ -26,6 +26,10 @@ enum BaseEnum {
 impl Base {
 	pub(crate) const HEX: Self = Self(BaseEnum::Hex);
 
+	pub(crate) const fn is_plain(self) -> bool {
+		matches!(self.0, BaseEnum::Plain(_))
+	}
+
 	pub(crate) const fn base_as_u8(self) -> u8 {
 		match self.0 {
 			BaseEnum::Binary => 2,
@@ -62,7 +66,7 @@ impl Base {
 		Ok(Self(BaseEnum::Custom(base)))
 	}
 
-	pub(crate) fn write_prefix(self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+	pub(crate) fn write_prefix(self, f: &mut impl fmt::Write) -> Result<(), fmt::Error> {
 		match self.0 {
 			BaseEnum::Binary => write!(f, "0b")?,
 			BaseEnum::Octal => write!(f, "0o")?,
