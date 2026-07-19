@@ -39,6 +39,14 @@ impl Base {
 		}
 	}
 
+	pub(crate) const fn max_value(self) -> u8 {
+		self.base_as_u8() - 1
+	}
+
+	pub(crate) const fn max_char(self) -> char {
+		Self::digit_as_char(self.max_value() as _).expect("Max value is valid")
+	}
+
 	pub(crate) const fn from_zero_based_prefix_char(ch: char) -> FResult<Self> {
 		Ok(match ch {
 			'x' => Self(BaseEnum::Hex),

@@ -4232,6 +4232,9 @@ fn sf_1() {
 #[test]
 fn sf_2() {
 	test_eval("1234567.55645 to 2 sf", "approx. 1200000");
+	test_eval("99.9 to 2 sf", "approx. 100");
+	test_eval("199 to 2 sf", "approx. 200");
+	test_eval("999 to 2 sf", "approx. 1000");
 }
 
 #[test]
@@ -4292,11 +4295,13 @@ fn sf_13() {
 #[test]
 fn sf_hex_1() {
 	test_eval("0xff to 1 sf", "approx. 0x100");
+	test_eval("0xfff to 1 sf", "approx. 0x1000");
 }
 
 #[test]
 fn sf_hex_2() {
 	test_eval("0xff to 2 sf", "0xff");
+	test_eval("0xfff to 2 sf", "approx. 0x1000");
 }
 
 #[test]
