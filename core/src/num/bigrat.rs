@@ -669,8 +669,6 @@ impl BigRat {
 		if !self.is_definitely_zero()
 			&& let FormattingStyle::ScientificNotation(sf) = style
 		{
-			let num_digits_of_int_part = formatted_integer_part.value.num_digits();
-
 			let positive_exponent = !integer_part.is_definitely_zero();
 
 			let decimal = self.format_as_decimal(
@@ -699,15 +697,20 @@ impl BigRat {
 			let (mut value, exponent): (String, usize) = if positive_exponent {
 				let mut string = decimal.to_string();
 
-				if let Some(idx) = string.find(decimal_separator.decimal_separator()) {
-					string.remove(idx);
-				}
-
 				while string.ends_with('i') {
 					string.remove(string.len() - 1);
 				}
 
-				(string, num_digits_of_int_part - 1)
+				let exponent: usize;
+
+				if let Some(idx) = string.find(decimal_separator.decimal_separator()) {
+					string.remove(idx);
+					exponent = idx - 1;
+				} else {
+					exponent = string.len() - 1;
+				}
+
+				(string, exponent)
 			} else {
 				let string = decimal.to_string();
 

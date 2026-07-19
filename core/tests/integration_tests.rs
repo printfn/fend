@@ -6318,4 +6318,44 @@ fn test_scientific_notation_edge_cases() {
 			.get_main_result(),
 		"approx. 6.7 × 10^2"
 	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("199 to 2 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 2.0 × 10^2"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("999 to 1 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1 × 10^3"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("999.9 to 1 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1 × 10^3"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("999 to 2 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1.0 × 10^3"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("999.9 to 2 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1.0 × 10^3"
+	);
 }
