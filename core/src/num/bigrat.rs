@@ -714,6 +714,7 @@ impl BigRat {
 
 				(string, exponent)
 			} else {
+				let string = string.trim_end_matches('i');
 				let trimmed_string: String = string
 					.trim_start_matches(|ch| {
 						ch == decimal_separator.decimal_separator() || ch == '0'
