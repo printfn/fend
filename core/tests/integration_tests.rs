@@ -6292,7 +6292,15 @@ fn test_scientific_notation_edge_cases() {
 		evaluate("5i to 3 sn", &mut context)
 			.unwrap()
 			.get_main_result(),
-		"5.00 × 10^0i"
+		"(5.00 × 10^0)i"
+	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("2 + pi i to 4 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 2.000 × 10^0 + (3.142 × 10^0)i"
 	);
 
 	let mut context = Context::new();

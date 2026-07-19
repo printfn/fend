@@ -1518,7 +1518,11 @@ impl fmt::Display for FormattedBigRat {
 				write!(f, "{term}")?;
 			}
 			FormattedBigRatType::ScientificNotation(m, separator, sign, exponent, imag) => {
-				write!(f, "{m}{separator}{sign}{exponent}{imag}")?;
+				if imag.is_empty() {
+					write!(f, "{m}{separator}{sign}{exponent}")?;
+				} else {
+					write!(f, "({m}{separator}{sign}{exponent}){imag}")?;
+				}
 			}
 		}
 		Ok(())
