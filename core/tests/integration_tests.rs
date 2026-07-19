@@ -6374,4 +6374,12 @@ fn test_scientific_notation_edge_cases() {
 			.get_main_result(),
 		"approx. 1.0 × 10^0"
 	);
+
+	let mut context = Context::new();
+	assert_eq!(
+		evaluate("0.9995 + 0.99992345i to 3 sn", &mut context)
+			.unwrap()
+			.get_main_result(),
+		"approx. 1.00 × 10^0 + (1.00 × 10^0)i"
+	);
 }
