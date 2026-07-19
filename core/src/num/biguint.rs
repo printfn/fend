@@ -1,6 +1,6 @@
 use crate::error::{FendError, Interrupt};
 use crate::format::Format;
-use crate::interrupt::test_int;
+use crate::interrupt::{test_int};
 use crate::num::bigrat::sign::Sign;
 use crate::num::{Base, Exact, Range, RangeBound, out_of_range};
 use crate::result::FResult;
@@ -1463,6 +1463,24 @@ impl Format for BigUint {
 			},
 		)
 	}
+}
+
+#[test]
+fn test_format_big_uint_hex() {
+	let ff = BigUint::Small(255);
+	let opts = FormatOptions {
+		base: Base::HEX,
+		write_base_prefix: false,
+		sf_limit: Some(1),
+	};
+
+	assert_eq!(
+		ff.format(&opts, &crate::interrupt::Never)
+			.expect("formatting should work")
+			.value
+			.to_string(),
+		"100",
+	);
 }
 
 #[derive(Debug)]
