@@ -1,4 +1,4 @@
-use fend_core::{Context, evaluate};
+use fend_core::{evaluate, Context};
 
 #[track_caller]
 fn test_serialization_roundtrip(context: &mut Context) {
@@ -125,12 +125,10 @@ fn two_pi() {
 #[test]
 fn pi_to_fraction() {
 	let mut ctx = Context::new();
-	assert!(
-		evaluate("pi to fraction", &mut ctx)
-			.unwrap()
-			.get_main_result()
-			.starts_with("approx.")
-	);
+	assert!(evaluate("pi to fraction", &mut ctx)
+		.unwrap()
+		.get_main_result()
+		.starts_with("approx."));
 }
 
 const DIVISION_BY_ZERO_ERROR: &str = "division by zero";
@@ -4312,6 +4310,26 @@ fn sf_small_1() {
 #[test]
 fn sf_small_2() {
 	test_eval("pi / 1000000 to 2 sf", "approx. 0.0000031");
+}
+
+#[test]
+fn sf_hex_17f_1() {
+	test_eval("0x17f to 1 sf", "approx. 0x100");
+}
+
+#[test]
+fn sf_hex_17f_2() {
+	test_eval("0x17f to 2 sf", "approx. 0x180");
+}
+
+#[test]
+fn sf_hex_ff_1() {
+	test_eval("0xff to 1 sf", "approx. 0x100");
+}
+
+#[test]
+fn sf_hex_ff_2() {
+	test_eval("0xff to 2 sf", "0xff");
 }
 
 #[test]
