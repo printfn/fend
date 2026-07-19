@@ -1479,13 +1479,14 @@ pub(crate) struct FormattedBigUint {
 	ty: FormattedBigUintType,
 }
 
-fn parse_char(ch: char) -> u8 {
-	if ch.is_ascii_digit() {
-		ch as u8 - b'0'
-	} else if ch.is_ascii_lowercase() {
-		10 + ch as u8 - b'a'
-	} else if ch.is_ascii_uppercase() {
-		10 + ch as u8 - b'A'
+#[allow(clippy::cast_possible_truncation)]
+fn parse_char(ch: char, base: Base) -> u8 {
+	if let Some(digit) = ch.to_digit(base.base_as_u8().into()) {
+		let byte = digit as u8;
+
+		debug_assert_eq!(u32::from(byte), digit);
+
+		byte
 	} else {
 		unreachable!("{ch} needs to be a digit");
 	}
@@ -1509,8 +1510,8 @@ impl fmt::Display for FormattedBigUint {
 					let mut chars = chars.peekable();
 
 					if let Some(last_non_zero_char) = chars.next() {
-						let mut last_digit: u8 = parse_char(last_non_zero_char);
-						let after_digit = chars.peek().map_or(0u8, |ch| parse_char(*ch));
+						let mut last_digit: u8 = parse_char(last_non_zero_char, self.base);
+						let after_digit = chars.peek().map_or(0u8, |ch| parse_char(*ch, self.base));
 
 						let base = self.base.base_as_u8();
 
