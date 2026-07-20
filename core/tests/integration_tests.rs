@@ -4315,6 +4315,26 @@ fn sf_small_2() {
 }
 
 #[test]
+fn sf_hex_17f_1() {
+	test_eval("0x17f to 1 sf", "approx. 0x100");
+}
+
+#[test]
+fn sf_hex_17f_2() {
+	test_eval("0x17f to 2 sf", "approx. 0x180");
+}
+
+#[test]
+fn sf_hex_ff_1() {
+	test_eval("0xff to 1 sf", "approx. 0x100");
+}
+
+#[test]
+fn sf_hex_ff_2() {
+	test_eval("0xff to 2 sf", "0xff");
+}
+
+#[test]
 fn sf_rounding_integer_carry() {
 	test_eval("123.9 to 3 sf", "approx. 124");
 }
@@ -4432,51 +4452,72 @@ fn million_pi_10_sf() {
 #[test]
 fn large_integer_to_1_sf() {
 	test_eval("1234567 to 1 sf", "approx. 1000000");
+	test_eval("8999999 to 1 sf", "approx. 9000000");
+	test_eval("999999 to 1 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_2_sf() {
 	test_eval("1234567 to 2 sf", "approx. 1200000");
+	test_eval("8999999 to 2 sf", "approx. 9000000");
+	test_eval("999999 to 2 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_3_sf() {
 	test_eval("1234567 to 3 sf", "approx. 1230000");
+	test_eval("8999999 to 3 sf", "approx. 9000000");
+	test_eval("999999 to 3 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_4_sf() {
 	test_eval("1234567 to 4 sf", "approx. 1235000");
+	test_eval("8999999 to 4 sf", "approx. 9000000");
+	test_eval("999999 to 4 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_5_sf() {
 	test_eval("1234567 to 5 sf", "approx. 1234600");
+	test_eval("8999999 to 5 sf", "approx. 9000000");
+	test_eval("999999 to 5 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_6_sf() {
 	test_eval("1234567 to 6 sf", "approx. 1234570");
+	test_eval("8999999 to 6 sf", "approx. 9000000");
+	test_eval("999999 to 6 sf", "999999");
 }
 
 #[test]
 fn large_integer_to_7_sf() {
 	test_eval("1234567 to 7 sf", "1234567");
+	test_eval("8999999 to 7 sf", "8999999");
+	test_eval("999999 to 7 sf", "999999");
+	test_eval("9999999 to 7 sf", "9999999");
 }
 
 #[test]
 fn large_integer_to_8_sf() {
 	test_eval("1234567 to 8 sf", "1234567");
+	test_eval("8999999 to 8 sf", "8999999");
+	test_eval("9999999 to 8 sf", "9999999");
 }
 
 #[test]
 fn large_integer_to_9_sf() {
 	test_eval("1234567 to 9 sf", "1234567");
+	test_eval("8999999 to 9 sf", "8999999");
+	test_eval("9999999 to 9 sf", "9999999");
 }
 
 #[test]
 fn large_integer_to_10_sf() {
 	test_eval("1234567 to 10 sf", "1234567");
+	test_eval("8999999 to 10 sf", "8999999");
+	test_eval("9999999 to 10 sf", "9999999");
 }
 
 #[test]
@@ -4512,6 +4553,16 @@ fn trailing_zeroes_sf_6() {
 #[test]
 fn trailing_zeroes_sf_7() {
 	test_eval("12345601 to 8sf", "12345601");
+}
+
+#[test]
+fn trailing_zeroes_sf_8() {
+	test_eval("1234599990 to 9sf", "1234599990");
+	test_eval("1234599990 to 8sf", "approx. 1234600000");
+	test_eval("1234599990 to 7sf", "approx. 1234600000");
+	test_eval("1234599990 to 6sf", "approx. 1234600000");
+	test_eval("1234599990 to 5sf", "approx. 1234600000");
+	test_eval("1234599990 to 4sf", "approx. 1235000000");
 }
 
 #[test]
