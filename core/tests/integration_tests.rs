@@ -4450,51 +4450,62 @@ fn million_pi_10_sf() {
 #[test]
 fn large_integer_to_1_sf() {
 	test_eval("1234567 to 1 sf", "approx. 1000000");
+	test_eval("999999 to 1 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_2_sf() {
 	test_eval("1234567 to 2 sf", "approx. 1200000");
+	test_eval("999999 to 2 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_3_sf() {
 	test_eval("1234567 to 3 sf", "approx. 1230000");
+	test_eval("999999 to 3 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_4_sf() {
 	test_eval("1234567 to 4 sf", "approx. 1235000");
+	test_eval("999999 to 4 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_5_sf() {
 	test_eval("1234567 to 5 sf", "approx. 1234600");
+	test_eval("999999 to 5 sf", "approx. 1000000");
 }
 
 #[test]
 fn large_integer_to_6_sf() {
 	test_eval("1234567 to 6 sf", "approx. 1234570");
+	test_eval("999999 to 6 sf", "999999");
 }
 
 #[test]
 fn large_integer_to_7_sf() {
 	test_eval("1234567 to 7 sf", "1234567");
+	test_eval("999999 to 7 sf", "999999");
+	test_eval("9999999 to 7 sf", "9999999");
 }
 
 #[test]
 fn large_integer_to_8_sf() {
 	test_eval("1234567 to 8 sf", "1234567");
+	test_eval("9999999 to 8 sf", "9999999");
 }
 
 #[test]
 fn large_integer_to_9_sf() {
 	test_eval("1234567 to 9 sf", "1234567");
+	test_eval("9999999 to 9 sf", "9999999");
 }
 
 #[test]
 fn large_integer_to_10_sf() {
 	test_eval("1234567 to 10 sf", "1234567");
+	test_eval("9999999 to 10 sf", "9999999");
 }
 
 #[test]
