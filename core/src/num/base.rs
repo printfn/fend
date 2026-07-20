@@ -25,6 +25,10 @@ enum BaseEnum {
 
 impl Base {
 	pub(crate) const HEX: Self = Self(BaseEnum::Hex);
+	#[cfg(test)]
+	pub(crate) const OCT: Self = Self(BaseEnum::Octal);
+	#[cfg(test)]
+	pub(crate) const BIN: Self = Self(BaseEnum::Binary);
 
 	pub(crate) const fn is_plain(self) -> bool {
 		matches!(self.0, BaseEnum::Plain(_))

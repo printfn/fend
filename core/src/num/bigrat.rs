@@ -671,6 +671,7 @@ impl BigRat {
 		{
 			let positive_exponent = !integer_part.is_definitely_zero();
 
+			// println!("-- starting recursive call --");
 			let decimal = self.format_as_decimal(
 				FormattingStyle::SignificantFigures(sf),
 				Base::from_plain_base(base.base_as_u8()).expect("is valid base"),
@@ -680,6 +681,9 @@ impl BigRat {
 				decimal_separator,
 				int,
 			)?;
+			// println!("-- ending recursive call --");
+
+			// println!("[{self:?}]  [{decimal:?}]");
 
 			let exact: bool = formatted_integer_part.exact && decimal.exact;
 
@@ -728,6 +732,8 @@ impl BigRat {
 
 				(trimmed_string, zeros)
 			};
+
+			// println!("[{self:?}] {:?}", (&value, exponent));
 
 			if value.len() > sf {
 				value.truncate(sf);
@@ -1538,8 +1544,12 @@ mod tests {
 	use super::BigRat;
 	use super::sign::Sign;
 
+	use crate::interrupt::Never;
 	use crate::num::biguint::BigUint;
+	use crate::num::{Base, FormattingStyle};
 	use crate::result::FResult;
+	use crate::{Context, DecimalSeparatorStyle, evaluate};
+	use std::fmt::Write as _;
 	use std::mem;
 
 	#[test]
@@ -1582,5 +1592,141 @@ mod tests {
 				den: BigUint::from(4)
 			}
 		);
+	}
+
+	#[test]
+	fn test_binary_format_as_decimal() {
+		let rat = BigRat {
+			sign: Sign::Negative,
+			num: BigUint::Small(1),
+			den: BigUint::Small(1),
+		};
+		let result = rat
+			.format_as_decimal(
+				FormattingStyle::SignificantFigures(1),
+				Base::BIN,
+				Sign::Negative,
+				"",
+				|| Ok(false),
+				DecimalSeparatorStyle::Comma,
+				&Never,
+			)
+			.unwrap();
+
+		assert_eq!(result.value.to_string(), "-0b1");
+
+		let result = rat
+			.format_as_decimal(
+				FormattingStyle::ScientificNotation(1),
+				Base::BIN,
+				Sign::Negative,
+				"",
+				|| Ok(false),
+				DecimalSeparatorStyle::Comma,
+				&Never,
+			)
+			.unwrap();
+		assert_eq!(
+			result.value.to_string(),
+			"-0b1 × 0b10^0b0",
+			"AAH: {rat:?} {result:?} "
+		);
+	}
+
+	#[test]
+	fn test_formatting_reversible() {
+		for decimal_separator in [DecimalSeparatorStyle::Comma, DecimalSeparatorStyle::Dot] {
+			for sign in [Sign::Negative, Sign::Positive] {
+				for num in 0..100 {
+					for den in [
+						1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
+						71,
+					] {
+						if den != 1 && num % den == 0 {
+							continue;
+						}
+
+						let rat = BigRat {
+							sign,
+							num: BigUint::Small(num),
+							den: BigUint::Small(den),
+						};
+						for base in [10, 2, 3, 4, 8, 16, 33, 36] {
+							let base = match base {
+								2 => Base::BIN,
+								8 => Base::OCT,
+								16 => Base::HEX,
+								10 => Base::from_plain_base(10).unwrap(),
+								_ => Base::from_custom_base(base).unwrap(),
+							};
+
+							for sf in [1, 2, 3, 4, 10] {
+								// println!("==== GOT NEW NUMBER {rat:?} ====");
+
+								let style = FormattingStyle::ScientificNotation(sf);
+
+								let result = rat.format_as_decimal(
+									style,
+									base,
+									sign,
+									"",
+									|| Ok(false),
+									decimal_separator,
+									&Never,
+								);
+
+								let value = result.unwrap().value;
+
+								// println!("[{rat:?}]: {value} ---");
+
+								if num != 0 {
+									assert!(value.to_string().contains(" × "));
+									assert!(value.to_string().contains("10^"));
+								}
+
+								let mut context = Context {
+									decimal_separator,
+									output_mode: crate::OutputMode::SimpleText,
+									..Default::default()
+								};
+								let result =
+									evaluate(&format!("{value} to {sf} sn"), &mut context).unwrap();
+								assert_eq!(result.plain_result, value.to_string());
+
+								let mut manual_division = String::new();
+								if sign == Sign::Negative {
+									manual_division.push('-');
+								}
+								base.write_prefix(&mut manual_division).unwrap();
+								write!(&mut manual_division, "{num} / ").unwrap();
+								base.write_prefix(&mut manual_division).unwrap();
+								write!(&mut manual_division, "{den}").unwrap();
+
+								let result2 = evaluate(
+									&format!("{manual_division} to {sf} sn"),
+									&mut context,
+								)
+								.unwrap();
+
+								assert_eq!(
+									result2.plain_result,
+									value.to_string(),
+									"{manual_division} != {value}  ({rat:?})"
+								);
+								assert_eq!(result.get_main_result(), result2.get_main_result());
+
+								if den == 1 {
+									let result_base10 =
+										evaluate(&format!("{value} to base 10"), &mut context)
+											.unwrap();
+
+									assert_eq!(result_base10.plain_result, num.to_string());
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
