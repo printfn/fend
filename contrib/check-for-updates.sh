@@ -22,7 +22,7 @@ cargo metadata --format-version 1 --no-deps \
 		fi
 	done
 
-(cd web && npx npm-check-updates -u && npm update)
+# (cd web && npx npm-check-updates -u && npm update)
 (cd telegram-bot && npx npm-check-updates -u && npm update)
 
 current_wix="$(jq -r .tools.wix.version < windows-wix/.config/dotnet-tools.json)"
