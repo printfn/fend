@@ -11,6 +11,7 @@ pub(crate) use day_of_week::DayOfWeek;
 pub(crate) use month::Month;
 use year::Year;
 
+use crate::interrupt::test_int;
 use crate::{Interrupt, error::FendError, ident::Ident, result::FResult, value::Value};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -203,6 +204,7 @@ impl Date {
 			let num_days = rhs.try_as_usize_unit(int)?;
 			let mut result = self;
 			for _ in 0..num_days {
+				test_int(int)?;
 				result = result.next();
 			}
 			Ok(Value::Date(result))
