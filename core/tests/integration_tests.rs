@@ -5776,6 +5776,11 @@ fn test_date_adding_many_days_works() {
 	test_eval_simple("@2023-02-28 + 366 days", "Thursday, 29 February 2024");
 	test_eval_simple("@2023-03-01 + 365 days", "Thursday, 29 February 2024");
 	test_eval_simple("@2023-03-01 + 366 days", "Friday, 1 March 2024");
+}
+
+#[test]
+#[cfg(target_pointer_width = "64")]
+fn test_date_adding_really_many_days_works() {
 	test_eval_simple(
 		"@1970-01-01 + 1_000_000_000 days",
 		"Wednesday, 3 January 2739877",
