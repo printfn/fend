@@ -221,6 +221,7 @@ impl Date {
 			let mut result = self;
 			for _ in 0..num_days {
 				result = result.prev();
+				test_int(int)?;
 			}
 			Ok(Value::Date(result))
 		} else if rhs.unit_equal_to("week", int)? {
@@ -230,6 +231,7 @@ impl Date {
 				for _ in 0..7 {
 					result = result.prev();
 				}
+				test_int(int)?;
 			}
 			Ok(Value::Date(result))
 		} else if rhs.unit_equal_to("month", int)? {
