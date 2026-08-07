@@ -1,5 +1,6 @@
 use std::{convert, fmt, io};
 
+use crate::format::DisplayDebug;
 use crate::num::RangeBound;
 use crate::{
 	error::FendError,
@@ -24,7 +25,7 @@ impl Year {
 		self.0
 	}
 
-	pub(crate) fn out_of_range_error(value: i64) -> FendError {
+	pub(crate) fn out_of_range_error(value: impl DisplayDebug + 'static) -> FendError {
 		FendError::OutOfRange {
 			value: Box::new(value),
 			range: crate::num::Range {
@@ -32,6 +33,28 @@ impl Year {
 				end: RangeBound::Closed(Box::new(Self::MAX)),
 			},
 		}
+	}
+
+	pub(crate) fn add(
+		self,
+		value: impl TryInto<u32> + Copy + DisplayDebug + 'static,
+	) -> FResult<Self> {
+		let value = value.try_into().map_err(|_| FendError::ValueTooLarge)?;
+
+		let new_year = self
+			.value()
+			.checked_add_unsigned(value)
+			.ok_or(FendError::ValueTooLarge)?;
+
+		Ok(if new_year == 0 {
+			Self::new(1)
+		} else {
+			match (self.value().is_positive(), new_year.is_positive()) {
+				(true, true) | (false, false) => Self::new(new_year),
+				(false, true) => Self::new(new_year).next()?, // add one year because 0 isn't valid.
+				(true, false) => unreachable!("Year can't have become negative"),
+			}
+		})
 	}
 
 	pub(crate) fn next(self) -> FResult<Self> {
@@ -43,6 +66,25 @@ impl Year {
 					Self::out_of_range_error(const { Self::MAX.value() as i64 + 1 })
 				})?,
 			)
+		})
+	}
+
+	pub(crate) fn sub(self, value: impl TryInto<u32> + Copy + 'static) -> FResult<Self> {
+		let value = value.try_into().map_err(|_| FendError::ValueTooLarge)?;
+
+		let new_year = self
+			.value()
+			.checked_sub_unsigned(value)
+			.ok_or(FendError::ValueTooLarge)?;
+
+		Ok(if new_year == 0 {
+			Self::new(-1)
+		} else {
+			match (self.value().is_positive(), new_year.is_positive()) {
+				(true, true) | (false, false) => Self::new(new_year),
+				(true, false) => Self::new(new_year).prev()?, // sub one year because 0 isn't valid.
+				(false, true) => unreachable!("Year can't have become positive"),
+			}
 		})
 	}
 

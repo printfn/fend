@@ -5851,6 +5851,20 @@ fn date_literal_subtraction() {
         "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
     );
 	test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
+
+	test_eval_simple("@2000-01-01 - 1999 year", "Monday, 1 January 1");
+	test_eval_simple("@2000-01-01 - 2000 year", "Saturday, 1 January 1 BC");
+	test_eval_simple("@2000-01-01 - 2001 year", "Friday, 1 January 2 BC");
+
+	test_eval_simple("@2000-02-01 - (1999 * 12 + 1) month", "Monday, 1 January 1");
+	test_eval_simple(
+		"@2000-03-01 - (2000 * 12 + 2) month",
+		"Saturday, 1 January 1 BC",
+	);
+	test_eval_simple(
+		"@2000-04-01 - (2001 * 12 + 3) month",
+		"Friday, 1 January 2 BC",
+	);
 }
 
 #[test]

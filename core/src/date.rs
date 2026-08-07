@@ -64,7 +64,7 @@ impl Date {
 			Month::October => (0, 1),
 		};
 		let m = if self.year.is_leap_year() { ms.1 } else { ms.0 };
-		match (d1 + m + i32::from(self.day.value() - 1)) % 7 {
+		match ((d1 + m + i32::from(self.day.value() - 1)) % 7 + 7) % 7 {
 			0 => DayOfWeek::Sunday,
 			1 => DayOfWeek::Monday,
 			2 => DayOfWeek::Tuesday,
@@ -123,13 +123,14 @@ impl Date {
 
 	pub(crate) fn diff_months(self, mut months: i64) -> FResult<Self> {
 		let mut result = self;
-		while months >= 12 {
-			result.year = result.year.next()?;
-			months -= 12;
-		}
-		while months <= -12 {
-			result.year = result.year.prev()?;
-			months += 12;
+		if months >= 12 {
+			let years = months / 12;
+			months %= 12;
+			result.year = result.year.add(years)?;
+		} else if months <= -12 {
+			let years = (months / 12).unsigned_abs();
+			months %= 12;
+			result.year = result.year.sub(years)?;
 		}
 		while months > 0 {
 			if result.month == Month::December {
