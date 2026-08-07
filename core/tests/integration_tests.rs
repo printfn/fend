@@ -5779,7 +5779,7 @@ fn test_date_adding_many_days_works() {
 }
 
 #[test]
-#[cfg(target_pointer_width = "64")]
+#[cfg_attr(not(target_pointer_width = "64"), ignore = "Needs at least 64 bits.")]
 fn test_date_adding_really_many_days_works() {
 	test_eval_simple(
 		"@1970-01-01 + 1_000_000_000 days",
