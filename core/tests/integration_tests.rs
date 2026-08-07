@@ -5779,6 +5779,19 @@ fn test_date_adding_many_days_works() {
 }
 
 #[test]
+#[cfg(target_pointer_width = "64")]
+fn test_date_adding_really_many_days_works() {
+	test_eval_simple(
+		"@1970-01-01 + 1_000_000_000 days",
+		"Wednesday, 3 January 2739877",
+	);
+	test_eval_simple(
+		"@1970-01-01 + 100_000_000_000 days",
+		"Tuesday, 13 September 273792670",
+	);
+}
+
+#[test]
 fn test_date_literal_addition() {
 	test_eval_simple("@1970-01-01 + 52 weeks", "Thursday, 31 December 1970"); // not leap year
 	test_eval_simple("@2020-01-01 + 52 weeks", "Wednesday, 30 December 2020"); // leap year
