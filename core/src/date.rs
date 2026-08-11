@@ -203,7 +203,7 @@ impl Date {
 		let mut result = self;
 
 		// make sure to be before 29th February to make skipping years work
-		while result.month != Month::January && num_days > 0 {
+		while num_days > 0 && result.month != Month::January {
 			result = result.next()?;
 			num_days -= 1;
 		}
@@ -264,7 +264,7 @@ impl Date {
 		let mut result = self;
 
 		// make sure to be after 29th February to make skipping years work
-		while result.month.as_u8() < Month::March.as_u8() && num_days > 0 {
+		while num_days > 0 && result.month.as_u8() < Month::March.as_u8() {
 			result = result.prev()?;
 			num_days -= 1;
 		}
