@@ -150,6 +150,13 @@ impl Date {
 			}
 			months += 1;
 		}
+
+		result.verify()
+	}
+
+	fn verify(self) -> FResult<Self> {
+		let result = self;
+
 		if result.day.value() > Month::number_of_days(result.month, result.year) {
 			let mut before = result;
 			before.day = Day::new(Month::number_of_days(before.month, before.year));
@@ -161,15 +168,16 @@ impl Date {
 				after.month = after.month.next();
 			}
 			after.day = Day::new(1);
-			return Err(FendError::NonExistentDate {
+			Err(FendError::NonExistentDate {
 				year: result.year.value(),
 				month: result.month,
 				expected_day: result.day.value(),
 				before,
 				after,
-			});
+			})
+		} else {
+			Ok(result)
 		}
-		Ok(result)
 	}
 
 	pub(crate) fn parse(s: &str) -> FResult<Self> {
@@ -200,6 +208,11 @@ impl Date {
 	}
 
 	fn add_days<I: Interrupt>(self, mut num_days: usize, int: &I) -> FResult<Self> {
+		if let Some(jd) = self.to_julian_date() {
+			let jd = jd.checked_add(num_days.try_into().map_err(|_| FendError::ValueTooLarge)?).ok_or_else(|| FendError::ValueTooLarge)?;
+			return Self::from_julian_date(jd);
+		}
+
 		let mut result = self;
 
 		// make sure to be before 29th February to make skipping years work
@@ -261,6 +274,11 @@ impl Date {
 	}
 
 	fn sub_days<I: Interrupt>(self, mut num_days: usize, int: &I) -> FResult<Self> {
+		if let Some(jd) = self.to_julian_date() {
+			let jd = jd.checked_sub(num_days.try_into().map_err(|_| FendError::ValueTooLarge)?).ok_or_else(|| FendError::ValueTooLarge)?;
+			return Self::from_julian_date(jd);
+		}
+
 		let mut result = self;
 
 		// make sure to be after 29th February to make skipping years work
@@ -318,6 +336,68 @@ impl Date {
 		} else {
 			Err(FendError::ExpectedANumber)
 		}
+	}
+
+	/// "It converts any given calendar date (I = year; J = month, a
+	/// number from 1 to 12; K = day of month) to a Julian Date (JD) --
+	/// a continuous count of days from an epoch in the very distant past."
+	///
+	/// "For example, noon at Greenwich, England, on January 1, 1970, is
+	/// the beginning of Julian Date 2,440,588."
+	///
+	/// SEE: <https://dl.acm.org/doi/epdf/10.1145/364096.364097>
+	///
+	/// Note: "@1970-01-01 - 2440588 days" is "Sunday, 23 November 4714 BC"
+	fn to_julian_date(self) -> Option<u64> {
+		#![allow(non_snake_case)]
+		// Based on Fortran code from: https://dl.acm.org/doi/epdf/10.1145/364096.364097
+
+		let I: i64 = self.year.value().into();
+		let J: i64 = self.month.as_u8().into();
+		let K: i64 = self.day.value().into();
+
+		let JD = K - 32075
+			+ 1461 * (I + 4800 + (J - 14) / 12) / 4
+			+ 367 * (J - 2 - (J - 14) / 12 * 12) / 12
+			- 3 * ((I + 4900 + (J - 14) / 12) / 100) / 4;
+
+		JD.try_into().ok()
+	}
+
+	fn from_julian_date(julian_date: u64) -> FResult<Self> {
+		#![allow(non_snake_case, clippy::manual_div_ceil)]
+
+		// Based on Fortran code from: https://dl.acm.org/doi/epdf/10.1145/364096.364097
+
+		let JD = julian_date;
+
+		let L = JD + 68569;
+		let N = 4 * L / 146_097;
+		let L = L - (146_097 * N + 3) / 4;
+		let I = 4000 * (L + 1) / 1_461_001;
+		let L = L - 1461 * I / 4 + 31;
+		let J = 80 * L / 2447;
+		let K = L - 2447 * J / 80;
+		let L = J / 11;
+		let J = J + 2 - 12 * L;
+		let I = 100 * (N - 49) + I + L;
+
+		let create_date = Self {
+			year: i32::try_from(I)
+				.map_err(|_| FendError::ValueTooLarge)?
+				.try_into()
+				.map_err(|_| FendError::ValueTooLarge)?,
+			month: u8::try_from(J)
+				.map_err(|_| FendError::ValueTooLarge)?
+				.try_into()
+				.map_err(|_| FendError::ValueTooLarge)?,
+			day: u8::try_from(K)
+				.map_err(|_| FendError::ValueTooLarge)?
+				.try_into()
+				.map_err(|_| FendError::ValueTooLarge)?,
+		};
+
+		create_date.verify()
 	}
 }
 

@@ -31,6 +31,20 @@ impl Day {
 	}
 }
 
+pub(crate) struct InvalidDayError;
+
+impl TryFrom<u8> for Day {
+	type Error = InvalidDayError;
+
+	fn try_from(day: u8) -> Result<Self, Self::Error> {
+		if day != 0 && day < 32 {
+			Ok(Self(day))
+		} else {
+			Err(InvalidDayError)
+		}
+	}
+}
+
 impl fmt::Debug for Day {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.0)
