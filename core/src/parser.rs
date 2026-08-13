@@ -505,13 +505,15 @@ fn parse_equality(input: &[Token]) -> ParseResult<'_> {
 
 	let (lhs, input) = parse_function(input)?;
 
-	for comp in COMPARISONS {
-		if let Ok(((), remaining)) = parse_fixed_symbol(input, comp.into()) {
-			let (rhs, remaining) = parse_function(remaining)?;
-			return Ok((
-				Expr::Comparison(comp, Box::new(lhs), Box::new(rhs)),
-				remaining,
-			));
+	if let Ok((Token::Symbol(symbol), remaining)) = parse_token(input) {
+		for comp in COMPARISONS {
+			if Symbol::from(comp) == symbol {
+				let (rhs, remaining) = parse_function(remaining)?;
+				return Ok((
+					Expr::Comparison(comp, Box::new(lhs), Box::new(rhs)),
+					remaining,
+				));
+			}
 		}
 	}
 
