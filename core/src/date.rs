@@ -27,7 +27,9 @@ impl Date {
 			return Err(FendError::UnableToGetCurrentDate);
 		};
 		let mut seconds_since_epoch = current_time_info.elapsed_unix_time_ms / 1000;
-		seconds_since_epoch = seconds_since_epoch.checked_sub_signed(current_time_info.timezone_offset_secs).ok_or(FendError::ValueTooLarge)?;
+		seconds_since_epoch = seconds_since_epoch
+			.checked_sub_signed(current_time_info.timezone_offset_secs)
+			.ok_or(FendError::ValueTooLarge)?;
 		let days = seconds_since_epoch / (60 * 60 * 24); // no leap seconds
 
 		let date = Self {

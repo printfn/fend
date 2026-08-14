@@ -387,8 +387,8 @@ impl Context {
 	/// offset to UTC, in seconds.
 	pub fn set_current_time_v1(&mut self, ms_since_1970: u64, tz_offset_secs: i64) {
 		self.current_time = Some(CurrentTimeInfo {
-		    elapsed_unix_time_ms: ms_since_1970,
-		    timezone_offset_secs: tz_offset_secs,
+			elapsed_unix_time_ms: ms_since_1970,
+			timezone_offset_secs: tz_offset_secs,
 		});
 	}
 
