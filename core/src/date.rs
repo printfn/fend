@@ -22,28 +22,21 @@ pub(crate) struct Date {
 }
 
 impl Date {
-	pub(crate) fn today(context: &crate::Context) -> FResult<Self> {
+	pub(crate) fn today<I: Interrupt>(context: &crate::Context, int: &I) -> FResult<Self> {
 		let Some(current_time_info) = &context.current_time else {
 			return Err(FendError::UnableToGetCurrentDate);
 		};
-		let mut ms_since_epoch: i64 = current_time_info.elapsed_unix_time_ms.try_into().unwrap();
-		ms_since_epoch -= current_time_info.timezone_offset_secs * 1000;
-		let mut days = ms_since_epoch / 86_400_000; // no leap seconds
-		let mut year = Year::new(1970);
-		while days >= year.number_of_days().into() {
-			year = year.next()?;
-			days -= i64::from(year.number_of_days());
-		}
-		let mut month = Month::January;
-		while days >= month.number_of_days(year).into() {
-			month = month.next();
-			days -= i64::from(month.number_of_days(year));
-		}
-		Ok(Self {
-			year,
-			month,
-			day: Day::new(days.try_into().unwrap()),
-		})
+		let mut seconds_since_epoch = current_time_info.elapsed_unix_time_ms / 1000;
+		seconds_since_epoch = seconds_since_epoch.checked_sub_signed(current_time_info.timezone_offset_secs).ok_or(FendError::ValueTooLarge)?;
+		let days = seconds_since_epoch / (60 * 60 * 24); // no leap seconds
+
+		let date = Self {
+			year: Year::new(1970),
+			day: Day::new(1),
+			month: Month::January,
+		};
+
+		date.add_days(days.try_into().map_err(|_| FendError::ValueTooLarge)?, int)
 	}
 
 	fn day_of_week(self) -> DayOfWeek {

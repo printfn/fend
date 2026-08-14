@@ -5186,7 +5186,6 @@ fn unicode_escape_aaa_uppercase() {
 }
 
 #[test]
-#[ignore]
 fn today() {
 	let mut context = Context::new();
 	context.set_current_time_v1(1617517099000, 0);
@@ -5197,13 +5196,19 @@ fn today() {
 }
 
 #[test]
-#[ignore]
 fn today_with_tz() {
+	let mut context = Context::new();
+	context.set_current_time_v1(1619943083155, 28800);
+	assert_eq!(
+		evaluate("today", &mut context).unwrap().get_main_result(),
+		"Sunday, 2 May 2021"
+	);
+
 	let mut context = Context::new();
 	context.set_current_time_v1(1619943083155, 43200);
 	assert_eq!(
 		evaluate("today", &mut context).unwrap().get_main_result(),
-		"Sunday, 2 May 2021"
+		"Saturday, 1 May 2021"
 	);
 }
 
