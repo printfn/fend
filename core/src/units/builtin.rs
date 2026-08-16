@@ -250,6 +250,48 @@ const CONSTANTS: &[UnitTuple] = &[
 	),
 	("gravity", "", "=9.80665 m/s^2", ""),
 	("force", "", "gravity", ""), // used to convert some units
+	(
+		"stefan_boltzmann",
+		"",
+		"=2*pi^5*boltzmann^4/15/c^2/planck^3",
+		"Stefan-Boltzmann constant (exact)",
+	),
+	(
+		"gas_constant",
+		"",
+		"=avogadro*boltzmann",
+		"molar gas constant (exact)",
+	),
+	(
+		"vacuum_permittivity",
+		"",
+		"=8.8541878188e-12 farad/m",
+		"Vacuum dielectric permittivity",
+	),
+	(
+		"reduced_planck",
+		"",
+		"=planck/2/pi",
+		"reduced Planck constant (exact)",
+	),
+	(
+		"elementary_charge",
+		"",
+		"=1.602176634e-19 coulomb",
+		"magnitude of the charge of an electron (exact)",
+	),
+	(
+		"faraday",
+		"",
+		"=elementary_charge*avogadro",
+		"Faraday constant (exact)",
+	),
+	(
+		"vacuum_permeability",
+		"",
+		"=1.25663706127e-6 N/A^2",
+		"Vacuum magnetic permeability",
+	),
 ];
 
 const ANGLES: &[UnitTuple] = &[
