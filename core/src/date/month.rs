@@ -6,7 +6,7 @@ use crate::{
 };
 use std::{convert, fmt, io};
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub(crate) enum Month {
 	January = 1,
 	February = 2,

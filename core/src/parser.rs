@@ -1,4 +1,4 @@
-use crate::ast::{Bop, Expr};
+use crate::ast::{Bop, Comparison, Expr};
 use crate::lexer::{Symbol, Token};
 use crate::value::Value;
 use std::fmt;
@@ -494,22 +494,30 @@ fn parse_function(input: &[Token]) -> ParseResult<'_> {
 }
 
 fn parse_equality(input: &[Token]) -> ParseResult<'_> {
+	const COMPARISONS: [Comparison; 6] = [
+		Comparison::Eq, // "=="
+		Comparison::Ne, // "!=" | "<>"
+		Comparison::Le, // "<="
+		Comparison::Lt, //  "<"
+		Comparison::Ge, // ">="
+		Comparison::Gt, // ">"
+	];
+
 	let (lhs, input) = parse_function(input)?;
-	if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::DoubleEquals) {
-		let (rhs, remaining) = parse_function(remaining)?;
-		Ok((
-			Expr::Equality(true, Box::new(lhs), Box::new(rhs)),
-			remaining,
-		))
-	} else if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::NotEquals) {
-		let (rhs, remaining) = parse_function(remaining)?;
-		Ok((
-			Expr::Equality(false, Box::new(lhs), Box::new(rhs)),
-			remaining,
-		))
-	} else {
-		Ok((lhs, input))
+
+	if let Ok((Token::Symbol(symbol), remaining)) = parse_token(input) {
+		for comp in COMPARISONS {
+			if Symbol::from(comp) == symbol {
+				let (rhs, remaining) = parse_function(remaining)?;
+				return Ok((
+					Expr::Comparison(comp, Box::new(lhs), Box::new(rhs)),
+					remaining,
+				));
+			}
+		}
 	}
+
+	Ok((lhs, input))
 }
 
 fn parse_assignment(input: &[Token]) -> ParseResult<'_> {
