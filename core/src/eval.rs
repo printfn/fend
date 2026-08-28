@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::{
@@ -72,6 +73,28 @@ fn parse_attrs(mut input: &str) -> (Attrs, &str) {
 	(attrs, input)
 }
 
+/// If a previous result is available (stored in `_`) and the input begins with
+/// a binary operator that cannot otherwise start an expression (such as `* 2`
+/// or `to miles`), rewrite it to continue from that result, e.g. `_ * 2` or
+/// `_ to miles`. This mirrors how pocket and on-screen calculators let an
+/// operator key off the previously-displayed value.
+fn continue_from_previous_result<'a, I: Interrupt>(
+	input: &'a str,
+	context: &crate::Context,
+	int: &I,
+) -> Cow<'a, str> {
+	if !context.variables.contains_key("_") {
+		return Cow::Borrowed(input);
+	}
+	let mut tokens = lexer::lex(input, context, int);
+	if let Some(Ok(lexer::Token::Symbol(symbol))) = tokens.next()
+		&& symbol.expects_preceding_operand()
+	{
+		return Cow::Owned(format!("_ {input}"));
+	}
+	Cow::Borrowed(input)
+}
+
 /// This also saves the calculation result in a variable `_` and `ans`
 pub(crate) fn evaluate_to_spans<I: Interrupt>(
 	input: &str,
@@ -80,8 +103,9 @@ pub(crate) fn evaluate_to_spans<I: Interrupt>(
 	int: &I,
 ) -> FResult<(Vec<Span>, Attrs)> {
 	let (attrs, input) = parse_attrs(input);
+	let input = continue_from_previous_result(input, context, int);
 	let mut spans = vec![];
-	let value = evaluate_to_value(input, scope, attrs, &mut spans, context, int)?;
+	let value = evaluate_to_value(input.as_ref(), scope, attrs, &mut spans, context, int)?;
 	context.variables.insert("_".to_string(), value.clone());
 	context.variables.insert("ans".to_string(), value.clone());
 	Ok((
