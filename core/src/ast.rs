@@ -867,9 +867,9 @@ fn resolve_builtin_identifier<I: Interrupt>(
 		]),
 		"print" => Value::BuiltInFunction(BuiltInFunction::Print),
 		"println" => Value::BuiltInFunction(BuiltInFunction::Println),
-		"today" => Value::Date(crate::date::Date::today(context)?),
-		"tomorrow" => Value::Date(crate::date::Date::today(context)?.next()),
-		"yesterday" => Value::Date(crate::date::Date::today(context)?.prev()),
+		"today" => Value::Date(crate::date::Date::today(context, int)?),
+		"tomorrow" => Value::Date(crate::date::Date::today(context, int)?.next()?),
+		"yesterday" => Value::Date(crate::date::Date::today(context, int)?.prev()?),
 		"trans" => Value::String(Cow::Borrowed("🏳️‍⚧️")),
 		_ => return Err(FendError::IdentifierNotFound(ident.clone())),
 	})
