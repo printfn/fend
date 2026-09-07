@@ -4,7 +4,7 @@
 #![deny(elided_lifetimes_in_paths)]
 
 use std::fmt::Write;
-use std::{error, io, process};
+use std::{error, io, io::Write as _, process};
 
 mod args;
 mod color;
@@ -128,6 +128,7 @@ async fn repl_loop(config: &config::Config) -> ExitCode {
 				},
 				"clear" | "clear()" | ":clear" => {
 					print!("\x1b[2J\x1b[H");
+					io::stdout().flush().expect("failed to flush stdout");
 				}
 				line => {
 					interrupt.reset();
