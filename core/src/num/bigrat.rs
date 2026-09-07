@@ -7,6 +7,7 @@ use crate::num::{Base, Exact, FormattingStyle, Range, RangeBound};
 use crate::result::FResult;
 use crate::serialize::CborValue;
 use core::f64;
+use std::fmt::{Debug, Display, Write};
 use std::{cmp, fmt, hash, ops};
 
 pub(crate) mod sign {
@@ -636,7 +637,7 @@ impl BigRat {
 		))
 	}
 
-	#[allow(clippy::too_many_arguments)]
+	#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 	fn format_as_decimal<I: Interrupt>(
 		&self,
 		style: FormattingStyle,
@@ -647,12 +648,15 @@ impl BigRat {
 		decimal_separator: DecimalSeparatorStyle,
 		int: &I,
 	) -> FResult<Exact<FormattedBigRat>> {
-		let integer_part = self.clone().num.div(&self.den, int)?;
-		let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
-			Some(sf)
-		} else {
-			None
+		let integer_part = self.num.clone().div(&self.den, int)?;
+
+		let sf_limit = match style {
+			FormattingStyle::SignificantFigures(sf) | FormattingStyle::ScientificNotation(sf) => {
+				Some(sf)
+			}
+			_ => None,
 		};
+
 		let formatted_integer_part = integer_part.format(
 			&biguint::FormatOptions {
 				base,
@@ -661,6 +665,121 @@ impl BigRat {
 			},
 			int,
 		)?;
+
+		if !self.is_definitely_zero()
+			&& let FormattingStyle::ScientificNotation(sf) = style
+		{
+			let positive_exponent = !integer_part.is_definitely_zero();
+
+			let silent_base = Base::from_plain_base(base.base_as_u8()).expect("is valid base");
+			let decimal = if self.is_integer() {
+				Self::format_as_integer(&self.num, silent_base, sign, term, false, Some(sf), int)?
+			} else {
+				self.format_as_decimal(
+					FormattingStyle::SignificantFigures(sf),
+					silent_base,
+					sign,
+					term,
+					terminating,
+					decimal_separator,
+					int,
+				)?
+			};
+
+			let exact: bool = formatted_integer_part.exact && decimal.exact;
+
+			let decimal = FormattedBigRat {
+				sign: Sign::Positive,
+				ty: decimal.value.ty,
+			};
+
+			let (FormattedBigRatType::Integer(_, _, is_imag, _)
+			| FormattedBigRatType::Decimal(_, _, is_imag)) = decimal.ty
+			else {
+				unreachable!()
+			};
+
+			let mut string = decimal.to_string();
+
+			if string.ends_with(is_imag) {
+				string.truncate(string.len() - is_imag.len());
+			}
+
+			let positive_exponent = positive_exponent || !string.starts_with('0');
+
+			let (mut value, exponent): (String, usize) = if positive_exponent {
+				let exponent: usize;
+
+				if let Some(idx) = string.find(decimal_separator.decimal_separator()) {
+					string.remove(idx);
+					exponent = idx - 1;
+				} else {
+					exponent = string.len() - 1;
+				}
+
+				(string, exponent)
+			} else {
+				let trimmed_string: String = string
+					.trim_start_matches(|ch| {
+						ch == decimal_separator.decimal_separator() || ch == '0'
+					})
+					.into();
+
+				let zeros = string
+					.chars()
+					.count()
+					.saturating_sub(trimmed_string.chars().count())
+					.saturating_sub(1);
+
+				(trimmed_string, zeros)
+			};
+
+			if value.len() > sf {
+				value.truncate(sf);
+			} else {
+				while value.len() < sf {
+					value.push('0');
+				}
+			}
+
+			if sf > 1 {
+				value.insert(1, decimal_separator.decimal_separator());
+			}
+
+			let separator = if base.is_plain() {
+				ScientificNotationSeparator::StaticStr(" × 10^")
+			} else {
+				let mut base_str = String::with_capacity(4);
+				base.write_prefix(&mut base_str)?;
+				base_str.write_str("10")?;
+
+				ScientificNotationSeparator::DynamicBase(" × ", base_str.into(), "^")
+			};
+
+			return Ok(Exact::new(
+				FormattedBigRat {
+					sign,
+					ty: FormattedBigRatType::ScientificNotation(
+						base,
+						value.into(),
+						separator,
+						if positive_exponent { "" } else { "-" },
+						BigUint::Small(exponent as u64)
+							.format(
+								&biguint::FormatOptions {
+									base,
+									write_base_prefix: true,
+									sf_limit: None,
+								},
+								int,
+							)?
+							.value,
+						is_imag,
+					),
+				},
+				exact,
+			));
+		}
 
 		let num_trailing_digits_to_print = if style == FormattingStyle::ExactFloat
 			|| (style == FormattingStyle::Auto && terminating()?)
@@ -1236,7 +1355,7 @@ impl Format for BigRat {
 		x.sign = Sign::Positive;
 
 		// try as integer if possible
-		if x.den == 1.into() {
+		if x.den == 1.into() && !matches!(style, FormattingStyle::ScientificNotation(_)) {
 			let sf_limit = if let FormattingStyle::SignificantFigures(sf) = style {
 				Some(sf)
 			} else {
@@ -1311,6 +1430,40 @@ enum FormattedBigRatType {
 	// space
 	// string (empty, "i", "pi", etc.)
 	Decimal(String, bool, &'static str),
+	// string representation of decimal number (may not contain recurring digits)
+	// separator ("E", " × 10^")
+	// sign of exponent ("", "-", "+")
+	// exponent
+	// string (empty, "i", "pi", etc.)
+	ScientificNotation(
+		Base,
+		Box<str>,
+		ScientificNotationSeparator,
+		&'static str,
+		FormattedBigUint,
+		&'static str,
+	),
+}
+
+#[derive(Debug)]
+pub(crate) enum ScientificNotationSeparator {
+	/// e.g. "E"
+	StaticStr(&'static str),
+	// mult " × "
+	// base
+	// pow "^"
+	DynamicBase(&'static str, Box<str>, &'static str),
+}
+
+impl Display for ScientificNotationSeparator {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::StaticStr(value) => f.write_str(value),
+			Self::DynamicBase(mult, base, pow) => {
+				write!(f, "{mult}{base}{pow}")
+			}
+		}
+	}
 }
 
 #[must_use]
@@ -1371,6 +1524,15 @@ impl fmt::Display for FormattedBigRat {
 				}
 				write!(f, "{term}")?;
 			}
+			FormattedBigRatType::ScientificNotation(base, m, separator, sign, exponent, imag) => {
+				base.write_prefix(f)?;
+
+				if imag.is_empty() {
+					write!(f, "{m}{separator}{sign}{exponent}")?;
+				} else {
+					write!(f, "({m}{separator}{sign}{exponent}){imag}")?;
+				}
+			}
 		}
 		Ok(())
 	}
@@ -1381,8 +1543,13 @@ mod tests {
 	use super::BigRat;
 	use super::sign::Sign;
 
+	use crate::format::Format as _;
+	use crate::interrupt::Never;
+	use crate::num::bigrat::FormatOptions;
 	use crate::num::biguint::BigUint;
+	use crate::num::{Base, FormattingStyle};
 	use crate::result::FResult;
+	use crate::{Context, DecimalSeparatorStyle, evaluate};
 	use std::mem;
 
 	#[test]
@@ -1425,5 +1592,136 @@ mod tests {
 				den: BigUint::from(4)
 			}
 		);
+	}
+
+	#[test]
+	fn test_binary_format_as_decimal() {
+		let rat = BigRat {
+			sign: Sign::Negative,
+			num: BigUint::Small(1),
+			den: BigUint::Small(1),
+		};
+		let result = rat
+			.format(
+				&FormatOptions {
+					base: Base::BIN,
+					style: FormattingStyle::SignificantFigures(1),
+					term: "",
+					use_parens_if_fraction: false,
+					decimal_separator: DecimalSeparatorStyle::Dot,
+				},
+				&Never,
+			)
+			.unwrap();
+
+		assert_eq!(result.value.to_string(), "-0b1");
+
+		let result = rat
+			.format(
+				&FormatOptions {
+					base: Base::BIN,
+					style: FormattingStyle::ScientificNotation(1),
+					term: "",
+					use_parens_if_fraction: false,
+					decimal_separator: DecimalSeparatorStyle::Dot,
+				},
+				&Never,
+			)
+			.unwrap();
+		assert_eq!(result.value.to_string(), "-0b1 × 0b10^0b0");
+	}
+
+	#[test]
+	fn test_scientific_formatting_reversible() {
+		for decimal_separator in [DecimalSeparatorStyle::Comma, DecimalSeparatorStyle::Dot] {
+			for sign in [Sign::Negative, Sign::Positive] {
+				for num in (1..10).into_iter().chain(100..110) {
+					for den in [
+						1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
+					] {
+						if den != 1 && num % den == 0 {
+							continue;
+						}
+
+						let rat = BigRat {
+							sign,
+							num: BigUint::Small(num),
+							den: BigUint::Small(den),
+						};
+						assert_eq!(rat.clone().simplify(&Never).unwrap().num, rat.num);
+						assert_eq!(rat.clone().simplify(&Never).unwrap().den, rat.den);
+
+						for base in [10, 2, 3, 4, 8, 16, 33, 36] {
+							let base = match base {
+								2 => Base::BIN,
+								8 => Base::OCT,
+								16 => Base::HEX,
+								10 => Base::from_plain_base(10).unwrap(),
+								_ => Base::from_custom_base(base).unwrap(),
+							};
+
+							for sf in [1, 2, 3, 4, 10] {
+								let result = rat.format(
+									&FormatOptions {
+										base,
+										style: FormattingStyle::ScientificNotation(sf),
+										term: "",
+										use_parens_if_fraction: false,
+										decimal_separator,
+									},
+									&Never,
+								);
+
+								let value = result.unwrap().value;
+
+								assert!(value.to_string().contains(" × "));
+								assert!(value.to_string().contains("10^"));
+
+								let mut context = Context {
+									decimal_separator,
+									output_mode: crate::OutputMode::SimpleText,
+									..Default::default()
+								};
+								let result =
+									evaluate(&format!("{value} to {sf} sn"), &mut context).unwrap();
+								assert_eq!(result.plain_result, value.to_string());
+
+								if base.base_as_u8() == 10 {
+									let sign_str = if sign == Sign::Negative { "-" } else { "" };
+									let manual_division =
+										format!("({sign_str}{num} / {den} to {sf} sn");
+									let result2 = evaluate(&manual_division, &mut context).unwrap();
+
+									assert_eq!(
+										result2
+											.plain_result
+											.strip_prefix("approx. ")
+											.unwrap_or(result2.plain_result.as_str()),
+										value.to_string(),
+										"{manual_division} != {value}  ({rat:?})"
+									);
+									assert_eq!(
+										result.get_main_result(),
+										result2.get_main_result().replace("approx. ", "")
+									);
+								}
+
+								if den == 1 && sf > (num.ilog(base.base_as_u8().into()) as usize) {
+									let result_base10 =
+										evaluate(&format!("{value} to base 10"), &mut context)
+											.unwrap();
+
+									if sign == Sign::Negative {
+										assert_eq!(result_base10.plain_result, format!("-{num}"));
+									} else {
+										assert_eq!(result_base10.plain_result, num.to_string());
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }

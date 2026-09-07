@@ -20,6 +20,8 @@ pub(crate) enum FormattingStyle {
 	DecimalPlaces(usize),
 	/// Print with the given number of significant figures (not including any leading zeroes)
 	SignificantFigures(usize),
+	/// Print with the given number of significant figures in scientific notation.
+	ScientificNotation(usize),
 	/// If exact and no recurring digits: `ExactFloat`, if complex/imag: `MixedFraction`,
 	/// otherwise: DecimalPlaces(10)
 	#[default]
@@ -38,6 +40,7 @@ impl fmt::Display for FormattingStyle {
 			Self::Exact => write!(f, "exact"),
 			Self::DecimalPlaces(d) => write!(f, "{d} dp"),
 			Self::SignificantFigures(s) => write!(f, "{s} sf"),
+			Self::ScientificNotation(s) => write!(f, "{s} sn"),
 			Self::Auto => write!(f, "auto"),
 		}
 	}
@@ -52,6 +55,7 @@ impl fmt::Debug for FormattingStyle {
 			Self::Exact => write!(f, "exact"),
 			Self::DecimalPlaces(d) => write!(f, "{d} dp"),
 			Self::SignificantFigures(s) => write!(f, "{s} sf"),
+			Self::ScientificNotation(s) => write!(f, "{s} sn"),
 			Self::Auto => write!(f, "auto"),
 		}
 	}
@@ -73,6 +77,10 @@ impl FormattingStyle {
 				s.serialize(write)?;
 			}
 			Self::Auto => 7u8.serialize(write)?,
+			Self::ScientificNotation(s) => {
+				8u8.serialize(write)?;
+				s.serialize(write)?;
+			}
 		}
 		Ok(())
 	}
@@ -86,6 +94,7 @@ impl FormattingStyle {
 			5 => Self::DecimalPlaces(usize::deserialize(read)?),
 			6 => Self::SignificantFigures(usize::deserialize(read)?),
 			7 => Self::Auto,
+			8 => Self::ScientificNotation(usize::deserialize(read)?),
 			_ => {
 				return Err(FendError::DeserializationError(
 					"formatting style is out of range",

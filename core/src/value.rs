@@ -25,6 +25,7 @@ pub(crate) enum Value {
 	Format(FormattingStyle),
 	Dp,
 	Sf,
+	Sn,
 	Base(Base),
 	// user-defined function with a named parameter
 	Fn(Ident, Box<Expr>, Option<Arc<Scope>>),
@@ -61,7 +62,10 @@ impl Value {
 			(Self::Num(a), Self::Num(b)) => a.compare(b, ctx.decimal_separator, int)?,
 			(Self::BuiltInFunction(a), Self::BuiltInFunction(b)) => c(a == b),
 			(Self::Format(a), Self::Format(b)) => c(a == b),
-			(Self::Dp, Self::Dp) | (Self::Sf, Self::Sf) | (Self::Unit, Self::Unit) => c(true),
+			(Self::Dp, Self::Dp)
+			| (Self::Sf, Self::Sf)
+			| (Self::Sn, Self::Sn)
+			| (Self::Unit, Self::Unit) => c(true),
 			(Self::Base(a), Self::Base(b)) => c(a == b),
 			(Self::Fn(a1, a2, a3), Self::Fn(b1, b2, b3)) => c(a1 == b1
 				&& a2.compare(b2, ctx, int)?
@@ -151,6 +155,7 @@ impl Value {
 				13u8.serialize(write)?;
 				d.serialize(write)?;
 			}
+			Self::Sn => 14u8.serialize(write)?,
 		}
 		Ok(())
 	}
@@ -189,6 +194,7 @@ impl Value {
 			11 => Self::Month(Month::deserialize(read)?),
 			12 => Self::DayOfWeek(DayOfWeek::deserialize(read)?),
 			13 => Self::Date(Date::deserialize(read)?),
+			14 => Self::Sn,
 			_ => {
 				return Err(FendError::DeserializationError(
 					"fend value type is out of range",
@@ -204,6 +210,7 @@ impl Value {
 			Self::Format(_) => "formatting style",
 			Self::Dp => "decimal places",
 			Self::Sf => "significant figures",
+			Self::Sn => "scientific notation",
 			Self::Base(_) => "base",
 			Self::Object(_) => "object",
 			Self::String(_) => "string",
@@ -294,6 +301,15 @@ impl Value {
 						return Err(FendError::CannotFormatWithZeroSf);
 					}
 					return Ok(Self::Format(FormattingStyle::SignificantFigures(num)));
+				}
+				if matches!(other, Self::Sn) {
+					let num = Self::Num(n)
+						.expect_num()?
+						.try_as_usize(context.decimal_separator, int)?;
+					if num == 0 {
+						return Err(FendError::CannotFormatWithZeroSn);
+					}
+					return Ok(Self::Format(FormattingStyle::ScientificNotation(num)));
 				}
 				if apply_mul_handling == ApplyMulHandling::OnlyApply {
 					let self_ = Self::Num(n);
@@ -410,6 +426,7 @@ impl Value {
 		Ok(res)
 	}
 
+	#[allow(clippy::too_many_lines)]
 	pub(crate) fn format<I: Interrupt>(
 		&self,
 		indent: usize,
@@ -447,6 +464,12 @@ impl Value {
 			Self::Sf => {
 				spans.push(Span {
 					string: "sf".to_string(),
+					kind: SpanKind::Keyword,
+				});
+			}
+			Self::Sn => {
+				spans.push(Span {
+					string: "sn".to_string(),
 					kind: SpanKind::Keyword,
 				});
 			}
@@ -545,6 +568,7 @@ impl fmt::Debug for Value {
 			Self::Format(fmt) => write!(f, "format: {fmt:?}"),
 			Self::Dp => write!(f, "dp"),
 			Self::Sf => write!(f, "sf"),
+			Self::Sn => write!(f, "sn"),
 			Self::Base(b) => write!(f, "base: {b:?}"),
 			Self::Fn(name, expr, scope) => {
 				write!(f, "fn: {name} => {expr:?} (scope: {scope:?})")
