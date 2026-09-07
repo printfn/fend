@@ -1,4 +1,4 @@
-use fend_core::{Context, evaluate};
+use fend_core::{evaluate, Context};
 
 #[track_caller]
 fn test_serialization_roundtrip(context: &mut Context) {
@@ -125,12 +125,10 @@ fn two_pi() {
 #[test]
 fn pi_to_fraction() {
 	let mut ctx = Context::new();
-	assert!(
-		evaluate("pi to fraction", &mut ctx)
-			.unwrap()
-			.get_main_result()
-			.starts_with("approx.")
-	);
+	assert!(evaluate("pi to fraction", &mut ctx)
+		.unwrap()
+		.get_main_result()
+		.starts_with("approx."));
 }
 
 const DIVISION_BY_ZERO_ERROR: &str = "division by zero";
@@ -4240,17 +4238,17 @@ fn sf_3() {
 
 #[test]
 fn sf_4() {
-	test_eval("1234567.55645 to 4 sf", "approx. 1234000");
+	test_eval("1234567.55645 to 4 sf", "approx. 1235000");
 }
 
 #[test]
 fn sf_5() {
-	test_eval("1234567.55645 to 5 sf", "approx. 1234500");
+	test_eval("1234567.55645 to 5 sf", "approx. 1234600");
 }
 
 #[test]
 fn sf_6() {
-	test_eval("1234567.55645 to 6 sf", "approx. 1234560");
+	test_eval("1234567.55645 to 6 sf", "approx. 1234570");
 }
 
 #[test]
@@ -4296,6 +4294,26 @@ fn sf_small_1() {
 #[test]
 fn sf_small_2() {
 	test_eval("pi / 1000000 to 2 sf", "approx. 0.0000031");
+}
+
+#[test]
+fn sf_hex_17f_1() {
+	test_eval("0x17f to 1 sf", "approx. 0x100");
+}
+
+#[test]
+fn sf_hex_17f_2() {
+	test_eval("0x17f to 2 sf", "approx. 0x180");
+}
+
+#[test]
+fn sf_hex_ff_1() {
+	test_eval("0xff to 1 sf", "approx. 0x100");
+}
+
+#[test]
+fn sf_hex_ff_2() {
+	test_eval("0xff to 2 sf", "0xff");
 }
 
 #[test]
@@ -4380,12 +4398,12 @@ fn million_pi_3_sf() {
 
 #[test]
 fn million_pi_4_sf() {
-	test_eval("1e6 pi to 4 sf", "approx. 3141000");
+	test_eval("1e6 pi to 4 sf", "approx. 3142000");
 }
 
 #[test]
 fn million_pi_5_sf() {
-	test_eval("1e6 pi to 5 sf", "approx. 3141500");
+	test_eval("1e6 pi to 5 sf", "approx. 3141600");
 }
 
 #[test]
@@ -4430,17 +4448,17 @@ fn large_integer_to_3_sf() {
 
 #[test]
 fn large_integer_to_4_sf() {
-	test_eval("1234567 to 4 sf", "approx. 1234000");
+	test_eval("1234567 to 4 sf", "approx. 1235000");
 }
 
 #[test]
 fn large_integer_to_5_sf() {
-	test_eval("1234567 to 5 sf", "approx. 1234500");
+	test_eval("1234567 to 5 sf", "approx. 1234600");
 }
 
 #[test]
 fn large_integer_to_6_sf() {
-	test_eval("1234567 to 6 sf", "approx. 1234560");
+	test_eval("1234567 to 6 sf", "approx. 1234570");
 }
 
 #[test]
@@ -4465,7 +4483,7 @@ fn large_integer_to_10_sf() {
 
 #[test]
 fn trailing_zeroes_sf_1() {
-	test_eval("1234560 to 5sf", "approx. 1234500");
+	test_eval("1234560 to 5sf", "approx. 1234600");
 }
 
 #[test]

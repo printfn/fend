@@ -2,10 +2,10 @@ use crate::error::{FendError, Interrupt};
 use crate::format::Format;
 use crate::interrupt::test_int;
 use crate::num::bigrat::sign::Sign;
-use crate::num::{Base, Exact, Range, RangeBound, out_of_range};
+use crate::num::{out_of_range, Base, Exact, Range, RangeBound};
 use crate::result::FResult;
 use crate::serialize::CborValue;
-use std::cmp::{Ordering, max};
+use std::cmp::{max, Ordering};
 use std::{fmt, hash};
 
 #[derive(Clone)]
@@ -1379,16 +1379,11 @@ impl Format for BigUint {
 	type Out = FormattedBigUint;
 
 	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
-		let base_prefix = if params.write_base_prefix {
-			Some(params.base)
-		} else {
-			None
-		};
-
 		if self.is_zero() {
 			return Ok(Exact::new(
 				FormattedBigUint {
-					base: base_prefix,
+					base: params.base,
+					write_base_prefix: params.write_base_prefix,
 					ty: FormattedBigUintType::Zero,
 				},
 				true,
@@ -1400,7 +1395,8 @@ impl Format for BigUint {
 			if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						base: params.base,
+						write_base_prefix: params.write_base_prefix,
 						ty: FormattedBigUintType::Simple(num.get(0)),
 					},
 					true,
@@ -1454,7 +1450,8 @@ impl Format for BigUint {
 					.is_none_or(|sf| sf >= output.len() - num_leading_zeroes);
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						base: params.base,
+						write_base_prefix: params.write_base_prefix,
 						ty: FormattedBigUintType::Complex(output, params.sf_limit),
 					},
 					exact,
@@ -1474,25 +1471,60 @@ enum FormattedBigUintType {
 #[must_use]
 #[derive(Debug)]
 pub(crate) struct FormattedBigUint {
-	base: Option<Base>,
+	base: Base,
+	write_base_prefix: bool,
 	ty: FormattedBigUintType,
 }
 
 impl fmt::Display for FormattedBigUint {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		if let Some(base) = self.base {
-			base.write_prefix(f)?;
+		if self.write_base_prefix {
+			self.base.write_prefix(f)?;
 		}
 		match &self.ty {
 			FormattedBigUintType::Zero => write!(f, "0")?,
 			FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
 			FormattedBigUintType::Complex(s, sf_limit) => {
-				for (i, ch) in s.chars().rev().enumerate() {
-					if sf_limit.is_some() && &Some(i) >= sf_limit {
-						write!(f, "0")?;
-					} else {
-						write!(f, "{ch}")?;
+				let base_as_u32: u32 = u32::from(self.base.base_as_u8());
+				let mut rev_chars: Vec<char> = s.chars().rev().collect();
+
+				if let Some(sf) = sf_limit
+					&& *sf > 0 && *sf < rev_chars.len() {
+						let num_truncated = rev_chars.len() - sf;
+						let dropped_char = rev_chars[*sf];
+						let val = dropped_char.to_digit(base_as_u32).unwrap_or(0);
+
+						// Keep only the significant figures we want
+						rev_chars.truncate(*sf);
+
+						// Check if we should round up (equivalent to fraction >= 1/2)
+						if val * 2 >= base_as_u32 {
+							let mut carry = 1u32;
+							for i in (0..*sf).rev() {
+								let d = rev_chars[i].to_digit(base_as_u32).unwrap_or(0) + carry;
+								if d >= base_as_u32 {
+									rev_chars[i] = '0';
+									carry = 1;
+								} else {
+									rev_chars[i] = char::from_digit(d, base_as_u32).unwrap();
+									carry = 0;
+									break;
+								}
+							}
+							if carry > 0 {
+								rev_chars.insert(0, '1');
+							}
+						}
+
+						// Pad with trailing zeros to maintain the original length
+						let target_len = rev_chars.len() + num_truncated;
+						while rev_chars.len() < target_len {
+							rev_chars.push('0');
+						}
 					}
+
+				for ch in rev_chars {
+					write!(f, "{ch}")?;
 				}
 			}
 		}
