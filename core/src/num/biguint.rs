@@ -30,6 +30,9 @@ impl hash::Hash for BigUint {
 
 use BigUint::{Large, Small};
 
+/// Fractional bits used when checking whether an integer root is exact.
+const ROOT_CHECK_BITS: u64 = 64;
+
 #[allow(clippy::cast_possible_truncation)]
 const fn truncate(n: u128) -> u64 {
 	n as u64
@@ -134,27 +137,12 @@ impl BigUint {
 		}
 	}
 
-	pub(crate) fn ilog2(&self) -> u64 {
-		assert!(!self.is_zero());
-		self.bits() - 1
-	}
-
 	#[allow(clippy::cast_precision_loss)]
-	pub(crate) fn log2<I: Interrupt>(&self, int: &I) -> FResult<f64> {
-		let int_log = self.ilog2() as f64;
-		let msb_position = self.bits();
-		let mut fractional_value = self.clone();
-
-		let mut divisor = Self::from(1).lshift_n(&msb_position.into(), int)?;
-		fractional_value.lshift(int)?;
-
-		while fractional_value.bits() > 1023 || divisor.bits() > 1023 {
-			fractional_value.rshift(int)?;
-			divisor.rshift(int)?;
-		}
-		let fractional_log = (fractional_value.as_f64() / divisor.as_f64()).log2();
-
-		Ok(int_log + fractional_log)
+	pub(crate) fn log2(&self) -> f64 {
+		// The leading 64 bits carry more precision than an f64 can hold.
+		let shift = self.bits().saturating_sub(64);
+		let leading = self.top_bits(shift) as f64;
+		leading.log2() + shift as f64
 	}
 
 	fn make_large(&mut self) {
@@ -224,40 +212,116 @@ impl BigUint {
 			return Ok(Exact::new(Self::from(1), false));
 		}
 
-		// Initial guess: 2 ^ ceil(bits / n)
-		let guess_bits = self_bits.div_ceil(n_usize as u64);
-		let mut x = Small(1).lshift_n(&guess_bits.into(), int)?;
-
-		let n_minus_1 = Self::from((n_usize - 1) as u64);
-
-		loop {
-			test_int(int)?;
-
-			// Newton iteration: x_new = ( (n-1)x + self/x^(n-1) ) / n
-
-			// 1. Calculate x^(n-1)
-			let x_pow_n_minus_1 = Self::pow(&x, &n_minus_1, int)?;
-
-			// 2. Calculate self / x^(n-1)
-			// We discard the remainder (the .1 tuple element).
-			let quotient = self.divmod(&x_pow_n_minus_1, int)?.0;
-
-			// 3. Calculate numerator: (n-1)x + quotient
-			let term1 = x.clone().mul(&n_minus_1, int)?;
-			let numerator = term1.add(&quotient);
-
-			// 4. Calculate x_new: numerator / n
-			let x_new = numerator.div(n, int)?;
-
-			// 5. Check convergence
-			// For integer Newton method starting from above, we stop when x_new >= x
-			if x_new >= x {
-				let check_pow = Self::pow(&x, n, int)?;
-				return Ok(Exact::new(x, check_pow == self));
-			}
-
-			x = x_new;
+		// Round the fixed-point root to the nearest integer and verify it with a
+		// single exponentiation; an exact root is an integer, so this decides
+		// exactness without a Newton iteration on huge integers.
+		let shift = Self::from(ROOT_CHECK_BITS);
+		let root = Self::fixed_root_n(&self, &Self::from(1), n_usize, ROOT_CHECK_BITS, int)?;
+		let half = Self::from(1).lshift_n(&Self::from(ROOT_CHECK_BITS - 1), int)?;
+		let candidate = root.add(&half).rshift_n(&shift, int)?;
+		let power = Self::pow(&candidate, n, int)?;
+		match power.cmp(&self) {
+			Ordering::Equal => Ok(Exact::new(candidate, true)),
+			Ordering::Less => Ok(Exact::new(candidate, false)),
+			Ordering::Greater => Ok(Exact::new(candidate.sub(&Self::from(1)), false)),
 		}
+	}
+
+	/// `(num / den)^(1/n)` with `bits` fractional bits: a fixed-point Newton
+	/// iteration seeded from logarithms, with every intermediate power
+	/// truncated to the working width so nothing grows with `n`.
+	#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+	pub(crate) fn fixed_root_n<I: Interrupt>(
+		num: &Self,
+		den: &Self,
+		n: usize,
+		bits: u64,
+		int: &I,
+	) -> FResult<Self> {
+		// Solve for root / 2^scale instead, which keeps the working values
+		// around 2^n rather than the full size of `num`; the root is then
+		// scaled back up exactly, so the working width carries `scale` extra bits.
+		let magnitude = num.bits().saturating_sub(den.bits()) as f64 / n as f64;
+		#[allow(clippy::cast_sign_loss)]
+		let scale = (magnitude.floor().max(0.0) as u64).saturating_sub(1);
+		let width = bits + scale;
+		let shift = Self::from(width);
+		let target = num
+			.clone()
+			.lshift_n(&shift, int)?
+			.rshift_n(&Self::from(scale * n as u64), int)?
+			.div(den, int)?;
+		let log2 = (num.log2() - den.log2()) / n as f64 - scale as f64;
+		let mut root = Self::fixed_from_log2(log2, width, int)?;
+		let n_big = Self::from(n as u64);
+		for _ in 0..64 {
+			test_int(int)?;
+			let pow_n_minus_1 = Self::fixed_pow(&root, n - 1, &shift, int)?;
+			let pow_n = pow_n_minus_1
+				.clone()
+				.mul(&root, int)?
+				.rshift_n(&shift, int)?;
+			let derivative = pow_n_minus_1.mul(&n_big, int)?;
+			if derivative.is_zero() {
+				break;
+			}
+			let too_high = pow_n >= target;
+			let error = if too_high {
+				pow_n.sub(&target)
+			} else {
+				target.clone().sub(&pow_n)
+			};
+			let delta = error.lshift_n(&shift, int)?.div(&derivative, int)?;
+			if delta <= Self::from(2) {
+				break;
+			}
+			root = if too_high {
+				root.sub(&delta)
+			} else {
+				root.add(&delta)
+			};
+		}
+		// Undo the scaling: `width` fractional bits times 2^scale leaves `bits`.
+		Ok(root)
+	}
+
+	/// `2^log2 · 2^bits` as an integer, built from the fractional part's
+	/// mantissa so any magnitude is representable.
+	#[allow(clippy::cast_possible_truncation)]
+	fn fixed_from_log2<I: Interrupt>(log2: f64, bits: u64, int: &I) -> FResult<Self> {
+		let int_part = log2.floor();
+		let mantissa = (log2 - int_part).exp2().to_bits();
+		// The mantissa carries 52 fractional bits of a value in [1, 2).
+		let mantissa = Self::from((mantissa & ((1 << 52) - 1)) | (1 << 52));
+		let exponent = int_part as i64 + bits.cast_signed() - 52;
+		if exponent >= 0 {
+			mantissa.lshift_n(&Self::from(exponent.unsigned_abs()), int)
+		} else {
+			mantissa.rshift_n(&Self::from(exponent.unsigned_abs()), int)
+		}
+	}
+
+	/// `base^exp` where `base` and the result carry `shift` fractional bits;
+	/// each product is truncated back to that width.
+	pub(crate) fn fixed_pow<I: Interrupt>(
+		base: &Self,
+		mut exp: usize,
+		shift: &Self,
+		int: &I,
+	) -> FResult<Self> {
+		let mut result = Self::from(1).lshift_n(shift, int)?;
+		let mut base = base.clone();
+		while exp > 0 {
+			test_int(int)?;
+			if exp & 1 == 1 {
+				result = result.mul(&base, int)?.rshift_n(shift, int)?;
+			}
+			exp >>= 1;
+			if exp > 0 {
+				base = base.clone().mul(&base, int)?.rshift_n(shift, int)?;
+			}
+		}
+		Ok(result)
 	}
 
 	fn pow_internal<I: Interrupt>(&self, mut exponent: u64, int: &I) -> FResult<Self> {
@@ -272,56 +336,6 @@ impl BigUint {
 			base = base.clone().mul(&base, int)?;
 		}
 		Ok(result)
-	}
-
-	fn lshift<I: Interrupt>(&mut self, int: &I) -> FResult<()> {
-		// Check for interrupts once per call, not per limb.
-		test_int(int)?;
-
-		match self {
-			Small(n) => {
-				if *n & 0xc000_0000_0000_0000 == 0 {
-					*n <<= 1;
-				} else {
-					*self = Large(vec![*n << 1, *n >> 63]);
-				}
-			}
-			Large(value) => {
-				// Use a forward pass.
-				// This is cache-friendly and allows the compiler to vectorise.
-				let mut carry = 0;
-				for elem in value.iter_mut() {
-					let new_carry = *elem >> 63;
-					*elem = (*elem << 1) | carry;
-					carry = new_carry;
-				}
-				if carry != 0 {
-					value.push(carry);
-				}
-			}
-		}
-		Ok(())
-	}
-
-	fn rshift<I: Interrupt>(&mut self, int: &I) -> FResult<()> {
-		// Check for interrupts once per call, not per limb.
-		test_int(int)?;
-
-		match self {
-			Small(n) => *n >>= 1,
-			Large(value) => {
-				let len = value.len();
-				if len > 0 {
-					// Forward pass: value[i] takes the high bit of value[i+1]
-					for i in 0..len - 1 {
-						value[i] = (value[i] >> 1) | (value[i + 1] << 63);
-					}
-					// Handle the most significant limb
-					value[len - 1] >>= 1;
-				}
-			}
-		}
-		Ok(())
 	}
 
 	pub(crate) fn divmod<I: Interrupt>(&self, other: &Self, int: &I) -> FResult<(Self, Self)> {
@@ -346,6 +360,97 @@ impl BigUint {
 		}
 
 		self.div_rem_knuth(other, int)
+	}
+
+	fn rshift_u64(&mut self, n: u64) {
+		if n == 0 {
+			return;
+		}
+		match self {
+			Small(v) => {
+				if n >= 64 {
+					*v = 0;
+				} else {
+					*v >>= n;
+				}
+			}
+			Large(v) => {
+				let shift_limbs = (n / 64) as usize;
+				let shift_bits = (n % 64) as u32;
+
+				if shift_limbs >= v.len() {
+					*self = Small(0);
+					return;
+				}
+
+				// Shift limbs (whole words) - remove LSBs
+				if shift_limbs > 0 {
+					v.drain(0..shift_limbs);
+				}
+
+				// Shift bits within limbs
+				if shift_bits > 0 {
+					let len = v.len();
+					let inv_shift = 64 - shift_bits;
+					for i in 0..len - 1 {
+						v[i] = (v[i] >> shift_bits) | (v[i + 1] << inv_shift);
+					}
+					v[len - 1] >>= shift_bits;
+				}
+
+				// Clean up
+				while v.last() == Some(&0) {
+					v.pop();
+				}
+				if v.is_empty() {
+					*self = Small(0);
+				}
+			}
+		}
+	}
+
+	fn lshift_u64(&mut self, n: u64) {
+		if n == 0 {
+			return;
+		}
+		match self {
+			Small(v) => {
+				// If it fits in Small, stay Small
+				if n < 64 && u64::from(v.leading_zeros()) >= n {
+					*v <<= n;
+				} else {
+					// promote to Large
+					let mut large = Large(vec![*v]);
+					large.lshift_u64(n);
+					*self = large;
+				}
+			}
+			Large(v) => {
+				let shift_limbs = (n / 64) as usize;
+				let shift_bits = (n % 64) as u32;
+
+				// 1. Shift bits
+				if shift_bits > 0 {
+					let mut carry = 0;
+					let inv_shift = 64 - shift_bits;
+					for x in v.iter_mut() {
+						let next_carry = *x >> inv_shift;
+						*x = (*x << shift_bits) | carry;
+						carry = next_carry;
+					}
+					if carry != 0 {
+						v.push(carry);
+					}
+				}
+
+				// 2. Prepend zero limbs (LSBs)
+				if shift_limbs > 0 {
+					let mut new_vec = vec![0; shift_limbs];
+					new_vec.append(v);
+					*v = new_vec;
+				}
+			}
+		}
 	}
 
 	pub(crate) fn gcd<I: Interrupt>(mut self, mut other: Self, int: &I) -> FResult<Self> {
@@ -1066,33 +1171,14 @@ impl BigUint {
 	}
 
 	pub(crate) fn lshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FResult<Self> {
-		let mut rhs = rhs.try_as_usize(int)?;
-		if rhs > 64 {
-			self.make_large();
-			match &mut self {
-				Large(v) => {
-					while rhs >= 64 {
-						v.insert(0, 0);
-						rhs -= 64;
-					}
-				}
-				Small(_) => unreachable!(),
-			}
-		}
-		for _ in 0..rhs {
-			self.lshift(int)?;
-		}
+		let rhs = rhs.try_as_usize(int)?;
+		self.lshift_u64(u64::try_from(rhs).unwrap());
 		Ok(self)
 	}
 
 	pub(crate) fn rshift_n<I: Interrupt>(mut self, rhs: &Self, int: &I) -> FResult<Self> {
 		let rhs = rhs.try_as_usize(int)?;
-		for _ in 0..rhs {
-			if self.is_zero() {
-				break;
-			}
-			self.rshift(int)?;
-		}
+		self.rshift_u64(u64::try_from(rhs).unwrap());
 		Ok(self)
 	}
 
@@ -1570,9 +1656,11 @@ mod tests {
 		let int = &crate::interrupt::Never;
 		let mut n = BigUint::from(1);
 		for _ in 0..100 {
-			n.lshift(int)?;
+			n = n.lshift_n(&1.into(), int)?;
 			assert_eq!(n.get(0) & 1, 0);
 		}
+		assert_eq!(n, BigUint::from(1).lshift_n(&100.into(), int)?);
+		assert_eq!(n.rshift_n(&99.into(), int)?, 2.into());
 		Ok(())
 	}
 
@@ -1617,9 +1705,12 @@ mod tests {
 	#[test]
 	fn test_large_lshift() -> Res {
 		let int = &crate::interrupt::Never;
-		let mut a = BigUint::from(9_223_372_036_854_775_808);
-		a.lshift(int)?;
+		let a = BigUint::from(9_223_372_036_854_775_808).lshift_n(&1.into(), int)?;
 		assert!(!a.is_zero());
+		assert_eq!(
+			a.rshift_n(&1.into(), int)?,
+			9_223_372_036_854_775_808.into()
+		);
 		Ok(())
 	}
 
