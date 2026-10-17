@@ -348,158 +348,73 @@ impl BigUint {
 		self.div_rem_knuth(other, int)
 	}
 
-	fn trailing_zeros(&self) -> u64 {
-		match self {
-			Small(n) => u64::from(n.trailing_zeros()),
-			Large(v) => {
-				let mut count = 0;
-				for &digit in v {
-					if digit == 0 {
-						count += 64;
-					} else {
-						count += u64::from(digit.trailing_zeros());
-						break;
-					}
-				}
-				count
-			}
-		}
-	}
-
-	fn rshift_u64(&mut self, n: u64) {
-		if n == 0 {
-			return;
-		}
-		match self {
-			Small(v) => {
-				if n >= 64 {
-					*v = 0;
-				} else {
-					*v >>= n;
-				}
-			}
-			Large(v) => {
-				let shift_limbs = (n / 64) as usize;
-				let shift_bits = (n % 64) as u32;
-
-				if shift_limbs >= v.len() {
-					*self = Small(0);
-					return;
-				}
-
-				// Shift limbs (whole words) - remove LSBs
-				if shift_limbs > 0 {
-					v.drain(0..shift_limbs);
-				}
-
-				// Shift bits within limbs
-				if shift_bits > 0 {
-					let len = v.len();
-					let inv_shift = 64 - shift_bits;
-					for i in 0..len - 1 {
-						v[i] = (v[i] >> shift_bits) | (v[i + 1] << inv_shift);
-					}
-					v[len - 1] >>= shift_bits;
-				}
-
-				// Clean up
-				while v.last() == Some(&0) {
-					v.pop();
-				}
-				if v.is_empty() {
-					*self = Small(0);
-				}
-			}
-		}
-	}
-
-	fn lshift_u64(&mut self, n: u64) {
-		if n == 0 {
-			return;
-		}
-		match self {
-			Small(v) => {
-				// If it fits in Small, stay Small
-				if n < 64 && u64::from(v.leading_zeros()) >= n {
-					*v <<= n;
-				} else {
-					// promote to Large
-					let mut large = Large(vec![*v]);
-					large.lshift_u64(n);
-					*self = large;
-				}
-			}
-			Large(v) => {
-				let shift_limbs = (n / 64) as usize;
-				let shift_bits = (n % 64) as u32;
-
-				// 1. Shift bits
-				if shift_bits > 0 {
-					let mut carry = 0;
-					let inv_shift = 64 - shift_bits;
-					for x in v.iter_mut() {
-						let next_carry = *x >> inv_shift;
-						*x = (*x << shift_bits) | carry;
-						carry = next_carry;
-					}
-					if carry != 0 {
-						v.push(carry);
-					}
-				}
-
-				// 2. Prepend zero limbs (LSBs)
-				if shift_limbs > 0 {
-					let mut new_vec = vec![0; shift_limbs];
-					new_vec.append(v);
-					*v = new_vec;
-				}
-			}
-		}
-	}
-
-	// Stein's Algorithm (Binary GCD)
 	pub(crate) fn gcd<I: Interrupt>(mut self, mut other: Self, int: &I) -> FResult<Self> {
-		// 1. Handle base cases
-		if self.is_zero() {
-			return Ok(other);
+		if self < other {
+			std::mem::swap(&mut self, &mut other);
 		}
-		if other.is_zero() {
-			return Ok(self);
-		}
-
-		// 2. Find common power of 2
-		let u_zeros = self.trailing_zeros();
-		let v_zeros = other.trailing_zeros();
-		let common_shift = std::cmp::min(u_zeros, v_zeros);
-
-		// 3. Remove factors of 2 from u and v
-		self.rshift_u64(u_zeros);
-		other.rshift_u64(v_zeros);
-
-		// 4. Main Loop
+		// Lehmer's algorithm: simulate several Euclidean steps on the leading
+		// bits of both numbers, then apply the accumulated cofactors to the
+		// full numbers in a single pass.
 		loop {
-			// Invariant: self and other are both odd at the start of loop body
 			test_int(int)?;
-
-			match self.cmp(&other) {
-				Ordering::Equal => break,
-				Ordering::Greater => {
-					self.sub_assign(&other);
-					let zeros = self.trailing_zeros();
-					self.rshift_u64(zeros);
-				}
-				Ordering::Less => {
-					std::mem::swap(&mut self, &mut other);
-					self.sub_assign(&other);
-					let zeros = self.trailing_zeros();
-					self.rshift_u64(zeros);
-				}
+			if other.is_zero() {
+				return Ok(self);
+			}
+			let bits = self.bits();
+			if bits <= 64 {
+				return Ok(Small(gcd_u64(self.get(0), other.get(0))));
+			}
+			// 63 leading bits keep every product below 2^126 in `apply_cofactors`.
+			let shift = bits - 63;
+			let cofactors = lehmer_cofactors(self.top_bits(shift), other.top_bits(shift));
+			if cofactors.1 == 0 {
+				// the leading bits give no information: take one exact step
+				let (_, remainder) = self.divmod(&other, int)?;
+				self = std::mem::replace(&mut other, remainder);
+			} else {
+				self.apply_cofactors(&mut other, cofactors);
 			}
 		}
+	}
 
-		// 5. Restore common power of 2
-		self.lshift_u64(common_shift);
-		Ok(self)
+	/// The bits of `self` from bit `shift` upwards, as a `u64`.
+	fn top_bits(&self, shift: u64) -> u64 {
+		let word = usize::try_from(shift / 64).unwrap();
+		let bit = shift % 64;
+		let low = self.get(word);
+		if bit == 0 {
+			low
+		} else {
+			(low >> bit) | (self.get(word + 1) << (64 - bit))
+		}
+	}
+
+	/// Replaces `(self, other)` with `(a*self + b*other, c*self + d*other)`.
+	/// Each cofactor pair has opposite signs and both results are known to be
+	/// non-negative, so a signed carry is enough to make this a single pass.
+	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+	fn apply_cofactors(&mut self, other: &mut Self, (a, b, c, d): (i128, i128, i128, i128)) {
+		self.make_large();
+		other.make_large();
+		let (Large(left), Large(right)) = (&mut *self, &mut *other) else {
+			unreachable!()
+		};
+		let len = max(left.len(), right.len());
+		left.resize(len, 0);
+		right.resize(len, 0);
+		let (mut carry_x, mut carry_y) = (0i128, 0i128);
+		for (xi, yi) in left.iter_mut().zip(right.iter_mut()) {
+			let (xv, yv) = (i128::from(*xi), i128::from(*yi));
+			let new_x = a * xv + b * yv + carry_x;
+			let new_y = c * xv + d * yv + carry_y;
+			*xi = new_x as u64;
+			*yi = new_y as u64;
+			carry_x = new_x >> 64;
+			carry_y = new_y >> 64;
+		}
+		debug_assert!(carry_x == 0 && carry_y == 0);
+		self.reduce();
+		other.reduce();
 	}
 
 	// Knuth's Algorithm D (The Art of Computer Programming, Vol 2, 4.3.1)
@@ -1305,6 +1220,34 @@ fn convert_below_1000(num: usize, result: &mut String) {
 	}
 }
 
+fn gcd_u64(mut a: u64, mut b: u64) -> u64 {
+	while b != 0 {
+		(a, b) = (b, a % b);
+	}
+	a
+}
+
+/// Runs Euclid's algorithm on the leading bits `a` and `b` for as long as the
+/// quotients are guaranteed to match those of the full numbers (Collins'
+/// condition), returning the cofactors `(A, B, C, D)` such that the full
+/// numbers become `A * a + B * b` and `C * a + D * b`.
+fn lehmer_cofactors(a: u64, b: u64) -> (i128, i128, i128, i128) {
+	let (mut a, mut b) = (i128::from(a), i128::from(b));
+	let (mut aa, mut bb, mut cc, mut dd) = (1, 0, 0, 1);
+	loop {
+		if b + cc == 0 || b + dd == 0 {
+			return (aa, bb, cc, dd);
+		}
+		let q = (a + aa) / (b + cc);
+		if q != (a + bb) / (b + dd) {
+			return (aa, bb, cc, dd);
+		}
+		(aa, cc) = (cc, aa - q * cc);
+		(bb, dd) = (dd, bb - q * dd);
+		(a, b) = (b, a - q * b);
+	}
+}
+
 impl Ord for BigUint {
 	fn cmp(&self, other: &Self) -> Ordering {
 		if let (Small(a), Small(b)) = (self, other) {
@@ -1642,6 +1585,24 @@ mod tests {
 		assert_eq!(BigUint::gcd(43.into(), 37.into(), int)?, 1.into());
 		assert_eq!(BigUint::gcd(215.into(), 86.into(), int)?, 43.into());
 		assert_eq!(BigUint::gcd(86.into(), 215.into(), int)?, 43.into());
+		// large values: gcd(2^200 * 3^50, 2^150 * 3^80 * 7) == 2^150 * 3^50
+		let p = |b: u64, e: u64| BigUint::pow(&b.into(), &e.into(), int);
+		let a = p(2, 200)?.mul(&p(3, 50)?, int)?;
+		let b = p(2, 150)?.mul(&p(3, 80)?, int)?.mul(&7.into(), int)?;
+		let expected = p(2, 150)?.mul(&p(3, 50)?, int)?;
+		assert_eq!(BigUint::gcd(a.clone(), b.clone(), int)?, expected);
+		assert_eq!(BigUint::gcd(b, a, int)?, expected);
+		// coprime large values
+		assert_eq!(
+			BigUint::gcd(p(99_999, 500)?, p(100_000, 500)?, int)?,
+			1.into()
+		);
+		// consecutive Fibonacci numbers are coprime and maximise Euclidean steps
+		let (f1, f2) = (
+			BigUint::fibonacci(1000, int)?,
+			BigUint::fibonacci(1001, int)?,
+		);
+		assert_eq!(BigUint::gcd(f1, f2, int)?, 1.into());
 		Ok(())
 	}
 
