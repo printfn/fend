@@ -206,7 +206,7 @@ checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
 
 [[package]]
 name = "fend"
-version = "1.5.8"
+version = "1.5.9"
 dependencies = [
  "fend-core",
  "rand",
@@ -220,11 +220,11 @@ dependencies = [
 
 [[package]]
 name = "fend-core"
-version = "1.5.8"
+version = "1.5.9"
 
 [[package]]
 name = "fend-wasm"
-version = "1.5.8"
+version = "1.5.9"
 dependencies = [
  "fend-core",
  "js-sys",

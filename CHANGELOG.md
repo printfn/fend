@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.5.9 (2026-10-21)
+
+* Update dependencies
+
 ### v1.5.8 (2026-01-24)
 
 * Use `rustls` rather than `native-tls` by default
