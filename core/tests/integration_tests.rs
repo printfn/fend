@@ -6167,3 +6167,78 @@ fn decimal_separator_comma() {
 		"1,69 AUD"
 	);
 }
+
+/// Evaluates each input in turn on a shared context (as the REPL does, keeping
+/// `_` around between lines) and returns the main result of the final input.
+fn eval_continued(inputs: &[&str]) -> String {
+	let mut context = Context::new();
+	context.set_exchange_rate_handler_v2(fend_core::test_utils::DummyCurrencyHandler);
+	let mut result = String::new();
+	for input in inputs {
+		result = evaluate(input, &mut context)
+			.unwrap()
+			.get_main_result()
+			.to_string();
+	}
+	result
+}
+
+#[test]
+fn continue_from_previous_result_multiplication() {
+	assert_eq!(eval_continued(&["8", "* 2"]), "16");
+}
+
+#[test]
+fn continue_from_previous_result_power() {
+	assert_eq!(eval_continued(&["8", "^ 2"]), "64");
+}
+
+#[test]
+fn continue_from_previous_result_modulo() {
+	assert_eq!(eval_continued(&["17", "mod 5"]), "2");
+}
+
+#[test]
+fn continue_from_previous_result_bit_shift() {
+	assert_eq!(eval_continued(&["1", "<< 4"]), "16");
+}
+
+#[test]
+fn continue_from_previous_result_xor() {
+	assert_eq!(eval_continued(&["6", "xor 3"]), "5");
+}
+
+#[test]
+fn continue_from_previous_result_unit_conversion() {
+	assert_eq!(eval_continued(&["255", "to hex"]), "ff");
+}
+
+#[test]
+fn continue_from_previous_result_can_be_chained() {
+	assert_eq!(eval_continued(&["8", "* 2", "^ 2"]), "256");
+}
+
+#[test]
+fn continue_from_previous_result_respects_leading_attribute() {
+	assert_eq!(eval_continued(&["3.5", "@noapprox * 2"]), "7");
+}
+
+#[test]
+fn continue_from_previous_result_leaves_unary_minus_alone() {
+	// `-` has a prefix form, so `- 5` is negative five rather than `_ - 5`.
+	assert_eq!(eval_continued(&["8", "- 5"]), "-5");
+}
+
+#[test]
+fn continue_from_previous_result_leaves_unary_division_alone() {
+	// `/` has a prefix form (`/2` == `1/2`), so it is not rewritten either.
+	assert_eq!(eval_continued(&["8", "/ 2"]), "0.5");
+}
+
+#[test]
+fn no_previous_result_to_continue_from() {
+	// Without a previous result there is nothing to continue from, so a leading
+	// binary operator remains an error.
+	let mut context = Context::new();
+	assert!(evaluate("* 2", &mut context).is_err());
+}

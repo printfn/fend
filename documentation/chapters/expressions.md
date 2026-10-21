@@ -156,6 +156,23 @@ The most recent calculation result is stored in a special variable `_` (or `ans`
 220
 ```
 
+As a shorthand, if a line begins with an operator that would otherwise need a
+value on its left, fend continues from the previous result automatically, just
+like a pocket calculator:
+
+```
+> 5 * 10
+50
+> * 2
+100
+> to hex
+64
+```
+
+This only applies to operators that can't start an expression on their own, so
+`-5` and `/2` still mean negative five and one half rather than continuing from
+the previous result.
+
 ## Units
 
 fend supports many units, such as `kg`, `lb`, `N`, `lightyear`, etc. You can interchangeably use `to`, `as` and `in` to convert between units.

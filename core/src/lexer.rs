@@ -44,6 +44,31 @@ pub(crate) enum Symbol {
 	Permutation,
 }
 
+impl Symbol {
+	/// Returns `true` if this is an infix operator that needs an operand on its
+	/// left-hand side and has no prefix (unary) form, so it cannot begin an
+	/// expression on its own. This lets input like `* 2` or `to miles` continue
+	/// from the previous result. `+`, `-` and `/` are deliberately excluded
+	/// because they double as prefix operators (e.g. `-5` or `/2`).
+	pub(crate) fn expects_preceding_operand(self) -> bool {
+		matches!(
+			self,
+			Self::Mul
+				| Self::Mod | Self::Pow
+				| Self::BitwiseAnd
+				| Self::BitwiseOr
+				| Self::BitwiseXor
+				| Self::UnitConversion
+				| Self::ShiftLeft
+				| Self::ShiftRight
+				| Self::DoubleEquals
+				| Self::NotEquals
+				| Self::Combination
+				| Self::Permutation
+		)
+	}
+}
+
 impl fmt::Display for Symbol {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
 		let s = match self {
