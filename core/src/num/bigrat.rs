@@ -9,6 +9,13 @@ use crate::serialize::CborValue;
 use core::f64;
 use std::{cmp, fmt, hash, ops};
 
+#[derive(Clone, Copy)]
+enum IntegralRounding {
+	Floor,
+	Ceil,
+	Nearest,
+}
+
 pub(crate) mod sign {
 	use crate::{
 		error::FendError,
@@ -376,19 +383,40 @@ impl BigRat {
 		Ok(self.apply_uint_op(BigUint::factorial, int)?.into())
 	}
 
+	fn round_to_integer<I: Interrupt>(self, mode: IntegralRounding, int: &I) -> FResult<Self> {
+		let (integer, remainder) = self.num.divmod(&self.den, int)?;
+		let has_fraction = remainder != 0.into();
+		let increment = match mode {
+			IntegralRounding::Floor => self.sign == Sign::Negative && has_fraction,
+			IntegralRounding::Ceil => self.sign == Sign::Positive && has_fraction,
+			IntegralRounding::Nearest => remainder.mul(&2.into(), int)? >= self.den,
+		};
+		let num = if increment {
+			integer.add(&1.into())
+		} else {
+			integer
+		};
+		Ok(Self {
+			sign: if num == 0.into() {
+				Sign::Positive
+			} else {
+				self.sign
+			},
+			num,
+			den: 1.into(),
+		})
+	}
+
 	pub(crate) fn floor<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		let float = self.into_f64(int)?.floor();
-		Self::from_f64(float, int)
+		self.round_to_integer(IntegralRounding::Floor, int)
 	}
 
 	pub(crate) fn ceil<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		let float = self.into_f64(int)?.ceil();
-		Self::from_f64(float, int)
+		self.round_to_integer(IntegralRounding::Ceil, int)
 	}
 
 	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		let float = self.into_f64(int)?.round();
-		Self::from_f64(float, int)
+		self.round_to_integer(IntegralRounding::Nearest, int)
 	}
 
 	pub(crate) fn bitwise<I: Interrupt>(
