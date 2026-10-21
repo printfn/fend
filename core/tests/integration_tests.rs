@@ -5186,7 +5186,6 @@ fn unicode_escape_aaa_uppercase() {
 }
 
 #[test]
-#[ignore]
 fn today() {
 	let mut context = Context::new();
 	context.set_current_time_v1(1617517099000, 0);
@@ -5197,13 +5196,19 @@ fn today() {
 }
 
 #[test]
-#[ignore]
 fn today_with_tz() {
+	let mut context = Context::new();
+	context.set_current_time_v1(1619943083155, 28800);
+	assert_eq!(
+		evaluate("today", &mut context).unwrap().get_main_result(),
+		"Sunday, 2 May 2021"
+	);
+
 	let mut context = Context::new();
 	context.set_current_time_v1(1619943083155, 43200);
 	assert_eq!(
 		evaluate("today", &mut context).unwrap().get_main_result(),
-		"Sunday, 2 May 2021"
+		"Saturday, 1 May 2021"
 	);
 }
 
@@ -5767,13 +5772,68 @@ fn permutation_test() {
 	test_eval("10 permute 3", "720");
 }
 
-// ERROR
+#[test]
+fn test_date_adding_many_days_works() {
+	test_eval_simple("@2024-02-29 + 365 days", "Friday, 28 February 2025");
+	test_eval_simple("@2024-02-29 + 366 days", "Saturday, 1 March 2025");
+	test_eval_simple("@2025-02-28 + 365 days", "Saturday, 28 February 2026");
+	test_eval_simple("@2023-02-28 + 365 days", "Wednesday, 28 February 2024");
+	test_eval_simple("@2023-02-28 + 366 days", "Thursday, 29 February 2024");
+	test_eval_simple("@2023-03-01 + 365 days", "Thursday, 29 February 2024");
+	test_eval_simple("@2023-03-01 + 366 days", "Friday, 1 March 2024");
+}
+
+#[test]
+#[cfg_attr(not(target_pointer_width = "64"), ignore = "Needs at least 64 bits.")]
+fn test_date_adding_really_many_days_works() {
+	test_eval_simple(
+		"@1970-01-01 + 1_000_000_000 days",
+		"Wednesday, 3 January 2739877",
+	);
+	test_eval_simple(
+		"@1970-01-01 + 100_000_000_000 days",
+		"Tuesday, 13 September 273792670",
+	);
+}
+
+#[test]
+fn test_date_literal_addition() {
+	test_eval_simple("@1970-01-01 + 52 weeks", "Thursday, 31 December 1970"); // not leap year
+	test_eval_simple("@2020-01-01 + 52 weeks", "Wednesday, 30 December 2020"); // leap year
+	test_eval_simple("@1970-01-01 + 200 weeks", "Thursday, 1 November 1973");
+	test_eval_simple("@2004-01-01 + 100 weeks", "Thursday, 1 December 2005");
+	test_eval_simple("@2005-01-01 + 100 weeks", "Saturday, 2 December 2006");
+	test_eval_simple("@1970-01-01 + 40 month", "Tuesday, 1 May 1973");
+	test_eval_simple("@2004-01-01 + 200 weeks", "Thursday, 1 November 2007");
+	test_eval_simple("@2004-01-01 + 40 month", "Tuesday, 1 May 2007");
+	test_eval_simple("@2004-01-01 + 4 years", "Tuesday, 1 January 2008");
+}
+
+#[test]
+fn test_date_literal_addition_and_subtraction() {
+	test_eval(
+		"@2020-01-01 + 1000 weeks - 1000 weeks == @2020-01-01",
+		"true",
+	);
+	test_eval(
+		"@2020-01-01 + 1000 weeks - 7000 days == @2020-01-01",
+		"true",
+	);
+	test_eval(
+		"@2020-01-01 - 1000 weeks + 7000 days == @2020-01-01",
+		"true",
+	);
+	test_eval("@2020-01-01 - 100 month + 100 month == @2020-01-01", "true");
+	test_eval("@2020-01-01 + 100 month - 100 month == @2020-01-01", "true");
+	test_eval("@2020-01-01 - 1200 month + 100 year == @2020-01-01", "true");
+	test_eval("@2020-01-01 + 1200 month - 100 year == @2020-01-01", "true");
+}
+
 #[test]
 fn date_literals() {
 	test_eval_simple("@1970-01-01", "Thursday, 1 January 1970");
 }
 
-// ERROR
 #[test]
 fn date_literal_subtraction() {
 	test_eval_simple("@2022-11-29 - 2 days", "Sunday, 27 November 2022");
@@ -5783,6 +5843,10 @@ fn date_literal_subtraction() {
 
 	test_eval_simple("@2022-03-01 - 1 month", "Tuesday, 1 February 2022");
 	test_eval_simple("@2020-02-28 - 1 year", "Thursday, 28 February 2019");
+	test_eval_simple("@2020-02-28 - 365 days", "Thursday, 28 February 2019");
+	test_eval_simple("@2020-03-28 - 365 days", "Friday, 29 March 2019"); // leap year
+	test_eval_simple("@2019-03-28 - 365 days", "Wednesday, 28 March 2018"); // not leap year
+
 	expect_error(
 		"@2020-02-29 - 1 year",
 		"February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
@@ -5792,6 +5856,20 @@ fn date_literal_subtraction() {
         "February 29, 2019 does not exist, did you mean Thursday, 28 February 2019 or Friday, 1 March 2019?".into(),
     );
 	test_eval_simple("@2020-08-01 - 1 year", "Thursday, 1 August 2019");
+
+	test_eval_simple("@2000-01-01 - 1999 year", "Monday, 1 January 1");
+	test_eval_simple("@2000-01-01 - 2000 year", "Saturday, 1 January 1 BC");
+	test_eval_simple("@2000-01-01 - 2001 year", "Friday, 1 January 2 BC");
+
+	test_eval_simple("@2000-02-01 - (1999 * 12 + 1) month", "Monday, 1 January 1");
+	test_eval_simple(
+		"@2000-03-01 - (2000 * 12 + 2) month",
+		"Saturday, 1 January 1 BC",
+	);
+	test_eval_simple(
+		"@2000-04-01 - (2001 * 12 + 3) month",
+		"Friday, 1 January 2 BC",
+	);
 }
 
 #[test]
