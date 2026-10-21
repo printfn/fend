@@ -38,12 +38,14 @@ pub(crate) enum FendError {
 	InvalidDiceSyntax,
 	SpecifyNumDp,
 	SpecifyNumSf,
+	SpecifyNumSn,
 	UnableToInvertFunction(&'static str),
 	InvalidOperandsForSubtraction,
 	InversesOfLambdasUnsupported,
 	CouldNotFindKeyInObject,
 	CouldNotFindKey(String),
 	CannotFormatWithZeroSf,
+	CannotFormatWithZeroSn,
 	UnableToGetCurrentDate,
 	IsNotAFunction(String),
 	IsNotAFunctionOrNumber(String),
@@ -150,6 +152,9 @@ impl fmt::Display for FendError {
 				f,
 				"you need to specify what number of significant figures to use, e.g. '10 sf'"
 			),
+			Self::SpecifyNumSn => {
+				write!(f, "you need to specify what precision to use, e.g. '10 sn'")
+			}
 			Self::ExpectedAUnitlessNumber => write!(f, "expected a unitless number"),
 			Self::ExpectedARealNumber => write!(f, "expected a real number"),
 			Self::StringCannotBeLonger => write!(f, "string cannot be longer than one codepoint"),
@@ -188,6 +193,12 @@ impl fmt::Display for FendError {
 			Self::InvalidOperandsForSubtraction => write!(f, "invalid operands for subtraction"),
 			Self::CannotFormatWithZeroSf => {
 				write!(f, "cannot format a number with zero significant figures")
+			}
+			Self::CannotFormatWithZeroSn => {
+				write!(
+					f,
+					"cannot format a number with zero precision in scientific notation"
+				)
 			}
 			Self::IsNotAFunction(s) => write!(f, "'{s}' is not a function"),
 			Self::IsNotAFunctionOrNumber(s) => write!(f, "'{s}' is not a function or number"),

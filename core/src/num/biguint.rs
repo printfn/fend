@@ -1379,16 +1379,15 @@ impl Format for BigUint {
 	type Out = FormattedBigUint;
 
 	fn format<I: Interrupt>(&self, params: &Self::Params, int: &I) -> FResult<Exact<Self::Out>> {
-		let base_prefix = if params.write_base_prefix {
-			Some(params.base)
+		let base = if params.write_base_prefix {
+			params.base
 		} else {
-			None
+			Base::from_plain_base(params.base.base_as_u8()).expect("is valid base")
 		};
-
 		if self.is_zero() {
 			return Ok(Exact::new(
 				FormattedBigUint {
-					base: base_prefix,
+					base,
 					ty: FormattedBigUintType::Zero,
 				},
 				true,
@@ -1400,7 +1399,8 @@ impl Format for BigUint {
 			if num.value_len() == 1 && params.base.base_as_u8() == 10 && params.sf_limit.is_none() {
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						base,
+
 						ty: FormattedBigUintType::Simple(num.get(0)),
 					},
 					true,
@@ -1454,7 +1454,8 @@ impl Format for BigUint {
 					.is_none_or(|sf| sf >= output.len() - num_leading_zeroes);
 				Exact::new(
 					FormattedBigUint {
-						base: base_prefix,
+						base,
+
 						ty: FormattedBigUintType::Complex(output, params.sf_limit),
 					},
 					exact,
@@ -1474,24 +1475,80 @@ enum FormattedBigUintType {
 #[must_use]
 #[derive(Debug)]
 pub(crate) struct FormattedBigUint {
-	base: Option<Base>,
+	base: Base,
 	ty: FormattedBigUintType,
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn parse_char(ch: char, base: Base) -> u8 {
+	if let Some(digit) = ch.to_digit(base.base_as_u8().into()) {
+		let byte = digit as u8;
+
+		debug_assert_eq!(u32::from(byte), digit);
+
+		byte
+	} else {
+		unreachable!("{ch} needs to be a digit");
+	}
 }
 
 impl fmt::Display for FormattedBigUint {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		if let Some(base) = self.base {
-			base.write_prefix(f)?;
-		}
+		self.base.write_prefix(f)?;
+
 		match &self.ty {
 			FormattedBigUintType::Zero => write!(f, "0")?,
 			FormattedBigUintType::Simple(i) => write!(f, "{i}")?,
 			FormattedBigUintType::Complex(s, sf_limit) => {
-				for (i, ch) in s.chars().rev().enumerate() {
-					if sf_limit.is_some() && &Some(i) >= sf_limit {
-						write!(f, "0")?;
+				debug_assert!(s.is_ascii());
+				debug_assert_eq!(s.len(), s.chars().count());
+
+				if let Some(sf_limit) = sf_limit
+					&& s.len() > *sf_limit
+				{
+					let s = s.as_bytes();
+
+					let after_last_char =
+						parse_char(char::from(s[s.len() - 1 - *sf_limit]), self.base);
+
+					let round_up = after_last_char >= self.base.base_as_u8().div_ceil(2);
+
+					let mut zeros_count = s.len() - sf_limit;
+
+					if round_up {
+						let max: u8 = self.base.max_char().try_into().expect("is ascii");
+
+						let number = &s[s.len() - sf_limit..];
+
+						let trailing_max_count = number.iter().take_while(|p| **p == max).count();
+
+						zeros_count += trailing_max_count;
+
+						if trailing_max_count == *sf_limit {
+							write!(f, "1")?;
+						} else {
+							let mut chars = number.iter().rev();
+							for ch in (&mut chars).take(sf_limit - trailing_max_count - 1) {
+								write!(f, "{}", char::from(*ch))?;
+							}
+							let mut num = parse_char(char::from(*chars.next().unwrap()), self.base);
+							debug_assert!(num < max);
+							num += 1;
+							write!(f, "{}", Base::digit_as_char(num.into()).unwrap())?;
+						}
 					} else {
-						write!(f, "{ch}")?;
+						// truncate
+						for ch in s.iter().rev().take(*sf_limit) {
+							write!(f, "{}", char::from(*ch))?;
+						}
+					}
+
+					for _ in 0..zeros_count {
+						write!(f, "0")?;
+					}
+				} else {
+					for ch in s.as_bytes().iter().rev() {
+						write!(f, "{}", char::from(*ch))?;
 					}
 				}
 			}
@@ -1529,6 +1586,67 @@ mod tests {
 
 	use super::BigUint;
 	type Res = Result<(), crate::error::FendError>;
+
+	#[test]
+	fn test_format_big_uint_hex() {
+		let opts = FormatOptions {
+			base: super::Base::HEX,
+			write_base_prefix: false,
+			sf_limit: Some(1),
+		};
+
+		let ff = BigUint::Small(0xff);
+		assert_eq!(
+			ff.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"100",
+		);
+		let f8 = BigUint::Small(0xf8);
+		assert_eq!(
+			f8.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"100",
+		);
+		let f7 = BigUint::Small(0xf7);
+		assert_eq!(
+			f7.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"f0",
+		);
+	}
+
+	#[test]
+	fn test_format_big_uint_base9() {
+		let opts = FormatOptions {
+			base: super::Base::from_custom_base(9).unwrap(),
+			write_base_prefix: false,
+			sf_limit: Some(1),
+		};
+
+		let u44 = BigUint::Small(4 * 9 + 4);
+		assert_eq!(
+			u44.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"40",
+		);
+
+		let u45 = BigUint::Small(4 * 9 + 5);
+		assert_eq!(
+			u45.format(&opts, &crate::interrupt::Never)
+				.expect("formatting should work")
+				.value
+				.to_string(),
+			"50",
+		);
+	}
 
 	#[test]
 	fn test_sqrt() -> Res {

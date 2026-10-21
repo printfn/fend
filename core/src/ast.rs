@@ -706,6 +706,9 @@ fn evaluate_as<I: Interrupt>(
 			Value::Sf => {
 				return Err(FendError::SpecifyNumSf);
 			}
+			Value::Sn => {
+				return Err(FendError::SpecifyNumSn);
+			}
 			Value::Base(base) => Value::Num(Box::new(
 				evaluate(a, scope, attrs, spans, context, int)?
 					.expect_num()?
@@ -765,6 +768,7 @@ pub(crate) fn resolve_identifier<I: Interrupt>(
 	lowercase_builtin_result.or(unit_result)
 }
 
+#[allow(clippy::too_many_lines)]
 fn resolve_builtin_identifier<I: Interrupt>(
 	ident: &Ident,
 	scope: Option<Arc<Scope>>,
@@ -847,6 +851,7 @@ fn resolve_builtin_identifier<I: Interrupt>(
 		"float" => Value::Format(FormattingStyle::ExactFloat),
 		"dp" => Value::Dp,
 		"sf" => Value::Sf,
+		"sn" => Value::Sn,
 		"base" => Value::BuiltInFunction(BuiltInFunction::Base),
 		"dec" | "decimal" => Value::Base(Base::from_plain_base(10)?),
 		"hex" | "hexadecimal" => Value::Base(Base::from_plain_base(16)?),

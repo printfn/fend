@@ -25,6 +25,14 @@ enum BaseEnum {
 
 impl Base {
 	pub(crate) const HEX: Self = Self(BaseEnum::Hex);
+	#[cfg(test)]
+	pub(crate) const OCT: Self = Self(BaseEnum::Octal);
+	#[cfg(test)]
+	pub(crate) const BIN: Self = Self(BaseEnum::Binary);
+
+	pub(crate) const fn is_plain(self) -> bool {
+		matches!(self.0, BaseEnum::Plain(_))
+	}
 
 	pub(crate) const fn base_as_u8(self) -> u8 {
 		match self.0 {
@@ -33,6 +41,14 @@ impl Base {
 			BaseEnum::Hex => 16,
 			BaseEnum::Custom(b) | BaseEnum::Plain(b) => b,
 		}
+	}
+
+	pub(crate) const fn max_value(self) -> u8 {
+		self.base_as_u8() - 1
+	}
+
+	pub(crate) const fn max_char(self) -> char {
+		Self::digit_as_char(self.max_value() as _).expect("Max value is valid")
 	}
 
 	pub(crate) const fn from_zero_based_prefix_char(ch: char) -> FResult<Self> {
@@ -62,7 +78,7 @@ impl Base {
 		Ok(Self(BaseEnum::Custom(base)))
 	}
 
-	pub(crate) fn write_prefix(self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+	pub(crate) fn write_prefix(self, f: &mut impl fmt::Write) -> Result<(), fmt::Error> {
 		match self.0 {
 			BaseEnum::Binary => write!(f, "0b")?,
 			BaseEnum::Octal => write!(f, "0o")?,
