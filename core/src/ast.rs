@@ -2,6 +2,7 @@ use crate::error::{FendError, Interrupt};
 use crate::eval::evaluate_to_value;
 use crate::ident::Ident;
 use crate::interrupt::test_int;
+use crate::lexer::Symbol;
 use crate::num::{Base, FormattingStyle, Number, Range, RangeBound};
 use crate::result::FResult;
 use crate::scope::Scope;
@@ -104,6 +105,59 @@ impl fmt::Display for Bop {
 	}
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Comparison {
+	Eq,
+	Ne,
+	Lt,
+	Le,
+	Gt,
+	Ge,
+}
+
+impl Serialize for Comparison {
+	fn serialize(&self, write: &mut impl io::Write) -> FResult<()> {
+		let value: u8 = match self {
+			Self::Ne => 0,
+			Self::Eq => 1,
+			Self::Lt => 2,
+			Self::Le => 3,
+			Self::Gt => 4,
+			Self::Ge => 5,
+		};
+		value.serialize(write)
+	}
+}
+
+impl Deserialize for Comparison {
+	fn deserialize(read: &mut impl io::Read) -> FResult<Self> {
+		let value = u8::deserialize(read)?;
+
+		Ok(match value {
+			0 => Self::Ne,
+			1 => Self::Eq,
+			2 => Self::Lt,
+			3 => Self::Le,
+			4 => Self::Gt,
+			5 => Self::Ge,
+			_ => return Err(FendError::DeserializationError("Invalid comparison")),
+		})
+	}
+}
+
+impl From<Comparison> for Symbol {
+	fn from(value: Comparison) -> Self {
+		match value {
+			Comparison::Eq => Self::DoubleEquals,
+			Comparison::Ne => Self::NotEquals,
+			Comparison::Lt => Self::LessThan,
+			Comparison::Le => Self::LessThanOrEquals,
+			Comparison::Gt => Self::GreaterThan,
+			Comparison::Ge => Self::GreaterThanOrEquals,
+		}
+	}
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum Expr {
 	Literal(Value),
@@ -127,7 +181,7 @@ pub(crate) enum Expr {
 	Of(Ident, Box<Self>),
 
 	Assign(Ident, Box<Self>),
-	Equality(bool, Box<Self>, Box<Self>),
+	Comparison(Comparison, Box<Self>, Box<Self>),
 	Statements(Box<Self>, Box<Self>),
 }
 
@@ -161,7 +215,7 @@ impl Expr {
 			(Self::Fn(a1, a2), Self::Fn(b1, b2))
 			| (Self::Of(a1, a2), Self::Of(b1, b2))
 			| (Self::Assign(a1, a2), Self::Assign(b1, b2)) => a1 == b1 && a2.compare(b2, ctx, int)?,
-			(Self::Equality(a1, a2, a3), Self::Equality(b1, b2, b3)) => {
+			(Self::Comparison(a1, a2, a3), Self::Comparison(b1, b2, b3)) => {
 				a1 == b1 && a2.compare(b2, ctx, int)? && a3.compare(b3, ctx, int)?
 			}
 			_ => false,
@@ -244,7 +298,7 @@ impl Expr {
 				a.serialize(write)?;
 				b.serialize(write)?;
 			}
-			Self::Equality(is_equals, a, b) => {
+			Self::Comparison(is_equals, a, b) => {
 				16u8.serialize(write)?;
 				is_equals.serialize(write)?;
 				a.serialize(write)?;
@@ -300,8 +354,8 @@ impl Expr {
 				Box::new(Self::deserialize(read)?),
 				Box::new(Self::deserialize(read)?),
 			),
-			16 => Self::Equality(
-				bool::deserialize(read)?,
+			16 => Self::Comparison(
+				Comparison::deserialize(read)?,
 				Box::new(Self::deserialize(read)?),
 				Box::new(Self::deserialize(read)?),
 			),
@@ -362,10 +416,10 @@ impl Expr {
 				a.format(attrs, ctx, int)?,
 				b.format(attrs, ctx, int)?
 			),
-			Self::Equality(is_equals, a, b) => format!(
+			Self::Comparison(comp, a, b) => format!(
 				"{} {} {}",
 				a.format(attrs, ctx, int)?,
-				if *is_equals { "==" } else { "!=" },
+				Symbol::from(*comp),
 				b.format(attrs, ctx, int)?
 			),
 		})
@@ -539,13 +593,36 @@ pub(crate) fn evaluate<I: Interrupt>(
 			let _lhs = evaluate(*a, scope.clone(), attrs, spans, context, int)?;
 			evaluate(*b, scope, attrs, spans, context, int)?
 		}
-		Expr::Equality(is_equals, a, b) => {
+		Expr::Comparison(comp, a, b) => {
 			let lhs = evaluate(*a, scope.clone(), attrs, spans, context, int)?;
 			let rhs = evaluate(*b, scope, attrs, spans, context, int)?;
-			Value::Bool(match lhs.compare(&rhs, context, int)? {
-				Some(cmp::Ordering::Equal) => is_equals,
-				Some(cmp::Ordering::Greater | cmp::Ordering::Less) | None => !is_equals,
-			})
+
+			let ordering = lhs.compare(&rhs, context, int)?;
+
+			let value: bool = match ordering {
+				Option::None => match comp {
+					Comparison::Eq => false,
+					Comparison::Ne => true,
+					_ => {
+						return Err(FendError::CannotCompare(
+							comp,
+							lhs.format_to_plain_string(0, attrs, true, context, int)?,
+							rhs.format_to_plain_string(0, attrs, true, context, int)?,
+						));
+					}
+				},
+				Some(cmp::Ordering::Equal) => {
+					matches!(comp, Comparison::Eq | Comparison::Le | Comparison::Ge)
+				}
+				Some(cmp::Ordering::Greater) => {
+					matches!(comp, Comparison::Ne | Comparison::Ge | Comparison::Gt)
+				}
+				Some(cmp::Ordering::Less) => {
+					matches!(comp, Comparison::Ne | Comparison::Le | Comparison::Lt)
+				}
+			};
+
+			Value::Bool(value)
 		}
 	})
 }

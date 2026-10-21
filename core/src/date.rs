@@ -13,7 +13,7 @@ use year::Year;
 
 use crate::{Interrupt, error::FendError, ident::Ident, result::FResult, value::Value};
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub(crate) struct Date {
 	year: Year,
 	month: Month,

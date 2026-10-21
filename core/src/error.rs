@@ -1,5 +1,7 @@
 use std::{error, fmt, io};
 
+use crate::ast::Comparison;
+use crate::lexer::Symbol;
 use crate::{date, num::Range};
 
 #[derive(Debug)]
@@ -92,6 +94,7 @@ pub(crate) enum FendError {
 		after: date::Date,
 	},
 	RomanNumeralZero,
+	CannotCompare(Comparison, String, String),
 }
 
 impl fmt::Display for FendError {
@@ -242,6 +245,9 @@ impl fmt::Display for FendError {
 				)
 			}
 			Self::RomanNumeralZero => write!(f, "zero cannot be represented as a roman numeral"),
+			Self::CannotCompare(c, a, b) => {
+				write!(f, "invalid comparison: {a} {} {b}", Symbol::from(*c))
+			}
 		}
 	}
 }

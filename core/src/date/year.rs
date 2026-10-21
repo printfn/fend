@@ -6,7 +6,7 @@ use crate::{
 	serialize::{Deserialize, Serialize},
 };
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub(crate) struct Year(i32);
 
 impl Year {
