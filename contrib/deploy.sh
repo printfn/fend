@@ -61,12 +61,12 @@ gitdiff() {
 	local expected_del_count="$3"
 	# checks the expected number of lines + files are different
 	local added_lines
-	added_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^+')"
+	added_lines="$(git -C "$gitdir" --no-pager diff --no-ext-diff|grep -c '^+')"
 	if [[ "$added_lines" != "$expected_add_count" ]]; then
 		fail "Expected $expected_add_count lines+files to be different (+)"
 	fi
 	local removed_lines
-	removed_lines="$(git -C "$gitdir" --no-pager diff|grep -c '^-')"
+	removed_lines="$(git -C "$gitdir" --no-pager diff --no-ext-diff|grep -c '^-')"
 	if [[ "$removed_lines" != "$expected_del_count" ]]; then
 		fail "Expected $expected_del_count lines+files to be different (-)"
 	fi
@@ -148,7 +148,7 @@ cargo run -q -- version | grep "$NEW_VERSION" \
 	|| fail "cargo run -- version returned the wrong version"
 echo "Committing..."
 git add -A
-git --no-pager diff --cached
+git --no-pager diff --cached --no-ext-diff
 echo "'git commit -am \"Release version $NEW_VERSION\"'"
 git commit -am "Release version $NEW_VERSION"
 RELEASE_COMMIT_HASH=$(git rev-parse main)
