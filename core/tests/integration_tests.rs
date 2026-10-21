@@ -1211,10 +1211,25 @@ fn powers_17() {
 }
 
 #[test]
+fn irrational_powers_are_fast_and_precise() {
+	test_eval("2^0.3333", "approx. 1.2598919399");
+	test_eval_simple("2^0.3333 to 18 dp", "approx. 1.259891939873717853");
+	test_eval("(1+1/7.7777)^7.7777", "approx. 2.5618815751");
+	test_eval("1.0001^10000.5", "approx. 2.7182818307");
+	test_eval("0.9999^99999.5", "approx. 0.0000453795");
+	test_eval("e^(-9.99)", "approx. 0.0000458562");
+	test_eval_simple(
+		"sqrt(2) to 40 dp",
+		"approx. 1.4142135623730950488016887242096980785697",
+	);
+	test_eval_simple("1025^(1/10) to 20 dp", "approx. 2.00019522672235935393");
+}
+
+#[test]
 fn powers_18() {
 	test_eval(
 		"5.2*10^15*300^(3/2)",
-		"approx. 27019992598074485776.9266786818",
+		"approx. 27019992598074485779.0281629275",
 	);
 }
 

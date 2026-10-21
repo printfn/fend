@@ -9,6 +9,9 @@ use crate::serialize::CborValue;
 use core::f64;
 use std::{cmp, fmt, hash, ops};
 
+/// Fractional bits kept for irrational roots and powers (about 58 decimal digits).
+const ROOT_BITS: u64 = 192;
+
 pub(crate) mod sign {
 	use crate::{
 		error::FendError,
@@ -337,7 +340,7 @@ impl BigRat {
 				},
 			));
 		}
-		Self::from_f64(self.num.log2(int)? - self.den.log2(int)?, int)
+		Self::from_f64(self.num.log2() - self.den.log2(), int)
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
@@ -1012,45 +1015,66 @@ impl BigRat {
 		} else {
 			Sign::Negative
 		};
-		let pow_res = Self {
-			sign: result_sign,
-			num: BigUint::pow(&self.num, &rhs.num, int)?,
-			den: BigUint::pow(&self.den, &rhs.num, int)?,
-		};
 		if rhs.den == 1.into() {
-			Ok(Exact::new(pow_res, true))
-		} else {
-			Ok(pow_res.root_n(
-				&Self {
-					sign: Sign::Positive,
-					num: rhs.den,
-					den: 1.into(),
+			return Ok(Exact::new(
+				Self {
+					sign: result_sign,
+					num: BigUint::pow(&self.num, &rhs.num, int)?,
+					den: BigUint::pow(&self.den, &rhs.num, int)?,
 				},
-				int,
-			)?)
+				true,
+			));
 		}
+		// a^(p/q) is rational only when a's numerator and denominator are both
+		// perfect q-th powers, so decide that on the base rather than on a^p.
+		let num_root = self.num.clone().root_n(&rhs.den, int)?;
+		let den_root = self.den.clone().root_n(&rhs.den, int)?;
+		if num_root.exact && den_root.exact {
+			return Ok(Exact::new(
+				Self {
+					sign: result_sign,
+					num: BigUint::pow(&num_root.value, &rhs.num, int)?,
+					den: BigUint::pow(&den_root.value, &rhs.num, int)?,
+				},
+				true,
+			));
+		}
+		let (p, q) = (rhs.num.try_as_usize(int)?, rhs.den.try_as_usize(int)?);
+		Ok(Exact::new(Self::approx_pow(&self, p, q, int)?, false))
 	}
 
-	/// n must be an integer
-	fn iter_root_n<I: Interrupt>(
-		mut low_bound: Self,
-		val: &Self,
-		n: &Self,
-		int: &I,
-	) -> FResult<Self> {
-		let mut high_bound = low_bound.clone().add(1.into(), int)?;
-		for _ in 0..50 {
-			let guess = low_bound
-				.clone()
-				.add(high_bound.clone(), int)?
-				.div(&2.into(), int)?;
-			if &guess.clone().pow(n.clone(), int)?.value < val {
-				low_bound = guess;
-			} else {
-				high_bound = guess;
-			}
+	/// Approximates `base^(p/q)` for an irrational result: the q-th root of the
+	/// base in fixed point, raised to `p` with truncated products. The base is
+	/// inverted first when it is below 1 so the result never underflows.
+	fn approx_pow<I: Interrupt>(base: &Self, p: usize, q: usize, int: &I) -> FResult<Self> {
+		if base.num < base.den {
+			let inverse = Self {
+				sign: Sign::Positive,
+				num: base.den.clone(),
+				den: base.num.clone(),
+			};
+			return Self::from(1).div(&Self::approx_pow(&inverse, p, q, int)?, int);
 		}
-		low_bound.add(high_bound, int)?.div(&2.into(), int)
+		// Raising to p multiplies the relative error by p: keep that many extra bits.
+		let bits = ROOT_BITS + u64::from(usize::BITS - p.leading_zeros()) + 8;
+		let shift = BigUint::from(bits);
+		let root = BigUint::fixed_root_n(&base.num, &base.den, q, bits, int)?;
+		let power = BigUint::fixed_pow(&root, p, &shift, int)?;
+		Ok(Self {
+			sign: Sign::Positive,
+			num: power,
+			den: BigUint::from(1).lshift_n(&shift, int)?,
+		})
+	}
+
+	/// Approximates the `n`th root of a positive rational to `ROOT_BITS` fractional bits.
+	fn approx_root_n<I: Interrupt>(val: &Self, n: usize, int: &I) -> FResult<Self> {
+		let root = BigUint::fixed_root_n(&val.num, &val.den, n, ROOT_BITS, int)?;
+		Ok(Self {
+			sign: Sign::Positive,
+			num: root,
+			den: BigUint::from(1).lshift_n(&BigUint::from(ROOT_BITS), int)?,
+		})
 	}
 
 	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
@@ -1089,28 +1113,8 @@ impl BigRat {
 				true,
 			));
 		}
-		// TODO check in which cases this might still be exact
-		let num_rat = if num.exact {
-			Self::from(num.value)
-		} else {
-			Self::iter_root_n(
-				Self::from(num.value),
-				&Self::from(self.num),
-				&Self::from(n.clone()),
-				int,
-			)?
-		};
-		let den_rat = if den.exact {
-			Self::from(den.value)
-		} else {
-			Self::iter_root_n(
-				Self::from(den.value),
-				&Self::from(self.den),
-				&Self::from(n.clone()),
-				int,
-			)?
-		};
-		Ok(Exact::new(num_rat.div(&den_rat, int)?, false))
+		let n = n.try_as_usize(int)?;
+		Ok(Exact::new(Self::approx_root_n(&self, n, int)?, false))
 	}
 
 	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
