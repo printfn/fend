@@ -16,9 +16,9 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-24.04, macos-26, windows-2025]
+        platform: [ubuntu-26.04, macos-26, windows-2025]
         include:
-          - platform: ubuntu-24.04
+          - platform: ubuntu-26.04
             artifact-path: target/release/fend
             artifact-platform-name: linux-x86_64-gnu
             env-command: ">> $GITHUB_ENV"
@@ -39,19 +39,19 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Update Rust
         run: rustup update
 
       - uses: swatinem/rust-cache@v2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 'latest'
 
       - name: Clippy, rustfmt
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: |
           rustup component add clippy
           cargo clippy --workspace --all-targets --all-features -- -D warnings
@@ -79,12 +79,12 @@ jobs:
         # Only run unit tests on non-Linux platforms since Linux runs
         # them as part of code coverage testing
       - name: Test
-        if: ${{ matrix.platform != 'ubuntu-24.04' }}
+        if: ${{ matrix.platform != 'ubuntu-26.04' }}
         run: |
           cargo test --workspace -- --nocapture --quiet
 
       - name: Test (Linux i686)
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: |
           sudo apt-get update -y
           sudo apt-get install -yq gcc-i686-linux-gnu
@@ -94,7 +94,7 @@ jobs:
             --target i686-unknown-linux-gnu --no-default-features --features rustls --workspace -- --nocapture --quiet
 
       - name: Generate code coverage
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         continue-on-error: true
         run: |
           RUSTFLAGS="-C instrument-coverage" \
@@ -142,14 +142,14 @@ jobs:
             ) >coverage.txt
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fend-${{ env.FEND_VERSION }}-${{ matrix.artifact-platform-name }}
           path: ${{ matrix.artifact-path }}
           if-no-files-found: error
 
       - name: Build (linux-aarch64-gnu)
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: |
           rustup target add aarch64-unknown-linux-gnu
           sudo apt-get install -yq gcc-aarch64-linux-gnu
@@ -157,34 +157,34 @@ jobs:
           cargo build --release --package fend --no-default-features --features rustls --target aarch64-unknown-linux-gnu
 
       - name: Upload artifacts (linux-aarch64-gnu)
-        uses: actions/upload-artifact@v4
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-aarch64-gnu
           path: target/aarch64-unknown-linux-gnu/release/fend
           if-no-files-found: error
 
       - name: Build (linux-x86_64-musl)
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: |
           rustup target add x86_64-unknown-linux-musl
           sudo apt-get install -yq musl-tools
           cargo build --release --package fend --no-default-features --features rustls --target x86_64-unknown-linux-musl
 
       - name: Upload artifacts (linux-x86_64-musl)
-        uses: actions/upload-artifact@v4
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-linux-x86_64-musl
           path: target/x86_64-unknown-linux-musl/release/fend
           if-no-files-found: error
 
       - name: Set up Homebrew
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
 
       - name: Build fend-wasm
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: |
           brew install pandoc
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -192,19 +192,19 @@ jobs:
           ./web/build.sh
 
       - name: Upload GitHub Pages artifact
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist
 
       - name: Build man page
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
         run: |
           ./documentation/build.sh
 
       - name: Upload man page
-        if: ${{ matrix.platform == 'ubuntu-24.04' }}
-        uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'ubuntu-26.04' }}
+        uses: actions/upload-artifact@v7
         with:
           name: man-page
           path: documentation/fend.1
@@ -218,7 +218,7 @@ jobs:
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
 
       - name: Upload artifacts (MSIX)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'windows-2025' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-windows-x64-msix
@@ -231,7 +231,7 @@ jobs:
           .\windows-wix\build.ps1
 
       - name: Upload artifacts (MSI)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ matrix.platform == 'windows-2025' }}
         with:
           name: fend-${{ env.FEND_VERSION }}-windows-x64-msi
@@ -239,20 +239,20 @@ jobs:
           if-no-files-found: error
 
       - name: Build telegram bot
-        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-24.04' }}
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-26.04' }}
         run: |
           ./telegram-bot/build.sh
 
       - name: Upload artifacts (telegram bot)
-        uses: actions/upload-artifact@v4
-        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-24.04' }}
+        uses: actions/upload-artifact@v7
+        if: ${{ github.ref == 'refs/heads/main' && matrix.platform == 'ubuntu-26.04' }}
         with:
           name: lambda_package
           path: telegram-bot/lambda_package.zip
           if-no-files-found: error
 
   deploy_telegram:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [build]
     if: ${{ github.ref == 'refs/heads/main' }}
 
@@ -266,16 +266,16 @@ jobs:
       url: https://t.me/fend_calc_bot
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: lambda_package
           path: telegram-bot/
 
       - name: Get AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME_ARN }}
@@ -288,7 +288,7 @@ jobs:
             ./telegram-bot/deploy.sh
 
   deploy_website:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [build]
     if: ${{ github.ref == 'refs/heads/main' }}
 
@@ -304,4 +304,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
