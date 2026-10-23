@@ -10,8 +10,8 @@ export default defineConfig({
 		minify: false,
 		rollupOptions: {
 			input: {
-				main: resolve(__dirname, 'index.html'),
-				widget: resolve(__dirname, 'widget.html'),
+				main: resolve(import.meta.dirname, 'index.html'),
+				widget: resolve(import.meta.dirname, 'widget.html'),
 			},
 		},
 		sourcemap: true,
