@@ -2692,6 +2692,7 @@ fn test_floor() {
 	test_eval("floor(3.9)", "3");
 	test_eval("floor(-3)", "-3");
 	test_eval("floor(-3.1)", "-4");
+	test_eval("floor(18446744073709551617.9)", "18446744073709551617");
 }
 
 #[test]
@@ -2700,6 +2701,7 @@ fn test_ceil() {
 	test_eval("ceil(3.3)", "4");
 	test_eval("ceil(-3)", "-3");
 	test_eval("ceil(-3.3)", "-3");
+	test_eval("ceil(18446744073709551617.1)", "18446744073709551618");
 }
 
 #[test]
@@ -2711,6 +2713,7 @@ fn test_round() {
 
 	test_eval("round(-3.3)", "-3");
 	test_eval("round(-3.7)", "-4");
+	test_eval("round(18446744073709551617.5)", "18446744073709551618");
 }
 
 #[test]
