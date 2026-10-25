@@ -127,6 +127,7 @@ These are some projects making use of fend:
 * [metasearch2](https://github.com/mat-1/metasearch2)
 * [FendApp](https://github.com/JadedBlueEyes/fendapp)
 * [Asleh](https://github.com/jossephus/asleh)
+* [fend-offline](https://github.com/TatsuhiroC/fend-offline)
 
 Feel free to make a pull request to add your own!
 
