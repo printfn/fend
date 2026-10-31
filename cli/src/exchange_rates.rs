@@ -16,6 +16,7 @@ fn get_cache_filename(source: config::ExchangeRateSource) -> &'static str {
 	match source {
 		ExchangeRateSource::EuropeanUnion => "eurofxref-daily.xml.cache",
 		ExchangeRateSource::UnitedNations => "xsql2XML.php.cache",
+		ExchangeRateSource::BankOfEngland => "boe.csv.cache",
 	}
 }
 
@@ -68,6 +69,9 @@ async fn load_exchange_rate_xml(source: config::ExchangeRateSource) -> Result<Ra
 		}
 		ExchangeRateSource::UnitedNations => {
 			"https://treasury.un.org/operationalrates/xsql2XML.php"
+		}
+		ExchangeRateSource::BankOfEngland => {
+			"https://allratestoday.com/api/open/central-bank/boe?format=csv"
 		}
 	};
 	Ok(RawData {
@@ -128,6 +132,7 @@ fn parse_exchange_rates(data: &RawData) -> Result<Vec<(String, f64)>, Error> {
 	match data.source {
 		ExchangeRateSource::EuropeanUnion => parse_exchange_rates_eu(&data.exchange_rate_data),
 		ExchangeRateSource::UnitedNations => parse_exchange_rates_un(&data.exchange_rate_data),
+		ExchangeRateSource::BankOfEngland => parse_exchange_rates_boe(&data.exchange_rate_data),
 	}
 }
 
@@ -194,6 +199,53 @@ fn parse_exchange_rates_un(exchange_rates: &str) -> Result<Vec<(String, f64)>, E
 		result.push((currency.to_string(), exchange_rate_usd));
 	}
 
+	Ok(result)
+}
+
+// CSV with the columns `rate_date,base,quote,rate_type,value`, one row per pair
+// quoted against GBP (e.g. `2026-10-29,GBP,USD,reference,1.3156`).
+fn parse_exchange_rates_boe(exchange_rates: &str) -> Result<Vec<(String, f64)>, Error> {
+	let err = "failed to load exchange rates";
+	let mut result = vec![("GBP".to_string(), 1.0)];
+	for l in exchange_rates
+		.trim_start_matches('\u{feff}')
+		.lines()
+		.skip(1)
+	{
+		let l = l.trim();
+		if l.is_empty() {
+			continue;
+		}
+		let mut fields = l.split(',');
+		let (Some(_date), Some(base), Some(quote), Some(rate_type), Some(value)) = (
+			fields.next(),
+			fields.next(),
+			fields.next(),
+			fields.next(),
+			fields.next(),
+		) else {
+			return Err(err.into());
+		};
+		if rate_type != "reference" {
+			continue;
+		}
+		let value = value.parse::<f64>()?;
+		if !value.is_normal() {
+			return Err(err.into());
+		}
+		match (base, quote) {
+			("GBP", currency) if currency != "GBP" => {
+				result.push((currency.to_string(), value));
+			}
+			(currency, "GBP") if currency != "GBP" => {
+				result.push((currency.to_string(), 1.0 / value));
+			}
+			_ => (),
+		}
+	}
+	if result.len() < 10 {
+		return Err(err.into());
+	}
 	Ok(result)
 }
 
@@ -287,5 +339,33 @@ impl fend_core::ExchangeRateFnV2 for ExchangeRateHandler {
 			}
 		}
 		Err(UnknownExchangeRate(currency.to_string()).into())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn parse_boe_csv() {
+		let csv = "\u{feff}rate_date,base,quote,rate_type,value\n\
+			2026-10-29,GBP,AUD,reference,2.0\n\
+			2026-10-29,GBP,CAD,reference,1.8\n\
+			2026-10-29,GBP,CHF,reference,1.1\n\
+			2026-10-29,GBP,CNY,reference,9.0\n\
+			2026-10-29,GBP,DKK,reference,8.6\n\
+			2026-10-29,EUR,GBP,reference,0.8\n\
+			2026-10-29,GBP,HKD,reference,10.3\n\
+			2026-10-29,GBP,JPY,buy,200.0\n\
+			2026-10-29,GBP,JPY,reference,205.0\n\
+			2026-10-29,GBP,USD,reference,1.25\n";
+		let rates = parse_exchange_rates_boe(csv).unwrap();
+		assert_eq!(rates[0], ("GBP".to_string(), 1.0));
+		assert_eq!(rates.len(), 10);
+		assert!(rates.contains(&("USD".to_string(), 1.25)));
+		assert!(rates.contains(&("EUR".to_string(), 1.25)));
+		assert!(!rates.contains(&("JPY".to_string(), 200.0)));
+		assert!(parse_exchange_rates_boe("rate_date,base,quote,rate_type,value\n").is_err());
+		assert!(parse_exchange_rates_boe("rate_date,base\nbad,row\n").is_err());
 	}
 }

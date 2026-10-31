@@ -23,17 +23,19 @@ unknown-settings = 'warn'
 
 # Whether to enable internet access. This is required for
 # currency conversions, where fend makes a request to
-# the UN treasury or the European Central Bank website
+# the UN treasury, the European Central Bank or allratestoday.com
 # to download up-to-date exchange rates.
 enable-internet-access = true
 
 # Data source for currency exchange rates. fend supports
 # the following options:
-#   * `auto` retrieves data from both sources in parallel
+#   * `auto` retrieves data from all sources in parallel
 #   * `UN` retrieves data from the UN treasury
 #     (endpoint: https://treasury.un.org/operationalrates/xsql2XML.php)
 #   * `EU` retrieves data from the EU central bank
 #     (endpoint: https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
+#   * `BoE` retrieves the Bank of England's daily rates via allratestoday.com
+#     (endpoint: https://allratestoday.com/api/open/central-bank/boe?format=csv)
 #   * 'disabled' will disable loading of exchange rate data
 exchange-rate-source = "auto"
 
