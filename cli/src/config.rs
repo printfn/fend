@@ -25,6 +25,7 @@ pub enum ExchangeRateSetting {
 	Disabled,
 	EuropeanUnion,
 	UnitedNations,
+	BankOfEngland,
 }
 
 impl ExchangeRateSetting {
@@ -33,10 +34,12 @@ impl ExchangeRateSetting {
 			ExchangeRateSetting::Auto => &[
 				ExchangeRateSource::EuropeanUnion,
 				ExchangeRateSource::UnitedNations,
+				ExchangeRateSource::BankOfEngland,
 			],
 			ExchangeRateSetting::Disabled => &[],
 			ExchangeRateSetting::EuropeanUnion => &[ExchangeRateSource::EuropeanUnion],
 			ExchangeRateSetting::UnitedNations => &[ExchangeRateSource::UnitedNations],
+			ExchangeRateSetting::BankOfEngland => &[ExchangeRateSource::BankOfEngland],
 		}
 	}
 }
@@ -45,14 +48,18 @@ impl ExchangeRateSetting {
 pub enum ExchangeRateSource {
 	EuropeanUnion,
 	UnitedNations,
+	BankOfEngland,
 }
 
 impl ExchangeRateSource {
-	// EU data is generally more reliable and more up-to-date, but supports fewer currencies
+	// EU data is generally more reliable and more up-to-date, but supports fewer currencies.
+	// The Bank of England data (via allratestoday.com) covers even fewer, so it is only a
+	// backup for when the other two are slow or down.
 	pub fn get_delay(self) -> time::Duration {
 		match self {
 			ExchangeRateSource::EuropeanUnion => time::Duration::ZERO,
 			ExchangeRateSource::UnitedNations => time::Duration::from_millis(1500),
+			ExchangeRateSource::BankOfEngland => time::Duration::from_secs(3),
 		}
 	}
 }
@@ -63,7 +70,7 @@ impl serde::de::Visitor<'_> for ExchangeRateSourceVisitor {
 	type Value = ExchangeRateSetting;
 
 	fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-		formatter.write_str("`auto`, `EU`, `UN`, or `disabled`")
+		formatter.write_str("`auto`, `EU`, `UN`, `BoE`, or `disabled`")
 	}
 
 	fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
@@ -71,11 +78,12 @@ impl serde::de::Visitor<'_> for ExchangeRateSourceVisitor {
 			"auto" => ExchangeRateSetting::Auto,
 			"EU" => ExchangeRateSetting::EuropeanUnion,
 			"UN" => ExchangeRateSetting::UnitedNations,
+			"BoE" => ExchangeRateSetting::BankOfEngland,
 			"disabled" => ExchangeRateSetting::Disabled,
 			_ => {
 				return Err(serde::de::Error::unknown_variant(
 					v,
-					&["auto", "EU", "UN", "disabled"],
+					&["auto", "EU", "UN", "BoE", "disabled"],
 				));
 			}
 		})
