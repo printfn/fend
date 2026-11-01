@@ -324,7 +324,7 @@ fn large_multiplication() {
 
 #[test]
 fn pi_times_pi() {
-	test_eval("pi * pi", "approx. 9.869604402");
+	test_eval("pi * pi", "approx. 9.8696044011");
 }
 
 #[test]
@@ -1211,10 +1211,25 @@ fn powers_17() {
 }
 
 #[test]
+fn irrational_powers_are_fast_and_precise() {
+	test_eval("2^0.3333", "approx. 1.2598919399");
+	test_eval_simple("2^0.3333 to 18 dp", "approx. 1.259891939873717853");
+	test_eval("(1+1/7.7777)^7.7777", "approx. 2.5618815751");
+	test_eval("1.0001^10000.5", "approx. 2.7182818307");
+	test_eval("0.9999^99999.5", "approx. 0.0000453795");
+	test_eval("e^(-9.99)", "approx. 0.0000458562");
+	test_eval_simple(
+		"sqrt(2) to 40 dp",
+		"approx. 1.4142135623730950488016887242096980785697",
+	);
+	test_eval_simple("1025^(1/10) to 20 dp", "approx. 2.00019522672235935393");
+}
+
+#[test]
 fn powers_18() {
 	test_eval(
 		"5.2*10^15*300^(3/2)",
-		"approx. 27019992598074485776.9266786818",
+		"approx. 27019992598074485779.0281629275",
 	);
 }
 
@@ -1816,7 +1831,7 @@ fn e_to_1() {
 #[test]
 fn e_in_binary() {
 	// FIXME: trailing zeroes
-	test_eval_simple("e in binary", "approx. 10.1011100000");
+	test_eval("e in binary", "approx. 10.10111");
 }
 
 #[test]
@@ -1999,7 +2014,7 @@ fn exponents_28() {
 
 #[test]
 fn exponents_29() {
-	test_eval_simple("e^2.72", "approx. 15.1803222450");
+	test_eval("e^2.72", "approx. 15.180322245");
 }
 
 #[test]
@@ -2220,7 +2235,7 @@ fn units_13() {
 #[test]
 fn units_14() {
 	// FIXME: trailing zeroes
-	test_eval_simple("5 pi/2", "approx. 7.8539816340");
+	test_eval("5 pi/2", "approx. 7.853981634");
 }
 
 #[test]
@@ -2711,6 +2726,39 @@ fn test_round() {
 
 	test_eval("round(-3.3)", "-3");
 	test_eval("round(-3.7)", "-4");
+
+	test_eval("round(2.5)", "3");
+	test_eval("round(-2.5)", "-3");
+	test_eval("round(-0.4)", "0");
+}
+
+#[test]
+fn rounding_up_at_a_zero_digit() {
+	test_eval("0.12309 to 4 dp", "approx. 0.1231");
+	test_eval("2.0000009 to 6 dp", "approx. 2.000001");
+	test_eval("-2.0000009 to 6 dp", "approx. -2.000001");
+	test_eval("0.0000009 to 6 dp", "approx. 0.000001");
+	test_eval("0.12309 to 4 sf", "approx. 0.1231");
+	test_eval("0.12301 to 4 dp", "approx. 0.123");
+}
+
+#[test]
+fn long_division_with_a_quotient_digit_of_all_ones() {
+	test_eval(
+		"floor((10^40 - 1) * 2^200 / 10^40)",
+		"1606938044258990275541962092341162602522042299978366936273821",
+	);
+}
+
+#[test]
+fn floor_ceil_round_are_exact() {
+	test_eval("floor(10^30/7)", "142857142857142857142857142857");
+	test_eval("ceil(10^20 + 0.1)", "100000000000000000001");
+	test_eval("floor(12345678901234567890.5)", "12345678901234567890");
+	test_eval("floor(-12345678901234567890.5)", "-12345678901234567891");
+	test_eval("round(1152921504606846976.5)", "1152921504606846977");
+	test_eval("floor(2^100 + 1/2) - 2^100", "0");
+	test_eval("ceil(-1/3)", "0");
 }
 
 #[test]
@@ -3161,7 +3209,7 @@ fn acos_0() {
 
 #[test]
 fn acos_3() {
-	test_eval_simple("acos 3", "approx. 0 + 1.762747174i");
+	test_eval("acos 3", "approx. 1.762747174i");
 }
 
 #[test]
@@ -3171,7 +3219,7 @@ fn acos_minus_3() {
 
 #[test]
 fn acos_one_point_zero_one() {
-	test_eval_simple("acos 1.01", "approx. 0 + 0.1413037695i");
+	test_eval("acos 1.01", "approx. 0.1413037695i");
 }
 
 #[test]
@@ -3286,7 +3334,7 @@ fn log10_1000() {
 
 #[test]
 fn log10_10000() {
-	test_eval_simple("log10 10000", "approx. 4.0000000000");
+	test_eval("log10 10000", "approx. 4");
 }
 
 #[test]
@@ -3306,7 +3354,7 @@ fn log_1000() {
 
 #[test]
 fn log_10000() {
-	test_eval_simple("log 10000", "approx. 4.0000000000");
+	test_eval("log 10000", "approx. 4");
 }
 
 #[test]
@@ -3341,7 +3389,7 @@ fn log2_minus_1() {
 
 #[test]
 fn sqrt_minus_two() {
-	test_eval_simple("sqrt(-2)", "approx. 0 + 1.4142135624i");
+	test_eval("sqrt(-2)", "approx. 1.4142135624i");
 }
 
 #[test]
@@ -3416,19 +3464,17 @@ fn sqrt_i() {
 
 #[test]
 fn sqrt_minus_two_i() {
-	// FIXME: no trailing zeroes
-	test_eval_simple("sqrt (-2i)", "approx. 1.0000000000 - 1.0000000000i");
+	test_eval_simple("sqrt (-2i)", "approx. 1 - 1i");
 }
 
 #[test]
 fn cbrt_i() {
-	// FIXME: no trailing zeroes
-	test_eval_simple("cbrt i", "approx. 0.8660254038 + 0.5000000000i");
+	test_eval("cbrt i", "approx. 0.8660254038 + 0.5i");
 }
 
 #[test]
 fn cbrt_minus_two_i() {
-	test_eval_simple("cbrt (-2i)", "approx. 1.0911236360 - 0.6299605249i");
+	test_eval("cbrt (-2i)", "approx. 1.091123636 - 0.6299605249i");
 }
 
 #[test]
@@ -3443,7 +3489,7 @@ fn cos_i() {
 
 #[test]
 fn tan_i() {
-	test_eval_simple("tan i", "approx. 0.7615941560i");
+	test_eval("tan i", "approx. 0.761594156i");
 }
 
 #[test]
@@ -6024,7 +6070,7 @@ fn uppercase_identifiers() {
 	test_eval("COS TAU", "1");
 	test_eval("LOG 1", "approx. 0");
 	test_eval("LOG10 1", "approx. 0");
-	test_eval("EXP 0", "approx. 1");
+	test_eval("EXP 0", "1");
 
 	expect_error("foo = 1; FOO", Some("unknown identifier 'FOO'"));
 }
@@ -6094,7 +6140,7 @@ fn european_formatting() {
 		fend_core::evaluate("sin(1,2)", &mut ctx)
 			.unwrap()
 			.get_main_result(),
-		"approx. 0,9320390860"
+		"approx. 0,932039086"
 	);
 }
 
@@ -6166,4 +6212,232 @@ fn decimal_separator_comma() {
 			.get_main_result(),
 		"1,69 AUD"
 	);
+}
+
+#[test]
+fn exp_ln_and_hyperbolic_functions_are_precise() {
+	test_eval_simple(
+		"e to 50 dp",
+		"approx. 2.71828182845904523536028747135266249775724709369996",
+	);
+	test_eval_simple(
+		"exp(-50) to 70 dp",
+		"approx. 0.000000000000000000000192874984796391778301734281652701257475283265123",
+	);
+	test_eval("exp 50", "approx. 5184705528587072464087.4533229335");
+	test_eval_simple(
+		"exp(10^-25) to 55 dp",
+		"approx. 1.000000000000000000000000100000000000000000000000005",
+	);
+	test_eval_simple(
+		"ln 3 to 50 dp",
+		"approx. 1.09861228866810969139524523692252570464749055782275",
+	);
+	test_eval_simple(
+		"ln(1 + 10^-30) to 65 dp",
+		"approx. 0.0000000000000000000000000000009999999999999999999999999999995",
+	);
+	test_eval_simple(
+		"ln(10^100) to 45 dp",
+		"approx. 230.258509299404568401799145468436420760110148863",
+	);
+	test_eval_simple(
+		"log2 10 to 50 dp",
+		"approx. 3.32192809488736234787031942948939017586483139302458",
+	);
+	test_eval_simple(
+		"log10 7 to 50 dp",
+		"approx. 0.84509804001425683071221625859263619348357239632397",
+	);
+	test_eval("log2 (1/1024)", "approx. -10");
+	test_eval("cosh 50", "approx. 2592352764293536232043.7266614667");
+	test_eval("sinh 60", "approx. 57100369490784214183147859.1572382815");
+	test_eval_simple(
+		"sinh(10^-20) to 65 dp",
+		"approx. 0.00000000000000000001000000000000000000000000000000000000000016667",
+	);
+	test_eval_simple(
+		"tanh 1 to 50 dp",
+		"approx. 0.76159415595576488811945828260479359041276859725794",
+	);
+	test_eval_simple(
+		"asinh(10^-15) to 50 dp",
+		"approx. 0.00000000000000099999999999999999999999999999983333",
+	);
+	test_eval_simple(
+		"acosh(1 + 10^-20) to 50 dp",
+		"approx. 0.00000000014142135623730950488005102129077204993623",
+	);
+	test_eval_simple(
+		"atanh 0.9 to 50 dp",
+		"approx. 1.47221948958322023000451371594392676861868963064956",
+	);
+	test_eval_simple(
+		"2^0.123456789012 to 50 dp",
+		"approx. 1.08934187035774403573523203271086206086029141643742",
+	);
+	test_eval_simple(
+		"e^2 to 50 dp",
+		"approx. 7.38905609893065022723042746057500781318031557055185",
+	);
+	expect_error("exp(10^9)", Some("value is too large"));
+}
+
+#[test]
+fn trigonometric_functions_are_precise() {
+	test_eval_simple(
+		"pi to 60 dp",
+		"approx. 3.141592653589793238462643383279502884197169399375105820974945",
+	);
+	test_eval_simple(
+		"atan(1) * 4 to 60 dp",
+		"approx. 3.141592653589793238462643383279502884197169399375105820974945",
+	);
+	test_eval_simple(
+		"sin 1 to 50 dp",
+		"approx. 0.84147098480789650665250232163029899962256306079837",
+	);
+	test_eval_simple(
+		"cos 1 to 50 dp",
+		"approx. 0.54030230586813971740093660744297660373231042061792",
+	);
+	test_eval_simple(
+		"tan 1 to 50 dp",
+		"approx. 1.55740772465490223050697480745836017308725077238152",
+	);
+	test_eval_simple(
+		"sin 355 to 50 dp",
+		"approx. -0.00003014435335948844921433028000865009959025580707",
+	);
+	test_eval_simple(
+		"sin(10^20) to 50 dp",
+		"approx. -0.6452512852657808442058117113125230074069041966869",
+	);
+	test_eval_simple(
+		"cos(10^30) to 40 dp",
+		"approx. -0.9959311944053957023942485879970486411302",
+	);
+	test_eval_simple(
+		"tan 1.5707963267 to 30 dp",
+		"approx. 10537783201.342317198145256648590305010736",
+	);
+	test_eval("1/sin(10^-20)", "approx. 100000000000000000000");
+	test_eval("(sin 1)^2 + (cos 1)^2", "approx. 1");
+	test_eval_simple(
+		"asin 0.999999 to 50 dp",
+		"approx. 1.56938211311467236746824989586709579363455866391913",
+	);
+	test_eval_simple(
+		"acos(1 - 10^-20) to 50 dp",
+		"approx. 0.0000000001414213562373095048802867235511675657777",
+	);
+	test_eval_simple(
+		"atan(10^20) to 50 dp",
+		"approx. 1.57079632679489661922132169163975144209858469968755",
+	);
+	test_eval_simple(
+		"e^pi to 50 dp",
+		"approx. 23.14069263277926900572908636794854738026610624260021",
+	);
+	test_eval_simple(
+		"2^pi to 50 dp",
+		"approx. 8.82497782707628762385642960420800158170441081527148",
+	);
+}
+
+#[test]
+fn reciprocal_trigonometric_functions() {
+	test_eval("cot 1", "approx. 0.6420926159");
+	test_eval("cot(45°)", "approx. 1");
+	test_eval("csc 1", "approx. 1.1883951058");
+	test_eval("coth 1", "approx. 1.3130352855");
+	test_eval("sech 1", "approx. 0.6480542737");
+	test_eval("csch 1", "approx. 0.8509181282");
+	test_eval("acot 2", "approx. 0.463647609");
+	test_eval("acot(-1)", "approx. -0.7853981634");
+	test_eval("acot 0", "approx. 1.5707963268");
+	test_eval_simple(
+		"acot(10^-20) to 50 dp",
+		"approx. 1.57079632679489661922132169163975144209858469968755",
+	);
+	test_eval("acsc 2", "approx. 0.5235987756");
+	test_eval("acoth 2", "approx. 0.5493061443");
+	test_eval("asech 0.5", "approx. 1.3169578969");
+	test_eval("acsch 1", "approx. 0.881373587");
+	test_eval("coth(-1000000)", "approx. -1");
+	test_eval("sech 1000", "approx. 0");
+	expect_error("cot 0", Some("division by zero"));
+	expect_error("coth 0", Some("division by zero"));
+}
+
+#[test]
+fn trunc_rounds_toward_zero() {
+	test_eval("trunc(-2.7)", "-2");
+	test_eval("trunc 2.7", "2");
+	test_eval("trunc(-2.5 kg)", "-2 kg");
+	test_eval("trunc(10^30/7)", "142857142857142857142857142857");
+	expect_error("trunc i", Some("expected a real number"));
+}
+
+#[test]
+fn gamma_function() {
+	test_eval("gamma 1", "1");
+	test_eval("gamma 5", "24");
+	test_eval("gamma 0.5", "approx. 1.7724538509");
+	test_eval("(gamma 0.5)^2", "approx. 3.1415926536");
+	test_eval("gamma(-2.5)", "approx. -0.9453087205");
+	test_eval_simple(
+		"gamma(1/3) to 50 dp",
+		"approx. 2.6789385347077476336556929409746776441286893779573",
+	);
+	test_eval_simple(
+		"gamma(pi) to 50 dp",
+		"approx. 2.28803779534003241795958890906023392288968815335622",
+	);
+	test_eval(
+		"gamma(10^-30)",
+		"approx. 999999999999999999999999999999.4227843351",
+	);
+	test_eval(
+		"gamma(-3 + 10^-30)",
+		"approx. -166666666666666666666666666666.8760196114",
+	);
+	expect_error("gamma 0", Some("division by zero"));
+	expect_error("gamma(-3)", Some("division by zero"));
+	expect_error("gamma i", Some("expected a real number"));
+	expect_error("gamma(10^6 + 0.5)", Some("value is too large"));
+	expect_error("gamma(10^20)", Some("value is too large"));
+}
+
+#[test]
+fn zeta_function() {
+	test_eval_simple(
+		"zeta 2 to 50 dp",
+		"approx. 1.6449340668482264364724151666460251892189499012068",
+	);
+	test_eval_simple(
+		"zeta 3 to 50 dp",
+		"approx. 1.2020569031595942853997381615114499907649862923405",
+	);
+	test_eval_simple(
+		"zeta 0.5 to 50 dp",
+		"approx. -1.46035450880958681288949915251529801246722933101258",
+	);
+	test_eval_simple(
+		"zeta(1 + 10^-30) to 50 dp",
+		"approx. 1000000000000000000000000000000.57721566490153286060651209008247524691798984687542",
+	);
+	test_eval_simple(
+		"zeta(-2.5) to 50 dp",
+		"approx. 0.00851692877785033054235856702834448693627599022007",
+	);
+	test_eval("zeta 0", "-0.5");
+	test_eval("zeta(-2)", "0");
+	test_eval_simple("zeta(-1) to fraction", "-1/12");
+	test_eval_simple(
+		"zeta(-57) to fraction",
+		"-2913228046513104891794716413587449/708",
+	);
+	test_eval("zeta 1000", "approx. 1");
+	expect_error("zeta 1", Some("division by zero"));
 }

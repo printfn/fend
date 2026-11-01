@@ -90,18 +90,7 @@ impl Real {
 	fn approximate<I: Interrupt>(self, int: &I) -> FResult<BigRat> {
 		match self.pattern {
 			Pattern::Simple(s) => Ok(s),
-			Pattern::Pi(n) => {
-				// This fraction is the 33th convergent of pi, (in the sense of continued fraction),
-				// and as such, is a "best approximation of the second kind" of pi (see e.g. the
-				// book of Khinchin about continued fractions).
-				// The 33th convergent is the last one with both numerators and denominators
-				// fitting in a u64-container.
-				// The difference between this approximation and pi is less than 10^-37.
-				let num = BigRat::from(2_646_693_125_139_304_345);
-				let den = BigRat::from(842_468_587_426_513_207);
-				let pi = num.div(&den, int)?;
-				Ok(n.mul(&pi, int)?)
-			}
+			Pattern::Pi(n) => Ok(n.mul(&BigRat::pi(int)?, int)?),
 		}
 	}
 
@@ -244,9 +233,35 @@ impl Real {
 		Ok(Self::from(self.approximate(int)?.atan(int)?))
 	}
 
+	pub(crate) fn acot<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		if self.is_zero() {
+			return Ok(Self {
+				pattern: Pattern::Pi(BigRat::from(1).div(&2.into(), int)?),
+			});
+		}
+		let inverse = BigRat::from(1).div(&self.approximate(int)?, int)?;
+		Ok(Self::from(inverse.atan(int)?))
+	}
+
 	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
+		let half_turns = if rhs.is_zero() {
+			match (self.is_pos(), self.is_neg()) {
+				(true, _) => Some(BigRat::from(1).div(&2.into(), int)?),
+				(_, true) => Some(-BigRat::from(1).div(&2.into(), int)?),
+				_ => Some(0.into()),
+			}
+		} else if self.is_zero() {
+			Some(if rhs.is_neg() { 1.into() } else { 0.into() })
+		} else {
+			None
+		};
+		if let Some(n) = half_turns {
+			return Ok(Self {
+				pattern: Pattern::Pi(n),
+			});
+		}
 		Ok(Self::from(
-			self.approximate(int)?.atan2(rhs.approximate(int)?, int)?,
+			self.approximate(int)?.atan2(&rhs.approximate(int)?, int)?,
 		))
 	}
 
@@ -301,6 +316,18 @@ impl Real {
 
 	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		Ok(Self::from(self.approximate(int)?.round(int)?))
+	}
+
+	pub(crate) fn trunc<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		Ok(Self::from(self.approximate(int)?.trunc(int)?))
+	}
+
+	pub(crate) fn gamma<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		Ok(self.approximate(int)?.gamma(int)?.apply(Self::from))
+	}
+
+	pub(crate) fn zeta<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		Ok(self.approximate(int)?.zeta(int)?.apply(Self::from))
 	}
 
 	pub(crate) fn format<I: Interrupt>(

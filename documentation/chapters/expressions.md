@@ -248,9 +248,12 @@ fend has a number of predefined functions:
 
 * Roots: `sqrt`, `cbrt` for square roots and cube roots
 * Standard trigonometric functions: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`
+* Reciprocal trigonometric functions: `cot`, `csc`, `acot`, `acsc`, `coth`, `sech`, `csch`, `acoth`, `asech`, `acsch`
 * Absolute value: `abs`
+* Rounding: `floor`, `ceil`, `round`, `trunc`
 * Logarithms: `ln`, `log` (or `log10`), `log2`
 * Exponential function (i.e. `e^x`): `exp`
+* Special functions: `gamma`, and `zeta` for the Riemann zeta function
 * Complex analysis: `real`, `imag`, `arg`
 
 Here are some examples of these functions:

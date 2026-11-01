@@ -785,17 +785,13 @@ fn resolve_builtin_identifier<I: Interrupt>(
 			)?)
 		};
 	}
+	if let Some(definition) = derived_function(ident.as_str()) {
+		return evaluate_to_value(definition, scope, attrs, spans, context, int);
+	}
 	Ok(match ident.as_str() {
 		"pi" | "\u{3c0}" => Value::Num(Box::new(Number::pi())),
 		"tau" | "\u{3c4}" => Value::Num(Box::new(Number::pi().mul(2.into(), int)?)),
-		"e" => evaluate_to_value(
-			"approx. 2718281828459045235/1000000000000000000",
-			scope,
-			attrs,
-			spans,
-			context,
-			int,
-		)?,
+		"e" => Value::Num(Box::new(Number::from(1).exp(context, int)?)),
 		"phi" => evaluate_to_value("(1 + sqrt(5))/2", scope, attrs, spans, context, int)?,
 		"i" => Value::Num(Box::new(Number::i())),
 		"true" => Value::Bool(true),
@@ -813,12 +809,14 @@ fn resolve_builtin_identifier<I: Interrupt>(
 		"floor" => Value::BuiltInFunction(BuiltInFunction::Floor),
 		"ceil" => Value::BuiltInFunction(BuiltInFunction::Ceil),
 		"round" => Value::BuiltInFunction(BuiltInFunction::Round),
+		"trunc" => Value::BuiltInFunction(BuiltInFunction::Trunc),
 		"sin" => Value::BuiltInFunction(BuiltInFunction::Sin),
 		"cos" => Value::BuiltInFunction(BuiltInFunction::Cos),
 		"tan" => Value::BuiltInFunction(BuiltInFunction::Tan),
 		"asin" => Value::BuiltInFunction(BuiltInFunction::Asin),
 		"acos" => Value::BuiltInFunction(BuiltInFunction::Acos),
 		"atan" => Value::BuiltInFunction(BuiltInFunction::Atan),
+		"acot" => Value::BuiltInFunction(BuiltInFunction::Acot),
 		"sinh" => Value::BuiltInFunction(BuiltInFunction::Sinh),
 		"cosh" => Value::BuiltInFunction(BuiltInFunction::Cosh),
 		"tanh" => Value::BuiltInFunction(BuiltInFunction::Tanh),
@@ -838,7 +836,9 @@ fn resolve_builtin_identifier<I: Interrupt>(
 		"log" | "log10" => Value::BuiltInFunction(BuiltInFunction::Log10),
 		"not" => Value::BuiltInFunction(BuiltInFunction::Not),
 		"fib" | "fibonacci" => Value::BuiltInFunction(BuiltInFunction::Fibonacci),
-		"exp" => evaluate_to_value("x: e^x", scope, attrs, spans, context, int)?,
+		"exp" => Value::BuiltInFunction(BuiltInFunction::Exp),
+		"gamma" => Value::BuiltInFunction(BuiltInFunction::Gamma),
+		"zeta" => Value::BuiltInFunction(BuiltInFunction::Zeta),
 		"approx." | "approximately" => Value::BuiltInFunction(BuiltInFunction::Approximately),
 		"auto" => Value::Format(FormattingStyle::Auto),
 		"exact" => Value::Format(FormattingStyle::Exact),
@@ -872,6 +872,21 @@ fn resolve_builtin_identifier<I: Interrupt>(
 		"yesterday" => Value::Date(crate::date::Date::today(context)?.prev()),
 		"trans" => Value::String(Cow::Borrowed("🏳️‍⚧️")),
 		_ => return Err(FendError::IdentifierNotFound(ident.clone())),
+	})
+}
+
+fn derived_function(ident: &str) -> Option<&'static str> {
+	Some(match ident {
+		"cot" => "x: (cos x) / (sin x)",
+		"csc" => "x: 1 / (sin x)",
+		"coth" => "x: 1 / (tanh x)",
+		"sech" => "x: 1 / (cosh x)",
+		"csch" => "x: 1 / (sinh x)",
+		"acsc" => "x: asin(1/x)",
+		"acoth" => "x: atanh(1/x)",
+		"asech" => "x: acosh(1/x)",
+		"acsch" => "x: asinh(1/x)",
+		_ => return None,
 	})
 }
 

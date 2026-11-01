@@ -9,6 +9,10 @@ use crate::serialize::CborValue;
 use core::f64;
 use std::{cmp, fmt, hash, ops};
 
+mod fixed;
+
+const ROOT_BITS: u64 = 192;
+
 pub(crate) mod sign {
 	use crate::{
 		error::FendError,
@@ -219,37 +223,12 @@ impl BigRat {
 		}
 	}
 
-	#[allow(
-		clippy::cast_possible_truncation,
-		clippy::cast_sign_loss,
-		clippy::cast_precision_loss
-	)]
-	pub(crate) fn from_f64<I: Interrupt>(mut f: f64, int: &I) -> FResult<Self> {
-		let negative = f < 0.0;
-		if negative {
-			f = -f;
-		}
-		let i = (f * u64::MAX as f64) as u128;
-		let part1 = i as u64;
-		let part2 = (i >> 64) as u64;
-		Ok(Self {
-			sign: if negative {
-				Sign::Negative
-			} else {
-				Sign::Positive
-			},
-			num: BigUint::from(part1)
-				.add(&BigUint::from(part2).mul(&BigUint::from(u64::MAX), int)?),
-			den: BigUint::from(u64::MAX),
-		})
-	}
-
 	// sin works for all real numbers
 	pub(crate) fn sin<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		Ok(if self == 0.into() {
 			Exact::new(Self::from(0), true)
 		} else {
-			Exact::new(Self::from_f64(f64::sin(self.into_f64(int)?), int)?, false)
+			Exact::new(fixed::sin(&self, int)?, false)
 		})
 	}
 
@@ -258,8 +237,12 @@ impl BigRat {
 		Ok(if self == 0.into() {
 			Exact::new(Self::from(1), true)
 		} else {
-			Exact::new(Self::from_f64(f64::cos(self.into_f64(int)?), int)?, false)
+			Exact::new(fixed::cos(&self, int)?, false)
 		})
+	}
+
+	pub(crate) fn pi<I: Interrupt>(int: &I) -> FResult<Self> {
+		fixed::pi_rat(int)
 	}
 
 	// asin, acos and atan only work for values between -1 and 1
@@ -268,7 +251,7 @@ impl BigRat {
 		if self > one || self < -one {
 			return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)));
 		}
-		Self::from_f64(f64::asin(self.into_f64(int)?), int)
+		fixed::asin(&self, int)
 	}
 
 	pub(crate) fn acos<I: Interrupt>(self, int: &I) -> FResult<Self> {
@@ -276,32 +259,32 @@ impl BigRat {
 		if self > one || self < -one {
 			return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)));
 		}
-		Self::from_f64(f64::acos(self.into_f64(int)?), int)
+		fixed::acos(&self, int)
 	}
 
 	// note that this works for any real number, unlike asin and acos
 	pub(crate) fn atan<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		Self::from_f64(f64::atan(self.into_f64(int)?), int)
+		fixed::atan(&self, int)
 	}
 
-	pub(crate) fn atan2<I: Interrupt>(self, rhs: Self, int: &I) -> FResult<Self> {
-		Self::from_f64(f64::atan2(self.into_f64(int)?, rhs.into_f64(int)?), int)
+	pub(crate) fn atan2<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {
+		fixed::atan2(&self, rhs, int)
 	}
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		Self::from_f64(f64::sinh(self.into_f64(int)?), int)
+		fixed::sinh(&self, int)
 	}
 
 	pub(crate) fn cosh<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		Self::from_f64(f64::cosh(self.into_f64(int)?), int)
+		fixed::cosh(&self, int)
 	}
 
 	pub(crate) fn tanh<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		Self::from_f64(f64::tanh(self.into_f64(int)?), int)
+		fixed::tanh(&self, int)
 	}
 
 	pub(crate) fn asinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		Self::from_f64(f64::asinh(self.into_f64(int)?), int)
+		fixed::asinh(&self, int)
 	}
 
 	// value must not be less than 1
@@ -315,7 +298,7 @@ impl BigRat {
 				},
 			));
 		}
-		Self::from_f64(f64::acosh(self.into_f64(int)?), int)
+		fixed::acosh(&self, int)
 	}
 
 	// value must be between -1 and 1.
@@ -324,10 +307,10 @@ impl BigRat {
 		if self >= one || self <= -one {
 			return Err(out_of_range(self.fm(int)?, Range::open(-1, 1)));
 		}
-		Self::from_f64(f64::atanh(self.into_f64(int)?), int)
+		fixed::atanh(&self, int)
 	}
 
-	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
+	fn expect_positive<I: Interrupt>(self, int: &I) -> FResult<Self> {
 		if self <= 0.into() {
 			return Err(out_of_range(
 				self.fm(int)?,
@@ -337,23 +320,46 @@ impl BigRat {
 				},
 			));
 		}
-		Self::from_f64(self.num.log2(int)? - self.den.log2(int)?, int)
+		self.simplify(int)
+	}
+
+	fn exact_log<I: Interrupt>(&self, base: u64, int: &I) -> FResult<Option<Self>> {
+		let (power, sign) = if self.den == 1.into() {
+			(&self.num, Sign::Positive)
+		} else if self.num == 1.into() {
+			(&self.den, Sign::Negative)
+		} else {
+			return Ok(None);
+		};
+		#[allow(clippy::cast_precision_loss)]
+		let estimate = (power.log2() / (base as f64).log2()).round();
+		#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+		let k = BigUint::from(estimate as u64);
+		Ok((&BigUint::pow(&base.into(), &k, int)? == power).then(|| Self::signed_integer(sign, k)))
+	}
+
+	pub(crate) fn log2<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let x = self.expect_positive(int)?;
+		if let Some(k) = x.exact_log(2, int)? {
+			return Ok(k);
+		}
+		fixed::ln(&x, int)?.div(&fixed::ln_2_rat(int)?, int)
 	}
 
 	pub(crate) fn ln<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
-		if self == 1.into() {
+		let x = self.expect_positive(int)?;
+		if x == 1.into() {
 			return Ok(Exact::new(0.into(), true));
 		}
-		Ok(Exact::new(
-			self.log2(int)?
-				.div(&Self::from_f64(std::f64::consts::LOG2_E, int)?, int)?,
-			false,
-		))
+		Ok(Exact::new(fixed::ln(&x, int)?, false))
 	}
 
 	pub(crate) fn log10<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		self.log2(int)?
-			.div(&Self::from_f64(std::f64::consts::LOG2_10, int)?, int)
+		let x = self.expect_positive(int)?;
+		if let Some(k) = x.exact_log(10, int)? {
+			return Ok(k);
+		}
+		fixed::ln(&x, int)?.div(&fixed::ln(&10.into(), int)?, int)
 	}
 
 	fn apply_uint_op<I: Interrupt, R>(
@@ -376,19 +382,83 @@ impl BigRat {
 		Ok(self.apply_uint_op(BigUint::factorial, int)?.into())
 	}
 
+	fn signed_integer(sign: Sign, num: BigUint) -> Self {
+		let sign = if num == 0.into() {
+			Sign::Positive
+		} else {
+			sign
+		};
+		Self {
+			sign,
+			num,
+			den: 1.into(),
+		}
+	}
+
+	fn trunc_magnitude<I: Interrupt>(&self, int: &I) -> FResult<(BigUint, bool)> {
+		let (quotient, remainder) = self.num.divmod(&self.den, int)?;
+		Ok((quotient, remainder != 0.into()))
+	}
+
 	pub(crate) fn floor<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		let float = self.into_f64(int)?.floor();
-		Self::from_f64(float, int)
+		let (quotient, cut) = self.trunc_magnitude(int)?;
+		let away = cut && self.sign == Sign::Negative;
+		let num = if away {
+			quotient.add(&1.into())
+		} else {
+			quotient
+		};
+		Ok(Self::signed_integer(self.sign, num))
 	}
 
 	pub(crate) fn ceil<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		let float = self.into_f64(int)?.ceil();
-		Self::from_f64(float, int)
+		let (quotient, cut) = self.trunc_magnitude(int)?;
+		let away = cut && self.sign == Sign::Positive;
+		let num = if away {
+			quotient.add(&1.into())
+		} else {
+			quotient
+		};
+		Ok(Self::signed_integer(self.sign, num))
+	}
+
+	pub(crate) fn trunc<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let (quotient, _) = self.trunc_magnitude(int)?;
+		Ok(Self::signed_integer(self.sign, quotient))
+	}
+
+	pub(crate) fn gamma<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		let x = self.simplify(int)?;
+		if !x.is_integer() {
+			return Ok(Exact::new(fixed::gamma(&x, int)?, false));
+		}
+		if x.sign == Sign::Negative || x.num.is_zero() {
+			return Err(FendError::DivideByZero);
+		}
+		if x.num.bits() > 20 {
+			return Err(FendError::ValueTooLarge);
+		}
+		let factorial = x.add(-Self::from(1), int)?.factorial(int)?;
+		Ok(Exact::new(factorial, true))
+	}
+
+	pub(crate) fn zeta<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		let s = self.simplify(int)?;
+		if s == 1.into() {
+			return Err(FendError::DivideByZero);
+		}
+		fixed::zeta(&s, int)
 	}
 
 	pub(crate) fn round<I: Interrupt>(self, int: &I) -> FResult<Self> {
-		let float = self.into_f64(int)?.round();
-		Self::from_f64(float, int)
+		let twice_den = self.den.clone().mul(&2.into(), int)?;
+		let num = self
+			.num
+			.clone()
+			.mul(&2.into(), int)?
+			.add(&self.den)
+			.div(&twice_den, int)?;
+		Ok(Self::signed_integer(self.sign, num))
 	}
 
 	pub(crate) fn bitwise<I: Interrupt>(
@@ -888,6 +958,21 @@ impl BigRat {
 					}
 				}
 				Err(NextDigitErr::Terminated { round_up }) => {
+					if round_up && trailing_zeroes > 0 {
+						let sign = if let Some(actual_sign) = actual_sign {
+							actual_sign
+						} else {
+							let (sign, formatted_int) = print_integer_part(false)?;
+							trailing_digits.push_str(&formatted_int);
+							trailing_digits.push(decimal_separator.decimal_separator());
+							sign
+						};
+						for _ in 1..trailing_zeroes {
+							trailing_digits.push('0');
+						}
+						trailing_digits.push('1');
+						return Ok((sign, Exact::new(trailing_digits, false)));
+					}
 					let sign = if let Some(actual_sign) = actual_sign {
 						actual_sign
 					} else {
@@ -898,31 +983,8 @@ impl BigRat {
 						sign
 					};
 					if round_up {
-						let mut chars: Vec<char> = trailing_digits.chars().collect();
-						let mut carry = true;
-						for i in (0..chars.len()).rev() {
-							let c = chars[i];
-							if c == decimal_separator.decimal_separator() {
-								continue;
-							}
-							if let Some(d) = c.to_digit(base.base_as_u8().into()) {
-								if d + 1 < base.base_as_u8().into() {
-									chars[i] =
-										char::from_digit(d + 1, base.base_as_u8().into()).unwrap();
-									carry = false;
-									break;
-								}
-								chars[i] = '0';
-							} else {
-								chars.insert(i + 1, '1');
-								carry = false;
-								break;
-							}
-						}
-						if carry {
-							chars.insert(0, '1');
-						}
-						trailing_digits = chars.into_iter().collect();
+						trailing_digits =
+							Self::round_up_digits(&trailing_digits, base, decimal_separator);
 					}
 					// is the number exact, or did we need to truncate?
 					let exact = current_numerator == 0.into();
@@ -933,6 +995,45 @@ impl BigRat {
 				}
 			}
 		}
+	}
+
+	fn round_up_digits(
+		digits: &str,
+		base: Base,
+		decimal_separator: DecimalSeparatorStyle,
+	) -> String {
+		let mut chars: Vec<char> = digits.chars().collect();
+		let mut carry = true;
+		for i in (0..chars.len()).rev() {
+			let c = chars[i];
+			if c == decimal_separator.decimal_separator() {
+				continue;
+			}
+			if let Some(d) = c.to_digit(base.base_as_u8().into()) {
+				if d + 1 < base.base_as_u8().into() {
+					chars[i] = char::from_digit(d + 1, base.base_as_u8().into()).unwrap();
+					carry = false;
+					break;
+				}
+				chars[i] = '0';
+			} else {
+				chars.insert(i + 1, '1');
+				carry = false;
+				break;
+			}
+		}
+		if carry {
+			chars.insert(0, '1');
+		}
+		if chars.contains(&decimal_separator.decimal_separator()) {
+			while chars.last() == Some(&'0') {
+				chars.pop();
+			}
+			if chars.last() == Some(&decimal_separator.decimal_separator()) {
+				chars.pop();
+			}
+		}
+		chars.into_iter().collect()
 	}
 
 	// Brent's cycle detection algorithm (based on pseudocode from Wikipedia)
@@ -1012,55 +1113,69 @@ impl BigRat {
 		} else {
 			Sign::Negative
 		};
-		let pow_res = Self {
-			sign: result_sign,
-			num: BigUint::pow(&self.num, &rhs.num, int)?,
-			den: BigUint::pow(&self.den, &rhs.num, int)?,
-		};
 		if rhs.den == 1.into() {
-			Ok(Exact::new(pow_res, true))
-		} else {
-			Ok(pow_res.root_n(
-				&Self {
-					sign: Sign::Positive,
-					num: rhs.den,
-					den: 1.into(),
+			return Ok(Exact::new(
+				Self {
+					sign: result_sign,
+					num: BigUint::pow(&self.num, &rhs.num, int)?,
+					den: BigUint::pow(&self.den, &rhs.num, int)?,
 				},
-				int,
-			)?)
+				true,
+			));
 		}
+		let num_root = self.num.clone().root_n(&rhs.den, int)?;
+		let den_root = self.den.clone().root_n(&rhs.den, int)?;
+		if num_root.exact && den_root.exact {
+			return Ok(Exact::new(
+				Self {
+					sign: result_sign,
+					num: BigUint::pow(&num_root.value, &rhs.num, int)?,
+					den: BigUint::pow(&den_root.value, &rhs.num, int)?,
+				},
+				true,
+			));
+		}
+		if rhs.num.bits() <= 32 && rhs.den.bits() <= 32 {
+			let (p, q) = (rhs.num.try_as_usize(int)?, rhs.den.try_as_usize(int)?);
+			return Ok(Exact::new(Self::approx_pow(&self, p, q, int)?, false));
+		}
+		Ok(Exact::new(fixed::pow(&self, &rhs, int)?, false))
 	}
 
-	/// n must be an integer
-	fn iter_root_n<I: Interrupt>(
-		mut low_bound: Self,
-		val: &Self,
-		n: &Self,
-		int: &I,
-	) -> FResult<Self> {
-		let mut high_bound = low_bound.clone().add(1.into(), int)?;
-		for _ in 0..50 {
-			let guess = low_bound
-				.clone()
-				.add(high_bound.clone(), int)?
-				.div(&2.into(), int)?;
-			if &guess.clone().pow(n.clone(), int)?.value < val {
-				low_bound = guess;
-			} else {
-				high_bound = guess;
-			}
+	fn approx_pow<I: Interrupt>(base: &Self, p: usize, q: usize, int: &I) -> FResult<Self> {
+		if base.num < base.den {
+			let inverse = Self {
+				sign: Sign::Positive,
+				num: base.den.clone(),
+				den: base.num.clone(),
+			};
+			return Self::from(1).div(&Self::approx_pow(&inverse, p, q, int)?, int);
 		}
-		low_bound.add(high_bound, int)?.div(&2.into(), int)
+		let bits = ROOT_BITS + u64::from(p.bit_width()) + 8;
+		let shift = BigUint::from(bits);
+		let root = BigUint::fixed_root_n(&base.num, &base.den, q, bits, int)?;
+		let power = BigUint::fixed_pow(&root, p, &shift, int)?;
+		Ok(Self {
+			sign: Sign::Positive,
+			num: power,
+			den: BigUint::from(1).lshift_n(&shift, int)?,
+		})
+	}
+
+	fn approx_root_n<I: Interrupt>(val: &Self, n: usize, int: &I) -> FResult<Self> {
+		let root = BigUint::fixed_root_n(&val.num, &val.den, n, ROOT_BITS, int)?;
+		Ok(Self {
+			sign: Sign::Positive,
+			num: root,
+			den: BigUint::from(1).lshift_n(&BigUint::from(ROOT_BITS), int)?,
+		})
 	}
 
 	pub(crate) fn exp<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
 		if self.num == 0.into() {
 			return Ok(Exact::new(Self::from(1), true));
 		}
-		Ok(Exact::new(
-			Self::from_f64(self.into_f64(int)?.exp(), int)?,
-			false,
-		))
+		Ok(Exact::new(fixed::exp(&self, int)?, false))
 	}
 
 	// the boolean indicates whether or not the result is exact
@@ -1089,28 +1204,8 @@ impl BigRat {
 				true,
 			));
 		}
-		// TODO check in which cases this might still be exact
-		let num_rat = if num.exact {
-			Self::from(num.value)
-		} else {
-			Self::iter_root_n(
-				Self::from(num.value),
-				&Self::from(self.num),
-				&Self::from(n.clone()),
-				int,
-			)?
-		};
-		let den_rat = if den.exact {
-			Self::from(den.value)
-		} else {
-			Self::iter_root_n(
-				Self::from(den.value),
-				&Self::from(self.den),
-				&Self::from(n.clone()),
-				int,
-			)?
-		};
-		Ok(Exact::new(num_rat.div(&den_rat, int)?, false))
+		let n = n.try_as_usize(int)?;
+		Ok(Exact::new(Self::approx_root_n(&self, n, int)?, false))
 	}
 
 	pub(crate) fn mul<I: Interrupt>(self, rhs: &Self, int: &I) -> FResult<Self> {

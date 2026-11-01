@@ -348,6 +348,7 @@ impl Value {
 			BuiltInFunction::Asin => arg.expect_num()?.asin(context, int)?,
 			BuiltInFunction::Acos => arg.expect_num()?.acos(context, int)?,
 			BuiltInFunction::Atan => arg.expect_num()?.atan(context, int)?,
+			BuiltInFunction::Acot => arg.expect_num()?.acot(context, int)?,
 			BuiltInFunction::Sinh => arg.expect_num()?.sinh(context, int)?,
 			BuiltInFunction::Cosh => arg.expect_num()?.cosh(context, int)?,
 			BuiltInFunction::Tanh => arg.expect_num()?.tanh(context, int)?,
@@ -357,6 +358,9 @@ impl Value {
 			BuiltInFunction::Ln => arg.expect_num()?.ln(context, int)?,
 			BuiltInFunction::Log2 => arg.expect_num()?.log2(context, int)?,
 			BuiltInFunction::Log10 => arg.expect_num()?.log10(context, int)?,
+			BuiltInFunction::Exp => arg.expect_num()?.exp(context, int)?,
+			BuiltInFunction::Gamma => arg.expect_num()?.gamma(context, int)?,
+			BuiltInFunction::Zeta => arg.expect_num()?.zeta(context, int)?,
 			BuiltInFunction::Base => {
 				let n: u8 = arg
 					.expect_num()?
@@ -375,6 +379,7 @@ impl Value {
 			BuiltInFunction::Floor => arg.expect_num()?.floor(int)?,
 			BuiltInFunction::Ceil => arg.expect_num()?.ceil(int)?,
 			BuiltInFunction::Round => arg.expect_num()?.round(int)?,
+			BuiltInFunction::Trunc => arg.expect_num()?.trunc(int)?,
 			BuiltInFunction::Fibonacci => arg
 				.expect_num()?
 				.fibonacci(context.decimal_separator, int)?,

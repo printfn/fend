@@ -663,6 +663,18 @@ impl Value {
 		})
 	}
 
+	pub(crate) fn trunc<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		let value = self.value.one_point()?.trunc(int)?;
+		Ok(Self {
+			value: Complex::from(value.value).into(),
+			unit: self.unit,
+			exact: self.exact && value.exact,
+			base: self.base,
+			format: self.format,
+			simplifiable: self.simplifiable,
+		})
+	}
+
 	pub(crate) fn fibonacci<I: Interrupt>(
 		self,
 		decimal_separator: DecimalSeparatorStyle,
@@ -783,6 +795,10 @@ impl Value {
 		self.apply_fn(Complex::atan, false, context.decimal_separator, int)
 	}
 
+	pub(crate) fn acot<I: Interrupt>(self, context: &mut crate::Context, int: &I) -> FResult<Self> {
+		self.apply_fn(Complex::acot, false, context.decimal_separator, int)
+	}
+
 	pub(crate) fn sinh<I: Interrupt>(self, context: &mut crate::Context, int: &I) -> FResult<Self> {
 		self.apply_fn(Complex::sinh, false, context.decimal_separator, int)
 	}
@@ -821,6 +837,22 @@ impl Value {
 
 	pub(crate) fn ln<I: Interrupt>(self, context: &mut crate::Context, int: &I) -> FResult<Self> {
 		self.apply_fn_exact(Complex::ln, true, context.decimal_separator, int)
+	}
+
+	pub(crate) fn exp<I: Interrupt>(self, context: &mut crate::Context, int: &I) -> FResult<Self> {
+		self.apply_fn_exact(Complex::exp, true, context.decimal_separator, int)
+	}
+
+	pub(crate) fn gamma<I: Interrupt>(
+		self,
+		context: &mut crate::Context,
+		int: &I,
+	) -> FResult<Self> {
+		self.apply_fn_exact(Complex::gamma, true, context.decimal_separator, int)
+	}
+
+	pub(crate) fn zeta<I: Interrupt>(self, context: &mut crate::Context, int: &I) -> FResult<Self> {
+		self.apply_fn_exact(Complex::zeta, true, context.decimal_separator, int)
 	}
 
 	pub(crate) fn log2<I: Interrupt>(self, context: &mut crate::Context, int: &I) -> FResult<Self> {

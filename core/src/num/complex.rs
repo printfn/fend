@@ -265,6 +265,18 @@ impl Complex {
 		Ok(Exact::new(self.expect_real()?.round(int)?, true))
 	}
 
+	pub(crate) fn trunc<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
+		Ok(Exact::new(self.expect_real()?.trunc(int)?, true))
+	}
+
+	pub(crate) fn gamma<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		Ok(self.expect_real()?.gamma(int)?.apply(Self::from))
+	}
+
+	pub(crate) fn zeta<I: Interrupt>(self, int: &I) -> FResult<Exact<Self>> {
+		Ok(self.expect_real()?.zeta(int)?.apply(Self::from))
+	}
+
 	pub(crate) fn arg<I: Interrupt>(self, int: &I) -> FResult<Exact<Real>> {
 		Ok(Exact::new(self.imag.atan2(self.real, int)?, false))
 	}
@@ -485,6 +497,16 @@ impl Complex {
 				)?
 				.value)
 		}
+	}
+
+	pub(crate) fn acot<I: Interrupt>(self, int: &I) -> FResult<Self> {
+		if self.imag.is_zero() {
+			return Ok(Self::from(self.real.acot(int)?));
+		}
+		Exact::new(Self::from(1), true)
+			.div(Exact::new(self, true), int)?
+			.value
+			.atan(int)
 	}
 
 	pub(crate) fn sinh<I: Interrupt>(self, int: &I) -> FResult<Self> {
