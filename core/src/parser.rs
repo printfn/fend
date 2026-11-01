@@ -56,6 +56,10 @@ impl From<ParseError> for crate::error::FendError {
 	}
 }
 
+fn literal(n: u64) -> Expr {
+	Expr::Literal(Value::Num(Box::new(n.into())))
+}
+
 fn parse_token(input: &[Token]) -> ParseResult<'_, Token> {
 	if input.is_empty() {
 		return Err(ParseError::ExpectedAToken);
@@ -139,18 +143,41 @@ fn parse_parens_or_literal(input: &[Token]) -> ParseResult<'_> {
 		Token::StringLiteral(s) => Ok((Expr::Literal(Value::String(s)), remaining)),
 		Token::Symbol(Symbol::OpenParens) => parse_parens(input),
 		Token::Symbol(Symbol::Backslash) => parse_backslash_lambda(input),
+		Token::Symbol(Symbol::Sqrt) => {
+			let (arg, remaining) = parse_power(remaining, true)?;
+			let half = Expr::Bop(Bop::Div, Box::new(literal(1)), Box::new(literal(2)));
+			let root = Expr::Bop(
+				Bop::Pow,
+				Box::new(arg),
+				Box::new(Expr::Parens(Box::new(half))),
+			);
+			Ok((Expr::Parens(Box::new(root)), remaining))
+		}
 		Token::Symbol(s) => Err(ParseError::UnexpectedSymbol(s)),
 		Token::Date(d) => Ok((Expr::Literal(Value::Date(d)), remaining)),
+		Token::Superscript(..) => Err(ParseError::UnexpectedInput),
 	}
 }
 
 fn parse_factorial(input: &[Token]) -> ParseResult<'_> {
 	let (mut res, mut input) = parse_parens_or_literal(input)?;
-	while let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
-		res = Expr::Factorial(Box::new(res));
-		input = remaining;
+	loop {
+		if let Ok(((), remaining)) = parse_fixed_symbol(input, Symbol::Factorial) {
+			res = Expr::Factorial(Box::new(res));
+			input = remaining;
+		} else if let Some((Token::Superscript(negative, magnitude), remaining)) =
+			input.split_first()
+		{
+			let mut exponent = Expr::Literal(Value::Num(Box::new(magnitude.clone())));
+			if *negative {
+				exponent = Expr::UnaryMinus(Box::new(exponent));
+			}
+			res = Expr::Bop(Bop::Pow, Box::new(res), Box::new(exponent));
+			input = remaining;
+		} else {
+			return Ok((res, input));
+		}
 	}
-	Ok((res, input))
 }
 
 fn parse_power(input: &[Token], allow_unary: bool) -> ParseResult<'_> {
@@ -302,7 +329,8 @@ fn parse_modulo2_cont(input: &[Token]) -> ParseResult<'_> {
 	// extra restriction: `%` can't be directly followed by an operator, since we
 	// assume that e.g. `1 % + ...` should be a percentage
 	if input.first().is_some_and(|t| {
-		matches!(t, Token::Symbol(_)) && !matches!(t, Token::Symbol(Symbol::OpenParens))
+		matches!(t, Token::Symbol(_))
+			&& !matches!(t, Token::Symbol(Symbol::OpenParens | Symbol::Sqrt))
 	}) {
 		return Err(ParseError::UnexpectedInput);
 	}

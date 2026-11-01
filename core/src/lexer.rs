@@ -11,6 +11,7 @@ pub(crate) enum Token {
 	Num(Number),
 	Ident(Ident),
 	Symbol(Symbol),
+	Superscript(bool, Number),
 	StringLiteral(borrow::Cow<'static, str>),
 	Date(Date),
 }
@@ -42,6 +43,7 @@ pub(crate) enum Symbol {
 	NotEquals,
 	Combination,
 	Permutation,
+	Sqrt,
 }
 
 impl fmt::Display for Symbol {
@@ -72,6 +74,7 @@ impl fmt::Display for Symbol {
 			Self::NotEquals => "!=",
 			Self::Combination => "nCr",
 			Self::Permutation => "nPr",
+			Self::Sqrt => "\u{221a}",
 		};
 		write!(f, "{s}")?;
 		Ok(())
@@ -432,48 +435,62 @@ fn parse_basic_number<'a, I: Interrupt>(
 	}
 
 	// parse exponentiation via unicode superscript digits
-	if base.base_as_u8() <= 10
-		&& input
-			.chars()
-			.next()
-			.is_some_and(|c| SUPERSCRIPT_DIGITS.contains(&c))
-		&& let Ok((mut power_digits, remaining)) = parse_power_number(input)
-	{
-		let mut exponent = Number::zero_with_base(base);
-
-		power_digits.reverse();
-
-		for (i, digit) in power_digits.into_iter().enumerate() {
-			let num = digit * 10u64.pow(u32::try_from(i).unwrap());
-			exponent = exponent.add(num.into(), decimal_separator, int)?;
+	if base.base_as_u8() <= 10 {
+		let (power_digits, remaining) = parse_power_number(input);
+		if !power_digits.is_empty() {
+			let exponent = superscript_value(power_digits, base, decimal_separator, int)?;
+			res = res.pow(exponent, decimal_separator, int)?;
+			input = remaining;
 		}
-
-		res = res.pow(exponent, decimal_separator, int)?;
-		input = remaining;
 	}
 
 	Ok((res, input))
 }
 
 const SUPERSCRIPT_DIGITS: [char; 10] = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+const SUPERSCRIPT_MINUS: char = '\u{207b}';
 
-fn parse_power_number(input: &str) -> FResult<(Vec<u64>, &str)> {
+fn parse_power_number(mut input: &str) -> (Vec<u64>, &str) {
 	let mut digits: Vec<u64> = Vec::new();
-
-	let (mut ch, mut input) = parse_char(input)?;
-	while let Some((idx, _)) = SUPERSCRIPT_DIGITS
-		.iter()
-		.enumerate()
-		.find(|(_, x)| **x == ch)
+	while let Some(ch) = input.chars().next()
+		&& let Some(idx) = SUPERSCRIPT_DIGITS.iter().position(|&x| x == ch)
 	{
 		digits.push(idx as u64);
-		if input.is_empty() {
-			break;
-		}
-		(ch, input) = parse_char(input)?;
+		input = &input[ch.len_utf8()..];
 	}
+	(digits, input)
+}
 
-	Ok((digits, input))
+fn superscript_value<I: Interrupt>(
+	digits: Vec<u64>,
+	base: Base,
+	decimal_separator: DecimalSeparatorStyle,
+	int: &I,
+) -> FResult<Number> {
+	let mut value = Number::zero_with_base(base);
+	for digit in digits {
+		value = value
+			.mul(10.into(), int)?
+			.add(digit.into(), decimal_separator, int)?;
+	}
+	Ok(value)
+}
+
+fn parse_superscript<'a, I: Interrupt>(
+	input: &'a str,
+	decimal_separator: DecimalSeparatorStyle,
+	int: &I,
+) -> FResult<(Token, &'a str)> {
+	let (negative, input) = match input.strip_prefix(SUPERSCRIPT_MINUS) {
+		Some(remaining) => (true, remaining),
+		None => (false, input),
+	};
+	let (digits, remaining) = parse_power_number(input);
+	if digits.is_empty() {
+		return Err(FendError::UnexpectedChar(SUPERSCRIPT_MINUS));
+	}
+	let value = superscript_value(digits, Base::default(), decimal_separator, int)?;
+	Ok((Token::Superscript(negative, value), remaining))
 }
 
 fn parse_number<'a, I: Interrupt>(
@@ -578,7 +595,7 @@ fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 		}
 		// unicode minus sign
 		'-' | '\u{2212}' => Symbol::Sub,
-		'*' | '\u{d7}' | '\u{2715}' => {
+		'*' | '\u{d7}' | '\u{2715}' | '\u{b7}' | '\u{22c5}' => {
 			if test_next('*') {
 				Symbol::Pow
 			} else {
@@ -619,6 +636,7 @@ fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 			}
 		}
 		';' => Symbol::Semicolon,
+		'\u{221a}' => Symbol::Sqrt,
 		_ => return Err(FendError::UnexpectedChar(ch)),
 	}))
 }
@@ -878,6 +896,11 @@ impl<I: Interrupt> Lexer<'_, '_, I> {
 					let (_terminator, remaining) = remaining.split_at(2);
 					self.input = remaining;
 					Token::StringLiteral(literal.to_string().into())
+				} else if ch == SUPERSCRIPT_MINUS || SUPERSCRIPT_DIGITS.contains(&ch) {
+					let (token, remaining) =
+						parse_superscript(self.input, self.decimal_separator, self.int)?;
+					self.input = remaining;
+					token
 				} else if is_valid_in_ident(ch, None) {
 					// dots aren't allowed in idents after a backslash
 					let (ident, remaining) =
@@ -906,7 +929,9 @@ impl<I: Interrupt> Iterator for Lexer<'_, '_, I> {
 		};
 		self.after_number_or_to = matches!(
 			res,
-			Some(Ok(Token::Num(_) | Token::Symbol(Symbol::UnitConversion)))
+			Some(Ok(Token::Num(_)
+				| Token::Superscript(..)
+				| Token::Symbol(Symbol::UnitConversion)))
 		);
 		if matches!(res, Some(Ok(Token::Symbol(Symbol::Backslash)))) {
 			self.after_backslash_state = 1;

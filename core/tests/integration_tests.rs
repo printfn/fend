@@ -5914,6 +5914,50 @@ fn test_superscript() {
 }
 
 #[test]
+fn superscript_exponents_after_any_value() {
+	test_eval("5⁻¹", "0.2");
+	test_eval("10⁻³", "0.001");
+	test_eval("(2+3)⁻¹", "0.2");
+	test_eval("(1+2)²", "9");
+	test_eval("5 m²", "5 m^2");
+	test_eval("(2 m)²", "4 m^2");
+	test_eval("a = 3; a²", "9");
+	test_eval("2²!", "24");
+	test_eval("2⁻¹'", "0.5'");
+	test_eval("sin⁻¹ 0.5", "approx. 0.5235987756");
+	test_eval("cosh⁻¹ 2", "approx. 1.3169578969");
+	expect_error("2⁻", Some("unexpected character '⁻'"));
+}
+
+#[test]
+fn superscripts_leave_the_next_character_alone() {
+	test_eval("2²+1", "5");
+	test_eval("2²*3", "12");
+	test_eval("2²pi", "approx. 12.5663706144");
+	expect_error("2²²²²²²²²²²²²²²²²²²²²²", Some("exponent too large"));
+}
+
+#[test]
+fn unicode_square_root() {
+	test_eval("√16", "4");
+	test_eval("√(2+2)", "2");
+	test_eval("√4^2", "4");
+	test_eval("2√3", "approx. 3.4641016151");
+	test_eval("√2·3", "approx. 4.2426406871");
+	test_eval("1/√2", "approx. 0.7071067812");
+	test_eval("√0.25", "0.5");
+	test_eval("10 % √4", "0");
+	test_eval("sqrt = \\y.y+1; √4", "2");
+}
+
+#[test]
+fn dot_multiplication() {
+	test_eval("2·3", "6");
+	test_eval("2⋅3", "6");
+	test_eval("N·m", "1 joule");
+}
+
+#[test]
 fn test_equality() {
 	test_eval("1 + 2 == 3", "true");
 	test_eval("1 + 2 != 4", "true");

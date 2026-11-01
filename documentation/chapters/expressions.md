@@ -83,6 +83,20 @@ approx. 6.2831853071
 120
 ```
 
+You can also write `×` or `·` for multiplication, `÷` for division, `√`
+for square roots, and exponents in superscript:
+
+```
+> 3 × 4
+12
+> 2√3
+approx. 3.4641016151
+> (1 + 2)²
+9
+> 5⁻¹
+0.2
+```
+
 You can use `=` to declare variables:
 
 ```
@@ -128,7 +142,7 @@ These are all the supported operators:
 | --- | --- | --- |
 | Literals, Identifiers, Parentheses | highest | N/A |
 | `of` | | right |
-| `!` | | left |
+| `!`, superscript exponents (e.g. `x²`) | | left |
 | `^`, `**` | | right |
 | `*`, `/`, `per`, function application (e.g. `sin 2`), `mod` | | left |
 | mixed fractions (e.g. `1 2/3`), implicit sums (e.g. `5 feet 10 inches`) | | N/A |
@@ -246,7 +260,7 @@ Wednesday, 19 May 2027
 
 fend has a number of predefined functions:
 
-* Roots: `sqrt`, `cbrt` for square roots and cube roots
+* Roots: `sqrt` (or `√`), `cbrt` for square roots and cube roots
 * Standard trigonometric functions: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`
 * Absolute value: `abs`
 * Logarithms: `ln`, `log` (or `log10`), `log2`
