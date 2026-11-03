@@ -98,7 +98,7 @@ impl Month {
 			.map_err(|_| FendError::DeserializationError("month is out of range"))
 	}
 
-	fn as_u8(self) -> u8 {
+	pub(crate) fn as_u8(self) -> u8 {
 		match self {
 			Self::January => 1,
 			Self::February => 2,
