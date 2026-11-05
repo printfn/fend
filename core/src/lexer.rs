@@ -40,6 +40,10 @@ pub(crate) enum Symbol {
 	Equals,       // used for assignment
 	DoubleEquals, // used for equality
 	NotEquals,
+	GreaterThan,
+	GreaterThanOrEquals,
+	LessThan,
+	LessThanOrEquals,
 	Combination,
 	Permutation,
 }
@@ -70,6 +74,10 @@ impl fmt::Display for Symbol {
 			Self::Equals => "=",
 			Self::DoubleEquals => "==",
 			Self::NotEquals => "!=",
+			Self::GreaterThan => ">",
+			Self::GreaterThanOrEquals => ">=",
+			Self::LessThan => "<",
+			Self::LessThanOrEquals => "<=",
 			Self::Combination => "nCr",
 			Self::Permutation => "nPr",
 		};
@@ -607,15 +615,19 @@ fn parse_symbol(ch: char, input: &mut &str) -> FResult<Token> {
 				Symbol::ShiftLeft
 			} else if test_next('>') {
 				Symbol::NotEquals
+			} else if test_next('=') {
+				Symbol::LessThanOrEquals
 			} else {
-				return Err(FendError::UnexpectedChar(ch));
+				Symbol::LessThan
 			}
 		}
 		'>' => {
 			if test_next('>') {
 				Symbol::ShiftRight
+			} else if test_next('=') {
+				Symbol::GreaterThanOrEquals
 			} else {
-				return Err(FendError::UnexpectedChar(ch));
+				Symbol::GreaterThan
 			}
 		}
 		';' => Symbol::Semicolon,

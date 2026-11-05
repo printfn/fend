@@ -81,11 +81,11 @@ impl Value {
 				}
 				return Ok(Some(cmp::Ordering::Equal));
 			}
-			(Self::String(a), Self::String(b)) => c(a == b),
-			(Self::Bool(a), Self::Bool(b)) => c(a == b),
-			(Self::Month(a), Self::Month(b)) => c(a == b),
+			(Self::String(a), Self::String(b)) => a.partial_cmp(b),
+			(Self::Bool(a), Self::Bool(b)) => a.partial_cmp(b),
+			(Self::Month(a), Self::Month(b)) => a.partial_cmp(b),
 			(Self::DayOfWeek(a), Self::DayOfWeek(b)) => c(a == b),
-			(Self::Date(a), Self::Date(b)) => c(a == b),
+			(Self::Date(a), Self::Date(b)) => a.partial_cmp(b),
 			_ => None,
 		})
 	}

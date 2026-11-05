@@ -4,7 +4,7 @@ use crate::{Deserialize, Serialize};
 use std::fmt;
 use std::io;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub(crate) struct Day(u8);
 
 impl Day {

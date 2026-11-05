@@ -5930,6 +5930,48 @@ fn test_equality() {
 }
 
 #[test]
+fn test_number_comparisons() {
+	test_eval("1 + 2 >= 3", "true");
+	test_eval("1 + 2 < 4", "true");
+	test_eval("1 + 2 <= 4", "true");
+	test_eval("1 <= 0", "false");
+	test_eval("1 >= 0", "true");
+	test_eval("1 > 0", "true");
+	test_eval("2m >= 200cm", "true");
+	test_eval("2.010m > 200cm", "true");
+	test_eval("2.010m <= 200cm", "false");
+	test_eval("2.000m >= approx. 200cm", "true");
+	test_eval("2.000m <= approx. 200cm", "true");
+	test_eval("-1 < 1", "true");
+	test_eval("-1 <= 1", "true");
+	test_eval("-1 > 1", "false");
+	test_eval("-1 >= 1", "false");
+	test_eval("-2^64 >= 1", "false");
+	test_eval("2^100 > 2^100 - 1", "true");
+	test_eval("2^100 > 2^100 + 1", "false");
+	test_eval("2^100 > 2^100", "false");
+	test_eval("2^-99 > 2^-100", "true");
+	test_eval("2^-99 < 2^-100", "false");
+	test_eval("2^-100 < 2^-99", "true");
+	test_eval("2^-100 > 2^-99", "false");
+}
+
+#[test]
+fn test_other_comparisons() {
+	test_eval("\"a\" < \"b\"", "true");
+	test_eval("@1970-01-01 > @1970-01-02", "false");
+	test_eval("@2003-12-12 < @2004-02-29", "true");
+	test_eval("true > false", "true");
+	test_eval("true < false", "false");
+	test_eval("true >= false", "true");
+	test_eval("true <= false", "false");
+	test_eval("true >= true", "true");
+	test_eval("true <= true", "true");
+	test_eval("false >= false", "true");
+	test_eval("false <= false", "true");
+}
+
+#[test]
 fn test_roman() {
 	expect_error(
 		"0 to roman",
